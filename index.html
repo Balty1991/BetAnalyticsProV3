@@ -300,7 +300,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 <!-- TABS -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-  <button class="tab" onclick="switchTab('live')">🔴 Live <span class="live-dot" id="live-tab-dot"></span></button>
   <button class="tab" onclick="switchTab('meciuri')">⚽ Meciuri</button>
   <button class="tab" onclick="switchTab('bilete')">🎫 Bilete</button>
   <button class="tab" onclick="switchTab('tracking')">📈 Tracking</button>
@@ -317,7 +316,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="stat-card"><div class="stat-num" id="st-total" style="color:var(--acc)">—</div><div class="stat-lbl">Total Meciuri</div></div>
       <div class="stat-card"><div class="stat-num" id="st-safe" style="color:var(--grn)">—</div><div class="stat-lbl">SAFE</div></div>
       <div class="stat-card"><div class="stat-num" id="st-value" style="color:var(--val)">—</div><div class="stat-lbl">Value Bets</div></div>
-      <div class="stat-card"><div class="stat-num" id="st-live" style="color:var(--red)">—</div><div class="stat-lbl">Live Acum</div></div>
     </div>
 
     <!-- Top 2 Ale Zilei -->
@@ -408,23 +406,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   </div>
 
   <!-- ===== LIVE TAB ===== -->
-  <div class="tab-content" id="tab-live">
-    <div class="live-header">
-      <div style="font-size:18px;font-weight:800">🔴 Meciuri Live</div>
-      <div class="live-count-badge" id="live-count-badge">0 live</div>
-      <div style="font-size:11px;color:var(--muted);font-family:var(--mono)" id="live-updated-at">—</div>
-      <button class="btn btn-primary" onclick="loadLive()" style="margin-left:auto;font-size:11px;padding:6px 12px">🔄 Refresh Live</button>
-    </div>
-    <div class="live-grid" id="live-grid">
-      <div class="live-empty">
-        <div class="live-empty-icon">⏰</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:8px">Niciun meci live acum</div>
-        <div style="font-size:12px">Apasa Refresh pentru a verifica</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== MECIURI ===== -->
   <div class="tab-content" id="tab-meciuri">
     <div class="filter-bar">
       <button class="filter-btn active" onclick="setFilter('all',this)">🌐 Toate</button>
@@ -538,7 +519,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 // GLOBAL STATE
 // ============================================================
 var ALL_MATCHES = [];
-var ALL_LIVE = [];
 var ALL_LEAGUES = [];
 var ALL_EVENTS = [];
 var ALL_TEAMS = [];
@@ -607,13 +587,12 @@ function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
-  var names=['dashboard','live','meciuri','bilete','tracking','bankroll'];
+  var names=['dashboard','meciuri','bilete','tracking','bankroll'];
   var tabs=document.querySelectorAll('.tab');
   var idx=names.indexOf(name);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
-  if(name==='live') renderLive();
 }
 
 // ============================================================
@@ -841,7 +820,6 @@ function doRefresh(){
 
   Promise.all([
     getJson('/data/predictions.json', []),
-    getJson('/data/live.json', []),
     getJson('/data/meta.json', {}),
     getJson('/data/leagues.json', []),
     getJson('/data/events.json', []),
@@ -849,16 +827,14 @@ function doRefresh(){
     getJson('/data/players_focus.json', [])
   ]).then(function(results){
     var predData = results[0];
-    var liveData = results[1];
-    var meta = results[2];
-    var leaguesData = results[3];
-    var eventsData = results[4];
-    var teamsData = results[5];
-    var playersData = results[6];
+    var meta = results[1];
+    var leaguesData = results[2];
+    var eventsData = results[3];
+    var teamsData = results[4];
+    var playersData = results[5];
 
     var preds = predData.results || predData || [];
     ALL_MATCHES = preds.map(analyzeMatch);
-    ALL_LIVE = liveData.results || liveData || [];
     ALL_LEAGUES = leaguesData.results || leaguesData || [];
     ALL_EVENTS = eventsData.results || eventsData || [];
     ALL_TEAMS = teamsData.results || teamsData || [];
@@ -874,7 +850,7 @@ function doRefresh(){
 
     var updatedAt = meta.updated_at ? new Date(meta.updated_at).toLocaleTimeString('ro-RO') : '';
     toast(
-      'Date actualizate: ' + ALL_MATCHES.length + ' meciuri / ' + ALL_LIVE.length + ' live' + (updatedAt ? ' @ ' + updatedAt : ''),
+      'Date actualizate: ' + ALL_MATCHES.length + ' meciuri' + (updatedAt ? ' @ ' + updatedAt : ''),
       'ok'
     );
   }).catch(function(err){
@@ -887,112 +863,6 @@ function doRefresh(){
 // ============================================================
 // LIVE TAB RENDERING
 // ============================================================
-function loadLive(){
-  var base = getBase();
-  fetch(base+'/data/live.json?t='+Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      ALL_LIVE = data.results || data || [];
-      renderLive();
-      toast(ALL_LIVE.length > 0 ? ALL_LIVE.length+' meciuri live' : 'Niciun meci live acum', 'ok');
-    })
-    .catch(function(){ toast('Eroare live', 'err'); });
-}
-
-function renderLive(){
-  var container = $('live-grid');
-  var badge = $('live-count-badge');
-  var dot = $('live-tab-dot');
-  var updEl = $('live-updated-at');
-
-  if(badge) badge.textContent = ALL_LIVE.length + ' live';
-  if(dot){ if(ALL_LIVE.length>0) dot.classList.add('show'); else dot.classList.remove('show'); }
-  if(updEl) updEl.textContent = 'actualizat: ' + new Date().toLocaleTimeString('ro-RO');
-  if($('st-live')) $('st-live').textContent = ALL_LIVE.length;
-
-  if(ALL_LIVE.length === 0){
-    container.innerHTML = '<div class="live-empty"><div class="live-empty-icon">⏰</div><div style="font-size:14px;font-weight:600;margin-bottom:8px">Niciun meci live acum</div><div style="font-size:12px;color:var(--muted)">Apasa Refresh Live pentru a verifica</div></div>';
-    return;
-  }
-
-  container.innerHTML = ALL_LIVE.map(function(m){
-    var minute = m.current_minute || 0;
-    var period = m.period || '';
-    var periodLabel = period === '1T' ? 'Prima repriză' : period === 'HT' ? 'Pauză' : period === '2T' ? 'A doua repriză' : period === 'FT' ? 'Final' : period;
-    var homeScore = m.home_score !== null ? m.home_score : '-';
-    var awayScore = m.away_score !== null ? m.away_score : '-';
-
-    var hLogo = m.home_team_obj ? logoImgHtml(teamLogoUrl(m.home_team_obj.api_id), m.home_team, 22) : '';
-    var aLogo = m.away_team_obj ? logoImgHtml(teamLogoUrl(m.away_team_obj.api_id), m.away_team, 22) : '';
-
-    var statsHtml = '';
-    if(m.live_stats && (m.live_stats.home || m.live_stats.away)){
-      var hs = m.live_stats.home || {};
-      var as = m.live_stats.away || {};
-      var statsRows = [
-        {label:'Posesie', h:(hs.ball_possession||0)+'%', a:(as.ball_possession||0)+'%', hv:hs.ball_possession||0, av:as.ball_possession||0},
-        {label:'Șuturi', h:(hs.total_shots||0), a:(as.total_shots||0), hv:hs.total_shots||0, av:as.total_shots||0},
-        {label:'Pe poartă', h:(hs.shots_on_target||0), a:(as.shots_on_target||0), hv:hs.shots_on_target||0, av:as.shots_on_target||0},
-        {label:'Cornere', h:(hs.corner_kicks||0), a:(as.corner_kicks||0), hv:hs.corner_kicks||0, av:as.corner_kicks||0},
-        {label:'Faulturi', h:(hs.fouls||0), a:(as.fouls||0), hv:hs.fouls||0, av:as.fouls||0},
-        {label:'Galbene', h:(hs.yellow_cards||0), a:(as.yellow_cards||0), hv:hs.yellow_cards||0, av:as.yellow_cards||0},
-        {label:'Roșii', h:(hs.red_cards||0), a:(as.red_cards||0), hv:hs.red_cards||0, av:as.red_cards||0},
-        {label:'Offside', h:(hs.offsides||0), a:(as.offsides||0), hv:hs.offsides||0, av:as.offsides||0}
-      ].filter(function(row){ return row.hv > 0 || row.av > 0 || row.label === 'Posesie'; });
-
-      statsHtml = '<div style="margin-bottom:12px">';
-      statsRows.forEach(function(row){
-        var total = row.hv + row.av;
-        var hPct = total > 0 ? (row.hv/total*100) : 50;
-        var aPct = 100 - hPct;
-        statsHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'+
-          '<div style="text-align:right;font-size:11px;font-family:var(--mono);font-weight:700;min-width:36px;color:var(--acc)">'+row.h+'</div>'+
-          '<div style="flex:1">'+
-            '<div style="font-size:9px;color:var(--muted);text-align:center;margin-bottom:2px">'+row.label+'</div>'+
-            '<div style="display:flex;height:4px;border-radius:2px;overflow:hidden">'+
-              '<div style="width:'+hPct+'%;background:var(--acc)"></div>'+
-              '<div style="width:'+aPct+'%;background:var(--pur)"></div>'+
-            '</div>'+
-          '</div>'+
-          '<div style="text-align:left;font-size:11px;font-family:var(--mono);font-weight:700;min-width:36px;color:var(--pur)">'+row.a+'</div>'+
-        '</div>';
-      });
-      statsHtml += '</div>';
-    }
-
-    var incidentHtml = '';
-    if(m.incidents && m.incidents.length > 0){
-      incidentHtml = '<div class="incidents-wrap"><div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase">Incidente</div>';
-      var sorted = m.incidents.slice().sort(function(a,b){ return b.minute - a.minute; }).slice(0,8);
-      sorted.forEach(function(inc){
-        var icon = inc.type === 'goal' ? '⚽' : inc.type === 'card' ? '🟨' : '🔄';
-        var iconClass = inc.type === 'goal' ? 'incident-goal' : inc.type === 'card' ? 'incident-card' : 'incident-sub';
-        var teamLabel = inc.is_home ? m.home_team : m.away_team;
-        incidentHtml += '<div class="incident-item">'+
-          '<span class="incident-min">'+inc.minute+"'</span>"+
-          '<div class="incident-icon '+iconClass+'">'+icon+'</div>'+
-          '<div class="incident-player">'+((inc.player_name||'—'))+'</div>'+
-          '<div class="incident-team">'+teamLabel+'</div>'+
-        '</div>';
-      });
-      incidentHtml += '</div>';
-    }
-
-    var leagueLogo = m.league && m.league.api_id ? logoImgHtml(leagueLogoUrl(m.league.api_id), m.league.name||'', 16) : '';
-
-    return '<div class="live-card">'+
-      '<div class="live-minute"><span class="pulse"></span>'+minute+"' "+periodLabel+'</div>'+
-      '<div style="font-size:10px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px">'+leagueLogo+' '+(m.league?m.league.name:'')+' • '+(m.league?m.league.country:'')+'</div>'+
-      '<div class="live-teams">'+
-        '<div class="live-team"><div style="display:flex;align-items:center;gap:6px">'+hLogo+'<span>'+m.home_team+'</span></div></div>'+
-        '<div class="live-score-wrap"><div class="live-score">'+homeScore+' — '+awayScore+'</div><div class="live-period">'+periodLabel+'</div></div>'+
-        '<div class="live-team away"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">'+aLogo+'<span>'+m.away_team+'</span></div></div>'+
-      '</div>'+
-      statsHtml+
-      incidentHtml+
-    '</div>';
-  }).join('');
-}
 
 // ============================================================
 // RENDER DASHBOARD
@@ -2217,7 +2087,6 @@ function renderAll(){
   if($('st-total')) $('st-total').textContent=total;
   if($('st-safe')) $('st-safe').textContent=safe;
   if($('st-value')) $('st-value').textContent=value;
-  if($('st-live')) $('st-live').textContent=ALL_LIVE.length;
 
   var now=new Date();
   var timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
@@ -2233,7 +2102,6 @@ function renderAll(){
   renderMatches();
   renderBilete();
   renderTracking();
-  renderLive();
 }
 
 window.addEventListener('DOMContentLoaded', function(){
