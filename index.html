@@ -294,6 +294,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="sb-dot live" id="sb-dot"></div>
       <span id="sb-text">Se incarca...</span>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);font-family:var(--mono)">
+      <span id="data-freshness">—</span>
+    </div>
     <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button>
   </div>
 </div>
@@ -874,6 +877,31 @@ function passesSelectionFilter(m){
 // ============================================================
 // DATA LOADING
 // ============================================================
+// ============================================================
+// RELATIVE TIME HELPER
+// ============================================================
+var LAST_UPDATE_TIME = null;
+
+function getRelativeTime(isoString){
+  if(!isoString) return '—';
+  try {
+    var then = new Date(isoString).getTime();
+    var now = new Date().getTime();
+    var diffMs = now - then;
+    var diffSec = Math.floor(diffMs / 1000);
+    var diffMin = Math.floor(diffSec / 60);
+    var diffHour = Math.floor(diffMin / 60);
+    var diffDay = Math.floor(diffHour / 24);
+    
+    if(diffSec < 60) return 'acum ' + diffSec + ' secunde';
+    if(diffMin < 60) return 'acum ' + diffMin + ' minut' + (diffMin !== 1 ? 'e' : '');
+    if(diffHour < 24) return 'acum ' + diffHour + ' ora' + (diffHour !== 1 ? 'e' : '');
+    return 'acum ' + diffDay + ' zi' + (diffDay !== 1 ? 'le' : '');
+  } catch(e) {
+    return '—';
+  }
+}
+
 function getBase(){
   return document.location.pathname.replace(/\/[^\/]*$/, '');
 }
@@ -883,7 +911,14 @@ function doRefresh(){
   var base = getBase();
 
   function getJson(path, fallback){
-    return fetch(base + path + '?t=' + Date.now())
+    // Force no-cache by adding timestamp and cache-busting headers
+    return fetch(base + path + '?t=' + Date.now(), {
+      cache: 'no-store',
+      headers: {
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
+    })
       .then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status+' @ '+path);
         return r.json();
@@ -918,19 +953,41 @@ function doRefresh(){
     if(storedToken) API_TOKEN = storedToken;
     else if(meta && meta.api_token) API_TOKEN = meta.api_token;
 
+    // Store the update time for relative time display
+    LAST_UPDATE_TIME = meta.updated_at || new Date().toISOString();
+    
     renderAll();
+    updateDataFreshness();
     hideLoader();
 
     var updatedAt = meta.updated_at ? new Date(meta.updated_at).toLocaleTimeString('ro-RO') : '';
-    toast(
-      'Date actualizate: ' + ALL_MATCHES.length + ' meciuri' + (updatedAt ? ' @ ' + updatedAt : ''),
-      'ok'
-    );
+    var relativeTime = getRelativeTime(meta.updated_at);
+    var dataAge = meta.updated_at ? Math.floor((new Date().getTime() - new Date(meta.updated_at).getTime()) / 60000) : 0;
+    
+    // Warning if data is older than 10 minutes
+    var toastType = dataAge > 10 ? 'warn' : 'ok';
+    var message = 'Date actualizate: ' + ALL_MATCHES.length + ' meciuri (' + relativeTime + ')';
+    if(dataAge > 10) {
+      message += ' ⚠️ GitHub Actions procesează datele noi';
+    }
+    toast(message, toastType);
   }).catch(function(err){
     hideLoader();
     toast('Eroare la incarcarea datelor', 'err');
     console.error(err);
   });
+}
+
+function updateDataFreshness(){
+  if(!LAST_UPDATE_TIME) return;
+  var freshEl = $('data-freshness');
+  if(!freshEl) return;
+  var relTime = getRelativeTime(LAST_UPDATE_TIME);
+  var dataAge = Math.floor((new Date().getTime() - new Date(LAST_UPDATE_TIME).getTime()) / 60000);
+  var statusColor = dataAge > 10 ? 'var(--yel)' : 'var(--grn)';
+  var statusText = dataAge > 10 ? '⚠️ Vechi' : '✓ Fresh';
+  var tooltip = dataAge > 10 ? 'GitHub Actions procesează datele noi' : 'Date actualizate';
+  freshEl.innerHTML = '<span style="color:' + statusColor + ';font-weight:700;cursor:help;" title="' + tooltip + '">' + statusText + '</span> • ' + relTime;
 }
 
 // ============================================================
@@ -2338,6 +2395,8 @@ window.addEventListener('DOMContentLoaded', function(){
   if(st) API_TOKEN=st;
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
+  // Update data freshness indicator every 10 seconds
+  setInterval(updateDataFreshness, 10000);
 });
 </script>
 </body>
