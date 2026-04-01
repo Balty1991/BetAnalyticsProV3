@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-BetAnalytics Pro V13 - Light / Stable Fetcher
+BetAnalytics Pro V14 - ML API Expanded Fetcher
 
 Scop:
 - predictions: la fiecare rulare
@@ -179,7 +179,8 @@ def main():
         "teams_count": len(teams),
         "players_focus_count": len(players_focus),
         "status": "ok",
-        "version": "v13-light",
+        "version": "v14-ml-expanded",
+        "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
     }
