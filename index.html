@@ -294,9 +294,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="sb-dot live" id="sb-dot"></div>
       <span id="sb-text">Se incarca...</span>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted);font-family:var(--mono)">
-      <span id="data-freshness">—</span>
-    </div>
     <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button>
   </div>
 </div>
@@ -570,7 +567,7 @@ var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
 var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{"initial":1000,"safe":2,"medium":5,"risk":10}');
-var API_TOKEN = '7a22fffa7ed9de01720e1e1f6bee2c417eef8e6d'; // setat din meta.json sau localStorage
+var API_TOKEN = ''; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
@@ -877,136 +874,63 @@ function passesSelectionFilter(m){
 // ============================================================
 // DATA LOADING
 // ============================================================
-// ============================================================
-// RELATIVE TIME HELPER
-// ============================================================
-var LAST_UPDATE_TIME = null;
-
-function getRelativeTime(isoString){
-  if(!isoString) return '—';
-  try {
-    var then = new Date(isoString).getTime();
-    var now = new Date().getTime();
-    var diffMs = now - then;
-    var diffSec = Math.floor(diffMs / 1000);
-    var diffMin = Math.floor(diffSec / 60);
-    var diffHour = Math.floor(diffMin / 60);
-    var diffDay = Math.floor(diffHour / 24);
-    
-    if(diffSec < 60) return 'acum ' + diffSec + ' secunde';
-    if(diffMin < 60) return 'acum ' + diffMin + ' minut' + (diffMin !== 1 ? 'e' : '');
-    if(diffHour < 24) return 'acum ' + diffHour + ' ora' + (diffHour !== 1 ? 'e' : '');
-    return 'acum ' + diffDay + ' zi' + (diffDay !== 1 ? 'le' : '');
-  } catch(e) {
-    return '—';
-  }
-}
-
 function getBase(){
   return document.location.pathname.replace(/\/[^\/]*$/, '');
 }
 
 function doRefresh(){
-  showLoader('Conectare directă la API Bzzoiro (Real-Time)...');
-  
-  var apiBase = 'https://sports.bzzoiro.com';
-  var tz = 'Europe/Bucharest';
+  showLoader('Incarcare date din API Bzzoiro...');
+  var base = getBase();
 
-  function fetchApi(endpoint){
-    return fetch(apiBase + endpoint, {
-      headers: {
-        'Authorization': 'Token ' + API_TOKEN
-      }
-    })
-    .then(function(r){
-      if(!r.ok) throw new Error('API Error: ' + r.status);
-      return r.json();
-    });
-  }
-
-  // Fetch all pages for predictions (Real-Time)
-  function fetchAllPages(endpoint){
-    var allResults = [];
-    function getPage(url){
-      return fetch(url, {
-        headers: { 'Authorization': 'Token ' + API_TOKEN }
+  function getJson(path, fallback){
+    return fetch(base + path + '?t=' + Date.now())
+      .then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status+' @ '+path);
+        return r.json();
       })
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        var results = data.results || data || [];
-        allResults = allResults.concat(results);
-        if(data.next) return getPage(data.next.replace('http://', 'https://'));
-        return allResults;
-      });
-    }
-    return getPage(apiBase + endpoint);
+      .catch(function(){ return fallback; });
   }
 
   Promise.all([
-    fetchAllPages('/api/predictions/?tz=' + tz + '&upcoming=true'),
-    fetchApi('/api/leagues/'),
-    fetchApi('/api/events/?tz=' + tz + '&status=notstarted'),
-    fetchApi('/api/teams/')
+    getJson('/data/predictions.json', []),
+    getJson('/data/meta.json', {}),
+    getJson('/data/leagues.json', []),
+    getJson('/data/events.json', []),
+    getJson('/data/teams.json', []),
+    getJson('/data/players_focus.json', [])
   ]).then(function(results){
-    var preds = results[0];
+    var predData = results[0];
+    var meta = results[1];
+    var leaguesData = results[2];
+    var eventsData = results[3];
+    var teamsData = results[4];
+    var playersData = results[5];
+
+    var preds = predData.results || predData || [];
     ALL_MATCHES = preds.map(analyzeMatch);
-    ALL_LEAGUES = results[1].results || results[1] || [];
-    ALL_EVENTS = results[2].results || results[2] || [];
-    ALL_TEAMS = results[3].results || results[3] || [];
+    ALL_LEAGUES = leaguesData.results || leaguesData || [];
+    ALL_EVENTS = eventsData.results || eventsData || [];
+    ALL_TEAMS = teamsData.results || teamsData || [];
+    ALL_PLAYERS = playersData.results || playersData || [];
     BILETE = null;
 
-    // Set update time to NOW since we just fetched from API
-    LAST_UPDATE_TIME = new Date().toISOString();
-    
+    var storedToken = localStorage.getItem('bsd_token');
+    if(storedToken) API_TOKEN = storedToken;
+    else if(meta && meta.api_token) API_TOKEN = meta.api_token;
+
     renderAll();
-    updateDataFreshness();
     hideLoader();
 
-    toast('Date preluate INSTANT din API: ' + ALL_MATCHES.length + ' meciuri', 'ok');
-  }).catch(function(err){
-    console.error('API Fetch failed, falling back to GitHub data...', err);
-    // Fallback to static files if API fails (CORS or Token issues)
-    doRefreshStatic();
-  });
-}
-
-function doRefreshStatic(){
-  showLoader('Incarcare date de rezerva (GitHub)...');
-  var base = getBase();
-  function getJson(path){ return fetch(base + path + '?t=' + Date.now()).then(function(r){ return r.json(); }); }
-
-  Promise.all([
-    getJson('/data/predictions.json'),
-    getJson('/data/meta.json'),
-    getJson('/data/leagues.json'),
-    getJson('/data/events.json'),
-    getJson('/data/teams.json')
-  ]).then(function(results){
-    ALL_MATCHES = (results[0].results || results[0] || []).map(analyzeMatch);
-    LAST_UPDATE_TIME = results[1].updated_at || new Date().toISOString();
-    renderAll();
-    updateDataFreshness();
-    hideLoader();
-    toast('Date încărcate din GitHub (Backup)', 'warn');
+    var updatedAt = meta.updated_at ? new Date(meta.updated_at).toLocaleTimeString('ro-RO') : '';
+    toast(
+      'Date actualizate: ' + ALL_MATCHES.length + ' meciuri' + (updatedAt ? ' @ ' + updatedAt : ''),
+      'ok'
+    );
   }).catch(function(err){
     hideLoader();
-    toast('Eroare critică la încărcarea datelor', 'err');
+    toast('Eroare la incarcarea datelor', 'err');
+    console.error(err);
   });
-}
-
-function updateDataFreshness(){
-  if(!LAST_UPDATE_TIME) return;
-  var freshEl = $('data-freshness');
-  if(!freshEl) return;
-  var relTime = getRelativeTime(LAST_UPDATE_TIME);
-  var dataAge = Math.floor((new Date().getTime() - new Date(LAST_UPDATE_TIME).getTime()) / 60000);
-  
-  // Since we use direct API, it should always be fresh after a manual refresh
-  var statusColor = dataAge > 2 ? 'var(--yel)' : 'var(--grn)';
-  var statusText = dataAge > 2 ? '⚡ API' : '✨ REAL-TIME';
-  var tooltip = 'Date preluate direct din API Bzzoiro';
-  
-  freshEl.innerHTML = '<span style="color:' + statusColor + ';font-weight:700;cursor:help;" title="' + tooltip + '">' + statusText + '</span> • ' + relTime;
 }
 
 // ============================================================
@@ -2414,8 +2338,6 @@ window.addEventListener('DOMContentLoaded', function(){
   if(st) API_TOKEN=st;
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
-  // Update data freshness indicator every 10 seconds
-  setInterval(updateDataFreshness, 10000);
 });
 </script>
 </body>
