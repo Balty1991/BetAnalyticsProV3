@@ -570,7 +570,7 @@ var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
 var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{"initial":1000,"safe":2,"medium":5,"risk":10}');
-var API_TOKEN = ''; // setat din meta.json sau localStorage
+var API_TOKEN = '7a22fffa7ed9de01720e1e1f6bee2c417eef8e6d'; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
@@ -907,74 +907,90 @@ function getBase(){
 }
 
 function doRefresh(){
-  showLoader('Incarcare date din API Bzzoiro...');
-  var base = getBase();
+  showLoader('Conectare directă la API Bzzoiro (Real-Time)...');
+  
+  var apiBase = 'https://sports.bzzoiro.com';
+  var tz = 'Europe/Bucharest';
 
-  function getJson(path, fallback){
-    // Force no-cache by adding timestamp and cache-busting headers
-    return fetch(base + path + '?t=' + Date.now(), {
-      cache: 'no-store',
+  function fetchApi(endpoint){
+    return fetch(apiBase + endpoint, {
       headers: {
-        'Pragma': 'no-cache',
-        'Cache-Control': 'no-cache, no-store, must-revalidate'
+        'Authorization': 'Token ' + API_TOKEN
       }
     })
-      .then(function(r){
-        if(!r.ok) throw new Error('HTTP '+r.status+' @ '+path);
-        return r.json();
+    .then(function(r){
+      if(!r.ok) throw new Error('API Error: ' + r.status);
+      return r.json();
+    });
+  }
+
+  // Fetch all pages for predictions (Real-Time)
+  function fetchAllPages(endpoint){
+    var allResults = [];
+    function getPage(url){
+      return fetch(url, {
+        headers: { 'Authorization': 'Token ' + API_TOKEN }
       })
-      .catch(function(){ return fallback; });
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var results = data.results || data || [];
+        allResults = allResults.concat(results);
+        if(data.next) return getPage(data.next.replace('http://', 'https://'));
+        return allResults;
+      });
+    }
+    return getPage(apiBase + endpoint);
   }
 
   Promise.all([
-    getJson('/data/predictions.json', []),
-    getJson('/data/meta.json', {}),
-    getJson('/data/leagues.json', []),
-    getJson('/data/events.json', []),
-    getJson('/data/teams.json', []),
-    getJson('/data/players_focus.json', [])
+    fetchAllPages('/api/predictions/?tz=' + tz + '&upcoming=true'),
+    fetchApi('/api/leagues/'),
+    fetchApi('/api/events/?tz=' + tz + '&status=notstarted'),
+    fetchApi('/api/teams/')
   ]).then(function(results){
-    var predData = results[0];
-    var meta = results[1];
-    var leaguesData = results[2];
-    var eventsData = results[3];
-    var teamsData = results[4];
-    var playersData = results[5];
-
-    var preds = predData.results || predData || [];
+    var preds = results[0];
     ALL_MATCHES = preds.map(analyzeMatch);
-    ALL_LEAGUES = leaguesData.results || leaguesData || [];
-    ALL_EVENTS = eventsData.results || eventsData || [];
-    ALL_TEAMS = teamsData.results || teamsData || [];
-    ALL_PLAYERS = playersData.results || playersData || [];
+    ALL_LEAGUES = results[1].results || results[1] || [];
+    ALL_EVENTS = results[2].results || results[2] || [];
+    ALL_TEAMS = results[3].results || results[3] || [];
     BILETE = null;
 
-    var storedToken = localStorage.getItem('bsd_token');
-    if(storedToken) API_TOKEN = storedToken;
-    else if(meta && meta.api_token) API_TOKEN = meta.api_token;
-
-    // Store the update time for relative time display
-    LAST_UPDATE_TIME = meta.updated_at || new Date().toISOString();
+    // Set update time to NOW since we just fetched from API
+    LAST_UPDATE_TIME = new Date().toISOString();
     
     renderAll();
     updateDataFreshness();
     hideLoader();
 
-    var updatedAt = meta.updated_at ? new Date(meta.updated_at).toLocaleTimeString('ro-RO') : '';
-    var relativeTime = getRelativeTime(meta.updated_at);
-    var dataAge = meta.updated_at ? Math.floor((new Date().getTime() - new Date(meta.updated_at).getTime()) / 60000) : 0;
-    
-    // Warning if data is older than 10 minutes
-    var toastType = dataAge > 10 ? 'warn' : 'ok';
-    var message = 'Date actualizate: ' + ALL_MATCHES.length + ' meciuri (' + relativeTime + ')';
-    if(dataAge > 10) {
-      message += ' ⚠️ GitHub Actions procesează datele noi';
-    }
-    toast(message, toastType);
+    toast('Date preluate INSTANT din API: ' + ALL_MATCHES.length + ' meciuri', 'ok');
+  }).catch(function(err){
+    console.error('API Fetch failed, falling back to GitHub data...', err);
+    // Fallback to static files if API fails (CORS or Token issues)
+    doRefreshStatic();
+  });
+}
+
+function doRefreshStatic(){
+  showLoader('Incarcare date de rezerva (GitHub)...');
+  var base = getBase();
+  function getJson(path){ return fetch(base + path + '?t=' + Date.now()).then(function(r){ return r.json(); }); }
+
+  Promise.all([
+    getJson('/data/predictions.json'),
+    getJson('/data/meta.json'),
+    getJson('/data/leagues.json'),
+    getJson('/data/events.json'),
+    getJson('/data/teams.json')
+  ]).then(function(results){
+    ALL_MATCHES = (results[0].results || results[0] || []).map(analyzeMatch);
+    LAST_UPDATE_TIME = results[1].updated_at || new Date().toISOString();
+    renderAll();
+    updateDataFreshness();
+    hideLoader();
+    toast('Date încărcate din GitHub (Backup)', 'warn');
   }).catch(function(err){
     hideLoader();
-    toast('Eroare la incarcarea datelor', 'err');
-    console.error(err);
+    toast('Eroare critică la încărcarea datelor', 'err');
   });
 }
 
@@ -984,9 +1000,12 @@ function updateDataFreshness(){
   if(!freshEl) return;
   var relTime = getRelativeTime(LAST_UPDATE_TIME);
   var dataAge = Math.floor((new Date().getTime() - new Date(LAST_UPDATE_TIME).getTime()) / 60000);
-  var statusColor = dataAge > 10 ? 'var(--yel)' : 'var(--grn)';
-  var statusText = dataAge > 10 ? '⚠️ Vechi' : '✓ Fresh';
-  var tooltip = dataAge > 10 ? 'GitHub Actions procesează datele noi' : 'Date actualizate';
+  
+  // Since we use direct API, it should always be fresh after a manual refresh
+  var statusColor = dataAge > 2 ? 'var(--yel)' : 'var(--grn)';
+  var statusText = dataAge > 2 ? '⚡ API' : '✨ REAL-TIME';
+  var tooltip = 'Date preluate direct din API Bzzoiro';
+  
   freshEl.innerHTML = '<span style="color:' + statusColor + ';font-weight:700;cursor:help;" title="' + tooltip + '">' + statusText + '</span> • ' + relTime;
 }
 
