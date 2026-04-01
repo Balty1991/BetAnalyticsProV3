@@ -294,7 +294,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="sb-dot live" id="sb-dot"></div>
       <span id="sb-text">Se incarca...</span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button><button class="btn" id="btn-token" onclick="setApiToken()" style="background:rgba(255,255,255,.06);color:var(--txt);border:1px solid var(--brd2)">🔑 API</button></div>
+    <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button>
   </div>
 </div>
 
@@ -532,7 +532,6 @@ var API_TOKEN = ''; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
-var AUTO_REFRESH_TIMER = null;
 
 // ============================================================
 // UTILS
@@ -807,97 +806,9 @@ function getBase(){
   return document.location.pathname.replace(/\/[^\/]*$/, '');
 }
 
-
-function updateTokenButton(){
-  var btn = $('btn-token');
-  if(!btn) return;
-  btn.textContent = API_TOKEN ? '✅ API' : '🔑 API';
-}
-
-function startAutoRefresh(){
-  stopAutoRefresh();
-  if(!API_TOKEN) return;
-  AUTO_REFRESH_TIMER = setInterval(function(){
-    doRefresh();
-  }, 180000); // 3 minute
-}
-
-function stopAutoRefresh(){
-  if(AUTO_REFRESH_TIMER){
-    clearInterval(AUTO_REFRESH_TIMER);
-    AUTO_REFRESH_TIMER = null;
-  }
-}
-
-function setApiToken(){
-  var current = localStorage.getItem('bsd_token') || '';
-  var val = prompt('Introdu cheia API BSD (fără cuvântul Token):', current);
-  if(val === null) return;
-  val = String(val).trim();
-  if(!val){
-    localStorage.removeItem('bsd_token');
-    API_TOKEN = '';
-    updateTokenButton();
-    stopAutoRefresh();
-    doRefresh();
-    toast('Cheia API a fost ștearsă. Aplicația revine pe snapshot.', 'warn');
-    return;
-  }
-  localStorage.setItem('bsd_token', val);
-  API_TOKEN = val;
-  updateTokenButton();
-  startAutoRefresh();
-  toast('Cheia API a fost salvată. Datele se actualizează automat.', 'ok');
-  doRefresh();
-}
-
-function fetchApiJson(url){
-  return fetch(url, {
-    headers: {
-      'Authorization': 'Token ' + API_TOKEN
-    }
-  }).then(function(r){
-    if(!r.ok) throw new Error('HTTP ' + r.status + ' @ ' + url);
-    return r.json();
-  });
-}
-
-function fetchApiAllPages(path){
-  var firstUrl = path.indexOf('http') === 0 ? path : ('https://sports.bzzoiro.com' + path);
-
-  return new Promise(function(resolve, reject){
-    var all = [];
-
-    function next(url){
-      fetchApiJson(url).then(function(data){
-        if(Array.isArray(data)){
-          all = all.concat(data);
-          resolve(all);
-          return;
-        }
-
-        var results = data.results || [];
-        all = all.concat(results);
-
-        if(data.next){
-          next(data.next.replace('http://','https://'));
-        } else {
-          resolve(all);
-        }
-      }).catch(reject);
-    }
-
-    next(firstUrl);
-  });
-}
-
 function doRefresh(){
-  showLoader(API_TOKEN ? 'Încărcare date în timp real din BSD API...' : 'Încărcare date din snapshot GitHub...');
+  showLoader('Incarcare date din API Bzzoiro...');
   var base = getBase();
-
-  var storedToken = localStorage.getItem('bsd_token');
-  if(storedToken) API_TOKEN = storedToken.trim();
-  updateTokenButton();
 
   function getJson(path, fallback){
     return fetch(base + path + '?t=' + Date.now())
@@ -908,60 +819,20 @@ function doRefresh(){
       .catch(function(){ return fallback; });
   }
 
-  function loadStatic(){
-    return Promise.all([
-      getJson('/data/predictions.json', []),
-      getJson('/data/meta.json', {}),
-      getJson('/data/leagues.json', []),
-      getJson('/data/events.json', []),
-      getJson('/data/teams.json', []),
-      getJson('/data/players_focus.json', [])
-    ]).then(function(results){
-      return {
-        predData: results[0],
-        meta: results[1],
-        leaguesData: results[2],
-        eventsData: results[3],
-        teamsData: results[4],
-        playersData: results[5],
-        source: 'snapshot'
-      };
-    });
-  }
-
-  function loadRealtime(){
-    return Promise.all([
-      fetchApiAllPages('/api/predictions/?tz=Europe/Bucharest&upcoming=true'),
-      getJson('/data/leagues.json', []),
-      getJson('/data/events.json', []),
-      getJson('/data/teams.json', []),
-      getJson('/data/players_focus.json', [])
-    ]).then(function(results){
-      return {
-        predData: results[0],
-        meta: { updated_at: new Date().toISOString(), source: 'realtime_api' },
-        leaguesData: results[1],
-        eventsData: results[2],
-        teamsData: results[3],
-        playersData: results[4],
-        source: 'realtime'
-      };
-    });
-  }
-
-  var loaderPromise = API_TOKEN ? loadRealtime().catch(function(err){
-    console.warn('Realtime API failed, fallback to snapshot:', err);
-    toast('API live indisponibilă, revin pe snapshot.', 'warn');
-    return loadStatic();
-  }) : loadStatic();
-
-  loaderPromise.then(function(payload){
-    var predData = payload.predData;
-    var meta = payload.meta || {};
-    var leaguesData = payload.leaguesData;
-    var eventsData = payload.eventsData;
-    var teamsData = payload.teamsData;
-    var playersData = payload.playersData;
+  Promise.all([
+    getJson('/data/predictions.json', []),
+    getJson('/data/meta.json', {}),
+    getJson('/data/leagues.json', []),
+    getJson('/data/events.json', []),
+    getJson('/data/teams.json', []),
+    getJson('/data/players_focus.json', [])
+  ]).then(function(results){
+    var predData = results[0];
+    var meta = results[1];
+    var leaguesData = results[2];
+    var eventsData = results[3];
+    var teamsData = results[4];
+    var playersData = results[5];
 
     var preds = predData.results || predData || [];
     ALL_MATCHES = preds.map(analyzeMatch);
@@ -971,18 +842,21 @@ function doRefresh(){
     ALL_PLAYERS = playersData.results || playersData || [];
     BILETE = null;
 
+    var storedToken = localStorage.getItem('bsd_token');
+    if(storedToken) API_TOKEN = storedToken;
+    else if(meta && meta.api_token) API_TOKEN = meta.api_token;
+
     renderAll();
     hideLoader();
 
     var updatedAt = meta.updated_at ? new Date(meta.updated_at).toLocaleTimeString('ro-RO') : '';
-    var msg = payload.source === 'realtime'
-      ? 'Date în timp real: ' + ALL_MATCHES.length + ' meciuri' + (updatedAt ? ' @ ' + updatedAt : '')
-      : 'Date actualizate: ' + ALL_MATCHES.length + ' meciuri' + (updatedAt ? ' @ ' + updatedAt : '');
-
-    toast(msg, 'ok');
+    toast(
+      'Date actualizate: ' + ALL_MATCHES.length + ' meciuri' + (updatedAt ? ' @ ' + updatedAt : ''),
+      'ok'
+    );
   }).catch(function(err){
     hideLoader();
-    toast('Eroare la încărcarea datelor', 'err');
+    toast('Eroare la incarcarea datelor', 'err');
     console.error(err);
   });
 }
@@ -2245,8 +2119,6 @@ window.addEventListener('DOMContentLoaded', function(){
   // Try to restore token from localStorage
   var st=localStorage.getItem('bsd_token');
   if(st) API_TOKEN=st;
-  updateTokenButton();
-  startAutoRefresh();
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
 });
