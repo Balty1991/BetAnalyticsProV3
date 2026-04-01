@@ -4,12 +4,13 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 permissions:
   contents: write
+
+concurrency:
+  group: fetch-betanalytics-data
+  cancel-in-progress: true
 
 jobs:
   fetch-data:
@@ -40,12 +41,11 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add data/
-          # Only commit if there are changes
+
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Auto-update data $(date -u '+%Y-%m-%d %H:%M UTC')"
-            # Pull before push to avoid conflicts
-            git pull --rebase origin main
-            git push
+            git pull --rebase origin main || true
+            git push origin HEAD:main
           fi
