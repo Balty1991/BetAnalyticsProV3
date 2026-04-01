@@ -2,15 +2,21 @@ name: Fetch BetAnalytics Data
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '3-58/5 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: betanalytics-data-main
+  cancel-in-progress: true
+
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Fetch predictions and live data
+      - name: Fetch predictions and events
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python fetch_data.py
