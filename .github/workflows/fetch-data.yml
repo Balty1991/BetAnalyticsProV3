@@ -2,15 +2,11 @@ name: Fetch BetAnalytics Data
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
-
-concurrency:
-  group: betanalytics-data-main
-  cancel-in-progress: false
 
 jobs:
   fetch-data:
@@ -20,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,10 +32,17 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python fetch_data.py
 
-      - name: Commit and push data
+      - name: Commit changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add data/
           git diff --staged --quiet || git commit -m "Auto-update data $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git push
+
+      - name: Pull latest changes
+        run: |
+          git pull --rebase origin main || true
+
+      - name: Push changes
+        run: |
+          git push || true
