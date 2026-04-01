@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -11,7 +14,7 @@ permissions:
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -37,12 +40,12 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add data/
-          git diff --staged --quiet || git commit -m "Auto-update data $(date -u '+%Y-%m-%d %H:%M UTC')"
-
-      - name: Pull latest changes
-        run: |
-          git pull --rebase origin main || true
-
-      - name: Push changes
-        run: |
-          git push || true
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-update data $(date -u '+%Y-%m-%d %H:%M UTC')"
+            # Pull before push to avoid conflicts
+            git pull --rebase origin main
+            git push
+          fi
