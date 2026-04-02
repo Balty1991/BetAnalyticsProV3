@@ -2,7 +2,7 @@ name: Fetch BetAnalytics Data
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # La fiecare 5 minute
+    - cron: '*/5 * * * *'
   workflow_dispatch:
   push:
     paths-ignore:
@@ -40,30 +40,23 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python fetch_data.py
 
-      - name: Update keep-alive timestamp
-        run: |
-          echo "$(date -u '+%Y-%m-%d %H:%M UTC')" > .last-run
-          git add .last-run
-
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data/
-
+          echo "$(date -u '+%Y-%m-%d %H:%M UTC')" > .last-run
+          git add data/ .last-run
+          
           if git diff --staged --quiet; then
-            echo "No changes to commit"
-            # Facem un commit gol pentru a menține workflow-ul activ
-            git commit --allow-empty -m "Keep-alive check $(date -u '+%Y-%m-%d %H:%M UTC')"
-            git pull --rebase origin main || true
-            git push origin HEAD:main
+            echo "No changes - keep-alive commit"
+            git commit --allow-empty -m "Keep-alive $(date -u '+%Y-%m-%d %H:%M UTC')"
           else
-            git commit -m "Auto-update data $(date -u '+%Y-%m-%d %H:%M UTC')"
-            git pull --rebase origin main || true
-            git push origin HEAD:main
+            git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC')"
           fi
+          
+          git pull --rebase origin main || true
+          git push origin HEAD:main
 
       - name: Notify on failure
         if: failure()
-        run: |
-          echo "::error::Workflow failed! Check logs for details."
+        run: echo "::error::Workflow failed!"
