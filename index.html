@@ -481,6 +481,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
         <button class="btn btn-green" style="font-size:14px;padding:12px 24px" onclick="generateTicket()">🛡️ Bilet Simplu EV</button>
         <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--acc),var(--cyan))" onclick="generateOver15Ticket()">🔥 Bilet 1.5G EV+</button>
+        <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--cyan),var(--grn))" onclick="generateProfitFocusTicket()">📈 Profit Focus (Single)</button>
         <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateMixTicket()">🎯 Mix 70% / ~5.0</button>
         <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--yel),var(--grn))" onclick="generateBestEventTicket()">⭐ Evenimentul zilei</button>
         <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--red),var(--org))" onclick="generateBigWinTicket()">🚀 Bilet Big Win</button>
@@ -1752,7 +1753,12 @@ function finalizeTicket(type, label, picks, totalOdds){
 
   var avgEdge = picks.reduce(function(acc, p){ return acc + (p.bestBet.value || 0); }, 0) / picks.length;
   var combinedProb = computeConservativeCombinedProb(picks);
-  var riskLabel = type === 'simple' ? 'Scăzut' : type === 'over15' ? 'Mediu' : type === 'mix_combo' ? 'Mediu+' : 'Ridicat';
+  var riskLabel =
+    type === 'profit_single' ? 'Scăzut+' :
+    type === 'simple' ? 'Scăzut' :
+    type === 'over15' ? 'Mediu' :
+    type === 'mix_combo' ? 'Mediu+' :
+    'Ridicat';
 
   BILETE = {
     picks: picks,
@@ -1917,39 +1923,186 @@ function generateMixTicket(){
 
 function generateBestEventTicket(){
   var now = new Date();
-  var todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var types = ['homeWin','awayWin','over15','over25','btts'];
-  var candidates = [];
-  ALL_MATCHES.forEach(function(m){
-    if(!passesSelectionFilter(m)) return;
-    if(m.dateKey !== todayKey) return;
-    types.forEach(function(t){
-      var c = buildMarketCandidate(m, t);
-      if(!c || !c.bestBet) return;
-      if(c.bestBet.odds < 1.20) return;
-      if(c.bestBet.adjProb < 90) return;
-      candidates.push(c);
-    });
-  });
-  candidates.sort(function(a,b){ return b.ticketScore - a.ticketScore; });
-  if(candidates.length){ finalizeTicket('best_single', '⭐ Evenimentul zilei', [candidates[0]], candidates[0].bestBet.odds); return; }
 
-  // fallback sincer, dacă nu există >90%
-  ALL_MATCHES.forEach(function(m){
-    if(!passesSelectionFilter(m)) return;
-    if(m.dateKey !== todayKey) return;
-    types.forEach(function(t){
-      var c = buildMarketCandidate(m, t);
-      if(!c || !c.bestBet) return;
-      if(c.bestBet.odds < 1.20) return;
-      if(c.bestBet.adjProb < 88) return;
-      candidates.push(c);
+  function makeDateKey(d){
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  var todayKey = makeDateKey(now);
+  var tomorrowKey = makeDateKey(new Date(now.getTime() + 86400000));
+  var types = ['homeWin', 'awayWin', 'over15', 'over25', 'btts'];
+
+  function collectBest(dateKeys, minAdjProb, minOdds){
+    var out = [];
+
+    ALL_MATCHES.forEach(function(m){
+      if(!passesSelectionFilter(m)) return;
+      if(dateKeys.indexOf(m.dateKey) === -1) return;
+
+      types.forEach(function(t){
+        var c = buildMarketCandidate(m, t);
+        if(!c || !c.bestBet) return;
+        if(c.bestBet.odds < minOdds) return;
+        if(c.bestBet.adjProb < minAdjProb) return;
+
+        out.push(c);
+      });
     });
-  });
-  candidates.sort(function(a,b){ return b.ticketScore - a.ticketScore; });
-  if(candidates.length){ finalizeTicket('best_single', '⭐ Evenimentul zilei', [candidates[0]], candidates[0].bestBet.odds); return; }
+
+    out.sort(function(a, b){
+      if(b.ticketScore !== a.ticketScore) return b.ticketScore - a.ticketScore;
+      if((b.bestBet.adjProb || 0) !== (a.bestBet.adjProb || 0)) {
+        return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0);
+      }
+      return (b.bestBet.value || 0) - (a.bestBet.value || 0);
+    });
+
+    return out;
+  }
+
+  var candidates = collectBest([todayKey], 82, 1.20);
+  if(!candidates.length) candidates = collectBest([todayKey], 78, 1.18);
+  if(!candidates.length) candidates = collectBest([todayKey], 75, 1.15);
+  if(!candidates.length) candidates = collectBest([todayKey, tomorrowKey], 75, 1.15);
+
+  if(candidates.length){
+    finalizeTicket('best_single', '⭐ Evenimentul zilei', [candidates[0]], candidates[0].bestBet.odds);
+    return;
+  }
 
   finalizeTicket('best_single', '⭐ Evenimentul zilei', [], 1);
+}
+
+function generateProfitFocusTicket(){
+  var now = new Date();
+
+  function makeDateKey(d){
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  function likelyScoreSupports(m, type){
+    var ls = parseLikelyScore(m.mostLikelyScore);
+    if(!ls) return true;
+    if(type === 'over15') return ls.total >= 2;
+    if(type === 'over25') return ls.total >= 3;
+    if(type === 'btts') return ls.btts;
+    if(type === 'homeWin') return ls.home > ls.away;
+    if(type === 'awayWin') return ls.away > ls.home;
+    return true;
+  }
+
+  function profitFilter(c){
+    if(!c || !c.bestBet) return false;
+
+    var t = c.bestBet.type;
+    var odds = Number(c.bestBet.odds || 0);
+    var value = Number(c.bestBet.value || 0);
+    var adjProb = Number(c.bestBet.adjProb || 0);
+    var conf = Number(c.confidence || 0);
+    var xgHome = Number(c.xgHome || 0);
+    var xgAway = Number(c.xgAway || 0);
+    var xgTotal = Number(c.xgTotal || 0);
+
+    if(odds < 1.22 || odds > 1.75) return false;
+    if(value < 0.01) return false;
+    if(adjProb < 72) return false;
+    if(conf < 48) return false;
+    if(!likelyScoreSupports(c, t)) return false;
+
+    if(t === 'over15'){
+      return c.probOver15 >= 75 && xgTotal >= 2.10;
+    }
+
+    if(t === 'over25'){
+      return c.probOver25 >= 60 && xgTotal >= 2.60;
+    }
+
+    if(t === 'btts'){
+      return c.probBtts >= 58 && xgHome >= 0.90 && xgAway >= 0.90;
+    }
+
+    if(t === 'homeWin'){
+      return c.predictedResult === 'H' &&
+             c.favorite === 'H' &&
+             (xgHome - xgAway) >= 0.30 &&
+             c.probDraw < 27;
+    }
+
+    if(t === 'awayWin'){
+      return c.predictedResult === 'A' &&
+             c.favorite === 'A' &&
+             (xgAway - xgHome) >= 0.30 &&
+             c.probDraw < 27;
+    }
+
+    return false;
+  }
+
+  function rankProfitCandidate(c){
+    var score = 0;
+    score += (c.bestBet.adjProb * 0.46);
+    score += (Math.max(0, c.bestBet.value) * 100 * 0.38);
+    score += (c.confidence * 0.16);
+
+    if(c.bestBet.type === 'over15') score += 10;
+    else if(c.bestBet.type === 'over25') score += 7;
+    else if(c.bestBet.type === 'btts') score += 5;
+    else score += 4;
+
+    if(c.bestBet.odds >= 1.30 && c.bestBet.odds <= 1.60) score += 3;
+
+    return score;
+  }
+
+  function collect(dateKeys, minAdjProb, minValue, minConf, minOdds, maxOdds){
+    var types = ['homeWin', 'awayWin', 'over15', 'over25', 'btts'];
+    var out = [];
+
+    ALL_MATCHES.forEach(function(m){
+      if(!passesSelectionFilter(m)) return;
+      if(dateKeys.indexOf(m.dateKey) === -1) return;
+
+      types.forEach(function(t){
+        var c = buildMarketCandidate(m, t);
+        if(!c || !c.bestBet) return;
+
+        if(c.bestBet.adjProb < minAdjProb) return;
+        if(c.bestBet.value < minValue) return;
+        if(c.confidence < minConf) return;
+        if(c.bestBet.odds < minOdds || c.bestBet.odds > maxOdds) return;
+        if(!profitFilter(c)) return;
+
+        c.ticketScore = Math.round(rankProfitCandidate(c));
+        out.push(c);
+      });
+    });
+
+    out.sort(function(a, b){
+      if(b.ticketScore !== a.ticketScore) return b.ticketScore - a.ticketScore;
+      if((b.bestBet.adjProb || 0) !== (a.bestBet.adjProb || 0)) return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0);
+      return (b.bestBet.value || 0) - (a.bestBet.value || 0);
+    });
+
+    return out;
+  }
+
+  var todayKey = makeDateKey(now);
+  var tomorrowKey = makeDateKey(new Date(now.getTime() + 86400000));
+
+  var candidates = collect([todayKey], 72, 0.01, 48, 1.22, 1.75);
+  if(!candidates.length) candidates = collect([todayKey], 70, 0.005, 45, 1.18, 1.85);
+  if(!candidates.length) candidates = collect([todayKey, tomorrowKey], 70, 0.005, 45, 1.18, 1.85);
+
+  if(candidates.length){
+    finalizeTicket('profit_single', '📈 Profit Focus (Single)', [candidates[0]], candidates[0].bestBet.odds);
+    return;
+  }
+
+  finalizeTicket('profit_single', '📈 Profit Focus (Single)', [], 1);
 }
 
 function generateBigWinTicket(){
