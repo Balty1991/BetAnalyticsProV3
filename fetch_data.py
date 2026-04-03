@@ -23,6 +23,7 @@ TZ = "Europe/Bucharest"
 DATA_DIR = "data"
 
 STATIC_REFRESH_HOURS = {0, 6, 12, 18}  # UTC
+LOOKAHEAD_DAYS = 30
 
 
 def ensure_token():
@@ -129,16 +130,17 @@ def main():
     started_at = datetime.now(timezone.utc)
     print(f"=== BetAnalytics V13 Light Fetch [{started_at.strftime('%Y-%m-%d %H:%M UTC')}] ===")
 
+    today = started_at.strftime("%Y-%m-%d")
+    future = (started_at + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
+
     # FAST DATA - every run
-    print("\n[1/4] Fetching predictions...")
-    predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&upcoming=true")
+    print(f"\n[1/4] Fetching predictions (next {LOOKAHEAD_DAYS} days)...")
+    predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={today}&date_to={future}")
     print(f"Total predictions: {len(predictions)}")
     if not predictions:
         raise RuntimeError("Predictions a venit gol. Oprim workflow-ul.")
 
-    print("\n[2/4] Fetching upcoming events (next 7 days)...")
-    today = started_at.strftime("%Y-%m-%d")
-    future = (started_at + timedelta(days=7)).strftime("%Y-%m-%d")
+    print(f"\n[2/4] Fetching upcoming events (next {LOOKAHEAD_DAYS} days)...")
     events = fetch_all_pages(f"/api/events/?tz={TZ}&date_from={today}&date_to={future}&status=notstarted")
     print(f"Total events: {len(events)}")
 
@@ -184,6 +186,7 @@ def main():
         "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
+        "lookahead_days": LOOKAHEAD_DAYS,
     }
     save_json(meta, "meta.json")
 
