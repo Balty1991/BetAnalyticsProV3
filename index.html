@@ -485,7 +485,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="generateBestEventTicket()">⭐ Recomandarea AI</button>
-          <button class="btn btn-green" onclick="generateProfitFocusTicket()">📈 Single disciplinat</button>
+          <button class="btn btn-green" onclick="toggleCustomBuilder(true)">🎛️ Constructor personalizat</button>
         </div>
       </div>
 
@@ -1955,17 +1955,17 @@ function toggleCustomBuilder(forceOpen){
 function applyCustomPreset(type){
   $('cust-format').value = type === 'safe' ? 'single' : 'combo';
   $('cust-stake').value = type === 'attack' ? 20 : type === 'balanced' ? 40 : 60;
-  $('cust-target-odds').value = type === 'safe' ? '1.45' : type === 'balanced' ? '2.40' : '4.50';
-  $('cust-picks').value = type === 'safe' ? 1 : type === 'balanced' ? 3 : 5;
+  $('cust-target-odds').value = type === 'safe' ? '1.45' : type === 'balanced' ? '2.40' : '5.50';
+  $('cust-picks').value = type === 'safe' ? 1 : type === 'balanced' ? 3 : 4;
   $('cust-risk').value = type === 'safe' ? 'low' : type === 'balanced' ? 'medium' : 'high';
   $('cust-mode').value = type === 'safe' ? 'strict' : type === 'balanced' ? 'flex' : 'optimize';
 
   $('cb-over15').checked = true;
   $('cb-over25').checked = type !== 'safe';
-  $('cb-btts').checked = type === 'balanced';
+  $('cb-btts').checked = type !== 'safe';
   $('cb-home').checked = type !== 'attack';
   $('cb-away').checked = type !== 'attack';
-  $('cb-ai-only').checked = true;
+  $('cb-ai-only').checked = (type !== 'attack');
   $('cb-fav-only').checked = type === 'safe';
   $('cb-goals-only').checked = type === 'attack';
 }
@@ -2061,6 +2061,43 @@ function setCustomTicketMeta(stake, risk){
   BILETE.riskLabel = risk === 'low' ? 'Scăzut' : risk === 'medium' ? 'Mediu' : 'Ridicat';
 }
 
+
+function setTicketError(msg){
+  BILETE = {
+    picks: [],
+    totalOdds: 1,
+    generatedAt: new Date().toISOString(),
+    error: msg
+  };
+  renderBilete();
+  toast(msg, 'warn');
+}
+
+function getCustomMaxReasonableOdds(opts){
+  var profile = getCustomProfile();
+  var legs = opts.format === 'single' ? 1 : Math.max(1, opts.picks);
+  return Math.pow(profile.maxOdd, legs);
+}
+
+function validateCustomRequest(opts){
+  var problems = [];
+  var maxReasonable = getCustomMaxReasonableOdds(opts);
+
+  if(opts.format === 'single' && opts.targetOdds > getCustomProfile().maxOdd + 0.6){
+    problems.push('Pentru Single, cota dorită este prea mare pentru filtrele actuale.');
+  }
+
+  if(opts.format === 'combo' && opts.targetOdds > (maxReasonable * 1.10)){
+    problems.push('Cota dorită este prea mare pentru numărul de evenimente și nivelul de risc ales.');
+  }
+
+  if(opts.allowedTypes.length === 0){
+    problems.push('Selectează cel puțin un tip de piață.');
+  }
+
+  return problems;
+}
+
 function generateControlledComboTicket(){
   var baseProfile = {
     allowedTypes: ['homeWin', 'awayWin', 'over15', 'over25', 'btts'],
@@ -2105,13 +2142,21 @@ function generateCustomTicket(){
 
   if(opts.format === 'single') opts.picks = 1;
 
+  var problems = validateCustomRequest(opts);
+  if(problems.length){
+    setTicketError(problems[0]);
+    return;
+  }
+
   var maxRelax = opts.mode === 'strict' ? 0 : opts.mode === 'flex' ? 2 : 3;
+  var currentPicks = opts.picks;
+  var currentTargetOdds = opts.targetOdds;
 
   for(var relax = 0; relax <= maxRelax; relax++){
     var pack = collectCustomCandidates(opts, relax);
 
     if(opts.format === 'single'){
-      var single = chooseCustomSingle(pack.list, opts.targetOdds);
+      var single = chooseCustomSingle(pack.list, currentTargetOdds);
       if(single){
         finalizeTicket('custom_single', '🎛️ Bilet personalizat', [single], single.bestBet.odds);
         setCustomTicketMeta(opts.stake, opts.risk);
@@ -2123,34 +2168,34 @@ function generateCustomTicket(){
     }
 
     var profile = {
-      minPicks: opts.picks,
-      maxPicks: opts.mode === 'optimize' ? Math.max(2, opts.picks) : opts.picks,
-      targetMinOdds: Math.max(1.10, opts.targetOdds * 0.82),
-      targetMaxOdds: opts.targetOdds * 1.18,
-      hardMaxOdds: opts.targetOdds * 1.45,
+      minPicks: currentPicks,
+      maxPicks: opts.mode === 'optimize' ? Math.max(2, currentPicks) : currentPicks,
+      targetMinOdds: Math.max(1.10, currentTargetOdds * 0.80),
+      targetMaxOdds: currentTargetOdds * 1.18,
+      hardMaxOdds: currentTargetOdds * 1.50,
       maxSameLeague: pack.profile.maxSameLeague,
       maxSameMarket: pack.profile.maxSameMarket
     };
 
+    var minNeeded = Math.min(profile.minPicks, opts.mode === 'optimize' ? 2 : profile.minPicks);
     var chosen = selectDiversifiedPicks(pack.list, profile);
-    if(chosen.picks.length >= Math.min(profile.minPicks, opts.mode === 'optimize' ? 2 : profile.minPicks) && chosen.totalOdds >= profile.targetMinOdds){
+
+    if(chosen.picks.length >= minNeeded && chosen.totalOdds >= profile.targetMinOdds){
       finalizeTicket('custom_combo', '🎛️ Bilet personalizat', chosen.picks, chosen.totalOdds);
       setCustomTicketMeta(opts.stake, opts.risk);
       renderBilete();
       toast('Bilet personalizat generat!', 'ok');
       return;
     }
+
+    if(opts.mode === 'optimize'){
+      if(currentPicks > 2) currentPicks -= 1;
+      if(currentTargetOdds > 2.0) currentTargetOdds = Math.max(2.0, currentTargetOdds * 0.72);
+    }
   }
 
-  if(opts.mode === 'optimize' && opts.format === 'combo' && opts.picks > 2){
-    $('cust-picks').value = Math.max(2, opts.picks - 1);
-    generateCustomTicket();
-    return;
-  }
-
-  finalizeTicket('custom_combo', '🎛️ Bilet personalizat', [], 1);
+  setTicketError('Criteriile sunt prea stricte acum. Scade cota dorită sau relaxează filtrele.');
 }
-
 function generateOver15Ticket(){
   var baseProfile = {
     allowedTypes: ['over15'],
