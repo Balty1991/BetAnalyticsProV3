@@ -1418,27 +1418,44 @@ function renderBacktest(){
   var updated = $('backtest-updated');
   if(!box) return;
   var bt = BACKTEST_SUMMARY || {};
+  var MIN_MARKET_BETS = 10;
+  var MIN_LEAGUE_BETS = 10;
   if(updated) updated.textContent = bt.updated_at ? ('Backtest: ' + fmtDateTime(bt.updated_at)) : 'Backtest: —';
   if(!bt.engine_bets){
     box.innerHTML = '<div class="empty-state" style="padding:18px 10px">Nu există suficiente date istorice procesate încă.</div>';
     return;
   }
-  var bestMarket = (bt.by_market && bt.by_market[0]) || null;
-  var bestLeague = (bt.by_league && bt.by_league[0]) || null;
+
+  var qualifiedMarkets = (bt.by_market || []).filter(function(x){ return (x.bets || 0) >= MIN_MARKET_BETS; });
+  var qualifiedLeagues = (bt.by_league || []).filter(function(x){ return (x.bets || 0) >= MIN_LEAGUE_BETS; });
+  var bestMarket = qualifiedMarkets.length ? qualifiedMarkets[0] : null;
+  var bestLeague = qualifiedLeagues.length ? qualifiedLeagues[0] : null;
+  var sampleHealthy = (bt.engine_bets || 0) >= 120;
+  var roiVal = Number(bt.engine_roi || 0);
+  var roiTone = roiVal >= 0 ? 'var(--grn)' : 'var(--red)';
+  var sampleTone = sampleHealthy ? 'var(--grn)' : 'var(--yel)';
+
   var items = [
-    {label:'Bets motor', value: bt.engine_bets, sub:(bt.finished_predictions||0)+' finished preds'},
-    {label:'Win Rate', value: fmtPct(bt.engine_winrate||0), sub:'flat stake'},
-    {label:'ROI', value: ((bt.engine_roi||0)>=0?'+':'') + fmtPct(bt.engine_roi||0), sub:'audit recent'},
-    {label:'Top piață', value: bestMarket ? bestMarket.key : '—', sub: bestMarket ? ('ROI ' + ((bestMarket.roi>=0?'+':'') + fmtPct(bestMarket.roi)) + ' / ' + bestMarket.bets + ' bets') : '—'},
-    {label:'Top ligă', value: bestLeague ? bestLeague.key : '—', sub: bestLeague ? ('ROI ' + ((bestLeague.roi>=0?'+':'') + fmtPct(bestLeague.roi)) + ' / ' + bestLeague.bets + ' bets') : '—'}
+    {label:'Bets motor', value: bt.engine_bets, color:'var(--txt)', sub:(bt.finished_predictions||0)+' finished preds'},
+    {label:'Win Rate', value: fmtPct(bt.engine_winrate||0), color:'var(--txt)', sub:'flat stake'},
+    {label:'ROI', value: ((roiVal>=0?'+':'') + fmtPct(roiVal)), color:roiTone, sub:'audit recent'},
+    {label:'Sample audit', value: sampleHealthy ? 'OK' : 'Mic', color:sampleTone, sub:'prag sănătos ≈ 120 bets'},
+    {label:'Top piață validată', value: bestMarket ? bestMarket.key : '—', color:'var(--txt)', sub: bestMarket ? ('ROI ' + ((bestMarket.roi>=0?'+':'') + fmtPct(bestMarket.roi)) + ' / ' + bestMarket.bets + ' bets') : ('minim ' + MIN_MARKET_BETS + ' bets')},
+    {label:'Top ligă validată', value: bestLeague ? bestLeague.key : '—', color:'var(--txt)', sub: bestLeague ? ('ROI ' + ((bestLeague.roi>=0?'+':'') + fmtPct(bestLeague.roi)) + ' / ' + bestLeague.bets + ' bets') : ('minim ' + MIN_LEAGUE_BETS + ' bets')}
   ];
+
+  var note = '<div style="grid-column:1/-1;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted)">'+
+    '<strong style="color:var(--txt)">Interpretare corectă:</strong> top piață / top ligă apar doar dacă au suficient sample. '+
+    'ROI-ul este calculat la miză fixă și nu garantează profit viitor.'+
+  '</div>';
+
   box.innerHTML = items.map(function(it){
     return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--brd2);border-radius:12px;padding:14px">'+
       '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase">'+it.label+'</div>'+
-      '<div style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--txt)">'+it.value+'</div>'+
+      '<div style="font-size:20px;font-weight:800;font-family:var(--mono);color:'+(it.color || 'var(--txt)')+'">'+it.value+'</div>'+
       '<div style="font-size:10px;color:var(--muted);margin-top:4px">'+it.sub+'</div>'+
     '</div>';
-  }).join('');
+  }).join('') + note;
 }
 
 function buildMlRecommendTags(m){
