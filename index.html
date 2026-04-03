@@ -1018,6 +1018,10 @@ function passesSelectionFilter(m){
   return matchTime > (now - 900000);
 }
 
+function getBetByType(m, type){
+  return (m && m.allBets || []).find(function(x){ return x.type === type; }) || null;
+}
+
 function getAnalysisStateMeta(state){
   if(state === 'ELIGIBLE') return {label:'✅ ELIGIBLE', color:'var(--grn)', bg:'rgba(34,197,94,.12)', border:'rgba(34,197,94,.25)'};
   if(state === 'CONTRADICTED') return {label:'⚠️ CONTRADICTED', color:'var(--yel)', bg:'rgba(245,158,11,.12)', border:'rgba(245,158,11,.25)'};
@@ -1809,6 +1813,325 @@ function renderMatches(){
   });
 
   container.innerHTML = html;
+}
+
+function parseLikelyScore(score){
+  if(!score || typeof score !== 'string' || score.indexOf('-') === -1) return null;
+  var p = score.split('-').map(function(x){ return parseInt(x, 10); });
+  if(p.length !== 2 || isNaN(p[0]) || isNaN(p[1])) return null;
+  return {
+    home: p[0],
+    away: p[1],
+    total: p[0] + p[1],
+    btts: p[0] > 0 && p[1] > 0
+  };
+}
+
+function clamp(v, min, max){
+  return Math.max(min, Math.min(max, v));
+}
+
+function uniqueReasons(arr){
+  var out = [];
+  (arr || []).forEach(function(x){
+    if(x && out.indexOf(x) === -1) out.push(x);
+  });
+  return out;
+}
+
+function computeConservativeCombinedProb(picks){
+  if(!picks || !picks.length) return 0;
+
+  var base = 1;
+  var leagues = {};
+  var markets = {};
+
+  picks.forEach(function(p){
+    var prob = ((p.bestBet && p.bestBet.adjProb) ? p.bestBet.adjProb : 0) / 100;
+    base *= prob;
+    leagues[p.league] = (leagues[p.league] || 0) + 1;
+    markets[p.bestBet.type] = (markets[p.bestBet.type] || 0) + 1;
+  });
+
+  var penalty = 1;
+  penalty *= Math.pow(0.97, Math.max(0, picks.length - 1));
+
+  Object.keys(leagues).forEach(function(lg){
+    if(leagues[lg] > 1) penalty *= Math.pow(0.93, leagues[lg] - 1);
+  });
+
+  Object.keys(markets).forEach(function(mt){
+    if(markets[mt] > 2) penalty *= Math.pow(0.95, markets[mt] - 2);
+  });
+
+  return +(base * penalty * 100).toFixed(1);
+}
+
+function marketFitAnalysis(m, type){
+  var score = 0;
+  var reasons = [];
+  var ls = parseLikelyScore(m.mostLikelyScore);
+  var xgHome = Number(m.xgHome || 0);
+  var xgAway = Number(m.xgAway || 0);
+  var xgTotal = Number(m.xgTotal || 0);
+  var xgGap = Math.abs(xgHome - xgAway);
+
+  if(type === 'over15'){
+    if(m.probOver15 >= 80){ score += 14; reasons.push('Peste 1.5 foarte puternic'); }
+    if(xgTotal >= 2.25){ score += 10; reasons.push('xG total bun'); }
+    if(ls && ls.total >= 2){ score += 10; reasons.push('scor probabil ≥ 2 goluri'); }
+    if(ls && ls.total < 2){ score -= 12; }
+    if(m.mlFlags && m.mlFlags.o15){ score += 10; reasons.push('ML recomandă O1.5'); }
+  }
+
+  if(type === 'over25'){
+    if(m.probOver25 >= 66){ score += 14; reasons.push('Peste 2.5 puternic'); }
+    if(xgTotal >= 2.75){ score += 12; reasons.push('xG total ridicat'); }
+    if(ls && ls.total >= 3){ score += 12; reasons.push('scor probabil ≥ 3 goluri'); }
+    if(ls && ls.total < 3){ score -= 14; }
+    if(m.mlFlags && m.mlFlags.o25){ score += 10; reasons.push('ML recomandă O2.5'); }
+  }
+
+  if(type === 'under25'){
+    if(m.probUnder25 >= 56){ score += 13; reasons.push('Under 2.5 are suport'); }
+    if(xgTotal <= 2.55){ score += 12; reasons.push('xG total temperat'); }
+    if(ls && ls.total <= 2){ score += 12; reasons.push('scor probabil ≤ 2 goluri'); }
+    if(ls && ls.total > 2){ score -= 14; }
+  }
+
+  if(type === 'under35'){
+    if(m.probUnder35 >= 68){ score += 13; reasons.push('Under 3.5 solid'); }
+    if(xgTotal <= 3.05){ score += 10; reasons.push('xG total controlat'); }
+    if(ls && ls.total <= 3){ score += 12; reasons.push('scor probabil ≤ 3 goluri'); }
+    if(ls && ls.total > 3){ score -= 16; }
+  }
+
+  if(type === 'over35'){
+    if(m.probOver35 >= 38){ score += 14; reasons.push('Peste 3.5 are semnal'); }
+    if(xgTotal >= 3.15){ score += 14; reasons.push('xG total foarte ridicat'); }
+    if(ls && ls.total >= 4){ score += 14; reasons.push('scor probabil ≥ 4 goluri'); }
+    if(ls && ls.total < 4){ score -= 16; }
+    if(m.mlFlags && m.mlFlags.o35){ score += 12; reasons.push('ML recomandă O3.5'); }
+  }
+
+  if(type === 'btts'){
+    if(m.probBtts >= 60){ score += 14; reasons.push('BTTS solid'); }
+    if(xgHome >= 0.95 && xgAway >= 0.95){ score += 14; reasons.push('ambele echipe au xG bun'); }
+    if(ls && ls.btts){ score += 12; reasons.push('scorul probabil susține BTTS'); }
+    if(ls && !ls.btts){ score -= 16; }
+    if(m.mlFlags && m.mlFlags.btts){ score += 10; reasons.push('ML recomandă BTTS'); }
+  }
+
+  if(type === 'bttsNo'){
+    if(m.probBttsNo >= 58){ score += 13; reasons.push('NG are suport'); }
+    if(xgHome <= 1.15 || xgAway <= 1.15){ score += 12; reasons.push('cel puțin o echipă are xG mic'); }
+    if(ls && !ls.btts){ score += 12; reasons.push('scorul probabil nu susține BTTS'); }
+    if(ls && ls.btts){ score -= 16; }
+  }
+
+  if(type === 'homeWin'){
+    if(m.predictedResult === 'H'){ score += 12; reasons.push('modelul dă gazdele'); }
+    if(m.favorite === 'H'){ score += 10; reasons.push('gazdele sunt favorite'); }
+    if(m.mlFlags && (m.mlFlags.winner || m.mlFlags.fav)){ score += 8; }
+    if(xgHome - xgAway >= 0.35){ score += 10; reasons.push('avantaj xG gazde'); }
+    if(xgGap < 0.20){ score -= 10; }
+    if(m.probDraw >= 27){ score -= 12; reasons.push('risc de egal mare'); }
+    if(ls && ls.home > ls.away){ score += 10; reasons.push('scor probabil pentru gazde'); }
+    if(ls && ls.home <= ls.away){ score -= 12; }
+  }
+
+  if(type === 'draw'){
+    if(m.probDraw >= 28){ score += 14; reasons.push('probabilitate de egal ridicată'); }
+    if(xgGap <= 0.25){ score += 12; reasons.push('echipe echilibrate ca xG'); }
+    if(ls && ls.home === ls.away){ score += 14; reasons.push('scor probabil de egal'); }
+    if(ls && ls.home !== ls.away){ score -= 14; }
+  }
+
+  if(type === 'awayWin'){
+    if(m.predictedResult === 'A'){ score += 12; reasons.push('modelul dă oaspeții'); }
+    if(m.favorite === 'A'){ score += 10; reasons.push('oaspeții sunt favoriți'); }
+    if(m.mlFlags && (m.mlFlags.winner || m.mlFlags.fav)){ score += 8; }
+    if(xgAway - xgHome >= 0.35){ score += 10; reasons.push('avantaj xG oaspeți'); }
+    if(xgGap < 0.20){ score -= 10; }
+    if(m.probDraw >= 27){ score -= 12; reasons.push('risc de egal mare'); }
+    if(ls && ls.away > ls.home){ score += 10; reasons.push('scor probabil pentru oaspeți'); }
+    if(ls && ls.away <= ls.home){ score -= 12; }
+  }
+
+  return { score: score, reasons: uniqueReasons(reasons) };
+}
+
+function isHardContradiction(m, type){
+  var ls = parseLikelyScore(m.mostLikelyScore);
+  if(!ls) return false;
+  if(type === 'over15' && ls.total < 2) return true;
+  if(type === 'under15' && ls.total >= 2) return true;
+  if(type === 'over25' && ls.total < 3) return true;
+  if(type === 'under25' && ls.total >= 3) return true;
+  if(type === 'over35' && ls.total < 4) return true;
+  if(type === 'under35' && ls.total >= 4) return true;
+  if(type === 'btts' && !ls.btts) return true;
+  if(type === 'bttsNo' && ls.btts) return true;
+  if(type === 'homeWin' && ls.home <= ls.away) return true;
+  if(type === 'draw' && ls.home !== ls.away) return true;
+  if(type === 'awayWin' && ls.away <= ls.home) return true;
+  return false;
+}
+
+function buildMarketCandidate(m, type){
+  var b = getBetByType(m, type);
+  if(!b) return null;
+  if(isHardContradiction(m, type)) return null;
+  if(b.value <= 0) return null;
+
+  var fit = marketFitAnalysis(m, type);
+  var reasons = uniqueReasons((fit && fit.reasons) || []);
+
+  var baseScore = 0;
+  baseScore += (b.adjProb * 0.42);
+  baseScore += ((m.confidence || 0) * 0.20);
+  baseScore += (Math.max(0, b.value) * 100 * 0.33);
+  baseScore += (fit && fit.score) || 0;
+
+  if(b.odds >= 1.20 && b.odds <= 1.90) baseScore += 5;
+  if(b.odds > 2.60) baseScore -= 8;
+
+  var risk = 'MEDIU';
+  if(b.adjProb >= 76 && b.value >= 0.02 && (m.confidence || 0) >= 58) risk = 'LOW';
+  else if(b.adjProb < 58 || b.odds > 2.30) risk = 'HIGH';
+
+  return Object.assign({}, m, {
+    bestBet: Object.assign({}, b),
+    ticketScore: Math.round(baseScore),
+    ticketRisk: risk,
+    why: reasons.slice(0, 3).join(' • ')
+  });
+}
+
+function getRelaxedProfile(profile, relax){
+  return {
+    allowedTypes: profile.allowedTypes.slice(),
+    minAdjProb: profile.minAdjProb - (relax * 4),
+    minValue: Math.max(0.005, profile.minValue - (relax * 0.01)),
+    minConf: profile.minConf - (relax * 4),
+    minOdd: profile.minOdd,
+    maxOdd: profile.maxOdd + (relax * 0.15),
+    minPicks: Math.max(1, profile.minPicks - (relax > 1 ? 1 : 0)),
+    maxPicks: profile.maxPicks,
+    targetMinOdds: profile.targetMinOdds,
+    targetMaxOdds: profile.targetMaxOdds + (relax * 0.7),
+    hardMaxOdds: profile.hardMaxOdds + (relax * 1.0),
+    maxSameLeague: profile.maxSameLeague,
+    maxSameMarket: profile.maxSameMarket
+  };
+}
+
+function candidateAccepted(c, profile){
+  if(!c || !c.bestBet) return false;
+  if(profile.allowedTypes.indexOf(c.bestBet.type) === -1) return false;
+  if(c.bestBet.adjProb < profile.minAdjProb) return false;
+  if(c.bestBet.value < profile.minValue) return false;
+  if(c.confidence < profile.minConf) return false;
+  if(c.bestBet.odds < profile.minOdd || c.bestBet.odds > profile.maxOdd) return false;
+  return true;
+}
+
+function collectCandidates(types, profile, relax){
+  var rp = getRelaxedProfile(profile, relax);
+  var list = [];
+
+  ALL_MATCHES.forEach(function(m){
+    if(!passesSelectionFilter(m)) return;
+
+    types.forEach(function(t){
+      var c = buildMarketCandidate(m, t);
+      if(candidateAccepted(c, rp)) list.push(c);
+    });
+  });
+
+  list.sort(function(a, b){
+    if(b.ticketScore !== a.ticketScore) return b.ticketScore - a.ticketScore;
+    if((b.bestBet.value || 0) !== (a.bestBet.value || 0)) return (b.bestBet.value || 0) - (a.bestBet.value || 0);
+    return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0);
+  });
+
+  return { list: list, profile: rp };
+}
+
+function selectDiversifiedPicks(candidates, profile){
+  var picks = [];
+  var totalOdds = 1;
+  var leagues = {};
+  var markets = {};
+  var events = {};
+
+  for(var i = 0; i < candidates.length; i++){
+    var c = candidates[i];
+    if(!c || !c.bestBet) continue;
+    if(events[c.eventId]) continue;
+
+    var lgCount = leagues[c.league] || 0;
+    var mkCount = markets[c.bestBet.type] || 0;
+
+    if(lgCount >= profile.maxSameLeague) continue;
+    if(mkCount >= profile.maxSameMarket) continue;
+
+    var nextOdds = totalOdds * c.bestBet.odds;
+    if(nextOdds > profile.hardMaxOdds) continue;
+
+    picks.push(c);
+    totalOdds = nextOdds;
+    events[c.eventId] = true;
+    leagues[c.league] = lgCount + 1;
+    markets[c.bestBet.type] = mkCount + 1;
+
+    var enoughCount = picks.length >= profile.minPicks;
+    var enoughOdds = totalOdds >= profile.targetMinOdds;
+    var shouldStop = totalOdds >= (profile.targetMaxOdds * 0.95) || picks.length >= profile.maxPicks;
+
+    if(enoughCount && enoughOdds && shouldStop) break;
+  }
+
+  return { picks: picks, totalOdds: totalOdds };
+}
+
+function finalizeTicket(type, label, picks, totalOdds){
+  if(!picks || !picks.length){
+    BILETE = {
+      picks: [],
+      totalOdds: 1,
+      generatedAt: new Date().toISOString(),
+      error: 'Nu exista selectie EV+ suficient de buna pentru acest tip de bilet.'
+    };
+    renderBilete();
+    toast('Nu exista selectie EV+ suficient de buna', 'warn');
+    return;
+  }
+
+  var avgEdge = picks.reduce(function(acc, p){ return acc + (p.bestBet.value || 0); }, 0) / picks.length;
+  var combinedProb = computeConservativeCombinedProb(picks);
+  var riskLabel =
+    type === 'profit_single' ? 'Scăzut+' :
+    type === 'best_single' ? 'Scăzut' :
+    type === 'simple' ? 'Scăzut' :
+    type === 'over15' ? 'Mediu' :
+    type === 'mix_combo' ? 'Mediu+' :
+    'Ridicat';
+
+  BILETE = {
+    picks: picks,
+    totalOdds: totalOdds,
+    generatedAt: new Date().toISOString(),
+    type: type,
+    label: label,
+    combinedProb: combinedProb,
+    avgEdge: avgEdge,
+    riskLabel: riskLabel,
+    stake: getStakeForTicket(type)
+  };
+
+  renderBilete();
+  toast(label + ' generat!', 'ok');
 }
 
 function generateConservativeTicket(){
