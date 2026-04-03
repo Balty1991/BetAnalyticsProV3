@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # status refresh
 """
-BetAnalytics Pro V15 - Fetcher + Historical Audit
+BetAnalytics Pro V16 - Fetcher + Historical Audit
 
 Scop:
 - predictions/events: la fiecare rulare
@@ -33,12 +33,40 @@ MARKETS = [
     {"key": "over15", "label": "Over 1.5G", "prob": lambda r: pct(r.get("prob_over_15")), "odds": lambda e: e.get("odds_over_15")},
     {"key": "under15", "label": "Under 1.5G", "prob": lambda r: 100 - pct(r.get("prob_over_15")), "odds": lambda e: e.get("odds_under_15")},
     {"key": "over25", "label": "Over 2.5G", "prob": lambda r: pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_over_25")},
-    {"key": "under25", "label": "Under 2.5G", "prob": lambda r: 100 - pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_under_25")},
+    {"key": "under25", "label": "Under 2.5G", "prob": lambda r: 100 - pct(r.get("prob_over_25")), "odds": lambda e.get("odds_under_25")},
     {"key": "over35", "label": "Over 3.5G", "prob": lambda r: pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_over_35")},
     {"key": "under35", "label": "Under 3.5G", "prob": lambda r: 100 - pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_under_35")},
     {"key": "btts", "label": "BTTS", "prob": lambda r: pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_yes")},
     {"key": "bttsNo", "label": "BTTS No", "prob": lambda r: 100 - pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_no")},
 ]
+
+ENGINE_MARKET_SETTINGS = {
+    "homeWin": {"min_adj": 61, "min_conf": 50, "min_value": 0.012, "min_xg_gap": 0.30},
+    "draw": {"min_adj": 58, "min_conf": 55, "min_value": 0.020, "max_xg_gap": 0.35, "max_xg_total": 2.60},
+    "awayWin": {"min_adj": 61, "min_conf": 50, "min_value": 0.012, "min_xg_gap": 0.30},
+    "over15": {"min_adj": 72, "min_conf": 48, "min_value": 0.008, "min_xg_total": 2.10},
+    "under15": {"min_adj": 74, "min_conf": 60, "min_value": 0.030, "max_xg_total": 1.45},
+    "over25": {"min_adj": 64, "min_conf": 52, "min_value": 0.015, "min_xg_total": 2.60},
+    "under25": {"min_adj": 61, "min_conf": 54, "min_value": 0.018, "max_xg_total": 2.55},
+    "over35": {"min_adj": 75, "min_conf": 62, "min_value": 0.040, "min_xg_total": 3.40},
+    "under35": {"min_adj": 73, "min_conf": 60, "min_value": 0.025, "max_xg_total": 3.00},
+    "btts": {"min_adj": 66, "min_conf": 58, "min_value": 0.020, "min_xg_home": 0.95, "min_xg_away": 0.95},
+    "bttsNo": {"min_adj": 64, "min_conf": 56, "min_value": 0.015, "max_min_xg": 1.15},
+}
+
+ENGINE_MARKET_PRIORITY = {
+    "over15": 9,
+    "homeWin": 4,
+    "awayWin": 4,
+    "over25": 3,
+    "bttsNo": 2,
+    "under25": 1,
+    "draw": 0,
+    "under15": -2,
+    "btts": -6,
+    "under35": -8,
+    "over35": -14,
+}
 
 
 def ensure_token():
@@ -85,12 +113,61 @@ def adjusted_prob(prob, confidence):
     return round(p * factor, 2)
 
 
-def ticket_score(adj_prob, value, confidence):
+def ticket_score(adj_prob, value, confidence, xg_total=0.0):
     c = normalize_confidence(confidence)
     prob_score = min(55.0, (pct(adj_prob) / 100.0) * 55.0)
     value_score = min(25.0, max(0.0, value) * 120.0)
     conf_score = min(20.0, (c / 100.0) * 20.0)
-    return round(prob_score + value_score + conf_score)
+    xg_bonus = min(10.0, max(0.0, (float(xg_total or 0.0) - 1.5) * 4.0))
+    return round(prob_score + value_score + conf_score + xg_bonus)
+
+
+def expected_goals(row):
+    try:
+        home = float(row.get("expected_home_goals") or 0)
+    except Exception:
+        home = 0.0
+    try:
+        away = float(row.get("expected_away_goals") or 0)
+    except Exception:
+        away = 0.0
+    if not math.isfinite(home):
+        home = 0.0
+    if not math.isfinite(away):
+        away = 0.0
+    total = home + away
+    return home, away, total
+
+
+def engine_market_pass(row, market_key, value, adj, confidence):
+    conf = normalize_confidence(confidence)
+    xg_home, xg_away, xg_total = expected_goals(row)
+    cfg = ENGINE_MARKET_SETTINGS.get(market_key, {})
+
+    if adj < cfg.get("min_adj", 60):
+        return False
+    if conf < cfg.get("min_conf", 50):
+        return False
+    if value < cfg.get("min_value", 0.01):
+        return False
+    if xg_total < cfg.get("min_xg_total", 0):
+        return False
+    if xg_total > cfg.get("max_xg_total", 999):
+        return False
+    if abs(xg_home - xg_away) < cfg.get("min_xg_gap", 0):
+        if cfg.get("min_xg_gap"):
+            return False
+    if abs(xg_home - xg_away) > cfg.get("max_xg_gap", 999):
+        if cfg.get("max_xg_gap") is not None:
+            return False
+    if xg_home < cfg.get("min_xg_home", 0):
+        return False
+    if xg_away < cfg.get("min_xg_away", 0):
+        return False
+    if min(xg_home, xg_away) > cfg.get("max_min_xg", 999):
+        if cfg.get("max_min_xg") is not None:
+            return False
+    return True
 
 
 def parse_scoreline(score):
@@ -278,7 +355,9 @@ def build_backtest_summary(predictions, lookback_days):
         if event.get("home_score") is None or event.get("away_score") is None:
             continue
 
-        confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
+        confidence = normalize_confidence(
+            row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob")
+        )
         finished.append(row)
 
         best_pick = None
@@ -295,10 +374,11 @@ def build_backtest_summary(predictions, lookback_days):
                 continue
             if hard_contradiction(row, market["key"]):
                 continue
-            if adj < 60 or confidence < 45:
+            if not engine_market_pass(row, market["key"], value, adj, confidence):
                 continue
 
-            score = ticket_score(adj, value, confidence)
+            _, _, xg_total = expected_goals(row)
+            score = ticket_score(adj, value, confidence, xg_total)
             outcome = market_outcome(event, market["key"])
             if outcome is None:
                 continue
@@ -314,7 +394,7 @@ def build_backtest_summary(predictions, lookback_days):
                 "won": bool(outcome),
                 "league": (event.get("league") or {}).get("name") or "Unknown",
             }
-            rank = (score * 1.0) + (max(0.0, value) * 100 * 0.35)
+            rank = (score * 1.0) + (max(0.0, value) * 100 * 0.35) + ENGINE_MARKET_PRIORITY.get(market["key"], 0)
             if rank > best_rank:
                 best_rank = rank
                 best_pick = pick
@@ -355,6 +435,10 @@ def build_backtest_summary(predictions, lookback_days):
         out.sort(key=lambda x: (x["roi"], x["bets"]), reverse=True)
         return out
 
+    market_rows = finalize_rows(by_market)[:12]
+    league_rows = finalize_rows(by_league)[:12]
+    blocked_markets = [row["key"] for row in market_rows if row["roi"] < -15 and row["bets"] >= 5]
+
     return {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "lookback_days": lookback_days,
@@ -364,21 +448,26 @@ def build_backtest_summary(predictions, lookback_days):
         "engine_profit": round(profit, 3),
         "engine_roi": round(roi, 2),
         "engine_winrate": round(winrate, 2),
-        "by_market": finalize_rows(by_market)[:12],
-        "by_league": finalize_rows(by_league)[:12],
+        "by_market": market_rows,
+        "by_league": league_rows,
+        "blocked_markets": blocked_markets,
+        "engine_policy": {
+            "xg_bonus_enabled": True,
+            "stricter_market_gates": True,
+            "market_priority": ENGINE_MARKET_PRIORITY,
+        },
     }
 
 
 def main():
     ensure_token()
     started_at = datetime.now(timezone.utc)
-    print(f"=== BetAnalytics V15 Fetch [{started_at.strftime('%Y-%m-%d %H:%M UTC')}] ===")
+    print(f"=== BetAnalytics V16 Fetch [{started_at.strftime('%Y-%m-%d %H:%M UTC')}] ===")
 
     today = started_at.strftime("%Y-%m-%d")
     future = (started_at + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
     past = (started_at - timedelta(days=BACKTEST_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
 
-    # FAST DATA - every run
     print(f"\n[1/5] Fetching predictions (next {LOOKAHEAD_DAYS} days)...")
     predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={today}&date_to={future}")
     print(f"Total predictions: {len(predictions)}")
@@ -392,9 +481,11 @@ def main():
     print(f"\n[3/5] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
     historical_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
     backtest = build_backtest_summary(historical_predictions, BACKTEST_LOOKBACK_DAYS)
-    print(f"Finished preds: {backtest['finished_predictions']} | Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%")
+    print(
+        f"Finished preds: {backtest['finished_predictions']} | "
+        f"Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%"
+    )
 
-    # STATIC-ish DATA - refresh only a few times/day
     refresh_static = should_refresh_static(started_at)
     print(f"\n[4/5] Static refresh window: {'YES' if refresh_static else 'NO'}")
 
@@ -437,12 +528,13 @@ def main():
         "backtest_engine_bets": backtest["engine_bets"],
         "backtest_engine_roi": backtest["engine_roi"],
         "status": "ok",
-        "version": "v15-audit-engine",
+        "version": "v16-audit-engine",
         "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
         "lookahead_days": LOOKAHEAD_DAYS,
         "backtest_lookback_days": BACKTEST_LOOKBACK_DAYS,
+        "engine_policy": "v16 stricter gates + xg bonus + market priority",
     }
     save_json(meta, "meta.json")
 
