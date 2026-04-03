@@ -4,21 +4,21 @@
 <!-- status refresh -->
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>BetAnalytics Pro v11 — ML API Expanded</title>
+<title>BetAnalytics Pro v16 — Audit & EV Upgrade</title>
 <meta name="theme-color" content="#0a0e17"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" href="icon-192.png"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
 <style>
 :root{
   --bg:#0a0e17;--bg2:#111827;--panel:#161d2e;--brd:#1e2a3a;--brd2:#2a3a50;
   --txt:#e2e8f0;--muted:#64748b;--acc:#3b82f6;--grn:#22c55e;--yel:#f59e0b;
   --org:#f97316;--red:#ef4444;--pur:#a855f7;--cyan:#06b6d4;--val:#10b981;
-  --mono:'JetBrains Mono',monospace;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;min-height:100vh;overflow-x:hidden}
 
 /* HEADER */
 .header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--brd);padding:10px 16px}
@@ -65,8 +65,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
 /* STATS GRID */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-@media(max-width:600px){.stats-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}}
+.stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:24px}
+@media(max-width:980px){.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stat-card{background:var(--panel);border:1px solid var(--brd);border-radius:12px;padding:16px;text-align:center}
 .stat-num{font-size:20px;font-weight:800;font-family:var(--mono)}
 .stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
@@ -82,7 +83,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .match-card:hover{border-color:var(--brd2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .match-card.safe{border-left:3px solid var(--grn)}
 .match-card.moderate{border-left:3px solid var(--yel)}
-.match-card.avoid{border-left:3px solid var(--red);opacity:.7}
+.match-card.avoid{border-left:3px solid var(--red);opacity:.88}
 .mc-league{font-size:10px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .mc-teams{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px}
 .mc-team{font-size:14px;font-weight:700;flex:1;display:flex;flex-direction:column;gap:3px}
@@ -99,7 +100,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .mc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .mc-stat{background:rgba(255,255,255,.04);border-radius:8px;padding:6px 4px;text-align:center}
 .mc-stat-val{font-size:13px;font-weight:700;font-family:var(--mono)}
-.mc-stat-lbl{font-size:9px;color:var(--muted);margin-top:2px}
+.mc-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
 .mc-rec{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
 .mc-rec-type{color:var(--acc);font-family:var(--mono)}
 .mc-rec-val{font-size:11px;color:var(--muted)}
@@ -113,7 +114,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 /* RECOMMEND TAGS */
 .rec-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-.rec-tag{padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;border:1px solid}
+.rec-tag{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid}
 .rec-tag-win{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.4);color:var(--acc)}
 .rec-tag-o15{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);color:var(--grn)}
 .rec-tag-o25{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.4);color:var(--val)}
@@ -139,6 +140,16 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .bilet-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .bilet-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
 .bilet-cota{font-size:22px;font-weight:800;font-family:var(--mono)}
+.bilet-risk-strip{height:8px;border-radius:999px;margin:12px 0 14px;background:linear-gradient(90deg,var(--grn),var(--yel),var(--red));position:relative;overflow:hidden}
+.bilet-risk-strip-fill{height:100%;background:rgba(255,255,255,.18);backdrop-filter:blur(2px)}
+.ticket-warning{margin:0 0 14px;padding:12px 14px;border-radius:12px;font-size:12px;line-height:1.5}
+.roi-bar-list{display:grid;gap:10px;margin-top:14px}
+.roi-bar-row{display:grid;grid-template-columns:110px 1fr 66px;gap:10px;align-items:center}
+.roi-bar-track{height:10px;background:rgba(255,255,255,.05);border:1px solid var(--brd2);border-radius:999px;overflow:hidden;position:relative}
+.roi-bar-fill{height:100%;border-radius:999px}
+.inline-panel{margin-top:12px;padding:14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--brd2)}
+.header-note{font-size:10px;color:var(--muted);font-family:var(--mono)}
+@media(max-width:640px){.matches-grid{grid-template-columns:1fr}.match-card{padding:14px}.mc-stats{grid-template-columns:repeat(2,1fr)}.mc-rec{font-size:11px}.roi-bar-row{grid-template-columns:86px 1fr 56px}}
 .bilet-meta{font-size:11px;color:var(--muted);margin-bottom:12px}
 .bilet-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--brd);gap:8px;flex-wrap:wrap}
 .bilet-row:last-child{border-bottom:none}
@@ -289,11 +300,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <div class="header-inner">
     <div class="logo">
       <div class="logo-title">BetAnalytics Pro</div>
-      <div class="logo-sub">Value Bet Engine v11 — Bzzoiro API Expanded</div>
+      <div class="logo-sub">Value Bet Engine v16 — Audit & EV Upgrade</div>
     </div>
     <div class="status-bar">
       <div class="sb-dot live" id="sb-dot"></div>
-      <span id="sb-text">Se incarca...</span>
+      <div><span id="sb-text">Se incarca...</span><div class="header-note" id="sb-sub">Ultimul update: —</div></div>
     </div>
     <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button>
   </div>
@@ -328,7 +339,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         <div id="backtest-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
       </div>
       <div id="backtest-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px"></div>
-      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">Arată sumarul pentru motorul intern de value pe istoric recent: câte selecții au fost generate, win rate, ROI și cele mai bune piețe / ligi.</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">Arată sumarul pentru motorul intern de value pe istoric recent: câte selecții au fost generate, win rate, ROI, piețele care trag în jos și piețele care merită păstrate active.</div>
     </div>
 
     <!-- Top 2 Ale Zilei -->
@@ -423,7 +434,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
     <!-- ML Legend -->
     <div style="margin-top:32px;padding:20px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08));border:1px solid rgba(168,85,247,.2);border-radius:14px">
-      <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:16px">🎯 Cum Funcționează — Bzzoiro API Expanded v11</div>
+      <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:16px">🎯 Cum Funcționează — Bzzoiro API Expanded v16</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px">
           <div style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:8px">🤖 CatBoost ML</div>
@@ -466,6 +477,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <button class="filter-btn" onclick="setFilter('draw',this)">⚪ X</button>
       <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
       <button class="filter-btn" onclick="setFilter('bttsno',this)">🚫 GG</button>
+      <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
       <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
       <button class="filter-btn" onclick="setFilter('u25',this)">🧊 Under 2.5G</button>
       <button class="filter-btn" onclick="setFilter('o35',this)">💥 Over 3.5G</button>
@@ -473,7 +485,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <button class="filter-btn" onclick="setFilter('win',this)">🚫X Winner</button>
       <select class="sort-select" id="sort-select" onchange="renderMatches()">
         <option value="score">🎯 Smart Score</option>
-        <option value="value">💰 Value %</option>
+        <option value="ev">💰 EV (Expected Value)</option>
         <option value="prob">📊 Probabilitate</option>
         <option value="conf">🧠 Confidence</option>
         <option value="date">📅 Data</option>
@@ -688,6 +700,8 @@ var ALL_EVENTS = [];
 var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
+var BLOCKED_MARKETS = [];
+var DATA_UPDATED_AT = null;
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
@@ -791,6 +805,38 @@ function getSupportedMarketTypes(){
   return ['homeWin','draw','awayWin','over15','under15','over25','under25','over35','under35','btts','bttsNo'];
 }
 
+function marketKeyToType(key){
+  var map = {
+    '1':'homeWin',
+    'X':'draw',
+    '2':'awayWin',
+    'Over 1.5G':'over15',
+    'Under 1.5G':'under15',
+    'Over 2.5G':'over25',
+    'Under 2.5G':'under25',
+    'Over 3.5G':'over35',
+    'Under 3.5G':'under35',
+    'BTTS':'btts',
+    'BTTS No':'bttsNo'
+  };
+  return map[key] || null;
+}
+function marketTypeToLabel(type){
+  var found = BET_TYPES.find(function(x){ return x.key === type; });
+  return found ? found.label : type;
+}
+function buildBlockedMarkets(backtest){
+  if(backtest && Array.isArray(backtest.blocked_markets) && backtest.blocked_markets.length){
+    return backtest.blocked_markets.map(marketKeyToType).filter(Boolean);
+  }
+  return ((backtest && backtest.by_market) || []).filter(function(x){
+    return Number(x && x.roi) < -15 && Number(x && x.bets) >= 5;
+  }).map(function(x){ return marketKeyToType(x.key); }).filter(Boolean);
+}
+function getBlockedMarketLabels(){
+  return BLOCKED_MARKETS.map(marketTypeToLabel);
+}
+
 function normalizeConfidence(conf){
   var c = Number(conf || 0);
   if(!isFinite(c) || c < 0) return 0;
@@ -816,12 +862,13 @@ function calcAdjustedProb(prob, confidence){
   var factor = 0.82 + (c / 100) * 0.18;
   return +(p * factor).toFixed(2);
 }
-function calcSmartScore(adjProb, value, confidence){
+function calcSmartScore(adjProb, value, confidence, xgTotal){
   var c = normalizeConfidence(confidence);
   var probScore = Math.min(55, (safePct(adjProb)/100)*55);
   var valueScore = Math.min(25, Math.max(0, value)*120);
   var confScore = Math.min(20, (c/100)*20);
-  return Math.round(probScore + valueScore + confScore);
+  var xgBonus = Math.min(10, Math.max(0, ((Number(xgTotal || 0) - 1.5) * 4)));
+  return Math.round(probScore + valueScore + confScore + xgBonus);
 }
 function getXGClass(val) {
   if (val >= 2.5) return { label: 'ELITE', color: '#ff4d4d', bg: 'rgba(255,77,77,0.15)' };
@@ -833,7 +880,7 @@ function getXGClass(val) {
 function getVerdict(adjProb, value, confidence){
   var c = normalizeConfidence(confidence);
   if(adjProb >= 72 && value >= 0.04 && c >= 55) return 'safe';
-  if(adjProb >= 60 && value >= 0.00) return 'moderate';
+  if(adjProb >= 60 && value >= 0.015) return 'moderate';
   return 'avoid';
 }
 function getExtraMarkets(raw){
@@ -887,7 +934,7 @@ function analyzeMatch(raw){
 
     var value = calcValue(prob, odds);
     var adjProb = calcAdjustedProb(prob, conf);
-    var score = calcSmartScore(adjProb, value, conf);
+    var score = calcSmartScore(adjProb, value, conf, Number(raw.expected_home_goals || 0) + Number(raw.expected_away_goals || 0));
     var verdict = getVerdict(adjProb, value, conf);
 
     var item = {
@@ -1117,6 +1164,8 @@ function doRefresh(){
     ALL_TEAMS = teamsData.results || teamsData || [];
     ALL_PLAYERS = playersData.results || playersData || [];
     BACKTEST_SUMMARY = backtestData || {};
+    BLOCKED_MARKETS = buildBlockedMarkets(BACKTEST_SUMMARY);
+    DATA_UPDATED_AT = meta && meta.updated_at ? meta.updated_at : null;
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -1449,13 +1498,36 @@ function renderBacktest(){
     'ROI-ul este calculat la miză fixă și nu garantează profit viitor.'+
   '</div>';
 
+  var marketBars = (bt.by_market || []).filter(function(x){ return Number(x.bets || 0) >= 5; });
+  var maxAbsRoi = Math.max(1, marketBars.reduce(function(acc, x){ return Math.max(acc, Math.abs(Number(x.roi || 0))); }, 0));
+  var chart = '<div class="inline-panel" style="grid-column:1/-1">'+
+    '<div style="font-size:13px;font-weight:800;margin-bottom:6px">📉 ROI pe piețe</div>'+
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">Vizual rapid pentru piețele care trag motorul în sus sau în jos.</div>'+
+    '<div class="roi-bar-list">'+ marketBars.map(function(x){
+      var roi = Number(x.roi || 0);
+      var width = Math.max(4, Math.round(Math.abs(roi) / maxAbsRoi * 100));
+      var fill = roi >= 0 ? 'linear-gradient(90deg,var(--grn),var(--val))' : 'linear-gradient(90deg,var(--org),var(--red))';
+      return '<div class="roi-bar-row">'+
+        '<div style="font-size:11px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x.key+'</div>'+
+        '<div class="roi-bar-track"><div class="roi-bar-fill" style="width:'+width+'%;background:'+fill+'"></div></div>'+
+        '<div style="font-size:11px;font-family:var(--mono);text-align:right;color:'+(roi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(roi >= 0 ? '+' : '')+roi.toFixed(1)+'%</div>'+
+      '</div>';
+    }).join('') + '</div></div>';
+
+  var blocked = getBlockedMarketLabels();
+  var blockedPanel = '<div class="inline-panel" style="grid-column:1/-1;border-color:'+(blocked.length ? 'rgba(239,68,68,.35)' : 'rgba(34,197,94,.28)')+'">'+
+    '<div style="font-size:13px;font-weight:800;margin-bottom:6px">⛔ Piețe blocate de backtest</div>'+
+    '<div style="font-size:11px;color:var(--muted)">'+
+      (blocked.length ? ('Exclude automat din generatoarele principale piețele cu ROI sub -15% și minim 5 pariuri: <strong style="color:var(--red)">'+blocked.join(', ')+'</strong>.') : 'Momentan nu există piețe blocate automat de backtest.')+
+    '</div></div>';
+
   box.innerHTML = items.map(function(it){
     return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--brd2);border-radius:12px;padding:14px">'+
       '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase">'+it.label+'</div>'+
       '<div style="font-size:20px;font-weight:800;font-family:var(--mono);color:'+(it.color || 'var(--txt)')+'">'+it.value+'</div>'+
       '<div style="font-size:10px;color:var(--muted);margin-top:4px">'+it.sub+'</div>'+
     '</div>';
-  }).join('') + note;
+  }).join('') + note + chart + blockedPanel;
 }
 
 function buildMlRecommendTags(m){
@@ -1724,6 +1796,7 @@ function renderMatches(){
     if(CURRENT_FILTER === 'draw') return b && b.type === 'draw';
     if(CURRENT_FILTER === 'btts') return b && b.type === 'btts';
     if(CURRENT_FILTER === 'bttsno') return b && b.type === 'bttsNo';
+    if(CURRENT_FILTER === 'o15') return m.bestBet && m.bestBet.type === 'over15';
     if(CURRENT_FILTER === 'o25') return b && b.type === 'over25';
     if(CURRENT_FILTER === 'u25') return b && b.type === 'under25';
     if(CURRENT_FILTER === 'o35') return b && b.type === 'over35';
@@ -1736,7 +1809,7 @@ function renderMatches(){
     var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0};
     var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0};
     if(sort === 'score') return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
-    if(sort === 'value') return (bBet.value||0) - (aBet.value||0);
+    if(sort === 'ev' || sort === 'value') return (bBet.value||0) - (aBet.value||0);
     if(sort === 'prob') return (bBet.adjProb||0) - (aBet.adjProb||0);
     if(sort === 'conf') return (b.confidence||0) - (a.confidence||0);
     if(sort === 'date') return new Date(a.date) - new Date(b.date);
@@ -2061,6 +2134,7 @@ function collectCandidates(types, profile, relax){
     if(!passesSelectionFilter(m)) return;
 
     types.forEach(function(t){
+      if(BLOCKED_MARKETS.indexOf(t) !== -1) return;
       var c = buildMarketCandidate(m, t);
       if(candidateAccepted(c, rp)) list.push(c);
     });
@@ -2112,7 +2186,8 @@ function selectDiversifiedPicks(candidates, profile){
   return { picks: picks, totalOdds: totalOdds };
 }
 
-function finalizeTicket(type, label, picks, totalOdds){
+function finalizeTicket(type, label, picks, totalOdds, options){
+  options = options || {};
   if(!picks || !picks.length){
     BILETE = {
       picks: [],
@@ -2144,7 +2219,10 @@ function finalizeTicket(type, label, picks, totalOdds){
     combinedProb: combinedProb,
     avgEdge: avgEdge,
     riskLabel: riskLabel,
-    stake: getStakeForTicket(type)
+    stake: getStakeForTicket(type),
+    relaxed: !!options.relaxed,
+    headerColor: options.headerColor || 'var(--grn)',
+    warning: options.warning || ''
   };
 
   renderBilete();
@@ -2201,7 +2279,7 @@ function generateTicket(){
     var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
     var chosen = selectDiversifiedPicks(pack.list, pack.profile);
     if(chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds){
-      finalizeTicket('simple', '🛡️ Bilet Smart EV', chosen.picks, chosen.totalOdds);
+      finalizeTicket('simple', relax > 0 ? '🛡️ Bilet Smart EV ⚠️ (relaxat)' : '🛡️ Bilet Smart EV', chosen.picks, chosen.totalOdds, {relaxed: relax > 0, headerColor: relax > 0 ? '#cc6600' : 'var(--grn)'});
       return;
     }
   }
@@ -2641,7 +2719,7 @@ function generateControlledComboTicket(){
     var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
     var chosen = selectDiversifiedPicks(pack.list, pack.profile);
     if(chosen.picks.length >= 3 && chosen.totalOdds >= 2.10){
-      finalizeTicket('controlled_combo', '⚖️ Combo controlat', chosen.picks, chosen.totalOdds);
+      finalizeTicket('controlled_combo', relax > 0 ? '⚖️ Combo controlat ⚠️ (relaxat)' : '⚖️ Combo controlat', chosen.picks, chosen.totalOdds, {relaxed: relax > 0, headerColor: relax > 0 ? '#cc6600' : 'var(--grn)'});
       if(BILETE) BILETE.riskLabel = 'Mediu';
       renderBilete();
       return;
@@ -2832,6 +2910,7 @@ function generateBestEventTicket(){
       if(dateKeys.indexOf(m.dateKey) === -1) return;
 
       types.forEach(function(t){
+        if(BLOCKED_MARKETS.indexOf(t) !== -1) return;
         var c = buildMarketCandidate(m, t);
         if(!c || !c.bestBet) return;
         if(c.bestBet.odds < minOdds) return;
@@ -2976,6 +3055,7 @@ function generateProfitFocusTicket(){
       if(dateKeys.indexOf(m.dateKey) === -1) return;
 
       types.forEach(function(t){
+        if(BLOCKED_MARKETS.indexOf(t) !== -1) return;
         var c = buildMarketCandidate(m, t);
         if(!c || !c.bestBet) return;
 
@@ -3035,12 +3115,12 @@ function generateBigWinTicket(){
     var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
     var chosen = selectDiversifiedPicks(pack.list, pack.profile);
     if(chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds){
-      finalizeTicket('big_win', '🚀 Bilet Big Win', chosen.picks, chosen.totalOdds);
+      finalizeTicket('big_win', relax > 0 ? '🚀 Bilet Big Win ⚠️ (relaxat)' : '🚀 Bilet Big Win', chosen.picks, chosen.totalOdds, {relaxed: relax > 0, headerColor: relax > 0 ? '#cc6600' : 'var(--grn)', warning: '🚨 Bilet de risc maxim — probabilitate câștig estimată sub 3%. Joacă doar sume simbolice.'});
       return;
     }
   }
 
-  finalizeTicket('big_win', '🚀 Bilet Big Win', [], 1);
+  finalizeTicket('big_win', '🚀 Bilet Big Win', [], 1, {warning: '🚨 Bilet de risc maxim — probabilitate câștig estimată sub 3%. Joacă doar sume simbolice.'});
 }
 
 function renderBilete(){
@@ -3058,13 +3138,23 @@ function renderBilete(){
   var stake = BILETE.stake || getStakeForTicket(BILETE.type);
   var stakeText = stake && stake > 0 ? (Number(stake).toFixed(0) + ' RON') : 'manuală la plasare';
   var avgEdgePct = ((BILETE.avgEdge || 0) * 100);
+  var headerColor = BILETE.headerColor || 'var(--grn)';
+  var riskLevel = BILETE.type === 'big_win' ? 92 : BILETE.type === 'controlled_combo' ? 56 : BILETE.type === 'simple' ? 34 : 48;
 
-  var html = '<div class="bilet-card">'+
-    '<div class="bilet-hdr">'+
-      '<div class="bilet-title">'+(BILETE.label || '🎯 Bilet')+' <span style="font-size:12px;color:var(--muted);font-weight:400">'+picks.length+' selectii</span></div>'+
-      '<div class="bilet-cota" style="color:var(--grn)">'+totalOdds.toFixed(2)+'x</div>'+
+  var html = '<div class="bilet-card" style="border-color:'+(BILETE.relaxed ? '#cc6600' : 'var(--brd)')+'">'+
+    '<div class="bilet-hdr" style="padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.06)">'+
+      '<div class="bilet-title" style="color:'+headerColor+'">'+(BILETE.label || '🎯 Bilet')+' <span style="font-size:12px;color:var(--muted);font-weight:400">'+picks.length+' selecții</span></div>'+
+      '<div class="bilet-cota" style="color:'+headerColor+'">'+totalOdds.toFixed(2)+'x</div>'+
     '</div>'+
+    '<div class="bilet-risk-strip"><div class="bilet-risk-strip-fill" style="width:'+riskLevel+'%"></div></div>'+
     '<div class="bilet-meta">Probabilitate conservatoare: <strong style="color:var(--acc)">'+combinedProb.toFixed(1)+'%</strong> • Miza: <strong style="color:var(--yel)">'+stakeText+'</strong> • Edge mediu: <strong style="color:var(--grn)">'+(avgEdgePct>=0?'+':'')+avgEdgePct.toFixed(1)+'%</strong> • Risc: <strong style="color:var(--pur)">'+(BILETE.riskLabel || '—')+'</strong></div>';
+
+  if(BILETE.relaxed){
+    html += '<div class="ticket-warning" style="background:rgba(204,102,0,.12);border:1px solid rgba(204,102,0,.35);color:#ffcc80">⚠️ Biletul a fost generat cu relaxare de prag. Calitatea selecției este sub profilul standard al generatorului.</div>';
+  }
+  if(BILETE.warning){
+    html += '<div class="ticket-warning" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#fecaca">'+BILETE.warning+'</div>';
+  }
 
   picks.forEach(function(m){
     var b = m.bestBet;
@@ -3328,7 +3418,7 @@ function calcBankroll(){
 // ============================================================
 // COLLAPSIBLE SECTIONS
 // ============================================================
-var SECTION_STATE={todaybest:false,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false,ml35:false};
+var SECTION_STATE={todaybest:true,top5:true,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false,ml35:false};
 function toggleSection(id){
   SECTION_STATE[id]=!SECTION_STATE[id];
   var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle'],ml35:['ml35-body','ml35-toggle']};
@@ -3378,7 +3468,8 @@ function renderAll(){
 
   var now = new Date();
   var timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  $('sb-text').textContent = total+' predicții — '+eligible+' eligibile — ora '+timeStr;
+  $('sb-text').textContent = total+' predicții — '+eligible+' eligibile';
+  if($('sb-sub')) $('sb-sub').textContent = 'Ultimul update date: ' + (DATA_UPDATED_AT ? fmtDateTime(DATA_UPDATED_AT) : ('ora ' + timeStr));
 
   buildLeagueFilter();
   renderBacktest();
@@ -3403,6 +3494,11 @@ window.addEventListener('DOMContentLoaded', function(){
   // Try to restore token from localStorage
   var st=localStorage.getItem('bsd_token');
   if(st) API_TOKEN=st;
+  ['todaybest','top5'].forEach(function(id){
+    var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle']};
+    var pair=map[id];
+    if(pair){ var body=$(pair[0]), toggle=$(pair[1]); if(body) body.classList.add('open'); if(toggle) toggle.classList.add('open'); }
+  });
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
   setInterval(doRefresh, 900000);
