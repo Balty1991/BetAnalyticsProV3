@@ -327,7 +327,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         <div class="sec-title">🎯 Top 2 pronosticuri ale zilei <span class="sec-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--grn)">Doar azi</span> <span class="collapse-count" id="todaybest-count">—</span></div>
         <span class="collapse-toggle" id="todaybest-toggle" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">▼</span>
       </div>
-      <div class="collapsible-body open" id="todaybest-body"><div class="matches-grid" id="today-best-grid" style="margin-top:10px"></div></div>
+      <div class="collapsible-body" id="todaybest-body"><div class="matches-grid" id="today-best-grid" style="margin-top:10px"></div></div>
     </div>
 
     <!-- Top 5 Value Picks -->
@@ -2002,11 +2002,44 @@ function relaxedCustomProfile(base, relax){
   };
 }
 
+function isStrictCustomMode(){
+  return $('cust-mode') && $('cust-mode').value === 'strict';
+}
+
+function isExplicitAiRecommended(c, type){
+  if(!c || !c.mlFlags) return false;
+  if(type === 'over15') return !!c.mlFlags.o15;
+  if(type === 'over25') return !!c.mlFlags.o25;
+  if(type === 'btts') return !!c.mlFlags.btts;
+  if(type === 'homeWin') return !!((c.mlFlags.winner && c.predictedResult === 'H') || (c.mlFlags.fav && c.favorite === 'H' && c.predictedResult === 'H'));
+  if(type === 'awayWin') return !!((c.mlFlags.winner && c.predictedResult === 'A') || (c.mlFlags.fav && c.favorite === 'A' && c.predictedResult === 'A'));
+  return false;
+}
+
+function isHeuristicAiPass(c, type){
+  if(!c || !c.bestBet) return false;
+  if(type === 'over15') return !!(c.probOver15 >= 84 && c.bestBet.adjProb >= 78);
+  if(type === 'over25') return !!(c.probOver25 >= 64 && c.bestBet.adjProb >= 72);
+  if(type === 'btts') return !!(c.probBtts >= 60 && c.bestBet.adjProb >= 72);
+  if(type === 'homeWin') return !!(c.favorite === 'H' && c.predictedResult === 'H' && c.bestBet.adjProb >= 72);
+  if(type === 'awayWin') return !!(c.favorite === 'A' && c.predictedResult === 'A' && c.bestBet.adjProb >= 72);
+  return false;
+}
+
+function isFavoriteAlignedSelection(c, type){
+  var aligned = !!(c && (c.favorite === 'H' || c.favorite === 'A') && c.predictedResult && c.favorite === c.predictedResult);
+  if(!aligned) return false;
+  if(type === 'homeWin') return c.favorite === 'H';
+  if(type === 'awayWin') return c.favorite === 'A';
+  return true;
+}
+
 function customCandidateFilter(c){
   if(!c || !c.bestBet) return false;
 
   var t = c.bestBet.type;
   var ls = parseLikelyScore(c.mostLikelyScore);
+  var strictMode = isStrictCustomMode();
 
   if($('cb-goals-only').checked){
     if(['over15','over25','btts'].indexOf(t) === -1) return false;
@@ -2031,34 +2064,13 @@ function customCandidateFilter(c){
   }
 
   if($('cb-ai-only').checked){
-    var aiPass = false;
-
-    if(t === 'over15'){
-      aiPass = (c.mlFlags && c.mlFlags.o15) || (c.hasMlRec && c.probOver15 >= 84 && c.bestBet.adjProb >= 78);
-    }
-
-    if(t === 'over25'){
-      aiPass = (c.mlFlags && c.mlFlags.o25) || (c.hasMlRec && c.probOver25 >= 64 && c.bestBet.adjProb >= 72);
-    }
-
-    if(t === 'btts'){
-      aiPass = (c.mlFlags && c.mlFlags.btts) || (c.hasMlRec && c.probBtts >= 60 && c.bestBet.adjProb >= 72);
-    }
-
-    if(t === 'homeWin'){
-      aiPass = (c.mlFlags && (c.mlFlags.winner || c.mlFlags.fav) && c.predictedResult === 'H') || (c.hasMlRec && c.favorite === 'H' && c.predictedResult === 'H' && c.bestBet.adjProb >= 72);
-    }
-
-    if(t === 'awayWin'){
-      aiPass = (c.mlFlags && (c.mlFlags.winner || c.mlFlags.fav) && c.predictedResult === 'A') || (c.hasMlRec && c.favorite === 'A' && c.predictedResult === 'A' && c.bestBet.adjProb >= 72);
-    }
-
+    var aiPass = isExplicitAiRecommended(c, t);
+    if(!aiPass && !strictMode) aiPass = isHeuristicAiPass(c, t);
     if(!aiPass) return false;
   }
 
-  if($('cb-fav-only').checked && (t === 'homeWin' || t === 'awayWin')){
-    if(t === 'homeWin' && !(c.favorite === 'H' && c.predictedResult === 'H')) return false;
-    if(t === 'awayWin' && !(c.favorite === 'A' && c.predictedResult === 'A')) return false;
+  if($('cb-fav-only').checked){
+    if(!isFavoriteAlignedSelection(c, t)) return false;
   }
 
   return true;
@@ -2089,6 +2101,127 @@ function collectCustomCandidates(opts, relax){
   });
 
   return { list: out, profile: profile };
+}
+
+function getCustomTargetWindow(targetOdds, mode, relax){
+  var pct = mode === 'strict' ? 0.08 : mode === 'flex' ? 0.16 : 0.28;
+  var minAbs = mode === 'strict' ? 0.08 : mode === 'flex' ? 0.15 : 0.25;
+  if(mode !== 'strict') pct += relax * 0.05;
+  var delta = Math.max(minAbs, targetOdds * pct);
+  return {
+    min: Math.max(1.05, targetOdds - delta),
+    max: targetOdds + delta,
+    delta: delta
+  };
+}
+
+function rankCustomComboState(state, targetOdds){
+  var closenessPenalty = Math.abs(Math.log((state.totalOdds || 1) / Math.max(1.05, targetOdds))) * 90;
+  return (
+    (state.totalTicketScore || 0) +
+    ((state.totalAdjProb || 0) / Math.max(1, state.picks.length) * 0.35) +
+    ((state.totalValue || 0) * 100 * 0.28) -
+    closenessPenalty
+  );
+}
+
+function expandCustomComboState(state, candidate, profile){
+  if(!state || !candidate || !candidate.bestBet) return null;
+  if(state.events[candidate.eventId]) return null;
+
+  var leagueCount = state.leagues[candidate.league] || 0;
+  var marketCount = state.markets[candidate.bestBet.type] || 0;
+  if(leagueCount >= profile.maxSameLeague) return null;
+  if(marketCount >= profile.maxSameMarket) return null;
+
+  var nextOdds = state.totalOdds * candidate.bestBet.odds;
+  if(nextOdds > profile.hardMaxOdds) return null;
+
+  var next = {
+    picks: state.picks.concat([candidate]),
+    totalOdds: nextOdds,
+    totalTicketScore: state.totalTicketScore + (candidate.ticketScore || 0),
+    totalAdjProb: state.totalAdjProb + (candidate.bestBet.adjProb || 0),
+    totalValue: state.totalValue + (candidate.bestBet.value || 0),
+    events: Object.assign({}, state.events),
+    leagues: Object.assign({}, state.leagues),
+    markets: Object.assign({}, state.markets)
+  };
+
+  next.events[candidate.eventId] = true;
+  next.leagues[candidate.league] = leagueCount + 1;
+  next.markets[candidate.bestBet.type] = marketCount + 1;
+  next.rank = 0;
+  return next;
+}
+
+function findBestCustomCombo(candidates, opts, profile, targetOdds, relax){
+  if(!candidates || !candidates.length) return null;
+
+  var mode = opts.mode || 'flex';
+  var exactPicks = Math.max(1, profile.maxPicks || opts.picks || 1);
+  var poolLimit = mode === 'strict' ? 60 : (mode === 'flex' ? 90 : 120);
+  var beamWidth = mode === 'strict' ? 30 : (mode === 'flex' ? 45 : 60);
+  var window = getCustomTargetWindow(targetOdds, mode, relax);
+  var pool = candidates.slice(0, poolLimit);
+  var beam = [{
+    picks: [],
+    totalOdds: 1,
+    totalTicketScore: 0,
+    totalAdjProb: 0,
+    totalValue: 0,
+    events: {},
+    leagues: {},
+    markets: {},
+    rank: 0
+  }];
+  var finished = [];
+
+  for(var depth = 0; depth < exactPicks; depth++){
+    var nextBeam = [];
+
+    for(var i = 0; i < beam.length; i++){
+      for(var j = 0; j < pool.length; j++){
+        var nextState = expandCustomComboState(beam[i], pool[j], profile);
+        if(!nextState) continue;
+
+        var picksLeft = exactPicks - nextState.picks.length;
+        if(picksLeft === 0){
+          if(nextState.totalOdds >= window.min && nextState.totalOdds <= window.max){
+            nextState.rank = rankCustomComboState(nextState, targetOdds);
+            finished.push(nextState);
+          }
+          continue;
+        }
+
+        var idealLegOdd = Math.pow(targetOdds / Math.max(1.01, nextState.totalOdds), 1 / picksLeft);
+        var projectedPenalty = Math.abs(idealLegOdd - 1.30) * 12;
+        nextState.rank = rankCustomComboState(nextState, targetOdds) - projectedPenalty;
+        nextBeam.push(nextState);
+      }
+    }
+
+    nextBeam.sort(function(a, b){ return b.rank - a.rank; });
+
+    var deduped = [];
+    var seen = {};
+    for(var k = 0; k < nextBeam.length && deduped.length < beamWidth; k++){
+      var state = nextBeam[k];
+      var sig = state.picks.length + '|' + state.totalOdds.toFixed(3) + '|' + Object.keys(state.markets).sort().join('-');
+      if(seen[sig]) continue;
+      seen[sig] = true;
+      deduped.push(state);
+    }
+    beam = deduped;
+    if(!beam.length && !finished.length) break;
+  }
+
+  if(!finished.length) return null;
+  finished.sort(function(a, b){ return b.rank - a.rank; });
+  return {
+    picks: finished[0].picks,
+    totalOdds: finished[0].totalOdds
+  };
 }
 
 function chooseCustomSingle(candidates, targetOdds){
@@ -2222,7 +2355,7 @@ function generateCustomTicket(){
     var marketSpreadNeed = Math.ceil(currentPicks / Math.max(1, opts.allowedTypes.length));
     var profile = {
       minPicks: currentPicks,
-      maxPicks: opts.mode === 'optimize' ? Math.max(2, currentPicks) : currentPicks,
+      maxPicks: currentPicks,
       targetMinOdds: Math.max(1.10, currentTargetOdds * 0.80),
       targetMaxOdds: currentTargetOdds * 1.18,
       hardMaxOdds: currentTargetOdds * 1.50,
@@ -2230,10 +2363,9 @@ function generateCustomTicket(){
       maxSameMarket: Math.max(pack.profile.maxSameMarket, marketSpreadNeed)
     };
 
-    var minNeeded = Math.min(profile.minPicks, opts.mode === 'optimize' ? 2 : profile.minPicks);
-    var chosen = selectDiversifiedPicks(pack.list, profile);
+    var chosen = findBestCustomCombo(pack.list, opts, profile, currentTargetOdds, relax);
 
-    if(chosen.picks.length >= minNeeded && chosen.totalOdds >= profile.targetMinOdds){
+    if(chosen && chosen.picks.length === currentPicks){
       finalizeTicket('custom_combo', '🎛️ Bilet personalizat', chosen.picks, chosen.totalOdds);
       setCustomTicketMeta(opts.stake, opts.risk);
       renderBilete();
@@ -2247,7 +2379,7 @@ function generateCustomTicket(){
     }
   }
 
-  setTicketError('Criteriile sunt prea stricte acum. Scade cota dorită sau relaxează filtrele.');
+  setTicketError('Nu există combinație care să respecte simultan piețele, filtrele, numărul de selecții și cota cerută. Redu cota, schimbă modul sau relaxează filtrele.');
 }
 function generateOver15Ticket(){
   var baseProfile = {
@@ -2834,7 +2966,7 @@ function calcBankroll(){
 // ============================================================
 // COLLAPSIBLE SECTIONS
 // ============================================================
-var SECTION_STATE={todaybest:true,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false,ml35:false};
+var SECTION_STATE={todaybest:false,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false,ml35:false};
 function toggleSection(id){
   SECTION_STATE[id]=!SECTION_STATE[id];
   var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle'],ml35:['ml35-body','ml35-toggle']};
