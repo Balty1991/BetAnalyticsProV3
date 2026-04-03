@@ -2031,10 +2031,29 @@ function customCandidateFilter(c){
   }
 
   if($('cb-ai-only').checked){
-    if(t === 'over15' && !(c.mlFlags && c.mlFlags.o15)) return false;
-    if(t === 'over25' && !(c.mlFlags && c.mlFlags.o25)) return false;
-    if(t === 'btts' && !(c.mlFlags && c.mlFlags.btts)) return false;
-    if((t === 'homeWin' || t === 'awayWin') && !(c.mlFlags && (c.mlFlags.winner || c.mlFlags.fav))) return false;
+    var aiPass = false;
+
+    if(t === 'over15'){
+      aiPass = (c.mlFlags && c.mlFlags.o15) || (c.hasMlRec && c.probOver15 >= 84 && c.bestBet.adjProb >= 78);
+    }
+
+    if(t === 'over25'){
+      aiPass = (c.mlFlags && c.mlFlags.o25) || (c.hasMlRec && c.probOver25 >= 64 && c.bestBet.adjProb >= 72);
+    }
+
+    if(t === 'btts'){
+      aiPass = (c.mlFlags && c.mlFlags.btts) || (c.hasMlRec && c.probBtts >= 60 && c.bestBet.adjProb >= 72);
+    }
+
+    if(t === 'homeWin'){
+      aiPass = (c.mlFlags && (c.mlFlags.winner || c.mlFlags.fav) && c.predictedResult === 'H') || (c.hasMlRec && c.favorite === 'H' && c.predictedResult === 'H' && c.bestBet.adjProb >= 72);
+    }
+
+    if(t === 'awayWin'){
+      aiPass = (c.mlFlags && (c.mlFlags.winner || c.mlFlags.fav) && c.predictedResult === 'A') || (c.hasMlRec && c.favorite === 'A' && c.predictedResult === 'A' && c.bestBet.adjProb >= 72);
+    }
+
+    if(!aiPass) return false;
   }
 
   if($('cb-fav-only').checked && (t === 'homeWin' || t === 'awayWin')){
@@ -2156,10 +2175,16 @@ function generateControlledComboTicket(){
   finalizeTicket('controlled_combo', '⚖️ Combo controlat', [], 1);
 }
 
+function parseLocaleNumber(value, fallback){
+  var raw = String(value == null ? '' : value).trim().replace(',', '.');
+  var n = Number(raw);
+  return isFinite(n) ? n : fallback;
+}
+
 function generateCustomTicket(){
   var opts = {
-    stake: Number($('cust-stake').value || 0),
-    targetOdds: Math.max(1.05, Number($('cust-target-odds').value || 1.50)),
+    stake: parseLocaleNumber($('cust-stake').value, 0),
+    targetOdds: Math.max(1.05, parseLocaleNumber($('cust-target-odds').value, 1.50)),
     picks: Math.max(1, parseInt($('cust-picks').value || '1', 10)),
     format: $('cust-format').value,
     risk: $('cust-risk').value,
@@ -2884,7 +2909,7 @@ window.addEventListener('DOMContentLoaded', function(){
   if(st) API_TOKEN=st;
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
-  setInterval(doRefresh, 120000);
+  setInterval(doRefresh, 900000);
 });
 </script>
 </body>
