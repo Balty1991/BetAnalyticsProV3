@@ -477,17 +477,120 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
   <!-- ===== BILETE ===== -->
   <div class="tab-content" id="tab-bilete">
-    <div class="gen-btn-wrap" style="display:flex;flex-direction:column;gap:12px;align-items:center;margin-bottom:30px">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-        <button class="btn btn-green" style="font-size:14px;padding:12px 24px" onclick="generateTicket()">🛡️ Bilet Simplu EV</button>
-        <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--acc),var(--cyan))" onclick="generateOver15Ticket()">🔥 Bilet 1.5G EV+</button>
-        <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--cyan),var(--grn))" onclick="generateProfitFocusTicket()">📈 Profit Focus (Single)</button>
-        <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateMixTicket()">🎯 Mix 70% / ~5.0</button>
-        <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--yel),var(--grn))" onclick="generateBestEventTicket()">⭐ Evenimentul zilei</button>
-        <button class="btn btn-primary" style="font-size:14px;padding:12px 24px;background:linear-gradient(135deg,var(--red),var(--org))" onclick="generateBigWinTicket()">🚀 Bilet Big Win</button>
+    <div style="display:grid;gap:16px;margin-bottom:22px">
+      <div class="welcome-box" style="margin-bottom:0">
+        <div>
+          <div class="sec-title" style="margin-bottom:6px">🎫 Bilete AI — versiune focusată</div>
+          <div class="welcome-text">O recomandare principală sus, 3 stiluri clare dedesubt și un constructor personalizat pentru control total.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="generateBestEventTicket()">⭐ Recomandarea AI</button>
+          <button class="btn btn-green" onclick="generateProfitFocusTicket()">📈 Single disciplinat</button>
+        </div>
       </div>
-      <div style="font-size:11px;color:var(--muted)">Criteriu: EV pozitiv, contradicții eliminate, diversificare și selecții mai curate.</div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+        <div class="bilet-card" style="margin-bottom:0;padding:16px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">📈 Single disciplinat</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">O singură selecție curată, orientată spre valoare și control.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <span class="sec-badge">Single</span>
+            <span class="sec-badge" style="color:var(--grn);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)">Risc scăzut+</span>
+          </div>
+          <button class="btn btn-green" style="width:100%;justify-content:center" onclick="generateProfitFocusTicket()">Generează</button>
+        </div>
+
+        <div class="bilet-card" style="margin-bottom:0;padding:16px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">⚖️ Combo controlat</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">3-4 evenimente, filtre stricte, fără artificii inutile.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <span class="sec-badge">Combo</span>
+            <span class="sec-badge" style="color:var(--yel);border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.08)">Risc mediu</span>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--acc),var(--pur))" onclick="generateControlledComboTicket()">Generează</button>
+        </div>
+
+        <div class="bilet-card" style="margin-bottom:0;padding:16px">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🚀 Atac / Big Win</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Speculativ. Păstrat separat pentru miză mică și lovituri rare.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <span class="sec-badge">Speculativ</span>
+            <span class="sec-badge" style="color:var(--red);border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.08)">Risc ridicat</span>
+          </div>
+          <button class="btn" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--red),var(--org));color:#fff" onclick="generateBigWinTicket()">Generează</button>
+        </div>
+
+        <div class="bilet-card" style="margin-bottom:0;padding:16px;border-color:rgba(6,182,212,.3)">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🎛️ Constructor de Bilet</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Utilizatorul alege miza, cota, numărul de evenimente și piețele permise.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <span class="sec-badge">Personalizat</span>
+            <span class="sec-badge" style="color:var(--cyan);border-color:rgba(6,182,212,.25);background:rgba(6,182,212,.08)">Control total</span>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--cyan),var(--grn))" onclick="toggleCustomBuilder(true)">Configurează</button>
+        </div>
+      </div>
+
+      <div class="extra-form" id="custom-builder">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div>
+            <div style="font-size:14px;font-weight:800;color:var(--acc)">🎛️ Constructor de Bilet</div>
+            <div style="font-size:11px;color:var(--muted)">Setezi direcția, iar AI-ul caută cel mai curat bilet posibil în limitele tale.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" style="font-size:11px;padding:6px 10px" onclick="applyCustomPreset('safe')">Conservator</button>
+            <button class="btn btn-primary" style="font-size:11px;padding:6px 10px;background:linear-gradient(135deg,var(--pur),var(--acc))" onclick="applyCustomPreset('balanced')">Echilibrat</button>
+            <button class="btn" style="font-size:11px;padding:6px 10px;background:var(--brd);color:var(--txt)" onclick="applyCustomPreset('attack')">Agresiv</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group"><label>Miza (RON)</label><input type="number" id="cust-stake" class="form-input" value="50" min="1" step="1"></div>
+          <div class="form-group"><label>Cota totală dorită</label><input type="number" id="cust-target-odds" class="form-input" value="2.20" min="1.05" step="0.05"></div>
+          <div class="form-group"><label>Nr. evenimente</label><input type="number" id="cust-picks" class="form-input" value="2" min="1" max="8"></div>
+          <div class="form-group"><label>Format</label><select id="cust-format" class="form-input"><option value="combo">Combo</option><option value="single">Single</option></select></div>
+          <div class="form-group"><label>Nivel risc</label><select id="cust-risk" class="form-input"><option value="low">Scăzut</option><option value="medium" selected>Mediu</option><option value="high">Ridicat</option></select></div>
+          <div class="form-group"><label>Mod generare</label><select id="cust-mode" class="form-input"><option value="strict">Strict</option><option value="flex" selected>Flexibil</option><option value="optimize">Optimizează AI</option></select></div>
+        </div>
+
+        <div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:var(--txt)">Piețe permise</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-over15" checked style="margin-right:6px">Over 1.5</label>
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-over25" checked style="margin-right:6px">Over 2.5</label>
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-btts" checked style="margin-right:6px">BTTS</label>
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-home" checked style="margin-right:6px">1</label>
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-away" checked style="margin-right:6px">2</label>
+        </div>
+
+        <div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:var(--txt)">Filtre suplimentare</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-ai-only" checked style="margin-right:6px">Doar AI recommended</label>
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-fav-only" style="margin-right:6px">Favorit aliniat</label>
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-goals-only" style="margin-right:6px">Doar goluri</label>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="generateCustomTicket()" style="flex:1;justify-content:center;min-width:180px">Generează bilet personalizat</button>
+          <button class="btn" onclick="toggleCustomBuilder()" style="background:var(--brd);color:var(--txt)">Închide</button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:center">
+        <button class="btn" onclick="toggleAdvancedGenerators()" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">🧰 Mai multe generatoare</button>
+      </div>
+
+      <div id="advanced-generators" style="display:none">
+        <div class="bilet-card" style="margin-bottom:0;padding:16px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px">Generatoare secundare / experimentale</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="generateTicket()">🛡️ Bilet Simplu EV</button>
+            <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--acc),var(--cyan))" onclick="generateOver15Ticket()">🔥 Bilet 1.5G EV+</button>
+            <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateMixTicket()">🎯 Mix 70%</button>
+          </div>
+        </div>
+      </div>
     </div>
+
     <div id="bilete-container"></div>
   </div>
 
@@ -1755,6 +1858,7 @@ function finalizeTicket(type, label, picks, totalOdds){
   var combinedProb = computeConservativeCombinedProb(picks);
   var riskLabel =
     type === 'profit_single' ? 'Scăzut+' :
+    type === 'best_single' ? 'Scăzut' :
     type === 'simple' ? 'Scăzut' :
     type === 'over15' ? 'Mediu' :
     type === 'mix_combo' ? 'Mediu+' :
@@ -1832,6 +1936,219 @@ function generateTicket(){
   }
 
   finalizeTicket('simple', '🛡️ Bilet Smart EV', [], 1);
+}
+
+
+function toggleAdvancedGenerators(){
+  var el = $('advanced-generators');
+  if(!el) return;
+  el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+}
+
+function toggleCustomBuilder(forceOpen){
+  var el = $('custom-builder');
+  if(!el) return;
+  if(forceOpen) el.classList.add('show');
+  else el.classList.toggle('show');
+}
+
+function applyCustomPreset(type){
+  $('cust-format').value = type === 'safe' ? 'single' : 'combo';
+  $('cust-stake').value = type === 'attack' ? 20 : type === 'balanced' ? 40 : 60;
+  $('cust-target-odds').value = type === 'safe' ? '1.45' : type === 'balanced' ? '2.40' : '4.50';
+  $('cust-picks').value = type === 'safe' ? 1 : type === 'balanced' ? 3 : 5;
+  $('cust-risk').value = type === 'safe' ? 'low' : type === 'balanced' ? 'medium' : 'high';
+  $('cust-mode').value = type === 'safe' ? 'strict' : type === 'balanced' ? 'flex' : 'optimize';
+
+  $('cb-over15').checked = true;
+  $('cb-over25').checked = type !== 'safe';
+  $('cb-btts').checked = type === 'balanced';
+  $('cb-home').checked = type !== 'attack';
+  $('cb-away').checked = type !== 'attack';
+  $('cb-ai-only').checked = true;
+  $('cb-fav-only').checked = type === 'safe';
+  $('cb-goals-only').checked = type === 'attack';
+}
+
+function getCustomAllowedTypes(){
+  var types = [];
+  if($('cb-over15').checked) types.push('over15');
+  if($('cb-over25').checked) types.push('over25');
+  if($('cb-btts').checked) types.push('btts');
+  if($('cb-home').checked) types.push('homeWin');
+  if($('cb-away').checked) types.push('awayWin');
+  if(!types.length) types = ['over15','over25','btts','homeWin','awayWin'];
+  return types;
+}
+
+function getCustomProfile(){
+  var risk = $('cust-risk').value;
+  var map = {
+    low:    { minAdjProb: 76, minValue: 0.012, minConf: 52, minOdd: 1.12, maxOdd: 1.55, maxSameLeague: 1, maxSameMarket: 1 },
+    medium: { minAdjProb: 72, minValue: 0.008, minConf: 48, minOdd: 1.12, maxOdd: 1.85, maxSameLeague: 1, maxSameMarket: 2 },
+    high:   { minAdjProb: 68, minValue: 0.000, minConf: 42, minOdd: 1.10, maxOdd: 2.35, maxSameLeague: 2, maxSameMarket: 3 }
+  };
+  return map[risk] || map.medium;
+}
+
+function relaxedCustomProfile(base, relax){
+  return {
+    minAdjProb: base.minAdjProb - (relax * 3),
+    minValue: Math.max(0, base.minValue - (relax * 0.004)),
+    minConf: base.minConf - (relax * 3),
+    minOdd: Math.max(1.05, base.minOdd - (relax * 0.03)),
+    maxOdd: base.maxOdd + (relax * 0.18),
+    maxSameLeague: base.maxSameLeague,
+    maxSameMarket: base.maxSameMarket
+  };
+}
+
+function customCandidateFilter(c){
+  if(!c || !c.bestBet) return false;
+
+  if($('cb-goals-only').checked && ['over15','over25','btts'].indexOf(c.bestBet.type) === -1) return false;
+  if($('cb-ai-only').checked && !c.hasMlRec) return false;
+
+  if($('cb-fav-only').checked && (c.bestBet.type === 'homeWin' || c.bestBet.type === 'awayWin')){
+    if(c.bestBet.type === 'homeWin' && !(c.favorite === 'H' && c.predictedResult === 'H')) return false;
+    if(c.bestBet.type === 'awayWin' && !(c.favorite === 'A' && c.predictedResult === 'A')) return false;
+  }
+
+  return true;
+}
+
+function collectCustomCandidates(opts, relax){
+  var profile = relaxedCustomProfile(getCustomProfile(), relax);
+  var out = [];
+
+  ALL_MATCHES.forEach(function(m){
+    if(!passesSelectionFilter(m)) return;
+
+    opts.allowedTypes.forEach(function(t){
+      var c = buildMarketCandidate(m, t);
+      if(!c || !c.bestBet) return;
+      if(c.bestBet.adjProb < profile.minAdjProb) return;
+      if(c.bestBet.value < profile.minValue) return;
+      if(c.confidence < profile.minConf) return;
+      if(c.bestBet.odds < profile.minOdd || c.bestBet.odds > profile.maxOdd) return;
+      if(!customCandidateFilter(c)) return;
+      out.push(c);
+    });
+  });
+
+  out.sort(function(a,b){
+    if(b.ticketScore !== a.ticketScore) return b.ticketScore - a.ticketScore;
+    if((b.bestBet.value || 0) !== (a.bestBet.value || 0)) return (b.bestBet.value || 0) - (a.bestBet.value || 0);
+    return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0);
+  });
+
+  return { list: out, profile: profile };
+}
+
+function chooseCustomSingle(candidates, targetOdds){
+  if(!candidates || !candidates.length) return null;
+  var ranked = candidates.slice().sort(function(a,b){
+    var aScore = (a.ticketScore || 0) - Math.abs((a.bestBet.odds || 0) - targetOdds) * 12;
+    var bScore = (b.ticketScore || 0) - Math.abs((b.bestBet.odds || 0) - targetOdds) * 12;
+    return bScore - aScore;
+  });
+  return ranked[0] || null;
+}
+
+function setCustomTicketMeta(stake, risk){
+  if(!BILETE) return;
+  BILETE.stake = Number(stake || 0);
+  BILETE.riskLabel = risk === 'low' ? 'Scăzut' : risk === 'medium' ? 'Mediu' : 'Ridicat';
+}
+
+function generateControlledComboTicket(){
+  var baseProfile = {
+    allowedTypes: ['homeWin', 'awayWin', 'over15', 'over25', 'btts'],
+    minAdjProb: 74,
+    minValue: 0.010,
+    minConf: 50,
+    minOdd: 1.18,
+    maxOdd: 1.60,
+    minPicks: 3,
+    maxPicks: 4,
+    targetMinOdds: 2.20,
+    targetMaxOdds: 4.20,
+    hardMaxOdds: 5.20,
+    maxSameLeague: 1,
+    maxSameMarket: 2
+  };
+
+  for(var relax = 0; relax <= 2; relax++){
+    var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
+    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
+    if(chosen.picks.length >= 3 && chosen.totalOdds >= 2.10){
+      finalizeTicket('controlled_combo', '⚖️ Combo controlat', chosen.picks, chosen.totalOdds);
+      if(BILETE) BILETE.riskLabel = 'Mediu';
+      renderBilete();
+      return;
+    }
+  }
+
+  finalizeTicket('controlled_combo', '⚖️ Combo controlat', [], 1);
+}
+
+function generateCustomTicket(){
+  var opts = {
+    stake: Number($('cust-stake').value || 0),
+    targetOdds: Math.max(1.05, Number($('cust-target-odds').value || 1.50)),
+    picks: Math.max(1, parseInt($('cust-picks').value || '1', 10)),
+    format: $('cust-format').value,
+    risk: $('cust-risk').value,
+    mode: $('cust-mode').value,
+    allowedTypes: getCustomAllowedTypes()
+  };
+
+  if(opts.format === 'single') opts.picks = 1;
+
+  var maxRelax = opts.mode === 'strict' ? 0 : opts.mode === 'flex' ? 2 : 3;
+
+  for(var relax = 0; relax <= maxRelax; relax++){
+    var pack = collectCustomCandidates(opts, relax);
+
+    if(opts.format === 'single'){
+      var single = chooseCustomSingle(pack.list, opts.targetOdds);
+      if(single){
+        finalizeTicket('custom_single', '🎛️ Bilet personalizat', [single], single.bestBet.odds);
+        setCustomTicketMeta(opts.stake, opts.risk);
+        renderBilete();
+        toast('Bilet personalizat generat!', 'ok');
+        return;
+      }
+      continue;
+    }
+
+    var profile = {
+      minPicks: opts.picks,
+      maxPicks: opts.mode === 'optimize' ? Math.max(2, opts.picks) : opts.picks,
+      targetMinOdds: Math.max(1.10, opts.targetOdds * 0.82),
+      targetMaxOdds: opts.targetOdds * 1.18,
+      hardMaxOdds: opts.targetOdds * 1.45,
+      maxSameLeague: pack.profile.maxSameLeague,
+      maxSameMarket: pack.profile.maxSameMarket
+    };
+
+    var chosen = selectDiversifiedPicks(pack.list, profile);
+    if(chosen.picks.length >= Math.min(profile.minPicks, opts.mode === 'optimize' ? 2 : profile.minPicks) && chosen.totalOdds >= profile.targetMinOdds){
+      finalizeTicket('custom_combo', '🎛️ Bilet personalizat', chosen.picks, chosen.totalOdds);
+      setCustomTicketMeta(opts.stake, opts.risk);
+      renderBilete();
+      toast('Bilet personalizat generat!', 'ok');
+      return;
+    }
+  }
+
+  if(opts.mode === 'optimize' && opts.format === 'combo' && opts.picks > 2){
+    $('cust-picks').value = Math.max(2, opts.picks - 1);
+    generateCustomTicket();
+    return;
+  }
+
+  finalizeTicket('custom_combo', '🎛️ Bilet personalizat', [], 1);
 }
 
 function generateOver15Ticket(){
@@ -2147,6 +2464,7 @@ function renderBilete(){
   var totalOdds = BILETE.totalOdds;
   var combinedProb = BILETE.combinedProb || computeConservativeCombinedProb(picks);
   var stake = BILETE.stake || getStakeForTicket(BILETE.type);
+  var stakeText = stake && stake > 0 ? (Number(stake).toFixed(0) + ' RON') : 'manuală la plasare';
   var avgEdgePct = ((BILETE.avgEdge || 0) * 100);
 
   var html = '<div class="bilet-card">'+
@@ -2154,7 +2472,7 @@ function renderBilete(){
       '<div class="bilet-title">'+(BILETE.label || '🎯 Bilet')+' <span style="font-size:12px;color:var(--muted);font-weight:400">'+picks.length+' selectii</span></div>'+
       '<div class="bilet-cota" style="color:var(--grn)">'+totalOdds.toFixed(2)+'x</div>'+
     '</div>'+
-    '<div class="bilet-meta">Probabilitate conservatoare: <strong style="color:var(--acc)">'+combinedProb.toFixed(1)+'%</strong> • Miza: <strong style="color:var(--yel)">manuală la plasare</strong> • Edge mediu: <strong style="color:var(--grn)">'+(avgEdgePct>=0?'+':'')+avgEdgePct.toFixed(1)+'%</strong> • Risc: <strong style="color:var(--pur)">'+(BILETE.riskLabel || '—')+'</strong></div>';
+    '<div class="bilet-meta">Probabilitate conservatoare: <strong style="color:var(--acc)">'+combinedProb.toFixed(1)+'%</strong> • Miza: <strong style="color:var(--yel)">'+stakeText+'</strong> • Edge mediu: <strong style="color:var(--grn)">'+(avgEdgePct>=0?'+':'')+avgEdgePct.toFixed(1)+'%</strong> • Risc: <strong style="color:var(--pur)">'+(BILETE.riskLabel || '—')+'</strong></div>';
 
   picks.forEach(function(m){
     var b = m.bestBet;
