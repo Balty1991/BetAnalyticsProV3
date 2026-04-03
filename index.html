@@ -441,7 +441,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,-app
       <button class="filter-btn" onclick="setFilter('safe',this)">🟢 Safe</button>
       <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
       <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
-      <button class="filter-btn" onclick="setFilter('bttsno',this)">🚫 NG</button>
       <select class="sort-select" id="sort-select" onchange="renderMatches()">
         <option value="score">🎯 Smart Score</option>
         <option value="ev">💰 EV (Expected Value)</option>
@@ -464,7 +463,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,-app
   <!-- ===== BILETE ===== -->
   <div class="tab-content" id="tab-bilete">
     <div style="display:grid;gap:16px;margin-bottom:22px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:2px">🎫 Bilete AI</div><div style="font-size:11px;color:var(--muted);margin-bottom:12px">Generatoare curate, fără dubluri vizuale.</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:2px">🎫 Bilete AI</div><div style="font-size:11px;color:var(--muted);margin-bottom:12px">Generatoare curate, fără dubluri vizuale.</div><div id="ticket-focus-sections" style="display:grid;gap:12px;margin-bottom:18px"></div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
         <div class="bilet-card" style="margin-bottom:0;padding:16px">
@@ -653,7 +652,7 @@ var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
 var BLOCKED_MARKETS = [];
 var DATA_UPDATED_AT = null;
-var PROFITABLE_MATCH_TYPES = ['over15', 'bttsNo'];
+var PROFITABLE_MATCH_TYPES = ['over15'];
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
@@ -3308,6 +3307,39 @@ function calcBankroll(){
     '<div class="bk-item"><div class="bk-label">💰 Bankroll actual</div><div class="bk-val" style="color:var(--grn)">'+actualBk.toFixed(2)+' RON</div><div class="bk-sub">Se actualizează automat</div></div>';
 }
 
+function relocateDashboardFocusToTickets(){
+  var target = $('ticket-focus-sections');
+  if(!target || target.dataset.moved === '1') return;
+
+  var moved = [];
+
+  function moveNode(node){
+    if(node) moved.push(node);
+  }
+
+  var todayBody = $('todaybest-body');
+  if(todayBody){
+    var todaySection = todayBody.parentElement;
+    moveNode(todaySection);
+  }
+
+  [['top5-hdr','top5-body'], ['topsafe-hdr','topsafe-body'], ['ml-hdr','ml-body'], ['mldc-hdr','mldc-body'], ['ml15-hdr','ml15-body']].forEach(function(pair){
+    var hdr = $(pair[0]);
+    var body = $(pair[1]);
+    if(hdr && body){
+      var wrap = document.createElement('div');
+      wrap.style.display = 'grid';
+      wrap.style.gap = '0';
+      wrap.appendChild(hdr);
+      wrap.appendChild(body);
+      moved.push(wrap);
+    }
+  });
+
+  moved.forEach(function(node){ target.appendChild(node); });
+  target.dataset.moved = '1';
+}
+
 // ============================================================
 // COLLAPSIBLE SECTIONS
 // ============================================================
@@ -3385,6 +3417,7 @@ window.addEventListener('DOMContentLoaded', function(){
   // Try to restore token from localStorage
   var st=localStorage.getItem('bsd_token');
   if(st) API_TOKEN=st;
+  relocateDashboardFocusToTickets();
   ['todaybest','top5'].forEach(function(id){
     var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle']};
     var pair=map[id];
