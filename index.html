@@ -485,7 +485,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="generateBestEventTicket()">⭐ Recomandarea AI</button>
-          <button class="btn btn-green" onclick="toggleCustomBuilder(true)">🎛️ Constructor personalizat</button>
         </div>
       </div>
 
@@ -2006,17 +2005,45 @@ function relaxedCustomProfile(base, relax){
 function customCandidateFilter(c){
   if(!c || !c.bestBet) return false;
 
-  if($('cb-goals-only').checked && ['over15','over25','btts'].indexOf(c.bestBet.type) === -1) return false;
-  if($('cb-ai-only').checked && !c.hasMlRec) return false;
+  var t = c.bestBet.type;
+  var ls = parseLikelyScore(c.mostLikelyScore);
 
-  if($('cb-fav-only').checked && (c.bestBet.type === 'homeWin' || c.bestBet.type === 'awayWin')){
-    if(c.bestBet.type === 'homeWin' && !(c.favorite === 'H' && c.predictedResult === 'H')) return false;
-    if(c.bestBet.type === 'awayWin' && !(c.favorite === 'A' && c.predictedResult === 'A')) return false;
+  if($('cb-goals-only').checked){
+    if(['over15','over25','btts'].indexOf(t) === -1) return false;
+
+    if(t === 'over15'){
+      if(c.probOver15 < 76) return false;
+      if(Number(c.xgTotal || 0) < 2.20) return false;
+      if(ls && ls.total < 2) return false;
+    }
+
+    if(t === 'over25'){
+      if(c.probOver25 < 60) return false;
+      if(Number(c.xgTotal || 0) < 2.70) return false;
+      if(ls && ls.total < 3) return false;
+    }
+
+    if(t === 'btts'){
+      if(c.probBtts < 58) return false;
+      if(Number(c.xgHome || 0) < 0.90 || Number(c.xgAway || 0) < 0.90) return false;
+      if(ls && !ls.btts) return false;
+    }
+  }
+
+  if($('cb-ai-only').checked){
+    if(t === 'over15' && !(c.mlFlags && c.mlFlags.o15)) return false;
+    if(t === 'over25' && !(c.mlFlags && c.mlFlags.o25)) return false;
+    if(t === 'btts' && !(c.mlFlags && c.mlFlags.btts)) return false;
+    if((t === 'homeWin' || t === 'awayWin') && !(c.mlFlags && (c.mlFlags.winner || c.mlFlags.fav))) return false;
+  }
+
+  if($('cb-fav-only').checked && (t === 'homeWin' || t === 'awayWin')){
+    if(t === 'homeWin' && !(c.favorite === 'H' && c.predictedResult === 'H')) return false;
+    if(t === 'awayWin' && !(c.favorite === 'A' && c.predictedResult === 'A')) return false;
   }
 
   return true;
 }
-
 function collectCustomCandidates(opts, relax){
   var profile = relaxedCustomProfile(getCustomProfile(), relax);
   var out = [];
@@ -2167,6 +2194,7 @@ function generateCustomTicket(){
       continue;
     }
 
+    var marketSpreadNeed = Math.ceil(currentPicks / Math.max(1, opts.allowedTypes.length));
     var profile = {
       minPicks: currentPicks,
       maxPicks: opts.mode === 'optimize' ? Math.max(2, currentPicks) : currentPicks,
@@ -2174,7 +2202,7 @@ function generateCustomTicket(){
       targetMaxOdds: currentTargetOdds * 1.18,
       hardMaxOdds: currentTargetOdds * 1.50,
       maxSameLeague: pack.profile.maxSameLeague,
-      maxSameMarket: pack.profile.maxSameMarket
+      maxSameMarket: Math.max(pack.profile.maxSameMarket, marketSpreadNeed)
     };
 
     var minNeeded = Math.min(profile.minPicks, opts.mode === 'optimize' ? 2 : profile.minPicks);
