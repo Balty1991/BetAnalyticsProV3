@@ -382,6 +382,15 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">Rezumat compact: perioadă analizată, motor, piața și strategia de bilet cu context real din backtest.</div>
     </div>
 
+
+    <div class="section" id="market-distribution-panel" style="margin-top:0;margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(34,197,94,.04));border:1px solid rgba(168,85,247,.16);box-shadow:0 10px 28px rgba(0,0,0,.14)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--txt)">📚 Distribuție piețe</div>
+        <div style="font-size:10px;color:var(--muted)">selecții eligibile • edge mediu • scor mediu</div>
+      </div>
+      <div id="market-distribution-table"></div>
+    </div>
+
     <!-- Top 2 Ale Zilei -->
     <div class="section" style="margin-bottom:12px">
       <div class="sec-hdr collapsible-header" onclick="toggleSection('todaybest')" style="border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;background:rgba(34,197,94,.05);margin-bottom:0;cursor:pointer">
@@ -506,18 +515,40 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <button class="filter-btn" onclick="setFilter('win',this)">🏁 1 / 2</button>
       <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
       <select class="sort-select" id="sort-select" onchange="renderMatches()">
-        <option value="date" selected>📅 Data</option>
+        <option value="date" selected>🕒 Ora meciului</option>
+        <option value="edge">📈 Edge</option>
         <option value="prob">📊 Probabilitate</option>
+        <option value="score">🧠 Score</option>
         <option value="value">💰 Value</option>
       </select>
       <span class="filter-count" id="filter-count">0 meciuri</span>
     </div>
-    <!-- League filter -->
-    <div class="league-filter-wrap" style="display:none">
+    <div class="league-filter-wrap" style="margin-top:10px">
       <label style="font-size:11px;color:var(--muted)">Liga:</label>
       <select class="league-filter-select" id="league-filter" onchange="renderMatches()">
         <option value="">Toate Ligile</option>
       </select>
+      <label style="font-size:11px;color:var(--muted)">Perioadă:</label>
+      <select class="league-filter-select" id="match-date-filter" onchange="renderMatches()">
+        <option value="all">Toate</option>
+        <option value="today">Azi</option>
+        <option value="3">1–3 zile</option>
+        <option value="7">1–7 zile</option>
+        <option value="14">1–14 zile</option>
+      </select>
+      <label style="font-size:11px;color:var(--muted)">Piață:</label>
+      <select class="league-filter-select" id="match-market-filter" onchange="renderMatches()">
+        <option value="">Toate piețele</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="Over 1.5G">Over 1.5G</option>
+        <option value="Over 2.5G">Over 2.5G</option>
+        <option value="BTTS">BTTS</option>
+      </select>
+      <label style="font-size:11px;color:var(--muted)">Min. prob.</label>
+      <input id="match-min-prob" class="bk-input" type="number" min="0" max="100" step="1" value="0" onchange="renderMatches()" style="width:96px">
+      <label style="font-size:11px;color:var(--muted)">Min. edge</label>
+      <input id="match-min-edge" class="bk-input" type="number" min="-20" max="50" step="0.5" value="0" onchange="renderMatches()" style="width:96px">
     </div>
     <div id="matches-container"></div>
   </div>
@@ -681,24 +712,41 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
   <!-- ===== BANKROLL ===== -->
   <div class="tab-content" id="tab-bankroll">
-    <div class="bankroll-card">
-      <div class="sec-title" style="margin-bottom:16px">💰 Management Bankroll</div>
-      <div class="bk-input-row">
-        <label style="font-size:13px;font-weight:600">Bankroll initial (RON):</label>
-        <input type="number" class="bk-input" id="bankroll-input" value="1000" min="10" step="50" onchange="calcBankroll()"/>
-        <button class="btn btn-primary" onclick="calcBankroll()">Calculeaza</button>
-      </div>
-      <div id="bk-current-status" style="margin-bottom:20px;padding:16px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Bankroll Actual</div>
-          <div id="bk-actual-val" style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--grn)">1000.00 RON</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
+      <div class="bankroll-card" style="margin-bottom:0">
+        <div class="sec-title" style="margin-bottom:16px">💰 Management Bankroll</div>
+        <div class="bk-input-row">
+          <label style="font-size:13px;font-weight:600">Bankroll inițial (RON):</label>
+          <input type="number" class="bk-input" id="bankroll-input" value="1000" min="10" step="50" onchange="calcBankroll()"/>
+          <label style="font-size:13px;font-weight:600">Conservative %:</label>
+          <input type="number" class="bk-input" id="bk-cons-pct" value="2" min="0.1" step="0.1" onchange="calcBankroll()" style="width:90px"/>
+          <label style="font-size:13px;font-weight:600">Balanced %:</label>
+          <input type="number" class="bk-input" id="bk-balanced-pct" value="4" min="0.1" step="0.1" onchange="calcBankroll()" style="width:90px"/>
+          <label style="font-size:13px;font-weight:600">Goals %:</label>
+          <input type="number" class="bk-input" id="bk-goals-pct" value="3" min="0.1" step="0.1" onchange="calcBankroll()" style="width:90px"/>
+          <button class="btn btn-primary" onclick="calcBankroll()">Salvează</button>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Profit/Pierdere</div>
-          <div id="bk-profit-val" style="font-size:18px;font-weight:700;font-family:var(--mono)">+0.00 RON</div>
+        <div id="bk-current-status" style="margin-bottom:20px;padding:16px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Bankroll actual</div>
+            <div id="bk-actual-val" style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--grn)">1000.00 RON</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Profit / Pierdere</div>
+            <div id="bk-profit-val" style="font-size:18px;font-weight:700;font-family:var(--mono)">+0.00 RON</div>
+          </div>
         </div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Mizele sugerate pentru biletele generate se calculează în RON direct din procentele tale. Profitul și pierderea vin din Tracking, nu din povești pescărești.</div>
+        <div class="bk-grid" id="bk-grid"></div>
       </div>
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--brd);font-size:12px;color:var(--muted)">Bankrollul se actualizează automat din rezultatele salvate în Tracking. Miza o introduci manual când marchezi un bilet ca plasat.</div><div class="bk-grid" id="bk-grid"></div>
+
+      <div class="bankroll-card" style="margin-bottom:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <div class="sec-title" style="margin-bottom:0">📓 Jurnal bilete</div>
+          <button class="btn" onclick="clearJournal()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.22);color:var(--red)">Șterge jurnalul</button>
+        </div>
+        <div id="ticket-journal"></div>
+      </div>
     </div>
   </div>
 
@@ -720,7 +768,8 @@ var APP_META = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
-var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{"initial":1000,"safe":2,"medium":5,"risk":10}');
+var TICKET_JOURNAL = JSON.parse(localStorage.getItem('bet_ticket_journal') || '[]');
+var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{"initial":1000,"cons":2,"balanced":4,"goals":3}');
 var API_TOKEN = ''; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
@@ -863,7 +912,8 @@ function calcSmartScore(adjProb, value, confidence, edgePct){
   var c = normalizeConfidence(confidence);
   var edge = Number(edgePct || 0);
   var probScore = Math.min(52, (safePct(adjProb)/100)*52);
-  var valueScore = Math.min(14, Math.max(0, value)*90);
+  var valueBase = Math.max(Number(value || 0), -0.05);
+  var valueScore = Math.max(-5, Math.min(14, valueBase * 90));
   var edgeScore = Math.min(18, Math.max(0, edge) * 1.8);
   var confScore = Math.min(8, (c/100)*8);
   return Math.round(probScore + valueScore + edgeScore + confScore);
@@ -1925,6 +1975,10 @@ function resetMatchFilters(){
   var first = document.querySelector('.filter-btn');
   if(first) first.classList.add('active');
   if($('league-filter')) $('league-filter').value = '';
+  if($('match-date-filter')) $('match-date-filter').value = 'all';
+  if($('match-market-filter')) $('match-market-filter').value = '';
+  if($('match-min-prob')) $('match-min-prob').value = 0;
+  if($('match-min-edge')) $('match-min-edge').value = 0;
   if($('sort-select')) $('sort-select').value = 'date';
   renderMatches();
 }
@@ -1943,31 +1997,48 @@ function renderMatches(){
   var container = $('matches-container');
   var sort = $('sort-select').value;
   var leagueF = $('league-filter') ? $('league-filter').value : '';
+  var dateF = $('match-date-filter') ? $('match-date-filter').value : 'all';
+  var marketF = $('match-market-filter') ? $('match-market-filter').value : '';
+  var minProb = $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0;
+  var minEdge = $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0;
+  var now = Date.now();
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
     if(leagueF && m.league !== leagueF) return false;
-    if(CURRENT_FILTER === 'all') return m.analysisState === 'ELIGIBLE';
-    if(CURRENT_FILTER === 'safe') return m.analysisState === 'ELIGIBLE' && m.verdict === 'safe';
-    if(CURRENT_FILTER === 'moderate') return m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate';
-    if(CURRENT_FILTER === 'value') return m.analysisState === 'ELIGIBLE' && b && b.value >= 0.05;
-    if(CURRENT_FILTER === 'o15') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over15';
-    if(CURRENT_FILTER === 'issues') return m.analysisState !== 'ELIGIBLE';
-    if(CURRENT_FILTER === 'btts') return m.analysisState === 'ELIGIBLE' && b && b.type === 'btts';
-    if(CURRENT_FILTER === 'o25') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over25';
-    if(CURRENT_FILTER === 'win') return m.analysisState === 'ELIGIBLE' && b && (b.type === 'homeWin' || b.type === 'awayWin');
-    return m.analysisState === 'ELIGIBLE';
+    if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
+    if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
+    if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
+    if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.05)) return false;
+    if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
+    if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
+    if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
+    if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
+    if(CURRENT_FILTER === 'win' && !(m.analysisState === 'ELIGIBLE' && b && (b.type === 'homeWin' || b.type === 'awayWin'))) return false;
+    if(!b) return false;
+
+    if(dateF === 'today'){
+      if(fmtDateKey(m.date) !== fmtDateKey(new Date().toISOString())) return false;
+    } else if(dateF !== 'all'){
+      var days = (new Date(m.date).getTime() - now) / 86400000;
+      if(days < 0 || days > Number(dateF)) return false;
+    }
+
+    if(marketF && b.label !== marketF) return false;
+    if((b.adjProb || 0) < minProb) return false;
+    if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
+    return true;
   });
 
   filtered.sort(function(a,b){
-    var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0};
-    var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0};
+    var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
+    var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
     if(sort === 'score') return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
     if(sort === 'value') return (bBet.value||0) - (aBet.value||0);
     if(sort === 'prob') return (bBet.adjProb||0) - (aBet.adjProb||0);
+    if(sort === 'edge') return (bBet.edgePct||0) - (aBet.edgePct||0);
     if(sort === 'conf') return (b.confidence||0) - (a.confidence||0);
-    if(sort === 'date') return new Date(a.date) - new Date(b.date);
-    return 0;
+    return new Date(a.date) - new Date(b.date);
   });
 
   $('filter-count').textContent = filtered.length + ' meciuri';
@@ -1976,61 +2047,67 @@ function renderMatches(){
     return;
   }
 
-  var groups = {};
-  filtered.forEach(function(m){
-    if(!groups[m.dateLabel]) groups[m.dateLabel] = [];
-    groups[m.dateLabel].push(m);
-  });
+  function renderCard(m){
+    var b = m.bestBet || null;
+    var state = getAnalysisStateMeta(m.analysisState);
+    var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
+    var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
+    var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
+    var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
+    var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
+    var recLabel = b ? b.label : 'Fără recomandare activă';
+    var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
+    var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
+    var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
+    var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
+    var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
+    var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
+    return '<div class="match-card '+verdictClass+'">'+
+      '<div class="mc-head">'+
+        '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
+        '<div class="mc-time"><span>🕒 '+m.dateLabel+' • '+m.timeLabel+'</span>'+scoreBadge+'</div>'+
+      '</div>'+
+      '<div class="mc-teams mc-teams-premium">'+
+        '<div class="mc-team"><div class="mc-team-row">'+hLogo+'<span>'+m.home+'</span></div></div>'+
+        '<div class="mc-vs">VS</div>'+
+        '<div class="mc-team away"><div class="mc-team-row">'+aLogo+'<span>'+m.away+'</span></div></div>'+
+      '</div>'+
+      '<div class="mc-midrow">'+
+        '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
+        (b && b.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '')+
+      '</div>'+
+      '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
+        '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG total</div></div>'+
+      '</div>'+
+      '<div class="card-reco-main">'+
+        '<div class="card-reco-head">'+
+          '<div class="card-reco-title">Pronostic recomandat</div>'+
+          (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
+        '</div>'+
+        '<div class="card-reco-pick">'+recLabel+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+'</div>'+
+      '</div>'+
+      (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
+    '</div>';
+  }
 
   var html = '';
-  Object.keys(groups).forEach(function(date){
-    html += '<div class="date-group"><div class="date-label">📅 '+date+'</div><div class="matches-grid">';
-    html += groups[date].map(function(m){
-      var b = m.bestBet || null;
-      var state = getAnalysisStateMeta(m.analysisState);
-      var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
-      var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
-      var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
-      var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
-      var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
-      var recLabel = b ? b.label : 'Fără recomandare activă';
-      var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
-      var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
-      var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
-      var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
-      var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
-      return '<div class="match-card '+verdictClass+'">'+
-        '<div class="mc-head">'+
-          '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
-          '<div class="mc-time"><span>🕒 '+m.dateLabel+' • '+m.timeLabel+'</span>'+scoreBadge+'</div>'+
-        '</div>'+
-        '<div class="mc-teams mc-teams-premium">'+
-          '<div class="mc-team"><div class="mc-team-row">'+hLogo+'<span>'+m.home+'</span></div></div>'+
-          '<div class="mc-vs">VS</div>'+
-          '<div class="mc-team away"><div class="mc-team-row">'+aLogo+'<span>'+m.away+'</span></div></div>'+
-        '</div>'+
-        '<div class="mc-midrow">'+
-          '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
-          (b && b.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '')+
-        '</div>'+
-        '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
-          '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
-          '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
-          '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG total</div></div>'+
-        '</div>'+
-        '<div class="card-reco-main">'+
-          '<div class="card-reco-head">'+
-            '<div class="card-reco-title">Pronostic recomandat</div>'+
-            (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
-          '</div>'+
-          '<div class="card-reco-pick">'+recLabel+'</div>'+
-          '<div class="card-reco-badges">'+probBadge+valueBadge+confBadge+'</div>'+
-        '</div>'+
-        (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
-      '</div>';
-    }).join('');
-    html += '</div></div>';
-  });
+  if(sort === 'date'){
+    var groups = {};
+    filtered.forEach(function(m){
+      if(!groups[m.dateLabel]) groups[m.dateLabel] = [];
+      groups[m.dateLabel].push(m);
+    });
+    Object.keys(groups).forEach(function(date){
+      html += '<div class="date-group"><div class="date-label">📅 '+date+'</div><div class="matches-grid">';
+      html += groups[date].map(renderCard).join('');
+      html += '</div></div>';
+    });
+  } else {
+    html = '<div class="matches-grid">' + filtered.map(renderCard).join('') + '</div>';
+  }
 
   container.innerHTML = html;
 }
@@ -2750,17 +2827,20 @@ function setCustomTicketMeta(stake, risk){
   BILETE.riskLabel = risk === 'low' ? 'Scăzut' : risk === 'medium' ? 'Mediu' : 'Ridicat';
 }
 
+function getBankrollCategoryForTicket(type){
+  if(type === 'over15') return 'goals';
+  if(type === 'simple' || type === 'best_single' || type === 'profit_single' || type === 'controlled_combo') return 'cons';
+  return 'balanced';
+}
+
 function getStakeForTicket(type){
-  var bk = Number((BANKROLL_SETTINGS && BANKROLL_SETTINGS.initial) || 1000);
-  var pctMap = {
-    best_single: 2.0,
-    profit_single: 2.0,
-    simple: 3.0,
-    controlled_combo: 2.5,
-    mix_combo: 1.5,
-    big_win: 0.75
-  };
-  var pct = pctMap[type] != null ? pctMap[type] : 2.0;
+  var settings = Object.assign({initial:1000,cons:2,balanced:4,goals:3}, BANKROLL_SETTINGS || {});
+  if(settings.cons == null && settings.safe != null) settings.cons = settings.safe;
+  if(settings.balanced == null && settings.medium != null) settings.balanced = settings.medium;
+  if(settings.goals == null && settings.risk != null) settings.goals = settings.risk;
+  var bk = Number(settings.initial || 1000);
+  var category = getBankrollCategoryForTicket(type);
+  var pct = Number(settings[category] || 2);
   var stake = bk * (pct / 100);
   stake = Math.max(10, Math.round(stake));
   return stake;
@@ -3364,7 +3444,8 @@ function renderBilete(){
     '</div>';
   });
 
-  html += '<div style="margin-top:16px;text-align:center">'+
+  html += '<div style="margin-top:16px;display:grid;gap:10px">'+
+    '<button onclick="storeTicket()" class="btn btn-primary" style="padding:12px 24px;font-size:14px;width:100%;justify-content:center">📌 PLASEAZĂ ÎN JURNAL</button>'+
     '<button onclick="placeCurrentTicket()" class="btn btn-green" style="padding:12px 24px;font-size:14px;width:100%;justify-content:center">✅ MARCHEAZĂ CA PLASAT</button>'+
   '</div></div>';
 
@@ -3410,6 +3491,8 @@ function placeCurrentTicket(){
   toast('Bilet inregistrat in tracking!', 'ok');
   BILETE = null;
   renderBilete();
+  renderTracking();
+  calcBankroll();
 }
 
 
@@ -3583,22 +3666,138 @@ function exportHistory(){
   }
 }
 
+function renderMarketDistribution(){
+  var target = $('market-distribution-table');
+  if(!target) return;
+  var summary = {};
+  ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.bestBet; }).forEach(function(m){
+    var key = m.bestBet.label || m.bestBet.type || '—';
+    if(!summary[key]) summary[key] = {count:0, edge:0, score:0};
+    summary[key].count += 1;
+    summary[key].edge += Number(m.bestBet.edgePct || 0);
+    summary[key].score += Number(m.bestBet.score || 0);
+  });
+  var rows = Object.keys(summary).sort(function(a,b){ return summary[b].count - summary[a].count; });
+  if(!rows.length){
+    target.innerHTML = '<div class="empty-state">Nu există selecții eligibile pentru distribuția pe piețe.</div>';
+    return;
+  }
+  var html = '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'+
+    '<thead><tr style="color:var(--muted);text-transform:uppercase;font-size:10px"><th style="text-align:left;padding:8px;border-bottom:1px solid var(--brd)">Piață</th><th style="text-align:right;padding:8px;border-bottom:1px solid var(--brd)">Selecții</th><th style="text-align:right;padding:8px;border-bottom:1px solid var(--brd)">Edge mediu</th><th style="text-align:right;padding:8px;border-bottom:1px solid var(--brd)">Score mediu</th></tr></thead><tbody>';
+  rows.forEach(function(name){
+    var item = summary[name];
+    var avgEdge = item.count ? item.edge / item.count : 0;
+    var avgScore = item.count ? item.score / item.count : 0;
+    html += '<tr>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);font-weight:700">'+name+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+item.count+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+(avgEdge>=0?'var(--grn)':'var(--red)')+'">'+(avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+avgScore.toFixed(1)+'</td>'+
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  target.innerHTML = html;
+}
+
+function renderJournal(){
+  var target = $('ticket-journal');
+  if(!target) return;
+  if(!TICKET_JOURNAL || !TICKET_JOURNAL.length){
+    target.innerHTML = '<div class="empty-state">Jurnalul este gol. Când găsești un bilet bun, îl pui aici și nu-l mai cauți ca pe șoseta dispărută.</div>';
+    return;
+  }
+  target.innerHTML = TICKET_JOURNAL.slice(0, 20).map(function(t){
+    var picksHtml = (t.picks || []).map(function(p){
+      return '<div style="margin-top:6px;font-size:11px;color:var(--txt)"><strong>'+p.home+' vs '+p.away+'</strong> • '+p.bet+' @ '+Number(p.odds || 0).toFixed(2)+'</div>';
+    }).join('');
+    return '<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
+        '<div><div style="font-size:13px;font-weight:700">'+(t.criteria || t.label || 'Bilet')+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+new Date(t.createdAt).toLocaleString('ro-RO')+' • '+(t.picks ? t.picks.length : 0)+' selecții • risc '+(t.riskLabel || '—')+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:var(--grn)">'+Number(t.totalOdds || 1).toFixed(2)+'x</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+Number(t.stake || 0).toFixed(2)+' RON</div></div>'+
+      '</div>'+
+      + picksHtml +
+    '</div>';
+  }).join('');
+}
+
+function storeTicket(){
+  if(!BILETE || !BILETE.picks || !BILETE.picks.length){
+    toast('Generează mai întâi un bilet', 'err');
+    return;
+  }
+  var entry = {
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    label: BILETE.label || 'Bilet generat',
+    criteria: BILETE.label || 'Bilet generat',
+    riskLabel: BILETE.riskLabel || '—',
+    totalOdds: Number(BILETE.totalOdds || 1),
+    combinedProb: Number(BILETE.combinedProb || computeConservativeCombinedProb(BILETE.picks) || 0),
+    stake: Number(BILETE.stake || getStakeForTicket(BILETE.type) || 0),
+    picks: BILETE.picks.map(function(m){
+      var b = m.bestBet || m;
+      return {
+        home: m.home,
+        away: m.away,
+        bet: b.label || '',
+        odds: Number(b.odds || 0),
+        prob: Number(b.adjProb || b.prob || 0),
+        edgePct: Number(b.edgePct || 0),
+        score: Number(b.score || 0),
+        league: m.league || '',
+        date: m.date || ''
+      };
+    })
+  };
+  TICKET_JOURNAL.unshift(entry);
+  localStorage.setItem('bet_ticket_journal', JSON.stringify(TICKET_JOURNAL));
+  renderJournal();
+  toast('Bilet salvat în jurnal', 'ok');
+}
+
+function clearJournal(){
+  if(!TICKET_JOURNAL.length){
+    toast('Jurnalul este deja gol', 'ok');
+    return;
+  }
+  TICKET_JOURNAL = [];
+  localStorage.setItem('bet_ticket_journal', JSON.stringify(TICKET_JOURNAL));
+  renderJournal();
+  toast('Jurnal șters', 'ok');
+}
+
 // ============================================================
 // BANKROLL
 // ============================================================
 function calcBankroll(){
-  var initialBk=parseFloat($('bankroll-input').value)||1000;
-  BANKROLL_SETTINGS = Object.assign({safe:2,medium:5,risk:10}, BANKROLL_SETTINGS || {}, {initial:initialBk});
-  localStorage.setItem('bet_bankroll_settings',JSON.stringify(BANKROLL_SETTINGS));
-  var totalProfit=TRACKING.reduce(function(acc,t){ return acc+t.profit; },0);
-  var actualBk=initialBk+totalProfit;
-  $('bk-actual-val').textContent=actualBk.toFixed(2)+' RON';
-  $('bk-profit-val').textContent=(totalProfit>=0?'+':'')+totalProfit.toFixed(2)+' RON';
-  $('bk-profit-val').style.color=totalProfit>=0?'var(--grn)':'var(--red)';
-  $('bk-grid').innerHTML=
+  var initialBk = parseFloat($('bankroll-input').value) || 1000;
+  var consPct = parseFloat($('bk-cons-pct').value) || 2;
+  var balancedPct = parseFloat($('bk-balanced-pct').value) || 4;
+  var goalsPct = parseFloat($('bk-goals-pct').value) || 3;
+
+  BANKROLL_SETTINGS = Object.assign({initial:1000,cons:2,balanced:4,goals:3}, BANKROLL_SETTINGS || {}, {
+    initial: initialBk,
+    cons: consPct,
+    balanced: balancedPct,
+    goals: goalsPct
+  });
+  localStorage.setItem('bet_bankroll_settings', JSON.stringify(BANKROLL_SETTINGS));
+
+  var totalProfit = TRACKING.reduce(function(acc,t){ return acc + Number(t.profit || 0); }, 0);
+  var actualBk = initialBk + totalProfit;
+  $('bk-actual-val').textContent = actualBk.toFixed(2)+' RON';
+  $('bk-profit-val').textContent = (totalProfit>=0?'+':'')+totalProfit.toFixed(2)+' RON';
+  $('bk-profit-val').style.color = totalProfit>=0 ? 'var(--grn)' : 'var(--red)';
+
+  $('bk-grid').innerHTML =
     '<div class="bk-item"><div class="bk-label">📦 Bankroll inițial</div><div class="bk-val" style="color:var(--acc)">'+initialBk.toFixed(2)+' RON</div><div class="bk-sub">Valoare introdusă manual</div></div>'+
     '<div class="bk-item"><div class="bk-label">📈 Profit/Pierdere totală</div><div class="bk-val" style="color:'+(totalProfit>=0?'var(--grn)':'var(--red)')+'">'+(totalProfit>=0?'+':'')+totalProfit.toFixed(2)+' RON</div><div class="bk-sub">Din Tracking</div></div>'+
-    '<div class="bk-item"><div class="bk-label">💰 Bankroll actual</div><div class="bk-val" style="color:var(--grn)">'+actualBk.toFixed(2)+' RON</div><div class="bk-sub">Se actualizează automat</div></div>';
+    '<div class="bk-item"><div class="bk-label">💰 Bankroll actual</div><div class="bk-val" style="color:var(--grn)">'+actualBk.toFixed(2)+' RON</div><div class="bk-sub">Se actualizează automat</div></div>'+
+    '<div class="bk-item"><div class="bk-label">🧊 Conservative</div><div class="bk-val" style="color:var(--grn)">'+(actualBk * consPct / 100).toFixed(2)+' RON</div><div class="bk-sub">'+consPct.toFixed(1)+'% per bilet curat / low risk</div></div>'+
+    '<div class="bk-item"><div class="bk-label">⚖️ Balanced</div><div class="bk-val" style="color:var(--acc)">'+(actualBk * balancedPct / 100).toFixed(2)+' RON</div><div class="bk-sub">'+balancedPct.toFixed(1)+'% pentru combo echilibrat</div></div>'+
+    '<div class="bk-item"><div class="bk-label">🔥 Goals</div><div class="bk-val" style="color:var(--yel)">'+(actualBk * goalsPct / 100).toFixed(2)+' RON</div><div class="bk-sub">'+goalsPct.toFixed(1)+'% pentru bilete pe goluri</div></div>';
+
+  renderJournal();
 }
 
 // ============================================================
@@ -3687,6 +3886,7 @@ function renderAll(){
 
   buildLeagueFilter();
   renderBacktest();
+  renderMarketDistribution();
   renderTodayBest();
   renderTopPicks();
   renderTopSafe();
@@ -3702,9 +3902,15 @@ function renderAll(){
 }
 
 window.addEventListener('DOMContentLoaded', function(){
-  if(BANKROLL_SETTINGS){
-    $('bankroll-input').value=BANKROLL_SETTINGS.initial||1000;
-  }
+  BANKROLL_SETTINGS = Object.assign({initial:1000,cons:2,balanced:4,goals:3}, BANKROLL_SETTINGS || {});
+  if(BANKROLL_SETTINGS.cons == null && BANKROLL_SETTINGS.safe != null) BANKROLL_SETTINGS.cons = BANKROLL_SETTINGS.safe;
+  if(BANKROLL_SETTINGS.balanced == null && BANKROLL_SETTINGS.medium != null) BANKROLL_SETTINGS.balanced = BANKROLL_SETTINGS.medium;
+  if(BANKROLL_SETTINGS.goals == null && BANKROLL_SETTINGS.risk != null) BANKROLL_SETTINGS.goals = BANKROLL_SETTINGS.risk;
+  if($('bankroll-input')) $('bankroll-input').value = BANKROLL_SETTINGS.initial || 1000;
+  if($('bk-cons-pct')) $('bk-cons-pct').value = BANKROLL_SETTINGS.cons || 2;
+  if($('bk-balanced-pct')) $('bk-balanced-pct').value = BANKROLL_SETTINGS.balanced || 4;
+  if($('bk-goals-pct')) $('bk-goals-pct').value = BANKROLL_SETTINGS.goals || 3;
+  renderJournal();
   // Try to restore token from localStorage
   var st=localStorage.getItem('bsd_token');
   if(st) API_TOKEN=st;
