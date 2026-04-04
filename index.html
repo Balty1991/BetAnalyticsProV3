@@ -350,7 +350,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         <div id="backtest-updated" style="font-size:9px;color:var(--muted);font-family:var(--mono)">—</div>
       </div>
       <div id="backtest-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px"></div>
-      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">ROI, sample, health și atât. Fără roman.</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">Rezumat compact: perioadă analizată, motor, piața și strategia de bilet cu context real din backtest.</div>
     </div>
 
     <!-- Top 2 Ale Zilei -->
@@ -703,6 +703,15 @@ var LAST_DAY_KEY = '';
 function $(id){ return document.getElementById(id); }
 function fmt(n,d){ return (d===undefined?Math.round(n):n.toFixed(d)); }
 function fmtPct(n){ return n.toFixed(1)+'%'; }
+function fmtSignedPct(n){
+  var num = Number(n || 0);
+  return (num >= 0 ? '+' : '') + fmtPct(num);
+}
+function rankBacktestRows(a,b){
+  if((Number(b && b.roi || 0)) !== (Number(a && a.roi || 0))) return Number(b && b.roi || 0) - Number(a && a.roi || 0);
+  if((Number(b && b.winrate || 0)) !== (Number(a && a.winrate || 0))) return Number(b && b.winrate || 0) - Number(a && a.winrate || 0);
+  return Number(b && b.bets || 0) - Number(a && a.bets || 0);
+}
 function fmtDateTime(iso){
   if(!iso) return '—';
   var d=new Date(iso);
@@ -1520,34 +1529,139 @@ function renderBacktest(){
   var bt = BACKTEST_SUMMARY || {};
   var MIN_MARKET_BETS = 10;
   var MIN_LEAGUE_BETS = 10;
-  if(updated) updated.textContent = bt.updated_at ? fmtDateTime(bt.updated_at) : '—';
+  var overall = bt.overall || {};
+  var health = (typeof APP_META !== 'undefined' && APP_META && APP_META.data_health) || {};
+
+  if(updated) updated.textContent = bt.updated_at ? ('Backtest actualizat: ' + fmtDateTime(bt.updated_at)) : 'Backtest: —';
   if(!bt.engine_bets){
     box.innerHTML = '<div class="empty-state" style="padding:10px">Nu există suficiente date istorice procesate încă.</div>';
     return;
   }
 
-  var qualifiedMarkets = (bt.by_market || []).filter(function(x){ return (x.bets || 0) >= MIN_MARKET_BETS; });
-  var qualifiedLeagues = (bt.by_league || []).filter(function(x){ return (x.bets || 0) >= MIN_LEAGUE_BETS; });
+  var qualifiedMarkets = (bt.by_market || []).filter(function(x){
+    return (x.bets || 0) >= MIN_MARKET_BETS && ['BTTS No','NG'].indexOf(String(x.key || x.label || '').trim()) === -1;
+  }).sort(rankBacktestRows);
+  var qualifiedLeagues = (bt.by_league || []).filter(function(x){ return (x.bets || 0) >= MIN_LEAGUE_BETS; }).sort(rankBacktestRows);
+
+  var visibleStrategyKeys = {
+    best_single: true,
+    conservative: true,
+    smart_ev: true,
+    simple: true,
+    over15: true,
+    mix_combo: true,
+    big_win: true,
+    custom_combo: true,
+    custom_single: true
+  };
+  var qualifiedStrategies = (bt.by_strategy || []).filter(function(x){
+    return (x.bets || 0) >= 3 && !!visibleStrategyKeys[String(x.key || '').trim()];
+  }).sort(rankBacktestRows);
+
   var bestMarket = qualifiedMarkets.length ? qualifiedMarkets[0] : null;
   var bestLeague = qualifiedLeagues.length ? qualifiedLeagues[0] : null;
-  var bestStrategy = (bt.by_strategy || []).filter(function(x){ return (x.bets || 0) >= 3; })[0] || null;
-  var health = (typeof APP_META !== 'undefined' && APP_META && APP_META.data_health) || {};
-  var rows = [
-    {label:'Bets motor', value: bt.engine_bets, pct: Math.min(100, (bt.engine_bets/200)*100), color:'var(--acc)'},
-    {label:'ROI motor', value: ((Number(bt.engine_roi||0)>=0?'+':'') + fmtPct(bt.engine_roi||0)), pct: Math.min(100, Math.abs(Number(bt.engine_roi||0))*20), color: Number(bt.engine_roi||0)>=0 ? 'var(--grn)' : 'var(--red)'},
-    {label:'Win rate', value: fmtPct(bt.engine_winrate||0), pct: Number(bt.engine_winrate||0), color:'var(--grn)'},
-    {label:'Sample', value: (bt.engine_bets || 0) >= 120 ? 'OK' : 'Mic', pct: Math.min(100,(bt.engine_bets||0)/1.2), color:'var(--yel)'},
-    {label:'Top piață', value: bestMarket ? bestMarket.key : '—', pct: bestMarket ? Math.min(100, Math.abs(bestMarket.roi||0)*20) : 0, color:'var(--pur)'},
-    {label:'Top ligă', value: bestLeague ? bestLeague.key : '—', pct: bestLeague ? Math.min(100, Math.abs(bestLeague.roi||0)*20) : 0, color:'var(--cyan)'},
-    {label:'Top strategie', value: bestStrategy ? (bestStrategy.label || bestStrategy.key) : '—', pct: bestStrategy ? Math.min(100, Math.abs(bestStrategy.roi||0)*20) : 0, color:'var(--acc)'},
-    {label:'Fără cote/date', value: health.events_without_odds != null ? health.events_without_odds : '—', pct: health.events_without_odds != null ? Math.min(100, Number(health.events_without_odds)) : 0, color:'var(--muted)'}
-  ];
-  box.innerHTML = '<div style="display:grid;grid-template-columns:1fr;gap:6px">'+rows.map(function(r){
-    return '<div style="padding:8px 10px;border:1px solid var(--brd2);border-radius:10px;background:linear-gradient(180deg,rgba(20,30,55,.9),rgba(14,22,40,.9))">'+
-      '<div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;margin-bottom:6px"><span style="color:var(--muted)">'+r.label+'</span><strong style="font-family:var(--mono);color:'+r.color+'">'+r.value+'</strong></div>'+
-      '<div style="height:4px;background:rgba(255,255,255,.05);border-radius:999px;overflow:hidden"><div style="height:100%;width:'+Math.max(6, r.pct || 0)+'%;background:'+r.color+';border-radius:999px"></div></div>'+
+  var bestStrategy = qualifiedStrategies.length ? qualifiedStrategies[0] : null;
+
+  var engineWins = bt.engine_wins != null ? bt.engine_wins : (overall.wins || 0);
+  var engineBets = bt.engine_bets || 0;
+  var engineWinrate = bt.engine_winrate != null ? bt.engine_winrate : (overall.winrate || 0);
+  var lookbackDays = bt.lookback_days || 0;
+  var finishedPredictions = bt.finished_predictions || 0;
+  var sampleLabel = engineBets >= 120 ? 'Solid' : engineBets >= 60 ? 'Mediu' : 'Mic';
+
+  function makeMeta(detailParts){
+    return detailParts.filter(Boolean).join(' • ');
+  }
+
+  function buildCard(card){
+    var valueText = String(card.value == null ? '—' : card.value);
+    var valueSize = valueText.length > 22 ? '12px' : valueText.length > 16 ? '13px' : valueText.length > 12 ? '15px' : '18px';
+    return '<div style="min-height:112px;padding:10px;border:1px solid var(--brd2);border-radius:14px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.18)">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">'+
+        '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">'+card.label+'</div>'+
+        '<div style="width:42px;height:4px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;flex-shrink:0"><div style="height:100%;width:'+Math.max(8, Math.min(100, Number(card.pct || 0)))+'%;background:'+card.color+';border-radius:999px"></div></div>'+
+      '</div>'+
+      '<div style="font-size:'+valueSize+';font-weight:800;line-height:1.15;color:'+card.color+';'+(card.mono ? 'font-family:var(--mono);' : '')+'word-break:break-word">'+valueText+'</div>'+
+      '<div style="margin-top:6px;font-size:10px;line-height:1.35;color:var(--txt)">'+(card.detail || '—')+'</div>'+
+      '<div style="margin-top:6px;font-size:9px;line-height:1.35;color:var(--muted)">'+(card.legend || '')+'</div>'+
     '</div>';
-  }).join('')+'</div>';
+  }
+
+  var cards = [
+    {
+      label:'Motor',
+      value: engineBets,
+      detail: makeMeta([engineWins + '/' + engineBets + ' win', 'sample ' + sampleLabel]),
+      legend: makeMeta(['cotă medie ' + Number(bt.engine_avg_odds || overall.avg_odds || 0).toFixed(2), 'edge mediu ' + fmtSignedPct(Number(bt.engine_avg_edge || overall.avg_edge || 0))]),
+      pct: Math.min(100, (engineBets / 180) * 100),
+      color:'var(--acc)',
+      mono:true
+    },
+    {
+      label:'ROI motor',
+      value: fmtSignedPct(Number(bt.engine_roi || 0)),
+      detail: makeMeta(['profit ' + Number(bt.engine_profit || overall.profit || 0).toFixed(2) + 'u', engineWins + '/' + engineBets + ' win']),
+      legend: 'backtest agregat pe motorul actual',
+      pct: Math.min(100, Math.abs(Number(bt.engine_roi || 0)) * 10),
+      color: Number(bt.engine_roi || 0) >= 0 ? 'var(--grn)' : 'var(--red)',
+      mono:true
+    },
+    {
+      label:'Win rate',
+      value: fmtPct(Number(engineWinrate || 0)),
+      detail: makeMeta([engineWins + ' câștigate', (engineBets - engineWins) + ' pierdute']),
+      legend: 'raport win din pariurile recomandate și închise',
+      pct: Number(engineWinrate || 0),
+      color:'var(--grn)',
+      mono:true
+    },
+    {
+      label:'Perioadă analizată',
+      value: lookbackDays ? ('' + lookbackDays + ' zile') : '—',
+      detail: makeMeta([finishedPredictions + ' predicții închise', bt.updated_at ? ('update ' + fmtDateTime(bt.updated_at)) : null]),
+      legend: 'toate valorile de mai sus folosesc aceeași fereastră',
+      pct: Math.min(100, finishedPredictions / 4),
+      color:'var(--yel)'
+    },
+    {
+      label:'Top piață',
+      value: bestMarket ? (bestMarket.label || bestMarket.key) : '—',
+      detail: bestMarket ? makeMeta(['ROI ' + fmtSignedPct(Number(bestMarket.roi || 0)), (bestMarket.wins || 0) + '/' + (bestMarket.bets || 0) + ' win']) : 'Fără piață cu sample suficient',
+      legend: bestMarket ? makeMeta(['win rate ' + fmtPct(Number(bestMarket.winrate || 0)), 'cotă medie ' + Number(bestMarket.avg_odds || 0).toFixed(2)]) : 'minim 10 recomandări',
+      pct: bestMarket ? Number(bestMarket.winrate || 0) : 0,
+      color:'var(--pur)'
+    },
+    {
+      label:'Top ligă',
+      value: bestLeague ? (bestLeague.label || bestLeague.key) : '—',
+      detail: bestLeague ? makeMeta(['ROI ' + fmtSignedPct(Number(bestLeague.roi || 0)), (bestLeague.wins || 0) + '/' + (bestLeague.bets || 0) + ' win']) : 'Fără ligă cu sample suficient',
+      legend: bestLeague ? ('minim ' + MIN_LEAGUE_BETS + ' recomandări în backtest') : 'minim 10 recomandări',
+      pct: bestLeague ? Number(bestLeague.winrate || 0) : 0,
+      color:'var(--cyan)'
+    },
+    {
+      label:'Top strategie bilet',
+      value: bestStrategy ? (bestStrategy.label || bestStrategy.key) : '—',
+      detail: bestStrategy ? makeMeta(['ROI ' + fmtSignedPct(Number(bestStrategy.roi || 0)), (bestStrategy.wins || 0) + '/' + (bestStrategy.bets || 0) + ' win']) : 'Nicio strategie din secțiunea Bilete nu are sample suficient',
+      legend: bestStrategy ? 'filtrat doar la strategiile afișate în secțiunea Bilete' : 'exclud strategiile ascunse sau scoase din UI',
+      pct: bestStrategy ? Number(bestStrategy.winrate || 0) : 0,
+      color:'var(--acc)'
+    },
+    {
+      label:'Health date',
+      value: health.events_without_odds != null ? health.events_without_odds : '—',
+      detail: (health.events_without_odds || 0) === 0 ? 'toate evenimentele au cote și dată' : makeMeta([(health.events_without_odds || 0) + ' evenimente fără cote/date', 'cu cât mai mic, cu atât mai bine']),
+      legend: 'nu intră în top dacă lipsesc datele critice',
+      pct: health.events_without_odds != null ? Math.max(8, 100 - Math.min(100, Number(health.events_without_odds) * 1.35)) : 0,
+      color:'var(--muted)',
+      mono:true
+    }
+  ];
+
+  box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'+cards.map(buildCard).join('')+'</div>'+
+    '<div style="margin-top:10px;padding:8px 10px;border:1px dashed rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.02);font-size:10px;line-height:1.45;color:var(--muted)">'+
+      '<strong style="color:var(--txt)">Legendă:</strong> win/recomandate = pariuri câștigate din total pariuri recomandate în backtest; ROI = randamentul acelei categorii pe perioada afișată; top strategie = doar biletele pe care le ai în secțiunea Bilete.'+
+    '</div>';
 } 
 
 function buildMlRecommendTags(m){
