@@ -4,10 +4,6 @@ on:
   schedule:
     - cron: '*/15 * * * *'
   workflow_dispatch:
-  push:
-    paths-ignore:
-      - '.keep-alive'
-      - 'README.md'
 
 permissions:
   contents: write
@@ -40,20 +36,18 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python fetch_data.py
 
-      - name: Commit and push changes
+      - name: Commit and push changes when data changed
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          echo "$(date -u '+%Y-%m-%d %H:%M UTC')" > .last-run
-          git add data/ .last-run
-          
+          git add data/
+
           if git diff --staged --quiet; then
-            echo "No changes - keep-alive commit"
-            git commit --allow-empty -m "Keep-alive $(date -u '+%Y-%m-%d %H:%M UTC')"
-          else
-            git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo "No data changes detected. Skipping commit."
+            exit 0
           fi
-          
+
+          git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase origin main || true
           git push origin HEAD:main
 
