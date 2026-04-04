@@ -267,6 +267,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 /* COMPACT DASHBOARD / MATCH CARDS */
 #topsafe-hdr,#topsafe-body,#mldc-hdr,#mldc-body,#ml25-hdr,#ml25-body{display:none!important}
 .compact-note{font-size:11px;color:var(--muted);line-height:1.5}
+#dashboard-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important}
+#dashboard-stats .stat-card{padding:10px;border-radius:10px}
+#dashboard-stats .stat-num{font-size:14px}
+#dashboard-stats .stat-lbl{font-size:9px}
+@media(max-width:600px){#dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .card-reco-main{margin-top:10px;padding:12px;border-radius:10px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.22)}
 .card-reco-title{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
 .card-reco-pick{font-size:16px;font-weight:800;color:var(--txt)}
@@ -341,8 +346,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
     <div class="section" id="health-panel" style="margin-bottom:12px;padding:10px 12px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.18)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-        <div style="font-size:14px;font-weight:700;color:var(--txt)">📌 Panou rapid</div>
-        <div id="backtest-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+        <div style="font-size:12px;font-weight:700;color:var(--txt)">📌 Panou rapid</div>
+        <div id="backtest-updated" style="font-size:9px;color:var(--muted);font-family:var(--mono)">—</div>
       </div>
       <div id="backtest-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px"></div>
       <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">ROI, sample, health și atât. Fără roman.</div>
@@ -381,10 +386,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <!-- ML Recommendations -->
     <div class="sec-hdr collapsible-header" id="ml-hdr" onclick="toggleSection('ml')" style="border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:10px 14px;background:rgba(59,130,246,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
       <div class="sec-title">🤖 ML CatBoost <span class="sec-badge">CatBoost</span> <span class="collapse-count" id="ml-count">—</span></div>
-      <div style="display:flex;align-items:center;gap:8px"><select class="sort-select" id="ml-sort" onclick="event.stopPropagation()" onchange="renderML()"><option value="prob">Prob.</option><option value="date">Data</option></select><span class="collapse-toggle" id="ml-toggle">▼</span></div>
+      <span class="collapse-toggle" id="ml-toggle">▼</span>
     </div>
     <div class="collapsible-body" id="ml-body">
-      <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:11px;color:var(--muted)">
+      <div style="display:flex;justify-content:flex-end;margin-top:10px"><select class="sort-select" id="ml-sort" onchange="renderML()"><option value="prob">Probabilitate</option><option value="date">Dată</option></select></div>
+      <div style="margin-top:8px;margin-bottom:12px;padding:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:10px;color:var(--muted)">
         <strong style="color:var(--acc)">📊 Ghid Scoruri:</strong> <strong style="color:var(--yel)">30-40%</strong> = Semnal moderat | <strong style="color:var(--grn)">40-50%</strong> = Puternic | <strong style="color:var(--grn)">>50%</strong> = Foarte puternic. Include: <strong>Favorit direct</strong> (nou).
       </div>
       <div class="ml-grid" id="ml-grid"></div>
@@ -405,10 +411,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <!-- ML +1.5G -->
     <div class="sec-hdr collapsible-header" id="ml15-hdr" onclick="toggleSection('ml15')" style="border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;background:rgba(34,197,94,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
       <div class="sec-title">🔥 Radar Over 1.5G <span class="sec-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--grn)">Over 1.5G</span> <span class="collapse-count" id="ml15-count">—</span></div>
-      <div style="display:flex;align-items:center;gap:8px"><select class="sort-select" id="ml15-sort" onclick="event.stopPropagation()" onchange="renderML15()"><option value="prob">Prob.</option><option value="date">Data</option></select><span class="collapse-toggle" id="ml15-toggle" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">▼</span></div>
+      <span class="collapse-toggle" id="ml15-toggle" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">▼</span>
     </div>
     <div class="collapsible-body" id="ml15-body">
-      <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
+      <div style="display:flex;justify-content:flex-end;margin-top:10px"><select class="sort-select" id="ml15-sort" onchange="renderML15()"><option value="prob">Probabilitate</option><option value="date">Dată</option></select></div>
+      <div style="margin-top:8px;margin-bottom:12px;padding:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;font-size:10px;color:var(--muted)">
         <strong style="color:var(--grn)">⚽ Focus pe piața care contează:</strong> aici vezi rapid meciurile cele mai curate pentru <strong style="color:var(--txt)">Peste 1.5 Goluri</strong>.
       </div>
       <div class="ml-grid" id="ml-15-grid"></div>
@@ -1462,32 +1469,16 @@ function buildRecommendationReasons(m, b){
   if(!m || !b) return [];
   var reasons = [];
   var t = b.type;
-  if(t === 'over15'){
-    reasons.push('Prob. O1.5 ' + m.probOver15.toFixed(1) + '%');
+  reasons.push('Șansă estimată ' + b.adjProb.toFixed(1) + '%');
+  if(t === 'over15' || t === 'over25' || t === 'under25' || t === 'under35'){
     reasons.push('xG total ' + m.xgTotal.toFixed(2));
-  } else if(t === 'over25'){
-    reasons.push('Prob. O2.5 ' + m.probOver25.toFixed(1) + '%');
-    reasons.push('xG total ' + m.xgTotal.toFixed(2));
-  } else if(t === 'under25'){
-    reasons.push('Prob. U2.5 ' + m.probUnder25.toFixed(1) + '%');
-    reasons.push('xG total ' + m.xgTotal.toFixed(2));
-  } else if(t === 'under35'){
-    reasons.push('Prob. U3.5 ' + m.probUnder35.toFixed(1) + '%');
-    reasons.push('xG total ' + m.xgTotal.toFixed(2));
-  } else if(t === 'btts'){
-    reasons.push('Prob. BTTS ' + m.probBtts.toFixed(1) + '%');
+  } else if(t === 'btts' || t === 'bttsNo'){
     reasons.push('xG H/A ' + m.xgHome.toFixed(2) + ' / ' + m.xgAway.toFixed(2));
-  } else if(t === 'bttsNo'){
-    reasons.push('Prob. NG ' + m.probBttsNo.toFixed(1) + '%');
-    reasons.push('cel puțin o echipă are xG mic');
   } else if(t === 'homeWin'){
-    reasons.push('1X2 gazde ' + m.probHome.toFixed(1) + '%');
     reasons.push('xG gap +' + Math.max(0, m.xgHome - m.xgAway).toFixed(2));
   } else if(t === 'awayWin'){
-    reasons.push('1X2 oaspeți ' + m.probAway.toFixed(1) + '%');
     reasons.push('xG gap +' + Math.max(0, m.xgAway - m.xgHome).toFixed(2));
   } else if(t === 'draw'){
-    reasons.push('Prob. egal ' + m.probDraw.toFixed(1) + '%');
     reasons.push('echilibru xG ' + Math.abs(m.xgHome - m.xgAway).toFixed(2));
   }
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
@@ -1510,23 +1501,20 @@ function renderMlApiCenter(){
   var avgConf = total ? (ALL_MATCHES.reduce(function(acc,m){ return acc + (m.confidence||0); },0) / total) : 0;
   var newest = ALL_MATCHES.slice().sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); })[0];
   var updatedEl = $('ml-api-updated');
-  if(updatedEl) updatedEl.textContent = newest && newest.createdAt ? ('Ultima generare: '+fmtDateTime(newest.createdAt)) : 'Ultima generare: —';
-  var items = [
-    {label:'1X2 expus', value: total ? Math.round(with1x2*100/total)+'%' : '—', sub: with1x2+' / '+total+' meciuri'},
-    {label:'xG disponibil', value: total ? Math.round(withXg*100/total)+'%' : '—', sub: 'H/A xG pe carduri'},
-    {label:'Eligibile', value: ALL_MATCHES.filter(function(m){ return m.analysisState === "ELIGIBLE"; }).length, sub: 'după audit intern'},
-    {label:'Over 2.5 folosit', value: total ? Math.round(withO25*100/total)+'%' : '—', sub: 'secțiune dedicată + filtre'},
-    {label:'Model metadata', value: total ? Math.round(withMeta*100/total)+'%' : '—', sub: 'versiune + created_at'},
-    {label:'Model dominant', value: versionLabel, sub: 'cea mai frecventă versiune'},
-    {label:'Confidence mediu', value: avgConf ? avgConf.toFixed(1)+'%' : '—', sub: 'medie pe setul curent'}
+  if(updatedEl) updatedEl.textContent = newest && newest.createdAt ? fmtDateTime(newest.createdAt) : '—';
+  var rows = [
+    ['1X2 expus', total ? Math.round(with1x2*100/total)+'%' : '—'],
+    ['xG disponibil', total ? Math.round(withXg*100/total)+'%' : '—'],
+    ['Eligibile', ALL_MATCHES.filter(function(m){ return m.analysisState === "ELIGIBLE"; }).length],
+    ['Over 2.5 folosit', total ? Math.round(withO25*100/total)+'%' : '—'],
+    ['Metadata model', total ? Math.round(withMeta*100/total)+'%' : '—'],
+    ['Model dominant', versionLabel],
+    ['Confidence mediu', avgConf ? avgConf.toFixed(1)+'%' : '—']
   ];
-  box.innerHTML = items.map(function(it){
-    return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--brd2);border-radius:12px;padding:14px">'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase">'+it.label+'</div>'+
-      '<div style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--txt)">'+it.value+'</div>'+
-      '<div style="font-size:10px;color:var(--muted);margin-top:4px">'+it.sub+'</div>'+
-    '</div>';
-  }).join('');
+  box.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+rows.map(function(r){
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--brd2);border-radius:10px;background:rgba(255,255,255,.03);font-size:11px">'+
+      '<span style="color:var(--muted)">'+r[0]+'</span><strong style="font-family:var(--mono)">'+r[1]+'</strong></div>';
+  }).join('')+'</div>';
 }
 
 
@@ -1537,9 +1525,9 @@ function renderBacktest(){
   var bt = BACKTEST_SUMMARY || {};
   var MIN_MARKET_BETS = 10;
   var MIN_LEAGUE_BETS = 10;
-  if(updated) updated.textContent = bt.updated_at ? ('Backtest: ' + fmtDateTime(bt.updated_at)) : 'Backtest: —';
+  if(updated) updated.textContent = bt.updated_at ? fmtDateTime(bt.updated_at) : '—';
   if(!bt.engine_bets){
-    box.innerHTML = '<div class="empty-state" style="padding:18px 10px">Nu există suficiente date istorice procesate încă.</div>';
+    box.innerHTML = '<div class="empty-state" style="padding:10px">Nu există suficiente date istorice procesate încă.</div>';
     return;
   }
 
@@ -1549,37 +1537,20 @@ function renderBacktest(){
   var bestLeague = qualifiedLeagues.length ? qualifiedLeagues[0] : null;
   var bestStrategy = (bt.by_strategy || []).filter(function(x){ return (x.bets || 0) >= 3; })[0] || null;
   var health = (typeof APP_META !== 'undefined' && APP_META && APP_META.data_health) || {};
-  var excluded = (bt.excluded_markets || []).join(', ') || '—';
-  var sampleHealthy = (bt.engine_bets || 0) >= 120;
-  var roiVal = Number(bt.engine_roi || 0);
-  var roiTone = roiVal >= 0 ? 'var(--grn)' : 'var(--red)';
-  var sampleTone = sampleHealthy ? 'var(--grn)' : 'var(--yel)';
-
-  var items = [
-    {label:'Bets motor', value: bt.engine_bets, color:'var(--txt)', sub:(bt.finished_predictions||0)+' finished preds'},
-    {label:'ROI motor', value: ((roiVal>=0?'+':'') + fmtPct(roiVal)), color:roiTone, sub:'miză fixă / audit recent'},
-    {label:'Win Rate', value: fmtPct(bt.engine_winrate||0), color:'var(--txt)', sub:'flat stake'},
-    {label:'Sample audit', value: sampleHealthy ? 'OK' : 'Mic', color:sampleTone, sub:'prag sănătos ≈ 120 bets'},
-    {label:'Top piață validată', value: bestMarket ? bestMarket.key : '—', color:'var(--txt)', sub: bestMarket ? ('ROI ' + ((bestMarket.roi>=0?'+':'') + fmtPct(bestMarket.roi)) + ' / ' + bestMarket.bets + ' bets') : ('minim ' + MIN_MARKET_BETS + ' bets')},
-    {label:'Top ligă validată', value: bestLeague ? bestLeague.key : '—', color:'var(--txt)', sub: bestLeague ? ('ROI ' + ((bestLeague.roi>=0?'+':'') + fmtPct(bestLeague.roi)) + ' / ' + bestLeague.bets + ' bets') : ('minim ' + MIN_LEAGUE_BETS + ' bets')},
-    {label:'Top strategie', value: bestStrategy ? (bestStrategy.label || bestStrategy.key) : '—', color:'var(--txt)', sub: bestStrategy ? ('ROI ' + ((bestStrategy.roi>=0?'+':'') + fmtPct(bestStrategy.roi)) + ' / ' + bestStrategy.bets + ' bets') : 'sample prea mic'},
-    {label:'Fără cote / date', value: health.events_without_odds != null ? health.events_without_odds : '—', color:'var(--txt)', sub:'meciuri fără odds utile în snapshot'},
-    {label:'Age mediu pred.', value: health.avg_prediction_age_hours != null ? (Number(health.avg_prediction_age_hours).toFixed(1)+'h') : '—', color:'var(--txt)', sub:'vechime medie a predicțiilor'},
-    {label:'Piață exclusă', value: excluded, color:'var(--txt)', sub:'scoasă complet din analiză'}
+  var rows = [
+    ['Bets motor', bt.engine_bets],
+    ['ROI motor', ((Number(bt.engine_roi||0)>=0?'+':'') + fmtPct(bt.engine_roi||0))],
+    ['Win rate', fmtPct(bt.engine_winrate||0)],
+    ['Sample', (bt.engine_bets || 0) >= 120 ? 'OK' : 'Mic'],
+    ['Top piață', bestMarket ? bestMarket.key : '—'],
+    ['Top ligă', bestLeague ? bestLeague.key : '—'],
+    ['Top strategie', bestStrategy ? (bestStrategy.label || bestStrategy.key) : '—'],
+    ['Fără cote/date', health.events_without_odds != null ? health.events_without_odds : '—']
   ];
-
-  var note = '<div style="grid-column:1/-1;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted)">'+
-    '<strong style="color:var(--txt)">Interpretare corectă:</strong> top piață / top ligă / top strategie apar doar dacă au sample suficient. '+
-    'ROI-ul este calculat la miză fixă și nu garantează profit viitor.'+
-  '</div>';
-
-  box.innerHTML = items.map(function(it){
-    return '<div style="background:rgba(255,255,255,.03);border:1px solid var(--brd2);border-radius:12px;padding:14px">'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase">'+it.label+'</div>'+
-      '<div style="font-size:20px;font-weight:800;font-family:var(--mono);color:'+(it.color || 'var(--txt)')+'">'+it.value+'</div>'+
-      '<div style="font-size:10px;color:var(--muted);margin-top:4px">'+it.sub+'</div>'+
-    '</div>';
-  }).join('') + note;
+  box.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+rows.map(function(r){
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--brd2);border-radius:10px;background:rgba(255,255,255,.03);font-size:11px">'+
+      '<span style="color:var(--muted)">'+r[0]+'</span><strong style="font-family:var(--mono)">'+r[1]+'</strong></div>';
+  }).join('')+'</div>';
 }
 
 function buildMlRecommendTags(m){
@@ -2760,6 +2731,30 @@ function collectCustomFallbackCandidates(opts){
   return out;
 }
 
+function collectLargeVolumeFallback(opts){
+  var out = [];
+  ALL_MATCHES.forEach(function(m){
+    if(!passesSelectionFilter(m)) return;
+    if(!customDatePass(m)) return;
+    opts.allowedTypes.forEach(function(t){
+      var c = buildMarketCandidate(m, t);
+      if(!c || !c.bestBet) return;
+      if(t === 'over15' && c.probOver15 >= 68 && Number(c.xgTotal || 0) >= 1.90 && c.bestBet.odds >= 1.10 && c.bestBet.odds <= 1.60) out.push(c);
+      else if(t === 'over25' && c.probOver25 >= 55 && Number(c.xgTotal || 0) >= 2.35 && c.bestBet.odds >= 1.20 && c.bestBet.odds <= 2.20) out.push(c);
+      else if(t === 'under35' && c.probUnder35 >= 64 && Number(c.xgTotal || 0) <= 3.20 && c.bestBet.odds >= 1.10 && c.bestBet.odds <= 1.65) out.push(c);
+      else if(['homeWin','awayWin','btts','bttsNo'].indexOf(t) !== -1 && c.bestBet.adjProb >= 60) out.push(c);
+    });
+  });
+  out.sort(function(a,b){
+    if(a.date !== b.date) return new Date(a.date) - new Date(b.date);
+    return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0);
+  });
+  var uniq = [];
+  var seen = {};
+  out.forEach(function(c){ if(!seen[c.eventId]){ seen[c.eventId]=true; uniq.push(c); } });
+  return uniq;
+}
+
 function generateCustomTicket(){
   var opts = {
     stake: parseLocaleNumber($('cust-stake').value, 0),
@@ -2842,6 +2837,19 @@ function generateCustomTicket(){
     if(opts.mode === 'optimize'){
       if(currentPicks > 2) currentPicks -= 1;
       if(currentTargetOdds > 2.0) currentTargetOdds = Math.max(2.0, currentTargetOdds * 0.72);
+    }
+  }
+
+  if(currentPicks > 10){
+    var volumeList = collectLargeVolumeFallback(opts);
+    if(volumeList.length >= currentPicks){
+      var picks = volumeList.slice(0, currentPicks);
+      var totalOdds = picks.reduce(function(acc, item){ return acc * item.bestBet.odds; }, 1);
+      finalizeTicket('custom_combo', '🎛️ Bilet personalizat (volum mare)', picks, totalOdds);
+      setCustomTicketMeta(opts.stake, opts.risk);
+      renderBilete();
+      toast('Fallback volum mare activat', 'warn');
+      return;
     }
   }
 
@@ -3464,7 +3472,7 @@ function calcBankroll(){
 // ============================================================
 // COLLAPSIBLE SECTIONS
 // ============================================================
-var SECTION_STATE={todaybest:true,top5:true,topsafe:false,ml:true,mldc:false,ml15:true,ml25:false};
+var SECTION_STATE={todaybest:false,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false};
 function toggleSection(id){
   SECTION_STATE[id]=!SECTION_STATE[id];
   var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle']};
@@ -3564,7 +3572,6 @@ window.addEventListener('DOMContentLoaded', function(){
   var st=localStorage.getItem('bsd_token');
   if(st) API_TOKEN=st;
   arrangeDashboardLayout();
-  applyOpenSections();
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
   setInterval(doRefresh, 900000);
