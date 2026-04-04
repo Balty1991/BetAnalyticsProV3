@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-# status refresh
 """
-BetAnalytics Pro V16 - Fetcher + Historical Audit
+BetAnalytics Pro V16 - Fetcher + Audit Engine
 
-Scop:
-- predictions/events: la fiecare rulare
-- leagues/teams/players_focus: refresh rar
-- backtest sumar pe istoric recent, folosind predicții BSD + scor final
-- fără live în app (stack static)
+Ce face:
+- trage predictions si upcoming events din BSD API
+- nu foloseste live in app
+- nu mai foloseste Over 3.5G ca piata recomandata/backtestata
+- construieste backtest mai serios: overall, pe piete, pe strategii, pe bucket-uri
+- salveaza si istoric rolling pentru engine-ul principal
 """
 
 import os
@@ -15,6 +15,7 @@ import json
 import math
 import requests
 from datetime import datetime, timezone, timedelta
+from typing import Dict, Any, List, Optional
 
 TOKEN = os.environ.get("BSD_TOKEN", "").strip()
 API_BASE = "https://sports.bzzoiro.com"
@@ -25,6 +26,8 @@ DATA_DIR = "data"
 STATIC_REFRESH_HOURS = {0, 6, 12, 18}  # UTC
 LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
+HISTORY_LOOKBACK_DAYS = 60
+HISTORY_MAX_ROWS = 2500
 
 MARKETS = [
     {"key": "homeWin", "label": "1", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
@@ -34,38 +37,84 @@ MARKETS = [
     {"key": "under15", "label": "Under 1.5G", "prob": lambda r: 100 - pct(r.get("prob_over_15")), "odds": lambda e: e.get("odds_under_15")},
     {"key": "over25", "label": "Over 2.5G", "prob": lambda r: pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_over_25")},
     {"key": "under25", "label": "Under 2.5G", "prob": lambda r: 100 - pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_under_25")},
-    {"key": "over35", "label": "Over 3.5G", "prob": lambda r: pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_over_35")},
     {"key": "under35", "label": "Under 3.5G", "prob": lambda r: 100 - pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_under_35")},
     {"key": "btts", "label": "BTTS", "prob": lambda r: pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_yes")},
     {"key": "bttsNo", "label": "BTTS No", "prob": lambda r: 100 - pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_no")},
 ]
 
-ENGINE_MARKET_SETTINGS = {
-    "homeWin": {"min_adj": 61, "min_conf": 50, "min_value": 0.012, "min_xg_gap": 0.30},
-    "draw": {"min_adj": 58, "min_conf": 55, "min_value": 0.020, "max_xg_gap": 0.35, "max_xg_total": 2.60},
-    "awayWin": {"min_adj": 61, "min_conf": 50, "min_value": 0.012, "min_xg_gap": 0.30},
-    "over15": {"min_adj": 72, "min_conf": 48, "min_value": 0.008, "min_xg_total": 2.10},
-    "under15": {"min_adj": 74, "min_conf": 60, "min_value": 0.030, "max_xg_total": 1.45},
-    "over25": {"min_adj": 64, "min_conf": 52, "min_value": 0.015, "min_xg_total": 2.60},
-    "under25": {"min_adj": 61, "min_conf": 54, "min_value": 0.018, "max_xg_total": 2.55},
-    "over35": {"min_adj": 75, "min_conf": 62, "min_value": 0.040, "min_xg_total": 3.40},
-    "under35": {"min_adj": 73, "min_conf": 60, "min_value": 0.025, "max_xg_total": 3.00},
-    "btts": {"min_adj": 66, "min_conf": 58, "min_value": 0.020, "min_xg_home": 0.95, "min_xg_away": 0.95},
-    "bttsNo": {"min_adj": 64, "min_conf": 56, "min_value": 0.015, "max_min_xg": 1.15},
-}
+MARKET_MAP = {m["key"]: m for m in MARKETS}
 
-ENGINE_MARKET_PRIORITY = {
-    "over15": 9,
-    "homeWin": 4,
-    "awayWin": 4,
-    "over25": 3,
-    "bttsNo": 2,
-    "under25": 1,
-    "draw": 0,
-    "under15": -2,
-    "btts": -6,
-    "under35": -8,
-    "over35": -14,
+STRATEGIES = {
+    "engine_overall": {
+        "label": "Engine Overall",
+        "allowed": {m["key"] for m in MARKETS},
+        "min_adj": 66.0,
+        "min_conf": 45.0,
+        "min_edge": 0.0,
+        "min_value": 0.0,
+        "odd_min": 1.15,
+        "odd_max": 2.25,
+    },
+    "best_single": {
+        "label": "Evenimentul zilei",
+        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts", "bttsNo"},
+        "min_adj": 72.0,
+        "min_conf": 50.0,
+        "min_edge": 1.5,
+        "min_value": 0.0,
+        "odd_min": 1.20,
+        "odd_max": 1.95,
+    },
+    "profit_single": {
+        "label": "Profit Focus Single",
+        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts", "bttsNo"},
+        "min_adj": 70.0,
+        "min_conf": 48.0,
+        "min_edge": 1.0,
+        "min_value": 0.005,
+        "odd_min": 1.18,
+        "odd_max": 1.85,
+    },
+    "conservative": {
+        "label": "Bilet conservator",
+        "allowed": {"over15", "under25", "under35", "bttsNo"},
+        "min_adj": 74.0,
+        "min_conf": 50.0,
+        "min_edge": 0.0,
+        "min_value": -0.01,
+        "odd_min": 1.12,
+        "odd_max": 1.65,
+    },
+    "smart_ev": {
+        "label": "Smart EV",
+        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts", "bttsNo"},
+        "min_adj": 66.0,
+        "min_conf": 45.0,
+        "min_edge": 2.0,
+        "min_value": 0.01,
+        "odd_min": 1.20,
+        "odd_max": 2.20,
+    },
+    "controlled_combo": {
+        "label": "Combo Controlat",
+        "allowed": {"over15", "over25", "under25", "under35", "btts", "bttsNo", "homeWin", "awayWin"},
+        "min_adj": 71.0,
+        "min_conf": 48.0,
+        "min_edge": 0.5,
+        "min_value": 0.0,
+        "odd_min": 1.18,
+        "odd_max": 1.80,
+    },
+    "over15": {
+        "label": "Bilet Over 1.5 EV+",
+        "allowed": {"over15"},
+        "min_adj": 76.0,
+        "min_conf": 50.0,
+        "min_edge": 0.0,
+        "min_value": -0.02,
+        "odd_min": 1.15,
+        "odd_max": 1.60,
+    },
 }
 
 
@@ -109,65 +158,8 @@ def calc_value(prob, odds):
 def adjusted_prob(prob, confidence):
     p = pct(prob)
     c = normalize_confidence(confidence)
-    factor = 0.82 + (c / 100.0) * 0.18
+    factor = 0.93 + (c / 100.0) * 0.07
     return round(p * factor, 2)
-
-
-def ticket_score(adj_prob, value, confidence, xg_total=0.0):
-    c = normalize_confidence(confidence)
-    prob_score = min(55.0, (pct(adj_prob) / 100.0) * 55.0)
-    value_score = min(25.0, max(0.0, value) * 120.0)
-    conf_score = min(20.0, (c / 100.0) * 20.0)
-    xg_bonus = min(10.0, max(0.0, (float(xg_total or 0.0) - 1.5) * 4.0))
-    return round(prob_score + value_score + conf_score + xg_bonus)
-
-
-def expected_goals(row):
-    try:
-        home = float(row.get("expected_home_goals") or 0)
-    except Exception:
-        home = 0.0
-    try:
-        away = float(row.get("expected_away_goals") or 0)
-    except Exception:
-        away = 0.0
-    if not math.isfinite(home):
-        home = 0.0
-    if not math.isfinite(away):
-        away = 0.0
-    total = home + away
-    return home, away, total
-
-
-def engine_market_pass(row, market_key, value, adj, confidence):
-    conf = normalize_confidence(confidence)
-    xg_home, xg_away, xg_total = expected_goals(row)
-    cfg = ENGINE_MARKET_SETTINGS.get(market_key, {})
-
-    if adj < cfg.get("min_adj", 60):
-        return False
-    if conf < cfg.get("min_conf", 50):
-        return False
-    if value < cfg.get("min_value", 0.01):
-        return False
-    if xg_total < cfg.get("min_xg_total", 0):
-        return False
-    if xg_total > cfg.get("max_xg_total", 999):
-        return False
-    if abs(xg_home - xg_away) < cfg.get("min_xg_gap", 0):
-        if cfg.get("min_xg_gap"):
-            return False
-    if abs(xg_home - xg_away) > cfg.get("max_xg_gap", 999):
-        if cfg.get("max_xg_gap") is not None:
-            return False
-    if xg_home < cfg.get("min_xg_home", 0):
-        return False
-    if xg_away < cfg.get("min_xg_away", 0):
-        return False
-    if min(xg_home, xg_away) > cfg.get("max_min_xg", 999):
-        if cfg.get("max_min_xg") is not None:
-            return False
-    return True
 
 
 def parse_scoreline(score):
@@ -193,8 +185,6 @@ def hard_contradiction(row, market_key):
     if market_key == "over25" and score["total"] < 3:
         return True
     if market_key == "under25" and score["total"] >= 3:
-        return True
-    if market_key == "over35" and score["total"] < 4:
         return True
     if market_key == "under35" and score["total"] >= 4:
         return True
@@ -231,8 +221,6 @@ def market_outcome(event, market_key):
         return total >= 3
     if market_key == "under25":
         return total <= 2
-    if market_key == "over35":
-        return total >= 4
     if market_key == "under35":
         return total <= 3
     if market_key == "btts":
@@ -240,6 +228,527 @@ def market_outcome(event, market_key):
     if market_key == "bttsNo":
         return hs == 0 or aw == 0
     return None
+
+
+def compute_no_vig(*odds_values):
+    clean = []
+    for o in odds_values:
+        try:
+            n = float(o or 0)
+        except Exception:
+            return None
+        if n < 1.01:
+            return None
+        clean.append(n)
+    inv = [1.0 / x for x in clean]
+    total = sum(inv)
+    if total <= 0:
+        return None
+    return [v / total * 100.0 for v in inv]
+
+
+def market_prob_from_row_event(row, event, market_key) -> Optional[float]:
+    if market_key == "homeWin":
+        vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
+        return round(vals[0], 2) if vals else None
+    if market_key == "draw":
+        vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
+        return round(vals[1], 2) if vals else None
+    if market_key == "awayWin":
+        vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
+        return round(vals[2], 2) if vals else None
+    if market_key in {"over15", "under15"}:
+        vals = compute_no_vig(event.get("odds_over_15"), event.get("odds_under_15"))
+        if not vals:
+            return None
+        return round(vals[0 if market_key == "over15" else 1], 2)
+    if market_key in {"over25", "under25"}:
+        vals = compute_no_vig(event.get("odds_over_25"), event.get("odds_under_25"))
+        if not vals:
+            return None
+        return round(vals[0 if market_key == "over25" else 1], 2)
+    if market_key == "under35":
+        vals = compute_no_vig(event.get("odds_over_35"), event.get("odds_under_35"))
+        if not vals:
+            return None
+        return round(vals[1], 2)
+    if market_key in {"btts", "bttsNo"}:
+        vals = compute_no_vig(event.get("odds_btts_yes"), event.get("odds_btts_no"))
+        if not vals:
+            return None
+        return round(vals[0 if market_key == "btts" else 1], 2)
+    return None
+
+
+def api_recommend(row, market_key):
+    if market_key == "over15":
+        return bool(row.get("over_15_recommend"))
+    if market_key == "over25":
+        return bool(row.get("over_25_recommend"))
+    if market_key == "btts":
+        return bool(row.get("btts_recommend"))
+    if market_key in {"homeWin", "awayWin"}:
+        fav = row.get("favorite")
+        if not row.get("favorite_recommend"):
+            return False
+        return (market_key == "homeWin" and fav == "H") or (market_key == "awayWin" and fav == "A")
+    return False
+
+
+def heuristic_recommend(row, market_key):
+    if market_key == "over15":
+        return pct(row.get("prob_over_15")) >= 75
+    if market_key == "over25":
+        return pct(row.get("prob_over_25")) >= 65
+    if market_key == "under25":
+        return pct(100 - pct(row.get("prob_over_25"))) >= 58
+    if market_key == "under35":
+        return pct(100 - pct(row.get("prob_over_35"))) >= 70
+    if market_key == "btts":
+        return pct(row.get("prob_btts_yes")) >= 60
+    if market_key == "bttsNo":
+        return pct(100 - pct(row.get("prob_btts_yes"))) >= 58
+    if market_key == "homeWin":
+        return row.get("predicted_result") == "H" and pct(row.get("prob_home_win")) >= 52
+    if market_key == "awayWin":
+        return row.get("predicted_result") == "A" and pct(row.get("prob_away_win")) >= 52
+    if market_key == "draw":
+        return row.get("predicted_result") == "D" and pct(row.get("prob_draw")) >= 32
+    return False
+
+
+def market_fit_score(row, market_key) -> float:
+    xg_home = float(row.get("expected_home_goals") or 0)
+    xg_away = float(row.get("expected_away_goals") or 0)
+    xg_total = xg_home + xg_away
+    scoreline = parse_scoreline(row.get("most_likely_score"))
+    score = 0.0
+
+    if market_key == "over15":
+        if xg_total >= 2.15:
+            score += 10
+        if scoreline and scoreline["total"] >= 2:
+            score += 12
+    elif market_key == "over25":
+        if xg_total >= 2.75:
+            score += 10
+        if scoreline and scoreline["total"] >= 3:
+            score += 12
+    elif market_key == "under25":
+        if xg_total <= 2.55:
+            score += 10
+        if scoreline and scoreline["total"] <= 2:
+            score += 12
+    elif market_key == "under35":
+        if xg_total <= 3.05:
+            score += 9
+        if scoreline and scoreline["total"] <= 3:
+            score += 10
+    elif market_key == "btts":
+        if xg_home >= 0.95 and xg_away >= 0.95:
+            score += 10
+        if scoreline and scoreline["btts"]:
+            score += 10
+    elif market_key == "bttsNo":
+        if xg_home <= 1.15 or xg_away <= 1.15:
+            score += 10
+        if scoreline and not scoreline["btts"]:
+            score += 10
+    elif market_key == "homeWin":
+        if row.get("predicted_result") == "H":
+            score += 10
+        if row.get("favorite") == "H":
+            score += 8
+    elif market_key == "awayWin":
+        if row.get("predicted_result") == "A":
+            score += 10
+        if row.get("favorite") == "A":
+            score += 8
+    elif market_key == "draw":
+        if row.get("predicted_result") == "D":
+            score += 9
+        if scoreline and scoreline["home"] == scoreline["away"]:
+            score += 8
+    return score
+
+
+def calc_smart_score(adj_prob, value, confidence, edge_pct, fit_score, source_api, source_heuristic):
+    c = normalize_confidence(confidence)
+    edge = float(edge_pct or 0)
+    score = 0.0
+    score += min(58.0, (pct(adj_prob) / 100.0) * 58.0)
+    score += min(18.0, max(0.0, edge) * 2.0)
+    score += min(14.0, max(0.0, value) * 120.0)
+    score += min(8.0, (c / 100.0) * 8.0)
+    score += min(14.0, fit_score)
+    if source_api:
+        score += 3.0
+    elif source_heuristic:
+        score += 1.0
+    if value < -0.03:
+        score -= 8.0
+    if edge < -2.0:
+        score -= 12.0
+    return round(score, 2)
+
+
+def verdict_from_metrics(adj_prob, value, confidence, edge_pct):
+    c = normalize_confidence(confidence)
+    edge = float(edge_pct or 0)
+    if adj_prob >= 77 and value >= 0 and c >= 55 and edge >= 1:
+        return "safe"
+    if adj_prob >= 68 and value >= 0 and c >= 45 and edge >= 0:
+        return "value"
+    if adj_prob >= 60 and c >= 40:
+        return "lean"
+    return "avoid"
+
+
+def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
+    market = MARKET_MAP[market_key]
+    event = row.get("event") or {}
+    odds = market["odds"](event)
+    try:
+        odds = float(odds or 0)
+    except Exception:
+        return None
+    if odds < 1.01:
+        return None
+    prob = market["prob"](row)
+    confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
+    value = calc_value(prob, odds)
+    adj = adjusted_prob(prob, confidence)
+    market_prob = market_prob_from_row_event(row, event, market_key)
+    edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
+    fit = market_fit_score(row, market_key)
+    source_api = api_recommend(row, market_key)
+    source_heuristic = heuristic_recommend(row, market_key)
+    score = calc_smart_score(adj, value, confidence, edge_pct, fit, source_api, source_heuristic)
+    verdict = verdict_from_metrics(adj, value, confidence, edge_pct)
+    outcome = market_outcome(event, market_key)
+    if outcome is None:
+        return None
+    return {
+        "market": market["label"],
+        "market_key": market_key,
+        "odds": round(odds, 3),
+        "prob": round(prob, 2),
+        "adj_prob": round(adj, 2),
+        "value": round(value, 4),
+        "confidence": round(confidence, 2),
+        "market_prob": round(market_prob, 2) if market_prob is not None else None,
+        "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
+        "fit_score": round(fit, 2),
+        "score": score,
+        "verdict": verdict,
+        "source_api": bool(source_api),
+        "source_heuristic": bool(source_heuristic),
+        "won": bool(outcome),
+        "league": (event.get("league") or {}).get("name") or "Unknown",
+        "event_id": event.get("id"),
+        "prediction_id": row.get("id"),
+        "date": event.get("event_date"),
+        "created_at": row.get("created_at"),
+        "most_likely_score": row.get("most_likely_score"),
+    }
+
+
+def qualifies_for_strategy(candidate, strategy_cfg):
+    if not candidate:
+        return False
+    if candidate["market_key"] not in strategy_cfg["allowed"]:
+        return False
+    if hard_contradiction({"most_likely_score": candidate.get("most_likely_score")}, candidate["market_key"]):
+        return False
+    if candidate["adj_prob"] < strategy_cfg["min_adj"]:
+        return False
+    if candidate["confidence"] < strategy_cfg["min_conf"]:
+        return False
+    if candidate["value"] < strategy_cfg["min_value"]:
+        return False
+    if candidate["odds"] < strategy_cfg["odd_min"] or candidate["odds"] > strategy_cfg["odd_max"]:
+        return False
+    edge = candidate["edge_pct"] if candidate["edge_pct"] is not None else -999
+    if edge < strategy_cfg["min_edge"]:
+        return False
+    if candidate["verdict"] == "avoid":
+        return False
+    return True
+
+
+def rank_candidate(candidate):
+    rank = candidate["score"]
+    rank += max(0.0, candidate["value"]) * 100.0 * 0.45
+    rank += max(0.0, candidate["edge_pct"] or 0.0) * 0.75
+    if candidate["source_api"]:
+        rank += 2.0
+    return round(rank, 3)
+
+
+def empty_stats(label=None):
+    return {
+        "label": label,
+        "bets": 0,
+        "wins": 0,
+        "losses": 0,
+        "profit": 0.0,
+        "roi": 0.0,
+        "winrate": 0.0,
+        "avg_odds": 0.0,
+        "avg_edge": 0.0,
+        "worst_run": 0,
+        "best_run": 0,
+    }
+
+
+def finalize_pick_stats(picks: List[Dict[str, Any]], label=None):
+    stats = empty_stats(label)
+    if not picks:
+        return stats
+    bets = len(picks)
+    wins = sum(1 for p in picks if p["won"])
+    losses = bets - wins
+    profit = sum((p["odds"] - 1.0) if p["won"] else -1.0 for p in picks)
+    avg_odds = sum(p["odds"] for p in picks) / bets
+    avg_edge = sum((p["edge_pct"] or 0.0) for p in picks) / bets
+
+    best_run = 0
+    worst_run = 0
+    cur_w = 0
+    cur_l = 0
+    for p in sorted(picks, key=lambda x: (x.get("date") or "", x.get("event_id") or 0, x.get("prediction_id") or 0)):
+        if p["won"]:
+            cur_w += 1
+            cur_l = 0
+        else:
+            cur_l += 1
+            cur_w = 0
+        best_run = max(best_run, cur_w)
+        worst_run = max(worst_run, cur_l)
+
+    stats.update({
+        "bets": bets,
+        "wins": wins,
+        "losses": losses,
+        "profit": round(profit, 3),
+        "roi": round((profit / bets) * 100.0 if bets else 0.0, 2),
+        "winrate": round((wins / bets) * 100.0 if bets else 0.0, 2),
+        "avg_odds": round(avg_odds, 3),
+        "avg_edge": round(avg_edge, 2),
+        "worst_run": int(worst_run),
+        "best_run": int(best_run),
+    })
+    return stats
+
+
+def bucket_label_odds(odds):
+    if odds <= 1.25:
+        return "1.10-1.25"
+    if odds <= 1.45:
+        return "1.26-1.45"
+    if odds <= 1.70:
+        return "1.46-1.70"
+    if odds <= 2.10:
+        return "1.71-2.10"
+    return "2.10+"
+
+
+def bucket_label_conf(conf):
+    if conf <= 45:
+        return "0-45"
+    if conf <= 55:
+        return "46-55"
+    if conf <= 65:
+        return "56-65"
+    if conf <= 75:
+        return "66-75"
+    return "76+"
+
+
+def bucket_label_edge(edge):
+    if edge <= 2:
+        return "0-2pp"
+    if edge <= 5:
+        return "2-5pp"
+    if edge <= 8:
+        return "5-8pp"
+    return "8pp+"
+
+
+def accumulate_pick(bucket_map, key, pick):
+    bucket_map.setdefault(key, []).append(pick)
+
+
+def rows_from_bucket_map(bucket_map):
+    out = []
+    for key, picks in bucket_map.items():
+        stats = finalize_pick_stats(picks)
+        stats["key"] = key
+        out.append(stats)
+    out.sort(key=lambda x: (x["roi"], x["bets"]), reverse=True)
+    return out
+
+
+def parse_dt(s):
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def build_data_health(predictions):
+    now = datetime.now(timezone.utc)
+    ages = []
+    events_without_odds = 0
+    predictions_without_scoreline = 0
+    predictions_with_api_flags = 0
+    predictions_with_heuristic_only = 0
+
+    for row in predictions or []:
+        event = row.get("event") or {}
+        if not any(event.get(k) not in (None, "", 0) for k in [
+            "odds_home", "odds_draw", "odds_away", "odds_over_15", "odds_over_25", "odds_under_25", "odds_under_35", "odds_btts_yes", "odds_btts_no"
+        ]):
+            events_without_odds += 1
+        if not row.get("most_likely_score"):
+            predictions_without_scoreline += 1
+        if any(bool(row.get(k)) for k in ["over_15_recommend", "over_25_recommend", "btts_recommend", "favorite_recommend", "winner_recommend"]):
+            predictions_with_api_flags += 1
+        else:
+            if any(heuristic_recommend(row, m["key"]) for m in MARKETS):
+                predictions_with_heuristic_only += 1
+        created_at = parse_dt(row.get("created_at"))
+        if created_at:
+            ages.append((now - created_at.astimezone(timezone.utc)).total_seconds() / 3600.0)
+
+    return {
+        "predictions_count": len(predictions or []),
+        "events_without_odds": events_without_odds,
+        "predictions_without_scoreline": predictions_without_scoreline,
+        "predictions_with_api_flags": predictions_with_api_flags,
+        "predictions_with_heuristic_only": predictions_with_heuristic_only,
+        "avg_prediction_age_hours": round(sum(ages) / len(ages), 2) if ages else None,
+        "max_prediction_age_hours": round(max(ages), 2) if ages else None,
+    }
+
+
+def build_backtest_summary(predictions, lookback_days):
+    finished_rows = []
+    engine_picks = []
+    strategy_picks = {k: [] for k in STRATEGIES if k != "engine_overall"}
+
+    by_market = {}
+    by_league = {}
+    by_odds = {}
+    by_conf = {}
+    by_edge = {}
+
+    for row in predictions or []:
+        event = row.get("event") or {}
+        if event.get("status") != "finished":
+            continue
+        if event.get("home_score") is None or event.get("away_score") is None:
+            continue
+        finished_rows.append(row)
+
+        candidates = []
+        for market in MARKETS:
+            cand = build_candidate(row, market["key"])
+            if not cand:
+                continue
+            candidates.append(cand)
+
+        if not candidates:
+            continue
+
+        # engine overall: best eligible candidate across all markets
+        engine_cfg = STRATEGIES["engine_overall"]
+        engine_eligible = [c for c in candidates if qualifies_for_strategy(c, engine_cfg)]
+        if engine_eligible:
+            best_engine = max(engine_eligible, key=rank_candidate)
+            engine_picks.append(best_engine)
+            accumulate_pick(by_market, best_engine["market"], best_engine)
+            accumulate_pick(by_league, best_engine["league"], best_engine)
+            accumulate_pick(by_odds, bucket_label_odds(best_engine["odds"]), best_engine)
+            accumulate_pick(by_conf, bucket_label_conf(best_engine["confidence"]), best_engine)
+            accumulate_pick(by_edge, bucket_label_edge(max(0.0, best_engine["edge_pct"] or 0.0)), best_engine)
+
+        # individual strategy simulations
+        for strategy_key, cfg in STRATEGIES.items():
+            if strategy_key == "engine_overall":
+                continue
+            eligible = [c for c in candidates if qualifies_for_strategy(c, cfg)]
+            if eligible:
+                strategy_picks[strategy_key].append(max(eligible, key=rank_candidate))
+
+    overall_stats = finalize_pick_stats(engine_picks, STRATEGIES["engine_overall"]["label"])
+    by_strategy = []
+    for strategy_key, picks in strategy_picks.items():
+        stats = finalize_pick_stats(picks, STRATEGIES[strategy_key]["label"])
+        stats["key"] = strategy_key
+        by_strategy.append(stats)
+    by_strategy.sort(key=lambda x: (x["roi"], x["bets"]), reverse=True)
+
+    return {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "lookback_days": lookback_days,
+        "finished_predictions": len(finished_rows),
+        "engine_bets": overall_stats["bets"],
+        "engine_wins": overall_stats["wins"],
+        "engine_profit": overall_stats["profit"],
+        "engine_roi": overall_stats["roi"],
+        "engine_winrate": overall_stats["winrate"],
+        "engine_avg_odds": overall_stats["avg_odds"],
+        "engine_avg_edge": overall_stats["avg_edge"],
+        "engine_best_run": overall_stats["best_run"],
+        "engine_worst_run": overall_stats["worst_run"],
+        "overall": overall_stats,
+        "by_market": rows_from_bucket_map(by_market)[:20],
+        "by_league": rows_from_bucket_map(by_league)[:20],
+        "by_strategy": by_strategy,
+        "by_odds_bucket": rows_from_bucket_map(by_odds),
+        "by_conf_bucket": rows_from_bucket_map(by_conf),
+        "by_edge_bucket": rows_from_bucket_map(by_edge),
+        "markets_included": [m["label"] for m in MARKETS],
+        "excluded_markets": ["Over 3.5G"],
+    }
+
+
+def load_existing_json(filename, default):
+    path = os.path.join(DATA_DIR, filename)
+    if not os.path.exists(path):
+        return default
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+
+def save_json(data, filename):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    path = os.path.join(DATA_DIR, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"Saved: {path} ({os.path.getsize(path)} bytes)")
+
+
+def unique_team_ids_from_events(events):
+    ids = set()
+    for event in events or []:
+        home = (event.get("home_team_obj") or {}).get("id")
+        away = (event.get("away_team_obj") or {}).get("id")
+        if home:
+            ids.add(home)
+        if away:
+            ids.add(away)
+    return sorted(ids)
+
+
+def should_refresh_static(now_utc):
+    return now_utc.hour in STATIC_REFRESH_HOURS
 
 
 def fetch_url(url):
@@ -283,178 +792,41 @@ def fetch_all_pages(endpoint, extra_params=""):
     return all_results
 
 
-def save_json(data, filename):
-    os.makedirs(DATA_DIR, exist_ok=True)
-    path = os.path.join(DATA_DIR, filename)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"Saved: {path} ({os.path.getsize(path)} bytes)")
-
-
-def load_existing_json(filename, default):
-    path = os.path.join(DATA_DIR, filename)
-    if not os.path.exists(path):
-        return default
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return default
-
-
-def unique_team_ids_from_events(events):
-    ids = set()
-    for event in events or []:
-        home = (event.get("home_team_obj") or {}).get("id")
-        away = (event.get("away_team_obj") or {}).get("id")
-        if home:
-            ids.add(home)
-        if away:
-            ids.add(away)
-    return sorted(ids)
-
-
-def fetch_focus_players(team_ids, max_teams=60):
-    players = []
-    seen = set()
-    limited_ids = team_ids[:max_teams]
-    total = len(limited_ids)
-
-    for idx, team_id in enumerate(limited_ids, start=1):
-        print(f"Players for team {team_id} ({idx}/{total})...")
-        rows = fetch_all_pages(f"/api/players/?team={team_id}")
-        for row in rows:
-            pid = row.get("id")
-            if pid and pid not in seen:
-                seen.add(pid)
-                players.append(row)
-
-    return players
-
-
-def should_refresh_static(now_utc):
-    return now_utc.hour in STATIC_REFRESH_HOURS
-
-
-def build_backtest_summary(predictions, lookback_days):
-    finished = []
-    engine_picks = []
-
-    by_market = {}
-    by_league = {}
-
-    def acc_row(store, key):
-        if key not in store:
-            store[key] = {"key": key, "bets": 0, "wins": 0, "profit": 0.0}
-        return store[key]
-
+def build_history_rows(predictions):
+    rows = []
     for row in predictions or []:
         event = row.get("event") or {}
         if event.get("status") != "finished":
             continue
         if event.get("home_score") is None or event.get("away_score") is None:
             continue
-
-        confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
-        finished.append(row)
-
-        best_pick = None
-        best_rank = -1e9
-
-        for market in MARKETS:
-            odds = market["odds"](event)
-            if odds in (None, ""):
-                continue
-            prob = market["prob"](row)
-            value = calc_value(prob, odds)
-            adj = adjusted_prob(prob, confidence)
-            if value <= 0:
-                continue
-            if hard_contradiction(row, market["key"]):
-                continue
-            if not engine_market_pass(row, market["key"], value, adj, confidence):
-                continue
-
-            _, _, xg_total = expected_goals(row)
-            score = ticket_score(adj, value, confidence, xg_total)
-            outcome = market_outcome(event, market["key"])
-            if outcome is None:
-                continue
-
-            pick = {
-                "market": market["label"],
-                "market_key": market["key"],
-                "odds": float(odds),
-                "prob": round(prob, 2),
-                "adj_prob": round(adj, 2),
-                "value": round(value, 4),
-                "score": int(score),
-                "won": bool(outcome),
-                "league": (event.get("league") or {}).get("name") or "Unknown",
-            }
-            rank = (score * 1.0) + (max(0.0, value) * 100 * 0.35) + ENGINE_MARKET_PRIORITY.get(market["key"], 0)
-            if rank > best_rank:
-                best_rank = rank
-                best_pick = pick
-
-        if best_pick:
-            engine_picks.append(best_pick)
-            market_bucket = acc_row(by_market, best_pick["market"])
-            league_bucket = acc_row(by_league, best_pick["league"])
-            for bucket in (market_bucket, league_bucket):
-                bucket["bets"] += 1
-                if best_pick["won"]:
-                    bucket["wins"] += 1
-                    bucket["profit"] += best_pick["odds"] - 1.0
-                else:
-                    bucket["profit"] -= 1.0
-
-    bets = len(engine_picks)
-    wins = sum(1 for x in engine_picks if x["won"])
-    profit = sum((x["odds"] - 1.0) if x["won"] else -1.0 for x in engine_picks)
-    staked = float(bets)
-    roi = (profit / staked * 100.0) if staked else 0.0
-    winrate = (wins / bets * 100.0) if bets else 0.0
-
-    def finalize_rows(store):
-        out = []
-        for row in store.values():
-            bets_local = row["bets"] or 0
-            roi_local = (row["profit"] / bets_local * 100.0) if bets_local else 0.0
-            winrate_local = (row["wins"] / bets_local * 100.0) if bets_local else 0.0
-            out.append({
-                "key": row["key"],
-                "bets": bets_local,
-                "wins": row["wins"],
-                "profit": round(row["profit"], 3),
-                "roi": round(roi_local, 2),
-                "winrate": round(winrate_local, 2),
-            })
-        out.sort(key=lambda x: (x["roi"], x["bets"]), reverse=True)
-        return out
-
-    market_rows = finalize_rows(by_market)[:12]
-    league_rows = finalize_rows(by_league)[:12]
-    blocked_markets = [row["key"] for row in market_rows if row["roi"] < -15 and row["bets"] >= 5]
-
-    return {
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "lookback_days": lookback_days,
-        "finished_predictions": len(finished),
-        "engine_bets": bets,
-        "engine_wins": wins,
-        "engine_profit": round(profit, 3),
-        "engine_roi": round(roi, 2),
-        "engine_winrate": round(winrate, 2),
-        "by_market": market_rows,
-        "by_league": league_rows,
-        "blocked_markets": blocked_markets,
-        "engine_policy": {
-            "xg_bonus_enabled": True,
-            "stricter_market_gates": True,
-            "market_priority": ENGINE_MARKET_PRIORITY,
-        },
-    }
+        candidates = [build_candidate(row, m["key"]) for m in MARKETS]
+        candidates = [c for c in candidates if c and qualifies_for_strategy(c, STRATEGIES["engine_overall"])]
+        if not candidates:
+            continue
+        pick = max(candidates, key=rank_candidate)
+        rows.append({
+            "date": pick.get("date"),
+            "created_at": pick.get("created_at"),
+            "event_id": pick.get("event_id"),
+            "prediction_id": pick.get("prediction_id"),
+            "league": pick.get("league"),
+            "market": pick.get("market"),
+            "market_key": pick.get("market_key"),
+            "odds": pick.get("odds"),
+            "model_prob": pick.get("prob"),
+            "adjusted_prob": pick.get("adj_prob"),
+            "market_prob": pick.get("market_prob"),
+            "edge_pct": pick.get("edge_pct"),
+            "confidence": pick.get("confidence"),
+            "value": pick.get("value"),
+            "score": pick.get("score"),
+            "source_api": pick.get("source_api"),
+            "source_heuristic": pick.get("source_heuristic"),
+            "won": pick.get("won"),
+        })
+    rows.sort(key=lambda x: (x.get("date") or "", x.get("event_id") or 0), reverse=True)
+    return rows[:HISTORY_MAX_ROWS]
 
 
 def main():
@@ -465,8 +837,8 @@ def main():
     today = started_at.strftime("%Y-%m-%d")
     future = (started_at + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
     past = (started_at - timedelta(days=BACKTEST_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
+    past_history = (started_at - timedelta(days=HISTORY_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
 
-    # FAST DATA - every run
     print(f"\n[1/5] Fetching predictions (next {LOOKAHEAD_DAYS} days)...")
     predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={today}&date_to={future}")
     print(f"Total predictions: {len(predictions)}")
@@ -482,7 +854,12 @@ def main():
     backtest = build_backtest_summary(historical_predictions, BACKTEST_LOOKBACK_DAYS)
     print(f"Finished preds: {backtest['finished_predictions']} | Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%")
 
-    # STATIC-ish DATA - refresh only a few times/day
+    history_predictions = historical_predictions
+    if HISTORY_LOOKBACK_DAYS != BACKTEST_LOOKBACK_DAYS:
+        history_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past_history}&date_to={today}")
+    history_rows = build_history_rows(history_predictions)
+    data_health = build_data_health(predictions)
+
     refresh_static = should_refresh_static(started_at)
     print(f"\n[4/5] Static refresh window: {'YES' if refresh_static else 'NO'}")
 
@@ -496,13 +873,8 @@ def main():
     else:
         teams = load_existing_json("teams.json", [])
 
-    if refresh_static or not os.path.exists(os.path.join(DATA_DIR, "players_focus.json")):
-        focus_team_ids = unique_team_ids_from_events(events)
-        players_focus = fetch_focus_players(focus_team_ids, max_teams=60)
-    else:
-        players_focus = load_existing_json("players_focus.json", [])
-
-    print(f"Leagues: {len(leagues)} | Teams: {len(teams)} | Players focus: {len(players_focus)}")
+    players_focus = []
+    print(f"Leagues: {len(leagues)} | Teams: {len(teams)} | Players focus: 0")
 
     print("\n[5/5] Saving files...")
     save_json(predictions, "predictions.json")
@@ -511,6 +883,7 @@ def main():
     save_json(teams, "teams.json")
     save_json(players_focus, "players_focus.json")
     save_json(backtest, "backtest.json")
+    save_json(history_rows, "history_engine.json")
 
     meta = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -519,19 +892,22 @@ def main():
         "events_count": len(events),
         "leagues_count": len(leagues),
         "teams_count": len(teams),
-        "players_focus_count": len(players_focus),
+        "players_focus_count": 0,
         "historical_predictions_count": len(historical_predictions),
+        "history_engine_rows": len(history_rows),
         "backtest_finished_predictions": backtest["finished_predictions"],
         "backtest_engine_bets": backtest["engine_bets"],
         "backtest_engine_roi": backtest["engine_roi"],
         "status": "ok",
-        "version": "v16-audit-engine",
+        "version": "v16-audit-engine-nolive-noo35",
         "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
         "lookahead_days": LOOKAHEAD_DAYS,
         "backtest_lookback_days": BACKTEST_LOOKBACK_DAYS,
-        "engine_policy": "v16 stricter gates + xg bonus + market priority",
+        "history_lookback_days": HISTORY_LOOKBACK_DAYS,
+        "excluded_markets": ["Over 3.5G"],
+        "data_health": data_health,
     }
     save_json(meta, "meta.json")
 
