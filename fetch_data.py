@@ -13,6 +13,7 @@ Ce face:
 import os
 import json
 import math
+import re
 import requests
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
@@ -766,6 +767,36 @@ def fetch_url(url):
     raise RuntimeError(f"Fetch esuat definitiv pentru {url}: {last_error}")
 
 
+def fetch_status_metrics():
+    url = f"{API_BASE}/status/"
+    try:
+        r = requests.get(url, timeout=30)
+        r.raise_for_status()
+        html = r.text or ""
+        block_match = re.search(r"Football Pipeline(.*?)(Tennis Pipeline|API Endpoints Health|$)", html, re.S | re.I)
+        block = block_match.group(1) if block_match else html
+
+        def pick(label):
+            m = re.search(label + r"\s*([0-9,]+|None)", block, re.I)
+            if not m:
+                return None
+            raw = m.group(1).strip()
+            if raw.lower() == "none":
+                return 0
+            return int(raw.replace(",", ""))
+
+        return {
+            "upcoming_matches": pick(r"Upcoming matches"),
+            "with_odds": pick(r"With odds"),
+            "ml_predictions_upcoming": pick(r"ML predictions\s*\(upcoming\)"),
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "source": url,
+        }
+    except Exception as e:
+        print(f"WARN: status metrics unavailable: {e}")
+        return {}
+
+
 def fetch_all_pages(endpoint, extra_params=""):
     all_results = []
     next_url = f"{API_BASE}{endpoint}{extra_params}"
@@ -845,11 +876,16 @@ def main():
     if not predictions:
         raise RuntimeError("Predictions a venit gol. Oprim workflow-ul.")
 
-    print(f"\n[2/5] Fetching upcoming events (next {LOOKAHEAD_DAYS} days)...")
+    print(f"\n[2/6] Fetching upcoming events (next {LOOKAHEAD_DAYS} days)...")
     events = fetch_all_pages(f"/api/events/?tz={TZ}&date_from={today}&date_to={future}&status=notstarted")
     print(f"Total events: {len(events)}")
 
-    print(f"\n[3/5] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
+    print("\n[3/6] Fetching BSD status metrics...")
+    status_metrics = fetch_status_metrics()
+    if status_metrics:
+        print(f"Status ML predictions: {status_metrics.get('ml_predictions_upcoming')} | With odds: {status_metrics.get('with_odds')}")
+
+    print(f"\n[4/6] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
     historical_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
     backtest = build_backtest_summary(historical_predictions, BACKTEST_LOOKBACK_DAYS)
     print(f"Finished preds: {backtest['finished_predictions']} | Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%")
@@ -861,7 +897,7 @@ def main():
     data_health = build_data_health(predictions)
 
     refresh_static = should_refresh_static(started_at)
-    print(f"\n[4/5] Static refresh window: {'YES' if refresh_static else 'NO'}")
+    print(f"\n[5/6] Static refresh window: {'YES' if refresh_static else 'NO'}")
 
     if refresh_static or not os.path.exists(os.path.join(DATA_DIR, "leagues.json")):
         leagues = fetch_all_pages("/api/leagues/")
@@ -876,7 +912,7 @@ def main():
     players_focus = []
     print(f"Leagues: {len(leagues)} | Teams: {len(teams)} | Players focus: 0")
 
-    print("\n[5/5] Saving files...")
+    print("\n[6/6] Saving files...")
     save_json(predictions, "predictions.json")
     save_json(events, "events.json")
     save_json(leagues, "leagues.json")
@@ -908,6 +944,7 @@ def main():
         "history_lookback_days": HISTORY_LOOKBACK_DAYS,
         "excluded_markets": ["Over 3.5G"],
         "data_health": data_health,
+        "bsd_status": status_metrics,
     }
     save_json(meta, "meta.json")
 
