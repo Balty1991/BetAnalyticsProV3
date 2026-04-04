@@ -800,8 +800,10 @@ def fetch_status_metrics():
         r = requests.get(url, timeout=30)
         r.raise_for_status()
         html = r.text or ""
-        block_match = re.search(r"Football Pipeline(.*?)(Tennis Pipeline|API Endpoints Health|$)", html, re.S | re.I)
-        block = block_match.group(1) if block_match else html
+        plain = re.sub(r"<[^>]+>", " ", html)
+        plain = re.sub(r"\s+", " ", plain).strip()
+        block_match = re.search(r"Football Pipeline(.*?)(Tennis Pipeline|API Endpoints Health|$)", plain, re.S | re.I)
+        block = block_match.group(1) if block_match else plain
 
         def pick(label):
             m = re.search(label + r"\s*([0-9,]+|None)", block, re.I)
@@ -812,13 +814,16 @@ def fetch_status_metrics():
                 return 0
             return int(raw.replace(",", ""))
 
-        return {
+        data = {
             "upcoming_matches": pick(r"Upcoming matches"),
             "with_odds": pick(r"With odds"),
             "ml_predictions_upcoming": pick(r"ML predictions\s*\(upcoming\)"),
             "fetched_at": datetime.now(timezone.utc).isoformat(),
             "source": url,
         }
+        if data.get("ml_predictions_upcoming") is None and data.get("with_odds") is None:
+            return {}
+        return data
     except Exception as e:
         print(f"WARN: status metrics unavailable: {e}")
         return {}
