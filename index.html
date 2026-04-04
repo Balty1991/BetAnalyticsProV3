@@ -285,6 +285,35 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .ticket-mini .l{font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase}
 @media(max-width:600px){.ticket-mini-grid{grid-template-columns:1fr 1fr 1fr}}
 
+
+.match-card{background:linear-gradient(180deg,rgba(18,28,50,.98),rgba(14,22,40,.98));border:1px solid rgba(84,119,255,.18);border-radius:18px;padding:16px;box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.match-card.safe{border-left:3px solid var(--grn)}
+.match-card.moderate{border-left:3px solid var(--yel)}
+.match-card.avoid{border-left:3px solid var(--red);opacity:1}
+.mc-head{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.mc-time{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:0}
+.mc-score-pill{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;color:var(--txt);font-family:var(--mono)}
+.mc-teams-premium{margin-bottom:12px;padding:4px 0 2px}
+.mc-teams-premium .mc-team{font-size:16px;font-weight:800}
+.mc-midrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mc-value-chip{padding:4px 10px;border-radius:999px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.24);font-size:10px;font-weight:800;color:var(--grn);font-family:var(--mono)}
+.ticket-mini-grid-premium{margin-top:0;margin-bottom:10px}
+.ticket-mini-grid-premium .ticket-mini{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.07);padding:10px 8px}
+.ticket-mini-grid-premium .ticket-mini .v{font-size:15px}
+.card-reco-main{margin-top:0;padding:12px 12px 10px;border-radius:14px;background:linear-gradient(180deg,rgba(59,130,246,.12),rgba(29,78,216,.08));border:1px solid rgba(59,130,246,.20)}
+.card-reco-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.card-reco-odd{font-size:11px;font-weight:800;color:var(--acc);font-family:var(--mono)}
+.card-reco-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.card-reco-badge{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:700;color:var(--txt)}
+.reason-list{gap:7px;margin-top:10px}
+.reason-pill{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.07)}
+@media(max-width:600px){
+  .matches-grid{grid-template-columns:1fr}
+  .match-card{padding:14px;border-radius:16px}
+  .mc-teams-premium .mc-team{font-size:15px}
+  .card-reco-pick{font-size:15px}
+}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .stats-grid{grid-template-columns:repeat(2,1fr)}
@@ -1629,7 +1658,7 @@ function renderBacktest(){
     {
       label:'Top piață',
       value: bestMarket ? (bestMarket.label || bestMarket.key) : '—',
-      detail: bestMarket ? makeMeta(['ROI ' + fmtSignedPct(Number(bestMarket.roi || 0)), (bestMarket.wins || 0) + '/' + (bestMarket.bets || 0) + ' win']) : 'Fără piață cu sample suficient',
+      detail: bestMarket ? makeMeta(['ROI ' + fmtSignedPct(Number(bestMarket.roi || 0)), 'backtest ' + (bestMarket.wins || 0) + '/' + (bestMarket.bets || 0) + ' win']) : 'Fără piață cu sample suficient',
       legend: bestMarket ? makeMeta(['win rate ' + fmtPct(Number(bestMarket.winrate || 0)), 'cotă medie ' + Number(bestMarket.avg_odds || 0).toFixed(2)]) : 'minim 10 recomandări',
       pct: bestMarket ? Number(bestMarket.winrate || 0) : 0,
       color:'var(--pur)'
@@ -1637,7 +1666,7 @@ function renderBacktest(){
     {
       label:'Top ligă',
       value: bestLeague ? (bestLeague.label || bestLeague.key) : '—',
-      detail: bestLeague ? makeMeta(['ROI ' + fmtSignedPct(Number(bestLeague.roi || 0)), (bestLeague.wins || 0) + '/' + (bestLeague.bets || 0) + ' win']) : 'Fără ligă cu sample suficient',
+      detail: bestLeague ? makeMeta(['ROI ' + fmtSignedPct(Number(bestLeague.roi || 0)), 'backtest ' + (bestLeague.wins || 0) + '/' + (bestLeague.bets || 0) + ' win']) : 'Fără ligă cu sample suficient',
       legend: bestLeague ? ('minim ' + MIN_LEAGUE_BETS + ' recomandări în backtest') : 'minim 10 recomandări',
       pct: bestLeague ? Number(bestLeague.winrate || 0) : 0,
       color:'var(--cyan)'
@@ -1645,8 +1674,8 @@ function renderBacktest(){
     {
       label:'Top strategie bilet',
       value: bestStrategy ? (bestStrategy.label || bestStrategy.key) : '—',
-      detail: bestStrategy ? makeMeta(['ROI ' + fmtSignedPct(Number(bestStrategy.roi || 0)), (bestStrategy.wins || 0) + '/' + (bestStrategy.bets || 0) + ' win']) : 'Nicio strategie din secțiunea Bilete nu are sample suficient',
-      legend: bestStrategy ? 'filtrat doar la strategiile afișate în secțiunea Bilete' : 'exclud strategiile ascunse sau scoase din UI',
+      detail: bestStrategy ? makeMeta(['ROI ' + fmtSignedPct(Number(bestStrategy.roi || 0)), 'backtest ' + (bestStrategy.wins || 0) + '/' + (bestStrategy.bets || 0) + ' win']) : 'Nicio strategie din secțiunea Bilete nu are sample suficient',
+      legend: bestStrategy ? 'nu reprezintă biletele generate acum; sunt rezultate istorice din backtest' : 'exclud strategiile ascunse sau scoase din UI',
       pct: bestStrategy ? Number(bestStrategy.winrate || 0) : 0,
       color:'var(--acc)'
     },
@@ -1663,7 +1692,7 @@ function renderBacktest(){
 
   box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'+cards.map(buildCard).join('')+'</div>'+
     '<div style="margin-top:8px;font-size:9px;line-height:1.35;color:var(--muted);opacity:.92">'+
-      '<strong style="color:var(--txt)">Legendă:</strong> win/recomandate = câștigate din total recomandate în backtest; ROI = randamentul categoriei; top strategie = doar biletele din secțiunea Bilete.'+
+      '<strong style="color:var(--txt)">Legendă:</strong> win/recomandate = câștigate din total recomandate în backtest; valorile nu sunt numărul de bilete generate acum în tabul Bilete/Tracking.'+
     '</div>';
 } 
 
@@ -1913,18 +1942,18 @@ function renderMatches(){
   var leagueF = $('league-filter') ? $('league-filter').value : '';
 
   var filtered = ALL_MATCHES.filter(function(m){
-    var b = m.bestBet || m.rawBestBet;
+    var b = m.bestBet || null;
     if(leagueF && m.league !== leagueF) return false;
-    if(CURRENT_FILTER === 'all') return true;
+    if(CURRENT_FILTER === 'all') return m.analysisState === 'ELIGIBLE';
     if(CURRENT_FILTER === 'safe') return m.analysisState === 'ELIGIBLE' && m.verdict === 'safe';
     if(CURRENT_FILTER === 'moderate') return m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate';
     if(CURRENT_FILTER === 'value') return m.analysisState === 'ELIGIBLE' && b && b.value >= 0.05;
-    if(CURRENT_FILTER === 'o15') return b && b.type === 'over15';
+    if(CURRENT_FILTER === 'o15') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over15';
     if(CURRENT_FILTER === 'issues') return m.analysisState !== 'ELIGIBLE';
-    if(CURRENT_FILTER === 'btts') return b && b.type === 'btts';
-    if(CURRENT_FILTER === 'o25') return b && b.type === 'over25';
-    if(CURRENT_FILTER === 'u35') return b && b.type === 'under35';
-    return true;
+    if(CURRENT_FILTER === 'btts') return m.analysisState === 'ELIGIBLE' && b && b.type === 'btts';
+    if(CURRENT_FILTER === 'o25') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over25';
+    if(CURRENT_FILTER === 'u35') return m.analysisState === 'ELIGIBLE' && b && b.type === 'under35';
+    return m.analysisState === 'ELIGIBLE';
   });
 
   filtered.sort(function(a,b){
@@ -1954,35 +1983,47 @@ function renderMatches(){
   Object.keys(groups).forEach(function(date){
     html += '<div class="date-group"><div class="date-label">📅 '+date+'</div><div class="matches-grid">';
     html += groups[date].map(function(m){
-      var b = m.bestBet || m.rawBestBet || null;
+      var b = m.bestBet || null;
       var state = getAnalysisStateMeta(m.analysisState);
       var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
       var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
       var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
       var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
-      var reasons = buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('');
-      var recHtml = b ? (b.label + (b.odds ? ' @ ' + Number(b.odds).toFixed(2) : '')) : 'Fără piață recomandată';
-      var whyLine = b ? ('Probabilitate estimată <strong style="color:var(--acc)">'+fmtPct(b.adjProb || 0)+'</strong>' + (b.value != null ? ' • Value <strong style="color:var(--grn)">'+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</strong>' : '') + ' • Confidence <strong style="color:var(--yel)">'+m.confidence.toFixed(0)+'%</strong>') : 'Snapshot informativ';
+      var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
+      var recLabel = b ? b.label : 'Fără recomandare activă';
+      var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
+      var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
+      var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
+      var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
+      var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
       return '<div class="match-card '+verdictClass+'">'+
-        '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
-        '<div class="mc-time">🕒 '+m.dateLabel+' • '+m.timeLabel+(m.mostLikelyScore ? ' • scor probabil '+m.mostLikelyScore : '')+'</div>'+
-        '<div class="mc-teams" style="margin-bottom:12px">'+
+        '<div class="mc-head">'+
+          '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
+          '<div class="mc-time"><span>🕒 '+m.dateLabel+' • '+m.timeLabel+'</span>'+scoreBadge+'</div>'+
+        '</div>'+
+        '<div class="mc-teams mc-teams-premium">'+
           '<div class="mc-team"><div class="mc-team-row">'+hLogo+'<span>'+m.home+'</span></div></div>'+
           '<div class="mc-vs">VS</div>'+
           '<div class="mc-team away"><div class="mc-team-row">'+aLogo+'<span>'+m.away+'</span></div></div>'+
         '</div>'+
-        '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
-        '<div class="ticket-mini-grid">'+
-          '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG Gazde</div></div>'+
-          '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG Oaspeți</div></div>'+
-          '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG Total</div></div>'+
+        '<div class="mc-midrow">'+
+          '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
+          + (b && b.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '') +
+        '</div>'+
+        '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
+          '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
+          '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
+          '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG total</div></div>'+
         '</div>'+
         '<div class="card-reco-main">'+
-          '<div class="card-reco-title">Pronostic recomandat</div>'+
-          '<div class="card-reco-pick">'+recHtml+'</div>'+
-          '<div class="card-reco-meta">'+whyLine+'</div>'+
+          '<div class="card-reco-head">'+
+            '<div class="card-reco-title">Pronostic recomandat</div>'+
+            (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
+          '</div>'+
+          '<div class="card-reco-pick">'+recLabel+'</div>'+
+          '<div class="card-reco-badges">'+probBadge+valueBadge+confBadge+'</div>'+
         '</div>'+
-        '<div class="reason-list">'+reasons+'</div>'+
+        (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
       '</div>';
     }).join('');
     html += '</div></div>';
