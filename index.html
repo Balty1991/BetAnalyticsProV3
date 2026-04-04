@@ -3673,16 +3673,16 @@ function renderAll(){
   var value = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.bestBet && m.bestBet.value >= 0.05; }).length;
   var mlComplete = ALL_MATCHES.filter(function(m){ return m.createdAt && m.modelVersion && (m.probOver25 || m.probUnder25) && (m.xgTotal || m.xgHome || m.xgAway); }).length;
 
+  var now = new Date();
+  var timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var rawMl = APP_META && APP_META.bsd_status && APP_META.bsd_status.ml_predictions_upcoming != null ? APP_META.bsd_status.ml_predictions_upcoming : (APP_META && APP_META.header_sync && APP_META.header_sync.upcoming_predictions_count != null ? APP_META.header_sync.upcoming_predictions_count : total);
+  var rawOdds = APP_META && APP_META.bsd_status && APP_META.bsd_status.with_odds != null ? APP_META.bsd_status.with_odds : (APP_META && APP_META.header_sync && APP_META.header_sync.with_odds_upcoming_count != null ? APP_META.header_sync.with_odds_upcoming_count : eligible);
+
   if($('st-total')) $('st-total').textContent = rawMl;
   if($('st-eligible')) $('st-eligible').textContent = rawOdds;
   if($('st-safe')) $('st-safe').textContent = safe;
   if($('st-value')) $('st-value').textContent = value;
   if($('st-mlcov')) $('st-mlcov').textContent = BACKTEST_SUMMARY && BACKTEST_SUMMARY.engine_bets ? ((BACKTEST_SUMMARY.engine_roi >= 0 ? '+' : '') + fmtPct(BACKTEST_SUMMARY.engine_roi || 0)) : (total ? Math.round(mlComplete*100/total)+'%' : '—');
-
-  var now = new Date();
-  var timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  var rawMl = APP_META && APP_META.bsd_status && APP_META.bsd_status.ml_predictions_upcoming != null ? APP_META.bsd_status.ml_predictions_upcoming : (APP_META && APP_META.header_sync && APP_META.header_sync.upcoming_predictions_count != null ? APP_META.header_sync.upcoming_predictions_count : total);
-  var rawOdds = APP_META && APP_META.bsd_status && APP_META.bsd_status.with_odds != null ? APP_META.bsd_status.with_odds : (APP_META && APP_META.header_sync && APP_META.header_sync.with_odds_upcoming_count != null ? APP_META.header_sync.with_odds_upcoming_count : eligible);
   $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — ora '+timeStr;
 
   buildLeagueFilter();
