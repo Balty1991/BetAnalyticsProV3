@@ -676,6 +676,7 @@ var ALL_EVENTS = [];
 var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
+var APP_META = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
@@ -1166,6 +1167,7 @@ function doRefresh(){
     var backtestData = results[5];
 
     var preds = predData.results || predData || [];
+    APP_META = meta || {};
     ALL_MATCHES = preds.map(analyzeMatch);
     syncRecommendationEngine();
     ALL_LEAGUES = leaguesData.results || leaguesData || [];
@@ -1489,7 +1491,7 @@ function renderBacktest(){
   var bestMarket = qualifiedMarkets.length ? qualifiedMarkets[0] : null;
   var bestLeague = qualifiedLeagues.length ? qualifiedLeagues[0] : null;
   var bestStrategy = (bt.by_strategy || []).filter(function(x){ return (x.bets || 0) >= 3; })[0] || null;
-  var health = (APP_META && APP_META.data_health) || {};
+  var health = (typeof APP_META !== 'undefined' && APP_META && APP_META.data_health) || {};
   var excluded = (bt.excluded_markets || []).join(', ') || '—';
   var sampleHealthy = (bt.engine_bets || 0) >= 120;
   var roiVal = Number(bt.engine_roi || 0);
