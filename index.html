@@ -265,7 +265,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 
 /* COMPACT DASHBOARD / MATCH CARDS */
-#topsafe-hdr,#topsafe-body,#ml-hdr,#ml-body,#mldc-hdr,#mldc-body,#ml25-hdr,#ml25-body{display:none!important}
+#topsafe-hdr,#topsafe-body,#mldc-hdr,#mldc-body,#ml25-hdr,#ml25-body{display:none!important}
 .compact-note{font-size:11px;color:var(--muted);line-height:1.5}
 .card-reco-main{margin-top:10px;padding:12px;border-radius:10px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.22)}
 .card-reco-title{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
@@ -331,7 +331,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <div class="tab-content active" id="tab-dashboard">
 
     <!-- Stats row -->
-    <div class="stats-grid" style="margin-bottom:16px">
+    <div class="stats-grid" id="dashboard-stats" style="margin-bottom:12px">
       <div class="stat-card"><div class="stat-num" id="st-total" style="color:var(--acc)">—</div><div class="stat-lbl">Predicții încărcate</div></div>
       <div class="stat-card"><div class="stat-num" id="st-eligible" style="color:var(--grn)">—</div><div class="stat-lbl">Eligibile</div></div>
       <div class="stat-card"><div class="stat-num" id="st-safe" style="color:var(--grn)">—</div><div class="stat-lbl">SAFE</div></div>
@@ -339,13 +339,13 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="stat-card"><div class="stat-num" id="st-mlcov" style="color:var(--pur)">—</div><div class="stat-lbl">Cu backtest</div></div>
     </div>
 
-    <div class="section" style="margin-bottom:16px;padding:16px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.18)">
+    <div class="section" id="health-panel" style="margin-bottom:12px;padding:10px 12px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.18)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-        <div style="font-size:14px;font-weight:700;color:var(--txt)">📌 Panou rapid de sănătate</div>
+        <div style="font-size:14px;font-weight:700;color:var(--txt)">📌 Panou rapid</div>
         <div id="backtest-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
       </div>
       <div id="backtest-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px"></div>
-      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">Doar indicatorii importanți: cât de bine s-a mișcat motorul recent și cât de sănătos e snapshot-ul actual.</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">ROI, sample, health și atât. Fără roman.</div>
     </div>
 
     <!-- Top 2 Ale Zilei -->
@@ -380,8 +380,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
     <!-- ML Recommendations -->
     <div class="sec-hdr collapsible-header" id="ml-hdr" onclick="toggleSection('ml')" style="border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:10px 14px;background:rgba(59,130,246,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
-      <div class="sec-title">🤖 ML Recommendations <span class="sec-badge">CatBoost</span> <span class="collapse-count" id="ml-count">—</span></div>
-      <span class="collapse-toggle" id="ml-toggle">▼</span>
+      <div class="sec-title">🤖 ML CatBoost <span class="sec-badge">CatBoost</span> <span class="collapse-count" id="ml-count">—</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><select class="sort-select" id="ml-sort" onclick="event.stopPropagation()" onchange="renderML()"><option value="prob">Prob.</option><option value="date">Data</option></select><span class="collapse-toggle" id="ml-toggle">▼</span></div>
     </div>
     <div class="collapsible-body" id="ml-body">
       <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:11px;color:var(--muted)">
@@ -405,7 +405,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <!-- ML +1.5G -->
     <div class="sec-hdr collapsible-header" id="ml15-hdr" onclick="toggleSection('ml15')" style="border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;background:rgba(34,197,94,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
       <div class="sec-title">🔥 Radar Over 1.5G <span class="sec-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--grn)">Over 1.5G</span> <span class="collapse-count" id="ml15-count">—</span></div>
-      <span class="collapse-toggle" id="ml15-toggle" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">▼</span>
+      <div style="display:flex;align-items:center;gap:8px"><select class="sort-select" id="ml15-sort" onclick="event.stopPropagation()" onchange="renderML15()"><option value="prob">Prob.</option><option value="date">Data</option></select><span class="collapse-toggle" id="ml15-toggle" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">▼</span></div>
     </div>
     <div class="collapsible-body" id="ml15-body">
       <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
@@ -428,7 +428,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 
     <!-- ML Legend -->
-    <div style="margin-top:32px;padding:20px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08));border:1px solid rgba(168,85,247,.2);border-radius:14px">
+    <div id="audit-legend-box" style="margin-top:14px;padding:12px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08));border:1px solid rgba(168,85,247,.2);border-radius:14px">
       <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:16px">🎯 Cum Funcționează — Audit Engine v16</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px">
@@ -447,7 +447,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="margin-top:12px;font-size:10px;color:var(--muted);font-style:italic">ℹ️ Disclaimer: Pronosticurile ML sunt recomandări statistice. Pariurile comportă risc. Pariază responsabil.</div>
     </div>
 
-    <div style="margin-top:18px;padding:18px;background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(59,130,246,.06));border:1px solid rgba(16,185,129,.18);border-radius:14px">
+    <div id="ml-api-box" style="margin-top:12px;padding:12px;background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(59,130,246,.06));border:1px solid rgba(16,185,129,.18);border-radius:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div style="font-size:14px;font-weight:700;color:var(--txt)">📡 Centrul ML API</div>
         <div id="ml-api-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
@@ -469,18 +469,15 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
       <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
       <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
-      <button class="filter-btn" onclick="setFilter('issues',this)">🧩 Audit</button>
       <select class="sort-select" id="sort-select" onchange="renderMatches()">
-        <option value="score">🎯 Smart Score</option>
-        <option value="value">💰 Value %</option>
+        <option value="date" selected>📅 Data</option>
         <option value="prob">📊 Probabilitate</option>
-        <option value="conf">🧠 Confidence</option>
-        <option value="date">📅 Data</option>
+        <option value="value">💰 Value</option>
       </select>
       <span class="filter-count" id="filter-count">0 meciuri</span>
     </div>
     <!-- League filter -->
-    <div class="league-filter-wrap">
+    <div class="league-filter-wrap" style="display:none">
       <label style="font-size:11px;color:var(--muted)">Liga:</label>
       <select class="league-filter-select" id="league-filter" onchange="renderMatches()">
         <option value="">Toate Ligile</option>
@@ -560,7 +557,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         <div class="form-grid">
           <div class="form-group"><label>Miza (RON)</label><input type="number" id="cust-stake" class="form-input" value="50" min="1" step="1"></div>
           <div class="form-group"><label>Cota totală dorită</label><input type="number" id="cust-target-odds" class="form-input" value="2.20" min="1.05" step="0.05"></div>
-          <div class="form-group"><label>Nr. evenimente</label><input type="number" id="cust-picks" class="form-input" value="2" min="1" max="8"></div>
+          <div class="form-group"><label>Nr. evenimente</label><input type="number" id="cust-picks" class="form-input" value="2" min="1" max="20"></div>
           <div class="form-group"><label>Format</label><select id="cust-format" class="form-input"><option value="combo">Combo</option><option value="single">Single</option></select></div>
           <div class="form-group"><label>Data evenimentelor</label><select id="cust-date-window" class="form-input"><option value="today">Azi</option><option value="3d">1-3 zile</option><option value="7d" selected>1-7 zile</option><option value="14d">1-14 zile</option><option value="30d">1-30 zile</option></select></div>
           <div class="form-group"><label>Nivel risc</label><select id="cust-risk" class="form-input"><option value="low">Scăzut</option><option value="medium" selected>Mediu</option><option value="high">Ridicat</option></select></div>
@@ -790,6 +787,17 @@ function getSupportedMarketTypes(){
   return ['homeWin','draw','awayWin','over15','under15','over25','under25','under35','btts','bttsNo'];
 }
 
+function isSaneOddsForType(type, odds){
+  var o = Number(odds || 0);
+  if(!isFinite(o) || o < 1.01) return false;
+  if(type === 'over15') return o <= 2.20;
+  if(type === 'under15') return o <= 8.00;
+  if(type === 'over25' || type === 'under25' || type === 'btts' || type === 'bttsNo') return o <= 4.50;
+  if(type === 'under35') return o <= 2.60;
+  if(type === 'homeWin' || type === 'awayWin' || type === 'draw') return o <= 12.00;
+  return o <= 20.00;
+}
+
 function normalizeConfidence(conf){
   var c = Number(conf || 0);
   if(!isFinite(c) || c < 0) return 0;
@@ -958,7 +966,7 @@ function analyzeMatch(raw){
   BET_TYPES.forEach(function(bt){
     var prob = bt.probGetter ? safePct(bt.probGetter(raw)) : safePct(raw[bt.probField]);
     var odds = Number(e[bt.oddsField] || 0);
-    if(!prob || !odds) return;
+    if(!prob || !odds || !isSaneOddsForType(bt.key, odds)) return;
 
     var value = calcValue(prob, odds);
     var marketProb = getNoVigMarketProbFromRaw(raw, bt.key);
@@ -1586,15 +1594,26 @@ function buildMlRecommendTags(m){
 
 function renderML(){
   var container = $('ml-grid');
+  if(!container) return;
+  var sortMode = $('ml-sort') ? $('ml-sort').value : 'prob';
   var ml = ALL_MATCHES.filter(function(m){
     var matchTime = new Date(m.date).getTime();
     var now = new Date().getTime();
     return m.hasMlRec && matchTime > (now - 900000);
-  }).sort(function(a,b){ return b.confidence - a.confidence; });
-  var validMl = ml.filter(function(m){
+  });
+
+  ml = ml.filter(function(m){
     return m.mlPicks.filter(function(p){ return p.label !== 'Over 1.5G'; }).length > 0;
   });
-  updateSectionCount('ml', validMl.length);
+
+  ml.sort(function(a,b){
+    var aTop = a.mlPicks.filter(function(p){ return p.label !== 'Over 1.5G'; })[0];
+    var bTop = b.mlPicks.filter(function(p){ return p.label !== 'Over 1.5G'; })[0];
+    if(sortMode === 'date') return new Date(a.date) - new Date(b.date);
+    return (bTop ? bTop.prob : 0) - (aTop ? aTop.prob : 0);
+  });
+
+  updateSectionCount('ml', ml.length);
   if(ml.length === 0){ container.innerHTML = '<div class="empty-state">Nicio recomandare ML momentan.</div>'; return; }
 
   container.innerHTML = ml.map(function(m){
@@ -1608,18 +1627,18 @@ function renderML(){
     return '<div class="ml-card">'+
       '<div class="ml-hdr">'+
         '<div class="ml-teams" style="display:flex;align-items:center;gap:5px">'+hLogo+m.home+' vs '+m.away+aLogo+'</div>'+
-        '<div class="ml-conf">'+m.confidence.toFixed(0)+'%</div>'+
+        '<div class="ml-conf">'+topPick.prob.toFixed(1)+'%</div>'+
       '</div>'+
-      '<div style="font-size:9px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">'+
-        '<span>'+m.league+' • '+m.dateLabel+'</span>'+scoreStr+
+      '<div style="font-size:9px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+
+        '<span>'+m.league+' • '+m.dateLabel+'</span><span>'+m.timeLabel+'</span>'+scoreStr+
       '</div>'+
       buildMlRecommendTags(m)+
       '<div class="ml-picks" style="margin-top:6px">'+
         '<span class="ml-pick" style="background:rgba(59,130,246,0.15);color:var(--acc);font-size:11px;padding:4px 10px">🎯 '+topPick.label+'</span>'+
       '</div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05)">'+
-        '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+topPick.prob.toFixed(1)+'%</b></div>'+
-        '<div style="font-size:9px;color:var(--acc);font-weight:700">AI: '+m.confidence.toFixed(0)+'%</div>'+
+        '<div style="font-size:9px;color:var(--muted)">AI: <b>'+m.confidence.toFixed(0)+'%</b></div>'+
+        '<div style="font-size:9px;color:var(--acc);font-weight:700">Prob: '+topPick.prob.toFixed(1)+'%</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -1662,11 +1681,21 @@ function renderMLDC(){
 
 function renderML15(){
   var container = $('ml-15-grid');
+  if(!container) return;
+  var sortMode = $('ml15-sort') ? $('ml15-sort').value : 'prob';
   var ml15 = ALL_MATCHES.filter(function(m){
     var matchTime = new Date(m.date).getTime();
     var now = new Date().getTime();
     return m.hasMlRec && m.mlPicks.some(function(p){ return p.label === 'Over 1.5G'; }) && matchTime > (now - 900000);
-  }).sort(function(a,b){ return b.confidence - a.confidence; });
+  });
+
+  ml15.sort(function(a,b){
+    var ao = a.mlPicks.find(function(p){ return p.label === 'Over 1.5G'; });
+    var bo = b.mlPicks.find(function(p){ return p.label === 'Over 1.5G'; });
+    if(sortMode === 'date') return new Date(a.date) - new Date(b.date);
+    return (bo ? bo.prob : 0) - (ao ? ao.prob : 0);
+  });
+
   updateSectionCount('ml15', ml15.length);
   if(ml15.length === 0){ container.innerHTML = '<div class="empty-state">Nicio recomandare +1.5G momentan.</div>'; return; }
   container.innerHTML = ml15.map(function(m){
@@ -1675,15 +1704,15 @@ function renderML15(){
     return '<div class="ml-card" style="background:rgba(34,197,94,0.06);border-color:rgba(34,197,94,0.2)">'+
       '<div class="ml-hdr">'+
         '<div class="ml-teams">'+m.home+' vs '+m.away+'</div>'+
-        '<div class="ml-conf" style="color:var(--grn)">'+m.confidence.toFixed(0)+'%</div>'+
+        '<div class="ml-conf" style="color:var(--grn)">'+o15.prob.toFixed(1)+'%</div>'+
       '</div>'+
-      '<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between">'+
+      '<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">'+
         '<span>'+m.league+' • '+m.dateLabel+'</span>'+
         '<span style="font-weight:700;color:var(--cyan)">Σ xG: '+tXg.toFixed(2)+'</span>'+
       '</div>'+
       '<div class="ml-picks"><span class="ml-pick" style="background:rgba(34,197,94,0.15);color:var(--grn);font-size:11px;padding:4px 10px">🔥 Over 1.5G</span></div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05)">'+
-        '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+o15.prob.toFixed(1)+'%</b></div>'+
+        '<div style="font-size:9px;color:var(--muted)">Data: <b>'+m.timeLabel+'</b></div>'+
         '<div style="font-size:9px;color:var(--grn);font-weight:700">AI: '+m.confidence.toFixed(0)+'%</div>'+
       '</div>'+
     '</div>';
@@ -1779,7 +1808,7 @@ function resetMatchFilters(){
   var first = document.querySelector('.filter-btn');
   if(first) first.classList.add('active');
   if($('league-filter')) $('league-filter').value = '';
-  if($('sort-select')) $('sort-select').value = 'score';
+  if($('sort-select')) $('sort-select').value = 'date';
   renderMatches();
 }
 
@@ -1841,7 +1870,6 @@ function renderMatches(){
     html += '<div class="date-group"><div class="date-label">📅 '+date+'</div><div class="matches-grid">';
     html += groups[date].map(function(m){
       var b = m.bestBet || m.rawBestBet || null;
-      var alt = m.eligibleCandidates && m.eligibleCandidates[1] ? m.eligibleCandidates[1].bestBet : null;
       var state = getAnalysisStateMeta(m.analysisState);
       var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
       var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
@@ -1849,7 +1877,6 @@ function renderMatches(){
       var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
       var reasons = buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('');
       var recHtml = b ? (b.label + (b.odds ? ' @ ' + Number(b.odds).toFixed(2) : '')) : 'Fără piață recomandată';
-      var altHtml = alt ? '<div class="card-reco-alt">Robot backup: <strong style="color:var(--txt)">'+alt.label+'</strong>'+(alt.odds?' @ '+Number(alt.odds).toFixed(2):'')+' • '+fmtPct(alt.adjProb||0)+'</div>' : '';
       var whyLine = b ? ('Probabilitate estimată <strong style="color:var(--acc)">'+fmtPct(b.adjProb || 0)+'</strong>' + (b.value != null ? ' • Value <strong style="color:var(--grn)">'+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</strong>' : '') + ' • Confidence <strong style="color:var(--yel)">'+m.confidence.toFixed(0)+'%</strong>') : 'Snapshot informativ';
       return '<div class="match-card '+verdictClass+'">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -1869,7 +1896,6 @@ function renderMatches(){
           '<div class="card-reco-title">Pronostic recomandat</div>'+
           '<div class="card-reco-pick">'+recHtml+'</div>'+
           '<div class="card-reco-meta">'+whyLine+'</div>'+
-          altHtml+
         '</div>'+
         '<div class="reason-list">'+reasons+'</div>'+
       '</div>';
@@ -2760,6 +2786,26 @@ function generateCustomTicket(){
   for(var relax = 0; relax <= maxRelax; relax++){
     var pack = collectCustomCandidates(opts, relax);
 
+    if(opts.format !== 'single' && currentPicks > 10){
+      var hvProfile = {
+        minPicks: currentPicks,
+        maxPicks: currentPicks,
+        targetMinOdds: Math.max(1.20, currentTargetOdds * 0.70),
+        targetMaxOdds: currentTargetOdds * 1.35,
+        hardMaxOdds: currentTargetOdds * 1.70,
+        maxSameLeague: Math.max(2, pack.profile.maxSameLeague),
+        maxSameMarket: Math.max(5, pack.profile.maxSameMarket)
+      };
+      var hv = selectDiversifiedPicks(pack.list, hvProfile);
+      if(hv.picks.length === currentPicks){
+        finalizeTicket('custom_combo', '🎛️ Bilet personalizat', hv.picks, hv.totalOdds);
+        setCustomTicketMeta(opts.stake, opts.risk);
+        renderBilete();
+        toast('Bilet volum mare generat!', 'ok');
+        return;
+      }
+    }
+
     if(opts.format === 'single'){
       var single = chooseCustomSingle(pack.list, currentTargetOdds);
       if(single){
@@ -3418,7 +3464,7 @@ function calcBankroll(){
 // ============================================================
 // COLLAPSIBLE SECTIONS
 // ============================================================
-var SECTION_STATE={todaybest:false,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false};
+var SECTION_STATE={todaybest:true,top5:true,topsafe:false,ml:true,mldc:false,ml15:true,ml25:false};
 function toggleSection(id){
   SECTION_STATE[id]=!SECTION_STATE[id];
   var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle']};
@@ -3437,6 +3483,30 @@ function updateSectionCount(id,count){
 // ============================================================
 // RENDER ALL
 // ============================================================
+
+function applyOpenSections(){
+  ['todaybest','top5','ml','ml15'].forEach(function(id){
+    var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],ml:['ml-body','ml-toggle'],ml15:['ml15-body','ml15-toggle']};
+    var pair=map[id];
+    if(!pair) return;
+    var body=$(pair[0]), toggle=$(pair[1]);
+    if(body) body.classList.add('open');
+    if(toggle) toggle.classList.add('open');
+  });
+}
+
+function arrangeDashboardLayout(){
+  var dash = $('tab-dashboard');
+  if(!dash) return;
+  var mlHdr = $('ml-hdr'), mlBody = $('ml-body');
+  var ml15Hdr = $('ml15-hdr'), ml15Body = $('ml15-body');
+  var stats = $('dashboard-stats'), health = $('health-panel'), legend = $('audit-legend-box'), api = $('ml-api-box');
+  if(mlHdr && mlBody && ml15Hdr && ml15Body){
+    dash.insertBefore(ml15Hdr, mlHdr);
+    dash.insertBefore(ml15Body, mlHdr);
+  }
+  [stats, health, legend, api].forEach(function(el){ if(el) dash.appendChild(el); });
+}
 
 function getCurrentDayKey(){
   var now = new Date();
@@ -3493,6 +3563,8 @@ window.addEventListener('DOMContentLoaded', function(){
   // Try to restore token from localStorage
   var st=localStorage.getItem('bsd_token');
   if(st) API_TOKEN=st;
+  arrangeDashboardLayout();
+  applyOpenSections();
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
   setInterval(doRefresh, 900000);
