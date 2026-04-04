@@ -1526,6 +1526,9 @@ function renderBacktest(){
   var box = $('backtest-summary');
   var updated = $('backtest-updated');
   if(!box) return;
+  box.style.display = 'block';
+  box.style.gridTemplateColumns = 'none';
+  box.style.gap = '0';
   var bt = BACKTEST_SUMMARY || {};
   var MIN_MARKET_BETS = 10;
   var MIN_LEAGUE_BETS = 10;
@@ -1576,7 +1579,7 @@ function renderBacktest(){
   function buildCard(card){
     var valueText = String(card.value == null ? '—' : card.value);
     var valueSize = valueText.length > 22 ? '12px' : valueText.length > 16 ? '13px' : valueText.length > 12 ? '15px' : '18px';
-    return '<div style="min-height:112px;padding:10px;border:1px solid var(--brd2);border-radius:14px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.18)">'+
+    return '<div style="min-height:96px;padding:9px;border:1px solid var(--brd2);border-radius:14px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.18)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">'+
         '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">'+card.label+'</div>'+
         '<div style="width:42px;height:4px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;flex-shrink:0"><div style="height:100%;width:'+Math.max(8, Math.min(100, Number(card.pct || 0)))+'%;background:'+card.color+';border-radius:999px"></div></div>'+
