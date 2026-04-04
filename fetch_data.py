@@ -635,6 +635,33 @@ def build_data_health(predictions):
     }
 
 
+
+
+def build_header_sync_metrics(predictions):
+    upcoming = []
+    for row in predictions or []:
+        event = row.get("event") or {}
+        if event.get("status") == "notstarted":
+            upcoming.append(row)
+
+    def has_pipeline_odds(row):
+        event = row.get("event") or {}
+        required = [
+            "odds_home", "odds_draw", "odds_away",
+            "odds_over_15", "odds_over_25",
+            "odds_under_25", "odds_under_35",
+            "odds_btts_yes", "odds_btts_no"
+        ]
+        return all(event.get(k) not in (None, "", 0) for k in required)
+
+    with_odds = sum(1 for row in upcoming if has_pipeline_odds(row))
+
+    return {
+        "upcoming_predictions_count": len(upcoming),
+        "with_odds_upcoming_count": with_odds,
+    }
+
+
 def build_backtest_summary(predictions, lookback_days):
     finished_rows = []
     engine_picks = []
@@ -895,6 +922,7 @@ def main():
         history_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past_history}&date_to={today}")
     history_rows = build_history_rows(history_predictions)
     data_health = build_data_health(predictions)
+    header_sync = build_header_sync_metrics(predictions)
 
     refresh_static = should_refresh_static(started_at)
     print(f"\n[5/6] Static refresh window: {'YES' if refresh_static else 'NO'}")
@@ -944,6 +972,7 @@ def main():
         "history_lookback_days": HISTORY_LOOKBACK_DAYS,
         "excluded_markets": ["Over 3.5G"],
         "data_health": data_health,
+        "header_sync": header_sync,
         "bsd_status": status_metrics,
     }
     save_json(meta, "meta.json")
