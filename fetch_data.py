@@ -355,9 +355,7 @@ def build_backtest_summary(predictions, lookback_days):
         if event.get("home_score") is None or event.get("away_score") is None:
             continue
 
-        confidence = normalize_confidence(
-            row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob")
-        )
+        confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
         finished.append(row)
 
         best_pick = None
@@ -468,6 +466,7 @@ def main():
     future = (started_at + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
     past = (started_at - timedelta(days=BACKTEST_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
 
+    # FAST DATA - every run
     print(f"\n[1/5] Fetching predictions (next {LOOKAHEAD_DAYS} days)...")
     predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={today}&date_to={future}")
     print(f"Total predictions: {len(predictions)}")
@@ -481,11 +480,9 @@ def main():
     print(f"\n[3/5] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
     historical_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
     backtest = build_backtest_summary(historical_predictions, BACKTEST_LOOKBACK_DAYS)
-    print(
-        f"Finished preds: {backtest['finished_predictions']} | "
-        f"Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%"
-    )
+    print(f"Finished preds: {backtest['finished_predictions']} | Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%")
 
+    # STATIC-ish DATA - refresh only a few times/day
     refresh_static = should_refresh_static(started_at)
     print(f"\n[4/5] Static refresh window: {'YES' if refresh_static else 'NO'}")
 
