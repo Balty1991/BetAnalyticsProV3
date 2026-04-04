@@ -285,6 +285,35 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .ticket-mini .l{font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase}
 @media(max-width:600px){.ticket-mini-grid{grid-template-columns:1fr 1fr 1fr}}
 
+
+.match-card{background:linear-gradient(180deg,rgba(18,28,50,.98),rgba(14,22,40,.98));border:1px solid rgba(84,119,255,.18);border-radius:18px;padding:16px;box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.match-card.safe{border-left:3px solid var(--grn)}
+.match-card.moderate{border-left:3px solid var(--yel)}
+.match-card.avoid{border-left:3px solid var(--red);opacity:1}
+.mc-head{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.mc-time{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:0}
+.mc-score-pill{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;color:var(--txt);font-family:var(--mono)}
+.mc-teams-premium{margin-bottom:12px;padding:4px 0 2px}
+.mc-teams-premium .mc-team{font-size:16px;font-weight:800}
+.mc-midrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mc-value-chip{padding:4px 10px;border-radius:999px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.24);font-size:10px;font-weight:800;color:var(--grn);font-family:var(--mono)}
+.ticket-mini-grid-premium{margin-top:0;margin-bottom:10px}
+.ticket-mini-grid-premium .ticket-mini{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.07);padding:10px 8px}
+.ticket-mini-grid-premium .ticket-mini .v{font-size:15px}
+.card-reco-main{margin-top:0;padding:12px 12px 10px;border-radius:14px;background:linear-gradient(180deg,rgba(59,130,246,.12),rgba(29,78,216,.08));border:1px solid rgba(59,130,246,.20)}
+.card-reco-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.card-reco-odd{font-size:11px;font-weight:800;color:var(--acc);font-family:var(--mono)}
+.card-reco-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.card-reco-badge{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:700;color:var(--txt)}
+.reason-list{gap:7px;margin-top:10px}
+.reason-pill{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.07)}
+@media(max-width:600px){
+  .matches-grid{grid-template-columns:1fr}
+  .match-card{padding:14px;border-radius:16px}
+  .mc-teams-premium .mc-team{font-size:15px}
+  .card-reco-pick{font-size:15px}
+}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .stats-grid{grid-template-columns:repeat(2,1fr)}
@@ -474,7 +503,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
       <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
       <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
-      <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
+      <button class="filter-btn" onclick="setFilter('win',this)">🏁 1 / 2</button>
       <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
       <select class="sort-select" id="sort-select" onchange="renderMatches()">
         <option value="date" selected>📅 Data</option>
@@ -784,18 +813,14 @@ function switchTab(name){
 // ============================================================
 var BET_TYPES = [
   {key:'homeWin',  label:'1',            probField:'prob_home_win',  oddsField:'odds_home'},
-  {key:'draw',     label:'X',            probField:'prob_draw',      oddsField:'odds_draw'},
   {key:'awayWin',  label:'2',            probField:'prob_away_win',  oddsField:'odds_away'},
   {key:'over15',   label:'Over 1.5G',    probField:'prob_over_15',   oddsField:'odds_over_15'},
-  {key:'under15',  label:'Under 1.5G',   probGetter:function(raw){ return 100 - safePct(raw.prob_over_15); }, oddsField:'odds_under_15'},
   {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
-  {key:'under25',  label:'Under 2.5G',   probGetter:function(raw){ return 100 - safePct(raw.prob_over_25); }, oddsField:'odds_under_25'},
-  {key:'under35',  label:'Under 3.5G',   probGetter:function(raw){ return 100 - safePct(raw.prob_over_35); }, oddsField:'odds_under_35'},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
 ];
 
 function getSupportedMarketTypes(){
-  return ['homeWin','draw','awayWin','over15','under15','over25','under25','under35','btts'];
+  return ['homeWin','awayWin','over15','over25','btts'];
 }
 
 function isSaneOddsForType(type, odds){
@@ -996,9 +1021,10 @@ function analyzeMatch(raw){
       marketProb: marketProb,
       edgePct: edgePct,
       sourceApi: apiRecommendForRaw(raw, bt.key),
-      sourceHeuristic: heuristicRecommendForRaw(raw, bt.key)
+      sourceHeuristic: false
     };
 
+    if(!item.sourceApi) return;
     allBets.push(item);
     if(score > bestScore){
       bestScore = score;
@@ -1010,14 +1036,13 @@ function analyzeMatch(raw){
   var doubleChancePick = getDoubleChancePick(raw, extra, conf);
 
   var candidates = [];
-  if(raw.over_15_recommend || safePct(raw.prob_over_15) > 75) candidates.push({label:'Over 1.5G', prob: safePct(raw.prob_over_15), tag:'o15'});
-  if(raw.over_25_recommend || safePct(raw.prob_over_25) > 65) candidates.push({label:'Over 2.5G', prob: safePct(raw.prob_over_25), tag:'o25'});
-  if(raw.btts_recommend || safePct(raw.prob_btts_yes) > 60) candidates.push({label:'BTTS', prob: safePct(raw.prob_btts_yes), tag:'btts'});
-  if((raw.winner_recommend || extra.prob12 >= 78) && extra.prob12) candidates.push({label:'12 / Fără egal', prob: extra.prob12, tag:'win'});
-  if(raw.favorite_recommend && raw.favorite && raw.favorite_prob){
-    var favLabel = raw.favorite === 'H' ? '1 (Favorit)' : '2 (Favorit)';
-    if(!candidates.some(function(c){ return c.tag === 'fav'; })) candidates.push({label: favLabel, prob: safePct(raw.favorite_prob), tag:'fav'});
-  }
+  if(raw.over_15_recommend) candidates.push({label:'Over 1.5G', prob: safePct(raw.prob_over_15), tag:'o15'});
+  if(raw.over_25_recommend) candidates.push({label:'Over 2.5G', prob: safePct(raw.prob_over_25), tag:'o25'});
+  if(raw.btts_recommend) candidates.push({label:'BTTS', prob: safePct(raw.prob_btts_yes), tag:'btts'});
+  if(raw.winner_recommend && raw.predicted_result === 'H') candidates.push({label:'1', prob: safePct(raw.prob_home_win), tag:'win'});
+  if(raw.winner_recommend && raw.predicted_result === 'A') candidates.push({label:'2', prob: safePct(raw.prob_away_win), tag:'win'});
+  if(raw.favorite_recommend && raw.favorite === 'H') candidates.push({label:'1 (Favorit API)', prob: safePct(raw.favorite_prob || raw.prob_home_win), tag:'fav'});
+  if(raw.favorite_recommend && raw.favorite === 'A') candidates.push({label:'2 (Favorit API)', prob: safePct(raw.favorite_prob || raw.prob_away_win), tag:'fav'});
   candidates.sort(function(a,b){ return b.prob - a.prob; });
 
   var mlFlags = { o15: !!raw.over_15_recommend, o25: !!raw.over_25_recommend, o35: false, btts: !!raw.btts_recommend, winner: !!raw.winner_recommend, fav: !!raw.favorite_recommend };
@@ -1452,7 +1477,7 @@ function buildMatchReasons(m){
   if(m.bestBet && m.bestBet.edgePct != null) reasons.push('No-vig ' + (m.bestBet.edgePct >= 0 ? '+' : '') + m.bestBet.edgePct.toFixed(1) + 'pp');
   if(m.bestBet && m.bestBet.value >= 0.03) reasons.push('EV+ ' + fmtPct(m.bestBet.value * 100));
   if(m.bestBet && m.bestBet.sourceApi) reasons.push('Confirmat API');
-  else if(m.bestBet && m.bestBet.sourceHeuristic) reasons.push('Validat euristic');
+
   if(m.confidence >= 60) reasons.push('AI confidence ' + m.confidence.toFixed(0) + '%');
   if(m.xgTotal >= 2.6) reasons.push('xG total ' + m.xgTotal.toFixed(2));
   if(m.probOver25 >= 60) reasons.push('O2.5 ' + m.probOver25.toFixed(1) + '%');
@@ -1485,7 +1510,7 @@ function buildRecommendationReasons(m, b){
   }
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
   if(b.sourceApi) reasons.push('confirmat API');
-  else if(b.sourceHeuristic) reasons.push('validat euristic');
+
   return uniqueReasons(reasons).slice(0, 3);
 }
 
@@ -1629,7 +1654,7 @@ function renderBacktest(){
     {
       label:'Top piață',
       value: bestMarket ? (bestMarket.label || bestMarket.key) : '—',
-      detail: bestMarket ? makeMeta(['ROI ' + fmtSignedPct(Number(bestMarket.roi || 0)), (bestMarket.wins || 0) + '/' + (bestMarket.bets || 0) + ' win']) : 'Fără piață cu sample suficient',
+      detail: bestMarket ? makeMeta(['ROI ' + fmtSignedPct(Number(bestMarket.roi || 0)), 'backtest ' + (bestMarket.wins || 0) + '/' + (bestMarket.bets || 0) + ' win']) : 'Fără piață cu sample suficient',
       legend: bestMarket ? makeMeta(['win rate ' + fmtPct(Number(bestMarket.winrate || 0)), 'cotă medie ' + Number(bestMarket.avg_odds || 0).toFixed(2)]) : 'minim 10 recomandări',
       pct: bestMarket ? Number(bestMarket.winrate || 0) : 0,
       color:'var(--pur)'
@@ -1637,7 +1662,7 @@ function renderBacktest(){
     {
       label:'Top ligă',
       value: bestLeague ? (bestLeague.label || bestLeague.key) : '—',
-      detail: bestLeague ? makeMeta(['ROI ' + fmtSignedPct(Number(bestLeague.roi || 0)), (bestLeague.wins || 0) + '/' + (bestLeague.bets || 0) + ' win']) : 'Fără ligă cu sample suficient',
+      detail: bestLeague ? makeMeta(['ROI ' + fmtSignedPct(Number(bestLeague.roi || 0)), 'backtest ' + (bestLeague.wins || 0) + '/' + (bestLeague.bets || 0) + ' win']) : 'Fără ligă cu sample suficient',
       legend: bestLeague ? ('minim ' + MIN_LEAGUE_BETS + ' recomandări în backtest') : 'minim 10 recomandări',
       pct: bestLeague ? Number(bestLeague.winrate || 0) : 0,
       color:'var(--cyan)'
@@ -1645,8 +1670,8 @@ function renderBacktest(){
     {
       label:'Top strategie bilet',
       value: bestStrategy ? (bestStrategy.label || bestStrategy.key) : '—',
-      detail: bestStrategy ? makeMeta(['ROI ' + fmtSignedPct(Number(bestStrategy.roi || 0)), (bestStrategy.wins || 0) + '/' + (bestStrategy.bets || 0) + ' win']) : 'Nicio strategie din secțiunea Bilete nu are sample suficient',
-      legend: bestStrategy ? 'filtrat doar la strategiile afișate în secțiunea Bilete' : 'exclud strategiile ascunse sau scoase din UI',
+      detail: bestStrategy ? makeMeta(['ROI ' + fmtSignedPct(Number(bestStrategy.roi || 0)), 'backtest ' + (bestStrategy.wins || 0) + '/' + (bestStrategy.bets || 0) + ' win']) : 'Nicio strategie din secțiunea Bilete nu are sample suficient',
+      legend: bestStrategy ? 'nu reprezintă biletele generate acum; sunt rezultate istorice din backtest' : 'exclud strategiile ascunse sau scoase din UI',
       pct: bestStrategy ? Number(bestStrategy.winrate || 0) : 0,
       color:'var(--acc)'
     },
@@ -1663,7 +1688,7 @@ function renderBacktest(){
 
   box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'+cards.map(buildCard).join('')+'</div>'+
     '<div style="margin-top:8px;font-size:9px;line-height:1.35;color:var(--muted);opacity:.92">'+
-      '<strong style="color:var(--txt)">Legendă:</strong> win/recomandate = câștigate din total recomandate în backtest; ROI = randamentul categoriei; top strategie = doar biletele din secțiunea Bilete.'+
+      '<strong style="color:var(--txt)">Legendă:</strong> win/recomandate = câștigate din total recomandate în backtest; valorile nu sunt numărul de bilete generate acum în tabul Bilete/Tracking.'+
     '</div>';
 } 
 
@@ -1913,18 +1938,18 @@ function renderMatches(){
   var leagueF = $('league-filter') ? $('league-filter').value : '';
 
   var filtered = ALL_MATCHES.filter(function(m){
-    var b = m.bestBet || m.rawBestBet;
+    var b = m.bestBet || null;
     if(leagueF && m.league !== leagueF) return false;
-    if(CURRENT_FILTER === 'all') return true;
+    if(CURRENT_FILTER === 'all') return m.analysisState === 'ELIGIBLE';
     if(CURRENT_FILTER === 'safe') return m.analysisState === 'ELIGIBLE' && m.verdict === 'safe';
     if(CURRENT_FILTER === 'moderate') return m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate';
     if(CURRENT_FILTER === 'value') return m.analysisState === 'ELIGIBLE' && b && b.value >= 0.05;
-    if(CURRENT_FILTER === 'o15') return b && b.type === 'over15';
+    if(CURRENT_FILTER === 'o15') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over15';
     if(CURRENT_FILTER === 'issues') return m.analysisState !== 'ELIGIBLE';
-    if(CURRENT_FILTER === 'btts') return b && b.type === 'btts';
-    if(CURRENT_FILTER === 'o25') return b && b.type === 'over25';
-    if(CURRENT_FILTER === 'u35') return b && b.type === 'under35';
-    return true;
+    if(CURRENT_FILTER === 'btts') return m.analysisState === 'ELIGIBLE' && b && b.type === 'btts';
+    if(CURRENT_FILTER === 'o25') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over25';
+    if(CURRENT_FILTER === 'win') return m.analysisState === 'ELIGIBLE' && b && (b.type === 'homeWin' || b.type === 'awayWin');
+    return m.analysisState === 'ELIGIBLE';
   });
 
   filtered.sort(function(a,b){
@@ -1954,35 +1979,47 @@ function renderMatches(){
   Object.keys(groups).forEach(function(date){
     html += '<div class="date-group"><div class="date-label">📅 '+date+'</div><div class="matches-grid">';
     html += groups[date].map(function(m){
-      var b = m.bestBet || m.rawBestBet || null;
+      var b = m.bestBet || null;
       var state = getAnalysisStateMeta(m.analysisState);
       var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
       var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
       var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
       var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
-      var reasons = buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('');
-      var recHtml = b ? (b.label + (b.odds ? ' @ ' + Number(b.odds).toFixed(2) : '')) : 'Fără piață recomandată';
-      var whyLine = b ? ('Probabilitate estimată <strong style="color:var(--acc)">'+fmtPct(b.adjProb || 0)+'</strong>' + (b.value != null ? ' • Value <strong style="color:var(--grn)">'+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</strong>' : '') + ' • Confidence <strong style="color:var(--yel)">'+m.confidence.toFixed(0)+'%</strong>') : 'Snapshot informativ';
+      var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
+      var recLabel = b ? b.label : 'Fără recomandare activă';
+      var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
+      var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
+      var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
+      var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
+      var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
       return '<div class="match-card '+verdictClass+'">'+
-        '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
-        '<div class="mc-time">🕒 '+m.dateLabel+' • '+m.timeLabel+(m.mostLikelyScore ? ' • scor probabil '+m.mostLikelyScore : '')+'</div>'+
-        '<div class="mc-teams" style="margin-bottom:12px">'+
+        '<div class="mc-head">'+
+          '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
+          '<div class="mc-time"><span>🕒 '+m.dateLabel+' • '+m.timeLabel+'</span>'+scoreBadge+'</div>'+
+        '</div>'+
+        '<div class="mc-teams mc-teams-premium">'+
           '<div class="mc-team"><div class="mc-team-row">'+hLogo+'<span>'+m.home+'</span></div></div>'+
           '<div class="mc-vs">VS</div>'+
           '<div class="mc-team away"><div class="mc-team-row">'+aLogo+'<span>'+m.away+'</span></div></div>'+
         '</div>'+
-        '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
-        '<div class="ticket-mini-grid">'+
-          '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG Gazde</div></div>'+
-          '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG Oaspeți</div></div>'+
-          '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG Total</div></div>'+
+        '<div class="mc-midrow">'+
+          '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
+          + (b && b.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '') +
+        '</div>'+
+        '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
+          '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
+          '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
+          '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG total</div></div>'+
         '</div>'+
         '<div class="card-reco-main">'+
-          '<div class="card-reco-title">Pronostic recomandat</div>'+
-          '<div class="card-reco-pick">'+recHtml+'</div>'+
-          '<div class="card-reco-meta">'+whyLine+'</div>'+
+          '<div class="card-reco-head">'+
+            '<div class="card-reco-title">Pronostic recomandat</div>'+
+            (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
+          '</div>'+
+          '<div class="card-reco-pick">'+recLabel+'</div>'+
+          '<div class="card-reco-badges">'+probBadge+valueBadge+confBadge+'</div>'+
         '</div>'+
-        '<div class="reason-list">'+reasons+'</div>'+
+        (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
       '</div>';
     }).join('');
     html += '</div></div>';
