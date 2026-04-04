@@ -366,8 +366,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
     <!-- Stats row -->
     <div class="stats-grid" id="dashboard-stats" style="margin-top:12px;margin-bottom:12px">
-      <div class="stat-card"><div class="stat-num" id="st-total" style="color:var(--acc)">—</div><div class="stat-lbl">Predicții încărcate</div></div>
-      <div class="stat-card"><div class="stat-num" id="st-eligible" style="color:var(--grn)">—</div><div class="stat-lbl">Eligibile</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-total" style="color:var(--acc)">—</div><div class="stat-lbl">ML predictions BSD</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-eligible" style="color:var(--grn)">—</div><div class="stat-lbl">Cu cote BSD</div></div>
       <div class="stat-card"><div class="stat-num" id="st-safe" style="color:var(--grn)">—</div><div class="stat-lbl">SAFE</div></div>
       <div class="stat-card"><div class="stat-num" id="st-value" style="color:var(--val)">—</div><div class="stat-lbl">Edge ≥ 5%</div></div>
       <div class="stat-card"><div class="stat-num" id="st-mlcov" style="color:var(--pur)">—</div><div class="stat-lbl">Cu backtest</div></div>
@@ -3673,8 +3673,8 @@ function renderAll(){
   var value = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.bestBet && m.bestBet.value >= 0.05; }).length;
   var mlComplete = ALL_MATCHES.filter(function(m){ return m.createdAt && m.modelVersion && (m.probOver25 || m.probUnder25) && (m.xgTotal || m.xgHome || m.xgAway); }).length;
 
-  if($('st-total')) $('st-total').textContent = total;
-  if($('st-eligible')) $('st-eligible').textContent = eligible;
+  if($('st-total')) $('st-total').textContent = rawMl;
+  if($('st-eligible')) $('st-eligible').textContent = rawOdds;
   if($('st-safe')) $('st-safe').textContent = safe;
   if($('st-value')) $('st-value').textContent = value;
   if($('st-mlcov')) $('st-mlcov').textContent = BACKTEST_SUMMARY && BACKTEST_SUMMARY.engine_bets ? ((BACKTEST_SUMMARY.engine_roi >= 0 ? '+' : '') + fmtPct(BACKTEST_SUMMARY.engine_roi || 0)) : (total ? Math.round(mlComplete*100/total)+'%' : '—');
