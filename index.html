@@ -3681,8 +3681,8 @@ function renderAll(){
 
   var now = new Date();
   var timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  var rawMl = APP_META && APP_META.bsd_status && APP_META.bsd_status.ml_predictions_upcoming != null ? APP_META.bsd_status.ml_predictions_upcoming : total;
-  var rawOdds = APP_META && APP_META.bsd_status && APP_META.bsd_status.with_odds != null ? APP_META.bsd_status.with_odds : eligible;
+  var rawMl = APP_META && APP_META.bsd_status && APP_META.bsd_status.ml_predictions_upcoming != null ? APP_META.bsd_status.ml_predictions_upcoming : (APP_META && APP_META.header_sync && APP_META.header_sync.upcoming_predictions_count != null ? APP_META.header_sync.upcoming_predictions_count : total);
+  var rawOdds = APP_META && APP_META.bsd_status && APP_META.bsd_status.with_odds != null ? APP_META.bsd_status.with_odds : (APP_META && APP_META.header_sync && APP_META.header_sync.with_odds_upcoming_count != null ? APP_META.header_sync.with_odds_upcoming_count : eligible);
   $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — ora '+timeStr;
 
   buildLeagueFilter();
