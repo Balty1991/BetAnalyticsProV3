@@ -328,6 +328,25 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .card-reco-badge{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:700;color:var(--txt)}
 .reason-list{gap:7px;margin-top:10px}
 .reason-pill{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.07)}
+
+.source-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid transparent;text-transform:uppercase;letter-spacing:.02em}
+.source-chip-api{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.32);color:var(--grn)}
+.source-chip-heur{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.32);color:var(--yel)}
+.source-chip-mixed{background:rgba(59,130,246,.14);border-color:rgba(59,130,246,.32);color:var(--acc)}
+.audit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.audit-card{background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));border:1px solid var(--brd2);border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.audit-card-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.audit-card-value{font-size:20px;font-weight:800;font-family:var(--mono)}
+.audit-card-sub{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.4}
+.audit-list{display:grid;gap:10px}
+.audit-row{background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));border:1px solid var(--brd2);border-radius:14px;padding:12px}
+.audit-row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.audit-row-teams{font-size:14px;font-weight:700;color:var(--txt)}
+.audit-row-meta{margin-top:4px;font-size:11px;color:var(--muted);line-height:1.4}
+.audit-row-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.audit-badge{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-family:var(--mono)}
+.audit-reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.audit-reason{padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--txt)}
 @media(max-width:600px){
   .matches-grid{grid-template-columns:1fr}
   .match-card{padding:14px;border-radius:16px}
@@ -374,6 +393,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 <!-- TABS -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  <button class="tab" onclick="switchTab('audit')">🎯 Audit Kelly</button>
   <button class="tab" onclick="switchTab('meciuri')">⚽ Meciuri</button>
   <button class="tab" onclick="switchTab('bilete')">🎫 Bilete</button>
   <button class="tab" onclick="switchTab('tracking')">📈 Tracking</button>
@@ -535,6 +555,31 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.55">
         Acest bloc arată cât de mult din endpointul <strong style="color:var(--txt)">/predictions</strong> este realmente folosit în UI: 1X2, xG, piețe Over 1.5/2.5/3.5, BTTS, Favorite, Under 3.5, model version și data generării.
       </div>
+    </div>
+  </div>
+
+  <!-- ===== AUDIT TAB ===== -->
+  <div class="tab-content" id="tab-audit">
+    <div class="section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(59,130,246,.06));border:1px solid rgba(245,158,11,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--txt)">🎯 Audit Kelly / Signal</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Top pariuri filtrate din <strong style="color:var(--txt)">signal_audit.json</strong>, cu Kelly afișat pe fiecare selecție.</div>
+        </div>
+        <div id="audit-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+      </div>
+      <div class="audit-grid" id="audit-summary-grid"></div>
+    </div>
+
+    <div class="section" style="padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--txt)">📋 Pariuri auditate</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Kelly 1/4 este pus în față; pe mobil se vede clar fără să faci gimnastică cu zoom-ul.</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted)">sortare implicită: Kelly 1/4 ↓</div>
+      </div>
+      <div id="signal-audit-table" class="audit-list"></div>
     </div>
   </div>
 
@@ -822,8 +867,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <div class="tab-content" id="tab-istoric21">
     <div class="section" style="margin-bottom:12px">
       <div class="sec-hdr">
-        <div class="sec-title">🧾 Istoric recomandări 21 zile reale</div>
-        <div style="font-size:11px;color:var(--muted)">filtrat strict după ultimele 21 zile calendaristice</div>
+        <div class="sec-title">🧾 Istoric recomandări 21 zile</div>
+        <div style="font-size:11px;color:var(--muted)">detaliat pe fiecare tip de pronostic</div>
       </div>
       <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px">Aici vezi istoricul recomandărilor folosite în backtest, grupat pe tip de pariu. Pentru fiecare categorie primești win / jucate, win rate și ROI, iar dedesubt fiecare eveniment cu verdictul win / lose.</div>
     </div>
@@ -845,6 +890,7 @@ var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
 var HISTORY_ENGINE = [];
+var SIGNAL_AUDIT = {};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
@@ -896,6 +942,39 @@ function fmtDateKey(iso){
   var d=new Date(iso);
   return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');
 }
+function sourceTypeFromBet(b){
+  if(!b) return 'none';
+  if(b.sourceApi && b.sourceHeuristic) return 'mixed';
+  if(b.sourceApi) return 'api';
+  if(b.sourceHeuristic) return 'heuristic';
+  return 'heuristic';
+}
+function sourceLabelFromBet(b){
+  var t = sourceTypeFromBet(b);
+  if(t === 'api') return 'ML/API';
+  if(t === 'mixed') return 'ML + heuristic';
+  if(t === 'heuristic') return 'heuristic';
+  return '—';
+}
+function sourceChipHtmlForBet(b){
+  var t = sourceTypeFromBet(b);
+  if(t === 'api') return '<span class="source-chip source-chip-api">ML/API</span>';
+  if(t === 'mixed') return '<span class="source-chip source-chip-mixed">ML + heuristic</span>';
+  if(t === 'heuristic') return '<span class="source-chip source-chip-heur">heuristic</span>';
+  return '';
+}
+function sourceChipHtmlForAuditRow(r){
+  if(r && r.source_api && r.source_heuristic) return '<span class="source-chip source-chip-mixed">ML + heuristic</span>';
+  if(r && r.source_api) return '<span class="source-chip source-chip-api">ML/API</span>';
+  if(r && r.source_heuristic) return '<span class="source-chip source-chip-heur">heuristic</span>';
+  return '<span class="source-chip source-chip-heur">heuristic</span>';
+}
+function ageBucketLabel(hours){
+  var h = Number(hours || 0);
+  if(!isFinite(h) || h <= 0) return '—';
+  if(h < 24) return h.toFixed(1)+'h';
+  return (h/24).toFixed(1)+' zile';
+}
 function toast(msg,type){
   var w=$('toast-wrap');
   var t=document.createElement('div');
@@ -931,7 +1010,7 @@ function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
-  var names=['dashboard','meciuri','bilete','tracking','bankroll','istoric21'];
+  var names=['dashboard','audit','meciuri','bilete','tracking','bankroll','istoric21'];
   var tabs=document.querySelectorAll('.tab');
   var idx=names.indexOf(name);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
@@ -1153,7 +1232,7 @@ function analyzeMatch(raw){
       marketProb: marketProb,
       edgePct: edgePct,
       sourceApi: apiRecommendForRaw(raw, bt.key),
-      sourceHeuristic: false
+      sourceHeuristic: heuristicRecommendForRaw(raw, bt.key)
     };
 
     allBets.push(item);
@@ -1351,7 +1430,8 @@ function doRefresh(){
     getJson('/data/events.json', []),
     getJson('/data/teams.json', []),
     getJson('/data/backtest.json', {}),
-    getJson('/data/history_engine.json', [])
+    getJson('/data/history_engine.json', []),
+    getJson('/data/signal_audit.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -1360,6 +1440,7 @@ function doRefresh(){
     var teamsData = results[4];
     var backtestData = results[5];
     var historyData = results[6];
+    var signalAuditData = results[7];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
@@ -1371,6 +1452,7 @@ function doRefresh(){
     ALL_PLAYERS = [];
     BACKTEST_SUMMARY = backtestData || {};
     HISTORY_ENGINE = Array.isArray(historyData) ? historyData : (historyData.results || historyData || []);
+    SIGNAL_AUDIT = signalAuditData || {};
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -1553,7 +1635,7 @@ function renderTodayBest(){
     var scoreStr = m.mostLikelyScore ? '<span class="score-badge" style="margin-left:6px;font-size:10px">⚽ '+m.mostLikelyScore+'</span>' : '';
     return '<div class="top-pick-card" style="border-color:rgba(34,197,94,0.35)">'+
       '<div class="tp-rank">#'+(i+1)+'</div>'+
-      '<div class="tp-badge tp-badge-safe">🟢 AZI</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="tp-badge tp-badge-safe">🟢 AZI</div>'+sourceChipHtmlForBet(b)+'</div>'+
       '<div class="tp-teams" style="display:flex;align-items:center;gap:6px">'+hLogo+' '+m.home+' vs '+m.away+' '+aLogo+'</div>'+
       '<div style="text-align:center;margin:6px 0">'+scoreStr+'</div>'+
       '<div class="tp-league">'+m.league+' • '+m.timeLabel+'</div>'+
@@ -1595,7 +1677,7 @@ function renderTopPicks(){
 
     return '<div class="top-pick-card">'+
       '<div class="tp-rank">#'+(i+1)+'</div>'+
-      '<div class="tp-badge '+badgeClass+'">'+badgeText+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="tp-badge '+badgeClass+'">'+badgeText+'</div>'+sourceChipHtmlForBet(b)+'</div>'+
       '<div class="tp-teams" style="display:flex;align-items:center;gap:6px">'+hLogo+' '+m.home+' vs '+m.away+' '+aLogo+'</div>'+
       '<div style="font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:center;gap:10px">'+
         '<span style="color:'+hXg.color+'">H: '+m.xgHome.toFixed(2)+'</span>'+
@@ -1619,7 +1701,7 @@ function buildMatchReasons(m){
   if(m.analysisState && m.analysisState !== 'ELIGIBLE') reasons.push(getAnalysisStateMeta(m.analysisState).label.replace(/[✅⚠️🧠⛔🛰️ ]/g,''));
   if(m.bestBet && m.bestBet.edgePct != null) reasons.push('No-vig ' + (m.bestBet.edgePct >= 0 ? '+' : '') + m.bestBet.edgePct.toFixed(1) + 'pp');
   if(m.bestBet && m.bestBet.value >= 0.03) reasons.push('EV+ ' + fmtPct(m.bestBet.value * 100));
-  if(m.bestBet && m.bestBet.sourceApi) reasons.push('Confirmat API');
+  if(m.bestBet) reasons.push('sursă ' + sourceLabelFromBet(m.bestBet));
 
   if(m.confidence >= 60) reasons.push('AI confidence ' + m.confidence.toFixed(0) + '%');
   if(m.xgTotal >= 2.6) reasons.push('xG total ' + m.xgTotal.toFixed(2));
@@ -1651,9 +1733,75 @@ function buildRecommendationReasons(m, b){
     reasons.push('echilibru xG ' + Math.abs(m.xgHome - m.xgAway).toFixed(2));
   }
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
-  if(b.sourceApi) reasons.push('confirmat API');
+  reasons.push('sursă ' + sourceLabelFromBet(b));
 
-  return uniqueReasons(reasons).slice(0, 3);
+  return uniqueReasons(reasons).slice(0, 4);
+}
+
+function renderSignalAudit(){
+  var summary = $('audit-summary-grid');
+  var list = $('signal-audit-table');
+  var updated = $('audit-updated');
+  if(!summary || !list) return;
+
+  var audit = SIGNAL_AUDIT || {};
+  var rows = Array.isArray(audit.rows) ? audit.rows.slice() : [];
+  rows.sort(function(a,b){ return Number(b.kelly_quarter_pct || 0) - Number(a.kelly_quarter_pct || 0); });
+
+  if(updated) updated.textContent = audit.updated_at ? ('Audit actualizat: ' + fmtDateTime(audit.updated_at)) : 'Audit: —';
+
+  var health = (APP_META && APP_META.data_health) || {};
+  var eligible = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE'; });
+  var apiCount = eligible.filter(function(m){ return m.bestBet && sourceTypeFromBet(m.bestBet) === 'api'; }).length;
+  var heurCount = eligible.filter(function(m){ return m.bestBet && sourceTypeFromBet(m.bestBet) === 'heuristic'; }).length;
+  var mixedCount = eligible.filter(function(m){ return m.bestBet && sourceTypeFromBet(m.bestBet) === 'mixed'; }).length;
+
+  var cards = [
+    {label:'Semnale auditate', value: rows.length, sub:'pariuri prezente în signal_audit.json', color:'var(--acc)'},
+    {label:'Kelly 1/4 mediu', value: fmtPct(Number(audit.avg_kelly_quarter_pct || 0)), sub:'miza teoretică frânată, nu Kelly full ca să nu sară banca-n tavan', color:'var(--grn)'},
+    {label:'Edge mediu', value: fmtSignedPct(Number(audit.avg_edge_pct || 0)), sub:'diferența model vs no-vig market', color:'var(--yel)'},
+    {label:'Value mediu', value: fmtSignedPct(Number(audit.avg_value_pct || 0)), sub:'EV mediu al semnalelor auditate', color:'var(--pur)'},
+    {label:'Heuristic în carduri', value: heurCount + (mixedCount ? ' +' + mixedCount + ' mix' : ''), sub:'eligibile marcate explicit în UI, ca să nu mai fie ninja prin carduri', color:'var(--yel)'},
+    {label:'Stale scoase', value: Number(health.stale_predictions_removed || 0), sub:(health.prediction_age_cap_hours ? ('cap ' + ageBucketLabel(health.prediction_age_cap_hours)) : 'fără cap') + ' • max rămas ' + (health.max_prediction_age_hours != null ? ageBucketLabel(health.max_prediction_age_hours) : '—'), color:'var(--red)'}
+  ];
+
+  summary.innerHTML = cards.map(function(c){
+    return '<div class="audit-card">'+
+      '<div class="audit-card-label">'+c.label+'</div>'+
+      '<div class="audit-card-value" style="color:'+c.color+'">'+c.value+'</div>'+
+      '<div class="audit-card-sub">'+c.sub+'</div>'+
+    '</div>';
+  }).join('');
+
+  if(!rows.length){
+    list.innerHTML = '<div class="empty-state">signal_audit.json e gol sau nu a fost generat încă la ultimul fetch.</div>';
+    return;
+  }
+
+  list.innerHTML = rows.map(function(r, idx){
+    var reasonHtml = (r.reason_tags || []).map(function(tag){ return '<span class="audit-reason">'+tag+'</span>'; }).join('');
+    var evDate = r.event_date ? (fmtDate(r.event_date) + ' • ' + fmtTime(r.event_date)) : '—';
+    var age = r.age_hours != null ? ageBucketLabel(r.age_hours) : (r.created_at ? ageBucketLabel(hoursSince(r.created_at)) : '—');
+    var valuePct = Number(r.value || 0) * 100;
+    return '<div class="audit-row">'+
+      '<div class="audit-row-top">'+
+        '<div>'+
+          '<div class="audit-row-teams">#'+(idx+1)+' • '+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+          '<div class="audit-row-meta">'+(r.league || '—')+' • '+evDate+' • model '+(r.model_version || '—')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sourceChipHtmlForAuditRow(r)+'<span class="audit-badge">Kelly 1/4 '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span></div>'+
+      '</div>'+
+      '<div class="audit-row-badges">'+
+        '<span class="audit-badge">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</span>'+
+        '<span class="audit-badge">Adj '+fmtPct(Number(r.adjusted_prob || 0))+'</span>'+
+        '<span class="audit-badge">Edge '+fmtSignedPct(Number(r.edge_pct || 0))+'</span>'+
+        '<span class="audit-badge">Value '+fmtSignedPct(valuePct)+'</span>'+
+        '<span class="audit-badge">Fair '+(r.fair_odds != null ? Number(r.fair_odds).toFixed(2) : '—')+'</span>'+
+        '<span class="audit-badge">Age '+age+'</span>'+
+      '</div>'+
+      (reasonHtml ? '<div class="audit-reasons">'+reasonHtml+'</div>' : '')+
+    '</div>';
+  }).join('');
 }
 
 function renderMlApiCenter(){
@@ -1824,6 +1972,15 @@ function renderBacktest(){
       legend: 'nu intră în top dacă lipsesc datele critice',
       pct: health.events_without_odds != null ? Math.max(8, 100 - Math.min(100, Number(health.events_without_odds) * 1.35)) : 0,
       color:'var(--muted)',
+      mono:true
+    },
+    {
+      label:'Vârstă predicții',
+      value: health.max_prediction_age_hours != null ? ageBucketLabel(health.max_prediction_age_hours) : '—',
+      detail: makeMeta([health.avg_prediction_age_hours != null ? ('medie ' + ageBucketLabel(health.avg_prediction_age_hours)) : null, health.stale_predictions_removed ? (health.stale_predictions_removed + ' stale scoase') : 'fără stale detectat']),
+      legend: health.prediction_age_cap_hours ? ('cap activ ' + ageBucketLabel(health.prediction_age_cap_hours)) : 'fără cap de vârstă',
+      pct: health.max_prediction_age_hours != null && health.prediction_age_cap_hours ? Math.max(8, 100 - Math.min(100, (Number(health.max_prediction_age_hours) / Number(health.prediction_age_cap_hours || 1)) * 100)) : 0,
+      color:'var(--org)',
       mono:true
     }
   ];
@@ -2181,6 +2338,8 @@ function renderMatches(){
     var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
     var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
+    var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
+    var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -2193,6 +2352,7 @@ function renderMatches(){
       '</div>'+
       '<div class="mc-midrow">'+
         '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
+        sourceBadge+
         (b && b.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '')+
       '</div>'+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
@@ -2206,7 +2366,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+ageBadge+'</div>'+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
@@ -2382,6 +2542,7 @@ function buildMarketCandidate(m, type){
   if(!b) return null;
   if(isHardContradiction(m, type)) return null;
   if(b.value <= 0) return null;
+  if(Number(b.odds || 0) > 1.65) return null;
 
   var fit = marketFitAnalysis(m, type);
   var reasons = uniqueReasons((fit && fit.reasons) || []);
@@ -3547,7 +3708,7 @@ function renderBilete(){
           '<div class="bilet-match-info">'+(m.league||'Liga')+' • '+(m.dateLabel||'')+' '+(m.timeLabel||'')+'</div>'+
         '</div>'+
         '<div class="bilet-pick">'+
-          '<div class="bilet-pick-type">'+b.label+' @ '+b.odds.toFixed(2)+'</div>'+
+          '<div class="bilet-pick-type">'+b.label+' @ '+b.odds.toFixed(2)+' '+sourceChipHtmlForBet(b)+'</div>'+
           '<div class="bilet-pick-prob">Prob: '+fmtPct(b.adjProb)+' • Confidence: '+m.confidence.toFixed(0)+'%</div>'+
         '</div>'+
       '</div>'+
@@ -3880,16 +4041,9 @@ function renderHistory21(){
   var root = $('history21-root');
   if(!root) return;
   var supported = (BET_TYPES || []).map(function(b){ return b.label; });
-  var nowTs = Date.now();
-  var cutoffTs = nowTs - (21 * 24 * 60 * 60 * 1000);
-  var rows = (HISTORY_ENGINE || []).filter(function(r){
-    if(!r || supported.indexOf(r.market) === -1) return false;
-    var ts = new Date(r.date || r.created_at || 0).getTime();
-    if(!ts || isNaN(ts)) return false;
-    return ts >= cutoffTs && ts <= (nowTs + 24 * 60 * 60 * 1000);
-  });
+  var rows = (HISTORY_ENGINE || []).filter(function(r){ return r && supported.indexOf(r.market) !== -1; });
   if(!rows.length){
-    root.innerHTML = '<div class="empty-state">Nu există încă istoric real pe ultimele 21 de zile pentru piețele active.</div>';
+    root.innerHTML = '<div class="empty-state">Nu există încă istoric pe ultimele 21 de zile pentru piețele active.</div>';
     return;
   }
   var groups = {};
@@ -4173,6 +4327,7 @@ function renderAll(){
   renderTodayBest();
   renderTopPicks();
   renderTopSafe();
+  renderSignalAudit();
   renderML();
   renderMLDC();
   renderML15();
