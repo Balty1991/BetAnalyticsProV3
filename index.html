@@ -765,6 +765,8 @@ var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
 var APP_META = {};
+var SIGNAL_AUDIT = {rows:[]};
+var ODDS_HISTORY = {snapshots:[],recent_movers:[]};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
@@ -1176,7 +1178,18 @@ function analyzeMatch(raw){
     rawVerdict: bestBet ? bestBet.verdict : 'avoid',
     analysisState: bestBet ? 'RAW_ONLY' : 'NO_ODDS',
     eligibleCandidates: [],
-    apiFlagsCount: [raw.over_15_recommend, raw.over_25_recommend, raw.btts_recommend, raw.favorite_recommend, raw.winner_recommend].filter(Boolean).length
+    apiFlagsCount: [raw.over_15_recommend, raw.over_25_recommend, raw.btts_recommend, raw.favorite_recommend, raw.winner_recommend].filter(Boolean).length,
+    auditSummary: raw.audit_summary || null,
+    bestMarketKey: raw.best_market_key || null,
+    bestMarketLabel: raw.best_market_label || null,
+    bestFairOdds: raw.best_fair_odds != null ? Number(raw.best_fair_odds) : null,
+    bestKellyQuarterPct: raw.best_kelly_quarter_pct != null ? Number(raw.best_kelly_quarter_pct) : null,
+    bestKellyFullPct: raw.best_kelly_full_pct != null ? Number(raw.best_kelly_full_pct) : null,
+    bestPreviousOdds: raw.best_previous_odds != null ? Number(raw.best_previous_odds) : null,
+    bestOpeningOdds: raw.best_opening_odds != null ? Number(raw.best_opening_odds) : null,
+    bestLineMovementPct: raw.best_line_movement_pct != null ? Number(raw.best_line_movement_pct) : null,
+    bestFromOpenPct: raw.best_from_open_pct != null ? Number(raw.best_from_open_pct) : null,
+    auditReasonTags: Array.isArray(raw.audit_reason_tags) ? raw.audit_reason_tags : []
   };
 }
 
@@ -1267,7 +1280,9 @@ function doRefresh(){
     getJson('/data/leagues.json', []),
     getJson('/data/events.json', []),
     getJson('/data/teams.json', []),
-    getJson('/data/backtest.json', {})
+    getJson('/data/backtest.json', {}),
+    getJson('/data/signal_audit.json', {rows:[]}),
+    getJson('/data/odds_history.json', {snapshots:[],recent_movers:[]})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -1275,6 +1290,8 @@ function doRefresh(){
     var eventsData = results[3];
     var teamsData = results[4];
     var backtestData = results[5];
+    var signalAuditData = results[6];
+    var oddsHistoryData = results[7];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
@@ -1285,6 +1302,8 @@ function doRefresh(){
     ALL_TEAMS = teamsData.results || teamsData || [];
     ALL_PLAYERS = [];
     BACKTEST_SUMMARY = backtestData || {};
+    SIGNAL_AUDIT = signalAuditData || {rows:[]};
+    ODDS_HISTORY = oddsHistoryData || {snapshots:[],recent_movers:[]};
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -1534,7 +1553,8 @@ function buildMatchReasons(m){
   if(m.bestBet && m.bestBet.edgePct != null) reasons.push('No-vig ' + (m.bestBet.edgePct >= 0 ? '+' : '') + m.bestBet.edgePct.toFixed(1) + 'pp');
   if(m.bestBet && m.bestBet.value >= 0.03) reasons.push('EV+ ' + fmtPct(m.bestBet.value * 100));
   if(m.bestBet && m.bestBet.sourceApi) reasons.push('Confirmat API');
-
+  if(m.bestKellyQuarterPct != null && m.bestKellyQuarterPct > 0) reasons.push('Kelly 1/4 ' + m.bestKellyQuarterPct.toFixed(2) + '%');
+  if(m.bestLineMovementPct != null) reasons.push('Mișcare ' + (m.bestLineMovementPct >= 0 ? '+' : '') + m.bestLineMovementPct.toFixed(1) + '%');
   if(m.confidence >= 60) reasons.push('AI confidence ' + m.confidence.toFixed(0) + '%');
   if(m.xgTotal >= 2.6) reasons.push('xG total ' + m.xgTotal.toFixed(2));
   if(m.probOver25 >= 60) reasons.push('O2.5 ' + m.probOver25.toFixed(1) + '%');
@@ -1545,8 +1565,9 @@ function buildMatchReasons(m){
   if(m.favoriteRecommend && m.favoriteProp) reasons.push('favorit ML ' + m.favoriteProp.toFixed(1) + '%');
   if(m.doubleChancePick) reasons.push(m.doubleChancePick.label + ' ' + m.doubleChancePick.prob.toFixed(1) + '%');
   if(m.winnerRecommend) reasons.push('modelul vede meci fără egal');
+  if(m.bestFairOdds != null) reasons.push('Fair ' + m.bestFairOdds.toFixed(2));
   if(m.mostLikelyScore) reasons.push('scor probabil ' + m.mostLikelyScore);
-  return uniqueReasons(reasons).slice(0, 4);
+  return uniqueReasons(reasons).slice(0, 5);
 }
 
 function buildRecommendationReasons(m, b){
@@ -1565,10 +1586,14 @@ function buildRecommendationReasons(m, b){
   } else if(t === 'draw'){
     reasons.push('echilibru xG ' + Math.abs(m.xgHome - m.xgAway).toFixed(2));
   }
+  if(b.edgePct != null) reasons.push('Edge ' + (b.edgePct >= 0 ? '+' : '') + b.edgePct.toFixed(1) + 'pp');
+  if(m.bestFairOdds != null) reasons.push('Fair ' + m.bestFairOdds.toFixed(2));
+  if(m.bestKellyQuarterPct != null && m.bestKellyQuarterPct > 0) reasons.push('Kelly 1/4 ' + m.bestKellyQuarterPct.toFixed(2) + '%');
+  if(m.bestLineMovementPct != null) reasons.push('Mișcare ' + (m.bestLineMovementPct >= 0 ? '+' : '') + m.bestLineMovementPct.toFixed(1) + '%');
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
   if(b.sourceApi) reasons.push('confirmat API');
-
-  return uniqueReasons(reasons).slice(0, 3);
+  if(m.auditReasonTags && m.auditReasonTags.length) reasons = reasons.concat(m.auditReasonTags.slice(0,2));
+  return uniqueReasons(reasons).slice(0, 5);
 }
 
 function renderMlApiCenter(){
@@ -3699,6 +3724,45 @@ function renderMarketDistribution(){
   target.innerHTML = html;
 }
 
+function renderAuditHub(){
+  var dash = $('tab-dashboard');
+  if(!dash) return;
+  var box = $('audit-hub-box');
+  if(!box){
+    box = document.createElement('div');
+    box.id = 'audit-hub-box';
+    box.style.marginTop = '14px';
+    box.style.marginBottom = '12px';
+    box.style.padding = '12px';
+    box.style.background = 'linear-gradient(135deg,rgba(6,182,212,.06),rgba(16,185,129,.06))';
+    box.style.border = '1px solid rgba(6,182,212,.18)';
+    box.style.borderRadius = '14px';
+    var ref = $('audit-legend-box') || $('ml-api-box');
+    if(ref && ref.parentNode) ref.parentNode.insertBefore(box, ref);
+    else dash.appendChild(box);
+  }
+  var rows = (SIGNAL_AUDIT && SIGNAL_AUDIT.rows) ? SIGNAL_AUDIT.rows : [];
+  var movers = (ODDS_HISTORY && ODDS_HISTORY.recent_movers) ? ODDS_HISTORY.recent_movers : [];
+  var avgEdge = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_edge_pct != null ? Number(SIGNAL_AUDIT.avg_edge_pct) : 0;
+  var avgKelly = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_kelly_quarter_pct != null ? Number(SIGNAL_AUDIT.avg_kelly_quarter_pct) : 0;
+  var avgValue = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_value_pct != null ? Number(SIGNAL_AUDIT.avg_value_pct) : 0;
+  var clv = APP_META && APP_META.clv_summary ? APP_META.clv_summary : null;
+  var topMover = movers && movers.length ? movers[0] : null;
+  var moverHtml = topMover ? ('<div style="margin-top:10px;font-size:11px;color:var(--muted)">Top mover: <b style="color:var(--txt)">'+(topMover.home||'—')+' vs '+(topMover.away||'—')+'</b> • '+(topMover.market||'—')+' • <b style="color:' + ((topMover.line_movement_pct||0)>=0 ? 'var(--yel)' : 'var(--grn)') + '">'+((topMover.line_movement_pct||0)>=0?'+':'')+Number(topMover.line_movement_pct||0).toFixed(2)+'%</b></div>') : '';
+  var leaders = rows.slice(0,3).map(function(r){
+    return '<div style="padding:8px 0;border-top:1px solid rgba(255,255,255,.06)"><div style="font-size:12px;font-weight:700">'+(r.home||'—')+' vs '+(r.away||'—')+'</div><div style="font-size:10px;color:var(--muted)">'+(r.market||'—')+' @ '+Number(r.book_odds||0).toFixed(2)+' • Fair '+(r.fair_odds ? Number(r.fair_odds).toFixed(2) : '—')+' • Edge '+((r.edge_pct||0)>=0?'+':'')+Number(r.edge_pct||0).toFixed(1)+'pp • Kelly 1/4 '+Number(r.kelly_quarter_pct||0).toFixed(2)+'%</div></div>';
+  }).join('');
+  box.innerHTML = '<div class="sec-hdr"><div class="sec-title">📡 Audit & CLV Hub <span class="sec-badge">v17</span></div><div style="font-size:11px;color:var(--muted);font-family:var(--mono)">'+rows.length+' semnale auditate</div></div>' +
+    '<div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:10px">' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--acc)">'+avgEdge.toFixed(2)+'pp</div><div class="stat-lbl">Edge mediu audit</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--grn)">'+avgValue.toFixed(2)+'%</div><div class="stat-lbl">Value mediu</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--yel)">'+avgKelly.toFixed(2)+'%</div><div class="stat-lbl">Kelly 1/4 mediu</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--pur)">'+(clv ? (Number(clv.avg_clv_pct||0).toFixed(2)+'%') : '—')+'</div><div class="stat-lbl">CLV mediu istoric</div></div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--muted)">Panou nou pentru semnale auditate, mișcare de cote și un rezumat CLV din istoricul engine-ului.</div>' + moverHtml +
+    '<div style="margin-top:10px">'+(leaders || '<div class="empty-state" style="padding:10px 0">Nu există încă semnale auditate.</div>')+'</div>';
+}
+
 function renderJournal(){
   var target = $('ticket-journal');
   if(!target) return;
@@ -3887,6 +3951,7 @@ function renderAll(){
   buildLeagueFilter();
   renderBacktest();
   renderMarketDistribution();
+  renderAuditHub();
   renderTodayBest();
   renderTopPicks();
   renderTopSafe();
