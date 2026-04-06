@@ -357,6 +357,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <button class="tab" onclick="switchTab('bilete')">🎫 Bilete</button>
   <button class="tab" onclick="switchTab('tracking')">📈 Tracking</button>
   <button class="tab" onclick="switchTab('bankroll')">💰 Bankroll</button>
+  <button class="tab" onclick="switchTab('istoric21')">🧾 Istoric 21 zile</button>
 </div>
 
 <div class="main">
@@ -767,6 +768,17 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     </div>
   </div>
 
+  <div class="tab-content" id="tab-istoric21">
+    <div class="section" style="margin-bottom:12px">
+      <div class="sec-hdr">
+        <div class="sec-title">🧾 Istoric recomandări 21 zile</div>
+        <div style="font-size:11px;color:var(--muted)">detaliat pe fiecare tip de pronostic</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px">Aici vezi istoricul recomandărilor folosite în backtest, grupat pe tip de pariu. Pentru fiecare categorie primești win / jucate, win rate și ROI, iar dedesubt fiecare eveniment cu verdictul win / lose.</div>
+    </div>
+    <div id="history21-root"></div>
+  </div>
+
 </div><!-- /main -->
 
 <script>
@@ -781,6 +793,7 @@ var ALL_EVENTS = [];
 var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
+var HISTORY_ENGINE = [];
 var APP_META = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
@@ -866,12 +879,13 @@ function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
-  var names=['dashboard','meciuri','bilete','tracking','bankroll'];
+  var names=['dashboard','meciuri','bilete','tracking','bankroll','istoric21'];
   var tabs=document.querySelectorAll('.tab');
   var idx=names.indexOf(name);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
+  if(name==='istoric21') renderHistory21();
 }
 
 // ============================================================
@@ -1284,7 +1298,8 @@ function doRefresh(){
     getJson('/data/leagues.json', []),
     getJson('/data/events.json', []),
     getJson('/data/teams.json', []),
-    getJson('/data/backtest.json', {})
+    getJson('/data/backtest.json', {}),
+    getJson('/data/history_engine.json', [])
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -1292,6 +1307,7 @@ function doRefresh(){
     var eventsData = results[3];
     var teamsData = results[4];
     var backtestData = results[5];
+    var historyData = results[6];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
@@ -1302,6 +1318,7 @@ function doRefresh(){
     ALL_TEAMS = teamsData.results || teamsData || [];
     ALL_PLAYERS = [];
     BACKTEST_SUMMARY = backtestData || {};
+    HISTORY_ENGINE = Array.isArray(historyData) ? historyData : (historyData.results || historyData || []);
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -3536,6 +3553,7 @@ function placeCurrentTicket(){
   renderBilete();
   renderTracking();
   calcBankroll();
+  renderHistory21();
 }
 
 
@@ -3783,6 +3801,73 @@ function renderMarketPerformance(){
   });
   html += '</tbody></table></div>';
   target.innerHTML = html;
+}
+
+function renderHistory21(){
+  var root = $('history21-root');
+  if(!root) return;
+  var supported = (BET_TYPES || []).map(function(b){ return b.label; });
+  var rows = (HISTORY_ENGINE || []).filter(function(r){ return r && supported.indexOf(r.market) !== -1; });
+  if(!rows.length){
+    root.innerHTML = '<div class="empty-state">Nu există încă istoric pe ultimele 21 de zile pentru piețele active.</div>';
+    return;
+  }
+  var groups = {};
+  rows.forEach(function(r){
+    var key = r.market || '—';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+  var summary = Object.keys(groups).map(function(key){
+    var list = groups[key];
+    var bets = list.length;
+    var wins = list.filter(function(r){ return !!r.won; }).length;
+    var profit = list.reduce(function(acc, r){
+      var o = Number(r.odds || 0);
+      return acc + (r.won ? (o > 1 ? (o - 1) : 0) : -1);
+    }, 0);
+    return {
+      market: key,
+      bets: bets,
+      wins: wins,
+      losses: bets - wins,
+      winrate: bets ? (wins * 100 / bets) : 0,
+      roi: bets ? (profit * 100 / bets) : 0,
+      avgOdds: bets ? list.reduce(function(acc,r){ return acc + Number(r.odds || 0); }, 0) / bets : 0,
+      list: list.sort(function(a,b){ return new Date(b.date || b.created_at || 0) - new Date(a.date || a.created_at || 0); })
+    };
+  }).sort(function(a,b){ return b.bets - a.bets; });
+  var cards = '<div class="stats-grid" style="margin-bottom:14px">' + summary.map(function(s){
+    return '<div class="stat-card">'+
+      '<div class="stat-num" style="color:'+ (s.roi >= 0 ? 'var(--grn)' : 'var(--red)') +'">'+(s.roi >= 0 ? '+' : '')+s.roi.toFixed(1)+'%</div>'+
+      '<div class="stat-lbl" style="margin-bottom:6px">'+s.market+'</div>'+
+      '<div style="font-size:12px;color:var(--txt)">'+s.wins+'/'+s.bets+' win</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">Win rate '+s.winrate.toFixed(1)+'% • Cotă '+s.avgOdds.toFixed(2)+'</div>'+
+    '</div>';
+  }).join('') + '</div>';
+  var details = summary.map(function(s){
+    var rowsHtml = s.list.map(function(r){
+      var verdict = r.won ? 'WIN' : 'LOSE';
+      var color = r.won ? 'var(--grn)' : 'var(--red)';
+      var edge = Number(r.edge_pct || 0);
+      var adj = Number(r.adjusted_prob || 0);
+      return '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+          '<div>'+ 
+            '<div style="font-size:12px;font-weight:700;color:var(--txt)">'+(r.league || '—')+'</div>'+ 
+            '<div style="font-size:11px;color:var(--txt)">'+fmtDateTime(r.date || r.created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+ 
+            '<div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. ajustată '+adj.toFixed(1)+'% • Edge '+(edge>=0?'+':'')+edge.toFixed(1)+'% • Score '+Number(r.score || 0).toFixed(1)+'</div>'+ 
+          '</div>'+ 
+          '<div style="padding:6px 10px;border-radius:999px;background:'+(r.won ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)')+';border:1px solid '+(r.won ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)')+';color:'+color+';font-size:11px;font-weight:800">'+verdict+'</div>'+ 
+        '</div>'+ 
+      '</div>';
+    }).join('');
+    return '<div class="section" style="margin-bottom:14px">'+
+      '<div class="sec-hdr" style="margin-bottom:8px"><div class="sec-title">'+s.market+'</div><div style="font-size:11px;color:var(--muted)">'+s.wins+'/'+s.bets+' win • ROI '+(s.roi>=0?'+':'')+s.roi.toFixed(1)+'% • Win rate '+s.winrate.toFixed(1)+'%</div></div>'+
+      '<div style="padding:0 4px">'+rowsHtml+'</div>'+
+    '</div>';
+  }).join('');
+  root.innerHTML = cards + details;
 }
 
 function renderJournal(){
