@@ -895,7 +895,7 @@ function switchTab(name){
 var BET_TYPES = [
   {key:'over15',   label:'Over 1.5G',    probField:'prob_over_15',   oddsField:'odds_over_15'},
   {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
-  {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35'},
+  {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35', probGetter:function(raw){ return 100 - safePct(raw.prob_over_35); }},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
 ];
 
