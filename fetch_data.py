@@ -29,6 +29,9 @@ LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
 HISTORY_LOOKBACK_DAYS = 60
 HISTORY_MAX_ROWS = 2500
+ODDS_HISTORY_MAX_ROWS = 12000
+ODDS_HISTORY_MAX_PER_MARKET = 12
+DEFAULT_BANKROLL = 1000.0
 
 MARKETS = [
     {"key": "homeWin", "label": "1", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
@@ -154,6 +157,76 @@ def calc_value(prob, odds):
     if o < 1.01:
         return -999.0
     return ((pct(prob) / 100.0) * o) - 1.0
+
+
+def fair_odds(prob):
+    p = pct(prob)
+    if p <= 0:
+        return None
+    return round(100.0 / p, 3)
+
+
+def calc_kelly(prob, odds, fraction=1.0, cap=0.08):
+    try:
+        p = pct(prob) / 100.0
+        o = float(odds or 0)
+    except Exception:
+        return 0.0
+    if o <= 1.0 or p <= 0.0 or p >= 1.0:
+        return 0.0
+    b = o - 1.0
+    edge = (b * p) - (1.0 - p)
+    if b <= 0:
+        return 0.0
+    raw = edge / b
+    if not math.isfinite(raw):
+        return 0.0
+    raw = max(0.0, raw)
+    sized = raw * float(fraction or 1.0)
+    return round(min(cap, sized) * 100.0, 2)
+
+
+def pct_change(current, previous):
+    try:
+        cur = float(current or 0)
+        prev = float(previous or 0)
+    except Exception:
+        return None
+    if prev <= 0:
+        return None
+    return round(((cur - prev) / prev) * 100.0, 2)
+
+
+def iso_to_dt(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace('Z', '+00:00'))
+    except Exception:
+        return None
+
+
+def market_event_odds(event, market_key):
+    mapper = {
+        'homeWin': 'odds_home',
+        'draw': 'odds_draw',
+        'awayWin': 'odds_away',
+        'over15': 'odds_over_15',
+        'under15': 'odds_under_15',
+        'over25': 'odds_over_25',
+        'under25': 'odds_under_25',
+        'under35': 'odds_under_35',
+        'btts': 'odds_btts_yes',
+        'bttsNo': 'odds_btts_no',
+    }
+    field = mapper.get(market_key)
+    if not field:
+        return None
+    try:
+        odd = float((event or {}).get(field) or 0)
+    except Exception:
+        return None
+    return round(odd, 3) if odd >= 1.01 else None
 
 
 def adjusted_prob(prob, confidence):
@@ -438,6 +511,10 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         "value": round(value, 4),
         "confidence": round(confidence, 2),
         "market_prob": round(market_prob, 2) if market_prob is not None else None,
+        "fair_odds": fair_odds(prob),
+        "fair_odds_adj": fair_odds(adj),
+        "kelly_full_pct": calc_kelly(adj, odds, 1.0),
+        "kelly_quarter_pct": calc_kelly(adj, odds, 0.25),
         "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
         "fit_score": round(fit, 2),
         "score": score,
@@ -744,6 +821,171 @@ def build_backtest_summary(predictions, lookback_days):
     }
 
 
+def build_reason_tags(row, candidate):
+    tags = []
+    if candidate.get("edge_pct") is not None:
+        tags.append(f"No-vig {candidate['edge_pct']:+.1f}pp")
+    if candidate.get("value", 0) > 0:
+        tags.append(f"EV+ {candidate['value']*100:.1f}%")
+    if candidate.get("source_api"):
+        tags.append("Confirmat API")
+    if candidate.get("confidence", 0) >= 55:
+        tags.append(f"AI {candidate['confidence']:.0f}%")
+    if candidate.get("market_key") in {"over15", "over25", "under25", "under35"}:
+        xg_total = float(row.get("expected_home_goals") or 0) + float(row.get("expected_away_goals") or 0)
+        if xg_total > 0:
+            tags.append(f"xG {xg_total:.2f}")
+    if row.get("most_likely_score"):
+        tags.append(f"Scor {row.get('most_likely_score')}")
+    return tags[:5]
+
+
+def update_odds_history(existing_history, predictions, snapshot_at_iso):
+    history = existing_history or {}
+    existing = history.get("snapshots") if isinstance(history, dict) else []
+    existing = existing if isinstance(existing, list) else []
+    rows = [item for item in existing if isinstance(item, dict)]
+    for row in predictions or []:
+        event = row.get("event") or {}
+        event_id = event.get("id")
+        if not event_id:
+            continue
+        base = {
+            "event_id": event_id,
+            "prediction_id": row.get("id"),
+            "event_date": event.get("event_date"),
+            "snapshot_at": snapshot_at_iso,
+            "league": (event.get("league") or {}).get("name") or "Unknown",
+            "home": event.get("home_team"),
+            "away": event.get("away_team"),
+            "status": event.get("status"),
+        }
+        for market in MARKETS:
+            odd = market_event_odds(event, market["key"])
+            if odd is not None:
+                rows.append({**base, "market_key": market["key"], "market": market["label"], "odds": odd})
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    grouped = {}
+    for item in rows:
+        snap_dt = iso_to_dt(item.get("snapshot_at"))
+        event_dt = iso_to_dt(item.get("event_date"))
+        if snap_dt and snap_dt < cutoff:
+            continue
+        if event_dt and event_dt < cutoff:
+            continue
+        grouped.setdefault((item.get("event_id"), item.get("market_key")), []).append(item)
+    compact, latest_index, previous_index, opening_index = [], {}, {}, {}
+    for key, items in grouped.items():
+        items.sort(key=lambda x: (x.get("snapshot_at") or ""))
+        dedup, prev_sig = [], None
+        for item in items:
+            sig = (item.get("snapshot_at"), item.get("odds"))
+            if sig != prev_sig:
+                dedup.append(item)
+            prev_sig = sig
+        kept = dedup[-ODDS_HISTORY_MAX_PER_MARKET:]
+        compact.extend(kept)
+        if kept:
+            opening_index[key] = kept[0]
+            latest_index[key] = kept[-1]
+            previous_index[key] = kept[-2] if len(kept) >= 2 else None
+    compact.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0, x.get("market_key") or "", x.get("snapshot_at") or ""), reverse=True)
+    compact = compact[:ODDS_HISTORY_MAX_ROWS]
+    movers = []
+    for key, last in latest_index.items():
+        prev = previous_index.get(key)
+        change = pct_change(last.get("odds"), prev.get("odds") if prev else None)
+        if change is not None:
+            movers.append({
+                "event_id": last.get("event_id"), "market_key": last.get("market_key"), "market": last.get("market"),
+                "home": last.get("home"), "away": last.get("away"), "league": last.get("league"),
+                "current_odds": last.get("odds"), "previous_odds": prev.get("odds") if prev else None,
+                "line_movement_pct": change, "snapshot_at": last.get("snapshot_at"), "event_date": last.get("event_date")
+            })
+    movers.sort(key=lambda x: abs(x.get("line_movement_pct") or 0), reverse=True)
+    return {"updated_at": snapshot_at_iso, "snapshots": compact, "recent_movers": movers[:120]}, latest_index, previous_index, opening_index
+
+
+def enrich_predictions_with_audit(predictions, latest_index, previous_index, opening_index):
+    enriched, audit_rows = [], []
+    for row in predictions or []:
+        event = row.get("event") or {}
+        candidates = [build_candidate(row, m["key"]) for m in MARKETS]
+        candidates = [c for c in candidates if c]
+        eligible = [c for c in candidates if qualifies_for_strategy(c, STRATEGIES["engine_overall"])]
+        best = max(eligible, key=rank_candidate) if eligible else (max(candidates, key=rank_candidate) if candidates else None)
+        row2 = dict(row)
+        if best:
+            key = (best.get("event_id"), best.get("market_key"))
+            prev = previous_index.get(key)
+            opening = opening_index.get(key)
+            current_odds = best.get("odds")
+            previous_odds = prev.get("odds") if prev else None
+            opening_odds = opening.get("odds") if opening else current_odds
+            audit_summary = {
+                "market_key": best.get("market_key"), "market": best.get("market"), "book_odds": current_odds,
+                "market_prob": best.get("market_prob"), "model_prob": best.get("prob"), "adjusted_prob": best.get("adj_prob"),
+                "fair_odds": best.get("fair_odds_adj") or best.get("fair_odds"), "edge_pct": best.get("edge_pct"), "value": best.get("value"),
+                "score": best.get("score"), "verdict": best.get("verdict"), "kelly_full_pct": best.get("kelly_full_pct"),
+                "kelly_quarter_pct": best.get("kelly_quarter_pct"), "previous_odds": previous_odds, "opening_odds": opening_odds,
+                "line_movement_pct": pct_change(current_odds, previous_odds), "from_open_pct": pct_change(current_odds, opening_odds),
+                "reason_tags": build_reason_tags(row, best),
+            }
+            row2["audit_summary"] = audit_summary
+            row2["best_market_key"] = audit_summary["market_key"]
+            row2["best_market_label"] = audit_summary["market"]
+            row2["best_market_prob"] = audit_summary["market_prob"]
+            row2["best_edge_pct"] = audit_summary["edge_pct"]
+            row2["best_value"] = audit_summary["value"]
+            row2["best_adj_prob"] = audit_summary["adjusted_prob"]
+            row2["best_fair_odds"] = audit_summary["fair_odds"]
+            row2["best_kelly_quarter_pct"] = audit_summary["kelly_quarter_pct"]
+            row2["best_kelly_full_pct"] = audit_summary["kelly_full_pct"]
+            row2["best_previous_odds"] = previous_odds
+            row2["best_opening_odds"] = opening_odds
+            row2["best_line_movement_pct"] = audit_summary["line_movement_pct"]
+            row2["best_from_open_pct"] = audit_summary["from_open_pct"]
+            row2["audit_reason_tags"] = audit_summary["reason_tags"]
+            if event.get("status") == "notstarted":
+                audit_rows.append({
+                    "prediction_id": row.get("id"), "event_id": event.get("id"), "created_at": row.get("created_at"),
+                    "event_date": event.get("event_date"), "league": (event.get("league") or {}).get("name") or "Unknown",
+                    "home": event.get("home_team"), "away": event.get("away_team"), "model_version": row.get("model_version"), **audit_summary
+                })
+        enriched.append(row2)
+    audit_rows.sort(key=lambda x: (x.get("score") or 0, x.get("edge_pct") or -999, x.get("adjusted_prob") or 0), reverse=True)
+    audit_out = {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "count": len(audit_rows),
+        "avg_edge_pct": round(sum((x.get("edge_pct") or 0) for x in audit_rows) / len(audit_rows), 2) if audit_rows else 0.0,
+        "avg_kelly_quarter_pct": round(sum((x.get("kelly_quarter_pct") or 0) for x in audit_rows) / len(audit_rows), 2) if audit_rows else 0.0,
+        "avg_value_pct": round(sum((x.get("value") or 0) * 100.0 for x in audit_rows) / len(audit_rows), 2) if audit_rows else 0.0,
+        "rows": audit_rows[:300],
+    }
+    return enriched, audit_out
+
+
+def enrich_history_rows_with_clv(history_rows, latest_index):
+    enriched, clv_vals = [], []
+    for row in history_rows or []:
+        row2 = dict(row)
+        latest = latest_index.get((row.get("event_id"), row.get("market_key")))
+        closing_odds = latest.get("odds") if latest else None
+        row2["closing_odds"] = closing_odds
+        if closing_odds and row.get("odds"):
+            row2["clv_pct"] = round(((float(row.get("odds")) / float(closing_odds)) - 1.0) * 100.0, 2)
+            clv_vals.append(row2["clv_pct"])
+        else:
+            row2["clv_pct"] = None
+        enriched.append(row2)
+    clv_summary = {
+        "count": len([x for x in enriched if x.get("clv_pct") is not None]),
+        "avg_clv_pct": round(sum(clv_vals) / len(clv_vals), 2) if clv_vals else 0.0,
+        "positive_clv_rate": round((sum(1 for x in clv_vals if x > 0) / len(clv_vals)) * 100.0, 2) if clv_vals else 0.0,
+    }
+    return enriched, clv_summary
+
+
 def load_existing_json(filename, default):
     path = os.path.join(DATA_DIR, filename)
     if not os.path.exists(path):
@@ -953,6 +1195,8 @@ def main():
     save_json(players_focus, "players_focus.json")
     save_json(backtest, "backtest.json")
     save_json(history_rows, "history_engine.json")
+    save_json(odds_history, "odds_history.json")
+    save_json(signal_audit, "signal_audit.json")
 
     meta = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -964,11 +1208,17 @@ def main():
         "players_focus_count": 0,
         "historical_predictions_count": len(historical_predictions),
         "history_engine_rows": len(history_rows),
+        "odds_history_rows": len(odds_history.get("snapshots", [])),
+        "signal_audit_rows": signal_audit.get("count", 0),
         "backtest_finished_predictions": backtest["finished_predictions"],
         "backtest_engine_bets": backtest["engine_bets"],
         "backtest_engine_roi": backtest["engine_roi"],
+        "audit_avg_edge_pct": signal_audit.get("avg_edge_pct", 0.0),
+        "audit_avg_kelly_quarter_pct": signal_audit.get("avg_kelly_quarter_pct", 0.0),
+        "audit_avg_value_pct": signal_audit.get("avg_value_pct", 0.0),
+        "clv_summary": clv_summary,
         "status": "ok",
-        "version": "v16-audit-engine-nolive-noo35",
+        "version": "v17-audit-clv-kelly",
         "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
