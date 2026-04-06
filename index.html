@@ -555,7 +555,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="matches-card-head">
         <div>
           <div class="matches-card-title">ℹ️ Info meciuri</div>
-          <div class="matches-card-sub">Tot ce ține de filtrare și sortare este grupat aici, compact și mai ușor de urmărit pe mobil.</div>
+          <div class="matches-card-sub">Tot ce ține de filtrare și sortare este grupat aici, compact și mai ușor de urmărit pe mobil. Lista afișează acum doar selecțiile confirmate de API, cu cote BSD reale.</div>
         </div>
         <span class="sec-badge" style="color:var(--pur);border-color:rgba(168,85,247,.22);background:rgba(168,85,247,.08)">Filtre rapide</span>
       </div>
@@ -1295,7 +1295,7 @@ function syncRecommendationEngine(){
         if(rawBet.value > 0) positive.push(type);
       }
       var cand = buildMarketCandidate(m, type);
-      if(cand && cand.bestBet) eligible.push(cand);
+      if(cand && cand.bestBet && cand.bestBet.sourceApi) eligible.push(cand);
     });
 
     eligible.sort(function(a, b){
