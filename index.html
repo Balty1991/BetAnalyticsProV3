@@ -3807,6 +3807,17 @@ function setHistoryMarket(market){
   renderHistory21();
 }
 
+function getHistoryEventName(r){
+  var eventId = Number(r && r.event_id || 0);
+  if(eventId){
+    var match = (ALL_MATCHES || []).find(function(m){ return Number(m && m.eventId || 0) === eventId; });
+    if(match && match.home && match.away) return match.home + ' vs ' + match.away;
+    var ev = (ALL_EVENTS || []).find(function(e){ return Number(e && e.id || 0) === eventId; });
+    if(ev && ev.home_team && ev.away_team) return ev.home_team + ' vs ' + ev.away_team;
+  }
+  return '';
+}
+
 function renderHistory21(){
   var root = $('history21-root');
   if(!root) return;
@@ -3858,11 +3869,13 @@ function renderHistory21(){
     var color = r.won ? 'var(--grn)' : 'var(--red)';
     var edge = Number(r.edge_pct || 0);
     var adj = Number(r.adjusted_prob || 0);
+    var eventName = getHistoryEventName(r);
     return '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
         '<div>'+ 
-          '<div style="font-size:12px;font-weight:700;color:var(--txt)">'+(r.league || '—')+'</div>'+ 
-          '<div style="font-size:11px;color:var(--txt)">'+fmtDateTime(r.date || r.created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+ 
+          '<div style="font-size:13px;font-weight:800;color:var(--txt)">'+(eventName || r.league || '—')+'</div>'+ 
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px">'+(r.league || '—')+'</div>'+ 
+          '<div style="font-size:11px;color:var(--txt);margin-top:3px">'+fmtDateTime(r.date || r.created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+ 
           '<div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. ajustată '+adj.toFixed(1)+'% • Edge '+(edge>=0?'+':'')+edge.toFixed(1)+'% • Score '+Number(r.score || 0).toFixed(1)+'</div>'+ 
         '</div>'+ 
         '<div style="padding:6px 10px;border-radius:999px;background:'+(r.won ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)')+';border:1px solid '+(r.won ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)')+';color:'+color+';font-size:11px;font-weight:800">'+verdict+'</div>'+ 
