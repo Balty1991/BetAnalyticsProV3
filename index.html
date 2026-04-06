@@ -429,7 +429,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <div class="collapsible-body" id="ml-body">
       <div style="display:flex;justify-content:flex-end;margin-top:10px"><select class="sort-select" id="ml-sort" onchange="renderML()"><option value="prob">Probabilitate</option><option value="date">Dată</option></select></div>
       <div style="margin-top:8px;margin-bottom:12px;padding:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:10px;color:var(--muted)">
-        <strong style="color:var(--acc)">📊 Ghid Scoruri:</strong> <strong style="color:var(--yel)">30-40%</strong> = Semnal moderat | <strong style="color:var(--grn)">40-50%</strong> = Puternic | <strong style="color:var(--grn)">>50%</strong> = Foarte puternic. Include: <strong>Favorit direct</strong> (nou).
+        <strong style="color:var(--acc)">📊 Ghid Scoruri:</strong> <strong style="color:var(--yel)">30-40%</strong> = Semnal moderat | <strong style="color:var(--grn)">40-50%</strong> = Puternic | <strong style="color:var(--grn)">>50%</strong> = Foarte puternic. Include: <strong>Under 3.5</strong> și piețe de goluri mai stabile.
       </div>
       <div class="ml-grid" id="ml-grid"></div>
     </div>
@@ -471,6 +471,17 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="ml-grid" id="ml-25-grid"></div>
     </div>
 
+    <!-- ML Under 3.5G -->
+    <div class="sec-hdr collapsible-header" id="ml35-hdr" onclick="toggleSection('ml35')" style="border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:10px 14px;background:rgba(6,182,212,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
+      <div class="sec-title">🧊 ML Under 3.5G <span class="sec-badge" style="background:rgba(6,182,212,0.15);border-color:rgba(6,182,212,0.3);color:var(--cyan)">Under 3.5G</span> <span class="collapse-count" id="ml35-count">—</span></div>
+      <span class="collapse-toggle" id="ml35-toggle" style="background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.25);color:var(--cyan)">▼</span>
+    </div>
+    <div class="collapsible-body" id="ml35-body">
+      <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
+        <strong style="color:var(--cyan)">🧊 Piață mai stabilă:</strong> aici vezi meciurile unde modelul susține <strong style="color:var(--txt)">Sub 3.5 Goluri</strong>.
+      </div>
+      <div class="ml-grid" id="ml-35-grid"></div>
+    </div>
 
     <!-- ML Legend -->
     <div id="audit-legend-box" style="margin-top:14px;padding:12px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08));border:1px solid rgba(168,85,247,.2);border-radius:14px">
@@ -499,7 +510,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       </div>
       <div id="ml-api-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px"></div>
       <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.55">
-        Acest bloc arată cât de mult din endpointul <strong style="color:var(--txt)">/predictions</strong> este realmente folosit în UI: 1X2, xG, piețe Over 1.5/2.5/3.5, BTTS, Favorite, Winner/No Draw, model version și data generării.
+        Acest bloc arată cât de mult din endpointul <strong style="color:var(--txt)">/predictions</strong> este realmente folosit în UI: 1X2, xG, piețe Over 1.5/2.5/3.5, BTTS, Favorite, Under 3.5, model version și data generării.
       </div>
     </div>
   </div>
@@ -512,7 +523,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
       <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
       <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
-      <button class="filter-btn" onclick="setFilter('win',this)">🏁 1 / 2</button>
+      <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
       <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
       <select class="sort-select" id="sort-select" onchange="renderMatches()">
         <option value="date" selected>🕒 Ora meciului</option>
@@ -539,10 +550,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <label style="font-size:11px;color:var(--muted)">Piață:</label>
       <select class="league-filter-select" id="match-market-filter" onchange="renderMatches()">
         <option value="">Toate piețele</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
         <option value="Over 1.5G">Over 1.5G</option>
         <option value="Over 2.5G">Over 2.5G</option>
+        <option value="Under 3.5G">Under 3.5G</option>
         <option value="BTTS">BTTS</option>
       </select>
       <label style="font-size:11px;color:var(--muted)">Min. prob.</label>
@@ -636,8 +646,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-over15" checked style="margin-right:6px">Over 1.5</label>
           <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-over25" checked style="margin-right:6px">Over 2.5</label>
           <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-btts" checked style="margin-right:6px">BTTS</label>
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-home" checked style="margin-right:6px">1</label>
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-away" checked style="margin-right:6px">2</label>
+          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-under35" checked style="margin-right:6px">Under 3.5</label>
         </div>
 
         <div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:var(--txt)">Filtre suplimentare</div>
@@ -861,15 +870,14 @@ function switchTab(name){
 // CORE ENGINE — VALUE BET ANALYSIS
 // ============================================================
 var BET_TYPES = [
-  {key:'homeWin',  label:'1',            probField:'prob_home_win',  oddsField:'odds_home'},
-  {key:'awayWin',  label:'2',            probField:'prob_away_win',  oddsField:'odds_away'},
   {key:'over15',   label:'Over 1.5G',    probField:'prob_over_15',   oddsField:'odds_over_15'},
   {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
+  {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35'},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
 ];
 
 function getSupportedMarketTypes(){
-  return ['homeWin','awayWin','over15','over25','btts'];
+  return ['over15','over25','under35','btts'];
 }
 
 function isSaneOddsForType(type, odds){
@@ -1098,9 +1106,10 @@ function analyzeMatch(raw){
   var mlFlags = {
     o15: allBets.some(function(x){ return x.type === 'over15'; }),
     o25: allBets.some(function(x){ return x.type === 'over25'; }),
+    u35: allBets.some(function(x){ return x.type === 'under35'; }),
     o35: false,
     btts: allBets.some(function(x){ return x.type === 'btts'; }),
-    winner: allBets.some(function(x){ return x.type === 'homeWin' || x.type === 'awayWin'; }),
+    winner: false,
     fav: !!raw.favorite_recommend
   };
   var homeApiId = e.home_team_obj ? e.home_team_obj.api_id : null;
@@ -1544,8 +1553,7 @@ function buildMatchReasons(m){
   if(m.probBttsNo >= 58) reasons.push('NG ' + m.probBttsNo.toFixed(1) + '%');
   if(m.favoriteRecommend && m.favoriteProp) reasons.push('favorit ML ' + m.favoriteProp.toFixed(1) + '%');
   if(m.doubleChancePick) reasons.push(m.doubleChancePick.label + ' ' + m.doubleChancePick.prob.toFixed(1) + '%');
-  if(m.winnerRecommend) reasons.push('modelul vede meci fără egal');
-  if(m.mostLikelyScore) reasons.push('scor probabil ' + m.mostLikelyScore);
+    if(m.mostLikelyScore) reasons.push('scor probabil ' + m.mostLikelyScore);
   return uniqueReasons(reasons).slice(0, 4);
 }
 
@@ -1754,7 +1762,7 @@ function buildMlRecommendTags(m){
   if(m.mlFlags.o15) tags += '<span class="rec-tag rec-tag-o15">O1.5</span>';
   if(m.mlFlags.o25) tags += '<span class="rec-tag rec-tag-o25">O2.5</span>';
   if(m.mlFlags.btts) tags += '<span class="rec-tag rec-tag-btts">BTTS</span>';
-  if(m.mlFlags.winner) tags += '<span class="rec-tag rec-tag-win">12</span>';
+  if(m.mlFlags.u35) tags += '<span class="rec-tag rec-tag-o35">U3.5</span>';
   if(m.mlFlags.fav) tags += '<span class="rec-tag rec-tag-fav">FAV</span>';
   return tags ? '<div class="rec-tags">'+tags+'</div>' : '';
 }
@@ -1918,9 +1926,38 @@ function renderML25(){
   }).join('');
 }
 
-// Over 3.5G removed from app
+// Under 3.5G ML
 function renderML35(){
-  return;
+  var container = $('ml-35-grid');
+  if(!container) return;
+  var list = ALL_MATCHES.filter(function(m){
+    var matchTime = new Date(m.date).getTime();
+    var now = new Date().getTime();
+    return (m.mlFlags.u35 || (m.probUnder35 && m.probUnder35 >= 68)) && matchTime > (now - 900000);
+  }).sort(function(a,b){ return (b.probUnder35||0) - (a.probUnder35||0); });
+  updateSectionCount('ml35', list.length);
+  if(list.length === 0){ container.innerHTML = '<div class="empty-state">Nicio recomandare Under 3.5G momentan.</div>'; return; }
+  container.innerHTML = list.map(function(m){
+    var prob35 = m.probUnder35 || 0;
+    var odds35 = m.oddsUnder35 || 0;
+    var reasons = buildMatchReasons(m).map(function(r){ return '<span class="rec-tag rec-tag-o35">'+r+'</span>'; }).join('');
+    return '<div class="ml-card" style="background:rgba(6,182,212,0.06);border-color:rgba(6,182,212,0.2)">'+
+      '<div class="ml-hdr">'+
+        '<div class="ml-teams">'+m.home+' vs '+m.away+'</div>'+
+        '<div class="ml-conf" style="color:var(--cyan)">'+prob35.toFixed(1)+'%</div>'+
+      '</div>'+
+      '<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+
+        '<span>'+m.league+' • '+m.dateLabel+' • '+(m.modelVersion||'CatBoost')+'</span>' +
+        '<span style="font-weight:700;color:var(--cyan)">Σ xG: '+m.xgTotal.toFixed(2)+'</span>'+
+      '</div>'+
+      '<div class="ml-picks"><span class="ml-pick" style="background:rgba(6,182,212,0.15);color:var(--cyan);font-size:11px;padding:4px 10px">🧊 Under 3.5G</span></div>'+
+      (reasons ? '<div class="rec-tags" style="margin-top:7px">'+reasons+'</div>' : '')+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);gap:8px;flex-wrap:wrap">'+
+        '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+prob35.toFixed(1)+'%</b>'+(odds35?' | Cotă: <b>'+odds35.toFixed(2)+'</b>':'')+'</div>'+
+        '<div style="font-size:9px;color:var(--muted)">Gen: '+fmtDateTime(m.createdAt)+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
 
 function renderTopSafe(){
@@ -2014,7 +2051,7 @@ function renderMatches(){
     if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
     if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
     if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
-    if(CURRENT_FILTER === 'win' && !(m.analysisState === 'ELIGIBLE' && b && (b.type === 'homeWin' || b.type === 'awayWin'))) return false;
+    if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
     if(!b) return false;
 
     if(dateF === 'today'){
@@ -2420,7 +2457,7 @@ function finalizeTicket(type, label, picks, totalOdds){
 
 function generateConservativeTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin'],
+    allowedTypes: ['over15','over25','under35','btts'],
     minAdjProb: 72,
     minValue: 0.008,
     minConf: 48,
@@ -2456,7 +2493,7 @@ function generateConservativeTicket(){
 
 function generateTicket(){
   var baseProfile = {
-    allowedTypes: ['homeWin','draw','awayWin','over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under25','under35','btts'],
     minAdjProb: 68,
     minValue: 0.015,
     minConf: 52,
@@ -2509,8 +2546,7 @@ function applyCustomPreset(type){
   $('cb-over15').checked = true;
   $('cb-over25').checked = type !== 'safe';
   $('cb-btts').checked = type !== 'safe';
-  $('cb-home').checked = type !== 'attack';
-  $('cb-away').checked = type !== 'attack';
+  $('cb-under35').checked = true;
   $('cb-ai-only').checked = (type !== 'attack');
   $('cb-fav-only').checked = type === 'safe';
   $('cb-goals-only').checked = type === 'attack';
@@ -2521,9 +2557,8 @@ function getCustomAllowedTypes(){
   if($('cb-over15').checked) types.push('over15');
   if($('cb-over25').checked) types.push('over25');
   if($('cb-btts').checked) types.push('btts');
-  if($('cb-home').checked) types.push('homeWin');
-  if($('cb-away').checked) types.push('awayWin');
-  if(!types.length) types = ['over15','over25','btts','homeWin','awayWin'];
+  if($('cb-under35').checked) types.push('under35');
+  if(!types.length) types = ['over15','over25','under35','btts'];
   return types;
 }
 
@@ -2885,7 +2920,7 @@ function validateCustomRequest(opts){
 
 function generateControlledComboTicket(){
   var baseProfile = {
-    allowedTypes: ['homeWin','draw','awayWin','over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under25','under35','btts'],
     minAdjProb: 74,
     minValue: 0.010,
     minConf: 50,
@@ -3138,7 +3173,7 @@ function generateOver35Ticket(){
 
 function generateMixTicket(){
   var baseProfile = {
-    allowedTypes: ['homeWin','draw','awayWin','over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under25','under35','btts'],
     minAdjProb: 70,
     minValue: 0.018,
     minConf: 54,
@@ -3176,7 +3211,7 @@ function generateBestEventTicket(){
 
   var todayKey = makeDateKey(now);
   var tomorrowKey = makeDateKey(new Date(now.getTime() + 86400000));
-  var types = ['over15','over25','btts','homeWin','awayWin'];
+  var types = ['over15','over25','under35','btts'];
 
   function collectBest(dateKeys, minAdjProb){
     var out = [];
@@ -3321,7 +3356,7 @@ function generateProfitFocusTicket(){
   }
 
   function collect(dateKeys, minAdjProb, minValue, minConf, minOdds, maxOdds){
-    var types = ['homeWin','draw','awayWin','over15','over25','under25','under35','btts'];
+    var types = ['over15','over25','under25','under35','btts'];
     var out = [];
 
     ALL_MATCHES.forEach(function(m){
@@ -3369,7 +3404,7 @@ function generateProfitFocusTicket(){
 
 function generateBigWinTicket(){
   var baseProfile = {
-    allowedTypes: ['homeWin','draw','awayWin','over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under25','under35','btts'],
     minAdjProb: 70,
     minValue: 0.010,
     minConf: 48,
