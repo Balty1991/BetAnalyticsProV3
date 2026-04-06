@@ -3713,6 +3713,9 @@ function renderMarketDistribution(){
   var target = $('market-distribution-table');
   if(!target) return;
   var summary = {};
+  (BET_TYPES || []).forEach(function(bt){
+    summary[bt.label] = {count:0, edge:0, score:0};
+  });
   ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.bestBet; }).forEach(function(m){
     var key = m.bestBet.label || m.bestBet.type || '—';
     if(!summary[key]) summary[key] = {count:0, edge:0, score:0};
@@ -3720,11 +3723,10 @@ function renderMarketDistribution(){
     summary[key].edge += Number(m.bestBet.edgePct || 0);
     summary[key].score += Number(m.bestBet.score || 0);
   });
-  var rows = Object.keys(summary).sort(function(a,b){ return summary[b].count - summary[a].count; });
-  if(!rows.length){
-    target.innerHTML = '<div class="empty-state">Nu există selecții eligibile pentru distribuția pe piețe.</div>';
-    return;
-  }
+  var rows = Object.keys(summary).sort(function(a,b){
+    if(summary[b].count !== summary[a].count) return summary[b].count - summary[a].count;
+    return a.localeCompare(b);
+  });
   var html = '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'+
     '<thead><tr style="color:var(--muted);text-transform:uppercase;font-size:10px"><th style="text-align:left;padding:8px;border-bottom:1px solid var(--brd)">Piață</th><th style="text-align:right;padding:8px;border-bottom:1px solid var(--brd)">Selecții</th><th style="text-align:right;padding:8px;border-bottom:1px solid var(--brd)">Edge mediu</th><th style="text-align:right;padding:8px;border-bottom:1px solid var(--brd)">Score mediu</th></tr></thead><tbody>';
   rows.forEach(function(name){
