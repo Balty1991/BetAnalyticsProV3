@@ -946,7 +946,12 @@ def enrich_predictions_with_audit(predictions, latest_index, previous_index, ope
             row2["best_line_movement_pct"] = audit_summary["line_movement_pct"]
             row2["best_from_open_pct"] = audit_summary["from_open_pct"]
             row2["audit_reason_tags"] = audit_summary["reason_tags"]
-            if event.get("status") == "notstarted":
+            event_dt = iso_to_dt(event.get("event_date"))
+            status = (event.get("status") or "").lower()
+            include_in_audit = (status not in {"finished", "cancelled", "canceled", "postponed"})
+            if event_dt and event_dt >= (datetime.now(timezone.utc) - timedelta(hours=12)):
+                include_in_audit = True
+            if include_in_audit:
                 audit_rows.append({
                     "prediction_id": row.get("id"), "event_id": event.get("id"), "created_at": row.get("created_at"),
                     "event_date": event.get("event_date"), "league": (event.get("league") or {}).get("name") or "Unknown",
