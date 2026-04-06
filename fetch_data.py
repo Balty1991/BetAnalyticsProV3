@@ -1171,6 +1171,11 @@ def main():
     data_health = build_data_health(predictions)
     header_sync = build_header_sync_metrics(predictions)
 
+    existing_odds_history = load_existing_json("odds_history.json", {"snapshots": [], "recent_movers": []})
+    odds_history, latest_index, previous_index, opening_index = update_odds_history(existing_odds_history, predictions, started_at.isoformat())
+    predictions, signal_audit = enrich_predictions_with_audit(predictions, latest_index, previous_index, opening_index)
+    history_rows, clv_summary = enrich_history_rows_with_clv(history_rows, latest_index)
+
     refresh_static = should_refresh_static(started_at)
     print(f"\n[5/6] Static refresh window: {'YES' if refresh_static else 'NO'}")
 
