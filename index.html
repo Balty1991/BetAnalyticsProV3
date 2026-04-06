@@ -391,6 +391,14 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div id="market-distribution-table"></div>
     </div>
 
+    <div class="section" id="market-performance-panel" style="margin-top:0;margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(59,130,246,.04));border:1px solid rgba(34,197,94,.16);box-shadow:0 10px 28px rgba(0,0,0,.14)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--txt)">🎯 Performanță pe fiecare pronostic</div>
+        <div style="font-size:10px;color:var(--muted)">win rate • ROI • win/jucate • cota medie</div>
+      </div>
+      <div id="market-performance-table"></div>
+    </div>
+
     <!-- Top 2 Ale Zilei -->
     <div class="section" style="margin-bottom:12px">
       <div class="sec-hdr collapsible-header" onclick="toggleSection('todaybest')" style="border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;background:rgba(34,197,94,.05);margin-bottom:0;cursor:pointer">
@@ -3734,6 +3742,47 @@ function renderMarketDistribution(){
   target.innerHTML = html;
 }
 
+function renderMarketPerformance(){
+  var target = $('market-performance-table');
+  if(!target || !BACKTEST_SUMMARY || !Array.isArray(BACKTEST_SUMMARY.by_market)) return;
+  var supported = (BET_TYPES || []).map(function(b){ return b.label; });
+  var rows = BACKTEST_SUMMARY.by_market.filter(function(item){
+    return item && supported.indexOf(item.key) !== -1;
+  }).sort(function(a,b){
+    if((b.bets || 0) !== (a.bets || 0)) return (b.bets || 0) - (a.bets || 0);
+    return (b.winrate || 0) - (a.winrate || 0);
+  });
+  if(!rows.length){
+    target.innerHTML = '<div class="empty-state">Nu există încă breakdown pe piețe în backtest.</div>';
+    return;
+  }
+  var html = '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">'+
+    '<thead><tr style="text-align:left;color:var(--muted)">'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08)">Pronostic</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Win rate</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">ROI</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Win / jucate</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Cotă medie</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Edge mediu</th>'+
+    '</tr></thead><tbody>';
+  rows.forEach(function(item){
+    var roi = Number(item.roi || 0);
+    var wr = Number(item.winrate || 0);
+    var avgOdds = Number(item.avg_odds || 0);
+    var avgEdge = Number(item.avg_edge || 0);
+    html += '<tr>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);font-weight:700">'+(item.key || '—')+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+ (wr >= 65 ? 'var(--grn)' : 'var(--txt)') +'">'+wr.toFixed(1)+'%</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+ (roi >= 0 ? 'var(--grn)' : 'var(--red)') +'">'+(roi>=0?'+':'')+roi.toFixed(1)+'%</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+Number(item.wins || 0)+'/'+Number(item.bets || 0)+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+avgOdds.toFixed(2)+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+ (avgEdge >= 0 ? 'var(--acc)' : 'var(--red)') +'">'+(avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%</td>'+
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  target.innerHTML = html;
+}
+
 function renderJournal(){
   var target = $('ticket-journal');
   if(!target) return;
@@ -3922,6 +3971,7 @@ function renderAll(){
   buildLeagueFilter();
   renderBacktest();
   renderMarketDistribution();
+  renderMarketPerformance();
   renderTodayBest();
   renderTopPicks();
   renderTopSafe();
