@@ -3743,7 +3743,7 @@ function exportHistory(){
 function moveDashboardInfoPanels(){
   var root = $('stats-info-root');
   if(!root) return;
-  var ids = ['dashboard-stats','ml35-hdr','ml35-body','health-panel','market-distribution-panel','market-performance-panel','audit-legend-box','ml-api-box'];
+  var ids = ['dashboard-stats','health-panel','market-distribution-panel','market-performance-panel','audit-legend-box','ml-api-box'];
   ids.forEach(function(id){
     var el = $(id);
     if(el && el.parentNode !== root) root.appendChild(el);
