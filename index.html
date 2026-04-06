@@ -486,7 +486,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <span class="collapse-toggle" id="ml35-toggle" style="background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.25);color:var(--cyan)">▼</span>
     </div>
     <div class="collapsible-body" id="ml35-body">
-      <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
+      <div style="display:flex;justify-content:flex-end;margin-top:10px"><select class="sort-select" id="ml35-sort" onchange="renderML35()"><option value="prob">Probabilitate</option><option value="date">Dată</option></select></div>
+      <div style="margin-top:8px;margin-bottom:16px;padding:12px;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
         <strong style="color:var(--cyan)">🧊 Piață mai stabilă:</strong> aici vezi meciurile unde modelul susține <strong style="color:var(--txt)">Sub 3.5 Goluri</strong>.
       </div>
       <div class="ml-grid" id="ml-35-grid"></div>
@@ -1956,11 +1957,16 @@ function renderML25(){
 function renderML35(){
   var container = $('ml-35-grid');
   if(!container) return;
+  var sortMode = $('ml35-sort') ? $('ml35-sort').value : 'prob';
   var list = ALL_MATCHES.filter(function(m){
     var matchTime = new Date(m.date).getTime();
     var now = new Date().getTime();
     return (m.mlFlags.u35 || (m.probUnder35 && m.probUnder35 >= 68)) && matchTime > (now - 900000);
-  }).sort(function(a,b){ return (b.probUnder35||0) - (a.probUnder35||0); });
+  });
+  list.sort(function(a,b){
+    if(sortMode === 'date') return new Date(a.date) - new Date(b.date);
+    return (b.probUnder35||0) - (a.probUnder35||0);
+  });
   updateSectionCount('ml35', list.length);
   if(list.length === 0){ container.innerHTML = '<div class="empty-state">Nicio recomandare Under 3.5G momentan.</div>'; return; }
   container.innerHTML = list.map(function(m){
