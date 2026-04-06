@@ -3982,10 +3982,10 @@ function calcBankroll(){
 // ============================================================
 // COLLAPSIBLE SECTIONS
 // ============================================================
-var SECTION_STATE={todaybest:false,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false};
+var SECTION_STATE={todaybest:false,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false,ml35:false};
 function toggleSection(id){
   SECTION_STATE[id]=!SECTION_STATE[id];
-  var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle']};
+  var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle'],ml35:['ml35-body','ml35-toggle']};
   var pair=map[id];
   if(!pair) return;
   var body=$(pair[0]), toggle=$(pair[1]);
@@ -3993,7 +3993,7 @@ function toggleSection(id){
   else{ body.classList.remove('open'); toggle.classList.remove('open'); }
 }
 function updateSectionCount(id,count){
-  var map={todaybest:'todaybest-count',top5:'top5-count',topsafe:'topsafe-count',ml:'ml-count',mldc:'mldc-count',ml15:'ml15-count',ml25:'ml25-count'};
+  var map={todaybest:'todaybest-count',top5:'top5-count',topsafe:'topsafe-count',ml:'ml-count',mldc:'mldc-count',ml15:'ml15-count',ml25:'ml25-count',ml35:'ml35-count'};
   var el=$(map[id]);
   if(el) el.textContent=count+' meciuri';
 }
@@ -4003,7 +4003,7 @@ function updateSectionCount(id,count){
 // ============================================================
 
 function applyOpenSections(){
-  ['todaybest','top5','ml','ml15'].forEach(function(id){
+  ['todaybest','top5','ml','ml15','ml35'].forEach(function(id){
     var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],ml:['ml-body','ml-toggle'],ml15:['ml15-body','ml15-toggle']};
     var pair=map[id];
     if(!pair) return;
