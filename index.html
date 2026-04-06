@@ -130,6 +130,27 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .league-filter-wrap{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .league-filter-select{background:var(--panel);border:1px solid var(--brd2);color:var(--txt);font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;max-width:200px}
 
+/* MATCHES HUB */
+.matches-section-card{background:linear-gradient(180deg,rgba(18,28,50,.98),rgba(14,22,40,.98));border:1px solid rgba(84,119,255,.16);border-radius:18px;padding:14px;box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.matches-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.matches-card-title{font-size:15px;font-weight:800;color:var(--txt)}
+.matches-card-sub{font-size:11px;color:var(--muted);line-height:1.55;max-width:720px;margin-top:4px}
+#matches-dashboard-sections{display:grid;gap:12px}
+#matches-dashboard-sections .sec-hdr{margin-bottom:0}
+#matches-dashboard-sections .collapsible-body.open{padding-bottom:2px}
+.matches-filter-toolbar{margin-bottom:12px;padding:10px;border:1px solid rgba(59,130,246,.14);border-radius:14px;background:rgba(255,255,255,.03);align-items:flex-start;justify-content:space-between}
+.matches-chip-group{display:flex;gap:8px;flex-wrap:wrap;flex:1 1 560px}
+.matches-chip-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;flex:0 0 auto}
+.matches-chip-meta .filter-count{margin-left:0;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.matches-filter-advanced{margin-bottom:0;padding:10px;border:1px solid rgba(168,85,247,.14);border-radius:14px;background:rgba(255,255,255,.025);display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;align-items:end}
+.filter-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.filter-field label{font-size:10px;color:var(--muted);font-weight:600}
+.filter-field .league-filter-select,.filter-field .bk-input{width:100%;max-width:none}
+.filter-field-wide{grid-column:span 2}
+.matches-filter-card .bk-input{width:100%;font-size:12px;padding:10px 12px}
+@media(max-width:768px){.filter-field-wide{grid-column:span 1}.matches-chip-meta{width:100%;justify-content:space-between}.matches-filter-toolbar{padding:10px}.matches-section-card{padding:12px}}
+@media(max-width:520px){.matches-chip-meta{flex-direction:column;align-items:stretch}.matches-chip-meta .sort-select,.matches-chip-meta .filter-count{width:100%;text-align:center}}
+
 /* DATE GROUP */
 .date-group{margin-bottom:20px}
 .date-label{font-size:12px;font-weight:600;color:var(--muted);padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;margin-bottom:10px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono)}
@@ -519,49 +540,86 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
   <!-- ===== LIVE TAB ===== -->
   <div class="tab-content" id="tab-meciuri">
-    <div class="filter-bar">
-      <button class="filter-btn active" onclick="setFilter('all',this)">🌐 Toate</button>
-      <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
-      <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
-      <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
-      <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
-      <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
-      <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
-      <select class="sort-select" id="sort-select" onchange="renderMatches()">
-        <option value="date" selected>🕒 Ora meciului</option>
-        <option value="edge">📈 Edge</option>
-        <option value="prob">📊 Probabilitate</option>
-        <option value="score">🧠 Score</option>
-        <option value="value">💰 Value</option>
-      </select>
-      <span class="filter-count" id="filter-count">0 meciuri</span>
+    <div class="section matches-section-card" id="matches-dashboard-hub" style="margin-bottom:14px">
+      <div class="matches-card-head">
+        <div>
+          <div class="matches-card-title">📚 Categorii mutate din Dashboard</div>
+          <div class="matches-card-sub">Topurile și radarele stau acum aici, exact deasupra listei de meciuri, ca să nu mai faci slalom între tab-uri.</div>
+        </div>
+        <span class="sec-badge" style="color:var(--acc);border-color:rgba(59,130,246,.22);background:rgba(59,130,246,.08)">Info & categorii</span>
+      </div>
+      <div id="matches-dashboard-sections"></div>
     </div>
-    <div class="league-filter-wrap" style="margin-top:10px">
-      <label style="font-size:11px;color:var(--muted)">Liga:</label>
-      <select class="league-filter-select" id="league-filter" onchange="renderMatches()">
-        <option value="">Toate Ligile</option>
-      </select>
-      <label style="font-size:11px;color:var(--muted)">Perioadă:</label>
-      <select class="league-filter-select" id="match-date-filter" onchange="renderMatches()">
-        <option value="all">Toate</option>
-        <option value="today">Azi</option>
-        <option value="3">1–3 zile</option>
-        <option value="7">1–7 zile</option>
-        <option value="14">1–14 zile</option>
-      </select>
-      <label style="font-size:11px;color:var(--muted)">Piață:</label>
-      <select class="league-filter-select" id="match-market-filter" onchange="renderMatches()">
-        <option value="">Toate piețele</option>
-        <option value="Over 1.5G">Over 1.5G</option>
-        <option value="Over 2.5G">Over 2.5G</option>
-        <option value="Under 3.5G">Under 3.5G</option>
-        <option value="BTTS">BTTS</option>
-      </select>
-      <label style="font-size:11px;color:var(--muted)">Min. prob.</label>
-      <input id="match-min-prob" class="bk-input" type="number" min="0" max="100" step="1" value="0" onchange="renderMatches()" style="width:96px">
-      <label style="font-size:11px;color:var(--muted)">Min. edge</label>
-      <input id="match-min-edge" class="bk-input" type="number" min="-20" max="50" step="0.5" value="0" onchange="renderMatches()" style="width:96px">
+
+    <div class="section matches-section-card matches-filter-card" style="margin-bottom:14px">
+      <div class="matches-card-head">
+        <div>
+          <div class="matches-card-title">ℹ️ Info meciuri</div>
+          <div class="matches-card-sub">Tot ce ține de filtrare și sortare este grupat aici, compact și mai ușor de urmărit pe mobil.</div>
+        </div>
+        <span class="sec-badge" style="color:var(--pur);border-color:rgba(168,85,247,.22);background:rgba(168,85,247,.08)">Filtre rapide</span>
+      </div>
+
+      <div class="filter-bar matches-filter-toolbar">
+        <div class="matches-chip-group">
+          <button class="filter-btn active" onclick="setFilter('all',this)">🌐 Toate</button>
+          <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
+          <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
+          <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
+          <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
+          <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
+          <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
+        </div>
+        <div class="matches-chip-meta">
+          <select class="sort-select" id="sort-select" onchange="renderMatches()">
+            <option value="date" selected>🕒 Ora meciului</option>
+            <option value="edge">📈 Edge</option>
+            <option value="prob">📊 Probabilitate</option>
+            <option value="score">🧠 Score</option>
+            <option value="value">💰 Value</option>
+          </select>
+          <span class="filter-count" id="filter-count">0 meciuri</span>
+        </div>
+      </div>
+
+      <div class="league-filter-wrap matches-filter-advanced">
+        <div class="filter-field filter-field-wide">
+          <label for="league-filter">Liga</label>
+          <select class="league-filter-select" id="league-filter" onchange="renderMatches()">
+            <option value="">Toate Ligile</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-date-filter">Perioadă</label>
+          <select class="league-filter-select" id="match-date-filter" onchange="renderMatches()">
+            <option value="all">Toate</option>
+            <option value="today">Azi</option>
+            <option value="3">1–3 zile</option>
+            <option value="7">1–7 zile</option>
+            <option value="14">1–14 zile</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-market-filter">Piață</label>
+          <select class="league-filter-select" id="match-market-filter" onchange="renderMatches()">
+            <option value="">Toate piețele</option>
+            <option value="Over 1.5G">Over 1.5G</option>
+            <option value="Over 2.5G">Over 2.5G</option>
+            <option value="Under 3.5G">Under 3.5G</option>
+            <option value="BTTS">BTTS</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-min-prob">Min. prob.</label>
+          <input id="match-min-prob" class="bk-input" type="number" min="0" max="100" step="1" value="0" onchange="renderMatches()">
+        </div>
+        <div class="filter-field">
+          <label for="match-min-edge">Min. edge</label>
+          <input id="match-min-edge" class="bk-input" type="number" min="-20" max="50" step="0.5" value="0" onchange="renderMatches()">
+        </div>
+      </div>
     </div>
+
     <div id="matches-container"></div>
   </div>
 
@@ -4024,19 +4082,46 @@ function applyOpenSections(){
   });
 }
 
+function buildCollapsiblePair(headerId, bodyId){
+  var header = $(headerId), body = $(bodyId);
+  if(!header || !body) return null;
+  var wrap = document.createElement('div');
+  wrap.className = 'matches-dashboard-block';
+  wrap.appendChild(header);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+function moveDashboardSectionsToMatches(){
+  var target = $('matches-dashboard-sections');
+  if(!target || target.dataset.moved === '1') return;
+
+  var todayWrap = document.createElement('div');
+  todayWrap.className = 'matches-dashboard-block';
+  var todayHeader = document.querySelector('[onclick="toggleSection(\'todaybest\')"]');
+  var todayBody = $('todaybest-body');
+  if(todayHeader && todayBody){
+    todayWrap.appendChild(todayHeader);
+    todayWrap.appendChild(todayBody);
+    target.appendChild(todayWrap);
+  }
+
+  [['top5-hdr','top5-body'],['ml15-hdr','ml15-body'],['ml-hdr','ml-body'],['ml35-hdr','ml35-body']].forEach(function(pair){
+    var block = buildCollapsiblePair(pair[0], pair[1]);
+    if(block) target.appendChild(block);
+  });
+
+  target.dataset.moved = '1';
+}
+
 function arrangeDashboardLayout(){
   var dash = $('tab-dashboard');
   if(!dash) return;
-  var mlHdr = $('ml-hdr'), mlBody = $('ml-body');
-  var ml15Hdr = $('ml15-hdr'), ml15Body = $('ml15-body');
-  var stats = $('dashboard-stats'), health = $('health-panel'), legend = $('audit-legend-box'), api = $('ml-api-box');
-  if(mlHdr && mlBody && ml15Hdr && ml15Body){
-    dash.insertBefore(ml15Hdr, mlHdr);
-    dash.insertBefore(ml15Body, mlHdr);
-  }
-  [stats, health, legend, api].forEach(function(el){ if(el) dash.appendChild(el); });
+  var stats = $('dashboard-stats'), health = $('health-panel'), market = $('market-performance-panel'), legend = $('audit-legend-box'), api = $('ml-api-box');
+  [stats, health, market, legend, api].forEach(function(el){ if(el) dash.appendChild(el); });
   if(stats) stats.style.marginTop = '12px';
   if(health) health.style.marginTop = '14px';
+  if(market) market.style.marginTop = '0';
   if(api) api.style.marginTop = '14px';
 }
 
@@ -4105,6 +4190,7 @@ window.addEventListener('DOMContentLoaded', function(){
   // Try to restore token from localStorage
   var st=localStorage.getItem('bsd_token');
   if(st) API_TOKEN=st;
+  moveDashboardSectionsToMatches();
   arrangeDashboardLayout();
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
