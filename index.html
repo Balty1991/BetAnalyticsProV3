@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ro">
 <head>
 <!-- status refresh -->
@@ -794,6 +794,7 @@ var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
 var HISTORY_ENGINE = [];
+var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
@@ -3803,6 +3804,11 @@ function renderMarketPerformance(){
   target.innerHTML = html;
 }
 
+function setHistoryMarket(market){
+  ACTIVE_HISTORY_MARKET = market || '';
+  renderHistory21();
+}
+
 function renderHistory21(){
   var root = $('history21-root');
   if(!root) return;
@@ -3837,36 +3843,37 @@ function renderHistory21(){
       list: list.sort(function(a,b){ return new Date(b.date || b.created_at || 0) - new Date(a.date || a.created_at || 0); })
     };
   }).sort(function(a,b){ return b.bets - a.bets; });
+  if(!ACTIVE_HISTORY_MARKET && summary.length) ACTIVE_HISTORY_MARKET = summary[0].market;
   var cards = '<div class="stats-grid" style="margin-bottom:14px">' + summary.map(function(s){
-    return '<div class="stat-card">'+
-      '<div class="stat-num" style="color:'+ (s.roi >= 0 ? 'var(--grn)' : 'var(--red)') +'">'+(s.roi >= 0 ? '+' : '')+s.roi.toFixed(1)+'%</div>'+
-      '<div class="stat-lbl" style="margin-bottom:6px">'+s.market+'</div>'+
+    var active = ACTIVE_HISTORY_MARKET === s.market;
+    return '<button onclick="setHistoryMarket(''+String(s.market).replace(/'/g, "\'")+'')" style="text-align:left;cursor:pointer;border-radius:16px;padding:14px;border:1px solid '+(active ? 'rgba(59,130,246,.35)' : 'rgba(255,255,255,.08)')+';background:'+(active ? 'linear-gradient(135deg,rgba(59,130,246,.12),rgba(34,197,94,.08))' : 'rgba(255,255,255,.03)')+';box-shadow:none">'+
+      '<div style="font-size:26px;font-weight:800;color:'+ (s.roi >= 0 ? 'var(--grn)' : 'var(--red)') +'">'+(s.roi >= 0 ? '+' : '')+s.roi.toFixed(1)+'%</div>'+
+      '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin:6px 0">'+s.market+'</div>'+
       '<div style="font-size:12px;color:var(--txt)">'+s.wins+'/'+s.bets+' win</div>'+
       '<div style="font-size:11px;color:var(--muted);margin-top:4px">Win rate '+s.winrate.toFixed(1)+'% • Cotă '+s.avgOdds.toFixed(2)+'</div>'+
-    '</div>';
+    '</button>';
   }).join('') + '</div>';
-  var details = summary.map(function(s){
-    var rowsHtml = s.list.map(function(r){
-      var verdict = r.won ? 'WIN' : 'LOSE';
-      var color = r.won ? 'var(--grn)' : 'var(--red)';
-      var edge = Number(r.edge_pct || 0);
-      var adj = Number(r.adjusted_prob || 0);
-      return '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
-        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
-          '<div>'+ 
-            '<div style="font-size:12px;font-weight:700;color:var(--txt)">'+(r.league || '—')+'</div>'+ 
-            '<div style="font-size:11px;color:var(--txt)">'+fmtDateTime(r.date || r.created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+ 
-            '<div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. ajustată '+adj.toFixed(1)+'% • Edge '+(edge>=0?'+':'')+edge.toFixed(1)+'% • Score '+Number(r.score || 0).toFixed(1)+'</div>'+ 
-          '</div>'+ 
-          '<div style="padding:6px 10px;border-radius:999px;background:'+(r.won ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)')+';border:1px solid '+(r.won ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)')+';color:'+color+';font-size:11px;font-weight:800">'+verdict+'</div>'+ 
+  var current = summary.find(function(s){ return s.market === ACTIVE_HISTORY_MARKET; }) || summary[0];
+  var rowsHtml = current.list.map(function(r){
+    var verdict = r.won ? 'WIN' : 'LOSE';
+    var color = r.won ? 'var(--grn)' : 'var(--red)';
+    var edge = Number(r.edge_pct || 0);
+    var adj = Number(r.adjusted_prob || 0);
+    return '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+        '<div>'+ 
+          '<div style="font-size:12px;font-weight:700;color:var(--txt)">'+(r.league || '—')+'</div>'+ 
+          '<div style="font-size:11px;color:var(--txt)">'+fmtDateTime(r.date || r.created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+ 
+          '<div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. ajustată '+adj.toFixed(1)+'% • Edge '+(edge>=0?'+':'')+edge.toFixed(1)+'% • Score '+Number(r.score || 0).toFixed(1)+'</div>'+ 
         '</div>'+ 
-      '</div>';
-    }).join('');
-    return '<div class="section" style="margin-bottom:14px">'+
-      '<div class="sec-hdr" style="margin-bottom:8px"><div class="sec-title">'+s.market+'</div><div style="font-size:11px;color:var(--muted)">'+s.wins+'/'+s.bets+' win • ROI '+(s.roi>=0?'+':'')+s.roi.toFixed(1)+'% • Win rate '+s.winrate.toFixed(1)+'%</div></div>'+
-      '<div style="padding:0 4px">'+rowsHtml+'</div>'+
+        '<div style="padding:6px 10px;border-radius:999px;background:'+(r.won ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)')+';border:1px solid '+(r.won ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)')+';color:'+color+';font-size:11px;font-weight:800">'+verdict+'</div>'+ 
+      '</div>'+ 
     '</div>';
   }).join('');
+  var details = '<div class="section" style="margin-bottom:14px">'+
+    '<div class="sec-hdr" style="margin-bottom:8px"><div class="sec-title">'+current.market+'</div><div style="font-size:11px;color:var(--muted)">'+current.wins+'/'+current.bets+' win • ROI '+(current.roi>=0?'+':'')+current.roi.toFixed(1)+'% • Win rate '+current.winrate.toFixed(1)+'%</div></div>'+
+    '<div style="padding:0 4px">'+rowsHtml+'</div>'+
+  '</div>';
   root.innerHTML = cards + details;
 }
 
