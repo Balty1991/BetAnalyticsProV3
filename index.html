@@ -822,8 +822,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <div class="tab-content" id="tab-istoric21">
     <div class="section" style="margin-bottom:12px">
       <div class="sec-hdr">
-        <div class="sec-title">🧾 Istoric recomandări 21 zile</div>
-        <div style="font-size:11px;color:var(--muted)">detaliat pe fiecare tip de pronostic</div>
+        <div class="sec-title">🧾 Istoric recomandări 21 zile reale</div>
+        <div style="font-size:11px;color:var(--muted)">filtrat strict după ultimele 21 zile calendaristice</div>
       </div>
       <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px">Aici vezi istoricul recomandărilor folosite în backtest, grupat pe tip de pariu. Pentru fiecare categorie primești win / jucate, win rate și ROI, iar dedesubt fiecare eveniment cu verdictul win / lose.</div>
     </div>
@@ -3880,9 +3880,16 @@ function renderHistory21(){
   var root = $('history21-root');
   if(!root) return;
   var supported = (BET_TYPES || []).map(function(b){ return b.label; });
-  var rows = (HISTORY_ENGINE || []).filter(function(r){ return r && supported.indexOf(r.market) !== -1; });
+  var nowTs = Date.now();
+  var cutoffTs = nowTs - (21 * 24 * 60 * 60 * 1000);
+  var rows = (HISTORY_ENGINE || []).filter(function(r){
+    if(!r || supported.indexOf(r.market) === -1) return false;
+    var ts = new Date(r.date || r.created_at || 0).getTime();
+    if(!ts || isNaN(ts)) return false;
+    return ts >= cutoffTs && ts <= (nowTs + 24 * 60 * 60 * 1000);
+  });
   if(!rows.length){
-    root.innerHTML = '<div class="empty-state">Nu există încă istoric pe ultimele 21 de zile pentru piețele active.</div>';
+    root.innerHTML = '<div class="empty-state">Nu există încă istoric real pe ultimele 21 de zile pentru piețele active.</div>';
     return;
   }
   var groups = {};
