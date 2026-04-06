@@ -3815,6 +3815,31 @@ function renderMarketDistribution(){
   target.innerHTML = html;
 }
 
+function deriveAuditRowsFromMatches(){
+  return (ALL_MATCHES || []).filter(function(m){
+    return m && m.auditSummary && (m.auditSummary.market || m.bestMarketLabel || null);
+  }).map(function(m){
+    var a = m.auditSummary || {};
+    return {
+      prediction_id: m.id || null,
+      event_id: m.eventId || null,
+      event_date: m.date || null,
+      league: m.league || 'Unknown',
+      home: m.home || '—',
+      away: m.away || '—',
+      market: a.market || m.bestMarketLabel || (m.bestBet && m.bestBet.label) || '—',
+      book_odds: a.book_odds != null ? a.book_odds : (m.bestBet ? m.bestBet.odds : null),
+      fair_odds: a.fair_odds != null ? a.fair_odds : (m.bestBet ? getDisplayedFairOdds(m, m.bestBet) : null),
+      edge_pct: a.edge_pct != null ? a.edge_pct : (m.bestBet ? m.bestBet.edgePct : null),
+      kelly_quarter_pct: a.kelly_quarter_pct != null ? a.kelly_quarter_pct : (m.bestBet ? getDisplayedKellyQuarter(m, m.bestBet) : null),
+      adjusted_prob: a.adjusted_prob != null ? a.adjusted_prob : (m.bestBet ? m.bestBet.adjProb : null)
+    };
+  }).sort(function(a,b){
+    if((b.edge_pct || 0) !== (a.edge_pct || 0)) return (b.edge_pct || 0) - (a.edge_pct || 0);
+    return (b.adjusted_prob || 0) - (a.adjusted_prob || 0);
+  });
+}
+
 function renderAuditHub(){
   var dash = $('tab-dashboard');
   if(!dash) return;
@@ -3832,11 +3857,11 @@ function renderAuditHub(){
     if(ref && ref.parentNode) ref.parentNode.insertBefore(box, ref);
     else dash.appendChild(box);
   }
-  var rows = (SIGNAL_AUDIT && SIGNAL_AUDIT.rows) ? SIGNAL_AUDIT.rows : [];
+  var rows = (SIGNAL_AUDIT && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length) ? SIGNAL_AUDIT.rows : deriveAuditRowsFromMatches();
   var movers = (ODDS_HISTORY && ODDS_HISTORY.recent_movers) ? ODDS_HISTORY.recent_movers : [];
-  var avgEdge = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_edge_pct != null ? Number(SIGNAL_AUDIT.avg_edge_pct) : 0;
-  var avgKelly = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_kelly_quarter_pct != null ? Number(SIGNAL_AUDIT.avg_kelly_quarter_pct) : 0;
-  var avgValue = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_value_pct != null ? Number(SIGNAL_AUDIT.avg_value_pct) : 0;
+  var avgEdge = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_edge_pct != null && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length ? Number(SIGNAL_AUDIT.avg_edge_pct) : (rows.length ? rows.reduce(function(acc, r){ return acc + Number(r.edge_pct || 0); }, 0) / rows.length : 0);
+  var avgKelly = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_kelly_quarter_pct != null && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length ? Number(SIGNAL_AUDIT.avg_kelly_quarter_pct) : (rows.length ? rows.reduce(function(acc, r){ return acc + Number(r.kelly_quarter_pct || 0); }, 0) / rows.length : 0);
+  var avgValue = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_value_pct != null && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length ? Number(SIGNAL_AUDIT.avg_value_pct) : 0;
   var clv = APP_META && APP_META.clv_summary ? APP_META.clv_summary : null;
   var topMover = movers && movers.length ? movers[0] : null;
   var moverHtml = topMover ? ('<div style="margin-top:10px;font-size:11px;color:var(--muted)">Top mover: <b style="color:var(--txt)">'+(topMover.home||'—')+' vs '+(topMover.away||'—')+'</b> • '+(topMover.market||'—')+' • <b style="color:' + ((topMover.line_movement_pct||0)>=0 ? 'var(--yel)' : 'var(--grn)') + '">'+((topMover.line_movement_pct||0)>=0?'+':'')+Number(topMover.line_movement_pct||0).toFixed(2)+'%</b></div>') : '';
