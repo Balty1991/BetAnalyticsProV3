@@ -514,7 +514,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
       <button class="filter-btn" onclick="setFilter('win',this)">🏁 1 / 2</button>
       <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
-      <button class="filter-btn" onclick="setFilter('big',this)">🚀 Big Value</button>
       <select class="sort-select" id="sort-select" onchange="renderMatches()">
         <option value="date" selected>🕒 Ora meciului</option>
         <option value="edge">📈 Edge</option>
@@ -766,8 +765,6 @@ var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
 var APP_META = {};
-var SIGNAL_AUDIT = {rows:[]};
-var ODDS_HISTORY = {snapshots:[],recent_movers:[]};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
@@ -1043,44 +1040,6 @@ function getDoubleChancePick(raw, extra, confidence){
   };
 }
 
-function calcFairOddsFromProb(probPct){
-  var p = Number(probPct || 0);
-  if(!p || p <= 0) return null;
-  return +(100 / p).toFixed(2);
-}
-
-function calcKellyPctFromBet(adjProbPct, odds, fraction){
-  var p = Number(adjProbPct || 0) / 100;
-  var o = Number(odds || 0);
-  var f = fraction == null ? 0.25 : Number(fraction);
-  if(!p || !o || o <= 1) return 0;
-  var b = o - 1;
-  var q = 1 - p;
-  var raw = ((b * p) - q) / b;
-  if(!isFinite(raw) || raw <= 0) return 0;
-  return +(Math.min(raw * f, 0.08) * 100).toFixed(2);
-}
-
-function auditMatchesDisplayedBet(m, b){
-  if(!m || !b || !m.auditSummary) return false;
-  return (m.auditSummary.market_key || m.bestMarketKey || null) === b.type;
-}
-
-function getDisplayedFairOdds(m, b){
-  if(auditMatchesDisplayedBet(m, b) && m.bestFairOdds != null) return Number(m.bestFairOdds);
-  return calcFairOddsFromProb(b && (b.adjProb || b.prob));
-}
-
-function getDisplayedKellyQuarter(m, b){
-  if(auditMatchesDisplayedBet(m, b) && m.bestKellyQuarterPct != null) return Number(m.bestKellyQuarterPct);
-  return calcKellyPctFromBet(b && (b.adjProb || b.prob), b && b.odds, 0.25);
-}
-
-function getDisplayedLineMovementPct(m, b){
-  if(auditMatchesDisplayedBet(m, b) && m.bestLineMovementPct != null) return Number(m.bestLineMovementPct);
-  return null;
-}
-
 function analyzeMatch(raw){
   var e = raw.event || {};
   var conf = normalizeConfidence(raw.confidence != null ? raw.confidence : raw.favorite_prob);
@@ -1217,18 +1176,7 @@ function analyzeMatch(raw){
     rawVerdict: bestBet ? bestBet.verdict : 'avoid',
     analysisState: bestBet ? 'RAW_ONLY' : 'NO_ODDS',
     eligibleCandidates: [],
-    apiFlagsCount: [raw.over_15_recommend, raw.over_25_recommend, raw.btts_recommend, raw.favorite_recommend, raw.winner_recommend].filter(Boolean).length,
-    auditSummary: raw.audit_summary || null,
-    bestMarketKey: raw.best_market_key || null,
-    bestMarketLabel: raw.best_market_label || null,
-    bestFairOdds: raw.best_fair_odds != null ? Number(raw.best_fair_odds) : null,
-    bestKellyQuarterPct: raw.best_kelly_quarter_pct != null ? Number(raw.best_kelly_quarter_pct) : null,
-    bestKellyFullPct: raw.best_kelly_full_pct != null ? Number(raw.best_kelly_full_pct) : null,
-    bestPreviousOdds: raw.best_previous_odds != null ? Number(raw.best_previous_odds) : null,
-    bestOpeningOdds: raw.best_opening_odds != null ? Number(raw.best_opening_odds) : null,
-    bestLineMovementPct: raw.best_line_movement_pct != null ? Number(raw.best_line_movement_pct) : null,
-    bestFromOpenPct: raw.best_from_open_pct != null ? Number(raw.best_from_open_pct) : null,
-    auditReasonTags: Array.isArray(raw.audit_reason_tags) ? raw.audit_reason_tags : []
+    apiFlagsCount: [raw.over_15_recommend, raw.over_25_recommend, raw.btts_recommend, raw.favorite_recommend, raw.winner_recommend].filter(Boolean).length
   };
 }
 
@@ -1319,9 +1267,7 @@ function doRefresh(){
     getJson('/data/leagues.json', []),
     getJson('/data/events.json', []),
     getJson('/data/teams.json', []),
-    getJson('/data/backtest.json', {}),
-    getJson('/data/signal_audit.json', {rows:[]}),
-    getJson('/data/odds_history.json', {snapshots:[],recent_movers:[]})
+    getJson('/data/backtest.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -1329,8 +1275,6 @@ function doRefresh(){
     var eventsData = results[3];
     var teamsData = results[4];
     var backtestData = results[5];
-    var signalAuditData = results[6];
-    var oddsHistoryData = results[7];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
@@ -1341,8 +1285,6 @@ function doRefresh(){
     ALL_TEAMS = teamsData.results || teamsData || [];
     ALL_PLAYERS = [];
     BACKTEST_SUMMARY = backtestData || {};
-    SIGNAL_AUDIT = signalAuditData || {rows:[]};
-    ODDS_HISTORY = oddsHistoryData || {snapshots:[],recent_movers:[]};
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -1588,15 +1530,11 @@ function renderTopPicks(){
 
 function buildMatchReasons(m){
   var reasons = [];
-  var shownFair = m.bestBet ? getDisplayedFairOdds(m, m.bestBet) : null;
-  var shownKelly = m.bestBet ? getDisplayedKellyQuarter(m, m.bestBet) : null;
-  var shownMove = m.bestBet ? getDisplayedLineMovementPct(m, m.bestBet) : null;
   if(m.analysisState && m.analysisState !== 'ELIGIBLE') reasons.push(getAnalysisStateMeta(m.analysisState).label.replace(/[✅⚠️🧠⛔🛰️ ]/g,''));
   if(m.bestBet && m.bestBet.edgePct != null) reasons.push('No-vig ' + (m.bestBet.edgePct >= 0 ? '+' : '') + m.bestBet.edgePct.toFixed(1) + 'pp');
   if(m.bestBet && m.bestBet.value >= 0.03) reasons.push('EV+ ' + fmtPct(m.bestBet.value * 100));
   if(m.bestBet && m.bestBet.sourceApi) reasons.push('Confirmat API');
-  if(shownKelly != null && shownKelly > 0) reasons.push('Kelly 1/4 ' + shownKelly.toFixed(2) + '%');
-  if(shownMove != null) reasons.push('Mișcare ' + (shownMove >= 0 ? '+' : '') + shownMove.toFixed(1) + '%');
+
   if(m.confidence >= 60) reasons.push('AI confidence ' + m.confidence.toFixed(0) + '%');
   if(m.xgTotal >= 2.6) reasons.push('xG total ' + m.xgTotal.toFixed(2));
   if(m.probOver25 >= 60) reasons.push('O2.5 ' + m.probOver25.toFixed(1) + '%');
@@ -1607,17 +1545,13 @@ function buildMatchReasons(m){
   if(m.favoriteRecommend && m.favoriteProp) reasons.push('favorit ML ' + m.favoriteProp.toFixed(1) + '%');
   if(m.doubleChancePick) reasons.push(m.doubleChancePick.label + ' ' + m.doubleChancePick.prob.toFixed(1) + '%');
   if(m.winnerRecommend) reasons.push('modelul vede meci fără egal');
-  if(shownFair != null) reasons.push('Fair ' + shownFair.toFixed(2));
   if(m.mostLikelyScore) reasons.push('scor probabil ' + m.mostLikelyScore);
-  return uniqueReasons(reasons).slice(0, 5);
+  return uniqueReasons(reasons).slice(0, 4);
 }
 
 function buildRecommendationReasons(m, b){
   if(!m || !b) return [];
   var reasons = [];
-  var shownFair = getDisplayedFairOdds(m, b);
-  var shownKelly = getDisplayedKellyQuarter(m, b);
-  var shownMove = getDisplayedLineMovementPct(m, b);
   var t = b.type;
   reasons.push('Șansă estimată ' + b.adjProb.toFixed(1) + '%');
   if(t === 'over15' || t === 'over25' || t === 'under25' || t === 'under35'){
@@ -1631,14 +1565,10 @@ function buildRecommendationReasons(m, b){
   } else if(t === 'draw'){
     reasons.push('echilibru xG ' + Math.abs(m.xgHome - m.xgAway).toFixed(2));
   }
-  if(b.edgePct != null) reasons.push('Edge ' + (b.edgePct >= 0 ? '+' : '') + b.edgePct.toFixed(1) + 'pp');
-  if(shownFair != null) reasons.push('Fair ' + shownFair.toFixed(2));
-  if(shownKelly != null && shownKelly > 0) reasons.push('Kelly 1/4 ' + shownKelly.toFixed(2) + '%');
-  if(shownMove != null) reasons.push('Mișcare ' + (shownMove >= 0 ? '+' : '') + shownMove.toFixed(1) + '%');
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
   if(b.sourceApi) reasons.push('confirmat API');
-  if(m.auditReasonTags && m.auditReasonTags.length) reasons = reasons.concat(m.auditReasonTags.slice(0,2));
-  return uniqueReasons(reasons).slice(0, 5);
+
+  return uniqueReasons(reasons).slice(0, 3);
 }
 
 function renderMlApiCenter(){
@@ -2063,44 +1993,6 @@ function buildLeagueFilter(){
   sel.innerHTML = opts;
 }
 
-function getBigValueBet(m){
-  if(!m || !m.allBets || !m.allBets.length) return null;
-  var list = m.allBets.filter(function(b){
-    if(!b) return false;
-    if(['draw','under25','under35'].indexOf(b.type) !== -1) return false;
-    if((b.odds || 0) < 2.20 || (b.odds || 0) > 5.50) return false;
-    if((b.adjProb || 0) < 42) return false;
-    if((b.value || 0) < 0.08) return false;
-    if((b.edgePct || 0) < 5) return false;
-    if((m.confidence || 0) < 52) return false;
-    if(isHardContradiction(m, b.type)) return false;
-    if(b.type === 'homeWin' && !(m.predictedResult === 'H' && (m.xgHome - m.xgAway) >= 0.20)) return false;
-    if(b.type === 'awayWin' && !(m.predictedResult === 'A' && (m.xgAway - m.xgHome) >= 0.20)) return false;
-    if(b.type === 'over25' && Number(m.xgTotal || 0) < 2.45) return false;
-    if(b.type === 'btts' && Number(m.probBtts || 0) < 58) return false;
-    return true;
-  }).map(function(b){
-    var score = 0;
-    score += (b.adjProb || 0) * 0.46;
-    score += Math.max(0, (b.value || 0) * 100) * 0.34;
-    score += Math.max(0, b.edgePct || 0) * 1.10;
-    if((b.odds || 0) >= 2.20 && (b.odds || 0) <= 3.80) score += 4;
-    if((b.odds || 0) > 4.50) score -= 5;
-    return Object.assign({}, b, { bigScore: Math.round(score) });
-  });
-  if(!list.length) return null;
-  list.sort(function(a,b){
-    if((b.bigScore || 0) !== (a.bigScore || 0)) return (b.bigScore || 0) - (a.bigScore || 0);
-    if((b.value || 0) !== (a.value || 0)) return (b.value || 0) - (a.value || 0);
-    return (b.adjProb || 0) - (a.adjProb || 0);
-  });
-  return list[0];
-}
-
-function getRenderBetForMatches(m){
-  return CURRENT_FILTER === 'big' ? getBigValueBet(m) : (m.bestBet || null);
-}
-
 function renderMatches(){
   var container = $('matches-container');
   var sort = $('sort-select').value;
@@ -2112,7 +2004,7 @@ function renderMatches(){
   var now = Date.now();
 
   var filtered = ALL_MATCHES.filter(function(m){
-    var b = getRenderBetForMatches(m);
+    var b = m.bestBet || null;
     if(leagueF && m.league !== leagueF) return false;
     if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
     if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
@@ -2123,7 +2015,6 @@ function renderMatches(){
     if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
     if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
     if(CURRENT_FILTER === 'win' && !(m.analysisState === 'ELIGIBLE' && b && (b.type === 'homeWin' || b.type === 'awayWin'))) return false;
-    if(CURRENT_FILTER === 'big' && !b) return false;
     if(!b) return false;
 
     if(dateF === 'today'){
@@ -2140,9 +2031,9 @@ function renderMatches(){
   });
 
   filtered.sort(function(a,b){
-    var aBet = getRenderBetForMatches(a) || a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
-    var bBet = getRenderBetForMatches(b) || b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
-    if(sort === 'score') return CURRENT_FILTER === 'big' ? ((bBet.bigScore || 0) - (aBet.bigScore || 0)) : ((b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0));
+    var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
+    var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
+    if(sort === 'score') return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
     if(sort === 'value') return (bBet.value||0) - (aBet.value||0);
     if(sort === 'prob') return (bBet.adjProb||0) - (aBet.adjProb||0);
     if(sort === 'edge') return (bBet.edgePct||0) - (aBet.edgePct||0);
@@ -2157,13 +2048,9 @@ function renderMatches(){
   }
 
   function renderCard(m){
-    var b = getRenderBetForMatches(m);
+    var b = m.bestBet || null;
     var state = getAnalysisStateMeta(m.analysisState);
     var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
-    if(CURRENT_FILTER === 'big' && b){
-      state = {label:'🚀 BIG VALUE', color:'var(--pur)', bg:'rgba(168,85,247,.12)', border:'rgba(168,85,247,.25)'};
-      verdictClass = 'moderate';
-    }
     var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
     var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
     var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
@@ -2376,9 +2263,6 @@ function buildMarketCandidate(m, type){
   if(!b) return null;
   if(isHardContradiction(m, type)) return null;
   if(b.value <= 0) return null;
-  if((b.adjProb || 0) < 70) return null;
-  if((m.confidence || 0) < 50) return null;
-  if((b.odds || 0) > 2.30) return null;
 
   var fit = marketFitAnalysis(m, type);
   var reasons = uniqueReasons((fit && fit.reasons) || []);
@@ -3815,70 +3699,6 @@ function renderMarketDistribution(){
   target.innerHTML = html;
 }
 
-function deriveAuditRowsFromMatches(){
-  return (ALL_MATCHES || []).filter(function(m){
-    return m && m.auditSummary && (m.auditSummary.market || m.bestMarketLabel || null);
-  }).map(function(m){
-    var a = m.auditSummary || {};
-    return {
-      prediction_id: m.id || null,
-      event_id: m.eventId || null,
-      event_date: m.date || null,
-      league: m.league || 'Unknown',
-      home: m.home || '—',
-      away: m.away || '—',
-      market: a.market || m.bestMarketLabel || (m.bestBet && m.bestBet.label) || '—',
-      book_odds: a.book_odds != null ? a.book_odds : (m.bestBet ? m.bestBet.odds : null),
-      fair_odds: a.fair_odds != null ? a.fair_odds : (m.bestBet ? getDisplayedFairOdds(m, m.bestBet) : null),
-      edge_pct: a.edge_pct != null ? a.edge_pct : (m.bestBet ? m.bestBet.edgePct : null),
-      kelly_quarter_pct: a.kelly_quarter_pct != null ? a.kelly_quarter_pct : (m.bestBet ? getDisplayedKellyQuarter(m, m.bestBet) : null),
-      adjusted_prob: a.adjusted_prob != null ? a.adjusted_prob : (m.bestBet ? m.bestBet.adjProb : null)
-    };
-  }).sort(function(a,b){
-    if((b.edge_pct || 0) !== (a.edge_pct || 0)) return (b.edge_pct || 0) - (a.edge_pct || 0);
-    return (b.adjusted_prob || 0) - (a.adjusted_prob || 0);
-  });
-}
-
-function renderAuditHub(){
-  var dash = $('tab-dashboard');
-  if(!dash) return;
-  var box = $('audit-hub-box');
-  if(!box){
-    box = document.createElement('div');
-    box.id = 'audit-hub-box';
-    box.style.marginTop = '14px';
-    box.style.marginBottom = '12px';
-    box.style.padding = '12px';
-    box.style.background = 'linear-gradient(135deg,rgba(6,182,212,.06),rgba(16,185,129,.06))';
-    box.style.border = '1px solid rgba(6,182,212,.18)';
-    box.style.borderRadius = '14px';
-    var ref = $('audit-legend-box') || $('ml-api-box');
-    if(ref && ref.parentNode) ref.parentNode.insertBefore(box, ref);
-    else dash.appendChild(box);
-  }
-  var rows = (SIGNAL_AUDIT && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length) ? SIGNAL_AUDIT.rows : deriveAuditRowsFromMatches();
-  var movers = (ODDS_HISTORY && ODDS_HISTORY.recent_movers) ? ODDS_HISTORY.recent_movers : [];
-  var avgEdge = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_edge_pct != null && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length ? Number(SIGNAL_AUDIT.avg_edge_pct) : (rows.length ? rows.reduce(function(acc, r){ return acc + Number(r.edge_pct || 0); }, 0) / rows.length : 0);
-  var avgKelly = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_kelly_quarter_pct != null && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length ? Number(SIGNAL_AUDIT.avg_kelly_quarter_pct) : (rows.length ? rows.reduce(function(acc, r){ return acc + Number(r.kelly_quarter_pct || 0); }, 0) / rows.length : 0);
-  var avgValue = SIGNAL_AUDIT && SIGNAL_AUDIT.avg_value_pct != null && SIGNAL_AUDIT.rows && SIGNAL_AUDIT.rows.length ? Number(SIGNAL_AUDIT.avg_value_pct) : 0;
-  var clv = APP_META && APP_META.clv_summary ? APP_META.clv_summary : null;
-  var topMover = movers && movers.length ? movers[0] : null;
-  var moverHtml = topMover ? ('<div style="margin-top:10px;font-size:11px;color:var(--muted)">Top mover: <b style="color:var(--txt)">'+(topMover.home||'—')+' vs '+(topMover.away||'—')+'</b> • '+(topMover.market||'—')+' • <b style="color:' + ((topMover.line_movement_pct||0)>=0 ? 'var(--yel)' : 'var(--grn)') + '">'+((topMover.line_movement_pct||0)>=0?'+':'')+Number(topMover.line_movement_pct||0).toFixed(2)+'%</b></div>') : '';
-  var leaders = rows.slice(0,3).map(function(r){
-    return '<div style="padding:8px 0;border-top:1px solid rgba(255,255,255,.06)"><div style="font-size:12px;font-weight:700">'+(r.home||'—')+' vs '+(r.away||'—')+'</div><div style="font-size:10px;color:var(--muted)">'+(r.market||'—')+' @ '+Number(r.book_odds||0).toFixed(2)+' • Fair '+(r.fair_odds ? Number(r.fair_odds).toFixed(2) : '—')+' • Edge '+((r.edge_pct||0)>=0?'+':'')+Number(r.edge_pct||0).toFixed(1)+'pp • Kelly 1/4 '+Number(r.kelly_quarter_pct||0).toFixed(2)+'%</div></div>';
-  }).join('');
-  box.innerHTML = '<div class="sec-hdr"><div class="sec-title">📡 Audit & CLV Hub <span class="sec-badge">v17</span></div><div style="font-size:11px;color:var(--muted);font-family:var(--mono)">'+rows.length+' semnale auditate</div></div>' +
-    '<div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:10px">' +
-      '<div class="stat-card"><div class="stat-num" style="color:var(--acc)">'+avgEdge.toFixed(2)+'pp</div><div class="stat-lbl">Edge mediu audit</div></div>' +
-      '<div class="stat-card"><div class="stat-num" style="color:var(--grn)">'+avgValue.toFixed(2)+'%</div><div class="stat-lbl">Value mediu</div></div>' +
-      '<div class="stat-card"><div class="stat-num" style="color:var(--yel)">'+avgKelly.toFixed(2)+'%</div><div class="stat-lbl">Kelly 1/4 mediu</div></div>' +
-      '<div class="stat-card"><div class="stat-num" style="color:var(--pur)">'+(clv ? (Number(clv.avg_clv_pct||0).toFixed(2)+'%') : '—')+'</div><div class="stat-lbl">CLV mediu istoric</div></div>' +
-    '</div>' +
-    '<div style="font-size:11px;color:var(--muted)">Panou nou pentru semnale auditate, mișcare de cote și un rezumat CLV din istoricul engine-ului.</div>' + moverHtml +
-    '<div style="margin-top:10px">'+(leaders || '<div class="empty-state" style="padding:10px 0">Nu există încă semnale auditate.</div>')+'</div>';
-}
-
 function renderJournal(){
   var target = $('ticket-journal');
   if(!target) return;
@@ -4067,7 +3887,6 @@ function renderAll(){
   buildLeagueFilter();
   renderBacktest();
   renderMarketDistribution();
-  renderAuditHub();
   renderTodayBest();
   renderTopPicks();
   renderTopSafe();
