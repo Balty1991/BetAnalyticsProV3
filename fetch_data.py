@@ -29,6 +29,8 @@ LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
 HISTORY_LOOKBACK_DAYS = 60
 HISTORY_MAX_ROWS = 2500
+MAX_PREDICTION_AGE_HOURS = 21 * 24
+SIGNAL_AUDIT_MAX_ROWS = 24
 
 MARKETS = [
     {"key": "homeWin", "label": "1", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
@@ -40,7 +42,6 @@ MARKETS = [
     {"key": "under25", "label": "Under 2.5G", "prob": lambda r: 100 - pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_under_25")},
     {"key": "under35", "label": "Under 3.5G", "prob": lambda r: 100 - pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_under_35")},
     {"key": "btts", "label": "BTTS", "prob": lambda r: pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_yes")},
-    {"key": "bttsNo", "label": "BTTS No", "prob": lambda r: 100 - pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_no")},
 ]
 
 MARKET_MAP = {m["key"]: m for m in MARKETS}
@@ -54,11 +55,11 @@ STRATEGIES = {
         "min_edge": 0.0,
         "min_value": 0.0,
         "odd_min": 1.15,
-        "odd_max": 2.25,
+        "odd_max": 1.65,
     },
     "best_single": {
         "label": "Evenimentul zilei",
-        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts", "bttsNo"},
+        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts"},
         "min_adj": 72.0,
         "min_conf": 50.0,
         "min_edge": 1.5,
@@ -68,7 +69,7 @@ STRATEGIES = {
     },
     "profit_single": {
         "label": "Profit Focus Single",
-        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts", "bttsNo"},
+        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts"},
         "min_adj": 70.0,
         "min_conf": 48.0,
         "min_edge": 1.0,
@@ -78,7 +79,7 @@ STRATEGIES = {
     },
     "conservative": {
         "label": "Bilet conservator",
-        "allowed": {"over15", "under25", "under35", "bttsNo"},
+        "allowed": {"over15", "under25", "under35"},
         "min_adj": 74.0,
         "min_conf": 50.0,
         "min_edge": 0.0,
@@ -88,7 +89,7 @@ STRATEGIES = {
     },
     "smart_ev": {
         "label": "Smart EV",
-        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts", "bttsNo"},
+        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts"},
         "min_adj": 66.0,
         "min_conf": 45.0,
         "min_edge": 2.0,
@@ -98,7 +99,7 @@ STRATEGIES = {
     },
     "controlled_combo": {
         "label": "Combo Controlat",
-        "allowed": {"over15", "over25", "under25", "under35", "btts", "bttsNo", "homeWin", "awayWin"},
+        "allowed": {"over15", "over25", "under25", "under35", "btts", "homeWin", "awayWin"},
         "min_adj": 71.0,
         "min_conf": 48.0,
         "min_edge": 0.5,
@@ -599,7 +600,177 @@ def parse_dt(s):
         return None
 
 
-def build_data_health(predictions):
+def calc_kelly_pct(prob_pct, odds, fraction=1.0, cap_pct=8.0):
+    try:
+        p = pct(prob_pct) / 100.0
+        o = float(odds or 0)
+    except Exception:
+        return 0.0
+    if o <= 1.01 or p <= 0:
+        return 0.0
+    b = o - 1.0
+    raw = ((b * p) - (1.0 - p)) / b
+    if not math.isfinite(raw) or raw <= 0:
+        return 0.0
+    return round(min(cap_pct, raw * 100.0 * fraction), 2)
+
+
+def is_prediction_stale(row, now_utc=None, max_age_hours=MAX_PREDICTION_AGE_HOURS):
+    now_utc = now_utc or datetime.now(timezone.utc)
+    created_at = parse_dt((row or {}).get("created_at"))
+    if not created_at:
+        return False
+    age_h = (now_utc - created_at.astimezone(timezone.utc)).total_seconds() / 3600.0
+    return age_h > max_age_hours
+
+
+def dedupe_and_filter_predictions(predictions, now_utc=None, max_age_hours=MAX_PREDICTION_AGE_HOURS):
+    now_utc = now_utc or datetime.now(timezone.utc)
+    kept = {}
+    stale_removed = 0
+    duplicate_removed = 0
+    for row in predictions or []:
+        if is_prediction_stale(row, now_utc=now_utc, max_age_hours=max_age_hours):
+            stale_removed += 1
+            continue
+        event = row.get("event") or {}
+        event_id = event.get("id") or row.get("id")
+        current = kept.get(event_id)
+        row_created = parse_dt(row.get("created_at")) or datetime.min.replace(tzinfo=timezone.utc)
+        cur_created = parse_dt((current or {}).get("created_at")) or datetime.min.replace(tzinfo=timezone.utc)
+        if current is None or row_created.astimezone(timezone.utc) >= cur_created.astimezone(timezone.utc):
+            if current is not None:
+                duplicate_removed += 1
+            kept[event_id] = row
+        else:
+            duplicate_removed += 1
+    filtered = sorted(kept.values(), key=lambda r: ((r.get("event") or {}).get("event_date") or "", r.get("id") or 0))
+    return filtered, {
+        "input_count": len(predictions or []),
+        "kept_count": len(filtered),
+        "stale_removed": stale_removed,
+        "duplicate_removed": duplicate_removed,
+        "max_age_hours": max_age_hours,
+    }
+
+
+def build_signal_audit(predictions):
+    rows = []
+    now_utc = datetime.now(timezone.utc)
+    for row in predictions or []:
+        event = row.get("event") or {}
+        if event.get("status") != "notstarted":
+            continue
+
+        candidates = []
+        for market in MARKETS:
+            market_key = market["key"]
+            try:
+                odds = float((market["odds"](event) or 0))
+            except Exception:
+                odds = 0.0
+            if odds < 1.01:
+                continue
+            prob = market["prob"](row)
+            confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
+            value = calc_value(prob, odds)
+            adj = adjusted_prob(prob, confidence)
+            market_prob = market_prob_from_row_event(row, event, market_key)
+            edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
+            fit = market_fit_score(row, market_key)
+            source_api = api_recommend(row, market_key)
+            source_heuristic = heuristic_recommend(row, market_key)
+            score = calc_smart_score(adj, value, confidence, edge_pct, fit, source_api, source_heuristic)
+            verdict = verdict_from_metrics(adj, value, confidence, edge_pct)
+            candidate = {
+                "market": market["label"],
+                "market_key": market_key,
+                "odds": round(odds, 3),
+                "prob": round(prob, 2),
+                "adj_prob": round(adj, 2),
+                "value": round(value, 4),
+                "confidence": round(confidence, 2),
+                "market_prob": round(market_prob, 2) if market_prob is not None else None,
+                "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
+                "fit_score": round(fit, 2),
+                "score": score,
+                "verdict": verdict,
+                "source_api": bool(source_api),
+                "source_heuristic": bool(source_heuristic),
+                "league": (event.get("league") or {}).get("name") or "Unknown",
+                "event_id": event.get("id"),
+                "prediction_id": row.get("id"),
+                "date": event.get("event_date"),
+                "created_at": row.get("created_at"),
+                "most_likely_score": row.get("most_likely_score"),
+            }
+            if qualifies_for_strategy(candidate, STRATEGIES["engine_overall"]):
+                candidates.append(candidate)
+
+        if not candidates:
+            continue
+
+        pick = max(candidates, key=rank_candidate)
+        created_at = parse_dt(pick.get("created_at"))
+        age_hours = round((now_utc - created_at.astimezone(timezone.utc)).total_seconds() / 3600.0, 2) if created_at else None
+        fair_odds = round(1.0 / max(0.0001, pick.get("adj_prob", 0) / 100.0), 3) if pick.get("adj_prob") else None
+        kelly_full = calc_kelly_pct(pick.get("adj_prob"), pick.get("odds"), fraction=1.0)
+        kelly_quarter = calc_kelly_pct(pick.get("adj_prob"), pick.get("odds"), fraction=0.25)
+        reason_tags = []
+        if pick.get("edge_pct") is not None:
+            reason_tags.append(f"No-vig {pick['edge_pct']:+.1f}pp")
+        if pick.get("value") is not None:
+            reason_tags.append(f"EV+ {pick['value']*100:+.1f}%")
+        if pick.get("market_key") in {"over15", "over25", "under25", "under35"}:
+            xg_total = round(float(row.get("expected_home_goals") or 0) + float(row.get("expected_away_goals") or 0), 2)
+            reason_tags.append(f"xG {xg_total:.2f}")
+        if row.get("most_likely_score"):
+            reason_tags.append(f"Scor {row.get('most_likely_score')}")
+        rows.append({
+            "prediction_id": pick.get("prediction_id"),
+            "event_id": pick.get("event_id"),
+            "created_at": pick.get("created_at"),
+            "event_date": pick.get("date"),
+            "age_hours": age_hours,
+            "league": pick.get("league"),
+            "home": event.get("home_team"),
+            "away": event.get("away_team"),
+            "model_version": row.get("model_version"),
+            "market_key": pick.get("market_key"),
+            "market": pick.get("market"),
+            "book_odds": pick.get("odds"),
+            "market_prob": pick.get("market_prob"),
+            "model_prob": pick.get("prob"),
+            "adjusted_prob": pick.get("adj_prob"),
+            "fair_odds": fair_odds,
+            "edge_pct": pick.get("edge_pct"),
+            "value": pick.get("value"),
+            "score": pick.get("score"),
+            "verdict": pick.get("verdict"),
+            "source_api": pick.get("source_api"),
+            "source_heuristic": pick.get("source_heuristic"),
+            "kelly_full_pct": kelly_full,
+            "kelly_quarter_pct": kelly_quarter,
+            "previous_odds": pick.get("odds"),
+            "opening_odds": pick.get("odds"),
+            "line_movement_pct": 0.0,
+            "from_open_pct": 0.0,
+            "reason_tags": reason_tags[:4],
+        })
+
+    rows.sort(key=lambda x: (float(x.get("kelly_quarter_pct") or 0), float(x.get("edge_pct") or 0), float(x.get("score") or 0)), reverse=True)
+    rows = rows[:SIGNAL_AUDIT_MAX_ROWS]
+    return {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "count": len(rows),
+        "avg_edge_pct": round(sum(float(r.get("edge_pct") or 0) for r in rows) / len(rows), 2) if rows else 0.0,
+        "avg_kelly_quarter_pct": round(sum(float(r.get("kelly_quarter_pct") or 0) for r in rows) / len(rows), 2) if rows else 0.0,
+        "avg_value_pct": round(sum(float(r.get("value") or 0) * 100.0 for r in rows) / len(rows), 2) if rows else 0.0,
+        "rows": rows,
+    }
+
+
+def build_data_health(predictions, prep_stats=None):
     now = datetime.now(timezone.utc)
     ages = []
     events_without_odds = 0
@@ -624,7 +795,7 @@ def build_data_health(predictions):
         if created_at:
             ages.append((now - created_at.astimezone(timezone.utc)).total_seconds() / 3600.0)
 
-    return {
+    out = {
         "predictions_count": len(predictions or []),
         "events_without_odds": events_without_odds,
         "predictions_without_scoreline": predictions_without_scoreline,
@@ -633,6 +804,13 @@ def build_data_health(predictions):
         "avg_prediction_age_hours": round(sum(ages) / len(ages), 2) if ages else None,
         "max_prediction_age_hours": round(max(ages), 2) if ages else None,
     }
+    if prep_stats:
+        out.update({
+            "stale_predictions_removed": prep_stats.get("stale_removed", 0),
+            "duplicate_predictions_removed": prep_stats.get("duplicate_removed", 0),
+            "prediction_age_cap_hours": prep_stats.get("max_age_hours"),
+        })
+    return out
 
 
 
@@ -904,9 +1082,11 @@ def main():
 
     print(f"\n[1/5] Fetching predictions (next {LOOKAHEAD_DAYS} days)...")
     predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={today}&date_to={future}")
-    print(f"Total predictions: {len(predictions)}")
+    print(f"Total predictions raw: {len(predictions)}")
+    predictions, upcoming_prep = dedupe_and_filter_predictions(predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
+    print(f"Upcoming predictions kept: {len(predictions)} | stale removed: {upcoming_prep['stale_removed']} | duplicates removed: {upcoming_prep['duplicate_removed']}")
     if not predictions:
-        raise RuntimeError("Predictions a venit gol. Oprim workflow-ul.")
+        raise RuntimeError("Predictions a venit gol dupa filtrarea stale/duplicate. Oprim workflow-ul.")
 
     print(f"\n[2/6] Fetching upcoming events (next {LOOKAHEAD_DAYS} days)...")
     events = fetch_all_pages(f"/api/events/?tz={TZ}&date_from={today}&date_to={future}&status=notstarted")
@@ -919,14 +1099,17 @@ def main():
 
     print(f"\n[4/6] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
     historical_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
+    historical_predictions, historical_prep = dedupe_and_filter_predictions(historical_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     backtest = build_backtest_summary(historical_predictions, BACKTEST_LOOKBACK_DAYS)
     print(f"Finished preds: {backtest['finished_predictions']} | Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%")
 
     history_predictions = historical_predictions
     if HISTORY_LOOKBACK_DAYS != BACKTEST_LOOKBACK_DAYS:
         history_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past_history}&date_to={today}")
+        history_predictions, _history_prep = dedupe_and_filter_predictions(history_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     history_rows = build_history_rows(history_predictions)
-    data_health = build_data_health(predictions)
+    signal_audit = build_signal_audit(predictions)
+    data_health = build_data_health(predictions, upcoming_prep)
     header_sync = build_header_sync_metrics(predictions)
 
     refresh_static = should_refresh_static(started_at)
@@ -953,16 +1136,20 @@ def main():
     save_json(players_focus, "players_focus.json")
     save_json(backtest, "backtest.json")
     save_json(history_rows, "history_engine.json")
+    save_json(signal_audit, "signal_audit.json")
 
     meta = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "started_at": started_at.isoformat(),
         "predictions_count": len(predictions),
+        "raw_predictions_count": upcoming_prep.get("input_count", len(predictions)),
         "events_count": len(events),
         "leagues_count": len(leagues),
         "teams_count": len(teams),
         "players_focus_count": 0,
         "historical_predictions_count": len(historical_predictions),
+        "historical_raw_predictions_count": historical_prep.get("input_count", len(historical_predictions)),
+        "signal_audit_count": signal_audit.get("count", 0),
         "history_engine_rows": len(history_rows),
         "backtest_finished_predictions": backtest["finished_predictions"],
         "backtest_engine_bets": backtest["engine_bets"],
@@ -979,6 +1166,8 @@ def main():
         "data_health": data_health,
         "header_sync": header_sync,
         "bsd_status": status_metrics,
+        "upcoming_preprocess": upcoming_prep,
+        "historical_preprocess": historical_prep,
     }
     save_json(meta, "meta.json")
 
