@@ -358,6 +358,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <button class="tab" onclick="switchTab('tracking')">📈 Tracking</button>
   <button class="tab" onclick="switchTab('bankroll')">💰 Bankroll</button>
   <button class="tab" onclick="switchTab('istoric21')">🧾 Istoric 21 zile</button>
+  <button class="tab" onclick="switchTab('statistici')">📚 Statistici</button>
 </div>
 
 <div class="main">
@@ -779,6 +780,16 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <div id="history21-root"></div>
   </div>
 
+  <div class="tab-content" id="tab-statistici">
+    <div class="section" style="margin-bottom:12px">
+      <div class="sec-hdr">
+        <div class="sec-title">📚 Statistici & Info</div>
+        <div style="font-size:11px;color:var(--muted)">toate blocurile informative mutate din dashboard</div>
+      </div>
+    </div>
+    <div id="stats-info-root"></div>
+  </div>
+
 </div><!-- /main -->
 
 <script>
@@ -880,13 +891,14 @@ function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
-  var names=['dashboard','meciuri','bilete','tracking','bankroll','istoric21'];
+  var names=['dashboard','meciuri','bilete','tracking','bankroll','istoric21','statistici'];
   var tabs=document.querySelectorAll('.tab');
   var idx=names.indexOf(name);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
+  if(name==='statistici') moveDashboardInfoPanels();
 }
 
 // ============================================================
@@ -3726,6 +3738,16 @@ function exportHistory(){
     console.error(e);
     toast('Eroare la export', 'err');
   }
+}
+
+function moveDashboardInfoPanels(){
+  var root = $('stats-info-root');
+  if(!root) return;
+  var ids = ['dashboard-stats','ml35-hdr','ml35-body','health-panel','market-distribution-panel','market-performance-panel','audit-legend-box','ml-api-box'];
+  ids.forEach(function(id){
+    var el = $(id);
+    if(el && el.parentNode !== root) root.appendChild(el);
+  });
 }
 
 function renderMarketDistribution(){
