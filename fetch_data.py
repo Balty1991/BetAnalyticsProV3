@@ -1351,6 +1351,326 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
     return out[:RECOMMENDATION_LOG_MAX_ROWS]
 
 
+
+
+def clamp(value, low, high):
+    return max(low, min(high, value))
+
+
+def ai_odds_bucket(odds):
+    o = float(odds or 0)
+    if o < 1.20:
+        return "1.01–1.19"
+    if o < 1.35:
+        return "1.20–1.34"
+    if o < 1.50:
+        return "1.35–1.49"
+    if o < 1.66:
+        return "1.50–1.65"
+    return "1.66+"
+
+
+def ai_conf_bucket(confidence):
+    c = float(confidence or 0)
+    if c < 50:
+        return "<50"
+    if c < 60:
+        return "50–59"
+    if c < 70:
+        return "60–69"
+    return "70+"
+
+
+def ai_edge_bucket(edge_pct):
+    e = float(edge_pct or 0)
+    if e < 1:
+        return "<1%"
+    if e < 3:
+        return "1–2.9%"
+    if e < 5:
+        return "3–4.9%"
+    return "5%+"
+
+
+def ai_weekday_label(iso_value):
+    if not iso_value:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(str(iso_value).replace("Z", "+00:00"))
+    except Exception:
+        return "—"
+    names = ["Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică"]
+    return names[dt.weekday()]
+
+
+def ai_hour_bucket(iso_value):
+    if not iso_value:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(str(iso_value).replace("Z", "+00:00"))
+    except Exception:
+        return "—"
+    hour = dt.hour
+    if hour < 6:
+        return "00–05"
+    if hour < 12:
+        return "06–11"
+    if hour < 18:
+        return "12–17"
+    return "18–23"
+
+
+def ai_source_label(row):
+    if row.get("source_api") and row.get("source_heuristic"):
+        return "ML + heuristic"
+    if row.get("source_api"):
+        return "ML/API"
+    if row.get("source_heuristic"):
+        return "heuristic"
+    return "heuristic"
+
+
+def ai_recency_weight(iso_value, now_utc):
+    if not iso_value:
+        return 0.8
+    try:
+        dt = datetime.fromisoformat(str(iso_value).replace("Z", "+00:00"))
+    except Exception:
+        return 0.8
+    age_days = max(0.0, (now_utc - dt).total_seconds() / 86400.0)
+    return round(max(0.55, 1.0 - min(age_days, 75.0) / 170.0), 4)
+
+
+def ai_create_stat(kind, key, label):
+    return {
+        "kind": kind,
+        "key": key,
+        "label": label,
+        "raw_bets": 0,
+        "bets_w": 0.0,
+        "wins_w": 0.0,
+        "profit_w": 0.0,
+        "edge_sum": 0.0,
+        "odds_sum": 0.0,
+    }
+
+
+def ai_update_stat(store, kind, key, label, row, weight):
+    bucket = store.setdefault(kind, {})
+    stat = bucket.get(key)
+    if not stat:
+        stat = ai_create_stat(kind, key, label)
+        bucket[key] = stat
+    odds = float(row.get("odds") or 0)
+    won = bool(row.get("won"))
+    profit = (odds - 1.0) if won and odds > 1 else -1.0
+    stat["raw_bets"] += 1
+    stat["bets_w"] += weight
+    stat["wins_w"] += weight if won else 0.0
+    stat["profit_w"] += profit * weight
+    stat["edge_sum"] += float(row.get("edge_pct") or 0.0)
+    stat["odds_sum"] += odds
+
+
+def ai_finalize_stat(stat):
+    bets_w = float(stat.get("bets_w") or 0.0)
+    raw_bets = int(stat.get("raw_bets") or 0)
+    if bets_w <= 0 or raw_bets <= 0:
+        return None
+    wins_w = float(stat.get("wins_w") or 0.0)
+    profit_w = float(stat.get("profit_w") or 0.0)
+    roi = (profit_w * 100.0 / bets_w) if bets_w else 0.0
+    winrate = (wins_w * 100.0 / bets_w) if bets_w else 0.0
+    avg_edge = (float(stat.get("edge_sum") or 0.0) / raw_bets) if raw_bets else 0.0
+    avg_odds = (float(stat.get("odds_sum") or 0.0) / raw_bets) if raw_bets else 0.0
+    sample_factor = min(1.0, raw_bets / 10.0)
+    memory_score = (roi * 0.38) + ((winrate - 54.0) * 0.22) + (avg_edge * 0.90)
+    memory_score *= sample_factor
+    out = dict(stat)
+    out.update({
+        "wins": int(round(wins_w)),
+        "losses": max(0, raw_bets - int(round(wins_w))),
+        "roi": round(roi, 2),
+        "winrate": round(winrate, 2),
+        "profit": round(profit_w, 3),
+        "avg_edge": round(avg_edge, 2),
+        "avg_odds": round(avg_odds, 3),
+        "memory_score": round(clamp(memory_score, -18.0, 18.0), 2),
+    })
+    return out
+
+
+def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
+    settled = [
+        r for r in (recommendation_log or [])
+        if r.get("status") in {"win", "lose"} and r.get("market_key") in {"over15", "over25", "under35", "btts"}
+    ]
+    settled.extend([
+        r for r in (history_rows or [])
+        if r.get("won") is not None and r.get("market_key") in {"over15", "over25", "under35", "btts"}
+    ])
+    pending = [
+        r for r in (current_rows or [])
+        if r.get("market_key") in {"over15", "over25", "under35", "btts"}
+    ]
+
+    patterns = {}
+    for row in settled:
+        base_time = row.get("settled_at") or row.get("event_date") or row.get("logged_at") or row.get("prediction_created_at")
+        weight = ai_recency_weight(base_time, now_utc)
+        market_key = row.get("market_key") or "—"
+        league = row.get("league") or "Unknown"
+        odds_bucket = ai_odds_bucket(row.get("odds"))
+        conf_bucket = ai_conf_bucket(row.get("confidence"))
+        edge_bucket = ai_edge_bucket(row.get("edge_pct"))
+        event_time = row.get("event_date") or row.get("date")
+        weekday = ai_weekday_label(event_time)
+        hour_bucket = ai_hour_bucket(event_time)
+        source_label = ai_source_label(row)
+        market_label = row.get("market") or market_key
+
+        ai_update_stat(patterns, "market", market_key, market_label, row, weight)
+        ai_update_stat(patterns, "market_league", f"{market_key}|{league}", f"{market_label} • {league}", row, weight)
+        ai_update_stat(patterns, "market_odds", f"{market_key}|{odds_bucket}", f"{market_label} • cote {odds_bucket}", row, weight)
+        ai_update_stat(patterns, "market_conf", f"{market_key}|{conf_bucket}", f"{market_label} • conf {conf_bucket}", row, weight)
+        ai_update_stat(patterns, "market_edge", f"{market_key}|{edge_bucket}", f"{market_label} • edge {edge_bucket}", row, weight)
+        ai_update_stat(patterns, "market_weekday", f"{market_key}|{weekday}", f"{market_label} • {weekday}", row, weight)
+        ai_update_stat(patterns, "market_hour", f"{market_key}|{hour_bucket}", f"{market_label} • interval {hour_bucket}", row, weight)
+        ai_update_stat(patterns, "market_source", f"{market_key}|{source_label}", f"{market_label} • {source_label}", row, weight)
+
+    final_patterns = {}
+    flat_patterns = []
+    for kind, bucket in patterns.items():
+        final_patterns[kind] = {}
+        for key, stat in bucket.items():
+            fin = ai_finalize_stat(stat)
+            if not fin:
+                continue
+            final_patterns[kind][key] = fin
+            flat_patterns.append(fin)
+
+    market_rows = sorted(
+        [row for row in final_patterns.get("market", {}).values() if row.get("raw_bets", 0) >= 4],
+        key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
+        reverse=True,
+    )
+    positive_patterns = sorted(
+        [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) > 0],
+        key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
+        reverse=True,
+    )[:12]
+    negative_patterns = sorted(
+        [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) < 0],
+        key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0)),
+    )[:12]
+
+    def lookup(kind, key, min_bets=3):
+        row = final_patterns.get(kind, {}).get(key)
+        if not row or int(row.get("raw_bets") or 0) < min_bets:
+            return None
+        return row
+
+    adaptive_picks = []
+    for row in pending:
+        market_key = row.get("market_key") or "—"
+        market_label = row.get("market") or market_key
+        league = row.get("league") or "Unknown"
+        odds_bucket = ai_odds_bucket(row.get("odds"))
+        conf_bucket = ai_conf_bucket(row.get("confidence"))
+        edge_bucket = ai_edge_bucket(row.get("edge_pct"))
+        weekday = ai_weekday_label(row.get("event_date"))
+        hour_bucket = ai_hour_bucket(row.get("event_date"))
+        source_label = ai_source_label(row)
+        reasons = []
+        bonus = 0.0
+
+        checks = [
+            ("market", market_key, 5, 0.85, market_label),
+            ("market_league", f"{market_key}|{league}", 3, 1.00, f"{market_label} în {league}"),
+            ("market_odds", f"{market_key}|{odds_bucket}", 3, 0.45, f"{market_label} la cote {odds_bucket}"),
+            ("market_conf", f"{market_key}|{conf_bucket}", 3, 0.45, f"{market_label} la conf {conf_bucket}"),
+            ("market_edge", f"{market_key}|{edge_bucket}", 3, 0.30, f"{market_label} la edge {edge_bucket}"),
+            ("market_weekday", f"{market_key}|{weekday}", 3, 0.30, f"{market_label} în {weekday}"),
+            ("market_hour", f"{market_key}|{hour_bucket}", 3, 0.30, f"{market_label} în intervalul {hour_bucket}"),
+            ("market_source", f"{market_key}|{source_label}", 3, 0.20, f"{market_label} din sursa {source_label}"),
+        ]
+        for kind, key, min_bets, weight, reason_label in checks:
+            stat = lookup(kind, key, min_bets=min_bets)
+            if not stat:
+                continue
+            impact = float(stat.get("memory_score") or 0.0) * weight
+            bonus += impact
+            if abs(impact) >= 1.0:
+                reasons.append({
+                    "label": reason_label,
+                    "impact": round(impact, 2),
+                    "bets": int(stat.get("raw_bets") or 0),
+                    "roi": round(float(stat.get("roi") or 0.0), 2),
+                })
+
+        adaptive_score = float(row.get("score") or 0.0) + clamp(bonus, -16.0, 16.0)
+        adaptive_picks.append({
+            "event_id": row.get("event_id"),
+            "prediction_id": row.get("prediction_id"),
+            "home": row.get("home"),
+            "away": row.get("away"),
+            "league": league,
+            "event_date": row.get("event_date"),
+            "market": market_label,
+            "market_key": market_key,
+            "odds": row.get("odds"),
+            "adjusted_prob": row.get("adjusted_prob"),
+            "edge_pct": row.get("edge_pct"),
+            "confidence": row.get("confidence"),
+            "value": row.get("value"),
+            "base_score": round(float(row.get("score") or 0.0), 2),
+            "memory_bonus": round(clamp(bonus, -16.0, 16.0), 2),
+            "adaptive_score": round(adaptive_score, 2),
+            "source": source_label,
+            "most_likely_score": row.get("most_likely_score"),
+            "reasons": sorted(reasons, key=lambda x: abs(float(x.get("impact") or 0.0)), reverse=True)[:4],
+        })
+
+    adaptive_picks.sort(
+        key=lambda x: (
+            float(x.get("adaptive_score") or 0.0),
+            float(x.get("memory_bonus") or 0.0),
+            float(x.get("adjusted_prob") or 0.0),
+        ),
+        reverse=True,
+    )
+    adaptive_picks = adaptive_picks[:12]
+
+    settled_profit = sum((float(r.get("odds") or 0.0) - 1.0) if r.get("won") else -1.0 for r in settled)
+    settled_wins = sum(1 for r in settled if r.get("won") is True)
+    summary = {
+        "settled_bets": len(settled),
+        "settled_wins": settled_wins,
+        "settled_losses": max(0, len(settled) - settled_wins),
+        "settled_winrate": round((settled_wins * 100.0 / len(settled)), 2) if settled else 0.0,
+        "settled_roi": round((settled_profit * 100.0 / len(settled)), 2) if settled else 0.0,
+        "pending_scored": len(adaptive_picks),
+        "positive_patterns": len(positive_patterns),
+        "negative_patterns": len(negative_patterns),
+    }
+
+    return {
+        "updated_at": now_utc.isoformat(),
+        "version": "v1-adaptive-memory",
+        "lookback_rows": len(settled),
+        "summary": summary,
+        "by_market": market_rows,
+        "top_patterns": positive_patterns,
+        "avoid_patterns": negative_patterns,
+        "adaptive_picks": adaptive_picks,
+        "notes": [
+            "AI Memory V1 este un strat adaptiv peste motorul existent, nu un model magic separat.",
+            "Scorul adaptiv combină scorul curent al selecției cu tiparele care au avut ROI pozitiv sau negativ în istoric.",
+            "Pattern-urile cu eșantion mic sunt frânate automat, ca să nu nu sară la cer din două rezultate norocoase.",
+        ],
+    }
+
+
 def main():
     ensure_token()
     started_at = datetime.now(timezone.utc)
@@ -1394,6 +1714,7 @@ def main():
     current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat())
     finished_events = build_finished_event_index(history_predictions)
     recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
+    ai_memory = build_ai_memory(current_recommendations, recommendation_log, history_rows, started_at)
     data_health = build_data_health(predictions, upcoming_prep)
     header_sync = build_header_sync_metrics(predictions)
 
@@ -1423,6 +1744,7 @@ def main():
     save_json(history_rows, "history_engine.json")
     save_json(signal_audit, "signal_audit.json")
     save_json(recommendation_log, "recommendation_log.json")
+    save_json(ai_memory, "ai_memory.json")
 
     meta = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -1437,6 +1759,8 @@ def main():
         "historical_raw_predictions_count": historical_prep.get("input_count", len(historical_predictions)),
         "signal_audit_count": signal_audit.get("count", 0),
         "history_engine_rows": len(history_rows),
+        "ai_memory_settled_rows": ai_memory.get("summary", {}).get("settled_bets", 0),
+        "ai_memory_adaptive_picks": len(ai_memory.get("adaptive_picks") or []),
         "backtest_finished_predictions": backtest["finished_predictions"],
         "backtest_engine_bets": backtest["engine_bets"],
         "backtest_engine_roi": backtest["engine_roi"],
