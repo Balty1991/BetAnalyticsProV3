@@ -1474,8 +1474,9 @@ function doRefresh(){
     hideLoader();
 
     var updatedAt = meta.updated_at ? new Date(meta.updated_at).toLocaleTimeString('ro-RO') : '';
+    var statusMetrics = getStatusDisplayMetrics();
     toast(
-      'Date actualizate: ' + ALL_MATCHES.length + ' meciuri' + (updatedAt ? ' @ ' + updatedAt : ''),
+      'Date API sincronizate: ' + statusMetrics.ml + ' ML / ' + statusMetrics.odds + ' cu cote' + (updatedAt ? ' @ ' + updatedAt : ''),
       'ok'
     );
   }).catch(function(err){
@@ -4527,6 +4528,28 @@ function checkDailyRefresh(){
   }
 }
 
+function getStatusDisplayMetrics(){
+  var totalLocal = ALL_MATCHES.length;
+  var eligibleLocal = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE'; }).length;
+  var apiMl = APP_META && APP_META.bsd_status && APP_META.bsd_status.ml_predictions_upcoming != null ? Number(APP_META.bsd_status.ml_predictions_upcoming) : null;
+  var apiOdds = APP_META && APP_META.bsd_status && APP_META.bsd_status.with_odds != null ? Number(APP_META.bsd_status.with_odds) : null;
+  var syncMl = APP_META && APP_META.header_sync && APP_META.header_sync.upcoming_predictions_count != null ? Number(APP_META.header_sync.upcoming_predictions_count) : null;
+  var syncOdds = APP_META && APP_META.header_sync && APP_META.header_sync.with_odds_upcoming_count != null ? Number(APP_META.header_sync.with_odds_upcoming_count) : null;
+
+  return {
+    ml: apiMl != null && !isNaN(apiMl) ? apiMl : (syncMl != null && !isNaN(syncMl) ? syncMl : totalLocal),
+    odds: apiOdds != null && !isNaN(apiOdds) ? apiOdds : (syncOdds != null && !isNaN(syncOdds) ? syncOdds : eligibleLocal)
+  };
+}
+
+function getStatusDisplayTime(){
+  var raw = (APP_META && APP_META.bsd_status && APP_META.bsd_status.fetched_at) || (APP_META && APP_META.updated_at) || null;
+  if(!raw) return '';
+  var dt = new Date(raw);
+  if(!isFinite(dt.getTime())) return '';
+  return dt.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+}
+
 function renderAll(){
   LAST_DAY_KEY = getCurrentDayKey();
   var total = ALL_MATCHES.length;
@@ -4535,10 +4558,14 @@ function renderAll(){
   var value = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.bestBet && m.bestBet.value >= 0.05; }).length;
   var mlComplete = ALL_MATCHES.filter(function(m){ return m.createdAt && m.modelVersion && (m.probOver25 || m.probUnder25) && (m.xgTotal || m.xgHome || m.xgAway); }).length;
 
-  var now = new Date();
-  var timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  var rawMl = APP_META && APP_META.bsd_status && APP_META.bsd_status.ml_predictions_upcoming != null ? APP_META.bsd_status.ml_predictions_upcoming : (APP_META && APP_META.header_sync && APP_META.header_sync.upcoming_predictions_count != null ? APP_META.header_sync.upcoming_predictions_count : total);
-  var rawOdds = APP_META && APP_META.bsd_status && APP_META.bsd_status.with_odds != null ? APP_META.bsd_status.with_odds : (APP_META && APP_META.header_sync && APP_META.header_sync.with_odds_upcoming_count != null ? APP_META.header_sync.with_odds_upcoming_count : eligible);
+  var timeStr = getStatusDisplayTime();
+  if(!timeStr){
+    var now = new Date();
+    timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  }
+  var statusMetrics = getStatusDisplayMetrics();
+  var rawMl = statusMetrics.ml;
+  var rawOdds = statusMetrics.odds;
 
   if($('st-total')) $('st-total').textContent = rawMl;
   if($('st-eligible')) $('st-eligible').textContent = rawOdds;
