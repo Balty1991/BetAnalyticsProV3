@@ -123,8 +123,10 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 /* FILTERS */
 .filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.filter-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--brd2);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.filter-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--brd2);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
 .filter-btn.active{background:rgba(59,130,246,.15);border-color:var(--acc);color:var(--acc)}
+.filter-btn-badge{display:inline-block;padding:1px 5px;border-radius:8px;font-size:9px;font-weight:800;font-family:var(--mono);background:rgba(255,255,255,.10);color:var(--muted);min-width:14px;text-align:center;transition:all .2s}
+.filter-btn.active .filter-btn-badge{background:rgba(59,130,246,.25);color:var(--acc)}
 .sort-select{background:var(--panel);border:1px solid var(--brd2);color:var(--txt);font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer}
 .filter-count{font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto}
 .league-filter-wrap{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
@@ -607,13 +609,13 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
       <div class="filter-bar matches-filter-toolbar">
         <div class="matches-chip-group">
-          <button class="filter-btn active" onclick="setFilter('all',this)">🌐 Toate</button>
-          <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
-          <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
-          <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
-          <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
-          <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
-          <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
+          <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">🌐 Toate <span class="filter-btn-badge" id="fbadge-all"></span></button>
+          <button class="filter-btn" data-filter="safe" onclick="setFilter('safe',this)">⭐ Top analizate <span class="filter-btn-badge" id="fbadge-safe"></span></button>
+          <button class="filter-btn" data-filter="o15" onclick="setFilter('o15',this)">🔥 Over 1.5G <span class="filter-btn-badge" id="fbadge-o15"></span></button>
+          <button class="filter-btn" data-filter="o25" onclick="setFilter('o25',this)">🎯 Over 2.5G <span class="filter-btn-badge" id="fbadge-o25"></span></button>
+          <button class="filter-btn" data-filter="btts" onclick="setFilter('btts',this)">🤝 BTTS <span class="filter-btn-badge" id="fbadge-btts"></span></button>
+          <button class="filter-btn" data-filter="u35" onclick="setFilter('u35',this)">🧊 Under 3.5G <span class="filter-btn-badge" id="fbadge-u35"></span></button>
+          <button class="filter-btn" data-filter="value" onclick="setFilter('value',this)">💰 Value <span class="filter-btn-badge" id="fbadge-value"></span></button>
         </div>
         <div class="matches-chip-meta">
           <select class="sort-select" id="sort-select" onchange="renderMatches()">
@@ -2242,6 +2244,34 @@ function renderTopSafe(){
 // ============================================================
 // RENDER MATCHES
 // ============================================================
+function countForFilter(f){
+  return ALL_MATCHES.filter(function(m){
+    var b = m.bestBet || null;
+    if(f === 'all') return m.analysisState === 'ELIGIBLE';
+    if(f === 'safe') return m.analysisState === 'ELIGIBLE' && m.verdict === 'safe';
+    if(f === 'moderate') return m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate';
+    if(f === 'value') return m.analysisState === 'ELIGIBLE' && b && b.value >= 0.05;
+    if(f === 'o15') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over15';
+    if(f === 'issues') return m.analysisState !== 'ELIGIBLE';
+    if(f === 'btts') return m.analysisState === 'ELIGIBLE' && b && b.type === 'btts';
+    if(f === 'o25') return m.analysisState === 'ELIGIBLE' && b && b.type === 'over25';
+    if(f === 'u35') return m.analysisState === 'ELIGIBLE' && b && b.type === 'under35';
+    return false;
+  }).length;
+}
+
+function updateFilterBadges(){
+  var filters = ['all','safe','o15','o25','btts','u35','value'];
+  filters.forEach(function(f){
+    var el = $('fbadge-' + f);
+    if(el){
+      var cnt = countForFilter(f);
+      el.textContent = cnt > 0 ? cnt : '';
+      el.style.display = cnt > 0 ? '' : 'none';
+    }
+  });
+}
+
 function setFilter(f, btn){
   CURRENT_FILTER = f;
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -2322,6 +2352,7 @@ function renderMatches(){
   });
 
   $('filter-count').textContent = filtered.length + ' meciuri';
+  updateFilterBadges();
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
     return;
@@ -4048,12 +4079,26 @@ function renderHistory21(){
   var supported = (BET_TYPES || []).map(function(b){ return b.label; });
   var now = new Date();
   var cutoff = new Date(now.getTime() - (21 * 86400000));
-  var rows = (RECOMMENDATION_LOG || []).filter(function(r){
+  var rawRows = (RECOMMENDATION_LOG || []).filter(function(r){
     if(!r || supported.indexOf(r.market) === -1) return false;
     var loggedAt = new Date(r.logged_at || r.prediction_created_at || 0);
     if(!isFinite(loggedAt.getTime())) return false;
     return loggedAt >= cutoff;
   });
+  // Deduplicare: pentru același event_id + market, păstrăm doar cel mai recent entry
+  var dedupMap = {};
+  rawRows.forEach(function(r){
+    var key = (r.event_id || r.eventId || 'noid') + '|' + (r.market || '');
+    var existing = dedupMap[key];
+    if(!existing){
+      dedupMap[key] = r;
+    } else {
+      var tNew = new Date(r.logged_at || r.prediction_created_at || 0).getTime();
+      var tOld = new Date(existing.logged_at || existing.prediction_created_at || 0).getTime();
+      if(tNew > tOld) dedupMap[key] = r;
+    }
+  });
+  var rows = Object.keys(dedupMap).map(function(k){ return dedupMap[k]; });
   if(!rows.length){
     root.innerHTML = '<div class="empty-state">Nu există încă recomandări reale salvate pe ultimele 21 de zile.</div>';
     return;
