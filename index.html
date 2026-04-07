@@ -1357,6 +1357,21 @@ function passesSelectionFilter(m){
   return isMatchStillDisplayable(m);
 }
 
+function hasOver25RadarSignal(m){
+  return !!(
+    m &&
+    isMatchStillDisplayable(m) &&
+    (
+      (m.mlFlags && m.mlFlags.o25) ||
+      (Number(m.probOver25 || 0) > 56)
+    )
+  );
+}
+
+function isPrimaryOver25(m){
+  return !!(m && m.analysisState === 'ELIGIBLE' && m.bestBet && m.bestBet.type === 'over25');
+}
+
 function getBetByType(m, type){
   return (m && m.allBets || []).find(function(x){ return x.type === type; }) || null;
 }
@@ -2332,16 +2347,22 @@ function renderML15(){
 function renderML25(){
   var container = $('ml-25-grid');
   var ml25 = ALL_MATCHES.filter(function(m){
-    var matchTime = new Date(m.date).getTime();
-    var now = new Date().getTime();
-    return (m.mlFlags.o25 || (m.probOver25 && m.probOver25 > 56)) && matchTime > (now - 900000);
-  }).sort(function(a,b){ return (b.probOver25||0) - (a.probOver25||0); });
+    return hasOver25RadarSignal(m);
+  }).sort(function(a,b){
+    var aPrimary = isPrimaryOver25(a) ? 1 : 0;
+    var bPrimary = isPrimaryOver25(b) ? 1 : 0;
+    if(bPrimary !== aPrimary) return bPrimary - aPrimary;
+    return (Number(b.probOver25 || 0)) - (Number(a.probOver25 || 0));
+  });
   updateSectionCount('ml25', ml25.length);
   if(ml25.length === 0){ container.innerHTML = '<div class="empty-state">Nicio recomandare +2.5G momentan.</div>'; return; }
   container.innerHTML = ml25.map(function(m){
-    var prob25 = m.probOver25 || 0;
-    var odds25 = m.oddsOver25 || 0;
+    var prob25 = Number(m.probOver25 || 0);
+    var odds25 = Number(m.oddsOver25 || 0);
     var reasons = buildMatchReasons(m).map(function(r){ return '<span class="rec-tag rec-tag-o25">'+r+'</span>'; }).join('');
+    var roleBadge = isPrimaryOver25(m)
+      ? '<span class="ml-pick" style="background:rgba(34,197,94,0.15);color:var(--grn);font-size:10px;padding:4px 10px">PRINCIPAL</span>'
+      : '<span class="ml-pick" style="background:rgba(245,158,11,0.15);color:var(--yel);font-size:10px;padding:4px 10px">ALTERNATIV</span>';
     return '<div class="ml-card" style="background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.2)">'+
       '<div class="ml-hdr">'+
         '<div class="ml-teams">'+m.home+' vs '+m.away+'</div>'+
@@ -2351,7 +2372,7 @@ function renderML25(){
         '<span>'+m.league+' • '+m.dateLabel+' • '+(m.modelVersion||'CatBoost')+'</span>' +
         '<span style="font-weight:700;color:var(--val)">Σ xG: '+m.xgTotal.toFixed(2)+'</span>'+
       '</div>'+
-      '<div class="ml-picks"><span class="ml-pick" style="background:rgba(16,185,129,0.15);color:var(--val);font-size:11px;padding:4px 10px">🎯 Over 2.5G</span></div>'+
+      '<div class="ml-picks"><span class="ml-pick" style="background:rgba(16,185,129,0.15);color:var(--val);font-size:11px;padding:4px 10px">🎯 Over 2.5G</span>'+roleBadge+'</div>'+
       (reasons ? '<div class="rec-tags" style="margin-top:7px">'+reasons+'</div>' : '')+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);gap:8px;flex-wrap:wrap">'+
         '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+prob25.toFixed(1)+'%</b>'+(odds25?' | Cotă: <b>'+odds25.toFixed(2)+'</b>':'')+'</div>'+
@@ -2482,6 +2503,7 @@ function renderMatches(){
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
+    var over25CategoryHit = m.analysisState === 'ELIGIBLE' && hasOver25RadarSignal(m);
     if(!isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
     if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
@@ -2491,9 +2513,9 @@ function renderMatches(){
     if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
     if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
     if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
-    if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
+    if(CURRENT_FILTER === 'o25' && !over25CategoryHit) return false;
     if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
-    if(!b) return false;
+    if(!b && CURRENT_FILTER !== 'o25') return false;
 
     if(dateF === 'today'){
       if(fmtDateKey(m.date) !== fmtDateKey(new Date().toISOString())) return false;
@@ -2502,15 +2524,44 @@ function renderMatches(){
       if(days < 0 || days > Number(dateF)) return false;
     }
 
-    if(marketF && b.label !== marketF) return false;
-    if((b.adjProb || 0) < minProb) return false;
-    if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
+    if(marketF){
+      if(CURRENT_FILTER === 'o25' && marketF === 'Over 2.5G'){
+        if(!over25CategoryHit) return false;
+      } else if(!b || b.label !== marketF) {
+        return false;
+      }
+    }
+
+    var effectiveProb = (CURRENT_FILTER === 'o25') ? Number(m.probOver25 || 0) : Number((b && b.adjProb) || 0);
+    var over25BetForFilters = CURRENT_FILTER === 'o25' ? getBetByType(m, 'over25') : null;
+    var effectiveEdge = (CURRENT_FILTER === 'o25')
+      ? Number((over25BetForFilters && over25BetForFilters.edgePct) || 0)
+      : Number((b && b.edgePct) || -999);
+
+    if(effectiveProb < minProb) return false;
+    if(effectiveEdge < minEdge) return false;
     return true;
   });
 
   filtered.sort(function(a,b){
     var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
     var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
+    if(CURRENT_FILTER === 'o25'){
+      var aPrimary = isPrimaryOver25(a) ? 1 : 0;
+      var bPrimary = isPrimaryOver25(b) ? 1 : 0;
+      if(bPrimary !== aPrimary) return bPrimary - aPrimary;
+      if(sort === 'prob') return Number(b.probOver25 || 0) - Number(a.probOver25 || 0);
+      if(sort === 'edge') {
+        var aO25 = getBetByType(a, 'over25');
+        var bO25 = getBetByType(b, 'over25');
+        return Number((bO25 && bO25.edgePct) || 0) - Number((aO25 && aO25.edgePct) || 0);
+      }
+      if(sort === 'value') {
+        var aV = getBetByType(a, 'over25');
+        var bV = getBetByType(b, 'over25');
+        return Number((bV && bV.value) || 0) - Number((aV && aV.value) || 0);
+      }
+    }
     if(sort === 'score') return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
     if(sort === 'value') return (bBet.value||0) - (aBet.value||0);
     if(sort === 'prob') return (bBet.adjProb||0) - (aBet.adjProb||0);
@@ -2542,6 +2593,19 @@ function renderMatches(){
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
+    var o25RoleBadge = '';
+    if(CURRENT_FILTER === 'o25' && hasOver25RadarSignal(m)){
+      o25RoleBadge = isPrimaryOver25(m)
+        ? '<span class="card-reco-badge" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.28);color:var(--grn)">Over 2.5 PRINCIPAL</span>'
+        : '<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.28);color:var(--yel)">Over 2.5 ALTERNATIV</span>';
+    }
+    var over25Line = '';
+    if(CURRENT_FILTER === 'o25'){
+      var over25Bet = getBetByType(m, 'over25');
+      if(over25Bet){
+        over25Line = '<div style="margin-top:8px;font-size:11px;color:var(--val);font-weight:700">Semnal Over 2.5G @ '+Number(over25Bet.odds || 0).toFixed(2)+' • Prob '+Number(m.probOver25 || 0).toFixed(1)+'%'+(over25Bet.edgePct != null ? (' • Edge '+(over25Bet.edgePct >= 0 ? '+' : '')+Number(over25Bet.edgePct).toFixed(1)+'%') : '')+'</div>';
+      }
+    }
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -2568,7 +2632,8 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+o25RoleBadge+probBadge+edgeBadge+valueBadge+confBadge+ageBadge+'</div>'+
+        over25Line+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
