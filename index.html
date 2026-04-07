@@ -634,6 +634,36 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       </div>
       <div id="ai-memory-picks" class="audit-list"></div>
     </div>
+
+    <div class="section" style="margin-top:14px;padding:14px;background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(168,85,247,.05));border:1px solid rgba(16,185,129,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--txt)">🎫 Generator AI Memory</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Generator separat, în AI Memory, bazat direct pe scorul adaptiv și pe tiparele învățate.</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted)">Safe / Echilibrat / Mega risc</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+        <div class="bilet-card" style="margin-bottom:0;padding:16px;border-color:rgba(34,197,94,.28)">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🛡️ Safe</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">2-3 selecții, accent pe probabilitate mare și memorie pozitivă.</div>
+          <button class="btn btn-green" style="width:100%;justify-content:center" onclick="generateAiMemoryTicket('safe')">Generează</button>
+          <div id="ai-ticket-safe" style="margin-top:12px"></div>
+        </div>
+        <div class="bilet-card" style="margin-bottom:0;padding:16px;border-color:rgba(59,130,246,.28)">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">⚖️ Echilibrat</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">3-4 selecții, balans între stabilitate și cotă totală.</div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateAiMemoryTicket('balanced')">Generează</button>
+          <div id="ai-ticket-balanced" style="margin-top:12px"></div>
+        </div>
+        <div class="bilet-card" style="margin-bottom:0;padding:16px;border-color:rgba(239,68,68,.28)">
+          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🚀 Mega risc</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">5-7 selecții, cotă mai mare, dar tot filtrată de memoria AI.</div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateAiMemoryTicket('risk')">Generează</button>
+          <div id="ai-ticket-risk" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
 
@@ -947,6 +977,7 @@ var HISTORY_ENGINE = [];
 var RECOMMENDATION_LOG = [];
 var SIGNAL_AUDIT = {};
 var AI_MEMORY = {};
+var AI_MEMORY_TICKETS = {safe:null, balanced:null, risk:null};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
@@ -1963,6 +1994,123 @@ function renderAIMemory(){
       (reasonsHtml ? '<div class="audit-reasons">'+reasonsHtml+'</div>' : '')+
     '</div>';
   }).join('');
+}
+
+function getAiMemoryProfile(type){
+  if(type === 'safe') return { label:'🛡️ AI Memory Safe', minPicks:2, maxPicks:3, minBonus:1.0, minAdaptive:78, minProb:72, minOdd:1.18, maxOdd:1.55, targetMinOdds:1.70, targetMaxOdds:3.10, maxSameMarket:1 };
+  if(type === 'balanced') return { label:'⚖️ AI Memory Echilibrat', minPicks:3, maxPicks:4, minBonus:0.0, minAdaptive:72, minProb:66, minOdd:1.18, maxOdd:1.65, targetMinOdds:2.40, targetMaxOdds:5.50, maxSameMarket:2 };
+  return { label:'🚀 AI Memory Mega risc', minPicks:5, maxPicks:7, minBonus:-1.5, minAdaptive:68, minProb:60, minOdd:1.20, maxOdd:1.68, targetMinOdds:6.00, targetMaxOdds:18.00, maxSameMarket:3 };
+}
+
+function getAiMemoryPool(){
+  return (AI_MEMORY && AI_MEMORY.adaptive_picks || []).filter(function(r){
+    return r && r.event_id && Number(r.odds || 0) >= 1.10 && Number(r.adjusted_prob || 0) > 0;
+  });
+}
+
+function rankAiMemoryCandidate(row, type){
+  var adaptive = Number(row.adaptive_score || 0);
+  var bonus = Number(row.memory_bonus || 0);
+  var prob = Number(row.adjusted_prob || 0);
+  var odds = Number(row.odds || 0);
+  var value = Number(row.value || 0) * 100;
+  if(type === 'safe') return adaptive * 0.45 + prob * 0.35 + bonus * 1.10 + value * 0.20 - Math.max(0, odds - 1.42) * 18;
+  if(type === 'balanced') return adaptive * 0.55 + prob * 0.20 + bonus * 0.90 + value * 0.25 + Math.min(odds, 1.62) * 5;
+  return adaptive * 0.55 + bonus * 0.80 + value * 0.20 + odds * 8;
+}
+
+function generateAiMemoryTicket(type, silent){
+  var base = getAiMemoryProfile(type);
+  var ticket = null;
+  for(var relax = 0; relax <= 3; relax++){
+    var profile = Object.assign({}, base, {
+      minBonus: base.minBonus - (relax * 0.8),
+      minAdaptive: base.minAdaptive - (relax * 3),
+      minProb: base.minProb - (relax * 3),
+      maxOdd: base.maxOdd + (relax * 0.05),
+      maxSameMarket: Math.min(base.maxSameMarket + (relax > 1 ? 1 : 0), 3)
+    });
+    var pool = getAiMemoryPool().filter(function(r){
+      return Number(r.memory_bonus || 0) >= profile.minBonus &&
+             Number(r.adaptive_score || 0) >= profile.minAdaptive &&
+             Number(r.adjusted_prob || 0) >= profile.minProb &&
+             Number(r.odds || 0) >= profile.minOdd &&
+             Number(r.odds || 0) <= profile.maxOdd;
+    }).sort(function(a,b){
+      return rankAiMemoryCandidate(b, type) - rankAiMemoryCandidate(a, type);
+    });
+
+    var picks = [];
+    var totalOdds = 1;
+    var byMarket = {};
+    var events = {};
+    for(var i=0;i<pool.length;i++){
+      var row = pool[i];
+      if(events[row.event_id]) continue;
+      if((byMarket[row.market_key] || 0) >= profile.maxSameMarket) continue;
+      picks.push(row);
+      events[row.event_id] = true;
+      byMarket[row.market_key] = (byMarket[row.market_key] || 0) + 1;
+      totalOdds *= Number(row.odds || 1);
+      var enoughCount = picks.length >= profile.minPicks;
+      var enoughOdds = totalOdds >= profile.targetMinOdds;
+      var shouldStop = totalOdds >= (profile.targetMaxOdds * 0.92) || picks.length >= profile.maxPicks;
+      if(enoughCount && enoughOdds && shouldStop) break;
+    }
+    if(picks.length >= profile.minPicks){
+      ticket = {
+        type: type,
+        label: profile.label,
+        picks: picks,
+        totalOdds: totalOdds,
+        avgBonus: picks.reduce(function(acc,r){ return acc + Number(r.memory_bonus || 0); },0) / picks.length,
+        combinedProb: picks.reduce(function(acc,r){ return acc * (Number(r.adjusted_prob || 0) / 100); }, 1) * 100,
+        generatedAt: new Date().toISOString()
+      };
+      break;
+    }
+  }
+  if(!ticket){
+    ticket = { type:type, label:base.label, picks:[], totalOdds:1, error:'Nu există încă suficiente selecții adaptive pentru acest profil.' };
+  }
+  AI_MEMORY_TICKETS[type] = ticket;
+  renderAiMemoryTicket(type);
+  if(!silent) toast(base.label + ' generat!', ticket.picks && ticket.picks.length ? 'ok' : 'warn');
+}
+
+function renderAiMemoryTicket(type){
+  var target = $('ai-ticket-' + type);
+  if(!target) return;
+  var ticket = AI_MEMORY_TICKETS[type];
+  if(!ticket || !ticket.picks || !ticket.picks.length){
+    var msg = ticket && ticket.error ? ticket.error : 'Apasă pe Generează și lasă memoria AI să aleagă.';
+    target.innerHTML = '<div class="empty-state" style="padding:10px">'+msg+'</div>';
+    return;
+  }
+  var html = '<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+      '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+ticket.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+ticket.picks.length+' selecții • Mem mediu '+(ticket.avgBonus >= 0 ? '+' : '')+ticket.avgBonus.toFixed(1)+'</div></div>'+
+      '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+ticket.totalOdds.toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă '+ticket.combinedProb.toFixed(1)+'%</div></div>'+
+    '</div>';
+  ticket.picks.forEach(function(r){
+    var reasons = (r.reasons || []).slice(0,2).map(function(reason){ return '<span class="reason-pill">'+reason.label+' • '+(Number(reason.impact || 0) >= 0 ? '+' : '')+Number(reason.impact || 0).toFixed(1)+'</span>'; }).join('');
+    html += '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+        '<div><div style="font-size:12px;font-weight:700;color:var(--txt)">'+(r.home || '—')+' vs '+(r.away || '—')+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+(r.league || '—')+' • '+(r.event_date ? (fmtDate(r.event_date)+' '+fmtTime(r.event_date)) : '—')+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:12px;font-weight:800;color:var(--acc)">'+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div><div style="font-size:10px;color:'+(Number(r.memory_bonus || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+';margin-top:4px">Mem '+(Number(r.memory_bonus || 0) >= 0 ? '+' : '')+Number(r.memory_bonus || 0).toFixed(1)+' • Adapt '+Number(r.adaptive_score || 0).toFixed(1)+'</div></div>'+
+      '</div>'+
+      (reasons ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+reasons+'</div>' : '')+
+    '</div>';
+  });
+  html += '</div>';
+  target.innerHTML = html;
+}
+
+function renderAiMemoryGenerators(){
+  ['safe','balanced','risk'].forEach(function(type){
+    if(!AI_MEMORY_TICKETS[type] || !AI_MEMORY_TICKETS[type].picks || !AI_MEMORY_TICKETS[type].picks.length) generateAiMemoryTicket(type, true);
+    else renderAiMemoryTicket(type);
+  });
 }
 
 function renderMlApiCenter(){
