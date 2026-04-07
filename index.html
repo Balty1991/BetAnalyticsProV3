@@ -2578,34 +2578,22 @@ function renderMatches(){
 
   function renderCard(m){
     var b = m.bestBet || null;
+    var displayBet = (CURRENT_FILTER === 'o25' && hasOver25RadarSignal(m) && getBetByType(m, 'over25')) ? getBetByType(m, 'over25') : b;
     var state = getAnalysisStateMeta(m.analysisState);
     var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
     var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
     var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
     var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
-    var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
-    var recLabel = b ? b.label : 'Fără recomandare activă';
-    var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
-    var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
-    var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
-    var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
-    var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
+    var reasons = displayBet ? buildRecommendationReasons(m, displayBet).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
+    var recLabel = displayBet ? displayBet.label : 'Fără recomandare activă';
+    var recOdd = displayBet && displayBet.odds ? Number(displayBet.odds).toFixed(2) : null;
+    var probBadge = displayBet ? ('<span class="card-reco-badge">Șansă '+fmtPct(displayBet.adjProb || 0)+'</span>') : '';
+    var valueBadge = displayBet && displayBet.value != null ? ('<span class="card-reco-badge">Value '+((displayBet.value>=0?'+':'') + fmtPct((displayBet.value||0)*100))+'</span>') : '';
+    var edgeBadge = displayBet && displayBet.edgePct != null ? ('<span class="card-reco-badge">Edge '+(displayBet.edgePct >= 0 ? '+' : '')+fmtPct(displayBet.edgePct)+'</span>') : '';
+    var confBadge = displayBet ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
-    var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
+    var sourceBadge = displayBet ? sourceChipHtmlForBet(displayBet) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
-    var o25RoleBadge = '';
-    if(CURRENT_FILTER === 'o25' && hasOver25RadarSignal(m)){
-      o25RoleBadge = isPrimaryOver25(m)
-        ? '<span class="card-reco-badge" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.28);color:var(--grn)">Over 2.5 PRINCIPAL</span>'
-        : '<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.28);color:var(--yel)">Over 2.5 ALTERNATIV</span>';
-    }
-    var over25Line = '';
-    if(CURRENT_FILTER === 'o25'){
-      var over25Bet = getBetByType(m, 'over25');
-      if(over25Bet){
-        over25Line = '<div style="margin-top:8px;font-size:11px;color:var(--val);font-weight:700">Semnal Over 2.5G @ '+Number(over25Bet.odds || 0).toFixed(2)+' • Prob '+Number(m.probOver25 || 0).toFixed(1)+'%'+(over25Bet.edgePct != null ? (' • Edge '+(over25Bet.edgePct >= 0 ? '+' : '')+Number(over25Bet.edgePct).toFixed(1)+'%') : '')+'</div>';
-      }
-    }
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -2619,7 +2607,7 @@ function renderMatches(){
       '<div class="mc-midrow">'+
         '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
         sourceBadge+
-        (b && b.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '')+
+        (displayBet && displayBet.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((displayBet.value||0)*100) + '</div>' : '')+
       '</div>'+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
         '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
@@ -2632,8 +2620,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+o25RoleBadge+probBadge+edgeBadge+valueBadge+confBadge+ageBadge+'</div>'+
-        over25Line+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+ageBadge+'</div>'+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
