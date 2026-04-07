@@ -1,0 +1,903 @@
+{
+  "updated_at": "2026-04-07T11:02:19.633071+00:00",
+  "version": "v1-adaptive-memory",
+  "lookback_rows": 56,
+  "summary": {
+    "settled_bets": 56,
+    "settled_wins": 46,
+    "settled_losses": 10,
+    "settled_winrate": 82.14,
+    "settled_roi": 10.61,
+    "pending_scored": 12,
+    "positive_patterns": 12,
+    "negative_patterns": 1
+  },
+  "by_market": [
+    {
+      "kind": "market",
+      "key": "btts",
+      "label": "BTTS",
+      "raw_bets": 6,
+      "bets_w": 4.8,
+      "wins_w": 4.0,
+      "profit_w": 1.544,
+      "edge_sum": 100.17,
+      "odds_sum": 9.37,
+      "wins": 4,
+      "losses": 2,
+      "roi": 32.17,
+      "winrate": 83.33,
+      "profit": 1.544,
+      "avg_edge": 16.7,
+      "avg_odds": 1.562,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market",
+      "key": "over15",
+      "label": "Over 1.5G",
+      "raw_bets": 27,
+      "bets_w": 21.60000000000001,
+      "wins_w": 19.200000000000006,
+      "profit_w": 3.248000000000001,
+      "edge_sum": 452.84999999999997,
+      "odds_sum": 35.11999999999999,
+      "wins": 19,
+      "losses": 8,
+      "roi": 15.04,
+      "winrate": 88.89,
+      "profit": 3.248,
+      "avg_edge": 16.77,
+      "avg_odds": 1.301,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market",
+      "key": "under35",
+      "label": "Under 3.5G",
+      "raw_bets": 18,
+      "bets_w": 14.400000000000004,
+      "wins_w": 10.4,
+      "profit_w": -0.5200000000000005,
+      "edge_sum": 201.64,
+      "odds_sum": 24.399999999999995,
+      "wins": 10,
+      "losses": 8,
+      "roi": -3.61,
+      "winrate": 72.22,
+      "profit": -0.52,
+      "avg_edge": 11.2,
+      "avg_odds": 1.356,
+      "memory_score": 12.72
+    },
+    {
+      "kind": "market",
+      "key": "over25",
+      "label": "Over 2.5G",
+      "raw_bets": 5,
+      "bets_w": 4.0,
+      "wins_w": 3.2,
+      "profit_w": 0.48,
+      "edge_sum": 65.86,
+      "odds_sum": 7.0,
+      "wins": 3,
+      "losses": 2,
+      "roi": 12.0,
+      "winrate": 80.0,
+      "profit": 0.48,
+      "avg_edge": 13.17,
+      "avg_odds": 1.4,
+      "memory_score": 11.07
+    }
+  ],
+  "top_patterns": [
+    {
+      "kind": "market_odds",
+      "key": "btts|1.50–1.65",
+      "label": "BTTS • cote 1.50–1.65",
+      "raw_bets": 5,
+      "bets_w": 4.0,
+      "wins_w": 4.0,
+      "profit_w": 2.3440000000000003,
+      "edge_sum": 87.21000000000001,
+      "odds_sum": 7.93,
+      "wins": 4,
+      "losses": 1,
+      "roi": 58.6,
+      "winrate": 100.0,
+      "profit": 2.344,
+      "avg_edge": 17.44,
+      "avg_odds": 1.586,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_source",
+      "key": "btts|heuristic",
+      "label": "BTTS • heuristic",
+      "raw_bets": 4,
+      "bets_w": 3.2,
+      "wins_w": 3.2,
+      "profit_w": 1.8640000000000003,
+      "edge_sum": 69.11,
+      "odds_sum": 6.33,
+      "wins": 3,
+      "losses": 1,
+      "roi": 58.25,
+      "winrate": 100.0,
+      "profit": 1.864,
+      "avg_edge": 17.28,
+      "avg_odds": 1.583,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_hour",
+      "key": "over15|12–17",
+      "label": "Over 1.5G • interval 12–17",
+      "raw_bets": 7,
+      "bets_w": 5.6,
+      "wins_w": 5.6,
+      "profit_w": 1.9279999999999997,
+      "edge_sum": 130.15,
+      "odds_sum": 9.41,
+      "wins": 6,
+      "losses": 1,
+      "roi": 34.43,
+      "winrate": 100.0,
+      "profit": 1.928,
+      "avg_edge": 18.59,
+      "avg_odds": 1.344,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_weekday",
+      "key": "over15|Sâmbătă",
+      "label": "Over 1.5G • Sâmbătă",
+      "raw_bets": 7,
+      "bets_w": 5.6,
+      "wins_w": 5.6,
+      "profit_w": 1.8239999999999998,
+      "edge_sum": 120.97,
+      "odds_sum": 9.28,
+      "wins": 6,
+      "losses": 1,
+      "roi": 32.57,
+      "winrate": 100.0,
+      "profit": 1.824,
+      "avg_edge": 17.28,
+      "avg_odds": 1.326,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market",
+      "key": "btts",
+      "label": "BTTS",
+      "raw_bets": 6,
+      "bets_w": 4.8,
+      "wins_w": 4.0,
+      "profit_w": 1.544,
+      "edge_sum": 100.17,
+      "odds_sum": 9.37,
+      "wins": 4,
+      "losses": 2,
+      "roi": 32.17,
+      "winrate": 83.33,
+      "profit": 1.544,
+      "avg_edge": 16.7,
+      "avg_odds": 1.562,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_edge",
+      "key": "btts|5%+",
+      "label": "BTTS • edge 5%+",
+      "raw_bets": 6,
+      "bets_w": 4.8,
+      "wins_w": 4.0,
+      "profit_w": 1.544,
+      "edge_sum": 100.17,
+      "odds_sum": 9.37,
+      "wins": 4,
+      "losses": 2,
+      "roi": 32.17,
+      "winrate": 83.33,
+      "profit": 1.544,
+      "avg_edge": 16.7,
+      "avg_odds": 1.562,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_conf",
+      "key": "over15|50–59",
+      "label": "Over 1.5G • conf 50–59",
+      "raw_bets": 14,
+      "bets_w": 11.200000000000001,
+      "wins_w": 11.200000000000001,
+      "profit_w": 3.1120000000000005,
+      "edge_sum": 219.42,
+      "odds_sum": 17.89,
+      "wins": 11,
+      "losses": 3,
+      "roi": 27.79,
+      "winrate": 100.0,
+      "profit": 3.112,
+      "avg_edge": 15.67,
+      "avg_odds": 1.278,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_weekday",
+      "key": "under35|Sâmbătă",
+      "label": "Under 3.5G • Sâmbătă",
+      "raw_bets": 9,
+      "bets_w": 7.199999999999999,
+      "wins_w": 6.3999999999999995,
+      "profit_w": 1.368,
+      "edge_sum": 111.15,
+      "odds_sum": 12.0,
+      "wins": 6,
+      "losses": 3,
+      "roi": 19.0,
+      "winrate": 88.89,
+      "profit": 1.368,
+      "avg_edge": 12.35,
+      "avg_odds": 1.333,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_odds",
+      "key": "over15|1.20–1.34",
+      "label": "Over 1.5G • cote 1.20–1.34",
+      "raw_bets": 15,
+      "bets_w": 12.000000000000002,
+      "wins_w": 11.200000000000001,
+      "profit_w": 2.024,
+      "edge_sum": 239.85,
+      "odds_sum": 18.75,
+      "wins": 11,
+      "losses": 4,
+      "roi": 16.87,
+      "winrate": 93.33,
+      "profit": 2.024,
+      "avg_edge": 15.99,
+      "avg_odds": 1.25,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market",
+      "key": "over15",
+      "label": "Over 1.5G",
+      "raw_bets": 27,
+      "bets_w": 21.60000000000001,
+      "wins_w": 19.200000000000006,
+      "profit_w": 3.248000000000001,
+      "edge_sum": 452.84999999999997,
+      "odds_sum": 35.11999999999999,
+      "wins": 19,
+      "losses": 8,
+      "roi": 15.04,
+      "winrate": 88.89,
+      "profit": 3.248,
+      "avg_edge": 16.77,
+      "avg_odds": 1.301,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_edge",
+      "key": "over15|5%+",
+      "label": "Over 1.5G • edge 5%+",
+      "raw_bets": 27,
+      "bets_w": 21.60000000000001,
+      "wins_w": 19.200000000000006,
+      "profit_w": 3.248000000000001,
+      "edge_sum": 452.84999999999997,
+      "odds_sum": 35.11999999999999,
+      "wins": 19,
+      "losses": 8,
+      "roi": 15.04,
+      "winrate": 88.89,
+      "profit": 3.248,
+      "avg_edge": 16.77,
+      "avg_odds": 1.301,
+      "memory_score": 18.0
+    },
+    {
+      "kind": "market_weekday",
+      "key": "over15|Duminică",
+      "label": "Over 1.5G • Duminică",
+      "raw_bets": 10,
+      "bets_w": 7.999999999999999,
+      "wins_w": 7.199999999999999,
+      "profit_w": 1.1919999999999995,
+      "edge_sum": 164.45000000000002,
+      "odds_sum": 12.89,
+      "wins": 7,
+      "losses": 3,
+      "roi": 14.9,
+      "winrate": 90.0,
+      "profit": 1.192,
+      "avg_edge": 16.45,
+      "avg_odds": 1.289,
+      "memory_score": 18.0
+    }
+  ],
+  "avoid_patterns": [
+    {
+      "kind": "market_weekday",
+      "key": "under35|Duminică",
+      "label": "Under 3.5G • Duminică",
+      "raw_bets": 4,
+      "bets_w": 3.2,
+      "wins_w": 0.8,
+      "profit_w": -2.24,
+      "edge_sum": 44.82000000000001,
+      "odds_sum": 5.5600000000000005,
+      "wins": 1,
+      "losses": 3,
+      "roi": -70.0,
+      "winrate": 25.0,
+      "profit": -2.24,
+      "avg_edge": 11.21,
+      "avg_odds": 1.39,
+      "memory_score": -9.16
+    }
+  ],
+  "adaptive_picks": [
+    {
+      "event_id": 3022,
+      "prediction_id": 2561,
+      "home": "Sparta Rotterdam",
+      "away": "PSV Eindhoven",
+      "league": "Eredivisie",
+      "event_date": "2026-04-11T19:45:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.39,
+      "adjusted_prob": 81.6,
+      "edge_pct": 17.87,
+      "confidence": 47.65,
+      "value": 0.1774,
+      "base_score": 123.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 139.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în intervalul 18–23",
+          "impact": 4.6,
+          "bets": 3,
+          "roi": 57.67
+        },
+        {
+          "label": "BTTS în Sâmbătă",
+          "impact": 4.09,
+          "bets": 3,
+          "roi": 59.0
+        }
+      ]
+    },
+    {
+      "event_id": 7710,
+      "prediction_id": 2454,
+      "home": "Real Madrid",
+      "away": "FC Bayern München",
+      "league": "Champions League",
+      "event_date": "2026-04-07T22:00:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.4,
+      "adjusted_prob": 79.75,
+      "edge_pct": 16.39,
+      "confidence": 49.79,
+      "value": 0.1572,
+      "base_score": 120.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 136.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-2",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în intervalul 18–23",
+          "impact": 4.6,
+          "bets": 3,
+          "roi": 57.67
+        },
+        {
+          "label": "BTTS la conf <50",
+          "impact": 2.52,
+          "bets": 3,
+          "roi": 3.67
+        }
+      ]
+    },
+    {
+      "event_id": 1713,
+      "prediction_id": 2507,
+      "home": "FC Augsburg",
+      "away": "TSG Hoffenheim",
+      "league": "Bundesliga",
+      "event_date": "2026-04-10T21:30:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.5,
+      "adjusted_prob": 76.11,
+      "edge_pct": 17.33,
+      "confidence": 46.62,
+      "value": 0.1859,
+      "base_score": 120.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 136.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "2-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în intervalul 18–23",
+          "impact": 4.6,
+          "bets": 3,
+          "roi": 57.67
+        }
+      ]
+    },
+    {
+      "event_id": 3018,
+      "prediction_id": 2604,
+      "home": "Fortuna Sittard",
+      "away": "NAC Breda",
+      "league": "Eredivisie",
+      "event_date": "2026-04-12T13:15:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.52,
+      "adjusted_prob": 75.2,
+      "edge_pct": 17.43,
+      "confidence": 40.73,
+      "value": 0.1926,
+      "base_score": 120.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 136.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la conf <50",
+          "impact": 2.52,
+          "bets": 3,
+          "roi": 3.67
+        }
+      ]
+    },
+    {
+      "event_id": 7712,
+      "prediction_id": 2460,
+      "home": "Barcelona",
+      "away": "Atlético Madrid",
+      "league": "Champions League",
+      "event_date": "2026-04-08T22:00:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.5,
+      "adjusted_prob": 81.85,
+      "edge_pct": 22.33,
+      "confidence": 49.79,
+      "value": 0.2725,
+      "base_score": 117.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 133.0,
+      "source": "heuristic",
+      "most_likely_score": "2-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în intervalul 18–23",
+          "impact": 4.6,
+          "bets": 3,
+          "roi": 57.67
+        }
+      ]
+    },
+    {
+      "event_id": 991,
+      "prediction_id": 2658,
+      "home": "Athletic Club",
+      "away": "Villarreal",
+      "league": "La Liga",
+      "event_date": "2026-04-12T22:00:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.65,
+      "adjusted_prob": 70.0,
+      "edge_pct": 16.91,
+      "confidence": 40.65,
+      "value": 0.205,
+      "base_score": 117.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 133.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în intervalul 18–23",
+          "impact": 4.6,
+          "bets": 3,
+          "roi": 57.67
+        }
+      ]
+    },
+    {
+      "event_id": 3868,
+      "prediction_id": 2453,
+      "home": "Wrexham",
+      "away": "Southampton",
+      "league": "Championship",
+      "event_date": "2026-04-07T22:00:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.64,
+      "adjusted_prob": 69.52,
+      "edge_pct": 15.79,
+      "confidence": 36.51,
+      "value": 0.1932,
+      "base_score": 115.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 131.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în intervalul 18–23",
+          "impact": 4.6,
+          "bets": 3,
+          "roi": 57.67
+        }
+      ]
+    },
+    {
+      "event_id": 1712,
+      "prediction_id": 2530,
+      "home": "Borussia Dortmund",
+      "away": "Bayer 04 Leverkusen",
+      "league": "Bundesliga",
+      "event_date": "2026-04-11T16:30:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.51,
+      "adjusted_prob": 72.61,
+      "edge_pct": 14.34,
+      "confidence": 43.24,
+      "value": 0.1418,
+      "base_score": 114.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 130.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-2",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în Sâmbătă",
+          "impact": 4.09,
+          "bets": 3,
+          "roi": 59.0
+        }
+      ]
+    },
+    {
+      "event_id": 6240,
+      "prediction_id": 2588,
+      "home": "Tigres UANL",
+      "away": "CD Guadalajara",
+      "league": "Liga MX Clausura",
+      "event_date": "2026-04-12T02:00:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.61,
+      "adjusted_prob": 67.96,
+      "edge_pct": 14.47,
+      "confidence": 48.96,
+      "value": 0.1347,
+      "base_score": 112.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 128.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la conf <50",
+          "impact": 2.52,
+          "bets": 3,
+          "roi": 3.67
+        }
+      ]
+    },
+    {
+      "event_id": 3017,
+      "prediction_id": 2550,
+      "home": "FC Utrecht",
+      "away": "SC Telstar",
+      "league": "Eredivisie",
+      "event_date": "2026-04-11T17:30:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.65,
+      "adjusted_prob": 67.74,
+      "edge_pct": 13.88,
+      "confidence": 53.82,
+      "value": 0.155,
+      "base_score": 112.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 128.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "2-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în Sâmbătă",
+          "impact": 4.09,
+          "bets": 3,
+          "roi": 59.0
+        }
+      ]
+    },
+    {
+      "event_id": 3019,
+      "prediction_id": 2575,
+      "home": "Heracles Almelo",
+      "away": "AFC Ajax",
+      "league": "Eredivisie",
+      "event_date": "2026-04-11T22:00:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.59,
+      "adjusted_prob": 67.74,
+      "edge_pct": 12.27,
+      "confidence": 43.26,
+      "value": 0.1216,
+      "base_score": 108.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 124.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS în intervalul 18–23",
+          "impact": 4.6,
+          "bets": 3,
+          "roi": 57.67
+        }
+      ]
+    },
+    {
+      "event_id": 318,
+      "prediction_id": 2614,
+      "home": "Crystal Palace",
+      "away": "Newcastle United",
+      "league": "Premier League",
+      "event_date": "2026-04-12T16:00:00+03:00",
+      "market": "BTTS",
+      "market_key": "btts",
+      "odds": 1.6,
+      "adjusted_prob": 66.9,
+      "edge_pct": 11.89,
+      "confidence": 38.66,
+      "value": 0.1184,
+      "base_score": 107.0,
+      "memory_bonus": 16.0,
+      "adaptive_score": 123.0,
+      "source": "ML + heuristic",
+      "most_likely_score": "1-1",
+      "reasons": [
+        {
+          "label": "BTTS",
+          "impact": 15.3,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la cote 1.50–1.65",
+          "impact": 8.1,
+          "bets": 5,
+          "roi": 58.6
+        },
+        {
+          "label": "BTTS la edge 5%+",
+          "impact": 5.4,
+          "bets": 6,
+          "roi": 32.17
+        },
+        {
+          "label": "BTTS la conf <50",
+          "impact": 2.52,
+          "bets": 3,
+          "roi": 3.67
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "AI Memory V1 este un strat adaptiv peste motorul existent, nu un model magic separat.",
+    "Scorul adaptiv combină scorul curent al selecției cu tiparele care au avut ROI pozitiv sau negativ în istoric.",
+    "Pattern-urile cu eșantion mic sunt frânate automat, ca să nu nu sară la cer din două rezultate norocoase."
+  ]
+}
