@@ -1308,9 +1308,28 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
         if not event_id:
             continue
         key = str(event_id)
-        if key not in by_event_id:
-            row["log_id"] = key
+        row["log_id"] = key
+        existing = by_event_id.get(key)
+
+        if not existing:
             by_event_id[key] = row
+            continue
+
+        # Ținem snapshotul final pentru meciurile deja închise,
+        # dar pentru cele încă pending resincronizăm piața curentă
+        # ca numerele din Istoric 21 zile să bată cu tab-ul Meciuri.
+        if existing.get("status") in {"win", "lose"}:
+            continue
+
+        first_logged_at = existing.get("first_logged_at") or existing.get("logged_at") or row.get("logged_at")
+        row["first_logged_at"] = first_logged_at
+        row["logged_at"] = row.get("logged_at") or existing.get("logged_at")
+        row["status"] = existing.get("status") or row.get("status")
+        row["won"] = existing.get("won")
+        row["home_score"] = existing.get("home_score")
+        row["away_score"] = existing.get("away_score")
+        row["settled_at"] = existing.get("settled_at")
+        by_event_id[key] = row
 
     for row in by_event_id.values():
         if row.get("status") in {"win", "lose"}:
