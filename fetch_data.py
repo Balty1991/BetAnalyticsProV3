@@ -1071,67 +1071,181 @@ def build_history_rows(predictions):
     return rows[:HISTORY_MAX_ROWS]
 
 
+
+def ui_like_heuristic_recommend(row, market_key):
+    xg_home = float(row.get("expected_home_goals") or 0)
+    xg_away = float(row.get("expected_away_goals") or 0)
+    xg_total = xg_home + xg_away
+    scoreline = parse_scoreline(row.get("most_likely_score"))
+
+    if market_key == "over15":
+        return pct(row.get("prob_over_15")) >= 76 and xg_total >= 2.10 and (not scoreline or scoreline["total"] >= 2)
+    if market_key == "over25":
+        return pct(row.get("prob_over_25")) >= 60 and xg_total >= 2.60 and (not scoreline or scoreline["total"] >= 3)
+    if market_key == "under35":
+        return pct(100 - pct(row.get("prob_over_35"))) >= 68 and xg_total <= 3.05 and (not scoreline or scoreline["total"] <= 3)
+    if market_key == "btts":
+        return pct(row.get("prob_btts_yes")) >= 58 and xg_home >= 0.90 and xg_away >= 0.90 and (not scoreline or scoreline["btts"])
+    return heuristic_recommend(row, market_key)
+
+
+def ui_like_market_fit_score(row, market_key):
+    xg_home = float(row.get("expected_home_goals") or 0)
+    xg_away = float(row.get("expected_away_goals") or 0)
+    xg_total = xg_home + xg_away
+    scoreline = parse_scoreline(row.get("most_likely_score"))
+    score = 0.0
+
+    if market_key == "over15":
+        if pct(row.get("prob_over_15")) >= 80:
+            score += 14
+        if xg_total >= 2.25:
+            score += 10
+        if scoreline and scoreline["total"] >= 2:
+            score += 10
+        if scoreline and scoreline["total"] < 2:
+            score -= 12
+        if row.get("over_15_recommend"):
+            score += 10
+    elif market_key == "over25":
+        if pct(row.get("prob_over_25")) >= 62:
+            score += 14
+        if xg_total >= 2.75:
+            score += 12
+        if scoreline and scoreline["total"] >= 3:
+            score += 12
+        if scoreline and scoreline["total"] < 3:
+            score -= 14
+        if row.get("over_25_recommend"):
+            score += 10
+    elif market_key == "under35":
+        if pct(100 - pct(row.get("prob_over_35"))) >= 68:
+            score += 13
+        if xg_total <= 3.05:
+            score += 10
+        if scoreline and scoreline["total"] <= 3:
+            score += 12
+        if scoreline and scoreline["total"] > 3:
+            score -= 16
+    elif market_key == "btts":
+        if pct(row.get("prob_btts_yes")) >= 60:
+            score += 14
+        if xg_home >= 0.95 and xg_away >= 0.95:
+            score += 14
+        if scoreline and scoreline["btts"]:
+            score += 12
+        if scoreline and not scoreline["btts"]:
+            score -= 16
+        if row.get("btts_recommend"):
+            score += 10
+
+    return round(score, 2)
+
+
+def build_ui_live_candidate(row, market_key):
+    market = MARKET_MAP[market_key]
+    event = row.get("event") or {}
+
+    try:
+        odds = float(market["odds"](event) or 0)
+    except Exception:
+        return None
+    if odds < 1.01:
+        return None
+    if hard_contradiction(row, market_key):
+        return None
+
+    prob = market["prob"](row)
+    confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
+    value = calc_value(prob, odds)
+    if value <= 0:
+        return None
+    if odds > 1.65:
+        return None
+
+    adj = adjusted_prob(prob, confidence)
+    market_prob = market_prob_from_row_event(row, event, market_key)
+    edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
+    fit = ui_like_market_fit_score(row, market_key)
+    source_api = api_recommend(row, market_key)
+    source_heuristic = ui_like_heuristic_recommend(row, market_key)
+    conf_boost = min(6.0, confidence * 0.06)
+
+    ticket_score = 0.0
+    ticket_score += adj * 0.40
+    ticket_score += max(0.0, float(edge_pct or 0.0)) * 1.35
+    ticket_score += max(0.0, value) * 100.0 * 0.18
+    ticket_score += fit
+    ticket_score += conf_boost
+    if source_api:
+        ticket_score += 4.0
+    if source_heuristic:
+        ticket_score += 2.0
+    if 1.18 <= odds <= 1.75:
+        ticket_score += 4.0
+    if odds > 2.20:
+        ticket_score -= 8.0
+
+    return {
+        "market": market["label"],
+        "market_key": market_key,
+        "odds": round(odds, 3),
+        "model_prob": round(prob, 2),
+        "adjusted_prob": round(adj, 2),
+        "market_prob": round(market_prob, 2) if market_prob is not None else None,
+        "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
+        "confidence": round(confidence, 2),
+        "value": round(value, 4),
+        "fit_score": round(fit, 2),
+        "ticket_score": round(ticket_score),
+        "source_api": bool(source_api),
+        "source_heuristic": bool(source_heuristic),
+        "league": (event.get("league") or {}).get("name") or "Unknown",
+        "event_id": event.get("id"),
+        "prediction_id": row.get("id"),
+        "date": event.get("event_date"),
+        "created_at": row.get("created_at"),
+        "most_likely_score": row.get("most_likely_score"),
+    }
+
+
+
 def build_current_recommendation_rows(predictions, logged_at_iso):
     rows = []
-    tracked_market_keys = {"over15", "over25", "under35", "btts"}
+    tracked_market_keys = ["over15", "over25", "under35", "btts"]
+
     for row in predictions or []:
         event = row.get("event") or {}
         if event.get("status") != "notstarted":
             continue
+
         candidates = []
-        for market in MARKETS:
-            if market["key"] not in tracked_market_keys:
-                continue
-            market_key = market["key"]
-            try:
-                odds = float((market["odds"](event) or 0))
-            except Exception:
-                odds = 0.0
-            if odds < 1.01:
-                continue
-            prob = market["prob"](row)
-            confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
-            value = calc_value(prob, odds)
-            adj = adjusted_prob(prob, confidence)
-            market_prob = market_prob_from_row_event(row, event, market_key)
-            edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
-            fit = market_fit_score(row, market_key)
-            source_api = api_recommend(row, market_key)
-            source_heuristic = heuristic_recommend(row, market_key)
-            score = calc_smart_score(adj, value, confidence, edge_pct, fit, source_api, source_heuristic)
-            verdict = verdict_from_metrics(adj, value, confidence, edge_pct)
-            candidate = {
-                "market": market["label"],
-                "market_key": market_key,
-                "odds": round(odds, 3),
-                "prob": round(prob, 2),
-                "adj_prob": round(adj, 2),
-                "value": round(value, 4),
-                "confidence": round(confidence, 2),
-                "market_prob": round(market_prob, 2) if market_prob is not None else None,
-                "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
-                "fit_score": round(fit, 2),
-                "score": score,
-                "verdict": verdict,
-                "source_api": bool(source_api),
-                "source_heuristic": bool(source_heuristic),
-                "league": (event.get("league") or {}).get("name") or "Unknown",
-                "event_id": event.get("id"),
-                "prediction_id": row.get("id"),
-                "date": event.get("event_date"),
-                "created_at": row.get("created_at"),
-                "most_likely_score": row.get("most_likely_score"),
-            }
-            if qualifies_for_strategy(candidate, STRATEGIES["engine_overall"]):
+        for market_key in tracked_market_keys:
+            candidate = build_ui_live_candidate(row, market_key)
+            if candidate:
                 candidates.append(candidate)
+
         if not candidates:
             continue
-        pick = max(candidates, key=rank_candidate)
+
+        candidates.sort(
+            key=lambda c: (
+                c.get("ticket_score") or 0,
+                c.get("value") or 0,
+                c.get("adjusted_prob") or 0,
+            ),
+            reverse=True,
+        )
+        pick = candidates[0]
+        event_id = pick.get("event_id")
+        if not event_id:
+            continue
+
         rows.append({
-            "log_id": f"{pick.get('event_id')}_{pick.get('market_key')}",
+            "log_id": str(event_id),
             "logged_at": logged_at_iso,
             "prediction_created_at": pick.get("created_at"),
-            "event_id": pick.get("event_id"),
+            "event_id": event_id,
             "prediction_id": pick.get("prediction_id"),
             "home": event.get("home_team"),
             "away": event.get("away_team"),
@@ -1140,23 +1254,24 @@ def build_current_recommendation_rows(predictions, logged_at_iso):
             "market": pick.get("market"),
             "market_key": pick.get("market_key"),
             "odds": pick.get("odds"),
-            "model_prob": pick.get("prob"),
-            "adjusted_prob": pick.get("adj_prob"),
+            "model_prob": pick.get("model_prob"),
+            "adjusted_prob": pick.get("adjusted_prob"),
             "market_prob": pick.get("market_prob"),
             "edge_pct": pick.get("edge_pct"),
             "confidence": pick.get("confidence"),
             "value": pick.get("value"),
-            "score": pick.get("score"),
+            "score": pick.get("ticket_score"),
             "source_api": pick.get("source_api"),
             "source_heuristic": pick.get("source_heuristic"),
             "model_version": row.get("model_version"),
-            "most_likely_score": row.get("most_likely_score"),
+            "most_likely_score": pick.get("most_likely_score"),
             "status": "pending",
             "won": None,
             "home_score": None,
             "away_score": None,
             "settled_at": None,
         })
+
     rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
     return rows
 
@@ -1176,21 +1291,28 @@ def build_finished_event_index(predictions):
     return out
 
 
+
 def update_recommendation_log(existing_rows, current_rows, finished_events, settled_at_iso):
     existing_rows = existing_rows or []
-    by_id = {}
+    by_event_id = {}
+
     for row in existing_rows:
-        log_id = row.get("log_id")
-        if not log_id:
-            log_id = f"{row.get('event_id')}_{row.get('market_key')}"
-            row["log_id"] = log_id
-        by_id[log_id] = row
+        event_id = row.get("event_id")
+        if not event_id:
+            continue
+        row["log_id"] = str(event_id)
+        by_event_id[str(event_id)] = row
 
     for row in current_rows or []:
-        if row.get("log_id") not in by_id:
-            by_id[row.get("log_id")] = row
+        event_id = row.get("event_id")
+        if not event_id:
+            continue
+        key = str(event_id)
+        if key not in by_event_id:
+            row["log_id"] = key
+            by_event_id[key] = row
 
-    for row in by_id.values():
+    for row in by_event_id.values():
         if row.get("status") in {"win", "lose"}:
             continue
         event = finished_events.get(row.get("event_id"))
@@ -1205,7 +1327,7 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
         row["away_score"] = event.get("away_score")
         row["settled_at"] = settled_at_iso
 
-    out = list(by_id.values())
+    out = list(by_event_id.values())
     out.sort(key=lambda x: (x.get("logged_at") or x.get("prediction_created_at") or "", x.get("event_id") or 0), reverse=True)
     return out[:RECOMMENDATION_LOG_MAX_ROWS]
 
