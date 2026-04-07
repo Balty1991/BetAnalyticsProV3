@@ -1343,11 +1343,18 @@ function analyzeMatch(raw){
   };
 }
 
+function isMatchStillDisplayable(m){
+  if(!m) return false;
+  if(String(m.status || '').toLowerCase() === 'finished') return false;
+  var matchTime = new Date(m.date).getTime();
+  if(!isFinite(matchTime)) return false;
+  var now = new Date().getTime();
+  return matchTime > (now - 90 * 60 * 1000);
+}
+
 function passesSelectionFilter(m){
   if(!m || !m.bestBet || m.analysisState !== 'ELIGIBLE') return false;
-  var matchTime = new Date(m.date).getTime();
-  var now = new Date().getTime();
-  return matchTime > (now - 900000);
+  return isMatchStillDisplayable(m);
 }
 
 function getBetByType(m, type){
@@ -2285,6 +2292,7 @@ function renderMatches(){
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
+    if(!isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
     if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
     if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
