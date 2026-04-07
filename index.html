@@ -1861,6 +1861,196 @@ function renderBacktest(){
   var overall = bt.overall || {};
   var health = (typeof APP_META !== 'undefined' && APP_META && APP_META.data_health) || {};
 
+  var supportedHistoryMarkets = (BET_TYPES || []).map(function(b){ return b.label; });
+  var historyCutoff = new Date(Date.now() - (21 * 86400000));
+  var historyRows = (RECOMMENDATION_LOG || []).filter(function(r){
+    if(!r || supportedHistoryMarkets.indexOf(r.market) === -1) return false;
+    var loggedAt = new Date(r.logged_at || r.prediction_created_at || 0);
+    if(!isFinite(loggedAt.getTime())) return false;
+    return loggedAt >= historyCutoff;
+  });
+
+  function summarizeRealRows(rows, groupFn){
+    var groups = {};
+    (rows || []).forEach(function(r){
+      var key = groupFn(r) || '—';
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    return Object.keys(groups).map(function(key){
+      var list = groups[key];
+      var settled = list.filter(function(r){ return r.status === 'win' || r.status === 'lose'; });
+      var bets = settled.length;
+      var wins = settled.filter(function(r){ return r.status === 'win' || r.won === true; }).length;
+      var profit = settled.reduce(function(acc, r){
+        var o = Number(r.odds || 0);
+        var isWin = r.status === 'win' || r.won === true;
+        return acc + (isWin ? (o > 1 ? (o - 1) : 0) : -1);
+      }, 0);
+      return {
+        key: key,
+        total: list.length,
+        pending: list.length - bets,
+        bets: bets,
+        wins: wins,
+        losses: bets - wins,
+        roi: bets ? (profit * 100 / bets) : 0,
+        winrate: bets ? (wins * 100 / bets) : 0,
+        avgOdds: bets ? settled.reduce(function(acc, r){ return acc + Number(r.odds || 0); }, 0) / bets : 0,
+        profit: profit
+      };
+    });
+  }
+
+  if(historyRows.length){
+    var settledRows = historyRows.filter(function(r){ return r.status === 'win' || r.status === 'lose'; });
+    var pendingRows = historyRows.filter(function(r){ return r.status !== 'win' && r.status !== 'lose'; });
+    var engineBetsReal = settledRows.length;
+    var engineWinsReal = settledRows.filter(function(r){ return r.status === 'win' || r.won === true; }).length;
+    var engineProfitReal = settledRows.reduce(function(acc, r){
+      var o = Number(r.odds || 0);
+      var isWin = r.status === 'win' || r.won === true;
+      return acc + (isWin ? (o > 1 ? (o - 1) : 0) : -1);
+    }, 0);
+    var engineRoiReal = engineBetsReal ? (engineProfitReal * 100 / engineBetsReal) : 0;
+    var engineWinrateReal = engineBetsReal ? (engineWinsReal * 100 / engineBetsReal) : 0;
+    var totalLoggedReal = historyRows.length;
+    var sampleLabelReal = totalLoggedReal >= 120 ? 'Solid' : totalLoggedReal >= 60 ? 'Mediu' : 'Mic';
+
+    var marketSummaryReal = summarizeRealRows(historyRows, function(r){ return r.market; });
+    var leagueSummaryReal = summarizeRealRows(historyRows, function(r){ return r.league; });
+    var sourceSummaryReal = summarizeRealRows(historyRows, function(r){
+      if(r.source_api && r.source_heuristic) return 'ML + Heuristic';
+      if(r.source_api) return 'ML/API';
+      if(r.source_heuristic) return 'Heuristic';
+      return 'Fără etichetă';
+    });
+
+    marketSummaryReal.sort(function(a,b){
+      if((b.bets || 0) !== (a.bets || 0)) return (b.bets || 0) - (a.bets || 0);
+      if((b.total || 0) !== (a.total || 0)) return (b.total || 0) - (a.total || 0);
+      return (b.roi || 0) - (a.roi || 0);
+    });
+    leagueSummaryReal.sort(function(a,b){
+      if((b.total || 0) !== (a.total || 0)) return (b.total || 0) - (a.total || 0);
+      if((b.bets || 0) !== (a.bets || 0)) return (b.bets || 0) - (a.bets || 0);
+      return (b.roi || 0) - (a.roi || 0);
+    });
+    sourceSummaryReal.sort(function(a,b){ return (b.total || 0) - (a.total || 0); });
+
+    var bestMarketReal = marketSummaryReal[0] || null;
+    var bestLeagueReal = leagueSummaryReal[0] || null;
+    var bestSourceReal = sourceSummaryReal[0] || null;
+    var latestHistoryUpdate = historyRows.slice().sort(function(a,b){ return new Date(b.logged_at || b.prediction_created_at || 0) - new Date(a.logged_at || a.prediction_created_at || 0); })[0];
+
+    if(updated) updated.textContent = latestHistoryUpdate ? ('Jurnal real actualizat: ' + fmtDateTime(latestHistoryUpdate.logged_at || latestHistoryUpdate.prediction_created_at)) : 'Jurnal real: —';
+    box.innerHTML = '';
+
+    function makeMeta(detailParts){
+      return detailParts.filter(Boolean).join(' • ');
+    }
+
+    function buildCard(card){
+      var valueText = String(card.value == null ? '—' : card.value);
+      var valueSize = valueText.length > 22 ? '12px' : valueText.length > 16 ? '13px' : valueText.length > 12 ? '15px' : '18px';
+      return '<div style="min-height:96px;padding:9px;border:1px solid var(--brd2);border-radius:14px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.18)">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">'+
+          '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">'+card.label+'</div>'+
+          '<div style="width:42px;height:4px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;flex-shrink:0"><div style="height:100%;width:'+Math.max(8, Math.min(100, Number(card.pct || 0)))+'%;background:'+card.color+';border-radius:999px"></div></div>'+
+        '</div>'+
+        '<div style="font-size:'+valueSize+';font-weight:800;line-height:1.15;color:'+card.color+';'+(card.mono ? 'font-family:var(--mono);' : '')+'word-break:break-word">'+valueText+'</div>'+
+        '<div style="margin-top:6px;font-size:10px;line-height:1.35;color:var(--txt)">'+(card.detail || '—')+'</div>'+
+        '<div style="margin-top:6px;font-size:9px;line-height:1.35;color:var(--muted)">'+(card.legend || '')+'</div>'+
+      '</div>';
+    }
+
+    var cardsReal = [
+      {
+        label:'Motor',
+        value: totalLoggedReal,
+        detail: makeMeta([engineWinsReal + '/' + engineBetsReal + ' win închise', 'sample ' + sampleLabelReal]),
+        legend: makeMeta(['pending ' + pendingRows.length, engineBetsReal ? ('cotă medie ' + (settledRows.reduce(function(acc,r){ return acc + Number(r.odds || 0); }, 0) / engineBetsReal).toFixed(2)) : null]),
+        pct: Math.min(100, (totalLoggedReal / 180) * 100),
+        color:'var(--acc)',
+        mono:true
+      },
+      {
+        label:'ROI motor',
+        value: engineBetsReal ? fmtSignedPct(engineRoiReal) : '—',
+        detail: makeMeta(['profit ' + engineProfitReal.toFixed(2) + 'u', engineWinsReal + '/' + engineBetsReal + ' win']),
+        legend: 'calculat doar din recomandările reale închise',
+        pct: engineBetsReal ? Math.min(100, Math.abs(engineRoiReal) * 10) : 0,
+        color: engineRoiReal >= 0 ? 'var(--grn)' : 'var(--red)',
+        mono:true
+      },
+      {
+        label:'Win rate',
+        value: engineBetsReal ? fmtPct(engineWinrateReal) : '—',
+        detail: makeMeta([engineWinsReal + ' câștigate', (engineBetsReal - engineWinsReal) + ' pierdute']),
+        legend: 'doar meciurile închise din jurnalul real',
+        pct: engineBetsReal ? engineWinrateReal : 0,
+        color:'var(--grn)',
+        mono:true
+      },
+      {
+        label:'Perioadă analizată',
+        value: '21 zile',
+        detail: makeMeta([totalLoggedReal + ' logate', latestHistoryUpdate ? ('update ' + fmtDateTime(latestHistoryUpdate.logged_at || latestHistoryUpdate.prediction_created_at)) : null]),
+        legend: 'pending ' + pendingRows.length + ' • istoric real, nu backtest',
+        pct: Math.min(100, totalLoggedReal / 4),
+        color:'var(--yel)'
+      },
+      {
+        label:'Top piață',
+        value: bestMarketReal ? bestMarketReal.key : '—',
+        detail: bestMarketReal ? makeMeta([(bestMarketReal.bets ? ('ROI ' + fmtSignedPct(bestMarketReal.roi)) : 'fără închideri încă'), bestMarketReal.total + ' logate']) : 'Fără piață logată încă',
+        legend: bestMarketReal ? makeMeta(['închise ' + bestMarketReal.bets, bestMarketReal.bets ? ('cotă medie ' + bestMarketReal.avgOdds.toFixed(2)) : 'doar pending']) : 'așteaptă primul batch real',
+        pct: bestMarketReal ? Math.max(bestMarketReal.winrate || 0, Math.min(100, bestMarketReal.total * 4)) : 0,
+        color:'var(--pur)'
+      },
+      {
+        label:'Top ligă',
+        value: bestLeagueReal ? bestLeagueReal.key : '—',
+        detail: bestLeagueReal ? makeMeta([bestLeagueReal.total + ' logate', bestLeagueReal.bets ? ('ROI ' + fmtSignedPct(bestLeagueReal.roi)) : 'fără închideri încă']) : 'Fără ligă logată încă',
+        legend: bestLeagueReal ? (bestLeagueReal.bets ? ('închise ' + bestLeagueReal.bets + ' • win rate ' + fmtPct(bestLeagueReal.winrate)) : 'doar pending până acum') : 'se umple automat din jurnal',
+        pct: bestLeagueReal ? Math.max(bestLeagueReal.winrate || 0, Math.min(100, bestLeagueReal.total * 5)) : 0,
+        color:'var(--cyan)'
+      },
+      {
+        label:'Top sursă',
+        value: bestSourceReal ? bestSourceReal.key : '—',
+        detail: bestSourceReal ? makeMeta([bestSourceReal.total + ' logate', bestSourceReal.bets ? (bestSourceReal.wins + '/' + bestSourceReal.bets + ' win') : 'fără închideri încă']) : 'Nicio sursă logată încă',
+        legend: bestSourceReal ? 'distribuția vine din jurnalul real salvat la emitere' : 'așteaptă primul batch real',
+        pct: bestSourceReal ? Math.min(100, bestSourceReal.total * 5) : 0,
+        color:'var(--acc)'
+      },
+      {
+        label:'Health date',
+        value: health.events_without_odds != null ? health.events_without_odds : '—',
+        detail: (health.events_without_odds || 0) === 0 ? 'toate evenimentele au cote și dată' : makeMeta([(health.events_without_odds || 0) + ' evenimente fără cote/date', 'cu cât mai mic, cu atât mai bine']),
+        legend: 'nu intră în top dacă lipsesc datele critice',
+        pct: health.events_without_odds != null ? Math.max(8, 100 - Math.min(100, Number(health.events_without_odds) * 1.35)) : 0,
+        color:'var(--muted)',
+        mono:true
+      },
+      {
+        label:'Vârstă predicții',
+        value: health.max_prediction_age_hours != null ? ageBucketLabel(health.max_prediction_age_hours) : '—',
+        detail: makeMeta([health.avg_prediction_age_hours != null ? ('medie ' + ageBucketLabel(health.avg_prediction_age_hours)) : null, health.stale_predictions_removed ? (health.stale_predictions_removed + ' stale scoase') : 'fără stale detectat']),
+        legend: health.prediction_age_cap_hours ? ('cap activ ' + ageBucketLabel(health.prediction_age_cap_hours)) : 'fără cap de vârstă',
+        pct: health.max_prediction_age_hours != null && health.prediction_age_cap_hours ? Math.max(8, 100 - Math.min(100, (Number(health.max_prediction_age_hours) / Number(health.prediction_age_cap_hours || 1)) * 100)) : 0,
+        color:'var(--org)',
+        mono:true
+      }
+    ];
+
+    box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'+cardsReal.map(buildCard).join('')+'</div>'+
+      '<div style="margin-top:8px;font-size:9px;line-height:1.35;color:var(--muted);opacity:.92">'+
+        '<strong style="color:var(--txt)">Legendă:</strong> panoul rapid folosește acum jurnalul real din ultimele 21 de zile; win/ROI se calculează doar din recomandările închise, iar pending rămâne separat.'+
+      '</div>';
+    return;
+  }
+
   if(updated) updated.textContent = bt.updated_at ? ('Backtest actualizat: ' + fmtDateTime(bt.updated_at)) : 'Backtest: —';
   if(!bt.engine_bets){
     box.innerHTML = '<div class="empty-state" style="padding:10px">Nu există suficiente date istorice procesate încă.</div>';
