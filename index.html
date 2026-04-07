@@ -398,6 +398,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 <div class="tabs">
   <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
   <button class="tab" onclick="switchTab('audit')">🎯 Audit Kelly</button>
+  <button class="tab" onclick="switchTab('aimemory')">🧠 AI Memory</button>
   <button class="tab" onclick="switchTab('meciuri')">⚽ Meciuri</button>
   <button class="tab" onclick="switchTab('bilete')">🎫 Bilete</button>
   <button class="tab" onclick="switchTab('tracking')">📈 Tracking</button>
@@ -586,6 +587,55 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div id="signal-audit-table" class="audit-list"></div>
     </div>
   </div>
+
+  <!-- ===== AI MEMORY TAB ===== -->
+  <div class="tab-content" id="tab-aimemory">
+    <div class="section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(16,185,129,.06));border:1px solid rgba(168,85,247,.20);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--txt)">🧠 AI Memory / Adaptive Engine</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Învață din istoricul real, din piețele care au mers și din tiparele care au produs ROI bun sau slab.</div>
+        </div>
+        <div id="ai-memory-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+      </div>
+      <div class="audit-grid" id="ai-memory-summary-grid"></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">V1 nu rescrie modelul BSD; adaugă un strat adaptiv care ridică sau frânează selecțiile pe baza memoriei reale.</div>
+    </div>
+
+    <div class="section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(14,165,233,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--txt)">📊 Ce piețe a învățat motorul</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Aici vezi unde memoria are încredere mai mare și unde pune frână.</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted)">minim 4 exemple închise</div>
+      </div>
+      <div class="audit-grid" id="ai-memory-market-grid"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+      <div class="section" style="padding:14px;background:linear-gradient(135deg,rgba(34,197,94,.06),rgba(59,130,246,.05));border:1px solid rgba(34,197,94,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+        <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:10px">✅ Tipare care au mers</div>
+        <div id="ai-memory-patterns-good"></div>
+      </div>
+      <div class="section" style="padding:14px;background:linear-gradient(135deg,rgba(239,68,68,.06),rgba(245,158,11,.05));border:1px solid rgba(239,68,68,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+        <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:10px">⛔ Tipare de evitat</div>
+        <div id="ai-memory-patterns-bad"></div>
+      </div>
+    </div>
+
+    <div class="section" style="padding:14px;background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(16,185,129,.05));border:1px solid rgba(99,102,241,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--txt)">🎯 Pronosticuri adaptive</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Scorul adaptiv = scorul motorului curent + bonus / penalizare din memoria AI.</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted)">top 12 selecții rescorate</div>
+      </div>
+      <div id="ai-memory-picks" class="audit-list"></div>
+    </div>
+  </div>
+
 
   <!-- ===== LIVE TAB ===== -->
   <div class="tab-content" id="tab-meciuri">
@@ -896,6 +946,7 @@ var BACKTEST_SUMMARY = {};
 var HISTORY_ENGINE = [];
 var RECOMMENDATION_LOG = [];
 var SIGNAL_AUDIT = {};
+var AI_MEMORY = {};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
@@ -1015,13 +1066,14 @@ function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
-  var names=['dashboard','audit','meciuri','bilete','tracking','bankroll','istoric21'];
+  var names=['dashboard','audit','aimemory','meciuri','bilete','tracking','bankroll','istoric21'];
   var tabs=document.querySelectorAll('.tab');
   var idx=names.indexOf(name);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
+  if(name==='aimemory') renderAIMemory();
 }
 
 // ============================================================
@@ -1444,7 +1496,8 @@ function doRefresh(){
     getJson('/data/backtest.json', {}),
     getJson('/data/history_engine.json', []),
     getJson('/data/recommendation_log.json', []),
-    getJson('/data/signal_audit.json', {})
+    getJson('/data/signal_audit.json', {}),
+    getJson('/data/ai_memory.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -1455,6 +1508,7 @@ function doRefresh(){
     var historyData = results[6];
     var recommendationLogData = results[7];
     var signalAuditData = results[8];
+    var aiMemoryData = results[9];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
@@ -1468,6 +1522,7 @@ function doRefresh(){
     HISTORY_ENGINE = Array.isArray(historyData) ? historyData : (historyData.results || historyData || []);
     RECOMMENDATION_LOG = Array.isArray(recommendationLogData) ? recommendationLogData : (recommendationLogData.results || recommendationLogData || []);
     SIGNAL_AUDIT = signalAuditData || {};
+    AI_MEMORY = aiMemoryData || {};
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -1816,6 +1871,96 @@ function renderSignalAudit(){
         '<span class="audit-badge">Age '+age+'</span>'+
       '</div>'+
       (reasonHtml ? '<div class="audit-reasons">'+reasonHtml+'</div>' : '')+
+    '</div>';
+  }).join('');
+}
+
+function renderAIMemory(){
+  var memory = AI_MEMORY || {};
+  var updated = $('ai-memory-updated');
+  var summary = $('ai-memory-summary-grid');
+  var markets = $('ai-memory-market-grid');
+  var good = $('ai-memory-patterns-good');
+  var bad = $('ai-memory-patterns-bad');
+  var picks = $('ai-memory-picks');
+  if(!summary || !markets || !good || !bad || !picks) return;
+
+  var data = memory.summary || {};
+  if(updated) updated.textContent = memory.updated_at ? ('Memorie actualizată: ' + fmtDateTime(memory.updated_at)) : 'Memorie: —';
+
+  var cards = [
+    {label:'Exemple închise', value: Number(data.settled_bets || 0), sub:'meciuri din care AI Memory a învățat efectiv', color:'var(--acc)'},
+    {label:'Win rate memorie', value: fmtPct(Number(data.settled_winrate || 0)), sub:'rata de câștig a setului pe care învață stratul adaptiv', color:'var(--grn)'},
+    {label:'ROI memorie', value: fmtSignedPct(Number(data.settled_roi || 0)), sub:'ROI pe istoricul folosit la memorare', color:'var(--yel)'},
+    {label:'Pronosticuri rescotate', value: Number(data.pending_scored || 0), sub:'selecții curente cărora li s-a aplicat memoria', color:'var(--pur)'},
+    {label:'Tipare bune', value: Number(data.positive_patterns || 0), sub:'pattern-uri cu scor adaptiv pozitiv', color:'var(--grn)'},
+    {label:'Tipare de evitat', value: Number(data.negative_patterns || 0), sub:'pattern-uri care trag scorul în jos', color:'var(--red)'}
+  ];
+  summary.innerHTML = cards.map(function(c){
+    return '<div class="audit-card">'+
+      '<div class="audit-card-label">'+c.label+'</div>'+
+      '<div class="audit-card-value" style="color:'+c.color+'">'+c.value+'</div>'+
+      '<div class="audit-card-sub">'+c.sub+'</div>'+
+    '</div>';
+  }).join('');
+
+  var marketRows = Array.isArray(memory.by_market) ? memory.by_market.slice(0, 8) : [];
+  markets.innerHTML = marketRows.length ? marketRows.map(function(r){
+    var roi = Number(r.roi || 0);
+    var mem = Number(r.memory_score || 0);
+    return '<div class="audit-card">'+
+      '<div class="audit-card-label">'+(r.label || r.key || '—')+'</div>'+
+      '<div class="audit-card-value" style="color:'+(mem >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(mem >= 0 ? '+' : '')+mem.toFixed(1)+'</div>'+
+      '<div class="audit-card-sub">ROI '+(roi >= 0 ? '+' : '')+roi.toFixed(1)+'% • '+Number(r.raw_bets || 0)+' exemple • win '+fmtPct(Number(r.winrate || 0))+'</div>'+
+    '</div>';
+  }).join('') : '<div class="empty-state">Memoria încă nu are suficiente exemple închise pentru piețe. Se umple după ce se adună mai mult istoric.</div>';
+
+  function renderPatternList(rows, positive){
+    if(!rows || !rows.length) return '<div class="empty-state">Încă nu există suficiente pattern-uri validate aici.</div>';
+    return rows.slice(0, 6).map(function(r){
+      var mem = Number(r.memory_score || 0);
+      var roi = Number(r.roi || 0);
+      return '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
+          '<div><div style="font-size:12px;font-weight:700;color:var(--txt)">'+(r.label || r.key || '—')+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:4px">'+Number(r.raw_bets || 0)+' exemple • ROI '+(roi >= 0 ? '+' : '')+roi.toFixed(1)+'% • win '+fmtPct(Number(r.winrate || 0))+'</div></div>'+
+          '<div style="padding:6px 10px;border-radius:999px;background:'+(positive ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)')+';border:1px solid '+(positive ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)')+';color:'+(positive ? 'var(--grn)' : 'var(--red)')+';font-size:11px;font-weight:800">'+(mem >= 0 ? '+' : '')+mem.toFixed(1)+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  good.innerHTML = renderPatternList(memory.top_patterns || [], true);
+  bad.innerHTML = renderPatternList(memory.avoid_patterns || [], false);
+
+  var pickRows = Array.isArray(memory.adaptive_picks) ? memory.adaptive_picks : [];
+  if(!pickRows.length){
+    picks.innerHTML = '<div class="empty-state">Încă nu există selecții curente care să poată fi rescotate de AI Memory.</div>';
+    return;
+  }
+
+  picks.innerHTML = pickRows.map(function(r, idx){
+    var bonus = Number(r.memory_bonus || 0);
+    var reasonsHtml = (r.reasons || []).map(function(reason){
+      return '<span class="audit-reason">'+reason.label+' • '+(Number(reason.impact || 0) >= 0 ? '+' : '')+Number(reason.impact || 0).toFixed(1)+' • ROI '+(Number(reason.roi || 0) >= 0 ? '+' : '')+Number(reason.roi || 0).toFixed(1)+'%</span>';
+    }).join('');
+    return '<div class="audit-row">'+
+      '<div class="audit-row-top">'+
+        '<div>'+
+          '<div class="audit-row-teams">#'+(idx+1)+' • '+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+          '<div class="audit-row-meta">'+(r.league || '—')+' • '+(r.event_date ? (fmtDate(r.event_date)+' • '+fmtTime(r.event_date)) : '—')+' • '+(r.source || '—')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="audit-badge" style="color:'+(bonus >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(bonus >= 0 ? '+' : '')+bonus.toFixed(1)+'</span></div>'+
+      '</div>'+
+      '<div class="audit-row-badges">'+
+        '<span class="audit-badge">'+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</span>'+
+        '<span class="audit-badge">Adj '+fmtPct(Number(r.adjusted_prob || 0))+'</span>'+
+        '<span class="audit-badge">Edge '+fmtSignedPct(Number(r.edge_pct || 0))+'</span>'+
+        '<span class="audit-badge">Score baza '+Number(r.base_score || 0).toFixed(1)+'</span>'+
+        '<span class="audit-badge">Adaptive '+Number(r.adaptive_score || 0).toFixed(1)+'</span>'+
+        '<span class="audit-badge">Value '+fmtSignedPct(Number(r.value || 0) * 100)+'</span>'+
+      '</div>'+
+      (reasonsHtml ? '<div class="audit-reasons">'+reasonsHtml+'</div>' : '')+
     '</div>';
   }).join('');
 }
