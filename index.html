@@ -4120,7 +4120,7 @@ function renderHistory21(){
         '<div>'+ 
           '<div style="font-size:13px;font-weight:800;color:var(--txt)">'+(eventName || r.league || '—')+'</div>'+ 
           '<div style="font-size:11px;color:var(--muted);margin-top:3px">'+(r.league || '—')+'</div>'+ 
-          '<div style="font-size:11px;color:var(--txt);margin-top:3px">Logat '+fmtDateTime(r.logged_at || r.prediction_created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+ 
+          '<div style="font-size:11px;color:var(--txt);margin-top:3px">'+(r.event_date ? ('Meci '+fmtDateTime(r.event_date)+' • ') : '')+'Logat '+fmtDateTime(r.logged_at || r.prediction_created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+ 
           '<div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. ajustată '+adj.toFixed(1)+'% • Edge '+(edge>=0?'+':'')+edge.toFixed(1)+'% • Score '+Number(r.score || 0).toFixed(1)+'</div>'+ 
           '<div style="font-size:10px;color:var(--muted);margin-top:4px">'+scoreText+'</div>'+ 
         '</div>'+ 
