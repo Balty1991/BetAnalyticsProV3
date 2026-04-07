@@ -1357,21 +1357,6 @@ function passesSelectionFilter(m){
   return isMatchStillDisplayable(m);
 }
 
-function hasOver25RadarSignal(m){
-  return !!(
-    m &&
-    isMatchStillDisplayable(m) &&
-    (
-      (m.mlFlags && m.mlFlags.o25) ||
-      (Number(m.probOver25 || 0) > 56)
-    )
-  );
-}
-
-function isPrimaryOver25(m){
-  return !!(m && m.analysisState === 'ELIGIBLE' && m.bestBet && m.bestBet.type === 'over25');
-}
-
 function getBetByType(m, type){
   return (m && m.allBets || []).find(function(x){ return x.type === type; }) || null;
 }
@@ -2347,22 +2332,16 @@ function renderML15(){
 function renderML25(){
   var container = $('ml-25-grid');
   var ml25 = ALL_MATCHES.filter(function(m){
-    return hasOver25RadarSignal(m);
-  }).sort(function(a,b){
-    var aPrimary = isPrimaryOver25(a) ? 1 : 0;
-    var bPrimary = isPrimaryOver25(b) ? 1 : 0;
-    if(bPrimary !== aPrimary) return bPrimary - aPrimary;
-    return (Number(b.probOver25 || 0)) - (Number(a.probOver25 || 0));
-  });
+    var matchTime = new Date(m.date).getTime();
+    var now = new Date().getTime();
+    return (m.mlFlags.o25 || (m.probOver25 && m.probOver25 > 56)) && matchTime > (now - 900000);
+  }).sort(function(a,b){ return (b.probOver25||0) - (a.probOver25||0); });
   updateSectionCount('ml25', ml25.length);
   if(ml25.length === 0){ container.innerHTML = '<div class="empty-state">Nicio recomandare +2.5G momentan.</div>'; return; }
   container.innerHTML = ml25.map(function(m){
-    var prob25 = Number(m.probOver25 || 0);
-    var odds25 = Number(m.oddsOver25 || 0);
+    var prob25 = m.probOver25 || 0;
+    var odds25 = m.oddsOver25 || 0;
     var reasons = buildMatchReasons(m).map(function(r){ return '<span class="rec-tag rec-tag-o25">'+r+'</span>'; }).join('');
-    var roleBadge = isPrimaryOver25(m)
-      ? '<span class="ml-pick" style="background:rgba(34,197,94,0.15);color:var(--grn);font-size:10px;padding:4px 10px">PRINCIPAL</span>'
-      : '<span class="ml-pick" style="background:rgba(245,158,11,0.15);color:var(--yel);font-size:10px;padding:4px 10px">ALTERNATIV</span>';
     return '<div class="ml-card" style="background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.2)">'+
       '<div class="ml-hdr">'+
         '<div class="ml-teams">'+m.home+' vs '+m.away+'</div>'+
@@ -2372,7 +2351,7 @@ function renderML25(){
         '<span>'+m.league+' • '+m.dateLabel+' • '+(m.modelVersion||'CatBoost')+'</span>' +
         '<span style="font-weight:700;color:var(--val)">Σ xG: '+m.xgTotal.toFixed(2)+'</span>'+
       '</div>'+
-      '<div class="ml-picks"><span class="ml-pick" style="background:rgba(16,185,129,0.15);color:var(--val);font-size:11px;padding:4px 10px">🎯 Over 2.5G</span>'+roleBadge+'</div>'+
+      '<div class="ml-picks"><span class="ml-pick" style="background:rgba(16,185,129,0.15);color:var(--val);font-size:11px;padding:4px 10px">🎯 Over 2.5G</span></div>'+
       (reasons ? '<div class="rec-tags" style="margin-top:7px">'+reasons+'</div>' : '')+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);gap:8px;flex-wrap:wrap">'+
         '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+prob25.toFixed(1)+'%</b>'+(odds25?' | Cotă: <b>'+odds25.toFixed(2)+'</b>':'')+'</div>'+
@@ -2503,7 +2482,6 @@ function renderMatches(){
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
-    var over25CategoryHit = m.analysisState === 'ELIGIBLE' && hasOver25RadarSignal(m);
     if(!isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
     if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
@@ -2513,9 +2491,9 @@ function renderMatches(){
     if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
     if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
     if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
-    if(CURRENT_FILTER === 'o25' && !over25CategoryHit) return false;
+    if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
     if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
-    if(!b && CURRENT_FILTER !== 'o25') return false;
+    if(!b) return false;
 
     if(dateF === 'today'){
       if(fmtDateKey(m.date) !== fmtDateKey(new Date().toISOString())) return false;
@@ -2524,44 +2502,15 @@ function renderMatches(){
       if(days < 0 || days > Number(dateF)) return false;
     }
 
-    if(marketF){
-      if(CURRENT_FILTER === 'o25' && marketF === 'Over 2.5G'){
-        if(!over25CategoryHit) return false;
-      } else if(!b || b.label !== marketF) {
-        return false;
-      }
-    }
-
-    var effectiveProb = (CURRENT_FILTER === 'o25') ? Number(m.probOver25 || 0) : Number((b && b.adjProb) || 0);
-    var over25BetForFilters = CURRENT_FILTER === 'o25' ? getBetByType(m, 'over25') : null;
-    var effectiveEdge = (CURRENT_FILTER === 'o25')
-      ? Number((over25BetForFilters && over25BetForFilters.edgePct) || 0)
-      : Number((b && b.edgePct) || -999);
-
-    if(effectiveProb < minProb) return false;
-    if(effectiveEdge < minEdge) return false;
+    if(marketF && b.label !== marketF) return false;
+    if((b.adjProb || 0) < minProb) return false;
+    if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
     return true;
   });
 
   filtered.sort(function(a,b){
     var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
     var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
-    if(CURRENT_FILTER === 'o25'){
-      var aPrimary = isPrimaryOver25(a) ? 1 : 0;
-      var bPrimary = isPrimaryOver25(b) ? 1 : 0;
-      if(bPrimary !== aPrimary) return bPrimary - aPrimary;
-      if(sort === 'prob') return Number(b.probOver25 || 0) - Number(a.probOver25 || 0);
-      if(sort === 'edge') {
-        var aO25 = getBetByType(a, 'over25');
-        var bO25 = getBetByType(b, 'over25');
-        return Number((bO25 && bO25.edgePct) || 0) - Number((aO25 && aO25.edgePct) || 0);
-      }
-      if(sort === 'value') {
-        var aV = getBetByType(a, 'over25');
-        var bV = getBetByType(b, 'over25');
-        return Number((bV && bV.value) || 0) - Number((aV && aV.value) || 0);
-      }
-    }
     if(sort === 'score') return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
     if(sort === 'value') return (bBet.value||0) - (aBet.value||0);
     if(sort === 'prob') return (bBet.adjProb||0) - (aBet.adjProb||0);
@@ -2578,21 +2527,20 @@ function renderMatches(){
 
   function renderCard(m){
     var b = m.bestBet || null;
-    var displayBet = (CURRENT_FILTER === 'o25' && hasOver25RadarSignal(m) && getBetByType(m, 'over25')) ? getBetByType(m, 'over25') : b;
     var state = getAnalysisStateMeta(m.analysisState);
     var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
     var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
     var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
     var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
-    var reasons = displayBet ? buildRecommendationReasons(m, displayBet).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
-    var recLabel = displayBet ? displayBet.label : 'Fără recomandare activă';
-    var recOdd = displayBet && displayBet.odds ? Number(displayBet.odds).toFixed(2) : null;
-    var probBadge = displayBet ? ('<span class="card-reco-badge">Șansă '+fmtPct(displayBet.adjProb || 0)+'</span>') : '';
-    var valueBadge = displayBet && displayBet.value != null ? ('<span class="card-reco-badge">Value '+((displayBet.value>=0?'+':'') + fmtPct((displayBet.value||0)*100))+'</span>') : '';
-    var edgeBadge = displayBet && displayBet.edgePct != null ? ('<span class="card-reco-badge">Edge '+(displayBet.edgePct >= 0 ? '+' : '')+fmtPct(displayBet.edgePct)+'</span>') : '';
-    var confBadge = displayBet ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
+    var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
+    var recLabel = b ? b.label : 'Fără recomandare activă';
+    var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
+    var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
+    var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
+    var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
+    var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
-    var sourceBadge = displayBet ? sourceChipHtmlForBet(displayBet) : '';
+    var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
@@ -2607,7 +2555,7 @@ function renderMatches(){
       '<div class="mc-midrow">'+
         '<div class="mc-verdict" style="background:'+state.bg+';border:1px solid '+state.border+';color:'+state.color+'">'+state.label+'</div>'+
         sourceBadge+
-        (displayBet && displayBet.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((displayBet.value||0)*100) + '</div>' : '')+
+        (b && b.value >= 0.05 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '')+
       '</div>'+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
         '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
