@@ -29,6 +29,7 @@ LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
 HISTORY_LOOKBACK_DAYS = 60
 HISTORY_MAX_ROWS = 2500
+RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 
@@ -1070,6 +1071,142 @@ def build_history_rows(predictions):
     return rows[:HISTORY_MAX_ROWS]
 
 
+def build_current_recommendation_rows(predictions, logged_at_iso):
+    rows = []
+    for row in predictions or []:
+        event = row.get("event") or {}
+        if event.get("status") != "notstarted":
+            continue
+        candidates = []
+        for market in MARKETS:
+            market_key = market["key"]
+            try:
+                odds = float((market["odds"](event) or 0))
+            except Exception:
+                odds = 0.0
+            if odds < 1.01:
+                continue
+            prob = market["prob"](row)
+            confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
+            value = calc_value(prob, odds)
+            adj = adjusted_prob(prob, confidence)
+            market_prob = market_prob_from_row_event(row, event, market_key)
+            edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
+            fit = market_fit_score(row, market_key)
+            source_api = api_recommend(row, market_key)
+            source_heuristic = heuristic_recommend(row, market_key)
+            score = calc_smart_score(adj, value, confidence, edge_pct, fit, source_api, source_heuristic)
+            verdict = verdict_from_metrics(adj, value, confidence, edge_pct)
+            candidate = {
+                "market": market["label"],
+                "market_key": market_key,
+                "odds": round(odds, 3),
+                "prob": round(prob, 2),
+                "adj_prob": round(adj, 2),
+                "value": round(value, 4),
+                "confidence": round(confidence, 2),
+                "market_prob": round(market_prob, 2) if market_prob is not None else None,
+                "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
+                "fit_score": round(fit, 2),
+                "score": score,
+                "verdict": verdict,
+                "source_api": bool(source_api),
+                "source_heuristic": bool(source_heuristic),
+                "league": (event.get("league") or {}).get("name") or "Unknown",
+                "event_id": event.get("id"),
+                "prediction_id": row.get("id"),
+                "date": event.get("event_date"),
+                "created_at": row.get("created_at"),
+                "most_likely_score": row.get("most_likely_score"),
+            }
+            if qualifies_for_strategy(candidate, STRATEGIES["engine_overall"]):
+                candidates.append(candidate)
+        if not candidates:
+            continue
+        pick = max(candidates, key=rank_candidate)
+        rows.append({
+            "log_id": f"{pick.get('prediction_id')}_{pick.get('market_key')}",
+            "logged_at": logged_at_iso,
+            "prediction_created_at": pick.get("created_at"),
+            "event_id": pick.get("event_id"),
+            "prediction_id": pick.get("prediction_id"),
+            "home": event.get("home_team"),
+            "away": event.get("away_team"),
+            "league": pick.get("league"),
+            "event_date": pick.get("date"),
+            "market": pick.get("market"),
+            "market_key": pick.get("market_key"),
+            "odds": pick.get("odds"),
+            "model_prob": pick.get("prob"),
+            "adjusted_prob": pick.get("adj_prob"),
+            "market_prob": pick.get("market_prob"),
+            "edge_pct": pick.get("edge_pct"),
+            "confidence": pick.get("confidence"),
+            "value": pick.get("value"),
+            "score": pick.get("score"),
+            "source_api": pick.get("source_api"),
+            "source_heuristic": pick.get("source_heuristic"),
+            "model_version": row.get("model_version"),
+            "most_likely_score": row.get("most_likely_score"),
+            "status": "pending",
+            "won": None,
+            "home_score": None,
+            "away_score": None,
+            "settled_at": None,
+        })
+    rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
+    return rows
+
+
+def build_finished_event_index(predictions):
+    out = {}
+    for row in predictions or []:
+        event = row.get("event") or {}
+        event_id = event.get("id")
+        if not event_id:
+            continue
+        if event.get("status") != "finished":
+            continue
+        if event.get("home_score") is None or event.get("away_score") is None:
+            continue
+        out[event_id] = event
+    return out
+
+
+def update_recommendation_log(existing_rows, current_rows, finished_events, settled_at_iso):
+    existing_rows = existing_rows or []
+    by_id = {}
+    for row in existing_rows:
+        log_id = row.get("log_id")
+        if not log_id:
+            log_id = f"{row.get('prediction_id')}_{row.get('market_key')}"
+            row["log_id"] = log_id
+        by_id[log_id] = row
+
+    for row in current_rows or []:
+        if row.get("log_id") not in by_id:
+            by_id[row.get("log_id")] = row
+
+    for row in by_id.values():
+        if row.get("status") in {"win", "lose"}:
+            continue
+        event = finished_events.get(row.get("event_id"))
+        if not event:
+            continue
+        won = market_outcome(event, row.get("market_key"))
+        if won is None:
+            continue
+        row["status"] = "win" if won else "lose"
+        row["won"] = bool(won)
+        row["home_score"] = event.get("home_score")
+        row["away_score"] = event.get("away_score")
+        row["settled_at"] = settled_at_iso
+
+    out = list(by_id.values())
+    out.sort(key=lambda x: (x.get("logged_at") or x.get("prediction_created_at") or "", x.get("event_id") or 0), reverse=True)
+    return out[:RECOMMENDATION_LOG_MAX_ROWS]
+
+
 def main():
     ensure_token()
     started_at = datetime.now(timezone.utc)
@@ -1109,6 +1246,10 @@ def main():
         history_predictions, _history_prep = dedupe_and_filter_predictions(history_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     history_rows = build_history_rows(history_predictions)
     signal_audit = build_signal_audit(predictions)
+    recommendation_log = load_existing_json("recommendation_log.json", [])
+    current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat())
+    finished_events = build_finished_event_index(history_predictions)
+    recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
     data_health = build_data_health(predictions, upcoming_prep)
     header_sync = build_header_sync_metrics(predictions)
 
@@ -1137,6 +1278,7 @@ def main():
     save_json(backtest, "backtest.json")
     save_json(history_rows, "history_engine.json")
     save_json(signal_audit, "signal_audit.json")
+    save_json(recommendation_log, "recommendation_log.json")
 
     meta = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
