@@ -1073,12 +1073,15 @@ def build_history_rows(predictions):
 
 def build_current_recommendation_rows(predictions, logged_at_iso):
     rows = []
+    tracked_market_keys = {"over15", "over25", "under35", "btts"}
     for row in predictions or []:
         event = row.get("event") or {}
         if event.get("status") != "notstarted":
             continue
         candidates = []
         for market in MARKETS:
+            if market["key"] not in tracked_market_keys:
+                continue
             market_key = market["key"]
             try:
                 odds = float((market["odds"](event) or 0))
@@ -1125,7 +1128,7 @@ def build_current_recommendation_rows(predictions, logged_at_iso):
             continue
         pick = max(candidates, key=rank_candidate)
         rows.append({
-            "log_id": f"{pick.get('prediction_id')}_{pick.get('market_key')}",
+            "log_id": f"{pick.get('event_id')}_{pick.get('market_key')}",
             "logged_at": logged_at_iso,
             "prediction_created_at": pick.get("created_at"),
             "event_id": pick.get("event_id"),
@@ -1179,7 +1182,7 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
     for row in existing_rows:
         log_id = row.get("log_id")
         if not log_id:
-            log_id = f"{row.get('prediction_id')}_{row.get('market_key')}"
+            log_id = f"{row.get('event_id')}_{row.get('market_key')}"
             row["log_id"] = log_id
         by_id[log_id] = row
 
