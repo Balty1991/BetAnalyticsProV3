@@ -1484,7 +1484,7 @@ def ai_finalize_stat(stat):
     avg_edge = (float(stat.get("edge_sum") or 0.0) / raw_bets) if raw_bets else 0.0
     avg_odds = (float(stat.get("odds_sum") or 0.0) / raw_bets) if raw_bets else 0.0
     sample_factor = min(1.0, raw_bets / 10.0)
-    memory_score = (roi * 0.38) + ((winrate - 54.0) * 0.22) + (avg_edge * 0.90)
+    memory_score = (roi * 0.32) + ((winrate - 54.0) * 0.18) + (avg_edge * 0.75)
     memory_score *= sample_factor
     out = dict(stat)
     out.update({
@@ -1495,8 +1495,32 @@ def ai_finalize_stat(stat):
         "profit": round(profit_w, 3),
         "avg_edge": round(avg_edge, 2),
         "avg_odds": round(avg_odds, 3),
-        "memory_score": round(clamp(memory_score, -18.0, 18.0), 2),
+        "memory_score": round(clamp(memory_score, -12.0, 12.0), 2),
     })
+    return out
+
+
+def ai_pattern_market_key(row):
+    if not row:
+        return "—"
+    kind = row.get("kind") or ""
+    key = str(row.get("key") or "")
+    if kind == "market":
+        return key or "—"
+    return key.split("|", 1)[0] if key else "—"
+
+
+def ai_select_diverse_patterns(rows, limit=12, max_per_market=2):
+    out = []
+    per_market = {}
+    for row in rows or []:
+        market_key = ai_pattern_market_key(row)
+        if per_market.get(market_key, 0) >= max_per_market:
+            continue
+        out.append(row)
+        per_market[market_key] = per_market.get(market_key, 0) + 1
+        if len(out) >= limit:
+            break
     return out
 
 
@@ -1534,9 +1558,12 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         ai_update_stat(patterns, "market_odds", f"{market_key}|{odds_bucket}", f"{market_label} • cote {odds_bucket}", row, weight)
         ai_update_stat(patterns, "market_conf", f"{market_key}|{conf_bucket}", f"{market_label} • conf {conf_bucket}", row, weight)
         ai_update_stat(patterns, "market_edge", f"{market_key}|{edge_bucket}", f"{market_label} • edge {edge_bucket}", row, weight)
-        ai_update_stat(patterns, "market_weekday", f"{market_key}|{weekday}", f"{market_label} • {weekday}", row, weight)
-        ai_update_stat(patterns, "market_hour", f"{market_key}|{hour_bucket}", f"{market_label} • interval {hour_bucket}", row, weight)
-        ai_update_stat(patterns, "market_source", f"{market_key}|{source_label}", f"{market_label} • {source_label}", row, weight)
+        if weekday != "—":
+            ai_update_stat(patterns, "market_weekday", f"{market_key}|{weekday}", f"{market_label} • {weekday}", row, weight)
+        if hour_bucket != "—":
+            ai_update_stat(patterns, "market_hour", f"{market_key}|{hour_bucket}", f"{market_label} • interval {hour_bucket}", row, weight)
+        if source_label:
+            ai_update_stat(patterns, "market_source", f"{market_key}|{source_label}", f"{market_label} • {source_label}", row, weight)
 
     final_patterns = {}
     flat_patterns = []
@@ -1550,21 +1577,23 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
             flat_patterns.append(fin)
 
     market_rows = sorted(
-        [row for row in final_patterns.get("market", {}).values() if row.get("raw_bets", 0) >= 4],
+        [row for row in final_patterns.get("market", {}).values() if row.get("raw_bets", 0) >= 5],
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
         reverse=True,
     )
-    positive_patterns = sorted(
+    positive_candidates = sorted(
         [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) > 0],
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
         reverse=True,
-    )[:12]
-    negative_patterns = sorted(
+    )
+    negative_candidates = sorted(
         [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) < 0],
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0)),
-    )[:12]
+    )
+    positive_patterns = ai_select_diverse_patterns(positive_candidates, limit=12, max_per_market=2)
+    negative_patterns = ai_select_diverse_patterns(negative_candidates, limit=12, max_per_market=2)
 
-    def lookup(kind, key, min_bets=3):
+    def lookup(kind, key, min_bets=4):
         row = final_patterns.get(kind, {}).get(key)
         if not row or int(row.get("raw_bets") or 0) < min_bets:
             return None
@@ -1581,34 +1610,57 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         weekday = ai_weekday_label(row.get("event_date"))
         hour_bucket = ai_hour_bucket(row.get("event_date"))
         source_label = ai_source_label(row)
-        reasons = []
-        bonus = 0.0
+        reason_pool = []
+        core_bonus = 0.0
+        context_impacts = []
 
-        checks = [
-            ("market", market_key, 5, 0.85, market_label),
-            ("market_league", f"{market_key}|{league}", 3, 1.00, f"{market_label} în {league}"),
-            ("market_odds", f"{market_key}|{odds_bucket}", 3, 0.45, f"{market_label} la cote {odds_bucket}"),
-            ("market_conf", f"{market_key}|{conf_bucket}", 3, 0.45, f"{market_label} la conf {conf_bucket}"),
-            ("market_edge", f"{market_key}|{edge_bucket}", 3, 0.30, f"{market_label} la edge {edge_bucket}"),
-            ("market_weekday", f"{market_key}|{weekday}", 3, 0.30, f"{market_label} în {weekday}"),
-            ("market_hour", f"{market_key}|{hour_bucket}", 3, 0.30, f"{market_label} în intervalul {hour_bucket}"),
-            ("market_source", f"{market_key}|{source_label}", 3, 0.20, f"{market_label} din sursa {source_label}"),
+        core_checks = [
+            ("market", market_key, 6, 0.60, market_label),
+            ("market_league", f"{market_key}|{league}", 4, 0.75, f"{market_label} în {league}"),
         ]
-        for kind, key, min_bets, weight, reason_label in checks:
+        context_checks = [
+            ("market_odds", f"{market_key}|{odds_bucket}", 4, 0.28, f"{market_label} la cote {odds_bucket}"),
+            ("market_conf", f"{market_key}|{conf_bucket}", 4, 0.28, f"{market_label} la conf {conf_bucket}"),
+            ("market_edge", f"{market_key}|{edge_bucket}", 4, 0.22, f"{market_label} la edge {edge_bucket}"),
+            ("market_weekday", f"{market_key}|{weekday}", 4, 0.18, f"{market_label} în {weekday}"),
+            ("market_hour", f"{market_key}|{hour_bucket}", 4, 0.18, f"{market_label} în intervalul {hour_bucket}"),
+            ("market_source", f"{market_key}|{source_label}", 4, 0.15, f"{market_label} din sursa {source_label}"),
+        ]
+
+        for kind, key, min_bets, weight, reason_label in core_checks:
             stat = lookup(kind, key, min_bets=min_bets)
             if not stat:
                 continue
             impact = float(stat.get("memory_score") or 0.0) * weight
-            bonus += impact
-            if abs(impact) >= 1.0:
-                reasons.append({
+            core_bonus += impact
+            if abs(impact) >= 0.8:
+                reason_pool.append({
                     "label": reason_label,
                     "impact": round(impact, 2),
                     "bets": int(stat.get("raw_bets") or 0),
                     "roi": round(float(stat.get("roi") or 0.0), 2),
                 })
 
-        adaptive_score = float(row.get("score") or 0.0) + clamp(bonus, -16.0, 16.0)
+        for kind, key, min_bets, weight, reason_label in context_checks:
+            stat = lookup(kind, key, min_bets=min_bets)
+            if not stat:
+                continue
+            impact = float(stat.get("memory_score") or 0.0) * weight
+            context_impacts.append({
+                "label": reason_label,
+                "impact": round(impact, 2),
+                "bets": int(stat.get("raw_bets") or 0),
+                "roi": round(float(stat.get("roi") or 0.0), 2),
+            })
+
+        positive_context = sorted([r for r in context_impacts if r["impact"] > 0], key=lambda x: x["impact"], reverse=True)[:2]
+        negative_context = sorted([r for r in context_impacts if r["impact"] < 0], key=lambda x: x["impact"])[:1]
+        context_bonus = sum(r["impact"] for r in positive_context + negative_context)
+        reasons = sorted(reason_pool + positive_context + negative_context, key=lambda x: abs(float(x.get("impact") or 0.0)), reverse=True)[:4]
+
+        raw_bonus = core_bonus + context_bonus
+        normalized_bonus = clamp(raw_bonus, -10.0, 10.0)
+        adaptive_score = float(row.get("score") or 0.0) + normalized_bonus
         adaptive_picks.append({
             "event_id": row.get("event_id"),
             "prediction_id": row.get("prediction_id"),
@@ -1624,11 +1676,11 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
             "confidence": row.get("confidence"),
             "value": row.get("value"),
             "base_score": round(float(row.get("score") or 0.0), 2),
-            "memory_bonus": round(clamp(bonus, -16.0, 16.0), 2),
+            "memory_bonus": round(normalized_bonus, 2),
             "adaptive_score": round(adaptive_score, 2),
             "source": source_label,
             "most_likely_score": row.get("most_likely_score"),
-            "reasons": sorted(reasons, key=lambda x: abs(float(x.get("impact") or 0.0)), reverse=True)[:4],
+            "reasons": reasons,
         })
 
     adaptive_picks.sort(
@@ -1639,7 +1691,17 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         ),
         reverse=True,
     )
-    adaptive_picks = adaptive_picks[:12]
+    diversified = []
+    per_market = {}
+    for pick in adaptive_picks:
+        mk = pick.get("market_key") or "—"
+        if per_market.get(mk, 0) >= 3:
+            continue
+        diversified.append(pick)
+        per_market[mk] = per_market.get(mk, 0) + 1
+        if len(diversified) >= 12:
+            break
+    adaptive_picks = diversified
 
     settled_profit = sum((float(r.get("odds") or 0.0) - 1.0) if r.get("won") else -1.0 for r in settled)
     settled_wins = sum(1 for r in settled if r.get("won") is True)
@@ -1656,7 +1718,7 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
 
     return {
         "updated_at": now_utc.isoformat(),
-        "version": "v1-adaptive-memory",
+        "version": "v1.1-adaptive-memory-diversified",
         "lookback_rows": len(settled),
         "summary": summary,
         "by_market": market_rows,
@@ -1664,9 +1726,9 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         "avoid_patterns": negative_patterns,
         "adaptive_picks": adaptive_picks,
         "notes": [
-            "AI Memory V1 este un strat adaptiv peste motorul existent, nu un model magic separat.",
-            "Scorul adaptiv combină scorul curent al selecției cu tiparele care au avut ROI pozitiv sau negativ în istoric.",
-            "Pattern-urile cu eșantion mic sunt frânate automat, ca să nu nu sară la cer din două rezultate norocoase.",
+            "AI Memory V1.1 reduce suprapunerea dintre pattern-uri apropiate și nu mai lasă aceeași piață să domine topul complet.",
+            "Bonusul adaptiv este normalizat mai jos, iar contextul nu mai poate împinge aceeași selecție din 5 direcții aproape identice.",
+            "Top picks-ul final este diversificat: maxim 3 selecții pe aceeași piață.",
         ],
     }
 
