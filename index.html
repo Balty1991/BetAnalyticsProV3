@@ -4241,19 +4241,26 @@ function placeCurrentTicket(){
   var ticket = {
     id: Date.now(),
     date: new Date().toLocaleDateString('ro-RO'),
+    placedAt: new Date().toISOString(),
     picks: BILETE.picks.map(function(m){
       var b = m.bestBet || m;
       return {
+        eventId: m.eventId || null,
+        predictionId: m.id || null,
+        eventDate: m.date || null,
         home: m.home,
         away: m.away,
         bet: b.label,
+        marketType: b.type || inferMarketTypeFromLabel(b.label),
         odds: b.odds,
         prob: b.adjProb,
         league: m.league,
         dateLabel: m.dateLabel || '',
         timeLabel: m.timeLabel || '',
         score: m.mostLikelyScore || null,
-        why: m.why || ''
+        why: m.why || '',
+        matchStatus: 'pending',
+        result: 'pending'
       };
     }),
     totalOdds: BILETE.totalOdds,
@@ -4261,7 +4268,10 @@ function placeCurrentTicket(){
     status: 'pending',
     profit: 0,
     type: 'generated',
-    criteria: BILETE.label || 'Bilet generat'
+    criteria: BILETE.label || 'Bilet generat',
+    manualOverride: false,
+    autoUpdatedAt: null,
+    autoSettledOdds: null
   };
 
   TRACKING.unshift(ticket);
@@ -4269,6 +4279,7 @@ function placeCurrentTicket(){
   toast('Bilet inregistrat in tracking!', 'ok');
   BILETE = null;
   renderBilete();
+  autoSyncTrackingStatuses();
   renderTracking();
   calcBankroll();
   renderHistory21();
@@ -4286,10 +4297,339 @@ function toggleExtraForm(){
 function addExtraTicket(){
   var date=$('ex-date').value, picksCount=parseInt($('ex-picks').value), odds=parseFloat($('ex-odds').value), stake=parseFloat($('ex-stake').value);
   if(!date||isNaN(picksCount)||isNaN(odds)||isNaN(stake)){ toast('Completeaza toate campurile', 'err'); return; }
-  var ticket = {id:Date.now(), date:new Date(date).toLocaleDateString('ro-RO'), picks:Array(picksCount).fill({home:'Extra',away:'Match',bet:'Custom',odds:1,prob:0}), totalOdds:odds, stake:stake, status:'pending', profit:0, type:'extra', criteria:'Bilet Extra'};
+  var ticket = {id:Date.now(), date:new Date(date).toLocaleDateString('ro-RO'), placedAt:new Date().toISOString(), picks:Array(picksCount).fill({home:'Extra',away:'Match',bet:'Custom',odds:1,prob:0,matchStatus:'manual',result:'pending'}), totalOdds:odds, stake:stake, status:'pending', profit:0, type:'extra', criteria:'Bilet Extra', manualOverride:true, autoUpdatedAt:null, autoSettledOdds:null};
   TRACKING.unshift(ticket);
   localStorage.setItem('bet_tracking', JSON.stringify(TRACKING));
   renderTracking(); toggleExtraForm(); toast('Bilet extra adaugat!', 'ok');
+}
+
+function inferMarketTypeFromLabel(label){
+  var txt = String(label || '').toLowerCase();
+  if(!txt) return null;
+  if(txt.indexOf('over 1.5') >= 0 || txt.indexOf('peste 1.5') >= 0 || txt === 'over15') return 'over15';
+  if(txt.indexOf('over 2.5') >= 0 || txt.indexOf('peste 2.5') >= 0 || txt === 'over25') return 'over25';
+  if(txt.indexOf('under 3.5') >= 0 || txt.indexOf('sub 3.5') >= 0 || txt === 'under35') return 'under35';
+  if(txt.indexOf('btts') >= 0 || txt.indexOf('gg') >= 0 || txt.indexOf('ambele echipe') >= 0) return 'btts';
+  return null;
+}
+
+function normalizeTicketEntityName(str){
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function isFinishedEventStatus(status, period){
+  var s = String(status || '').toLowerCase().trim();
+  var p = String(period || '').toLowerCase().trim();
+  return ['finished','ft','fulltime','full-time','completed','complete','after penalties','aet','after extra time'].indexOf(s) >= 0 ||
+         ['ft','aet','pen'].indexOf(p) >= 0;
+}
+
+function isVoidEventStatus(status){
+  var s = String(status || '').toLowerCase().trim();
+  return ['cancelled','canceled','postponed','abandoned','suspended','void','awarded'].indexOf(s) >= 0;
+}
+
+function getNumericOrNull(v){
+  var n = Number(v);
+  return isFinite(n) ? n : null;
+}
+
+function getScorePairFromSource(obj){
+  if(!obj) return {homeScore:null, awayScore:null};
+  var homeScore = getNumericOrNull(obj.home_score != null ? obj.home_score : obj.homeScore);
+  var awayScore = getNumericOrNull(obj.away_score != null ? obj.away_score : obj.awayScore);
+  return {homeScore:homeScore, awayScore:awayScore};
+}
+
+function evaluateMarketOutcome(marketType, homeScore, awayScore){
+  if(homeScore == null || awayScore == null) return 'pending';
+  var total = Number(homeScore) + Number(awayScore);
+  if(marketType === 'over15') return total >= 2 ? 'win' : 'loss';
+  if(marketType === 'over25') return total >= 3 ? 'win' : 'loss';
+  if(marketType === 'under35') return total <= 3 ? 'win' : 'loss';
+  if(marketType === 'btts') return (Number(homeScore) > 0 && Number(awayScore) > 0) ? 'win' : 'loss';
+  return 'pending';
+}
+
+function getEventDateMs(obj){
+  var raw = obj && (obj.event_date || obj.eventDate || obj.date || null);
+  var ms = raw ? new Date(raw).getTime() : NaN;
+  return isFinite(ms) ? ms : null;
+}
+
+function scoreEventCandidate(ev, pick){
+  if(!ev || !pick) return -1;
+  var score = 0;
+  var pickEventId = pick.eventId || pick.event_id || null;
+  if(pickEventId != null && String(ev.id) === String(pickEventId)) score += 1000;
+
+  var evHome = normalizeTicketEntityName(ev.home_team || ev.home || '');
+  var evAway = normalizeTicketEntityName(ev.away_team || ev.away || '');
+  var pkHome = normalizeTicketEntityName(pick.home || '');
+  var pkAway = normalizeTicketEntityName(pick.away || '');
+
+  if(evHome && pkHome && evHome === pkHome) score += 100;
+  if(evAway && pkAway && evAway === pkAway) score += 100;
+  if(evHome && pkAway && evHome === pkAway) score -= 80;
+  if(evAway && pkHome && evAway === pkHome) score -= 80;
+
+  var evDateMs = getEventDateMs(ev);
+  var pkDateMs = getEventDateMs(pick);
+  if(evDateMs != null && pkDateMs != null){
+    var diffHours = Math.abs(evDateMs - pkDateMs) / 36e5;
+    if(diffHours <= 1) score += 40;
+    else if(diffHours <= 6) score += 20;
+    else if(diffHours <= 30) score += 8;
+    else score -= Math.min(20, diffHours);
+  }
+
+  return score;
+}
+
+function findEventForStoredPick(pick){
+  if(!pick) return null;
+  var best = null;
+  var bestScore = -Infinity;
+  (ALL_EVENTS || []).forEach(function(ev){
+    var sc = scoreEventCandidate(ev, pick);
+    if(sc > bestScore){
+      bestScore = sc;
+      best = ev;
+    }
+  });
+  return bestScore >= 120 ? best : null;
+}
+
+function scoreRecommendationLogCandidate(row, pick, marketType){
+  if(!row || !pick) return -1;
+  var score = 0;
+  if(marketType && row.market_key === marketType) score += 60;
+  var pickEventId = pick.eventId || pick.event_id || null;
+  if(pickEventId != null && row.event_id != null && String(row.event_id) === String(pickEventId)) score += 1000;
+
+  var rowHome = normalizeTicketEntityName(row.home || '');
+  var rowAway = normalizeTicketEntityName(row.away || '');
+  var pkHome = normalizeTicketEntityName(pick.home || '');
+  var pkAway = normalizeTicketEntityName(pick.away || '');
+  if(rowHome && pkHome && rowHome === pkHome) score += 100;
+  if(rowAway && pkAway && rowAway === pkAway) score += 100;
+
+  var rowDateMs = getEventDateMs({event_date: row.event_date});
+  var pkDateMs = getEventDateMs(pick);
+  if(rowDateMs != null && pkDateMs != null){
+    var diffHours = Math.abs(rowDateMs - pkDateMs) / 36e5;
+    if(diffHours <= 1) score += 40;
+    else if(diffHours <= 6) score += 20;
+    else if(diffHours <= 30) score += 8;
+    else score -= Math.min(20, diffHours);
+  }
+  return score;
+}
+
+function findRecommendationLogForPick(pick, marketType){
+  if(!pick) return null;
+  var best = null;
+  var bestScore = -Infinity;
+  (RECOMMENDATION_LOG || []).forEach(function(row){
+    var sc = scoreRecommendationLogCandidate(row, pick, marketType);
+    if(sc > bestScore){
+      bestScore = sc;
+      best = row;
+    }
+  });
+  return bestScore >= 180 ? best : null;
+}
+
+function getAutoSettlementForPick(pick){
+  var marketType = pick.marketType || inferMarketTypeFromLabel(pick.bet || pick.market || '');
+  var event = findEventForStoredPick(pick);
+  if(event){
+    var scorePair = getScorePairFromSource(event);
+    var eventStatus = String(event.status || '').toLowerCase();
+    if(isVoidEventStatus(event.status)){
+      return {
+        eventId: event.id || pick.eventId || null,
+        eventDate: event.event_date || pick.eventDate || null,
+        matchStatus: eventStatus || 'void',
+        result: 'anulat',
+        homeScore: scorePair.homeScore,
+        awayScore: scorePair.awayScore,
+        marketType: marketType,
+        source: 'events'
+      };
+    }
+    if(isFinishedEventStatus(event.status, event.period) || (scorePair.homeScore != null && scorePair.awayScore != null && eventStatus === 'finished')){
+      return {
+        eventId: event.id || pick.eventId || null,
+        eventDate: event.event_date || pick.eventDate || null,
+        matchStatus: 'finished',
+        result: evaluateMarketOutcome(marketType, scorePair.homeScore, scorePair.awayScore),
+        homeScore: scorePair.homeScore,
+        awayScore: scorePair.awayScore,
+        marketType: marketType,
+        source: 'events'
+      };
+    }
+    return {
+      eventId: event.id || pick.eventId || null,
+      eventDate: event.event_date || pick.eventDate || null,
+      matchStatus: eventStatus || 'pending',
+      result: 'pending',
+      homeScore: scorePair.homeScore,
+      awayScore: scorePair.awayScore,
+      marketType: marketType,
+      source: 'events'
+    };
+  }
+
+  var row = findRecommendationLogForPick(pick, marketType);
+  if(row){
+    var rowScore = getScorePairFromSource(row);
+    if(String(row.status || '').toLowerCase() === 'void'){
+      return {
+        eventId: row.event_id || pick.eventId || null,
+        eventDate: row.event_date || pick.eventDate || null,
+        matchStatus: 'void',
+        result: 'anulat',
+        homeScore: rowScore.homeScore,
+        awayScore: rowScore.awayScore,
+        marketType: marketType,
+        source: 'log'
+      };
+    }
+    if(row.won != null){
+      return {
+        eventId: row.event_id || pick.eventId || null,
+        eventDate: row.event_date || pick.eventDate || null,
+        matchStatus: 'finished',
+        result: row.won ? 'win' : 'loss',
+        homeScore: rowScore.homeScore,
+        awayScore: rowScore.awayScore,
+        marketType: marketType,
+        source: 'log'
+      };
+    }
+    if(rowScore.homeScore != null && rowScore.awayScore != null){
+      return {
+        eventId: row.event_id || pick.eventId || null,
+        eventDate: row.event_date || pick.eventDate || null,
+        matchStatus: 'finished',
+        result: evaluateMarketOutcome(marketType, rowScore.homeScore, rowScore.awayScore),
+        homeScore: rowScore.homeScore,
+        awayScore: rowScore.awayScore,
+        marketType: marketType,
+        source: 'log'
+      };
+    }
+  }
+
+  return {
+    eventId: pick.eventId || null,
+    eventDate: pick.eventDate || null,
+    matchStatus: pick.matchStatus || 'pending',
+    result: pick.result || 'pending',
+    homeScore: pick.homeScore != null ? pick.homeScore : null,
+    awayScore: pick.awayScore != null ? pick.awayScore : null,
+    marketType: marketType,
+    source: null
+  };
+}
+
+function applyAutoSettlementToPick(pick, settlement){
+  if(!pick || !settlement) return false;
+  var changed = false;
+  function setField(key, val){
+    if((pick[key] == null ? null : pick[key]) !== (val == null ? null : val)){
+      pick[key] = val;
+      changed = true;
+    }
+  }
+  setField('eventId', settlement.eventId != null ? settlement.eventId : pick.eventId || null);
+  setField('eventDate', settlement.eventDate != null ? settlement.eventDate : pick.eventDate || null);
+  setField('marketType', settlement.marketType || pick.marketType || inferMarketTypeFromLabel(pick.bet || ''));
+  setField('matchStatus', settlement.matchStatus || 'pending');
+  setField('result', settlement.result || 'pending');
+  setField('homeScore', settlement.homeScore != null ? settlement.homeScore : null);
+  setField('awayScore', settlement.awayScore != null ? settlement.awayScore : null);
+  setField('autoSource', settlement.source || null);
+  return changed;
+}
+
+function computeAutoTicketSettlement(ticket){
+  if(!ticket || !ticket.picks || !ticket.picks.length) return null;
+  var results = ticket.picks.map(function(p){ return p.result || 'pending'; });
+  var hasPending = results.some(function(r){ return r === 'pending' || !r; });
+  var hasLoss = results.some(function(r){ return r === 'loss'; });
+  var wins = results.filter(function(r){ return r === 'win'; }).length;
+  var voids = results.filter(function(r){ return r === 'anulat'; }).length;
+
+  if(hasPending) return {status:'pending', profit:0, settledOdds:null};
+  if(hasLoss) return {status:'loss', profit:-(ticket.stake || 0), settledOdds:null};
+  if(wins === 0 && voids > 0) return {status:'anulat', profit:0, settledOdds:1};
+
+  var settledOdds = 1;
+  ticket.picks.forEach(function(p){
+    if((p.result || 'pending') === 'win'){
+      var odd = Number(p.odds || 1);
+      if(isFinite(odd) && odd > 1) settledOdds *= odd;
+    }
+  });
+  settledOdds = +settledOdds.toFixed(4);
+  return {status:'win', profit:+(((settledOdds - 1) * (ticket.stake || 0)).toFixed(2)), settledOdds:settledOdds};
+}
+
+function autoSyncTrackingStatuses(){
+  if(!Array.isArray(TRACKING) || !TRACKING.length) return false;
+  if((!ALL_EVENTS || !ALL_EVENTS.length) && (!RECOMMENDATION_LOG || !RECOMMENDATION_LOG.length)) return false;
+
+  var changed = false;
+  TRACKING.forEach(function(ticket){
+    if(!ticket) return;
+    if(ticket.manualOverride == null && ticket.type !== 'extra' && ticket.status && ticket.status !== 'pending' && !ticket.autoUpdatedAt){
+      ticket.manualOverride = true;
+      changed = true;
+    }
+    if(!Array.isArray(ticket.picks) || !ticket.picks.length) return;
+
+    ticket.picks.forEach(function(pick){
+      if(!pick) return;
+      var settlement = getAutoSettlementForPick(pick);
+      if(applyAutoSettlementToPick(pick, settlement)) changed = true;
+    });
+
+    if(ticket.type === 'extra' || ticket.manualOverride) return;
+
+    var auto = computeAutoTicketSettlement(ticket);
+    if(!auto) return;
+
+    if(ticket.status !== auto.status){
+      ticket.status = auto.status;
+      changed = true;
+    }
+    if(Number(ticket.profit || 0) !== Number(auto.profit || 0)){
+      ticket.profit = Number(auto.profit || 0);
+      changed = true;
+    }
+    var nextOdds = auto.settledOdds != null ? Number(auto.settledOdds) : null;
+    var curOdds = ticket.autoSettledOdds != null ? Number(ticket.autoSettledOdds) : null;
+    if(curOdds !== nextOdds){
+      ticket.autoSettledOdds = nextOdds;
+      changed = true;
+    }
+    var nowIso = new Date().toISOString();
+    if(ticket.autoUpdatedAt !== nowIso && auto.status !== 'pending'){
+      ticket.autoUpdatedAt = nowIso;
+      changed = true;
+    }
+  });
+
+  if(changed) localStorage.setItem('bet_tracking', JSON.stringify(TRACKING));
+  return changed;
 }
 
 function getStatusBadgeHtml(t){
@@ -4298,6 +4638,19 @@ function getStatusBadgeHtml(t){
   if(t.status==='co') return '<span style="background:rgba(245,158,11,.15);color:var(--yel);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">CO</span>';
   if(t.status==='anulat') return '<span style="background:rgba(100,116,139,.15);color:var(--muted);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">X</span>';
   return '<span class="badge-pending">PENDING</span>';
+}
+
+function getPickStatusBadgeHtml(result){
+  if(result === 'win') return '<span class="badge-win" style="font-size:9px;padding:2px 7px">WIN</span>';
+  if(result === 'loss') return '<span class="badge-loss" style="font-size:9px;padding:2px 7px">LOSE</span>';
+  if(result === 'anulat') return '<span style="background:rgba(100,116,139,.15);color:var(--muted);padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700">VOID</span>';
+  return '<span class="badge-pending" style="font-size:9px;padding:2px 7px">PENDING</span>';
+}
+
+function getTrackingModeBadgeHtml(t){
+  if(t.type === 'extra') return '<span style="background:rgba(168,85,247,.14);color:var(--pur);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">MANUAL</span>';
+  if(t.manualOverride) return '<span style="background:rgba(245,158,11,.14);color:var(--yel);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">MANUAL</span>';
+  return '<span style="background:rgba(59,130,246,.14);color:var(--acc);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">AUTO</span>';
 }
 
 function renderTracking(){
@@ -4327,12 +4680,17 @@ function renderTracking(){
   container.innerHTML = TRACKING.map(function(t,i){
     var profitStr=t.profit>0?'<span style="color:var(--grn)">+'+t.profit.toFixed(2)+' RON</span>':t.profit<0?'<span style="color:var(--red)">'+t.profit.toFixed(2)+' RON</span>':'<span style="color:var(--muted)">—</span>';
     var typeBadge=t.type==='extra'?'<span style="color:var(--pur);font-weight:700">EXTRA</span>':'<span style="color:var(--acc);font-weight:700">GEN</span>';
+    var oddsNote = (t.status === 'win' && t.autoSettledOdds && Number(t.autoSettledOdds) !== Number(t.totalOdds || 0))
+      ? ' • Cotă auto '+Number(t.autoSettledOdds).toFixed(2)+'x'
+      : '';
+    var syncNote = t.type !== 'extra' ? (t.manualOverride ? 'manual' : (t.autoUpdatedAt ? ('auto '+fmtDateTime(t.autoUpdatedAt)) : 'auto activ')) : 'manual';
     return '<div class="match-card" style="margin-bottom:10px">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">'+
         '<div>'+
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+typeBadge+getStatusBadgeHtml(t)+'</div>'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+typeBadge+getStatusBadgeHtml(t)+getTrackingModeBadgeHtml(t)+'</div>'+
           '<div style="font-size:14px;font-weight:800;margin-top:6px">'+(t.criteria||'Bilet')+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+t.date+' • '+(t.picks?t.picks.length:0)+' selecții • Cotă '+(t.totalOdds||1).toFixed(2)+'x • Miză '+(t.stake||0).toFixed(2)+' RON</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+t.date+' • '+(t.picks?t.picks.length:0)+' selecții • Cotă '+(t.totalOdds||1).toFixed(2)+'x'+oddsNote+' • Miză '+(t.stake||0).toFixed(2)+' RON</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:4px">Sync: '+syncNote+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+profitStr+'</div>'+
       '</div>'+
@@ -4341,6 +4699,7 @@ function renderTracking(){
         '<button onclick="markTicket('+i+',\'loss\')" class="btn" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)">LOSE</button>'+
         '<button onclick="cashOutTicket('+i+')" class="btn" style="background:rgba(245,158,11,.15);color:var(--yel);border:1px solid rgba(245,158,11,.3)">CO</button>'+
         '<button onclick="editTicketOdds('+i+')" class="btn" style="background:rgba(59,130,246,.15);color:var(--acc);border:1px solid rgba(59,130,246,.3)">Modifică cota</button>'+
+        +(t.type !== 'extra' ? '<button onclick="releaseTicketToAuto('+i+')" class="btn" style="background:rgba(99,102,241,.14);color:#c7d2fe;border:1px solid rgba(99,102,241,.3)">Auto</button>' : '')+
         '<button onclick="toggleTicketDetail('+i+')" class="btn" style="background:rgba(168,85,247,.15);color:var(--pur);border:1px solid rgba(168,85,247,.3)">'+(OPEN_TICKET_IDX===i?'Ascunde':'Vezi evenimente')+'</button>'+
         '<button onclick="deleteTicket('+i+')" class="btn" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--brd2)">Șterge</button>'+
       '</div>'+
@@ -4351,12 +4710,15 @@ function renderTracking(){
 }
 
 function markTicket(idx,status){
-  var t=TRACKING[idx]; var stake=t.stake||100; t.status=status;
-  if(status==='win') t.profit=(t.totalOdds-1)*stake;
+  var t=TRACKING[idx]; if(!t) return;
+  var stake=t.stake||100;
+  t.manualOverride = true;
+  t.status=status;
+  if(status==='win') t.profit=+(((t.totalOdds-1)*stake).toFixed(2));
   else if(status==='loss') t.profit=-stake;
   else t.profit=0;
   localStorage.setItem('bet_tracking', JSON.stringify(TRACKING));
-  renderTracking(); toast('Bilet actualizat','ok');
+  renderTracking(); toast('Bilet actualizat manual','ok');
 }
 function editTicketOdds(idx){
   var t = TRACKING[idx];
@@ -4367,6 +4729,9 @@ function editTicketOdds(idx){
   if(!isFinite(val) || val <= 1){ toast('Cotă invalidă', 'err'); return; }
   t.totalOdds = val;
   localStorage.setItem('bet_tracking', JSON.stringify(TRACKING));
+  if(!t.manualOverride){
+    autoSyncTrackingStatuses();
+  }
   renderTracking();
   toast('Cota a fost actualizată', 'ok');
 }
@@ -4376,27 +4741,46 @@ function cashOutTicket(idx){
   if(val === null) return;
   val = parseFloat(String(val).replace(',', '.'));
   if(!isFinite(val) || val < 0){ toast('Sumă invalidă', 'err'); return; }
+  t.manualOverride = true;
   t.status = 'co';
   t.cashout = val;
-  t.profit = val - (t.stake || 0);
+  t.profit = +(val - (t.stake || 0)).toFixed(2);
   localStorage.setItem('bet_tracking', JSON.stringify(TRACKING));
   renderTracking();
   toast('Cash out salvat', 'ok');
+}
+function releaseTicketToAuto(idx){
+  var t = TRACKING[idx];
+  if(!t || t.type === 'extra') return;
+  t.manualOverride = false;
+  delete t.cashout;
+  t.status = 'pending';
+  t.profit = 0;
+  autoSyncTrackingStatuses();
+  localStorage.setItem('bet_tracking', JSON.stringify(TRACKING));
+  renderTracking();
+  toast('Bilet trecut pe sincronizare automată', 'ok');
 }
 function renderTicketDetail(idx){
   var t = TRACKING[idx];
   if(!t || !t.picks || !t.picks.length) return '<div style="font-size:11px;color:var(--muted)">Fără selecții disponibile.</div>';
   var html = '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Evenimente bilet:</div>';
   html += t.picks.map(function(p, j){
-    return '<div style="padding:6px 0;border-top:'+ (j===0?'0':'1px solid rgba(255,255,255,.06)') +'">'+
-      '<div style="font-size:12px;font-weight:700">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>'+
-      '<div style="font-size:10px;color:var(--muted)">'+
+    var actualScore = (p.homeScore != null && p.awayScore != null) ? (p.homeScore+'-'+p.awayScore) : null;
+    var matchStateText = String(p.matchStatus || 'pending').toUpperCase();
+    return '<div style="padding:8px 0;border-top:'+ (j===0?'0':'1px solid rgba(255,255,255,.06)') +'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">'+
+        '<div style="font-size:12px;font-weight:700">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>'+
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+getPickStatusBadgeHtml(p.result || 'pending')+'<span style="font-size:9px;color:var(--muted)">'+matchStateText+'</span></div>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+
         (p.league||'—')+
         (p.dateLabel ? ' • '+p.dateLabel : '')+
         (p.timeLabel ? ' '+p.timeLabel : '')+
         ' • '+(p.bet||'—')+' @ '+((p.odds||0).toFixed ? p.odds.toFixed(2) : p.odds)+
       '</div>'+
       (p.score ? '<div style="font-size:10px;color:var(--pur)">Scor probabil: '+p.score+'</div>' : '')+
+      (actualScore ? '<div style="font-size:10px;color:var(--grn)">Scor final: '+actualScore+'</div>' : '')+
       (p.why ? '<div style="font-size:10px;color:var(--acc)">'+p.why+'</div>' : '')+
     '</div>';
   }).join('');
@@ -4887,6 +5271,7 @@ function renderAll(){
   renderMlApiCenter();
   renderMatches();
   renderBilete();
+  autoSyncTrackingStatuses();
   renderTracking();
 }
 
