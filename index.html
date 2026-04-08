@@ -1,4 +1,4 @@
-L<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ro">
 <head>
 <!-- status refresh -->
@@ -364,13 +364,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .matches-grid{grid-template-columns:1fr}
   .top-picks-grid{grid-template-columns:1fr}
   .live-grid{grid-template-columns:1fr}
-}
-.dashboard-glide-strip{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:4px;margin-top:14px}
-.dashboard-glide-strip::-webkit-scrollbar{display:none}
-.dashboard-glide-card{flex:0 0 100%;min-width:100%;scroll-snap-align:start}
-@media(min-width:900px){
-  .dashboard-glide-strip{display:grid;grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}
-  .dashboard-glide-card{min-width:0}
 }
 </style>
 </head>
@@ -5299,37 +5292,11 @@ function arrangeDashboardLayout(){
   var dash = $('tab-dashboard');
   if(!dash) return;
   var stats = $('dashboard-stats'), health = $('health-panel'), market = $('market-performance-panel'), legend = $('audit-legend-box'), api = $('ml-api-box');
-  [stats, health].forEach(function(el){ if(el) dash.appendChild(el); });
-
-  var glide = $('dashboard-glide-strip');
-  if(!glide){
-    glide = document.createElement('div');
-    glide.id = 'dashboard-glide-strip';
-    glide.className = 'dashboard-glide-strip';
-    dash.appendChild(glide);
-  }
-
-  function mountGlideCard(el, cardId){
-    if(!el) return;
-    var card = $(cardId);
-    if(!card){
-      card = document.createElement('div');
-      card.id = cardId;
-      card.className = 'dashboard-glide-card';
-      glide.appendChild(card);
-    }
-    card.appendChild(el);
-  }
-
-  mountGlideCard(legend, 'dashboard-glide-legend');
-  mountGlideCard(api, 'dashboard-glide-api');
-
-  if(market) market.style.display = 'none';
+  [stats, health, market, legend, api].forEach(function(el){ if(el) dash.appendChild(el); });
   if(stats) stats.style.marginTop = '12px';
   if(health) health.style.marginTop = '14px';
-  if(glide) glide.style.marginTop = '14px';
-  if(api) api.style.marginTop = '0';
-  if(legend) legend.style.marginTop = '0';
+  if(market) market.style.marginTop = '0';
+  if(api) api.style.marginTop = '14px';
 }
 
 function getCurrentDayKey(){
