@@ -4568,8 +4568,8 @@ function computeAutoTicketSettlement(ticket){
   var wins = results.filter(function(r){ return r === 'win'; }).length;
   var voids = results.filter(function(r){ return r === 'anulat'; }).length;
 
-  if(hasPending) return {status:'pending', profit:0, settledOdds:null};
   if(hasLoss) return {status:'loss', profit:-(ticket.stake || 0), settledOdds:null};
+  if(hasPending) return {status:'pending', profit:0, settledOdds:null};
   if(wins === 0 && voids > 0) return {status:'anulat', profit:0, settledOdds:1};
 
   var settledOdds = 1;
@@ -4699,7 +4699,7 @@ function renderTracking(){
         '<button onclick="markTicket('+i+',\'loss\')" class="btn" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)">LOSE</button>'+
         '<button onclick="cashOutTicket('+i+')" class="btn" style="background:rgba(245,158,11,.15);color:var(--yel);border:1px solid rgba(245,158,11,.3)">CO</button>'+
         '<button onclick="editTicketOdds('+i+')" class="btn" style="background:rgba(59,130,246,.15);color:var(--acc);border:1px solid rgba(59,130,246,.3)">Modifică cota</button>'+
-        +(t.type !== 'extra' ? '<button onclick="releaseTicketToAuto('+i+')" class="btn" style="background:rgba(99,102,241,.14);color:#c7d2fe;border:1px solid rgba(99,102,241,.3)">Auto</button>' : '')+
+        (t.type !== 'extra' ? '<button onclick="releaseTicketToAuto('+i+')" class="btn" style="background:rgba(99,102,241,.14);color:#c7d2fe;border:1px solid rgba(99,102,241,.3)">Auto</button>' : '')+
         '<button onclick="toggleTicketDetail('+i+')" class="btn" style="background:rgba(168,85,247,.15);color:var(--pur);border:1px solid rgba(168,85,247,.3)">'+(OPEN_TICKET_IDX===i?'Ascunde':'Vezi evenimente')+'</button>'+
         '<button onclick="deleteTicket('+i+')" class="btn" style="background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--brd2)">Șterge</button>'+
       '</div>'+
