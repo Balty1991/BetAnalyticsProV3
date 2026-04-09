@@ -368,6 +368,21 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .audit-badge{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-family:var(--mono)}
 .audit-reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .audit-reason{padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--txt)}
+.audit-row-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+.audit-row-main{min-width:0}
+.audit-row-titleline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.audit-row-rank{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 8px;border-radius:999px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.22);color:var(--acc);font-size:11px;font-weight:800;font-family:var(--mono)}
+.audit-pick-box{min-width:180px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(168,85,247,.10));border:1px solid rgba(99,102,241,.22);box-shadow:0 8px 20px rgba(0,0,0,.16)}
+.audit-pick-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.audit-pick-value{font-size:18px;font-weight:800;color:var(--txt);line-height:1.2}
+.audit-row-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.audit-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+.audit-stat{padding:10px 10px 9px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.audit-stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.audit-stat-value{font-size:14px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.audit-row-foot{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.audit-row-foot .audit-reason{background:rgba(255,255,255,.03)}
+@media(max-width:700px){.audit-row-header{grid-template-columns:1fr}.audit-pick-box{min-width:0;width:100%}.audit-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){
   .matches-grid{grid-template-columns:1fr}
   .match-card{padding:14px;border-radius:16px}
@@ -2070,23 +2085,29 @@ function renderSignalAudit(){
     var evDate = r.event_date ? (fmtDate(r.event_date) + ' • ' + fmtTime(r.event_date)) : '—';
     var age = r.age_hours != null ? ageBucketLabel(r.age_hours) : (r.created_at ? ageBucketLabel(hoursSince(r.created_at)) : '—');
     var valuePct = Number(r.value || 0) * 100;
+    var fairOdds = r.fair_odds != null ? Number(r.fair_odds).toFixed(2) : '—';
     return '<div class="audit-row">'+
-      '<div class="audit-row-top">'+
-        '<div>'+
-          '<div class="audit-row-teams">#'+(idx+1)+' • '+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+      '<div class="audit-row-header">'+
+        '<div class="audit-row-main">'+
+          '<div class="audit-row-titleline">'+
+            '<span class="audit-row-rank">#'+(idx+1)+'</span>'+
+            '<div class="audit-row-teams">'+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+          '</div>'+
           '<div class="audit-row-meta">'+(r.league || '—')+' • '+evDate+' • model '+(r.model_version || '—')+'</div>'+
         '</div>'+
-        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+sourceChipHtmlForAuditRow(r)+'<span class="audit-badge">Kelly 1/4 '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span></div>'+
+        '<div class="audit-pick-box">'+
+          '<div class="audit-pick-label">Pronostic</div>'+
+          '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</div>'+
+        '</div>'+
       '</div>'+
-      '<div class="audit-row-badges">'+
-        '<span class="audit-badge">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</span>'+
-        '<span class="audit-badge">Adj '+fmtPct(Number(r.adjusted_prob || 0))+'</span>'+
-        '<span class="audit-badge">Edge '+fmtSignedPct(Number(r.edge_pct || 0))+'</span>'+
-        '<span class="audit-badge">Value '+fmtSignedPct(valuePct)+'</span>'+
-        '<span class="audit-badge">Fair '+(r.fair_odds != null ? Number(r.fair_odds).toFixed(2) : '—')+'</span>'+
-        '<span class="audit-badge">Age '+age+'</span>'+
+      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+'<span class="audit-badge">Kelly 1/4 '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
+      '<div class="audit-stat-grid">'+
+        '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge_pct || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Value</div><div class="audit-stat-value">'+fmtSignedPct(valuePct)+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Fair odds</div><div class="audit-stat-value">'+fairOdds+'</div></div>'+
       '</div>'+
-      (reasonHtml ? '<div class="audit-reasons">'+reasonHtml+'</div>' : '')+
+      ((reasonHtml || fairOdds !== '—') ? '<div class="audit-row-foot">'+reasonHtml+'</div>' : '')+
     '</div>';
   }).join('');
 }
