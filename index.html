@@ -4797,9 +4797,15 @@ function renderBilete(){
   html += '<div style="margin-top:16px;display:grid;gap:10px">'+
     '<button onclick="storeTicket()" class="btn btn-primary" style="padding:12px 24px;font-size:14px;width:100%;justify-content:center">📌 PLASEAZĂ ÎN JURNAL</button>'+
     '<button onclick="placeCurrentTicket()" class="btn btn-green" style="padding:12px 24px;font-size:14px;width:100%;justify-content:center">✅ MARCHEAZĂ CA PLASAT</button>'+
+    '<button onclick="clearCurrentTicket()" class="btn" style="padding:12px 24px;font-size:14px;width:100%;justify-content:center;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.24);color:var(--red)">🗑️ ȘTERGE BILETUL</button>'+
   '</div></div>';
 
   container.innerHTML = html;
+}
+
+function clearCurrentTicket(){
+  BILETE = null;
+  renderBilete();
 }
 
 function placeCurrentTicket(){
