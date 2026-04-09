@@ -611,6 +611,30 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .trend-meta-value{font-size:16px;font-weight:800;font-family:var(--mono);margin-top:5px}
 @media(max-width:768px){.help-panel{padding:12px}.help-chip{font-size:10px;padding:6px 9px}.trend-chart{height:160px}}
 
+
+/* VISUAL INSIGHTS */
+.visual-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.visual-card{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(18,28,50,.95),rgba(14,22,40,.95))}
+.visual-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.visual-card-title{font-size:13px;font-weight:800;color:var(--txt)}
+.visual-card-sub{font-size:11px;color:var(--muted);line-height:1.55}
+.visual-mini-meta{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.visual-svg{width:100%;height:170px;display:block}
+.visual-list{display:grid;gap:8px}
+.visual-row{padding:9px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)}
+.visual-row-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;margin-bottom:6px}
+.visual-row-label{color:var(--txt);font-weight:700}
+.visual-row-value{font-family:var(--mono);font-weight:800}
+.visual-bar{height:7px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+.visual-bar-fill{height:100%;border-radius:999px}
+.visual-distribution{display:grid;gap:10px}
+.visual-dist-big{font-size:22px;font-weight:900;font-family:var(--mono)}
+.visual-dist-stack{display:flex;height:12px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
+.visual-dist-seg{height:100%}
+.visual-dist-legend{display:flex;flex-wrap:wrap;gap:8px}
+.visual-dist-pill{padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;color:var(--muted);font-family:var(--mono)}
+.visual-empty{padding:18px 12px;text-align:center;color:var(--muted);font-size:11px}
+
 </style>
 </head>
 <body>
@@ -673,7 +697,24 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="stat-card"><div class="stat-num" id="st-mlcov" style="color:var(--pur)">—</div><div class="stat-lbl">Cu backtest</div></div>
     </div>
 
-    <div class="focus-shell" id="focus-shell">
+    
+    <div class="help-panel" style="margin-top:12px">
+      <div class="help-head">
+        <div>
+          <div class="help-title">🧭 Glosar rapid model</div>
+          <div class="help-sub">Termenii tehnici cei mai folosiți în radaruri sunt acum accesibili direct din Dashboard. Ideea este să fie la un tap distanță, fără să încarce vizual ecranul principal.</div>
+        </div>
+        <div class="action-row"><span class="sec-badge">Dashboard</span></div>
+      </div>
+      <div class="help-chip-row">
+        <button class="help-chip" onclick="showInlineHelp('dashboard-help-output','xg')">xG</button>
+        <button class="help-chip" onclick="showInlineHelp('dashboard-help-output','confidence')">Confidence</button>
+        <button class="help-chip" onclick="showInlineHelp('dashboard-help-output','edge')">Edge</button>
+        <button class="help-chip" onclick="showInlineHelp('dashboard-help-output','value')">Value</button>
+      </div>
+      <div class="help-output" id="dashboard-help-output"></div>
+    </div>
+<div class="focus-shell" id="focus-shell">
       <div class="focus-head">
         <div>
           <div class="focus-title">🧭 Panou de recomandări</div>
@@ -702,7 +743,50 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     </div>
 
 
-    <div class="section" id="market-performance-panel" style="margin-top:0;margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(59,130,246,.04));border:1px solid rgba(34,197,94,.16);box-shadow:0 10px 28px rgba(0,0,0,.14)">
+    
+    <div class="section" id="dashboard-visual-panel" style="margin-top:0;margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.04));border:1px solid rgba(59,130,246,.18);box-shadow:0 10px 28px rgba(0,0,0,.14)">
+      <div class="visual-card-head" style="margin-bottom:12px">
+        <div>
+          <div class="visual-card-title">📊 Statistici vizuale rapide</div>
+          <div class="visual-card-sub">Trend profit/pierdere, distribuție win/loss și randament pe categorie, fără să ieși din dashboard.</div>
+        </div>
+        <div class="visual-mini-meta">Tracking + bankroll</div>
+      </div>
+      <div class="visual-grid">
+        <div class="visual-card">
+          <div class="visual-card-head">
+            <div>
+              <div class="visual-card-title">Profit / pierdere pe bilet</div>
+              <div class="visual-card-sub">Ultimele bilete înregistrate în Tracking.</div>
+            </div>
+            <div class="visual-mini-meta" id="dash-profit-meta">—</div>
+          </div>
+          <div id="dash-profit-chart"></div>
+        </div>
+        <div class="visual-card">
+          <div class="visual-card-head">
+            <div>
+              <div class="visual-card-title">Distribuție win / loss</div>
+              <div class="visual-card-sub">Biletele închise vs. cele încă pending.</div>
+            </div>
+            <div class="visual-mini-meta" id="dash-dist-meta">—</div>
+          </div>
+          <div id="dash-winloss-chart"></div>
+        </div>
+        <div class="visual-card">
+          <div class="visual-card-head">
+            <div>
+              <div class="visual-card-title">Randament pe categorie</div>
+              <div class="visual-card-sub">ROI pe tipurile de bilet deja jucate.</div>
+            </div>
+            <div class="visual-mini-meta" id="dash-category-meta">—</div>
+          </div>
+          <div id="dash-category-chart"></div>
+        </div>
+      </div>
+    </div>
+
+<div class="section" id="market-performance-panel" style="margin-top:0;margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(59,130,246,.04));border:1px solid rgba(34,197,94,.16);box-shadow:0 10px 28px rgba(0,0,0,.14)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <div style="font-size:12px;font-weight:700;color:var(--txt)">🎯 Performanță pe fiecare pronostic</div>
         <div style="font-size:10px;color:var(--muted)">win rate • ROI • win/jucate • cota medie</div>
@@ -866,7 +950,22 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="audit-grid" id="audit-summary-grid"></div>
     </div>
 
-    <div class="section" style="padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+    
+    <div class="section" style="margin-top:14px;padding:14px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(59,130,246,.04));border:1px solid rgba(34,197,94,.16);border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.14)">
+      <div class="visual-card-head" style="margin-bottom:12px">
+        <div>
+          <div class="visual-card-title">📈 Vizual Audit Kelly</div>
+          <div class="visual-card-sub">Metrici principale și piețe dominante din audit, prezentate mai ușor de digerat vizual.</div>
+        </div>
+        <div class="visual-mini-meta">Audit</div>
+      </div>
+      <div class="visual-grid">
+        <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">Metrici medii</div><div id="audit-metric-bars"></div></div>
+        <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">Piețe dominante</div><div id="audit-market-bars"></div></div>
+      </div>
+    </div>
+
+<div class="section" style="padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <div style="font-size:14px;font-weight:700;color:var(--txt)">📋 Pariuri auditate</div>
@@ -976,7 +1075,22 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         </div>
       </div>
 
-      <div class="section memory-panel memory-indigo">
+      
+      <div class="section memory-panel memory-blue" style="margin-top:14px">
+        <div class="visual-card-head" style="margin-bottom:12px">
+          <div>
+            <div class="visual-card-title">📈 Vizual AI Memory</div>
+            <div class="visual-card-sub">ROI și memory score pe piețele pe care memoria deja a învățat ceva util.</div>
+          </div>
+          <div class="visual-mini-meta">AI Memory</div>
+        </div>
+        <div class="visual-grid">
+          <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">ROI pe piață</div><div id="aimemory-roi-bars"></div></div>
+          <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">Memory score pe piață</div><div id="aimemory-score-bars"></div></div>
+        </div>
+      </div>
+
+<div class="section memory-panel memory-indigo">
         <div class="memory-shell-head">
           <div>
             <div class="memory-shell-title">🎯 Pronosticuri adaptive</div>
@@ -1441,6 +1555,8 @@ function hideLoader(){ $('loader').classList.remove('show'); }
 var TERM_HELP = {
   kelly_quarter:{title:'Kelly 1/4',text:'Kelly 1/4 este miza recomandată la un sfert din Kelly complet. Îl folosești ca variantă mai disciplinată, ca să nu supraexpui bankroll-ul atunci când modelul vede avantaj, dar realitatea rămâne volatilă.'},
   edge:{title:'Edge',text:'Edge-ul măsoară diferența dintre probabilitatea modelului și probabilitatea implicită a pieței. Cu cât Edge-ul este mai mare și validat pe o piață stabilă, cu atât semnalul este mai interesant.'},
+  xg:{title:'xG',text:'xG sau expected goals estimează câte goluri ar fi logic să producă o echipă sau un meci pe baza calității ocaziilor. Nu este scor final, ci un indicator de volum și calitate ofensivă.'},
+  confidence:{title:'Confidence',text:'Confidence este scorul de încredere al modelului pentru selecția sau verdictul afișat. Îl citești împreună cu Edge și contextul pieței, nu izolat.'},
   value:{title:'Value',text:'Value înseamnă valoare așteptată pozitivă. Nu spune că pariul va ieși sigur, ci că prețul pieței este mai bun decât ar sugera estimarea internă a modelului.'},
   fair_odds:{title:'Fair odds',text:'Fair odds reprezintă cota teoretică rezultată din probabilitatea estimată de model. Compari cota casei cu fair odds ca să vezi dacă piața oferă sau nu valoare.'},
   adjusted_prob:{title:'Probabilitate ajustată',text:'Probabilitatea ajustată este scorul final folosit în selecție după filtre, corecții și reguli de siguranță. Este mai utilă operațional decât o probabilitate brută izolată.'},
@@ -1585,6 +1701,144 @@ function renderBankrollTrend(initialBk){
     ['Diferență netă', (totalProfit >= 0 ? '+' : '') + totalProfit.toFixed(2) + ' RON', totalProfit >= 0 ? 'var(--grn)' : 'var(--red)']
   ].map(function(row){ return '<div class="trend-meta-card"><div class="trend-meta-label">'+row[0]+'</div><div class="trend-meta-value" style="color:'+row[2]+'">'+row[1]+'</div></div>'; }).join('');
 }
+function normalizeTicketCategory(ticket){
+  var raw = ((ticket && ticket.criteria) || '').toLowerCase();
+  if(ticket && ticket.type === 'extra') return 'Extra';
+  if(raw.indexOf('safe') >= 0) return 'Safe';
+  if(raw.indexOf('echilibrat') >= 0 || raw.indexOf('balanced') >= 0) return 'Echilibrat';
+  if(raw.indexOf('mega') >= 0 || raw.indexOf('risc') >= 0) return 'Mega risc';
+  if(raw.indexOf('single') >= 0) return 'Single';
+  return 'Generat';
+}
+function renderVisualBarList(targetId, rows, valueFormatter){
+  var target = $(targetId);
+  if(!target) return;
+  if(!rows || !rows.length){
+    target.innerHTML = '<div class="visual-empty">Nu există încă suficiente date.</div>';
+    return;
+  }
+  var maxAbs = rows.reduce(function(acc,row){ return Math.max(acc, Math.abs(Number(row.value || 0))); }, 0) || 1;
+  target.innerHTML = '<div class="visual-list">' + rows.map(function(row){
+    var val = Number(row.value || 0);
+    var pct = Math.max(6, Math.abs(val) * 100 / maxAbs);
+    var color = row.color || (val >= 0 ? 'var(--grn)' : 'var(--red)');
+    var display = valueFormatter ? valueFormatter(val, row) : val.toFixed(1);
+    return '<div class="visual-row"><div class="visual-row-top"><span class="visual-row-label">'+row.label+'</span><span class="visual-row-value" style="color:'+color+'">'+display+'</span></div><div class="visual-bar"><div class="visual-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
+  }).join('') + '</div>';
+}
+function renderProfitTrendChart(targetId, items){
+  var target = $(targetId);
+  if(!target) return;
+  if(!items || !items.length){
+    target.innerHTML = '<div class="visual-empty">Nu există bilete suficiente pentru trend.</div>';
+    return;
+  }
+  var values = items.map(function(it){ return Number(it.value || 0); });
+  var maxAbs = Math.max.apply(null, values.map(function(v){ return Math.abs(v); }).concat([1]));
+  var w = 760, h = 170, padX = 14, padTop = 12, padBottom = 18;
+  var midY = h / 2;
+  var barW = Math.max(12, Math.floor((w - padX*2) / items.length) - 4);
+  var gap = 4;
+  var x = padX;
+  var rects = items.map(function(it){
+    var v = Number(it.value || 0);
+    var bh = Math.max(4, Math.abs(v) * ((h/2 - padTop - 8) / maxAbs));
+    var y = v >= 0 ? (midY - bh) : midY;
+    var color = v >= 0 ? '#22c55e' : '#ef4444';
+    var r = '<rect x="'+x+'" y="'+y.toFixed(1)+'" width="'+barW+'" height="'+bh.toFixed(1)+'" rx="4" fill="'+color+'" opacity=".92" />' +
+            '<title>'+(it.label || '')+' '+(v>=0?'+':'')+v.toFixed(2)+' RON</title>';
+    x += barW + gap;
+    return r;
+  }).join('');
+  target.innerHTML = '<svg viewBox="0 0 '+w+' '+h+'" class="visual-svg" preserveAspectRatio="none"><line x1="'+padX+'" y1="'+midY+'" x2="'+(w-padX)+'" y2="'+midY+'" stroke="rgba(255,255,255,.12)" />'+rects+'</svg>';
+}
+function renderWinLossDistribution(targetId, stats){
+  var target = $(targetId);
+  if(!target) return;
+  var total = (stats.win || 0) + (stats.loss || 0) + (stats.pending || 0);
+  if(!total){
+    target.innerHTML = '<div class="visual-empty">Nu există încă bilete pentru distribuție.</div>';
+    return;
+  }
+  var wp = ((stats.win || 0) * 100 / total);
+  var lp = ((stats.loss || 0) * 100 / total);
+  var pp = ((stats.pending || 0) * 100 / total);
+  target.innerHTML = '<div class="visual-distribution"><div class="visual-dist-big">'+total+' bilete</div><div class="visual-dist-stack"><div class="visual-dist-seg" style="width:'+wp.toFixed(1)+'%;background:var(--grn)"></div><div class="visual-dist-seg" style="width:'+lp.toFixed(1)+'%;background:var(--red)"></div><div class="visual-dist-seg" style="width:'+pp.toFixed(1)+'%;background:var(--yel)"></div></div><div class="visual-dist-legend"><span class="visual-dist-pill">WIN '+(stats.win||0)+' • '+wp.toFixed(0)+'%</span><span class="visual-dist-pill">LOSS '+(stats.loss||0)+' • '+lp.toFixed(0)+'%</span><span class="visual-dist-pill">PENDING '+(stats.pending||0)+' • '+pp.toFixed(0)+'%</span></div></div>';
+}
+function renderDashboardVisuals(){
+  var tickets = Array.isArray(TRACKING) ? TRACKING.slice() : [];
+  if($('dash-profit-meta')) $('dash-profit-meta').textContent = tickets.length ? ('ultimele ' + Math.min(12, tickets.length)) : '—';
+  var profitItems = tickets.slice(0, 12).reverse().map(function(t, idx){ return { label:'B' + (idx + 1), value:Number(t.profit || 0) }; });
+  renderProfitTrendChart('dash-profit-chart', profitItems);
+
+  var dist = {win:0, loss:0, pending:0};
+  tickets.forEach(function(t){
+    if(t.status === 'win') dist.win++;
+    else if(t.status === 'loss') dist.loss++;
+    else dist.pending++;
+  });
+  if($('dash-dist-meta')) $('dash-dist-meta').textContent = tickets.length ? 'tracking' : '—';
+  renderWinLossDistribution('dash-winloss-chart', dist);
+
+  var byCat = {};
+  tickets.forEach(function(t){
+    var cat = normalizeTicketCategory(t);
+    byCat[cat] = byCat[cat] || {stake:0, profit:0, count:0};
+    byCat[cat].stake += Number(t.stake || 0);
+    byCat[cat].profit += Number(t.profit || 0);
+    byCat[cat].count += 1;
+  });
+  var catRows = Object.keys(byCat).map(function(key){
+    var roi = byCat[key].stake > 0 ? (byCat[key].profit * 100 / byCat[key].stake) : 0;
+    return {label:key + ' • ' + byCat[key].count, value:roi, color:roi >= 0 ? 'var(--grn)' : 'var(--red)'};
+  }).sort(function(a,b){ return Math.abs(Number(b.value||0)) - Math.abs(Number(a.value||0)); }).slice(0,6);
+  if($('dash-category-meta')) $('dash-category-meta').textContent = catRows.length ? (catRows.length + ' categorii') : '—';
+  renderVisualBarList('dash-category-chart', catRows, function(v){ return (v>=0?'+':'') + v.toFixed(1) + '%'; });
+}
+function renderAuditVisuals(){
+  var rows = Array.isArray((SIGNAL_AUDIT || {}).rows) ? SIGNAL_AUDIT.rows.slice() : [];
+  if(!rows.length){
+    renderVisualBarList('audit-metric-bars', []);
+    renderVisualBarList('audit-market-bars', []);
+    return;
+  }
+  var avgProb = rows.reduce(function(acc,r){ return acc + Number(r.adjusted_prob || 0); }, 0) / rows.length;
+  var avgEdge = rows.reduce(function(acc,r){ return acc + Number(r.edge_pct || 0); }, 0) / rows.length;
+  var avgKelly = rows.reduce(function(acc,r){ return acc + Number(r.kelly_quarter_pct || 0); }, 0) / rows.length;
+  var avgValue = rows.reduce(function(acc,r){ return acc + Number(r.value || 0) * 100; }, 0) / rows.length;
+  renderVisualBarList('audit-metric-bars', [
+    {label:'Prob. ajustată', value:avgProb, color:'var(--acc)'},
+    {label:'Edge mediu', value:avgEdge, color:'var(--grn)'},
+    {label:'Kelly 1/4', value:avgKelly, color:'var(--pur)'},
+    {label:'Value mediu', value:avgValue, color:'var(--yel)'}
+  ], function(v,row){ return (row.label === 'Prob. ajustată' ? v.toFixed(1) + '%' : (v>=0?'+':'') + v.toFixed(1) + '%'); });
+
+  var byMarket = {};
+  rows.forEach(function(r){
+    var key = r.market || '—';
+    byMarket[key] = byMarket[key] || {count:0, kelly:0};
+    byMarket[key].count += 1;
+    byMarket[key].kelly += Number(r.kelly_quarter_pct || 0);
+  });
+  var marketRows = Object.keys(byMarket).map(function(key){
+    return {label:key + ' • ' + byMarket[key].count, value:byMarket[key].kelly / Math.max(1, byMarket[key].count), color:'var(--acc)'};
+  }).sort(function(a,b){ return Number(b.value||0) - Number(a.value||0); }).slice(0,6);
+  renderVisualBarList('audit-market-bars', marketRows, function(v){ return v.toFixed(1) + '%'; });
+}
+function renderAiMemoryVisuals(){
+  var rows = Array.isArray((AI_MEMORY || {}).by_market) ? AI_MEMORY.by_market.slice(0, 8) : [];
+  if(!rows.length){
+    renderVisualBarList('aimemory-roi-bars', []);
+    renderVisualBarList('aimemory-score-bars', []);
+    return;
+  }
+  var roiRows = rows.map(function(r){ return {label:(r.market || '—') + ' • ' + Number(r.bets || 0), value:Number(r.roi || 0), color:Number(r.roi || 0) >= 0 ? 'var(--grn)' : 'var(--red)'}; });
+  var scoreRows = rows.map(function(r){ return {label:(r.market || '—') + ' • ' + Number(r.bets || 0), value:Number(r.memory_score || 0), color:'var(--pur)'}; });
+  renderVisualBarList('aimemory-roi-bars', roiRows, function(v){ return (v>=0?'+':'') + v.toFixed(1) + '%'; });
+  renderVisualBarList('aimemory-score-bars', scoreRows, function(v){ return v.toFixed(1); });
+}
+
+
 
 // Logo helpers - uses BSD API /img/ endpoint
 function teamLogoUrl(apiId){
@@ -2414,6 +2668,7 @@ function renderSignalAudit(){
   if(!rows.length){
     list.innerHTML = '<div class="empty-state">signal_audit.json e gol sau nu a fost generat încă la ultimul fetch.</div>';
     renderAuditGenerators();
+    renderAuditVisuals();
     return;
   }
 
@@ -2447,6 +2702,7 @@ function renderSignalAudit(){
       ((reasonHtml || fairOdds !== '—') ? '<div class="audit-row-foot">'+reasonHtml+'</div>' : '')+
     '</div>';
   }).join('');  renderAuditGenerators();
+  renderAuditVisuals();
 }
 
 
@@ -2642,6 +2898,8 @@ function renderAIMemory(){
 
   good.innerHTML = renderPatternList(memory.top_patterns || [], true);
   bad.innerHTML = renderPatternList(memory.avoid_patterns || [], false);
+
+  renderAiMemoryVisuals();
 
   var pickRows = Array.isArray(memory.adaptive_picks) ? memory.adaptive_picks : [];
   if(!pickRows.length){
@@ -5792,6 +6050,7 @@ function renderTracking(){
     '</div>';
   }).join('');
   calcBankroll();
+  renderDashboardVisuals();
 }
 
 function markTicket(idx,status){
@@ -6476,6 +6735,7 @@ function renderAll(){
 
   buildLeagueFilter();
   renderBacktest();
+  renderDashboardVisuals();
   renderMarketDistribution();
   renderMarketPerformance();
   renderFocusCenter();
@@ -6484,6 +6744,7 @@ function renderAll(){
   renderTopPicks();
   renderTopSafe();
   renderSignalAudit();
+  renderAuditVisuals();
   renderML();
   renderMLDC();
   renderML15();
