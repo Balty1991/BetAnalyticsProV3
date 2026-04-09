@@ -635,6 +635,42 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .visual-dist-pill{padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;color:var(--muted);font-family:var(--mono)}
 .visual-empty{padding:18px 12px;text-align:center;color:var(--muted);font-size:11px}
 
+
+/* UI PREFERENCES */
+body[data-theme="slate"]{
+  --bg:#0f172a;--bg2:#162235;--panel:#172033;--brd:#263447;--brd2:#334a63;
+  --txt:#e5edf8;--muted:#8fa3bb;--acc:#60a5fa;--grn:#34d399;--yel:#fbbf24;
+  --org:#fb923c;--red:#f87171;--pur:#c084fc;--cyan:#22d3ee;--val:#10b981;
+}
+body[data-theme="emerald"]{
+  --bg:#071611;--bg2:#0f241d;--panel:#10271f;--brd:#1d3a31;--brd2:#285348;
+  --txt:#e8fff6;--muted:#86a89c;--acc:#2dd4bf;--grn:#34d399;--yel:#fbbf24;
+  --org:#fb923c;--red:#fb7185;--pur:#a78bfa;--cyan:#22d3ee;--val:#10b981;
+}
+body.ui-density-compact .match-card,
+body.ui-density-compact .bilet-card,
+body.ui-density-compact .bankroll-card,
+body.ui-density-compact .visual-card,
+body.ui-density-compact .help-panel,
+body.ui-density-compact .section{padding-top:12px!important;padding-bottom:12px!important}
+body.ui-density-compact .matches-grid{gap:10px}
+body.ui-density-compact .mc-stats{gap:4px}
+body.ui-density-compact .audit-row{padding:12px}
+body.ui-density-compact .memory-generator-grid{gap:10px}
+body.ui-density-comfy .matches-grid{gap:16px}
+body.ui-density-comfy .memory-generator-grid{gap:14px}
+body.ui-density-comfy .match-card,
+body.ui-density-comfy .bilet-card,
+body.ui-density-comfy .bankroll-card,
+body.ui-density-comfy .visual-card,
+body.ui-density-comfy .help-panel{padding-top:18px!important;padding-bottom:18px!important}
+.ui-pref-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.ui-pref-box{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.ui-pref-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.ui-pref-checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
+.ui-pref-check{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:12px}
+.ui-pref-check input{accent-color:#3b82f6}
+
 </style>
 </head>
 <body>
@@ -698,7 +734,42 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     </div>
 
     
-    <div class="help-panel" style="margin-top:12px">
+    
+    <div class="section" id="ui-settings-panel" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(59,130,246,.04));border:1px solid rgba(99,102,241,.18);box-shadow:0 10px 28px rgba(0,0,0,.14)">
+      <div class="visual-card-head" style="margin-bottom:12px">
+        <div>
+          <div class="visual-card-title">🎛️ Preferințe UI</div>
+          <div class="visual-card-sub">Personalizare minimă: temă, densitate și widget-uri vizibile în dashboard. Preferințele sunt memorate automat.</div>
+        </div>
+        <div class="visual-mini-meta">salvat automat</div>
+      </div>
+      <div class="ui-pref-grid">
+        <div class="ui-pref-box">
+          <div class="ui-pref-label">Temă vizuală</div>
+          <select class="sort-select" id="ui-theme-select" onchange="setUiTheme(this.value)" style="width:100%">
+            <option value="default">Dark / Default</option>
+            <option value="slate">Slate Blue</option>
+            <option value="emerald">Emerald Dark</option>
+          </select>
+        </div>
+        <div class="ui-pref-box">
+          <div class="ui-pref-label">Densitate afișare</div>
+          <select class="sort-select" id="ui-density-select" onchange="setUiDensity(this.value)" style="width:100%">
+            <option value="normal">Normal</option>
+            <option value="compact">Compact</option>
+            <option value="comfy">Comfy</option>
+          </select>
+        </div>
+      </div>
+      <div class="ui-pref-checks">
+        <label class="ui-pref-check"><input type="checkbox" id="pref-show-help" onchange="toggleDashboardWidgetPref('help', this.checked)"><span>Glosar rapid</span></label>
+        <label class="ui-pref-check"><input type="checkbox" id="pref-show-focus" onchange="toggleDashboardWidgetPref('focus', this.checked)"><span>Panou recomandări</span></label>
+        <label class="ui-pref-check"><input type="checkbox" id="pref-show-health" onchange="toggleDashboardWidgetPref('health', this.checked)"><span>Panou rapid</span></label>
+        <label class="ui-pref-check"><input type="checkbox" id="pref-show-visual" onchange="toggleDashboardWidgetPref('visual', this.checked)"><span>Statistici vizuale</span></label>
+      </div>
+    </div>
+
+<div class="help-panel" id="dashboard-help-panel" style="margin-top:12px">
       <div class="help-head">
         <div>
           <div class="help-title">🧭 Glosar rapid model</div>
@@ -1464,6 +1535,7 @@ var API_TOKEN = ''; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
+var UI_PREFS = JSON.parse(localStorage.getItem('bet_ui_prefs') || '{}');
 
 // ============================================================
 // UTILS
@@ -1838,6 +1910,61 @@ function renderAiMemoryVisuals(){
   renderVisualBarList('aimemory-score-bars', scoreRows, function(v){ return v.toFixed(1); });
 }
 
+
+
+function getDefaultUiPrefs(){
+  return { theme:'default', density:'normal', dashboard:{help:true,focus:true,health:true,visual:true} };
+}
+function getUiPrefs(){
+  var base = getDefaultUiPrefs();
+  var current = Object.assign({}, base, UI_PREFS || {});
+  current.dashboard = Object.assign({}, base.dashboard, (UI_PREFS && UI_PREFS.dashboard) || {});
+  return current;
+}
+function saveUiPrefs(){ localStorage.setItem('bet_ui_prefs', JSON.stringify(UI_PREFS || {})); }
+function syncUiPrefsControls(){
+  var prefs = getUiPrefs();
+  if($('ui-theme-select')) $('ui-theme-select').value = prefs.theme || 'default';
+  if($('ui-density-select')) $('ui-density-select').value = prefs.density || 'normal';
+  if($('pref-show-help')) $('pref-show-help').checked = !!prefs.dashboard.help;
+  if($('pref-show-focus')) $('pref-show-focus').checked = !!prefs.dashboard.focus;
+  if($('pref-show-health')) $('pref-show-health').checked = !!prefs.dashboard.health;
+  if($('pref-show-visual')) $('pref-show-visual').checked = !!prefs.dashboard.visual;
+}
+function applyUiPrefs(){
+  var prefs = getUiPrefs();
+  document.body.setAttribute('data-theme', prefs.theme || 'default');
+  document.body.classList.remove('ui-density-compact','ui-density-comfy');
+  if(prefs.density === 'compact') document.body.classList.add('ui-density-compact');
+  if(prefs.density === 'comfy') document.body.classList.add('ui-density-comfy');
+  var map = {help:'dashboard-help-panel', focus:'focus-shell', health:'health-panel', visual:'dashboard-visual-panel'};
+  Object.keys(map).forEach(function(key){
+    var el = $(map[key]);
+    if(el) el.style.display = prefs.dashboard[key] ? '' : 'none';
+  });
+  syncUiPrefsControls();
+}
+function setUiTheme(value){
+  UI_PREFS = getUiPrefs();
+  UI_PREFS.theme = value || 'default';
+  saveUiPrefs();
+  applyUiPrefs();
+  toast('Tema a fost actualizată', 'ok');
+}
+function setUiDensity(value){
+  UI_PREFS = getUiPrefs();
+  UI_PREFS.density = value || 'normal';
+  saveUiPrefs();
+  applyUiPrefs();
+  toast('Densitatea a fost actualizată', 'ok');
+}
+function toggleDashboardWidgetPref(key, checked){
+  UI_PREFS = getUiPrefs();
+  UI_PREFS.dashboard[key] = !!checked;
+  saveUiPrefs();
+  applyUiPrefs();
+  toast((checked ? 'Afișat' : 'Ascuns') + ': ' + key, 'ok');
+}
 
 
 // Logo helpers - uses BSD API /img/ endpoint
@@ -6133,6 +6260,7 @@ function renderTicketDetail(idx){
 function toggleTicketDetail(idx){
   OPEN_TICKET_IDX = (OPEN_TICKET_IDX === idx ? null : idx);
   renderTracking();
+  applyUiPrefs();
 }
 
 function deleteTicket(idx){
@@ -6773,6 +6901,8 @@ window.addEventListener('DOMContentLoaded', function(){
   moveDashboardSectionsToMatches();
   arrangeDashboardLayout();
   setMobileNavActive('dashboard');
+  applyUiPrefs();
+  syncUiPrefsControls();
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
   setInterval(doRefresh, 900000);
