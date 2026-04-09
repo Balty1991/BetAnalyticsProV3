@@ -27,6 +27,14 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .logo-title{font-size:17px;font-weight:800;background:linear-gradient(135deg,#3b82f6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .logo-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
 .status-bar{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-family:var(--mono)}
+
+.header-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.header-quick-stats{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.header-stat-pill{min-width:62px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);text-align:center}
+.header-stat-pill strong{display:block;font-size:16px;font-family:var(--mono);line-height:1;color:var(--txt)}
+.header-stat-pill span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+#dashboard-stats{display:none!important}
+
 .sb-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .sb-dot.live{background:var(--grn);box-shadow:0 0 6px var(--grn);animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
@@ -440,6 +448,10 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .main{padding:14px 12px 110px}
   .header{padding:10px 12px}
   .header-inner{align-items:flex-start}
+  .header-tools{width:100%;justify-content:space-between}
+  .header-quick-stats{flex:1;justify-content:space-between;padding:6px}
+  .header-stat-pill{min-width:0;flex:1;padding:6px 4px}
+  .header-stat-pill strong{font-size:15px}
   .logo-title{font-size:15px}
   .status-bar{font-size:10px}
   .btn#btn-refresh{padding:7px 10px;font-size:11px}
@@ -506,7 +518,14 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="sb-dot live" id="sb-dot"></div>
       <span id="sb-text">Se incarca...</span>
     </div>
-    <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button>
+    <div class="header-tools">
+      <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button>
+      <div class="header-quick-stats" id="header-quick-stats">
+        <div class="header-stat-pill"><strong id="hq-ml">—</strong><span>ML</span></div>
+        <div class="header-stat-pill"><strong id="hq-odds">—</strong><span>Cote</span></div>
+        <div class="header-stat-pill"><strong id="hq-safe">—</strong><span>Safe</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -5890,6 +5909,9 @@ function renderAll(){
   if($('st-safe')) $('st-safe').textContent = safe;
   if($('st-value')) $('st-value').textContent = value;
   if($('st-mlcov')) $('st-mlcov').textContent = BACKTEST_SUMMARY && BACKTEST_SUMMARY.engine_bets ? ((BACKTEST_SUMMARY.engine_roi >= 0 ? '+' : '') + fmtPct(BACKTEST_SUMMARY.engine_roi || 0)) : (total ? Math.round(mlComplete*100/total)+'%' : '—');
+  if($('hq-ml')) $('hq-ml').textContent = rawMl;
+  if($('hq-odds')) $('hq-odds').textContent = rawOdds;
+  if($('hq-safe')) $('hq-safe').textContent = safe;
   $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — ora '+timeStr;
 
   buildLeagueFilter();
