@@ -353,6 +353,12 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .audit-card-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
 .audit-card-value{font-size:20px;font-weight:800;font-family:var(--mono)}
 .audit-card-sub{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.4}
+#audit-summary-grid.audit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#audit-summary-grid .audit-card{padding:12px 12px 10px;border-radius:12px}
+#audit-summary-grid .audit-card-label{margin-bottom:6px;font-size:9px}
+#audit-summary-grid .audit-card-value{font-size:18px}
+#audit-summary-grid .audit-card-sub{margin-top:4px;font-size:10px;line-height:1.3}
+@media (max-width:540px){#audit-summary-grid.audit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
 .audit-list{display:grid;gap:10px}
 .audit-row{background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));border:1px solid var(--brd2);border-radius:14px;padding:12px}
 .audit-row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -748,7 +754,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--txt)">🎯 Audit Kelly / Signal</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Top pariuri filtrate din <strong style="color:var(--txt)">signal_audit.json</strong>, cu Kelly afișat pe fiecare selecție.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Sinteză a selecțiilor validate din <strong style="color:var(--txt)">signal_audit.json</strong>.</div>
         </div>
         <div id="audit-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
       </div>
@@ -759,9 +765,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <div style="font-size:14px;font-weight:700;color:var(--txt)">📋 Pariuri auditate</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Kelly 1/4 este pus în față; pe mobil se vede clar fără să faci gimnastică cu zoom-ul.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Selecțiile sunt ordonate după Kelly 1/4.</div>
         </div>
-        <div style="font-size:10px;color:var(--muted)">sortare implicită: Kelly 1/4 ↓</div>
+        <div style="font-size:10px;color:var(--muted)">Sortare: Kelly 1/4 ↓</div>
       </div>
       <div id="signal-audit-table" class="audit-list"></div>
     </div>
@@ -2038,12 +2044,12 @@ function renderSignalAudit(){
   var mixedCount = eligible.filter(function(m){ return m.bestBet && sourceTypeFromBet(m.bestBet) === 'mixed'; }).length;
 
   var cards = [
-    {label:'Semnale auditate', value: rows.length, sub:'pariuri prezente în signal_audit.json', color:'var(--acc)'},
-    {label:'Kelly 1/4 mediu', value: fmtPct(Number(audit.avg_kelly_quarter_pct || 0)), sub:'miza teoretică frânată, nu Kelly full ca să nu sară banca-n tavan', color:'var(--grn)'},
-    {label:'Edge mediu', value: fmtSignedPct(Number(audit.avg_edge_pct || 0)), sub:'diferența model vs no-vig market', color:'var(--yel)'},
-    {label:'Value mediu', value: fmtSignedPct(Number(audit.avg_value_pct || 0)), sub:'EV mediu al semnalelor auditate', color:'var(--pur)'},
-    {label:'Heuristic în carduri', value: heurCount + (mixedCount ? ' +' + mixedCount + ' mix' : ''), sub:'eligibile marcate explicit în UI, ca să nu mai fie ninja prin carduri', color:'var(--yel)'},
-    {label:'Stale scoase', value: Number(health.stale_predictions_removed || 0), sub:(health.prediction_age_cap_hours ? ('cap ' + ageBucketLabel(health.prediction_age_cap_hours)) : 'fără cap') + ' • max rămas ' + (health.max_prediction_age_hours != null ? ageBucketLabel(health.max_prediction_age_hours) : '—'), color:'var(--red)'}
+    {label:'Semnale auditate', value: rows.length, sub:'total selecții incluse în audit', color:'var(--acc)'},
+    {label:'Kelly 1/4 mediu', value: fmtPct(Number(audit.avg_kelly_quarter_pct || 0)), sub:'miza recomandată la nivel Kelly 1/4', color:'var(--grn)'},
+    {label:'Edge mediu', value: fmtSignedPct(Number(audit.avg_edge_pct || 0)), sub:'diferență medie model vs piață', color:'var(--yel)'},
+    {label:'Value mediu', value: fmtSignedPct(Number(audit.avg_value_pct || 0)), sub:'valoare așteptată medie', color:'var(--pur)'},
+    {label:'Heuristic / Mix', value: heurCount + (mixedCount ? ' +' + mixedCount + ' mix' : ''), sub:'selecții afișate din surse heuristic și mix', color:'var(--yel)'},
+    {label:'Predicții stale scoase', value: Number(health.stale_predictions_removed || 0), sub:'eliminate pe criteriul de vechime', color:'var(--red)'}
   ];
 
   summary.innerHTML = cards.map(function(c){
