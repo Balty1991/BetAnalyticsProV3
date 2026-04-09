@@ -4634,29 +4634,68 @@ function renderPresetTicketCards(targetId){
 function renderFocusMarketCard(){
   var target = $('focus-market-card');
   if(!target) return;
-  var rows = (BACKTEST_SUMMARY && Array.isArray(BACKTEST_SUMMARY.by_market)) ? BACKTEST_SUMMARY.by_market.slice() : [];
-  var supported = (BET_TYPES || []).map(function(b){ return b.label; });
-  rows = rows.filter(function(item){ return item && supported.indexOf(item.key) !== -1; });
-  rows.sort(function(a,b){
-    var aScore = (Number(a.roi || 0) * 1.2) + (Number(a.winrate || 0) * 0.4) + Math.min(25, Number(a.bets || 0));
-    var bScore = (Number(b.roi || 0) * 1.2) + (Number(b.winrate || 0) * 0.4) + Math.min(25, Number(b.bets || 0));
-    return bScore - aScore;
+
+  var supportedHistoryMarkets = (BET_TYPES || []).map(function(b){ return b.label; });
+  var historyCutoff = new Date(Date.now() - (21 * 86400000));
+  var historyRows = (RECOMMENDATION_LOG || []).filter(function(r){
+    if(!r || supportedHistoryMarkets.indexOf(r.market) === -1) return false;
+    var loggedAt = new Date(r.logged_at || r.prediction_created_at || 0);
+    if(!isFinite(loggedAt.getTime())) return false;
+    return loggedAt >= historyCutoff;
   });
-  if(!rows.length){
-    target.innerHTML = '<div class="focus-side-title">📌 Piața-fanion</div><div class="focus-side-sub">Backtestul nu are încă suficient context pentru o piață dominantă.</div>';
+
+  function summarizeRows(rows){
+    var groups = {};
+    (rows || []).forEach(function(r){
+      var key = r.market || '—';
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    return Object.keys(groups).map(function(key){
+      var list = groups[key];
+      var settled = list.filter(function(r){ return r.status === 'win' || r.status === 'lose'; });
+      var bets = settled.length;
+      var wins = settled.filter(function(r){ return r.status === 'win' || r.won === true; }).length;
+      var profit = settled.reduce(function(acc, r){
+        var o = Number(r.odds || 0);
+        var isWin = r.status === 'win' || r.won === true;
+        return acc + (isWin ? (o > 1 ? (o - 1) : 0) : -1);
+      }, 0);
+      return {
+        key: key,
+        total: list.length,
+        pending: list.length - bets,
+        bets: bets,
+        wins: wins,
+        roi: bets ? (profit * 100 / bets) : 0,
+        winrate: bets ? (wins * 100 / bets) : 0,
+        avgOdds: bets ? settled.reduce(function(acc, r){ return acc + Number(r.odds || 0); }, 0) / bets : 0
+      };
+    });
+  }
+
+  var rows = summarizeRows(historyRows).filter(function(item){ return item && item.bets > 0; });
+  rows.sort(function(a,b){
+    if((b.roi || 0) !== (a.roi || 0)) return (b.roi || 0) - (a.roi || 0);
+    if((b.winrate || 0) !== (a.winrate || 0)) return (b.winrate || 0) - (a.winrate || 0);
+    return (b.bets || 0) - (a.bets || 0);
+  });
+
+  var best = rows[0] || null;
+  if(!best){
+    target.innerHTML = '<div class="focus-side-title">📌 Top trend 21 zile</div><div class="focus-footer" style="margin-top:12px"><button class="btn btn-primary" onclick="switchTab(&#39;istoric21&#39;)">Vezi statistica</button></div>';
     return;
   }
-  var best = rows[0];
-  target.innerHTML = '<div class="focus-side-title">📌 Piața-fanion acum</div>'+
-    '<div class="focus-side-sub">Nu te pierde în toate piețele. Când apare sus în aplicație, aceasta e piața pe care merită s-o tratezi prima.</div>'+
+
+  target.innerHTML = '<div class="focus-side-title">📌 Top trend 21 zile</div>'+
     '<div style="font-size:18px;font-weight:800;color:var(--txt);margin-bottom:10px">'+(best.key || '—')+'</div>'+
     '<div class="focus-side-metrics">'+
       '<div class="focus-metric"><div class="v">'+Number(best.winrate || 0).toFixed(1)+'%</div><div class="l">Win rate</div></div>'+
       '<div class="focus-metric"><div class="v">'+(Number(best.roi || 0) >= 0 ? '+' : '')+Number(best.roi || 0).toFixed(1)+'%</div><div class="l">ROI</div></div>'+
-      '<div class="focus-metric"><div class="v">'+Number(best.avg_odds || 0).toFixed(2)+'</div><div class="l">Cotă medie</div></div>'+
+      '<div class="focus-metric"><div class="v">'+Number(best.avgOdds || 0).toFixed(2)+'</div><div class="l">Cotă medie</div></div>'+
       '<div class="focus-metric"><div class="v">'+Number(best.wins || 0)+'/'+Number(best.bets || 0)+'</div><div class="l">Win / jucate</div></div>'+
     '</div>'+
-    '<div class="focus-footer" style="margin-top:12px"><div class="focus-footer-note">Folosește-o ca piață de bază, nu ca singura piață din univers.</div><button class="btn btn-primary" onclick="switchTab(&#39;meciuri&#39;)">Vezi analiza</button></div>';
+    '<div class="focus-footer" style="margin-top:12px"><button class="btn btn-primary" onclick="switchTab(&#39;istoric21&#39;)">Vezi statistica</button></div>';
 }
 
 function renderFocusSinglesCard(){
