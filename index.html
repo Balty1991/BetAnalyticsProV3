@@ -825,6 +825,36 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       </div>
       <div id="signal-audit-table" class="audit-list"></div>
     </div>
+
+    <div class="section memory-panel memory-mix" style="margin-top:14px">
+      <div class="memory-shell-head">
+        <div>
+          <div class="memory-shell-title">🎫 Generator Audit Kelly</div>
+          <div class="memory-shell-sub">Bilete generate direct din selecțiile validate din audit, folosind Kelly 1/4, edge și probabilitatea ajustată.</div>
+        </div>
+        <div class="memory-shell-meta">Safe / Echilibrat / Mega risc</div>
+      </div>
+      <div class="memory-generator-grid">
+        <div class="memory-generator-card safe">
+          <div class="memory-generator-title">🛡️ Safe</div>
+          <div class="memory-generator-sub">2-3 selecții mai conservatoare, cu Kelly și probabilitate ridicate.</div>
+          <button class="btn btn-green" style="width:100%;justify-content:center" onclick="generateAuditTicket('safe')">Generează</button>
+          <div id="audit-ticket-safe" style="margin-top:12px"></div>
+        </div>
+        <div class="memory-generator-card balanced">
+          <div class="memory-generator-title">⚖️ Echilibrat</div>
+          <div class="memory-generator-sub">3-4 selecții, balans între stabilitate, Kelly și cotă totală.</div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateAuditTicket('balanced')">Generează</button>
+          <div id="audit-ticket-balanced" style="margin-top:12px"></div>
+        </div>
+        <div class="memory-generator-card risk">
+          <div class="memory-generator-title">🚀 Mega risc</div>
+          <div class="memory-generator-sub">5-7 selecții filtrate din audit pentru cotă mai mare, fără loterie oarbă.</div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateAuditTicket('risk')">Generează</button>
+          <div id="audit-ticket-risk" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== AI MEMORY TAB ===== -->
@@ -1206,6 +1236,7 @@ var RECOMMENDATION_LOG = [];
 var SIGNAL_AUDIT = {};
 var AI_MEMORY = {};
 var AI_MEMORY_TICKETS = {safe:null, balanced:null, risk:null};
+var AUDIT_TICKETS = {safe:null, balanced:null, risk:null};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
@@ -1357,6 +1388,7 @@ function switchTab(name){
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
+  if(name==='audit'){ renderSignalAudit(); renderAuditGenerators(); }
   if(name==='aimemory') renderAIMemory();
 }
 
@@ -2130,6 +2162,7 @@ function renderSignalAudit(){
 
   if(!rows.length){
     list.innerHTML = '<div class="empty-state">signal_audit.json e gol sau nu a fost generat încă la ultimul fetch.</div>';
+    renderAuditGenerators();
     return;
   }
 
@@ -2162,8 +2195,141 @@ function renderSignalAudit(){
       '</div>'+
       ((reasonHtml || fairOdds !== '—') ? '<div class="audit-row-foot">'+reasonHtml+'</div>' : '')+
     '</div>';
-  }).join('');
+  }).join('');  renderAuditGenerators();
 }
+
+
+function getAuditProfile(type){
+  if(type === 'safe') return { label:'🛡️ Audit Kelly Safe', minPicks:2, maxPicks:3, minKelly:4.2, minProb:71, minEdge:6.0, minOdd:1.18, maxOdd:1.55, targetMinOdds:1.70, targetMaxOdds:3.20, maxSameMarket:1 };
+  if(type === 'balanced') return { label:'⚖️ Audit Kelly Echilibrat', minPicks:3, maxPicks:4, minKelly:3.0, minProb:66, minEdge:4.0, minOdd:1.18, maxOdd:1.68, targetMinOdds:2.40, targetMaxOdds:5.80, maxSameMarket:2 };
+  return { label:'🚀 Audit Kelly Mega risc', minPicks:5, maxPicks:7, minKelly:1.6, minProb:60, minEdge:2.5, minOdd:1.18, maxOdd:1.78, targetMinOdds:6.00, targetMaxOdds:18.00, maxSameMarket:3 };
+}
+
+function getAuditRowEventKey(row){
+  if(row && row.event_id != null) return 'e' + row.event_id;
+  return [row.home || '—', row.away || '—', row.event_date || '—'].join('|');
+}
+
+function getAuditRowMarketKey(row){
+  return row.market_key || row.market || 'misc';
+}
+
+function getAuditPool(){
+  return (SIGNAL_AUDIT && SIGNAL_AUDIT.rows || []).filter(function(r){
+    return r && (r.event_id != null || (r.home && r.away)) && Number(r.book_odds || 0) >= 1.10 && Number(r.adjusted_prob || 0) > 0;
+  });
+}
+
+function rankAuditCandidate(row, type){
+  var kelly = Number(row.kelly_quarter_pct || 0);
+  var prob = Number(row.adjusted_prob || 0);
+  var edge = Number(row.edge_pct || 0);
+  var odds = Number(row.book_odds || 0);
+  var value = Number(row.value || 0) * 100;
+  if(type === 'safe') return kelly * 1.35 + prob * 0.34 + edge * 1.15 + value * 0.22 - Math.max(0, odds - 1.45) * 18;
+  if(type === 'balanced') return kelly * 1.25 + prob * 0.22 + edge * 1.05 + value * 0.30 + Math.min(odds, 1.65) * 5;
+  return kelly * 1.10 + prob * 0.12 + edge * 0.95 + value * 0.28 + odds * 8;
+}
+
+function generateAuditTicket(type, silent){
+  var base = getAuditProfile(type);
+  var ticket = null;
+  for(var relax = 0; relax <= 3; relax++){
+    var profile = Object.assign({}, base, {
+      minKelly: Math.max(0, base.minKelly - (relax * 0.8)),
+      minProb: Math.max(0, base.minProb - (relax * 3)),
+      minEdge: base.minEdge - (relax * 1.2),
+      maxOdd: base.maxOdd + (relax * 0.06),
+      maxSameMarket: Math.min(base.maxSameMarket + (relax > 1 ? 1 : 0), 3)
+    });
+    var pool = getAuditPool().filter(function(r){
+      return Number(r.kelly_quarter_pct || 0) >= profile.minKelly &&
+             Number(r.adjusted_prob || 0) >= profile.minProb &&
+             Number(r.edge_pct || 0) >= profile.minEdge &&
+             Number(r.book_odds || 0) >= profile.minOdd &&
+             Number(r.book_odds || 0) <= profile.maxOdd;
+    }).sort(function(a,b){
+      return rankAuditCandidate(b, type) - rankAuditCandidate(a, type);
+    });
+
+    var picks = [];
+    var totalOdds = 1;
+    var byMarket = {};
+    var events = {};
+    for(var i=0;i<pool.length;i++){
+      var row = pool[i];
+      var eventKey = getAuditRowEventKey(row);
+      var marketKey = getAuditRowMarketKey(row);
+      if(events[eventKey]) continue;
+      if((byMarket[marketKey] || 0) >= profile.maxSameMarket) continue;
+      picks.push(row);
+      events[eventKey] = true;
+      byMarket[marketKey] = (byMarket[marketKey] || 0) + 1;
+      totalOdds *= Number(row.book_odds || 1);
+      var enoughCount = picks.length >= profile.minPicks;
+      var enoughOdds = totalOdds >= profile.targetMinOdds;
+      var shouldStop = totalOdds >= (profile.targetMaxOdds * 0.92) || picks.length >= profile.maxPicks;
+      if(enoughCount && enoughOdds && shouldStop) break;
+    }
+
+    if(picks.length >= profile.minPicks){
+      ticket = {
+        type: type,
+        label: profile.label,
+        picks: picks,
+        totalOdds: totalOdds,
+        avgKelly: picks.reduce(function(acc,r){ return acc + Number(r.kelly_quarter_pct || 0); },0) / picks.length,
+        avgEdge: picks.reduce(function(acc,r){ return acc + Number(r.edge_pct || 0); },0) / picks.length,
+        combinedProb: picks.reduce(function(acc,r){ return acc * (Number(r.adjusted_prob || 0) / 100); }, 1) * 100,
+        generatedAt: new Date().toISOString()
+      };
+      break;
+    }
+  }
+
+  if(!ticket){
+    ticket = { type:type, label:base.label, picks:[], totalOdds:1, error:'Nu există încă suficiente selecții auditate pentru acest profil.' };
+  }
+  AUDIT_TICKETS[type] = ticket;
+  renderAuditTicket(type);
+  if(!silent) toast(base.label + ' generat!', ticket.picks && ticket.picks.length ? 'ok' : 'warn');
+}
+
+function renderAuditTicket(type){
+  var target = $('audit-ticket-' + type);
+  if(!target) return;
+  var ticket = AUDIT_TICKETS[type];
+  if(!ticket || !ticket.picks || !ticket.picks.length){
+    var msg = ticket && ticket.error ? ticket.error : 'Apasă pe Generează și lasă Audit Kelly să aleagă.';
+    target.innerHTML = '<div class="empty-state" style="padding:10px">'+msg+'</div>';
+    return;
+  }
+  var html = '<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+      '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+ticket.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+ticket.picks.length+' selecții • Kelly mediu '+ticket.avgKelly.toFixed(1)+'%</div></div>'+
+      '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+ticket.totalOdds.toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă '+ticket.combinedProb.toFixed(1)+'%</div></div>'+
+    '</div>';
+  ticket.picks.forEach(function(r){
+    var tags = (r.reason_tags || []).slice(0,2).map(function(tag){ return '<span class="reason-pill">'+tag+'</span>'; }).join('');
+    html += '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+        '<div><div style="font-size:12px;font-weight:700;color:var(--txt)">'+(r.home || '—')+' vs '+(r.away || '—')+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+(r.league || '—')+' • '+(r.event_date ? (fmtDate(r.event_date)+' '+fmtTime(r.event_date)) : '—')+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:12px;font-weight:800;color:var(--acc)">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</div><div style="font-size:10px;color:var(--grn);margin-top:4px">Kelly '+fmtPct(Number(r.kelly_quarter_pct || 0))+' • Edge '+fmtSignedPct(Number(r.edge_pct || 0))+'</div></div>'+
+      '</div>'+
+      (tags ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+tags+'</div>' : '')+
+    '</div>';
+  });
+  html += '</div>';
+  target.innerHTML = html;
+}
+
+function renderAuditGenerators(){
+  ['safe','balanced','risk'].forEach(function(type){
+    if(!AUDIT_TICKETS[type] || !AUDIT_TICKETS[type].picks || !AUDIT_TICKETS[type].picks.length) generateAuditTicket(type, true);
+    else renderAuditTicket(type);
+  });
+}
+
 
 function renderAIMemory(){
   var memory = AI_MEMORY || {};
