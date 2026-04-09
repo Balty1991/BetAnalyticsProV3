@@ -1280,6 +1280,7 @@ function switchTab(name){
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
   closeMobileMore();
   setMobileNavActive(name);
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
