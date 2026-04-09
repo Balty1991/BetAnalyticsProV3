@@ -915,26 +915,15 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <!-- ===== BILETE ===== -->
   <div class="tab-content" id="tab-bilete">
     <div style="display:grid;gap:16px;margin-bottom:22px">
-      <div class="welcome-box focus-bilete-hero" style="margin-bottom:0">
-        <div>
-          <div class="sec-title" style="margin-bottom:6px">🎫 Bilete AI — flux simplificat</div>
-          <div class="welcome-text">Ți-am lăsat în față doar variantele care merită deschise primele. Generatoarele agresive și setările de finețe au fost mutate mai jos, în modul avansat.</div>
+      <div class="bilet-card" style="margin-bottom:0;padding:16px">
+        <div style="font-size:15px;font-weight:800;margin-bottom:10px">Generatoare avansate / secundare</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="generateTicket()">🛡️ Bilet Simplu EV</button>
+          <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--acc),var(--cyan))" onclick="generateOver15Ticket()">🔥 Bilet 1.5G EV+</button>
+          <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateMixTicket()">🎯 Mix 70%</button>
+          <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateBigWinTicket()">🚀 Mega Big Win</button>
+          <button class="btn" style="background:var(--brd);color:var(--txt)" onclick="toggleCustomBuilder(true)">🎛️ Constructor personalizat</button>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="generateBestEventTicket()">🎯 Single de azi</button>
-          <button class="btn btn-green" onclick="generateConservativeTicket()">🧊 Conservator</button>
-        </div>
-      </div>
-
-      <div class="focus-shell" style="padding:14px 14px 10px">
-        <div class="focus-head" style="margin-bottom:10px">
-          <div>
-            <div class="focus-title" style="font-size:15px">Ce merită generat acum</div>
-            <div class="focus-sub">Aici vezi imediat cele mai bune formate de bilet disponibile pe datele curente.</div>
-          </div>
-          <button class="btn" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)" onclick="toggleAdvancedGenerators()">🧰 Mod avansat</button>
-        </div>
-        <div class="focus-grid" id="ticket-lane-board"></div>
       </div>
 
       <div class="extra-form" id="custom-builder">
@@ -980,23 +969,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           <button class="btn" onclick="toggleCustomBuilder()" style="background:var(--brd);color:var(--txt)">Închide</button>
         </div>
       </div>
-
-      <div style="display:flex;justify-content:center">
-        <button class="btn" onclick="toggleAdvancedGenerators()" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">🧰 Arată / ascunde modul avansat</button>
-      </div>
-
-      <div id="advanced-generators" style="display:none">
-        <div class="bilet-card" style="margin-bottom:0;padding:16px">
-          <div style="font-size:13px;font-weight:700;margin-bottom:10px">Generatoare avansate / secundare</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="generateTicket()">🛡️ Bilet Simplu EV</button>
-            <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--acc),var(--cyan))" onclick="generateOver15Ticket()">🔥 Bilet 1.5G EV+</button>
-            <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateMixTicket()">🎯 Mix 70%</button>
-            <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateBigWinTicket()">🚀 Mega Big Win</button>
-            <button class="btn" style="background:var(--brd);color:var(--txt)" onclick="toggleCustomBuilder(true)">🎛️ Constructor personalizat</button>
-          </div>
-        </div>
-      </div>
+    </div>
     </div>
 
     <div id="bilete-container"></div>
@@ -4738,15 +4711,10 @@ function renderBilete(){
   var container = $('bilete-container');
 
   if(!BILETE || BILETE.picks.length === 0){
-    var msg = (BILETE && BILETE.error) ? BILETE.error : 'Alege unul dintre formatele recomandate de mai sus și lasă motorul să facă trierea.';
+    var msg = (BILETE && BILETE.error) ? BILETE.error : 'Alege un generator și creează biletul dorit.';
     container.innerHTML = '<div class="ticket-empty-cta">'+
       '<div class="ticket-empty-cta-title">Niciun bilet generat încă</div>'+
       '<div class="ticket-empty-cta-sub">'+msg+'</div>'+
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'+
-        '<button class="btn btn-primary" onclick="generateBestEventTicket()">🎯 Single de azi</button>'+
-        '<button class="btn btn-green" onclick="generateConservativeTicket()">🧊 Conservator</button>'+
-        '<button class="btn btn-primary" onclick="generateTicket()">🛡️ Combo echilibrat</button>'+
-      '</div>'+
     '</div>';
     return;
   }
