@@ -34,6 +34,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .header-stat-pill strong{display:block;font-size:16px;font-family:var(--mono);line-height:1;color:var(--txt)}
 .header-stat-pill span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
 #dashboard-stats{display:none!important}
+#market-performance-panel{display:none!important}
 
 .sb-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .sb-dot.live{background:var(--grn);box-shadow:0 0 6px var(--grn);animation:pulse 1.5s infinite}
@@ -5848,7 +5849,7 @@ function arrangeDashboardLayout(){
     dash.appendChild(shell);
     body = $('dashboard-insights-body');
   }
-  [health, market, legend, api].forEach(function(el){ if(el && body) body.appendChild(el); });
+  [health, legend, api].forEach(function(el){ if(el && body) body.appendChild(el); });
 }
 
 function getCurrentDayKey(){
