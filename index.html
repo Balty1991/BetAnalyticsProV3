@@ -635,57 +635,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .visual-dist-pill{padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;color:var(--muted);font-family:var(--mono)}
 .visual-empty{padding:18px 12px;text-align:center;color:var(--muted);font-size:11px}
 
-
-/* UI PREFERENCES */
-body[data-theme="slate"]{
-  --bg:#0f172a;--bg2:#162235;--panel:#172033;--brd:#263447;--brd2:#334a63;
-  --txt:#e5edf8;--muted:#8fa3bb;--acc:#60a5fa;--grn:#34d399;--yel:#fbbf24;
-  --org:#fb923c;--red:#f87171;--pur:#c084fc;--cyan:#22d3ee;--val:#10b981;
-}
-body[data-theme="emerald"]{
-  --bg:#071611;--bg2:#0f241d;--panel:#10271f;--brd:#1d3a31;--brd2:#285348;
-  --txt:#e8fff6;--muted:#86a89c;--acc:#2dd4bf;--grn:#34d399;--yel:#fbbf24;
-  --org:#fb923c;--red:#fb7185;--pur:#a78bfa;--cyan:#22d3ee;--val:#10b981;
-}
-body.ui-density-compact .match-card,
-body.ui-density-compact .bilet-card,
-body.ui-density-compact .bankroll-card,
-body.ui-density-compact .visual-card,
-body.ui-density-compact .help-panel,
-body.ui-density-compact .section{padding-top:12px!important;padding-bottom:12px!important}
-body.ui-density-compact .matches-grid{gap:10px}
-body.ui-density-compact .mc-stats{gap:4px}
-body.ui-density-compact .audit-row{padding:12px}
-body.ui-density-compact .memory-generator-grid{gap:10px}
-body.ui-density-comfy .matches-grid{gap:16px}
-body.ui-density-comfy .memory-generator-grid{gap:14px}
-body.ui-density-comfy .match-card,
-body.ui-density-comfy .bilet-card,
-body.ui-density-comfy .bankroll-card,
-body.ui-density-comfy .visual-card,
-body.ui-density-comfy .help-panel{padding-top:18px!important;padding-bottom:18px!important}
-.ui-pref-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.ui-pref-box{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
-.ui-pref-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.ui-pref-checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
-.ui-pref-check{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:12px}
-.ui-pref-check input{accent-color:#3b82f6}
-
-
-/* ONBOARDING + DATA STATES */
-.guide-steps{display:grid;gap:8px;margin-top:12px}
-.guide-step{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
-.guide-step-num{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(59,130,246,.16);color:var(--acc);font-size:11px;font-weight:800;flex-shrink:0}
-.guide-step-text{font-size:11px;color:var(--txt);line-height:1.55}
-.data-sync-panel{margin-bottom:14px;padding:12px 14px;border:1px solid rgba(59,130,246,.18);border-radius:14px;background:linear-gradient(135deg,rgba(59,130,246,.07),rgba(16,185,129,.05));box-shadow:0 10px 26px rgba(0,0,0,.14)}
-.data-sync-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.data-sync-title{font-size:13px;font-weight:800;color:var(--txt)}
-.data-sync-sub{font-size:11px;color:var(--muted);line-height:1.6;margin-top:4px;max-width:760px}
-.data-sync-badge{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;font-family:var(--mono)}
-.data-sync-badge.ok{background:rgba(34,197,94,.12);color:var(--grn);border-color:rgba(34,197,94,.24)}
-.data-sync-badge.warn{background:rgba(245,158,11,.12);color:var(--yel);border-color:rgba(245,158,11,.24)}
-.data-sync-badge.err{background:rgba(239,68,68,.12);color:var(--red);border-color:rgba(239,68,68,.24)}
-
 </style>
 </head>
 <body>
@@ -735,18 +684,6 @@ body.ui-density-comfy .help-panel{padding-top:18px!important;padding-bottom:18px
 </div>
 
 <div class="main">
-  <div class="data-sync-panel" id="global-data-state-panel">
-    <div class="data-sync-head">
-      <div>
-        <div class="data-sync-title" id="global-data-state-title">Sincronizare inițială</div>
-        <div class="data-sync-sub" id="global-data-state-message">Aplicația pregătește datele din sursele externe. În timpul sincronizării, recomandările și statisticile pot afișa informații provizorii.</div>
-      </div>
-      <div class="action-row">
-        <span class="data-sync-badge warn" id="global-data-state-badge">PREGĂTIRE</span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="doRefresh()">↻ Reîmprospătează</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ===== DASHBOARD ===== -->
   <div class="tab-content active" id="tab-dashboard">
@@ -761,42 +698,7 @@ body.ui-density-comfy .help-panel{padding-top:18px!important;padding-bottom:18px
     </div>
 
     
-    
-    <div class="section" id="ui-settings-panel" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(59,130,246,.04));border:1px solid rgba(99,102,241,.18);box-shadow:0 10px 28px rgba(0,0,0,.14)">
-      <div class="visual-card-head" style="margin-bottom:12px">
-        <div>
-          <div class="visual-card-title">🎛️ Preferințe UI</div>
-          <div class="visual-card-sub">Personalizare minimă: temă, densitate și widget-uri vizibile în dashboard. Preferințele sunt memorate automat.</div>
-        </div>
-        <div class="visual-mini-meta">salvat automat</div>
-      </div>
-      <div class="ui-pref-grid">
-        <div class="ui-pref-box">
-          <div class="ui-pref-label">Temă vizuală</div>
-          <select class="sort-select" id="ui-theme-select" onchange="setUiTheme(this.value)" style="width:100%">
-            <option value="default">Dark / Default</option>
-            <option value="slate">Slate Blue</option>
-            <option value="emerald">Emerald Dark</option>
-          </select>
-        </div>
-        <div class="ui-pref-box">
-          <div class="ui-pref-label">Densitate afișare</div>
-          <select class="sort-select" id="ui-density-select" onchange="setUiDensity(this.value)" style="width:100%">
-            <option value="normal">Normal</option>
-            <option value="compact">Compact</option>
-            <option value="comfy">Comfy</option>
-          </select>
-        </div>
-      </div>
-      <div class="ui-pref-checks">
-        <label class="ui-pref-check"><input type="checkbox" id="pref-show-help" onchange="toggleDashboardWidgetPref('help', this.checked)"><span>Glosar rapid</span></label>
-        <label class="ui-pref-check"><input type="checkbox" id="pref-show-focus" onchange="toggleDashboardWidgetPref('focus', this.checked)"><span>Panou recomandări</span></label>
-        <label class="ui-pref-check"><input type="checkbox" id="pref-show-health" onchange="toggleDashboardWidgetPref('health', this.checked)"><span>Panou rapid</span></label>
-        <label class="ui-pref-check"><input type="checkbox" id="pref-show-visual" onchange="toggleDashboardWidgetPref('visual', this.checked)"><span>Statistici vizuale</span></label>
-      </div>
-    </div>
-
-<div class="help-panel" id="dashboard-help-panel" style="margin-top:12px">
+    <div class="help-panel" style="margin-top:12px">
       <div class="help-head">
         <div>
           <div class="help-title">🧭 Glosar rapid model</div>
@@ -1319,21 +1221,7 @@ body.ui-density-comfy .help-panel{padding-top:18px!important;padding-bottom:18px
   </div>
 
   <!-- ===== BILETE ===== -->
-    <div class="tab-content" id="tab-bilete">
-    <div class="help-panel green" id="bilete-guide-panel">
-      <div class="help-head">
-        <div>
-          <div class="help-title">🎫 Ghid rapid Generator bilete</div>
-          <div class="help-sub">Generatorul este gândit pentru utilizare practică: alegi stilul de risc, verifici biletul rezultat și abia apoi îl trimiți în Tracking. Scopul este claritate, nu umplerea ecranului cu variante fără disciplină.</div>
-        </div>
-        <div class="action-row"><span class="sec-badge" style="color:var(--grn);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)">Onboarding</span></div>
-      </div>
-      <div class="guide-steps">
-        <div class="guide-step"><span class="guide-step-num">1</span><div class="guide-step-text">Alege tipul de generator potrivit: controlat pentru selecții mai curate, agresiv pentru cotă mai mare, personalizat pentru reguli proprii.</div></div>
-        <div class="guide-step"><span class="guide-step-num">2</span><div class="guide-step-text">Verifică biletul generat: cotă, număr de selecții, tipurile de piețe și explicațiile din cardurile afișate.</div></div>
-        <div class="guide-step"><span class="guide-step-num">3</span><div class="guide-step-text">Trimite biletul în Tracking doar după validarea finală. Acolo îi urmărești statusul, profitul și impactul în bankroll.</div></div>
-      </div>
-    </div>
+  <div class="tab-content" id="tab-bilete">
     <div style="display:grid;gap:16px;margin-bottom:22px">
       <div class="bilet-card" style="margin-bottom:0;padding:16px">
         <div style="font-size:16px;font-weight:800;margin-bottom:12px">Generatoare</div>
@@ -1411,20 +1299,6 @@ body.ui-density-comfy .help-panel{padding-top:18px!important;padding-bottom:18px
 
   <!-- ===== TRACKING ===== -->
   <div class="tab-content" id="tab-tracking">
-    <div class="help-panel" id="tracking-guide-panel">
-      <div class="help-head">
-        <div>
-          <div class="help-title">📈 Ghid rapid Tracking</div>
-          <div class="help-sub">Tracking-ul este zona operațională: aici intră biletele jucate, aici se actualizează statusurile și aici se calculează profitul care merge mai departe în Bankroll.</div>
-        </div>
-        <div class="action-row"><span class="sec-badge">Onboarding</span></div>
-      </div>
-      <div class="guide-steps">
-        <div class="guide-step"><span class="guide-step-num">1</span><div class="guide-step-text">Adaugi bilete generate sau bilete extra manuale, ca să ai evidență unificată într-un singur loc.</div></div>
-        <div class="guide-step"><span class="guide-step-num">2</span><div class="guide-step-text">Statusul poate fi sincronizat automat sau corectat manual atunci când ai nevoie de control direct.</div></div>
-        <div class="guide-step"><span class="guide-step-num">3</span><div class="guide-step-text">Profitul și pierderea din Tracking alimentează automat vizualizările și calculele din Bankroll.</div></div>
-      </div>
-    </div>
     <div style="margin-bottom:12px;font-size:13px;font-weight:700;color:var(--acc)">📊 Statistici Bilete Generate</div>
     <div class="tracking-stats">
       <div class="track-stat"><div class="track-num" id="tr-total" style="color:var(--acc)">0</div><div class="track-lbl">Bilete</div></div>
@@ -1590,8 +1464,6 @@ var API_TOKEN = ''; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
-var UI_PREFS = JSON.parse(localStorage.getItem('bet_ui_prefs') || '{}');
-var DATA_SYNC_STATE = { status:'idle', title:'', message:'' };
 
 // ============================================================
 // UTILS
@@ -1678,48 +1550,6 @@ function showLoader(msg){
   if(msg) $('loader-sub').textContent=msg;
 }
 function hideLoader(){ $('loader').classList.remove('show'); }
-
-
-function setGlobalDataState(status, title, message){
-  DATA_SYNC_STATE = { status: status || 'idle', title: title || '', message: message || '' };
-  var titleEl = $('global-data-state-title');
-  var msgEl = $('global-data-state-message');
-  var badgeEl = $('global-data-state-badge');
-  if(titleEl) titleEl.textContent = title || 'Stare date';
-  if(msgEl) msgEl.textContent = message || '';
-  if(badgeEl){
-    badgeEl.className = 'data-sync-badge ' + (status === 'ok' ? 'ok' : (status === 'error' ? 'err' : 'warn'));
-    badgeEl.textContent =
-      status === 'loading' ? 'LOADING' :
-      status === 'empty' ? 'FĂRĂ DATE' :
-      status === 'partial' ? 'PARȚIAL' :
-      status === 'delayed' ? 'ÎNTÂRZIAT' :
-      status === 'error' ? 'EROARE' :
-      'SINCRONIZAT';
-  }
-}
-function evaluateGlobalDataState(){
-  var matches = Array.isArray(ALL_MATCHES) ? ALL_MATCHES.length : 0;
-  var eligible = Array.isArray(ALL_MATCHES) ? ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE'; }).length : 0;
-  var auditRows = Array.isArray((SIGNAL_AUDIT || {}).rows) ? SIGNAL_AUDIT.rows.length : 0;
-  var aiRows = Array.isArray((AI_MEMORY || {}).adaptive_picks) ? AI_MEMORY.adaptive_picks.length : 0;
-  var fetchedAt = (APP_META && APP_META.bsd_status && APP_META.bsd_status.fetched_at) || (APP_META && APP_META.updated_at) || null;
-  var delayHours = hoursSince(fetchedAt);
-  if(!matches){
-    setGlobalDataState('empty', 'Nu există date disponibile în acest moment', 'Sincronizarea s-a încheiat, dar sursele externe nu au furnizat încă predicții utilizabile. Verifică din nou la refresh sau după următorul update automat.');
-    return;
-  }
-  if(delayHours != null && delayHours > 2.5){
-    setGlobalDataState('delayed', 'Datele sunt disponibile, dar par întârziate', 'Ultima sincronizare este mai veche decât intervalul normal. Recomandările pot rămâne valide, dar este prudent să verifici ora ultimei actualizări înainte de utilizare.');
-    return;
-  }
-  if(!eligible || (!auditRows && !aiRows)){
-    setGlobalDataState('partial', 'Date parțiale sau încă în curs de completare', 'Setul principal a fost încărcat, dar unele module avansate nu au încă date complete. Poți folosi aplicația, însă unele secțiuni pot afișa rezultate limitate.');
-    return;
-  }
-  var timeLabel = getStatusDisplayTime();
-  setGlobalDataState('ok', 'Sincronizare reușită', 'Datele externe au fost încărcate corect' + (timeLabel ? ' la ' + timeLabel : '') + '. Dacă vezi zone goale, înseamnă lipsă reală de semnale, nu neapărat eroare.');
-}
 
 
 var TERM_HELP = {
@@ -2008,61 +1838,6 @@ function renderAiMemoryVisuals(){
   renderVisualBarList('aimemory-score-bars', scoreRows, function(v){ return v.toFixed(1); });
 }
 
-
-
-function getDefaultUiPrefs(){
-  return { theme:'default', density:'normal', dashboard:{help:true,focus:true,health:true,visual:true} };
-}
-function getUiPrefs(){
-  var base = getDefaultUiPrefs();
-  var current = Object.assign({}, base, UI_PREFS || {});
-  current.dashboard = Object.assign({}, base.dashboard, (UI_PREFS && UI_PREFS.dashboard) || {});
-  return current;
-}
-function saveUiPrefs(){ localStorage.setItem('bet_ui_prefs', JSON.stringify(UI_PREFS || {})); }
-function syncUiPrefsControls(){
-  var prefs = getUiPrefs();
-  if($('ui-theme-select')) $('ui-theme-select').value = prefs.theme || 'default';
-  if($('ui-density-select')) $('ui-density-select').value = prefs.density || 'normal';
-  if($('pref-show-help')) $('pref-show-help').checked = !!prefs.dashboard.help;
-  if($('pref-show-focus')) $('pref-show-focus').checked = !!prefs.dashboard.focus;
-  if($('pref-show-health')) $('pref-show-health').checked = !!prefs.dashboard.health;
-  if($('pref-show-visual')) $('pref-show-visual').checked = !!prefs.dashboard.visual;
-}
-function applyUiPrefs(){
-  var prefs = getUiPrefs();
-  document.body.setAttribute('data-theme', prefs.theme || 'default');
-  document.body.classList.remove('ui-density-compact','ui-density-comfy');
-  if(prefs.density === 'compact') document.body.classList.add('ui-density-compact');
-  if(prefs.density === 'comfy') document.body.classList.add('ui-density-comfy');
-  var map = {help:'dashboard-help-panel', focus:'focus-shell', health:'health-panel', visual:'dashboard-visual-panel'};
-  Object.keys(map).forEach(function(key){
-    var el = $(map[key]);
-    if(el) el.style.display = prefs.dashboard[key] ? '' : 'none';
-  });
-  syncUiPrefsControls();
-}
-function setUiTheme(value){
-  UI_PREFS = getUiPrefs();
-  UI_PREFS.theme = value || 'default';
-  saveUiPrefs();
-  applyUiPrefs();
-  toast('Tema a fost actualizată', 'ok');
-}
-function setUiDensity(value){
-  UI_PREFS = getUiPrefs();
-  UI_PREFS.density = value || 'normal';
-  saveUiPrefs();
-  applyUiPrefs();
-  toast('Densitatea a fost actualizată', 'ok');
-}
-function toggleDashboardWidgetPref(key, checked){
-  UI_PREFS = getUiPrefs();
-  UI_PREFS.dashboard[key] = !!checked;
-  saveUiPrefs();
-  applyUiPrefs();
-  toast((checked ? 'Afișat' : 'Ascuns') + ': ' + key, 'ok');
-}
 
 
 // Logo helpers - uses BSD API /img/ endpoint
@@ -2521,7 +2296,6 @@ function getBase(){
 
 function doRefresh(){
   showLoader('Incarcare date actualizate...');
-  setGlobalDataState('loading', 'Sincronizare în curs', 'Aplicația preia din nou datele din sursele externe. În acest interval, unele panouri pot afișa valori provizorii.');
   var base = getBase();
 
   function getJson(path, fallback){
@@ -2577,7 +2351,6 @@ function doRefresh(){
     else if(meta && meta.api_token) API_TOKEN = meta.api_token;
 
     renderAll();
-    evaluateGlobalDataState();
     hideLoader();
 
     var statusTime = getStatusDisplayTime();
@@ -2588,7 +2361,6 @@ function doRefresh(){
     );
   }).catch(function(err){
     hideLoader();
-    setGlobalDataState('error', 'Eroare de sincronizare', 'Datele externe nu au putut fi actualizate la această încercare. Aplicația poate afișa ultimul set disponibil sau zone goale, în funcție de ce a fost deja încărcat.');
     toast('Eroare la incarcarea datelor', 'err');
     console.error(err);
   });
@@ -6361,7 +6133,6 @@ function renderTicketDetail(idx){
 function toggleTicketDetail(idx){
   OPEN_TICKET_IDX = (OPEN_TICKET_IDX === idx ? null : idx);
   renderTracking();
-  applyUiPrefs();
 }
 
 function deleteTicket(idx){
@@ -6984,7 +6755,6 @@ function renderAll(){
   renderBilete();
   autoSyncTrackingStatuses();
   renderTracking();
-  applyUiPrefs();
 }
 
 window.addEventListener('DOMContentLoaded', function(){
@@ -7003,8 +6773,6 @@ window.addEventListener('DOMContentLoaded', function(){
   moveDashboardSectionsToMatches();
   arrangeDashboardLayout();
   setMobileNavActive('dashboard');
-  applyUiPrefs();
-  syncUiPrefsControls();
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
   setInterval(doRefresh, 900000);
