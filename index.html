@@ -642,13 +642,12 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <div class="focus-shell" id="focus-shell">
       <div class="focus-head">
         <div>
-          <div class="focus-title">🧭 Centru de decizie</div>
+          <div class="focus-title">🧭 Panou de recomandări</div>
           <div class="focus-sub">Aplicația îți pune în față doar cele mai utile 4 variante de joc. Restul analizelor rămân în fundal, în taburile dedicate.</div>
         </div>
-        <button class="btn btn-primary" onclick="switchTab('bilete')">Deschide bilete</button>
       </div>
       <div class="focus-path">
-        <div class="focus-step"><span>1</span> Începi cu recomandarea marcată <b>START AICI</b></div>
+        <div class="focus-step"><span>1</span> Începi cu recomandarea principală afișată prima</div>
         <div class="focus-step"><span>2</span> Dacă nu-ți place structura, mergi pe varianta de rezervă</div>
         <div class="focus-step"><span>3</span> Analiza completă rămâne în <b>Analiză</b>, nu pe ecranul principal</div>
       </div>
@@ -4826,7 +4825,7 @@ function rankPresetTicket(ticket){
 
 function getPresetTicketCards(){
   var presets = [
-    { key:'best', title:'Single de azi', accent:'var(--grn)', action:'generateBestEventTicket()', btn:'Generează', preview:buildBestEventTicketPreview() },
+    { key:'best', title:'Biletul zilei', accent:'var(--grn)', action:'generateBestEventTicket()', btn:'Generează', preview:buildBestEventTicketPreview() },
     { key:'profit', title:'Profit Focus', accent:'var(--acc)', action:'generateProfitFocusTicket()', btn:'Generează', preview:buildProfitFocusTicketPreview() },
     { key:'smart', title:'Combo echilibrat', accent:'var(--pur)', action:'generateTicket()', btn:'Generează', preview:buildSmartTicketPreview() },
     { key:'cons', title:'Conservator', accent:'var(--cyan)', action:'generateConservativeTicket()', btn:'Generează', preview:buildConservativeTicketPreview() }
@@ -4874,7 +4873,7 @@ function renderPresetTicketCards(targetId){
     var extraCount = Math.max(0, picks.length - 1);
     return '<div class="focus-card '+(item.recommended ? 'recommended' : '')+'" style="--focus-accent:'+accent+'">'+
       '<div class="focus-card-head">'+
-        '<div><div class="focus-kicker">'+(item.recommended ? 'Start aici' : 'Variantă utilă')+'</div><div class="focus-card-title">'+item.title+'</div><div class="focus-card-sub">'+(t.summary || 'Generator dedicat acestui format.')+'</div></div>'+
+        '<div><div class="focus-card-title">'+item.title+'</div><div class="focus-card-sub">'+(t.summary || 'Generator dedicat acestui format.')+'</div></div>'+
         '<div class="focus-card-side"><span class="focus-badge '+badgeClass+'">'+(t.isEmpty ? 'Așteptare' : (t.riskLabel || '—'))+'</span>'+
         '</div>'+
       '</div>'+
