@@ -4592,7 +4592,6 @@ function renderPresetTicketCards(targetId){
       '<div class="focus-card-head">'+
         '<div><div class="focus-kicker">'+(item.recommended ? 'Start aici' : 'Variantă utilă')+'</div><div class="focus-card-title">'+item.title+'</div><div class="focus-card-sub">'+(t.summary || 'Generator dedicat acestui format.')+'</div></div>'+
         '<div class="focus-card-side"><span class="focus-badge '+badgeClass+'">'+(t.isEmpty ? 'Așteptare' : (t.riskLabel || '—'))+'</span>'+
-        (extraCount > 0 ? '<button class="focus-expand-chip" id="focus-expand-'+cardKey+'" onclick="togglePresetRows(&#39;focus-extra-'+cardKey+'&#39;, this)" data-collapsed="Vezi '+extraCount+'" data-expanded="Ascunde"><span class="label">Vezi '+extraCount+'</span><span class="arrow">▼</span></button>' : '')+
         '</div>'+
       '</div>'+
       '<div class="focus-card-metrics">'+
@@ -4602,7 +4601,7 @@ function renderPresetTicketCards(targetId){
       '</div>'+
       '<div class="focus-chip-row">'+(markets.length ? markets.map(function(m){ return '<span class="focus-chip">'+m+'</span>'; }).join('') : '<span class="focus-chip">fără selecții curate</span>')+'</div>'+
       '<div class="focus-mini-list">'+firstRow+(extraCount > 0 ? '<div class="focus-extra-rows" id="focus-extra-'+cardKey+'">'+extraRows+'</div>' : '')+'</div>'+
-      (extraCount > 0 ? '<button class="focus-more-toggle" onclick="togglePresetRows(&#39;focus-extra-'+cardKey+'&#39;, document.getElementById(&#39;focus-expand-'+cardKey+'&#39;))"><span>+'+extraCount+' selecții suplimentare</span><strong>Total '+picks.length+'</strong></button>' : '')+
+      (extraCount > 0 ? '<button class="focus-more-toggle" onclick="togglePresetRows(&#39;focus-extra-'+cardKey+'&#39;, this)" data-collapsed="Vezi mai mult" data-expanded="Ascunde"><span class="label">Vezi mai mult</span><strong>Total '+picks.length+'</strong></button>' : '')+
       '<div class="focus-footer">'+
         '<div class="focus-footer-note">'+(t.isEmpty ? 'Așteaptă date mai bune sau verifică Analiză.' : 'Edge mediu ' + (t.avgEdge >= 0 ? '+' : '') + ((t.avgEdge || 0) * 100).toFixed(1) + '%')+'</div>'+
         '<button class="btn '+(item.recommended ? 'btn-green' : 'btn-primary')+'" style="justify-content:center" onclick="'+item.action+'">'+item.btn+'</button>'+
