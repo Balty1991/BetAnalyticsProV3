@@ -2325,8 +2325,7 @@ function renderAuditTicket(type){
 
 function renderAuditGenerators(){
   ['safe','balanced','risk'].forEach(function(type){
-    if(!AUDIT_TICKETS[type] || !AUDIT_TICKETS[type].picks || !AUDIT_TICKETS[type].picks.length) generateAuditTicket(type, true);
-    else renderAuditTicket(type);
+    renderAuditTicket(type);
   });
 }
 
