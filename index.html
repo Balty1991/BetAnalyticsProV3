@@ -577,6 +577,40 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .top-picks-grid{grid-template-columns:1fr}
   .live-grid{grid-template-columns:1fr}
 }
+
+/* HELP / GLOSSARY / EXPORT / TREND */
+.help-panel{margin-bottom:14px;padding:12px 14px;border:1px solid rgba(59,130,246,.18);border-radius:14px;background:linear-gradient(135deg,rgba(59,130,246,.07),rgba(168,85,247,.05));box-shadow:0 10px 26px rgba(0,0,0,.14)}
+.help-panel.green{border-color:rgba(34,197,94,.18);background:linear-gradient(135deg,rgba(34,197,94,.07),rgba(16,185,129,.05))}
+.help-panel.amber{border-color:rgba(245,158,11,.18);background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(59,130,246,.04))}
+.help-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.help-title{font-size:13px;font-weight:800;color:var(--txt)}
+.help-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px;max-width:760px}
+.help-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.help-chip{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);color:var(--txt);font-size:11px;font-weight:700;cursor:pointer;transition:all .18s ease}
+.help-chip:hover{transform:translateY(-1px);border-color:rgba(59,130,246,.38);background:rgba(59,130,246,.12)}
+.help-output{display:none;margin-top:12px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(7,12,22,.72)}
+.help-output.show{display:block}
+.help-output-title{font-size:12px;font-weight:800;color:var(--acc);margin-bottom:6px}
+.help-output-text{font-size:11px;color:var(--txt);line-height:1.65}
+.help-output-note{font-size:10px;color:var(--muted);margin-top:8px}
+.action-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn-ghost{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--txt)}
+.btn-ghost:hover{background:rgba(255,255,255,.07)}
+.btn[disabled]{opacity:.68;cursor:not-allowed;transform:none!important}
+.generator-status{margin-top:8px;font-size:10px;color:var(--muted);font-family:var(--mono)}
+.trend-shell{margin-top:16px;padding:14px;border-radius:14px;border:1px solid rgba(59,130,246,.16);background:linear-gradient(180deg,rgba(16,24,40,.94),rgba(12,18,32,.94))}
+.trend-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.trend-title{font-size:13px;font-weight:800;color:var(--txt)}
+.trend-sub{font-size:11px;color:var(--muted);line-height:1.55;max-width:700px}
+.trend-legend{display:flex;gap:8px;flex-wrap:wrap}
+.trend-pill{padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;color:var(--muted);font-family:var(--mono)}
+.trend-chart{width:100%;height:180px;display:block}
+.trend-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+.trend-meta-card{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.trend-meta-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.trend-meta-value{font-size:16px;font-weight:800;font-family:var(--mono);margin-top:5px}
+@media(max-width:768px){.help-panel{padding:12px}.help-chip{font-size:10px;padding:6px 9px}.trend-chart{height:160px}}
+
 </style>
 </head>
 <body>
@@ -803,7 +837,25 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
   <!-- ===== AUDIT TAB ===== -->
   <div class="tab-content" id="tab-audit">
-    <div class="section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(59,130,246,.06));border:1px solid rgba(245,158,11,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
+    
+    <div class="help-panel">
+      <div class="help-head">
+        <div>
+          <div class="help-title">ℹ️ Ghid rapid Audit Kelly</div>
+          <div class="help-sub">Audit Kelly rămâne zona de selecție disciplinată: verifici întâi <b>Kelly 1/4</b>, apoi <b>Edge</b>, <b>Value</b> și doar la final cota. Explicațiile sunt acum direct în tab, fără pași în plus.</div>
+        </div>
+        <div class="action-row"><span class="sec-badge">Explicații contextuale</span><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="exportAuditCsv()">📄 Export CSV</button></div>
+      </div>
+      <div class="help-chip-row">
+        <button class="help-chip" onclick="showInlineHelp('audit-help-output','kelly_quarter')">Kelly 1/4</button>
+        <button class="help-chip" onclick="showInlineHelp('audit-help-output','edge')">Edge</button>
+        <button class="help-chip" onclick="showInlineHelp('audit-help-output','value')">Value</button>
+        <button class="help-chip" onclick="showInlineHelp('audit-help-output','fair_odds')">Fair odds</button>
+        <button class="help-chip" onclick="showInlineHelp('audit-help-output','adjusted_prob')">Prob. ajustată</button>
+      </div>
+      <div class="help-output" id="audit-help-output"></div>
+    </div>
+<div class="section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(59,130,246,.06));border:1px solid rgba(245,158,11,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--txt)">🎯 Audit Kelly / Signal</div>
@@ -837,19 +889,19 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         <div class="memory-generator-card safe">
           <div class="memory-generator-title">🛡️ Safe</div>
           <div class="memory-generator-sub">2-3 selecții mai conservatoare, cu Kelly și probabilitate ridicate.</div>
-          <button class="btn btn-green" style="width:100%;justify-content:center" onclick="generateAuditTicket('safe')">Generează</button>
+          <button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGenerateAuditTicket('safe', this)">Generează</button><div class="generator-status" id="audit-status-safe">Așteaptă o generare.</div>
           <div id="audit-ticket-safe" style="margin-top:12px"></div>
         </div>
         <div class="memory-generator-card balanced">
           <div class="memory-generator-title">⚖️ Echilibrat</div>
           <div class="memory-generator-sub">3-4 selecții, balans între stabilitate, Kelly și cotă totală.</div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateAuditTicket('balanced')">Generează</button>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGenerateAuditTicket('balanced', this)">Generează</button><div class="generator-status" id="audit-status-balanced">Așteaptă o generare.</div>
           <div id="audit-ticket-balanced" style="margin-top:12px"></div>
         </div>
         <div class="memory-generator-card risk">
           <div class="memory-generator-title">🚀 Mega risc</div>
           <div class="memory-generator-sub">5-7 selecții filtrate din audit pentru cotă mai mare, fără loterie oarbă.</div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateAuditTicket('risk')">Generează</button>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGenerateAuditTicket('risk', this)">Generează</button><div class="generator-status" id="audit-status-risk">Așteaptă o generare.</div>
           <div id="audit-ticket-risk" style="margin-top:12px"></div>
         </div>
       </div>
@@ -859,7 +911,25 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <!-- ===== AI MEMORY TAB ===== -->
   <div class="tab-content" id="tab-aimemory">
     <div id="ai-memory-shell">
-      <div class="section memory-panel memory-hero">
+      
+      <div class="help-panel green">
+        <div class="help-head">
+          <div>
+            <div class="help-title">🧠 Ghid rapid AI Memory</div>
+            <div class="help-sub">AI Memory completează scorul principal cu pattern-uri validate. Aici contează mai ales <b>adaptive score</b>, <b>memory bonus</b> și felul în care istoricul confirmă sau penalizează selecția curentă.</div>
+          </div>
+          <div class="action-row"><span class="sec-badge" style="color:var(--grn);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)">Adaptive scoring</span><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="exportAiMemoryCsv()">📄 Export CSV</button></div>
+        </div>
+        <div class="help-chip-row">
+          <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','adaptive_score')">Adaptive score</button>
+          <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','memory_bonus')">Memory bonus</button>
+          <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','roi')">ROI</button>
+          <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','positive_patterns')">Pattern-uri pozitive</button>
+          <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','negative_patterns')">Pattern-uri de evitat</button>
+        </div>
+        <div class="help-output" id="aimemory-help-output"></div>
+      </div>
+<div class="section memory-panel memory-hero">
         <div class="memory-shell-head">
           <div>
             <div class="memory-shell-title">🧠 AI Memory / Adaptive Engine</div>
@@ -929,19 +999,19 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           <div class="memory-generator-card safe">
             <div class="memory-generator-title">🛡️ Safe</div>
             <div class="memory-generator-sub">2-3 selecții, accent pe probabilitate mare și memorie pozitivă.</div>
-            <button class="btn btn-green" style="width:100%;justify-content:center" onclick="generateAiMemoryTicket('safe')">Generează</button>
+            <button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGenerateAiMemoryTicket('safe', this)">Generează</button><div class="generator-status" id="aimemory-status-safe">Așteaptă o generare.</div>
             <div id="ai-ticket-safe" style="margin-top:12px"></div>
           </div>
           <div class="memory-generator-card balanced">
             <div class="memory-generator-title">⚖️ Echilibrat</div>
             <div class="memory-generator-sub">3-4 selecții, balans între stabilitate și cotă totală.</div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateAiMemoryTicket('balanced')">Generează</button>
+            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGenerateAiMemoryTicket('balanced', this)">Generează</button><div class="generator-status" id="aimemory-status-balanced">Așteaptă o generare.</div>
             <div id="ai-ticket-balanced" style="margin-top:12px"></div>
           </div>
           <div class="memory-generator-card risk">
             <div class="memory-generator-title">🚀 Mega risc</div>
             <div class="memory-generator-sub">5-7 selecții, cotă mai mare, dar tot filtrată de memoria AI.</div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateAiMemoryTicket('risk')">Generează</button>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGenerateAiMemoryTicket('risk', this)">Generează</button><div class="generator-status" id="aimemory-status-risk">Așteaptă o generare.</div>
             <div id="ai-ticket-risk" style="margin-top:12px"></div>
           </div>
         </div>
@@ -1130,8 +1200,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <div class="sec-hdr">
       <div class="sec-title">📋 Istoric Pariuri</div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-green" onclick="toggleExtraForm()" style="font-size:11px;padding:5px 10px">➕ Adauga Extra</button>
-        <button class="btn btn-primary" onclick="exportHistory()" style="font-size:11px;padding:5px 10px">📥 Export</button>
+        <button class="btn btn-green" onclick="toggleExtraForm()" style="font-size:11px;padding:5px 10px">➕ Adaugă Extra</button>
+        <button class="btn btn-primary" onclick="exportTrackingCsv()" style="font-size:11px;padding:5px 10px">📄 CSV</button>
+        <button class="btn btn-ghost" onclick="exportHistory()" style="font-size:11px;padding:5px 10px">📥 JSON</button>
         <button class="btn" style="background:rgba(239,68,68,.15);color:var(--red);font-size:11px;padding:5px 10px;border:1px solid rgba(239,68,68,.3)" onclick="clearHistory()">🗑️ Sterge</button>
       </div>
     </div>
@@ -1153,7 +1224,25 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
   <!-- ===== BANKROLL ===== -->
   <div class="tab-content" id="tab-bankroll">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
+    
+    <div class="help-panel amber">
+      <div class="help-head">
+        <div>
+          <div class="help-title">💰 Ghid rapid Bankroll</div>
+          <div class="help-sub">Bankroll-ul folosește profitul și pierderea din Tracking și recalculează automat mizele recomandate. Mai jos ai și evoluția bankroll-ului pe biletele deja salvate.</div>
+        </div>
+        <div class="action-row"><span class="sec-badge" style="color:var(--yel);border-color:rgba(245,158,11,.24);background:rgba(245,158,11,.08)">Control miză</span><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="exportTrackingCsv()">📄 Export Tracking CSV</button></div>
+      </div>
+      <div class="help-chip-row">
+        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','conservative_stake')">Conservative</button>
+        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','balanced_stake')">Balanced</button>
+        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','goals_stake')">Goals</button>
+        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','roi')">ROI</button>
+        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','bankroll_flow')">Flux bankroll</button>
+      </div>
+      <div class="help-output" id="bankroll-help-output"></div>
+    </div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
       <div class="bankroll-card" style="margin-bottom:0">
         <div class="sec-title" style="margin-bottom:16px">💰 Management Bankroll</div>
         <div class="bk-input-row">
@@ -1179,6 +1268,20 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         </div>
         <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Mizele sugerate pentru biletele generate se calculează în RON direct din procentele tale. Profitul și pierderea vin din Tracking, nu din povești pescărești.</div>
         <div class="bk-grid" id="bk-grid"></div>
+        <div class="trend-shell" id="bankroll-trend-shell">
+          <div class="trend-head">
+            <div>
+              <div class="trend-title">📈 Evoluție bankroll</div>
+              <div class="trend-sub">Graficul folosește ordinea biletelor din Tracking și îți arată traseul bankroll-ului după fiecare rezultat înregistrat.</div>
+            </div>
+            <div class="trend-legend">
+              <span class="trend-pill">linie = bankroll</span>
+              <span class="trend-pill">punct final = stare curentă</span>
+            </div>
+          </div>
+          <div id="bankroll-trend-chart"></div>
+          <div class="trend-meta" id="bankroll-trend-meta"></div>
+        </div>
       </div>
 
       <div class="bankroll-card" style="margin-bottom:0">
@@ -1333,6 +1436,155 @@ function showLoader(msg){
   if(msg) $('loader-sub').textContent=msg;
 }
 function hideLoader(){ $('loader').classList.remove('show'); }
+
+
+var TERM_HELP = {
+  kelly_quarter:{title:'Kelly 1/4',text:'Kelly 1/4 este miza recomandată la un sfert din Kelly complet. Îl folosești ca variantă mai disciplinată, ca să nu supraexpui bankroll-ul atunci când modelul vede avantaj, dar realitatea rămâne volatilă.'},
+  edge:{title:'Edge',text:'Edge-ul măsoară diferența dintre probabilitatea modelului și probabilitatea implicită a pieței. Cu cât Edge-ul este mai mare și validat pe o piață stabilă, cu atât semnalul este mai interesant.'},
+  value:{title:'Value',text:'Value înseamnă valoare așteptată pozitivă. Nu spune că pariul va ieși sigur, ci că prețul pieței este mai bun decât ar sugera estimarea internă a modelului.'},
+  fair_odds:{title:'Fair odds',text:'Fair odds reprezintă cota teoretică rezultată din probabilitatea estimată de model. Compari cota casei cu fair odds ca să vezi dacă piața oferă sau nu valoare.'},
+  adjusted_prob:{title:'Probabilitate ajustată',text:'Probabilitatea ajustată este scorul final folosit în selecție după filtre, corecții și reguli de siguranță. Este mai utilă operațional decât o probabilitate brută izolată.'},
+  adaptive_score:{title:'Adaptive score',text:'Adaptive score este scorul compozit din AI Memory. El combină probabilitatea curentă cu istoricul de pattern-uri, penalizările și bonusurile de memorie.'},
+  memory_bonus:{title:'Memory bonus',text:'Memory bonus arată cât de mult ajută sau trage în jos istoricul relevant pentru selecția curentă. Valoarea pozitivă susține selecția; valoarea negativă cere mai multă prudență.'},
+  roi:{title:'ROI',text:'ROI-ul arată randamentul raportat la suma mizată. Un ROI pozitiv indică eficiență bună a setului analizat; unul negativ indică faptul că istoricul nu susține încă strategia.'},
+  positive_patterns:{title:'Pattern-uri pozitive',text:'Aceste pattern-uri sunt contexte care au confirmat mai des decât media. Nu sunt garanții, dar ajută la prioritizarea selecțiilor curate.'},
+  negative_patterns:{title:'Pattern-uri de evitat',text:'Aceste pattern-uri au tras în jos performanța istorică. Le folosești ca filtru de risc, nu ca verdict absolut.'},
+  conservative_stake:{title:'Conservative',text:'Miza conservative este pentru bilete curate sau cu risc mai jos. Scopul ei este să protejeze bankroll-ul atunci când vrei expunere mică și disciplinată.'},
+  balanced_stake:{title:'Balanced',text:'Balanced este miza intermediară pentru bilete echilibrate, unde accepți puțin mai mult risc pentru o cotă totală mai bună.'},
+  goals_stake:{title:'Goals',text:'Goals este miza dedicată biletelor pe piețe de goluri. O ții separat ca să nu amesteci profilul lor de risc cu selecțiile conservative.'},
+  bankroll_flow:{title:'Flux bankroll',text:'Fluxul bankroll-ului înseamnă cum se modifică suma totală după fiecare bilet înregistrat. Graficul te ajută să vezi dacă evoluția este stabilă, volatilă sau în degradare.'}
+};
+function showInlineHelp(targetId, termKey){
+  var box = $(targetId);
+  var item = TERM_HELP[termKey];
+  if(!box || !item) return;
+  box.classList.add('show');
+  box.innerHTML = '<div class="help-output-title">'+item.title+'</div><div class="help-output-text">'+item.text+'</div><div class="help-output-note">Explicația rămâne în tabul curent ca să poți compara imediat cu datele afișate.</div>';
+}
+function setButtonBusy(btn, busy, idleText, busyText){
+  if(!btn) return;
+  btn.disabled = !!busy;
+  btn.textContent = busy ? (busyText || 'Se procesează...') : idleText;
+}
+function setGeneratorStatus(id, text, tone){
+  var el = $(id);
+  if(!el) return;
+  el.textContent = text;
+  el.style.color = tone === 'ok' ? 'var(--grn)' : (tone === 'err' ? 'var(--red)' : (tone === 'warn' ? 'var(--yel)' : 'var(--muted)'));
+}
+function escapeCsv(value){
+  if(value === null || value === undefined) return '';
+  var str = String(value).replace(/\r?\n/g, ' ');
+  if(/[",;]/.test(str)) return '"' + str.replace(/"/g, '""') + '"';
+  return str;
+}
+function downloadTextFile(filename, content, mime){
+  var blob = new Blob([content], {type:mime || 'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function downloadCsv(filename, headers, rows){
+  var lines = [headers.map(escapeCsv).join(',')].concat(rows.map(function(row){ return row.map(escapeCsv).join(','); }));
+  downloadTextFile(filename, lines.join('\n'), 'text/csv;charset=utf-8');
+}
+function exportTrackingCsv(){
+  try{
+    var headers = ['created_at','date','type','mode','status','stake','total_odds','profit','picks_count','match_names','pick_types'];
+    var rows = (TRACKING || []).map(function(t){
+      return [t.createdAt || '', t.date || '', t.type || '', t.mode || '', t.status || '', Number(t.stake || 0).toFixed(2), Number(t.totalOdds || 0).toFixed(2), Number(t.profit || 0).toFixed(2), (t.picks || []).length, (t.picks || []).map(function(p){ return (p.home || '—') + ' vs ' + (p.away || '—'); }).join(' | '), (t.picks || []).map(function(p){ return p.bet || '—'; }).join(' | ')];
+    });
+    downloadCsv('tracking_export.csv', headers, rows);
+    toast('Tracking exportat în CSV', 'ok');
+  }catch(e){ console.error(e); toast('Eroare la export CSV', 'err'); }
+}
+function exportAuditCsv(){
+  try{
+    var rows = Array.isArray((SIGNAL_AUDIT || {}).rows) ? SIGNAL_AUDIT.rows : [];
+    var headers = ['event_date','league','home','away','market','book_odds','adjusted_prob','edge_pct','value_pct','kelly_quarter_pct','fair_odds','model_version'];
+    var csvRows = rows.map(function(r){ return [r.event_date || '', r.league || '', r.home || '', r.away || '', r.market || '', Number(r.book_odds || 0).toFixed(2), Number(r.adjusted_prob || 0).toFixed(2), Number(r.edge_pct || 0).toFixed(2), (Number(r.value || 0) * 100).toFixed(2), Number(r.kelly_quarter_pct || 0).toFixed(2), r.fair_odds != null ? Number(r.fair_odds).toFixed(2) : '', r.model_version || '']; });
+    downloadCsv('audit_kelly_export.csv', headers, csvRows);
+    toast('Audit Kelly exportat în CSV', 'ok');
+  }catch(e){ console.error(e); toast('Eroare la export CSV', 'err'); }
+}
+function exportAiMemoryCsv(){
+  try{
+    var rows = Array.isArray((AI_MEMORY || {}).adaptive_picks) ? AI_MEMORY.adaptive_picks : [];
+    var headers = ['event_date','league','home','away','market','odds','adjusted_prob','adaptive_score','memory_bonus','value_pct'];
+    var csvRows = rows.map(function(r){ return [r.event_date || '', r.league || '', r.home || '', r.away || '', r.market || '', Number(r.odds || 0).toFixed(2), Number(r.adjusted_prob || 0).toFixed(2), Number(r.adaptive_score || 0).toFixed(2), Number(r.memory_bonus || 0).toFixed(2), (Number(r.value || 0) * 100).toFixed(2)]; });
+    downloadCsv('ai_memory_export.csv', headers, csvRows);
+    toast('AI Memory exportat în CSV', 'ok');
+  }catch(e){ console.error(e); toast('Eroare la export CSV', 'err'); }
+}
+function handleGenerateAuditTicket(type, btn){
+  setButtonBusy(btn, true, 'Generează', 'Se generează...');
+  setGeneratorStatus('audit-status-' + type, 'Generatorul pregătește selecțiile...', '');
+  setTimeout(function(){
+    generateAuditTicket(type, false);
+    var ticket = AUDIT_TICKETS[type];
+    var ok = !!(ticket && ticket.picks && ticket.picks.length);
+    setGeneratorStatus('audit-status-' + type, ok ? ('Generat: ' + fmtDateTime(ticket.generatedAt || new Date().toISOString())) : (ticket && ticket.error ? ticket.error : 'Nu au fost găsite selecții suficiente.'), ok ? 'ok' : 'warn');
+    setButtonBusy(btn, false, 'Generează', 'Se generează...');
+  }, 120);
+}
+function handleGenerateAiMemoryTicket(type, btn){
+  setButtonBusy(btn, true, 'Generează', 'Se generează...');
+  setGeneratorStatus('aimemory-status-' + type, 'Generatorul pregătește selecțiile...', '');
+  setTimeout(function(){
+    generateAiMemoryTicket(type, false);
+    var ticket = AI_MEMORY_TICKETS[type];
+    var ok = !!(ticket && ticket.picks && ticket.picks.length);
+    setGeneratorStatus('aimemory-status-' + type, ok ? ('Generat: ' + fmtDateTime(ticket.generatedAt || new Date().toISOString())) : (ticket && ticket.error ? ticket.error : 'Nu au fost găsite selecții suficiente.'), ok ? 'ok' : 'warn');
+    setButtonBusy(btn, false, 'Generează', 'Se generează...');
+  }, 120);
+}
+function buildBankrollSeries(initialBk){
+  var current = Number(initialBk || 0);
+  var series = [{label:'Start', value:current, profit:0}];
+  (TRACKING || []).forEach(function(t, idx){
+    current += Number(t.profit || 0);
+    series.push({label:'B'+(idx+1), value:current, profit:Number(t.profit || 0), status:t.status || 'pending'});
+  });
+  return series;
+}
+function renderBankrollTrend(initialBk){
+  var chart = $('bankroll-trend-chart');
+  var meta = $('bankroll-trend-meta');
+  if(!chart || !meta) return;
+  var series = buildBankrollSeries(initialBk);
+  if(series.length <= 1){
+    chart.innerHTML = '<div class="empty-state" style="padding:26px 14px">Graficul va apărea după ce există bilete în Tracking.</div>';
+    meta.innerHTML = '<div class="trend-meta-card"><div class="trend-meta-label">Stare</div><div class="trend-meta-value" style="color:var(--muted)">Fără date</div></div>';
+    return;
+  }
+  var values = series.map(function(p){ return Number(p.value || 0); });
+  var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+  if(min === max){ min -= 1; max += 1; }
+  var w = 860, h = 180, padX = 18, padTop = 14, padBottom = 22;
+  var plotW = w - padX * 2, plotH = h - padTop - padBottom;
+  var points = series.map(function(p, idx){
+    var x = padX + (plotW * idx / Math.max(1, series.length - 1));
+    var y = padTop + (max - Number(p.value || 0)) * plotH / Math.max(1e-9, (max - min));
+    return {x:x, y:y, value:Number(p.value || 0), profit:Number(p.profit || 0), label:p.label};
+  });
+  var path = points.map(function(p, idx){ return (idx ? 'L' : 'M') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+  var last = points[points.length - 1];
+  var baseY = h - padBottom;
+  var grid = [0, 0.5, 1].map(function(r){ var y = padTop + plotH * r; return '<line x1="'+padX+'" y1="'+y.toFixed(1)+'" x2="'+(w-padX)+'" y2="'+y.toFixed(1)+'" stroke="rgba(255,255,255,.08)" stroke-dasharray="4 4" />'; }).join('');
+  var circles = points.map(function(p, idx){ return '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+(idx === points.length - 1 ? 4.5 : 3)+'" fill="'+(idx === points.length - 1 ? '#22c55e' : '#3b82f6')+'" opacity=".95" />'; }).join('');
+  chart.innerHTML = '<svg viewBox="0 0 '+w+' '+h+'" class="trend-chart" preserveAspectRatio="none">'+grid+'<path d="'+path+'" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /><line x1="'+padX+'" y1="'+baseY+'" x2="'+(w-padX)+'" y2="'+baseY+'" stroke="rgba(255,255,255,.10)" />'+circles+'<text x="'+last.x.toFixed(1)+'" y="'+(last.y - 10).toFixed(1)+'" fill="#22c55e" font-size="11" text-anchor="end">'+last.value.toFixed(2)+' RON</text></svg>';
+  var totalProfit = values[values.length - 1] - Number(initialBk || 0);
+  var best = Math.max.apply(null, values), worst = Math.min.apply(null, values);
+  meta.innerHTML = [
+    ['Puncte urmărite', series.length - 1, 'var(--acc)'],
+    ['Maxim bankroll', best.toFixed(2) + ' RON', 'var(--grn)'],
+    ['Minim bankroll', worst.toFixed(2) + ' RON', 'var(--red)'],
+    ['Diferență netă', (totalProfit >= 0 ? '+' : '') + totalProfit.toFixed(2) + ' RON', totalProfit >= 0 ? 'var(--grn)' : 'var(--red)']
+  ].map(function(row){ return '<div class="trend-meta-card"><div class="trend-meta-label">'+row[0]+'</div><div class="trend-meta-value" style="color:'+row[2]+'">'+row[1]+'</div></div>'; }).join('');
+}
 
 // Logo helpers - uses BSD API /img/ endpoint
 function teamLogoUrl(apiId){
@@ -2305,7 +2557,7 @@ function renderAuditTicket(type){
   }
   var html = '<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)">'+
     '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
-      '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+ticket.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+ticket.picks.length+' selecții • Kelly mediu '+ticket.avgKelly.toFixed(1)+'%</div></div>'+
+      '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+ticket.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+ticket.picks.length+' selecții • Kelly mediu '+ticket.avgKelly.toFixed(1)+'%'+(ticket.generatedAt ? ' • '+fmtDateTime(ticket.generatedAt) : '')+'</div></div>'+
       '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+ticket.totalOdds.toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă '+ticket.combinedProb.toFixed(1)+'%</div></div>'+
     '</div>';
   ticket.picks.forEach(function(r){
@@ -2325,6 +2577,8 @@ function renderAuditTicket(type){
 function renderAuditGenerators(){
   ['safe','balanced','risk'].forEach(function(type){
     renderAuditTicket(type);
+    var ticket = AUDIT_TICKETS[type];
+    if(ticket && ticket.picks && ticket.picks.length) setGeneratorStatus('audit-status-' + type, 'Ultima generare: ' + fmtDateTime(ticket.generatedAt || new Date().toISOString()), 'ok');
   });
 }
 
@@ -2519,7 +2773,7 @@ function renderAiMemoryTicket(type){
   }
   var html = '<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)">'+
     '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
-      '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+ticket.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+ticket.picks.length+' selecții • Mem mediu '+(ticket.avgBonus >= 0 ? '+' : '')+ticket.avgBonus.toFixed(1)+'</div></div>'+
+      '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+ticket.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+ticket.picks.length+' selecții • Mem mediu '+(ticket.avgBonus >= 0 ? '+' : '')+ticket.avgBonus.toFixed(1)+(ticket.generatedAt ? ' • '+fmtDateTime(ticket.generatedAt) : '')+'</div></div>'+
       '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+ticket.totalOdds.toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă '+ticket.combinedProb.toFixed(1)+'%</div></div>'+
     '</div>';
   ticket.picks.forEach(function(r){
@@ -2540,6 +2794,8 @@ function renderAiMemoryGenerators(){
   ['safe','balanced','risk'].forEach(function(type){
     if(!AI_MEMORY_TICKETS[type] || !AI_MEMORY_TICKETS[type].picks || !AI_MEMORY_TICKETS[type].picks.length) generateAiMemoryTicket(type, true);
     else renderAiMemoryTicket(type);
+    var ticket = AI_MEMORY_TICKETS[type];
+    if(ticket && ticket.picks && ticket.picks.length) setGeneratorStatus('aimemory-status-' + type, 'Ultima generare: ' + fmtDateTime(ticket.generatedAt || new Date().toISOString()), 'ok');
   });
 }
 
@@ -6049,6 +6305,7 @@ function calcBankroll(){
     '<div class="bk-item"><div class="bk-label">🔥 Goals</div><div class="bk-val" style="color:var(--yel)">'+(actualBk * goalsPct / 100).toFixed(2)+' RON</div><div class="bk-sub">'+goalsPct.toFixed(1)+'% pentru bilete pe goluri</div></div>';
 
   renderJournal();
+  renderBankrollTrend(initialBk);
 }
 
 // ============================================================
