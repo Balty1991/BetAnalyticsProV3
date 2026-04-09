@@ -28,13 +28,15 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .logo-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
 .status-bar{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-family:var(--mono)}
 
-.header-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.header-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-start}
 .header-quick-stats{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
 .header-stat-pill{min-width:62px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);text-align:center}
 .header-stat-pill strong{display:block;font-size:16px;font-family:var(--mono);line-height:1;color:var(--txt)}
 .header-stat-pill span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
 #dashboard-stats{display:none!important}
 #market-performance-panel{display:none!important}
+#header-quick-stats{display:none!important}
+#audit-legend-box{display:none!important}
 
 .sb-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .sb-dot.live{background:var(--grn);box-shadow:0 0 6px var(--grn);animation:pulse 1.5s infinite}
@@ -449,7 +451,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .main{padding:14px 12px 110px}
   .header{padding:10px 12px}
   .header-inner{align-items:flex-start}
-  .header-tools{width:100%;justify-content:space-between}
+  .header-tools{width:100%;justify-content:flex-start}
   .header-quick-stats{flex:1;justify-content:space-between;padding:6px}
   .header-stat-pill{min-width:0;flex:1;padding:6px 4px}
   .header-stat-pill strong{font-size:15px}
