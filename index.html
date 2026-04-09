@@ -410,6 +410,58 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 @media(max-width:768px){.focus-card-metrics,.focus-side-metrics{grid-template-columns:repeat(3,1fr)}.focus-head .btn{width:100%;justify-content:center}}
 @media(max-width:560px){.focus-grid{grid-template-columns:1fr}.focus-card-metrics,.focus-side-metrics{grid-template-columns:repeat(2,1fr)}.focus-footer{flex-direction:column;align-items:stretch}.focus-footer .btn{width:100%;justify-content:center}}
 
+
+/* MOBILE-FIRST NAV */
+.mobile-nav{display:none}
+.mobile-sheet{display:none}
+.mobile-sheet.show{display:block}
+.mobile-sheet{position:fixed;left:12px;right:12px;bottom:84px;z-index:180;background:rgba(10,14,23,.98);border:1px solid var(--brd2);border-radius:18px;padding:12px;box-shadow:0 18px 38px rgba(0,0,0,.38);backdrop-filter:blur(14px)}
+.mobile-sheet-btn{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:var(--txt);font-size:13px;font-weight:700;text-align:left;display:block;margin-bottom:8px}
+.mobile-sheet-btn:last-child{margin-bottom:0}
+.dashboard-insights-shell{margin-top:14px}
+.dashboard-insights-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.dashboard-insights-title{font-size:14px;font-weight:800;color:var(--txt)}
+.dashboard-insights-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.dashboard-insights-body{padding-top:12px}
+#dashboard-insights-body:not(.open), #matches-hub-body:not(.open){display:none}
+@media(max-width:768px){
+  .tabs{display:none}
+  .main{padding:14px 12px 110px}
+  .header{padding:10px 12px}
+  .header-inner{align-items:flex-start}
+  .logo-title{font-size:15px}
+  .status-bar{font-size:10px}
+  .btn#btn-refresh{padding:7px 10px;font-size:11px}
+  .mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:fixed;left:10px;right:10px;bottom:10px;z-index:190;background:rgba(10,14,23,.97);border:1px solid var(--brd2);border-radius:20px;padding:8px;box-shadow:0 16px 36px rgba(0,0,0,.42);backdrop-filter:blur(16px)}
+  .mobile-nav-btn{border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;border-radius:14px;font-size:17px;font-weight:800}
+  .mobile-nav-btn small{font-size:10px;color:inherit;font-weight:700}
+  .mobile-nav-btn.active{background:rgba(59,130,246,.12);color:var(--acc)}
+  #dashboard-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  #dashboard-stats .stat-card{padding:12px}
+  #dashboard-stats .stat-card:nth-child(n+4){display:none}
+  #health-panel,#market-performance-panel,#audit-legend-box,#ml-api-box{margin-top:0!important}
+  .focus-shell{padding:12px;border-radius:16px}
+  .focus-title{font-size:15px}
+  .focus-sub,.welcome-text,.matches-card-sub{font-size:11px}
+  .focus-step{width:100%;justify-content:flex-start;border-radius:14px}
+  .focus-mini-list .focus-mini-item:nth-child(n+2){display:none}
+  .focus-chip-row .focus-chip:nth-child(n+3){display:none}
+  .match-card{padding:12px;border-radius:14px}
+  .reason-list{display:none}
+  .card-reco-badges span:nth-child(n+4){display:none}
+  .ticket-mini-grid-premium{grid-template-columns:repeat(2,1fr)}
+  .ticket-mini-grid-premium .ticket-mini:last-child{grid-column:1 / -1}
+  .matches-filter-advanced{grid-template-columns:1fr 1fr}
+  .matches-card-head{gap:8px}
+  .bilet-card{padding:14px}
+  .history-table{min-width:620px}
+}
+@media(max-width:520px){
+  .matches-filter-advanced{grid-template-columns:1fr}
+  .focus-grid{grid-template-columns:1fr}
+  .focus-side-metrics{grid-template-columns:repeat(2,1fr)}
+}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .stats-grid{grid-template-columns:repeat(2,1fr)}
@@ -744,12 +796,14 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <div class="section matches-section-card" id="matches-dashboard-hub" style="margin-bottom:14px">
       <div class="matches-card-head">
         <div>
-          <div class="matches-card-title">📚 Categorii mutate din Dashboard</div>
-          <div class="matches-card-sub">Topurile și radarele stau acum aici, exact deasupra listei de meciuri, ca să nu mai faci slalom între tab-uri.</div>
+          <div class="matches-card-title">📚 Radaruri și categorii</div>
+          <div class="matches-card-sub">Le deschizi doar când vrei radarurile și topurile, nu stau permanent peste lista principală de meciuri.</div>
         </div>
-        <span class="sec-badge" style="color:var(--acc);border-color:rgba(59,130,246,.22);background:rgba(59,130,246,.08)">Info & categorii</span>
+        <button class="btn" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt);padding:6px 10px" onclick="toggleMatchesHub()">☰ Arată / ascunde</button>
       </div>
-      <div id="matches-dashboard-sections"></div>
+      <div class="collapsible-body" id="matches-hub-body">
+        <div id="matches-dashboard-sections"></div>
+      </div>
     </div>
 
     <div class="section matches-section-card matches-filter-card" style="margin-bottom:14px">
@@ -1005,6 +1059,20 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 </div><!-- /main -->
 
+<div class="mobile-nav" id="mobile-nav">
+  <button class="mobile-nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')"><span>⭐</span><small>Start</small></button>
+  <button class="mobile-nav-btn" data-tab="bilete" onclick="switchTab('bilete')"><span>🎫</span><small>Bilete</small></button>
+  <button class="mobile-nav-btn" data-tab="meciuri" onclick="switchTab('meciuri')"><span>⚽</span><small>Meciuri</small></button>
+  <button class="mobile-nav-btn" data-tab="more" onclick="toggleMobileMore()"><span>☰</span><small>Mai mult</small></button>
+</div>
+<div class="mobile-sheet" id="mobile-sheet">
+  <button class="mobile-sheet-btn" onclick="switchTab('tracking');closeMobileMore()">📈 Tracking</button>
+  <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()">💰 Bankroll</button>
+  <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()">🧾 Istoric 21</button>
+  <button class="mobile-sheet-btn" onclick="switchTab('audit');closeMobileMore()">🎯 Audit</button>
+  <button class="mobile-sheet-btn" onclick="switchTab('aimemory');closeMobileMore()">🧠 AI Memory</button>
+</div>
+
 <script>
 'use strict';
 
@@ -1137,6 +1205,28 @@ function logoImgHtml(url, alt, size){
 // ============================================================
 // TAB SWITCHING
 // ============================================================
+function setMobileNavActive(name){
+  var primary = ['dashboard','bilete','meciuri'];
+  document.querySelectorAll('.mobile-nav-btn').forEach(function(btn){ btn.classList.remove('active'); });
+  var activeKey = primary.indexOf(name) >= 0 ? name : 'more';
+  var target = document.querySelector('.mobile-nav-btn[data-tab="'+activeKey+'"]');
+  if(target) target.classList.add('active');
+}
+function getCurrentActiveTabName(){
+  var active = document.querySelector('.tab-content.active');
+  return active ? String(active.id || '').replace('tab-','') : 'dashboard';
+}
+function toggleMobileMore(){
+  var sheet = $('mobile-sheet');
+  if(!sheet) return;
+  sheet.classList.toggle('show');
+  setMobileNavActive(sheet.classList.contains('show') ? 'more' : getCurrentActiveTabName());
+}
+function closeMobileMore(){
+  var sheet = $('mobile-sheet');
+  if(sheet) sheet.classList.remove('show');
+  setMobileNavActive(getCurrentActiveTabName());
+}
 function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
@@ -1145,6 +1235,8 @@ function switchTab(name){
   var tabs=document.querySelectorAll('.tab');
   var idx=names.indexOf(name);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
+  closeMobileMore();
+  setMobileNavActive(name);
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
@@ -4454,6 +4546,8 @@ function renderPresetTicketCards(targetId){
   var target = $(targetId);
   if(!target) return;
   var presets = getPresetTicketCards();
+  presets.sort(function(a,b){ return (b.recommended ? 1 : 0) - (a.recommended ? 1 : 0); });
+  if(targetId === "ticket-lane-board") presets = presets.slice(0,3);
   target.innerHTML = presets.map(function(item){
     var t = item.preview || {};
     var picks = t.picks || [];
@@ -5614,13 +5708,26 @@ function calcBankroll(){
 // ============================================================
 var SECTION_STATE={todaybest:false,top5:false,topsafe:false,ml:false,mldc:false,ml15:false,ml25:false,ml35:false};
 function toggleSection(id){
-  SECTION_STATE[id]=!SECTION_STATE[id];
   var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle'],ml35:['ml35-body','ml35-toggle']};
+  Object.keys(map).forEach(function(key){
+    if(key !== id){
+      SECTION_STATE[key] = false;
+      var otherBody=$(map[key][0]), otherToggle=$(map[key][1]);
+      if(otherBody) otherBody.classList.remove('open');
+      if(otherToggle) otherToggle.classList.remove('open');
+    }
+  });
+  SECTION_STATE[id]=!SECTION_STATE[id];
   var pair=map[id];
   if(!pair) return;
   var body=$(pair[0]), toggle=$(pair[1]);
   if(SECTION_STATE[id]){ body.classList.add('open'); toggle.classList.add('open'); }
   else{ body.classList.remove('open'); toggle.classList.remove('open'); }
+}
+function toggleMatchesHub(){
+  var body = $('matches-hub-body');
+  if(!body) return;
+  body.classList.toggle('open');
 }
 function updateSectionCount(id,count){
   var map={todaybest:'todaybest-count',top5:'top5-count',topsafe:'topsafe-count',ml:'ml-count',mldc:'mldc-count',ml15:'ml15-count',ml25:'ml25-count',ml35:'ml35-count'};
@@ -5675,15 +5782,28 @@ function moveDashboardSectionsToMatches(){
   target.dataset.moved = '1';
 }
 
+function toggleDashboardInsights(){
+  var body = $('dashboard-insights-body');
+  if(!body) return;
+  body.classList.toggle('open');
+}
 function arrangeDashboardLayout(){
   var dash = $('tab-dashboard');
   if(!dash) return;
   var stats = $('dashboard-stats'), health = $('health-panel'), market = $('market-performance-panel'), legend = $('audit-legend-box'), api = $('ml-api-box');
-  [stats, health, market, legend, api].forEach(function(el){ if(el) dash.appendChild(el); });
   if(stats) stats.style.marginTop = '12px';
-  if(health) health.style.marginTop = '14px';
-  if(market) market.style.marginTop = '0';
-  if(api) api.style.marginTop = '14px';
+
+  var shell = $('dashboard-insights-shell');
+  var body = $('dashboard-insights-body');
+  if(!shell){
+    shell = document.createElement('div');
+    shell.className = 'focus-shell dashboard-insights-shell';
+    shell.id = 'dashboard-insights-shell';
+    shell.innerHTML = '<div class="dashboard-insights-toggle" onclick="toggleDashboardInsights()"><div><div class="dashboard-insights-title">📦 Detalii tehnice și performanță</div><div class="dashboard-insights-sub">Le-am scos din zona principală. Le deschizi doar când vrei context de backtest, piețe și AI.</div></div><div class="focus-badge muted">Detalii</div></div><div class="dashboard-insights-body" id="dashboard-insights-body"></div>';
+    dash.appendChild(shell);
+    body = $('dashboard-insights-body');
+  }
+  [health, market, legend, api].forEach(function(el){ if(el && body) body.appendChild(el); });
 }
 
 function getCurrentDayKey(){
@@ -5783,6 +5903,7 @@ window.addEventListener('DOMContentLoaded', function(){
   if(st) API_TOKEN=st;
   moveDashboardSectionsToMatches();
   arrangeDashboardLayout();
+  setMobileNavActive('dashboard');
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
   setInterval(doRefresh, 900000);
