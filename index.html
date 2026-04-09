@@ -372,6 +372,16 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .focus-card::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,var(--focus-accent),transparent)}
 .focus-card.recommended{border-color:rgba(34,197,94,.34);box-shadow:0 0 0 1px rgba(34,197,94,.12),0 14px 28px rgba(0,0,0,.16)}
 .focus-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+
+.focus-card-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+.focus-expand-chip{padding:6px 10px;border-radius:999px;border:1px solid rgba(59,130,246,.18);background:rgba(59,130,246,.08);color:var(--acc);font-size:10px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.focus-expand-chip .arrow{transition:transform .2s ease}
+.focus-expand-chip.open .arrow{transform:rotate(180deg)}
+.focus-extra-rows{max-height:0;overflow:hidden;transition:max-height .28s ease}
+.focus-extra-rows.open{max-height:420px}
+.focus-more-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:var(--txt);font-size:11px;font-weight:800;cursor:pointer}
+.focus-more-toggle strong{color:var(--acc);font-size:11px}
+
 .focus-kicker{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--focus-accent)}
 .focus-card-title{font-size:15px;font-weight:800;color:var(--txt);margin-top:2px}
 .focus-card-sub{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px}
@@ -4543,33 +4553,47 @@ function getPresetTicketCards(){
   return presets;
 }
 
+function togglePresetRows(id, btn){
+  var box = $(id);
+  if(!box || !btn) return;
+  var open = box.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  var collapsed = btn.getAttribute('data-collapsed') || 'Detalii';
+  var expanded = btn.getAttribute('data-expanded') || 'Ascunde';
+  var label = btn.querySelector('.label');
+  if(label) label.textContent = open ? expanded : collapsed;
+}
+
 function renderPresetTicketCards(targetId){
   var target = $(targetId);
   if(!target) return;
   var presets = getPresetTicketCards();
   presets.sort(function(a,b){ return (b.recommended ? 1 : 0) - (a.recommended ? 1 : 0); });
   if(targetId === "ticket-lane-board") presets = presets.slice(0,3);
-  target.innerHTML = presets.map(function(item){
+  target.innerHTML = presets.map(function(item, idx){
     var t = item.preview || {};
     var picks = t.picks || [];
     var markets = uniqueReasons(picks.map(function(p){ return p.bestBet && p.bestBet.label; }).filter(Boolean)).slice(0,3);
     var accent = item.accent || 'var(--acc)';
     var badgeClass = t.isEmpty ? 'muted' : (String(t.riskLabel || '').indexOf('Scăzut') === 0 ? 'good' : 'warn');
-    var pickRows = picks.slice(0,2).map(function(p){
+    var cardKey = targetId + '-' + idx;
+    var firstRow = picks[0] ? ('<div class="focus-mini-item">'+
+      '<div><div class="focus-mini-item-main">'+picks[0].home+' vs '+picks[0].away+'</div><div class="focus-mini-item-sub">'+(picks[0].league || '—')+' • '+(picks[0].dateLabel || '')+' '+(picks[0].timeLabel || '')+'</div></div>'+
+      '<div class="focus-mini-item-right">'+picks[0].bestBet.label+'<br>@ '+picks[0].bestBet.odds.toFixed(2)+'</div>'+
+    '</div>') : '<div class="focus-mini-item"><div><div class="focus-mini-item-main">Nimic foarte curat acum</div><div class="focus-mini-item-sub">Generatorul rămâne disponibil, dar nu forțează selecții doar ca să umple ecranul.</div></div></div>';
+    var extraRows = picks.slice(1).map(function(p){
       return '<div class="focus-mini-item">'+
         '<div><div class="focus-mini-item-main">'+p.home+' vs '+p.away+'</div><div class="focus-mini-item-sub">'+(p.league || '—')+' • '+(p.dateLabel || '')+' '+(p.timeLabel || '')+'</div></div>'+
         '<div class="focus-mini-item-right">'+p.bestBet.label+'<br>@ '+p.bestBet.odds.toFixed(2)+'</div>'+
       '</div>';
     }).join('');
-    if(!pickRows){
-      pickRows = '<div class="focus-mini-item"><div><div class="focus-mini-item-main">Nimic foarte curat acum</div><div class="focus-mini-item-sub">Generatorul rămâne disponibil, dar nu forțează selecții doar ca să umple ecranul.</div></div></div>';
-    } else if(picks.length > 2){
-      pickRows += '<div class="focus-mini-item"><div class="focus-mini-item-main">+'+(picks.length - 2)+' selecții suplimentare</div><div class="focus-mini-item-right">Total '+picks.length+'</div></div>';
-    }
+    var extraCount = Math.max(0, picks.length - 1);
     return '<div class="focus-card '+(item.recommended ? 'recommended' : '')+'" style="--focus-accent:'+accent+'">'+
       '<div class="focus-card-head">'+
         '<div><div class="focus-kicker">'+(item.recommended ? 'Start aici' : 'Variantă utilă')+'</div><div class="focus-card-title">'+item.title+'</div><div class="focus-card-sub">'+(t.summary || 'Generator dedicat acestui format.')+'</div></div>'+
-        '<span class="focus-badge '+badgeClass+'">'+(t.isEmpty ? 'Așteptare' : (t.riskLabel || '—'))+'</span>'+
+        '<div class="focus-card-side"><span class="focus-badge '+badgeClass+'">'+(t.isEmpty ? 'Așteptare' : (t.riskLabel || '—'))+'</span>'+
+        (extraCount > 0 ? '<button class="focus-expand-chip" id="focus-expand-'+cardKey+'" onclick="togglePresetRows(&#39;focus-extra-'+cardKey+'&#39;, this)" data-collapsed="Vezi '+extraCount+'" data-expanded="Ascunde"><span class="label">Vezi '+extraCount+'</span><span class="arrow">▼</span></button>' : '')+
+        '</div>'+
       '</div>'+
       '<div class="focus-card-metrics">'+
         '<div class="focus-metric"><div class="v">'+(picks.length || 0)+'</div><div class="l">Selecții</div></div>'+
@@ -4577,7 +4601,8 @@ function renderPresetTicketCards(targetId){
         '<div class="focus-metric"><div class="v">'+(t.isEmpty ? '—' : (t.combinedProb || 0).toFixed(1)+'%')+'</div><div class="l">Prob. cons.</div></div>'+
       '</div>'+
       '<div class="focus-chip-row">'+(markets.length ? markets.map(function(m){ return '<span class="focus-chip">'+m+'</span>'; }).join('') : '<span class="focus-chip">fără selecții curate</span>')+'</div>'+
-      '<div class="focus-mini-list">'+pickRows+'</div>'+
+      '<div class="focus-mini-list">'+firstRow+(extraCount > 0 ? '<div class="focus-extra-rows" id="focus-extra-'+cardKey+'">'+extraRows+'</div>' : '')+'</div>'+
+      (extraCount > 0 ? '<button class="focus-more-toggle" onclick="togglePresetRows(&#39;focus-extra-'+cardKey+'&#39;, document.getElementById(&#39;focus-expand-'+cardKey+'&#39;))"><span>+'+extraCount+' selecții suplimentare</span><strong>Total '+picks.length+'</strong></button>' : '')+
       '<div class="focus-footer">'+
         '<div class="focus-footer-note">'+(t.isEmpty ? 'Așteaptă date mai bune sau verifică Analiză.' : 'Edge mediu ' + (t.avgEdge >= 0 ? '+' : '') + ((t.avgEdge || 0) * 100).toFixed(1) + '%')+'</div>'+
         '<button class="btn '+(item.recommended ? 'btn-green' : 'btn-primary')+'" style="justify-content:center" onclick="'+item.action+'">'+item.btn+'</button>'+
