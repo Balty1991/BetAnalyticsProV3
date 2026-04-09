@@ -425,6 +425,27 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .focus-list-row span{display:block;font-size:9px;color:var(--muted);margin-top:2px}
 .focus-list-row b{font-size:10px;color:var(--acc);white-space:nowrap}
 .ticket-empty-cta{padding:18px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08));border:1px solid rgba(59,130,246,.16);text-align:center}
+
+.generator-board{display:grid;gap:14px}
+.generator-section{padding:14px;border-radius:18px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06)}
+.generator-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.generator-section-title strong{font-size:14px;color:var(--txt)}
+.generator-tag{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.16);color:var(--acc)}
+.generator-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.generator-tile{display:flex;align-items:center;gap:10px;width:100%;padding:14px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));color:var(--txt);text-align:left;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.generator-tile .icon{font-size:22px;line-height:1}
+.generator-tile .text{display:flex;flex-direction:column;gap:4px;min-width:0}
+.generator-tile .title{font-size:14px;font-weight:800;line-height:1.25}
+.generator-tile .badge{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;width:max-content;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--muted)}
+.generator-tile.primary{border-color:rgba(59,130,246,.20)}
+.generator-tile.goals{border-color:rgba(6,182,212,.24)}
+.generator-tile.mix{border-color:rgba(168,85,247,.24)}
+.generator-tile.bigwin{border-color:rgba(239,68,68,.24)}
+.generator-tile.custom{border-color:rgba(255,255,255,.10)}
+.generator-tile.full{grid-column:1 / -1}
+.generator-tile:hover{transform:translateY(-1px);transition:all .18s ease}
+@media(max-width:640px){.generator-grid{grid-template-columns:1fr}.generator-tile{padding:13px 12px}.generator-tile.full{grid-column:auto}}
+
 .ticket-empty-cta-title{font-size:16px;font-weight:800;color:var(--txt);margin-bottom:6px}
 .ticket-empty-cta-sub{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:14px}
 .focus-bilete-hero{border-color:rgba(59,130,246,.24)}
@@ -916,13 +937,28 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <div class="tab-content" id="tab-bilete">
     <div style="display:grid;gap:16px;margin-bottom:22px">
       <div class="bilet-card" style="margin-bottom:0;padding:16px">
-        <div style="font-size:15px;font-weight:800;margin-bottom:10px">Generatoare avansate / secundare</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="generateTicket()">🛡️ Bilet Simplu EV</button>
-          <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--acc),var(--cyan))" onclick="generateOver15Ticket()">🔥 Bilet 1.5G EV+</button>
-          <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateMixTicket()">🎯 Mix 70%</button>
-          <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateBigWinTicket()">🚀 Mega Big Win</button>
-          <button class="btn" style="background:var(--brd);color:var(--txt)" onclick="toggleCustomBuilder(true)">🎛️ Constructor personalizat</button>
+        <div style="font-size:16px;font-weight:800;margin-bottom:12px">Generatoare</div>
+        <div class="generator-board">
+          <div class="generator-section">
+            <div class="generator-section-title"><strong>Controlate</strong><span class="generator-tag">Selectii filtrate</span></div>
+            <div class="generator-grid">
+              <button class="generator-tile primary" onclick="generateTicket()"><span class="icon">🛡️</span><span class="text"><span class="title">Bilet Simplu EV</span><span class="badge">EV</span></span></button>
+              <button class="generator-tile goals" onclick="generateOver15Ticket()"><span class="icon">🔥</span><span class="text"><span class="title">Bilet 1.5G EV+</span><span class="badge">Goluri</span></span></button>
+            </div>
+          </div>
+          <div class="generator-section">
+            <div class="generator-section-title"><strong>Agresive</strong><span class="generator-tag">Cota mai mare</span></div>
+            <div class="generator-grid">
+              <button class="generator-tile mix" onclick="generateMixTicket()"><span class="icon">🎯</span><span class="text"><span class="title">Mix 70%</span><span class="badge">Mix</span></span></button>
+              <button class="generator-tile bigwin" onclick="generateBigWinTicket()"><span class="icon">🚀</span><span class="text"><span class="title">Mega Big Win</span><span class="badge">Risc ridicat</span></span></button>
+            </div>
+          </div>
+          <div class="generator-section">
+            <div class="generator-section-title"><strong>Personalizat</strong><span class="generator-tag">Configurare manuala</span></div>
+            <div class="generator-grid">
+              <button class="generator-tile custom full" onclick="toggleCustomBuilder(true)"><span class="icon">🎛️</span><span class="text"><span class="title">Constructor personalizat</span><span class="badge">Custom</span></span></button>
+            </div>
+          </div>
         </div>
       </div>
 
