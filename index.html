@@ -359,6 +359,12 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 #audit-summary-grid .audit-card-value{font-size:18px}
 #audit-summary-grid .audit-card-sub{margin-top:4px;font-size:10px;line-height:1.3}
 @media (max-width:540px){#audit-summary-grid.audit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
+#ai-memory-summary-grid.audit-grid,#ai-memory-market-grid.audit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#ai-memory-summary-grid .audit-card,#ai-memory-market-grid .audit-card{padding:12px 12px 10px;border-radius:12px}
+#ai-memory-summary-grid .audit-card-label,#ai-memory-market-grid .audit-card-label{margin-bottom:6px;font-size:9px}
+#ai-memory-summary-grid .audit-card-value,#ai-memory-market-grid .audit-card-value{font-size:18px}
+#ai-memory-summary-grid .audit-card-sub,#ai-memory-market-grid .audit-card-sub{margin-top:4px;font-size:10px;line-height:1.3}
+@media (max-width:540px){#ai-memory-summary-grid.audit-grid,#ai-memory-market-grid.audit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
 .audit-list{display:grid;gap:10px}
 .audit-row{background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));border:1px solid var(--brd2);border-radius:14px;padding:12px}
 .audit-row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -794,19 +800,19 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--txt)">🧠 AI Memory / Adaptive Engine</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Învață din istoricul real, din piețele care au mers și din tiparele care au produs ROI bun sau slab.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Memorie adaptivă construită pe rezultate reale și exemple închise.</div>
         </div>
         <div id="ai-memory-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
       </div>
       <div class="audit-grid" id="ai-memory-summary-grid"></div>
-      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">V1 nu rescrie modelul BSD; adaugă un strat adaptiv care ridică sau frânează selecțiile pe baza memoriei reale.</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.55">Scorul adaptiv completează scorul principal pe baza istoricului validat.</div>
     </div>
 
     <div class="section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(14,165,233,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <div style="font-size:14px;font-weight:700;color:var(--txt)">📊 Ce piețe a învățat motorul</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Aici vezi unde memoria are încredere mai mare și unde pune frână.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Sinteză pe piețe a performanței memoriei adaptive.</div>
         </div>
         <div style="font-size:10px;color:var(--muted)">minim 4 exemple închise</div>
       </div>
@@ -828,9 +834,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
         <div>
           <div style="font-size:14px;font-weight:700;color:var(--txt)">🎯 Pronosticuri adaptive</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Scorul adaptiv = scorul motorului curent + bonus / penalizare din memoria AI.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Selecții rescotate pe baza memoriei adaptive.</div>
         </div>
-        <div style="font-size:10px;color:var(--muted)">top 12 selecții rescorate</div>
+        <div style="font-size:10px;color:var(--muted)">Top 12 selecții</div>
       </div>
       <div id="ai-memory-picks" class="audit-list"></div>
     </div>
@@ -2126,12 +2132,12 @@ function renderAIMemory(){
   if(updated) updated.textContent = memory.updated_at ? ('Memorie actualizată: ' + fmtDateTime(memory.updated_at)) : 'Memorie: —';
 
   var cards = [
-    {label:'Exemple închise', value: Number(data.settled_bets || 0), sub:'meciuri din care AI Memory a învățat efectiv', color:'var(--acc)'},
-    {label:'Win rate memorie', value: fmtPct(Number(data.settled_winrate || 0)), sub:'rata de câștig a setului pe care învață stratul adaptiv', color:'var(--grn)'},
-    {label:'ROI memorie', value: fmtSignedPct(Number(data.settled_roi || 0)), sub:'ROI pe istoricul folosit la memorare', color:'var(--yel)'},
-    {label:'Pronosticuri rescotate', value: Number(data.pending_scored || 0), sub:'selecții curente cărora li s-a aplicat memoria', color:'var(--pur)'},
-    {label:'Tipare bune', value: Number(data.positive_patterns || 0), sub:'pattern-uri cu scor adaptiv pozitiv', color:'var(--grn)'},
-    {label:'Tipare de evitat', value: Number(data.negative_patterns || 0), sub:'pattern-uri care trag scorul în jos', color:'var(--red)'}
+    {label:'Exemple închise', value: Number(data.settled_bets || 0), sub:'baza validată pentru memorie', color:'var(--acc)'},
+    {label:'Win rate memorie', value: fmtPct(Number(data.settled_winrate || 0)), sub:'rata de câștig a setului analizat', color:'var(--grn)'},
+    {label:'ROI memorie', value: fmtSignedPct(Number(data.settled_roi || 0)), sub:'rentabilitate pe istoricul validat', color:'var(--yel)'},
+    {label:'Selecții rescotate', value: Number(data.pending_scored || 0), sub:'selecții curente evaluate adaptiv', color:'var(--pur)'},
+    {label:'Tipare pozitive', value: Number(data.positive_patterns || 0), sub:'patternuri cu impact favorabil', color:'var(--grn)'},
+    {label:'Tipare de evitat', value: Number(data.negative_patterns || 0), sub:'patternuri cu impact negativ', color:'var(--red)'}
   ];
   summary.innerHTML = cards.map(function(c){
     return '<div class="audit-card">'+
@@ -2148,7 +2154,7 @@ function renderAIMemory(){
     return '<div class="audit-card">'+
       '<div class="audit-card-label">'+(r.label || r.key || '—')+'</div>'+
       '<div class="audit-card-value" style="color:'+(mem >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(mem >= 0 ? '+' : '')+mem.toFixed(1)+'</div>'+
-      '<div class="audit-card-sub">ROI '+(roi >= 0 ? '+' : '')+roi.toFixed(1)+'% • '+Number(r.raw_bets || 0)+' exemple • win '+fmtPct(Number(r.winrate || 0))+'</div>'+
+      '<div class="audit-card-sub">ROI '+(roi >= 0 ? '+' : '')+roi.toFixed(1)+'% • '+Number(r.raw_bets || 0)+' exemple • win '+fmtPct(Number(r.winrate || 0))+'</div>+
     '</div>';
   }).join('') : '<div class="empty-state">Memoria încă nu are suficiente exemple închise pentru piețe. Se umple după ce se adună mai mult istoric.</div>';
 
@@ -2182,22 +2188,27 @@ function renderAIMemory(){
       return '<span class="audit-reason">'+reason.label+' • '+(Number(reason.impact || 0) >= 0 ? '+' : '')+Number(reason.impact || 0).toFixed(1)+' • ROI '+(Number(reason.roi || 0) >= 0 ? '+' : '')+Number(reason.roi || 0).toFixed(1)+'%</span>';
     }).join('');
     return '<div class="audit-row">'+
-      '<div class="audit-row-top">'+
-        '<div>'+
-          '<div class="audit-row-teams">#'+(idx+1)+' • '+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+      '<div class="audit-row-header">'+
+        '<div class="audit-row-main">'+
+          '<div class="audit-row-titleline">'+
+            '<span class="audit-row-rank">#'+(idx+1)+'</span>'+
+            '<div class="audit-row-teams">'+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+          '</div>'+
           '<div class="audit-row-meta">'+(r.league || '—')+' • '+(r.event_date ? (fmtDate(r.event_date)+' • '+fmtTime(r.event_date)) : '—')+' • '+(r.source || '—')+'</div>'+
         '</div>'+
-        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="audit-badge" style="color:'+(bonus >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(bonus >= 0 ? '+' : '')+bonus.toFixed(1)+'</span></div>'+
+        '<div class="audit-pick-box">'+
+          '<div class="audit-pick-label">Pronostic</div>'+
+          '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+
+        '</div>'+
       '</div>'+
-      '<div class="audit-row-badges">'+
-        '<span class="audit-badge">'+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</span>'+
-        '<span class="audit-badge">Adj '+fmtPct(Number(r.adjusted_prob || 0))+'</span>'+
-        '<span class="audit-badge">Edge '+fmtSignedPct(Number(r.edge_pct || 0))+'</span>'+
-        '<span class="audit-badge">Score baza '+Number(r.base_score || 0).toFixed(1)+'</span>'+
-        '<span class="audit-badge">Adaptive '+Number(r.adaptive_score || 0).toFixed(1)+'</span>'+
-        '<span class="audit-badge">Value '+fmtSignedPct(Number(r.value || 0) * 100)+'</span>'+
+      '<div class="audit-row-tags"><span class="audit-badge" style="color:'+(bonus >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(bonus >= 0 ? '+' : '')+bonus.toFixed(1)+'</span><span class="audit-badge">Sursă '+(r.source || '—')+'</span></div>'+
+      '<div class="audit-stat-grid">'+
+        '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge_pct || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Scor bază</div><div class="audit-stat-value">'+Number(r.base_score || 0).toFixed(1)+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Scor adaptiv</div><div class="audit-stat-value">'+Number(r.adaptive_score || 0).toFixed(1)+'</div></div>'+
       '</div>'+
-      (reasonsHtml ? '<div class="audit-reasons">'+reasonsHtml+'</div>' : '')+
+      '<div class="audit-row-foot"><span class="audit-reason">Value '+fmtSignedPct(Number(r.value || 0) * 100)+'</span>'+(reasonsHtml || '')+'</div>'+
     '</div>';
   }).join('');
 }
