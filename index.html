@@ -358,6 +358,58 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .card-reco-pick{font-size:15px}
 }
 
+
+/* FOCUS MODE */
+.focus-shell{margin:0 0 16px;padding:16px;border-radius:18px;background:linear-gradient(180deg,rgba(14,22,40,.98),rgba(17,24,39,.98));border:1px solid rgba(84,119,255,.16);box-shadow:0 14px 34px rgba(0,0,0,.18)}
+.focus-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.focus-title{font-size:16px;font-weight:800;color:var(--txt)}
+.focus-sub{font-size:12px;color:var(--muted);line-height:1.55;max-width:760px;margin-top:4px}
+.focus-path{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.focus-step{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);font-size:11px;color:var(--muted)}
+.focus-step span{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25);color:var(--acc);font-weight:800;font-family:var(--mono)}
+.focus-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.focus-card{--focus-accent:var(--acc);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);position:relative;overflow:hidden}
+.focus-card::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,var(--focus-accent),transparent)}
+.focus-card.recommended{border-color:rgba(34,197,94,.34);box-shadow:0 0 0 1px rgba(34,197,94,.12),0 14px 28px rgba(0,0,0,.16)}
+.focus-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.focus-kicker{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--focus-accent)}
+.focus-card-title{font-size:15px;font-weight:800;color:var(--txt);margin-top:2px}
+.focus-card-sub{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px}
+.focus-badge{padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-size:10px;font-weight:800;white-space:nowrap}
+.focus-badge.good{color:var(--grn);border-color:rgba(34,197,94,.22);background:rgba(34,197,94,.09)}
+.focus-badge.warn{color:var(--yel);border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.08)}
+.focus-badge.muted{color:var(--muted)}
+.focus-card-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.focus-metric{padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.05);text-align:center}
+.focus-metric .v{font-size:15px;font-weight:800;font-family:var(--mono);color:var(--txt)}
+.focus-metric .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.focus-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.focus-chip{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:700;background:rgba(59,130,246,.10);color:var(--txt);border:1px solid rgba(59,130,246,.16)}
+.focus-mini-list{display:grid;gap:7px;margin-bottom:12px}
+.focus-mini-item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+.focus-mini-item-main{font-size:11px;color:var(--txt);font-weight:700;line-height:1.35}
+.focus-mini-item-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.focus-mini-item-right{font-size:10px;color:var(--acc);font-weight:800;text-align:right;white-space:nowrap}
+.focus-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.focus-footer-note{font-size:10px;color:var(--muted)}
+.focus-bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.focus-side-card{padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.focus-side-title{font-size:13px;font-weight:800;color:var(--txt);margin-bottom:8px}
+.focus-side-sub{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.focus-side-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.focus-list{display:grid;gap:8px}
+.focus-list-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05)}
+.focus-list-row strong{display:block;font-size:11px;line-height:1.35}
+.focus-list-row span{display:block;font-size:9px;color:var(--muted);margin-top:2px}
+.focus-list-row b{font-size:10px;color:var(--acc);white-space:nowrap}
+.ticket-empty-cta{padding:18px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08));border:1px solid rgba(59,130,246,.16);text-align:center}
+.ticket-empty-cta-title{font-size:16px;font-weight:800;color:var(--txt);margin-bottom:6px}
+.ticket-empty-cta-sub{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:14px}
+.focus-bilete-hero{border-color:rgba(59,130,246,.24)}
+@media(max-width:900px){.focus-bottom{grid-template-columns:1fr}}
+@media(max-width:768px){.focus-card-metrics,.focus-side-metrics{grid-template-columns:repeat(3,1fr)}.focus-head .btn{width:100%;justify-content:center}}
+@media(max-width:560px){.focus-grid{grid-template-columns:1fr}.focus-card-metrics,.focus-side-metrics{grid-template-columns:repeat(2,1fr)}.focus-footer{flex-direction:column;align-items:stretch}.focus-footer .btn{width:100%;justify-content:center}}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .stats-grid{grid-template-columns:repeat(2,1fr)}
@@ -396,14 +448,14 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-  <button class="tab" onclick="switchTab('audit')">🎯 Audit Kelly</button>
-  <button class="tab" onclick="switchTab('aimemory')">🧠 AI Memory</button>
-  <button class="tab" onclick="switchTab('meciuri')">⚽ Meciuri</button>
+  <button class="tab active" onclick="switchTab('dashboard')">⭐ Start</button>
   <button class="tab" onclick="switchTab('bilete')">🎫 Bilete</button>
+  <button class="tab" onclick="switchTab(&#39;meciuri&#39;)">⚽ Analiză</button>
   <button class="tab" onclick="switchTab('tracking')">📈 Tracking</button>
   <button class="tab" onclick="switchTab('bankroll')">💰 Bankroll</button>
   <button class="tab" onclick="switchTab('istoric21')">🧾 Istoric 21 zile</button>
+  <button class="tab" onclick="switchTab('audit')">🎯 Audit Kelly</button>
+  <button class="tab" onclick="switchTab('aimemory')">🧠 AI Memory</button>
 </div>
 
 <div class="main">
@@ -418,6 +470,26 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="stat-card"><div class="stat-num" id="st-safe" style="color:var(--grn)">—</div><div class="stat-lbl">SAFE</div></div>
       <div class="stat-card"><div class="stat-num" id="st-value" style="color:var(--val)">—</div><div class="stat-lbl">Edge ≥ 5%</div></div>
       <div class="stat-card"><div class="stat-num" id="st-mlcov" style="color:var(--pur)">—</div><div class="stat-lbl">Cu backtest</div></div>
+    </div>
+
+    <div class="focus-shell" id="focus-shell">
+      <div class="focus-head">
+        <div>
+          <div class="focus-title">🧭 Centru de decizie</div>
+          <div class="focus-sub">Aplicația îți pune în față doar cele mai utile 4 variante de joc. Restul analizelor rămân în fundal, în taburile dedicate.</div>
+        </div>
+        <button class="btn btn-primary" onclick="switchTab('bilete')">Deschide bilete</button>
+      </div>
+      <div class="focus-path">
+        <div class="focus-step"><span>1</span> Începi cu recomandarea marcată <b>START AICI</b></div>
+        <div class="focus-step"><span>2</span> Dacă nu-ți place structura, mergi pe varianta de rezervă</div>
+        <div class="focus-step"><span>3</span> Analiza completă rămâne în <b>Analiză</b>, nu pe ecranul principal</div>
+      </div>
+      <div class="focus-grid" id="focus-ticket-grid"></div>
+      <div class="focus-bottom">
+        <div class="focus-side-card" id="focus-market-card"></div>
+        <div class="focus-side-card" id="focus-singles-card"></div>
+      </div>
     </div>
 
     <div class="section" id="health-panel" style="margin-top:14px;margin-bottom:12px;padding:10px 12px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.18);box-shadow:0 10px 30px rgba(0,0,0,.16)">
@@ -755,56 +827,26 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   <!-- ===== BILETE ===== -->
   <div class="tab-content" id="tab-bilete">
     <div style="display:grid;gap:16px;margin-bottom:22px">
-      <div class="welcome-box" style="margin-bottom:0">
+      <div class="welcome-box focus-bilete-hero" style="margin-bottom:0">
         <div>
-          <div class="sec-title" style="margin-bottom:6px">🎫 Bilete AI — versiune compactă</div>
-          <div class="welcome-text">Un bilet al zilei, un conservator 3-5 evenimente, un Big Win și un generator care trebuie să muncească pentru tine, nu invers.</div>
+          <div class="sec-title" style="margin-bottom:6px">🎫 Bilete AI — flux simplificat</div>
+          <div class="welcome-text">Ți-am lăsat în față doar variantele care merită deschise primele. Generatoarele agresive și setările de finețe au fost mutate mai jos, în modul avansat.</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="generateBestEventTicket()">🎯 Biletul zilei</button>
+          <button class="btn btn-primary" onclick="generateBestEventTicket()">🎯 Single de azi</button>
+          <button class="btn btn-green" onclick="generateConservativeTicket()">🧊 Conservator</button>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
-        <div class="bilet-card" style="margin-bottom:0;padding:16px;border-color:rgba(34,197,94,.3)">
-          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🎯 Biletul zilei</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">1-2 evenimente cu cel mai bun suport statistic din oferta apropiată.</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <span class="sec-badge">1-2 evenimente</span>
-            <span class="sec-badge" style="color:var(--grn);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)">Focus calitate</span>
+      <div class="focus-shell" style="padding:14px 14px 10px">
+        <div class="focus-head" style="margin-bottom:10px">
+          <div>
+            <div class="focus-title" style="font-size:15px">Ce merită generat acum</div>
+            <div class="focus-sub">Aici vezi imediat cele mai bune formate de bilet disponibile pe datele curente.</div>
           </div>
-          <button class="btn btn-green" style="width:100%;justify-content:center" onclick="generateBestEventTicket()">Generează</button>
+          <button class="btn" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)" onclick="toggleAdvancedGenerators()">🧰 Mod avansat</button>
         </div>
-
-        <div class="bilet-card" style="margin-bottom:0;padding:16px">
-          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🧊 Bilet conservator</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">3-5 evenimente curate, cu accent pe Over 1.5 și piețe robuste.</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <span class="sec-badge">3-5 evenimente</span>
-            <span class="sec-badge" style="color:var(--grn);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)">Risc scăzut-mediu</span>
-          </div>
-          <button class="btn btn-green" style="width:100%;justify-content:center" onclick="generateConservativeTicket()">Generează</button>
-        </div>
-
-        <div class="bilet-card" style="margin-bottom:0;padding:16px">
-          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🚀 Mega Big Win</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Caută cotă mare, dar nu din senin: doar selecții care au totuși suport în model.</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <span class="sec-badge">30 - 100 cotă</span>
-            <span class="sec-badge" style="color:var(--red);border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.08)">Risc ridicat</span>
-          </div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateBigWinTicket()">Generează</button>
-        </div>
-
-        <div class="bilet-card" style="margin-bottom:0;padding:16px;border-color:rgba(6,182,212,.3)">
-          <div style="font-size:15px;font-weight:800;margin-bottom:6px">🎛️ Generator personalizat</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Setezi criteriile, iar motorul caută și fallback-uri mai inteligente dacă piața e prea strânsă.</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <span class="sec-badge">Personalizat</span>
-            <span class="sec-badge" style="color:var(--cyan);border-color:rgba(6,182,212,.25);background:rgba(6,182,212,.08)">Optimizat</span>
-          </div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--cyan),var(--grn))" onclick="toggleCustomBuilder(true)">Configurează</button>
-        </div>
+        <div class="focus-grid" id="ticket-lane-board"></div>
       </div>
 
       <div class="extra-form" id="custom-builder">
@@ -852,16 +894,18 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       </div>
 
       <div style="display:flex;justify-content:center">
-        <button class="btn" onclick="toggleAdvancedGenerators()" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">🧰 Mai multe generatoare</button>
+        <button class="btn" onclick="toggleAdvancedGenerators()" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">🧰 Arată / ascunde modul avansat</button>
       </div>
 
       <div id="advanced-generators" style="display:none">
         <div class="bilet-card" style="margin-bottom:0;padding:16px">
-          <div style="font-size:13px;font-weight:700;margin-bottom:10px">Generatoare secundare / experimentale</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px">Generatoare avansate / secundare</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="generateTicket()">🛡️ Bilet Simplu EV</button>
             <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--acc),var(--cyan))" onclick="generateOver15Ticket()">🔥 Bilet 1.5G EV+</button>
             <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateMixTicket()">🎯 Mix 70%</button>
+            <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--pur),var(--red))" onclick="generateBigWinTicket()">🚀 Mega Big Win</button>
+            <button class="btn" style="background:var(--brd);color:var(--txt)" onclick="toggleCustomBuilder(true)">🎛️ Constructor personalizat</button>
           </div>
         </div>
       </div>
@@ -1097,7 +1141,7 @@ function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
-  var names=['dashboard','audit','aimemory','meciuri','bilete','tracking','bankroll','istoric21'];
+  var names=['dashboard','bilete','meciuri','tracking','bankroll','istoric21','audit','aimemory'];
   var tabs=document.querySelectorAll('.tab');
   var idx=names.indexOf(name);
   if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
@@ -4174,12 +4218,355 @@ function generateBigWinTicket(){
   finalizeTicket('big_win', '🚀 Mega Big Win', [], 1);
 }
 
+
+function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
+  picks = Array.isArray(picks) ? picks : [];
+  var combinedProb = picks.length ? computeConservativeCombinedProb(picks) : 0;
+  var avgEdge = picks.length ? (picks.reduce(function(acc, p){ return acc + Number((p.bestBet && p.bestBet.value) || 0); }, 0) / picks.length) : 0;
+  return {
+    type: type,
+    label: label,
+    picks: picks,
+    totalOdds: totalOdds || 1,
+    combinedProb: combinedProb,
+    avgEdge: avgEdge,
+    riskLabel: riskLabel || '—',
+    summary: summary || '',
+    isEmpty: !picks.length
+  };
+}
+
+function buildSmartTicketPreview(){
+  var baseProfile = {
+    allowedTypes: ['over15','over25','under25','under35','btts'],
+    minAdjProb: 68,
+    minValue: 0.015,
+    minConf: 52,
+    minOdd: 1.18,
+    maxOdd: 1.95,
+    minPicks: 2,
+    maxPicks: 4,
+    targetMinOdds: 1.65,
+    targetMaxOdds: 3.20,
+    hardMaxOdds: 3.80,
+    maxSameLeague: 1,
+    maxSameMarket: 2
+  };
+  for(var relax = 0; relax <= 2; relax++){
+    var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
+    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
+    if(chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds){
+      return makeTicketPreview('simple', '🛡️ Bilet Smart EV', chosen.picks, chosen.totalOdds, 'Scăzut-mediu', '2-4 selecții echilibrate, fără să forțeze cota de dragul show-ului.');
+    }
+  }
+  return makeTicketPreview('simple', '🛡️ Bilet Smart EV', [], 1, '—', 'Nu are încă material suficient de curat.');
+}
+
+function buildConservativeTicketPreview(){
+  var baseProfile = {
+    allowedTypes: ['over15','over25','under35','btts'],
+    minAdjProb: 72,
+    minValue: 0.008,
+    minConf: 48,
+    minOdd: 1.12,
+    maxOdd: 1.58,
+    minPicks: 3,
+    maxPicks: 5,
+    targetMinOdds: 1.90,
+    targetMaxOdds: 4.20,
+    hardMaxOdds: 5.20,
+    maxSameLeague: 1,
+    maxSameMarket: 3
+  };
+  for(var relax = 0; relax <= 3; relax++){
+    var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
+    pack.list.sort(function(a,b){
+      var aa = (a.bestBet.type === 'over15' ? 10 : 0) + (a.ticketScore || 0);
+      var bb = (b.bestBet.type === 'over15' ? 10 : 0) + (b.ticketScore || 0);
+      return bb - aa;
+    });
+    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
+    if(chosen.picks.length >= 3 && chosen.totalOdds >= 1.85){
+      return makeTicketPreview('simple', '🧊 Bilet conservator', chosen.picks, chosen.totalOdds, 'Scăzut-mediu', 'Pentru zilele în care vrei structură curată și piețe robuste.');
+    }
+  }
+  return makeTicketPreview('simple', '🧊 Bilet conservator', [], 1, '—', 'Momentan piața nu oferă 3-5 selecții suficient de curate.');
+}
+
+function buildBestEventTicketPreview(){
+  var now = new Date();
+  function makeDateKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  var todayKey = makeDateKey(now);
+  var tomorrowKey = makeDateKey(new Date(now.getTime() + 86400000));
+  var types = ['over15','over25','under35','btts'];
+
+  function collectBest(dateKeys, minAdjProb){
+    var out = [];
+    ALL_MATCHES.forEach(function(m){
+      if(!passesSelectionFilter(m)) return;
+      if(dateKeys.indexOf(m.dateKey) === -1) return;
+      types.forEach(function(t){
+        var c = buildMarketCandidate(m, t);
+        if(!c || !c.bestBet) return;
+        if(c.bestBet.adjProb < minAdjProb) return;
+        if(c.bestBet.odds < 1.12 || c.bestBet.odds > 1.68) return;
+        out.push(c);
+      });
+    });
+    out.sort(function(a, b){
+      if((b.bestBet.type === 'over15') !== (a.bestBet.type === 'over15')) return b.bestBet.type === 'over15' ? 1 : -1;
+      if(b.ticketScore !== a.ticketScore) return b.ticketScore - a.ticketScore;
+      return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0);
+    });
+    return out;
+  }
+
+  var candidates = collectBest([todayKey], 74);
+  if(!candidates.length) candidates = collectBest([todayKey], 70);
+  if(!candidates.length) candidates = collectBest([todayKey, tomorrowKey], 68);
+
+  if(candidates.length){
+    var picks = [candidates[0]];
+    for(var i = 1; i < candidates.length; i++){
+      var c = candidates[i];
+      if(c.eventId === picks[0].eventId) continue;
+      if((picks[0].bestBet.odds * c.bestBet.odds) > 3.20) continue;
+      picks.push(c);
+      break;
+    }
+    return makeTicketPreview('best_single', '🎯 Biletul zilei', picks, picks.reduce(function(acc, item){ return acc * item.bestBet.odds; }, 1), picks.length === 1 ? 'Scăzut' : 'Scăzut-mediu', 'Primul buton pe care merită să-l apeși când vrei selecția cea mai clară.');
+  }
+  return makeTicketPreview('best_single', '🎯 Biletul zilei', [], 1, '—', 'Nu există încă o alegere destul de clară pentru formatul de azi.');
+}
+
+function buildProfitFocusTicketPreview(){
+  var now = new Date();
+  function makeDateKey(d){
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function likelyScoreSupports(m, type){
+    var ls = parseLikelyScore(m.mostLikelyScore);
+    if(!ls) return true;
+    if(type === 'over15') return ls.total >= 2;
+    if(type === 'over25') return ls.total >= 3;
+    if(type === 'btts') return ls.btts;
+    if(type === 'homeWin') return ls.home > ls.away;
+    if(type === 'awayWin') return ls.away > ls.home;
+    return true;
+  }
+  function profitFilter(c){
+    if(!c || !c.bestBet) return false;
+    var t = c.bestBet.type;
+    var odds = Number(c.bestBet.odds || 0);
+    var value = Number(c.bestBet.value || 0);
+    var adjProb = Number(c.bestBet.adjProb || 0);
+    var conf = Number(c.confidence || 0);
+    var xgHome = Number(c.xgHome || 0);
+    var xgAway = Number(c.xgAway || 0);
+    var xgTotal = Number(c.xgTotal || 0);
+    if(odds < 1.22 || odds > 1.75) return false;
+    if(value < 0.01) return false;
+    if(adjProb < 72) return false;
+    if(conf < 48) return false;
+    if(!likelyScoreSupports(c, t)) return false;
+    if(t === 'over15') return c.probOver15 >= 75 && xgTotal >= 2.10;
+    if(t === 'over25') return c.probOver25 >= 60 && xgTotal >= 2.60;
+    if(t === 'btts') return c.probBtts >= 58 && xgHome >= 0.90 && xgAway >= 0.90;
+    if(t === 'under25') return c.probUnder25 >= 56 && xgTotal <= 2.55;
+    if(t === 'under35') return c.probUnder35 >= 68 && xgTotal <= 3.05;
+    if(t === 'homeWin') return c.predictedResult === 'H' && c.favorite === 'H' && (xgHome - xgAway) >= 0.30 && c.probDraw < 27;
+    if(t === 'draw') return c.probDraw >= 28 && Math.abs(xgHome - xgAway) <= 0.35 && Math.abs(c.probHome - c.probAway) <= 10;
+    if(t === 'awayWin') return c.predictedResult === 'A' && c.favorite === 'A' && (xgAway - xgHome) >= 0.30 && c.probDraw < 27;
+    return false;
+  }
+  function rankProfitCandidate(c){
+    var score = 0;
+    score += (c.bestBet.adjProb * 0.46);
+    score += (Math.max(0, c.bestBet.value) * 100 * 0.38);
+    score += (c.confidence * 0.16);
+    if(c.bestBet.type === 'over15') score += 10;
+    else if(c.bestBet.type === 'over25') score += 7;
+    else if(c.bestBet.type === 'under25' || c.bestBet.type === 'under35') score += 6;
+    else if(c.bestBet.type === 'btts') score += 5;
+    else score += 4;
+    if(c.bestBet.odds >= 1.30 && c.bestBet.odds <= 1.60) score += 3;
+    return score;
+  }
+  function collect(dateKeys, minAdjProb, minValue, minConf, minOdds, maxOdds){
+    var types = ['over15','over25','under25','under35','btts'];
+    var out = [];
+    ALL_MATCHES.forEach(function(m){
+      if(!passesSelectionFilter(m)) return;
+      if(dateKeys.indexOf(m.dateKey) === -1) return;
+      types.forEach(function(t){
+        var c = buildMarketCandidate(m, t);
+        if(!c || !c.bestBet) return;
+        if(c.bestBet.adjProb < minAdjProb) return;
+        if(c.bestBet.value < minValue) return;
+        if(c.confidence < minConf) return;
+        if(c.bestBet.odds < minOdds || c.bestBet.odds > maxOdds) return;
+        if(!profitFilter(c)) return;
+        c.ticketScore = Math.round(rankProfitCandidate(c));
+        out.push(c);
+      });
+    });
+    out.sort(function(a, b){
+      if(b.ticketScore !== a.ticketScore) return b.ticketScore - a.ticketScore;
+      if((b.bestBet.adjProb || 0) !== (a.bestBet.adjProb || 0)) return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0);
+      return (b.bestBet.value || 0) - (a.bestBet.value || 0);
+    });
+    return out;
+  }
+  var todayKey = makeDateKey(now);
+  var tomorrowKey = makeDateKey(new Date(now.getTime() + 86400000));
+  var candidates = collect([todayKey], 72, 0.01, 48, 1.22, 1.75);
+  if(!candidates.length) candidates = collect([todayKey], 70, 0.005, 45, 1.18, 1.85);
+  if(!candidates.length) candidates = collect([todayKey, tomorrowKey], 70, 0.005, 45, 1.18, 1.85);
+  if(candidates.length){
+    return makeTicketPreview('profit_single', '📈 Profit Focus (Single)', [candidates[0]], candidates[0].bestBet.odds, 'Scăzut+', 'Single EV+ pentru cine preferă lovituri scurte, nu bilete încărcate.');
+  }
+  return makeTicketPreview('profit_single', '📈 Profit Focus (Single)', [], 1, '—', 'Momentan nu are un single suficient de curat.');
+}
+
+function rankPresetTicket(ticket){
+  if(!ticket || !ticket.picks || !ticket.picks.length) return -999;
+  var riskPenaltyMap = {'Scăzut':0,'Scăzut+':1,'Scăzut-mediu':3,'Mediu':6,'Mediu+':8,'Ridicat':12};
+  var riskPenalty = riskPenaltyMap[ticket.riskLabel] != null ? riskPenaltyMap[ticket.riskLabel] : 5;
+  return (ticket.combinedProb * 0.75) + (Math.max(0, ticket.avgEdge) * 100 * 0.45) + (ticket.picks.length === 1 ? 8 : ticket.picks.length === 2 ? 6 : 3) - riskPenalty;
+}
+
+function getPresetTicketCards(){
+  var presets = [
+    { key:'best', title:'Single de azi', accent:'var(--grn)', action:'generateBestEventTicket()', btn:'Generează', preview:buildBestEventTicketPreview() },
+    { key:'profit', title:'Profit Focus', accent:'var(--acc)', action:'generateProfitFocusTicket()', btn:'Generează', preview:buildProfitFocusTicketPreview() },
+    { key:'smart', title:'Combo echilibrat', accent:'var(--pur)', action:'generateTicket()', btn:'Generează', preview:buildSmartTicketPreview() },
+    { key:'cons', title:'Conservator', accent:'var(--cyan)', action:'generateConservativeTicket()', btn:'Generează', preview:buildConservativeTicketPreview() }
+  ];
+  var available = presets.filter(function(p){ return p.preview && p.preview.picks && p.preview.picks.length; }).sort(function(a,b){ return rankPresetTicket(b.preview) - rankPresetTicket(a.preview); });
+  if(available.length) available[0].recommended = true;
+  else if(presets[0]) presets[0].recommended = true;
+  return presets;
+}
+
+function renderPresetTicketCards(targetId){
+  var target = $(targetId);
+  if(!target) return;
+  var presets = getPresetTicketCards();
+  target.innerHTML = presets.map(function(item){
+    var t = item.preview || {};
+    var picks = t.picks || [];
+    var markets = uniqueReasons(picks.map(function(p){ return p.bestBet && p.bestBet.label; }).filter(Boolean)).slice(0,3);
+    var accent = item.accent || 'var(--acc)';
+    var badgeClass = t.isEmpty ? 'muted' : (String(t.riskLabel || '').indexOf('Scăzut') === 0 ? 'good' : 'warn');
+    var pickRows = picks.slice(0,2).map(function(p){
+      return '<div class="focus-mini-item">'+
+        '<div><div class="focus-mini-item-main">'+p.home+' vs '+p.away+'</div><div class="focus-mini-item-sub">'+(p.league || '—')+' • '+(p.dateLabel || '')+' '+(p.timeLabel || '')+'</div></div>'+
+        '<div class="focus-mini-item-right">'+p.bestBet.label+'<br>@ '+p.bestBet.odds.toFixed(2)+'</div>'+
+      '</div>';
+    }).join('');
+    if(!pickRows){
+      pickRows = '<div class="focus-mini-item"><div><div class="focus-mini-item-main">Nimic foarte curat acum</div><div class="focus-mini-item-sub">Generatorul rămâne disponibil, dar nu forțează selecții doar ca să umple ecranul.</div></div></div>';
+    } else if(picks.length > 2){
+      pickRows += '<div class="focus-mini-item"><div class="focus-mini-item-main">+'+(picks.length - 2)+' selecții suplimentare</div><div class="focus-mini-item-right">Total '+picks.length+'</div></div>';
+    }
+    return '<div class="focus-card '+(item.recommended ? 'recommended' : '')+'" style="--focus-accent:'+accent+'">'+
+      '<div class="focus-card-head">'+
+        '<div><div class="focus-kicker">'+(item.recommended ? 'Start aici' : 'Variantă utilă')+'</div><div class="focus-card-title">'+item.title+'</div><div class="focus-card-sub">'+(t.summary || 'Generator dedicat acestui format.')+'</div></div>'+
+        '<span class="focus-badge '+badgeClass+'">'+(t.isEmpty ? 'Așteptare' : (t.riskLabel || '—'))+'</span>'+
+      '</div>'+
+      '<div class="focus-card-metrics">'+
+        '<div class="focus-metric"><div class="v">'+(picks.length || 0)+'</div><div class="l">Selecții</div></div>'+
+        '<div class="focus-metric"><div class="v">'+((t.totalOdds || 1).toFixed(2))+'x</div><div class="l">Cotă</div></div>'+
+        '<div class="focus-metric"><div class="v">'+(t.isEmpty ? '—' : (t.combinedProb || 0).toFixed(1)+'%')+'</div><div class="l">Prob. cons.</div></div>'+
+      '</div>'+
+      '<div class="focus-chip-row">'+(markets.length ? markets.map(function(m){ return '<span class="focus-chip">'+m+'</span>'; }).join('') : '<span class="focus-chip">fără selecții curate</span>')+'</div>'+
+      '<div class="focus-mini-list">'+pickRows+'</div>'+
+      '<div class="focus-footer">'+
+        '<div class="focus-footer-note">'+(t.isEmpty ? 'Așteaptă date mai bune sau verifică Analiză.' : 'Edge mediu ' + (t.avgEdge >= 0 ? '+' : '') + ((t.avgEdge || 0) * 100).toFixed(1) + '%')+'</div>'+
+        '<button class="btn '+(item.recommended ? 'btn-green' : 'btn-primary')+'" style="justify-content:center" onclick="'+item.action+'">'+item.btn+'</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderFocusMarketCard(){
+  var target = $('focus-market-card');
+  if(!target) return;
+  var rows = (BACKTEST_SUMMARY && Array.isArray(BACKTEST_SUMMARY.by_market)) ? BACKTEST_SUMMARY.by_market.slice() : [];
+  var supported = (BET_TYPES || []).map(function(b){ return b.label; });
+  rows = rows.filter(function(item){ return item && supported.indexOf(item.key) !== -1; });
+  rows.sort(function(a,b){
+    var aScore = (Number(a.roi || 0) * 1.2) + (Number(a.winrate || 0) * 0.4) + Math.min(25, Number(a.bets || 0));
+    var bScore = (Number(b.roi || 0) * 1.2) + (Number(b.winrate || 0) * 0.4) + Math.min(25, Number(b.bets || 0));
+    return bScore - aScore;
+  });
+  if(!rows.length){
+    target.innerHTML = '<div class="focus-side-title">📌 Piața-fanion</div><div class="focus-side-sub">Backtestul nu are încă suficient context pentru o piață dominantă.</div>';
+    return;
+  }
+  var best = rows[0];
+  target.innerHTML = '<div class="focus-side-title">📌 Piața-fanion acum</div>'+
+    '<div class="focus-side-sub">Nu te pierde în toate piețele. Când apare sus în aplicație, aceasta e piața pe care merită s-o tratezi prima.</div>'+
+    '<div style="font-size:18px;font-weight:800;color:var(--txt);margin-bottom:10px">'+(best.key || '—')+'</div>'+
+    '<div class="focus-side-metrics">'+
+      '<div class="focus-metric"><div class="v">'+Number(best.winrate || 0).toFixed(1)+'%</div><div class="l">Win rate</div></div>'+
+      '<div class="focus-metric"><div class="v">'+(Number(best.roi || 0) >= 0 ? '+' : '')+Number(best.roi || 0).toFixed(1)+'%</div><div class="l">ROI</div></div>'+
+      '<div class="focus-metric"><div class="v">'+Number(best.avg_odds || 0).toFixed(2)+'</div><div class="l">Cotă medie</div></div>'+
+      '<div class="focus-metric"><div class="v">'+Number(best.wins || 0)+'/'+Number(best.bets || 0)+'</div><div class="l">Win / jucate</div></div>'+
+    '</div>'+
+    '<div class="focus-footer" style="margin-top:12px"><div class="focus-footer-note">Folosește-o ca piață de bază, nu ca singura piață din univers.</div><button class="btn btn-primary" onclick="switchTab(&#39;meciuri&#39;)">Vezi analiza</button></div>';
+}
+
+function renderFocusSinglesCard(){
+  var target = $('focus-singles-card');
+  if(!target) return;
+  var list = ALL_MATCHES.filter(function(m){
+    return passesSelectionFilter(m) && m.bestBet && Number(m.bestBet.odds || 0) >= 1.12 && Number(m.bestBet.odds || 0) <= 1.75;
+  }).sort(function(a,b){
+    var aScore = (a.smartScore || 0) * 0.65 + (a.confidence || 0) * 0.35;
+    var bScore = (b.smartScore || 0) * 0.65 + (b.confidence || 0) * 0.35;
+    return bScore - aScore;
+  }).slice(0,3);
+  if(!list.length){
+    target.innerHTML = '<div class="focus-side-title">⚡ Singles rapide</div><div class="focus-side-sub">Nu există single-uri suficient de curate în intervalul util.</div>';
+    return;
+  }
+  target.innerHTML = '<div class="focus-side-title">⚡ Singles rapide</div><div class="focus-side-sub">Trei opțiuni scurte pe care merită să le verifici înainte să intri în toate categoriile.</div>'+
+    '<div class="focus-list">'+list.map(function(m){
+      return '<div class="focus-list-row">'+
+        '<div><strong>'+m.home+' vs '+m.away+'</strong><span>'+(m.bestBet && m.bestBet.label ? m.bestBet.label : '—')+' • '+(m.league || '—')+'</span></div>'+
+        '<b>@ '+(m.bestBet && m.bestBet.odds ? Number(m.bestBet.odds).toFixed(2) : '—')+'</b>'+
+      '</div>';
+    }).join('')+'</div>'+
+    '<div class="focus-footer" style="margin-top:12px"><div class="focus-footer-note">Dacă vrei context complet, intră în Analiză pentru filtre și breakdown.</div><button class="btn btn-primary" onclick="switchTab(&#39;meciuri&#39;)">Deschide analiza</button></div>';
+}
+
+function renderFocusCenter(){
+  renderPresetTicketCards('focus-ticket-grid');
+  renderFocusMarketCard();
+  renderFocusSinglesCard();
+}
+
+function renderTicketLaneBoard(){
+  renderPresetTicketCards('ticket-lane-board');
+}
+
 function renderBilete(){
   var container = $('bilete-container');
 
   if(!BILETE || BILETE.picks.length === 0){
-    var msg = (BILETE && BILETE.error) ? BILETE.error : 'Apasă un generator și lasă motorul să aleagă selecțiile.';
-    container.innerHTML = '<div class="empty-state">'+msg+'</div>';
+    var msg = (BILETE && BILETE.error) ? BILETE.error : 'Alege unul dintre formatele recomandate de mai sus și lasă motorul să facă trierea.';
+    container.innerHTML = '<div class="ticket-empty-cta">'+
+      '<div class="ticket-empty-cta-title">Niciun bilet generat încă</div>'+
+      '<div class="ticket-empty-cta-sub">'+msg+'</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">'+
+        '<button class="btn btn-primary" onclick="generateBestEventTicket()">🎯 Single de azi</button>'+
+        '<button class="btn btn-green" onclick="generateConservativeTicket()">🧊 Conservator</button>'+
+        '<button class="btn btn-primary" onclick="generateTicket()">🛡️ Combo echilibrat</button>'+
+      '</div>'+
+    '</div>';
     return;
   }
 
@@ -5246,8 +5633,8 @@ function updateSectionCount(id,count){
 // ============================================================
 
 function applyOpenSections(){
-  ['todaybest','top5','ml','ml15','ml35'].forEach(function(id){
-    var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],ml:['ml-body','ml-toggle'],ml15:['ml15-body','ml15-toggle']};
+  ['todaybest','top5'].forEach(function(id){
+    var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle'],ml35:['ml35-body','ml35-toggle']};
     var pair=map[id];
     if(!pair) return;
     var body=$(pair[0]), toggle=$(pair[1]);
@@ -5363,6 +5750,8 @@ function renderAll(){
   renderBacktest();
   renderMarketDistribution();
   renderMarketPerformance();
+  renderFocusCenter();
+  renderTicketLaneBoard();
   renderTodayBest();
   renderTopPicks();
   renderTopSafe();
