@@ -1207,6 +1207,13 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           </select>
         </div>
         <div class="filter-field">
+          <label for="match-pro-mode">Filtru Pro</label>
+          <select class="league-filter-select" id="match-pro-mode" onchange="renderMatches()">
+            <option value="all">Toate</option>
+            <option value="pro">Doar Pro</option>
+          </select>
+        </div>
+        <div class="filter-field">
           <label for="match-min-prob">Min. prob.</label>
           <input id="match-min-prob" class="bk-input" type="number" min="0" max="100" step="1" value="0" onchange="renderMatches()">
         </div>
@@ -1941,11 +1948,64 @@ function calcValue(prob, odds){
   if(!o || o < 1.01) return -999;
   return ((p / 100) * o) - 1;
 }
-function calcAdjustedProb(prob, confidence){
+function getBacktestRows(key){
+  if(!BACKTEST_SUMMARY || !BACKTEST_SUMMARY[key] || !Array.isArray(BACKTEST_SUMMARY[key])) return [];
+  return BACKTEST_SUMMARY[key];
+}
+function findBacktestRow(key, value){
+  if(!value) return null;
+  return getBacktestRows(key).find(function(r){ return String((r && r.key) || '') === String(value); }) || null;
+}
+function getOddsBucketLabel(odds){
+  var o = Number(odds || 0);
+  if(o <= 1.25) return '1.10-1.25';
+  if(o <= 1.45) return '1.26-1.45';
+  if(o <= 1.70) return '1.46-1.70';
+  if(o <= 2.10) return '1.71-2.10';
+  return '2.10+';
+}
+function getLeagueTierInfo(leagueName){
+  var row = findBacktestRow('by_league', leagueName) || {};
+  var bets = Number(row.bets || 0);
+  var roi = Number(row.roi || 0);
+  var winrate = Number(row.winrate || 0);
+  if(bets >= 5 && roi >= 12 && winrate >= 70) return { tier:'high', label:'Tier 1', multiplier:1.03 };
+  if(bets >= 5 && roi <= -5) return { tier:'avoid', label:'Tier 3', multiplier:0.96 };
+  return { tier:'neutral', label:'Tier 2', multiplier:1.0 };
+}
+function getMarketBacktestMultiplier(type){
+  var labelMap = { over15:'Over 1.5G', over25:'Over 2.5G', under35:'Under 3.5G', btts:'BTTS' };
+  var row = findBacktestRow('by_market', labelMap[type] || type) || {};
+  var bets = Number(row.bets || 0);
+  var roi = Number(row.roi || 0);
+  var winrate = Number(row.winrate || 0);
+  if(bets < 4) return 1.0;
+  if(roi >= 8 && winrate >= 72) return 1.02;
+  if(roi <= -4) return 0.97;
+  return 1.0;
+}
+function getOddsBucketMultiplier(odds){
+  var row = findBacktestRow('by_odds_bucket', getOddsBucketLabel(odds)) || {};
+  var bets = Number(row.bets || 0);
+  var roi = Number(row.roi || 0);
+  if(bets < 4) return 1.0;
+  if(roi >= 8) return 1.01;
+  if(roi <= -4) return 0.98;
+  return 1.0;
+}
+function calcAdjustedProb(prob, confidence, leagueName, marketKey, odds){
   var p = safePct(prob);
   var c = normalizeConfidence(confidence);
   var factor = 0.93 + (c / 100) * 0.07;
+  factor *= getLeagueTierInfo(leagueName).multiplier;
+  factor *= getMarketBacktestMultiplier(marketKey);
+  factor *= getOddsBucketMultiplier(odds);
+  factor = Math.max(0.86, Math.min(1.08, factor));
   return +(p * factor).toFixed(2);
+}
+function oddsInRanges(odds, ranges){
+  var o = Number(odds || 0);
+  return (ranges || []).some(function(range){ return o >= range[0] && o <= range[1]; });
 }
 function calcSmartScore(adjProb, value, confidence, edgePct){
   var c = normalizeConfidence(confidence);
@@ -2094,7 +2154,7 @@ function analyzeMatch(raw){
     var value = calcValue(prob, odds);
     var marketProb = getNoVigMarketProbFromRaw(raw, bt.key);
     var edgePct = marketProb != null ? +(prob - marketProb).toFixed(2) : null;
-    var adjProb = calcAdjustedProb(prob, conf);
+    var adjProb = calcAdjustedProb(prob, conf, e.league ? e.league.name : '', bt.key, odds);
     var score = calcSmartScore(adjProb, value, conf, edgePct);
     var verdict = getVerdict(adjProb, value, conf);
 
@@ -2147,6 +2207,7 @@ function analyzeMatch(raw){
   var awayApiId = e.away_team_obj ? e.away_team_obj.api_id : null;
   var leagueApiId = e.league ? e.league.api_id : null;
 
+  var leagueTierInfo = getLeagueTierInfo(e.league ? e.league.name : '');
   return {
     id: raw.id,
     eventId: e.id,
@@ -2157,6 +2218,8 @@ function analyzeMatch(raw){
     league: e.league ? e.league.name : '',
     country: e.league ? e.league.country : '',
     leagueApiId: leagueApiId,
+    leagueTier: leagueTierInfo.tier,
+    leagueTierLabel: leagueTierInfo.label,
     date: e.event_date,
     dateKey: fmtDateKey(e.event_date),
     dateLabel: fmtDate(e.event_date),
@@ -2333,13 +2396,13 @@ function doRefresh(){
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
+    BACKTEST_SUMMARY = backtestData || {};
     ALL_MATCHES = preds.map(analyzeMatch);
     syncRecommendationEngine();
     ALL_LEAGUES = leaguesData.results || leaguesData || [];
     ALL_EVENTS = eventsData.results || eventsData || [];
     ALL_TEAMS = teamsData.results || teamsData || [];
     ALL_PLAYERS = [];
-    BACKTEST_SUMMARY = backtestData || {};
     HISTORY_ENGINE = Array.isArray(historyData) ? historyData : (historyData.results || historyData || []);
     RECOMMENDATION_LOG = Array.isArray(recommendationLogData) ? recommendationLogData : (recommendationLogData.results || recommendationLogData || []);
     SIGNAL_AUDIT = signalAuditData || {};
@@ -2625,6 +2688,7 @@ function buildRecommendationReasons(m, b){
     reasons.push('echilibru xG ' + Math.abs(m.xgHome - m.xgAway).toFixed(2));
   }
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
+  if(m.leagueTierLabel) reasons.push('Ligă ' + m.leagueTierLabel);
   reasons.push('sursă ' + sourceLabelFromBet(b));
 
   return uniqueReasons(reasons).slice(0, 4);
@@ -3696,6 +3760,7 @@ function resetMatchFilters(){
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
+  if($('match-pro-mode')) $('match-pro-mode').value = 'all';
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
   if($('sort-select')) $('sort-select').value = 'date';
@@ -3718,6 +3783,7 @@ function renderMatches(){
   var leagueF = $('league-filter') ? $('league-filter').value : '';
   var dateF = $('match-date-filter') ? $('match-date-filter').value : 'all';
   var marketF = $('match-market-filter') ? $('match-market-filter').value : '';
+  var proMode = $('match-pro-mode') ? $('match-pro-mode').value : 'all';
   var minProb = $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0;
   var minEdge = $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0;
   var now = Date.now();
@@ -3745,6 +3811,7 @@ function renderMatches(){
     }
 
     if(marketF && b.label !== marketF) return false;
+    if(proMode === 'pro' && !(m.leagueTier !== 'avoid' && (b.adjProb || 0) >= 72 && (b.edgePct || -999) >= 1.5 && (b.value || 0) >= 0.01)) return false;
     if((b.adjProb || 0) < minProb) return false;
     if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
     return true;
@@ -3781,6 +3848,7 @@ function renderMatches(){
     var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
     var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
     var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
+    var tierBadge = b && m.leagueTierLabel ? ('<span class="card-reco-badge">'+m.leagueTierLabel+'</span>') : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
@@ -3810,7 +3878,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+ageBadge+'</div>'+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
@@ -3987,6 +4055,8 @@ function buildMarketCandidate(m, type){
   if(isHardContradiction(m, type)) return null;
   if(b.value <= 0) return null;
   if(Number(b.odds || 0) > 1.65) return null;
+  if(type === 'over25' && oddsInRanges(b.odds, [[1.26,1.45]]) && (b.value || 0) < 0.03) return null;
+  if(m.leagueTier === 'avoid' && type !== 'under35') return null;
 
   var fit = marketFitAnalysis(m, type);
   var reasons = uniqueReasons((fit && fit.reasons) || []);
@@ -4002,6 +4072,8 @@ function buildMarketCandidate(m, type){
   if(b.sourceApi) baseScore += 4;
   if(b.sourceHeuristic) baseScore += 2;
   if(b.odds >= 1.18 && b.odds <= 1.75) baseScore += 4;
+  if(m.leagueTier === 'high') baseScore += 4;
+  if(m.leagueTier === 'avoid') baseScore -= 8;
   if(b.odds > 2.20) baseScore -= 8;
 
   var risk = 'MEDIU';
@@ -4012,7 +4084,8 @@ function buildMarketCandidate(m, type){
     bestBet: Object.assign({}, b),
     ticketScore: Math.round(baseScore),
     ticketRisk: risk,
-    why: reasons.slice(0, 3).join(' • ')
+    why: reasons.slice(0, 3).join(' • '),
+    proEligible: (m.leagueTier !== 'avoid') && (b.adjProb >= 72) && ((b.edgePct || 0) >= 1.5) && ((b.value || 0) >= 0.01)
   });
 }
 
