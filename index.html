@@ -698,7 +698,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     </div>
 
     
-    <div class="help-panel" style="margin-top:12px">
+    <div class="help-panel" id="dashboard-help-panel" style="margin-top:12px">
       <div class="help-head">
         <div>
           <div class="help-title">🧭 Glosar rapid model</div>
@@ -6654,7 +6654,14 @@ function toggleDashboardInsights(){
 function arrangeDashboardLayout(){
   var dash = $('tab-dashboard');
   if(!dash) return;
-  var stats = $('dashboard-stats'), health = $('health-panel'), market = $('market-performance-panel'), legend = $('audit-legend-box'), api = $('ml-api-box');
+  var stats = $('dashboard-stats');
+  var focus = $('focus-shell');
+  var health = $('health-panel');
+  var visual = $('dashboard-visual-panel');
+  var market = $('market-performance-panel');
+  var legend = $('audit-legend-box');
+  var api = $('ml-api-box');
+  var help = $('dashboard-help-panel');
   if(stats) stats.style.marginTop = '12px';
 
   var shell = $('dashboard-insights-shell');
@@ -6664,10 +6671,18 @@ function arrangeDashboardLayout(){
     shell.className = 'focus-shell dashboard-insights-shell';
     shell.id = 'dashboard-insights-shell';
     shell.innerHTML = '<div class="dashboard-insights-toggle" onclick="toggleDashboardInsights()"><div><div class="dashboard-insights-title">📦 Detalii tehnice și performanță</div><div class="dashboard-insights-sub">Le-am scos din zona principală. Le deschizi doar când vrei context de backtest, piețe și AI.</div></div><div class="focus-badge muted">Detalii</div></div><div class="dashboard-insights-body" id="dashboard-insights-body"></div>';
-    dash.appendChild(shell);
+    if(focus && focus.parentNode === dash && focus.nextSibling) dash.insertBefore(shell, focus.nextSibling);
+    else if(focus && focus.parentNode === dash) dash.appendChild(shell);
+    else dash.appendChild(shell);
     body = $('dashboard-insights-body');
   }
-  [health, legend, api].forEach(function(el){ if(el && body) body.appendChild(el); });
+
+  [health, visual, market, legend, api].forEach(function(el){
+    if(el && body) body.appendChild(el);
+  });
+
+  if(help && help.parentNode !== dash) dash.appendChild(help);
+  else if(help) dash.appendChild(help);
 }
 
 function getCurrentDayKey(){
