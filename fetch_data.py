@@ -97,6 +97,8 @@ STRATEGIES = {
         "min_value": 0.01,
         "odd_min": 1.20,
         "odd_max": 2.20,
+        "exclude_odds_ranges": [(1.26, 1.45)],
+        "reject_league_tiers": {"avoid"},
     },
     "controlled_combo": {
         "label": "Combo Controlat",
@@ -119,6 +121,26 @@ STRATEGIES = {
         "odd_max": 1.60,
     },
 }
+
+DEAD_ODDS_RANGES = [(1.26, 1.45)]
+
+
+def load_bootstrap_backtest() -> Dict[str, Any]:
+    path = os.path.join(DATA_DIR, "backtest.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+BOOTSTRAP_BACKTEST = load_bootstrap_backtest()
+BOOTSTRAP_LEAGUE_ROWS = {str((r or {}).get("key") or ""): (r or {}) for r in (BOOTSTRAP_BACKTEST.get("by_league") or [])}
+BOOTSTRAP_MARKET_ROWS = {str((r or {}).get("key") or ""): (r or {}) for r in (BOOTSTRAP_BACKTEST.get("by_market") or [])}
+BOOTSTRAP_ODDS_ROWS = {str((r or {}).get("key") or ""): (r or {}) for r in (BOOTSTRAP_BACKTEST.get("by_odds_bucket") or [])}
 
 
 def ensure_token():
@@ -158,10 +180,80 @@ def calc_value(prob, odds):
     return ((pct(prob) / 100.0) * o) - 1.0
 
 
-def adjusted_prob(prob, confidence):
-    p = pct(prob)
+def odds_in_ranges(odds, ranges):
+    try:
+        o = float(odds or 0)
+    except Exception:
+        return False
+    for lower, upper in ranges or []:
+        if o >= float(lower) and o <= float(upper):
+            return True
+    return False
+
+
+def get_bootstrap_row(rows_map, key):
+    if not key:
+        return {}
+    return rows_map.get(str(key), {}) or {}
+
+
+def get_league_tier_info(league_name):
+    row = get_bootstrap_row(BOOTSTRAP_LEAGUE_ROWS, league_name)
+    bets = int(row.get("bets") or 0)
+    roi = float(row.get("roi") or 0)
+    winrate = float(row.get("winrate") or 0)
+    if bets >= 5 and roi >= 12 and winrate >= 70:
+        return {"tier": "high", "multiplier": 1.03}
+    if bets >= 5 and roi <= -5:
+        return {"tier": "avoid", "multiplier": 0.96}
+    return {"tier": "neutral", "multiplier": 1.0}
+
+
+
+def get_market_multiplier(market_key):
+    row = get_bootstrap_row(BOOTSTRAP_MARKET_ROWS, MARKET_MAP[market_key]["label"] if market_key in MARKET_MAP else market_key)
+    bets = int(row.get("bets") or 0)
+    roi = float(row.get("roi") or 0)
+    winrate = float(row.get("winrate") or 0)
+    if bets < 4:
+        return 1.0
+    if roi >= 8 and winrate >= 72:
+        return 1.02
+    if roi <= -4:
+        return 0.97
+    return 1.0
+
+
+
+
+def get_odds_bucket_multiplier(odds):
+    row = get_bootstrap_row(BOOTSTRAP_ODDS_ROWS, bucket_label_odds(float(odds or 0)))
+    bets = int(row.get("bets") or 0)
+    roi = float(row.get("roi") or 0)
+    if bets < 4:
+        return 1.0
+    if roi >= 8:
+        return 1.01
+    if roi <= -4:
+        return 0.98
+    return 1.0
+
+
+
+def dynamic_adjustment_factor(prob, confidence, league_name=None, market_key=None, odds=None):
     c = normalize_confidence(confidence)
-    factor = 0.93 + (c / 100.0) * 0.07
+    base_factor = 0.93 + (c / 100.0) * 0.07
+    league_factor = get_league_tier_info(league_name).get("multiplier", 1.0)
+    market_factor = get_market_multiplier(market_key) if market_key else 1.0
+    odds_factor = get_odds_bucket_multiplier(odds) if odds else 1.0
+    factor = base_factor * league_factor * market_factor * odds_factor
+    return max(0.86, min(1.08, factor))
+
+
+
+def adjusted_prob(prob, confidence, league_name=None, market_key=None, odds=None):
+    p = pct(prob)
+    factor = dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     return round(p * factor, 2)
 
 
@@ -419,8 +511,10 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         return None
     prob = market["prob"](row)
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
+    league_name = (event.get("league") or {}).get("name") or "Unknown"
+    tier_info = get_league_tier_info(league_name)
     value = calc_value(prob, odds)
-    adj = adjusted_prob(prob, confidence)
+    adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     market_prob = market_prob_from_row_event(row, event, market_key)
     edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
     fit = market_fit_score(row, market_key)
@@ -447,7 +541,9 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         "source_api": bool(source_api),
         "source_heuristic": bool(source_heuristic),
         "won": bool(outcome),
-        "league": (event.get("league") or {}).get("name") or "Unknown",
+        "league": league_name,
+        "league_tier": tier_info.get("tier"),
+        "adjustment_factor": round(dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds), 4),
         "event_id": event.get("id"),
         "prediction_id": row.get("id"),
         "date": event.get("event_date"),
@@ -470,6 +566,10 @@ def qualifies_for_strategy(candidate, strategy_cfg):
     if candidate["value"] < strategy_cfg["min_value"]:
         return False
     if candidate["odds"] < strategy_cfg["odd_min"] or candidate["odds"] > strategy_cfg["odd_max"]:
+        return False
+    if odds_in_ranges(candidate.get("odds"), strategy_cfg.get("exclude_odds_ranges") or []):
+        return False
+    if candidate.get("league_tier") in (strategy_cfg.get("reject_league_tiers") or set()):
         return False
     edge = candidate["edge_pct"] if candidate["edge_pct"] is not None else -999
     if edge < strategy_cfg["min_edge"]:
@@ -655,9 +755,10 @@ def dedupe_and_filter_predictions(predictions, now_utc=None, max_age_hours=MAX_P
     }
 
 
-def build_signal_audit(predictions):
+def build_signal_audit(predictions, recommendation_log=None):
     rows = []
     now_utc = datetime.now(timezone.utc)
+    log_index = {str((r or {}).get("event_id") or ""): (r or {}) for r in (recommendation_log or []) if (r or {}).get("event_id")}
     for row in predictions or []:
         event = row.get("event") or {}
         if event.get("status") != "notstarted":
@@ -675,7 +776,9 @@ def build_signal_audit(predictions):
             prob = market["prob"](row)
             confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
             value = calc_value(prob, odds)
-            adj = adjusted_prob(prob, confidence)
+            league_name = (event.get("league") or {}).get("name") or "Unknown"
+            tier_info = get_league_tier_info(league_name)
+            adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
             market_prob = market_prob_from_row_event(row, event, market_key)
             edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
             fit = market_fit_score(row, market_key)
@@ -698,7 +801,9 @@ def build_signal_audit(predictions):
                 "verdict": verdict,
                 "source_api": bool(source_api),
                 "source_heuristic": bool(source_heuristic),
-                "league": (event.get("league") or {}).get("name") or "Unknown",
+                "league": league_name,
+        "league_tier": tier_info.get("tier"),
+        "adjustment_factor": round(dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds), 4),
                 "event_id": event.get("id"),
                 "prediction_id": row.get("id"),
                 "date": event.get("event_date"),
@@ -727,6 +832,22 @@ def build_signal_audit(predictions):
             reason_tags.append(f"xG {xg_total:.2f}")
         if row.get("most_likely_score"):
             reason_tags.append(f"Scor {row.get('most_likely_score')}")
+        log_row = log_index.get(str(pick.get("event_id"))) or {}
+        previous_odds = log_row.get("odds") if log_row.get("odds") is not None else pick.get("odds")
+        opening_odds = log_row.get("opening_odds") if log_row.get("opening_odds") is not None else previous_odds
+        current_odds = pick.get("odds")
+        line_movement_pct = 0.0
+        from_open_pct = 0.0
+        try:
+            if previous_odds and current_odds:
+                line_movement_pct = round(((float(current_odds) - float(previous_odds)) / float(previous_odds)) * 100.0, 2)
+            if opening_odds and current_odds:
+                from_open_pct = round(((float(current_odds) - float(opening_odds)) / float(opening_odds)) * 100.0, 2)
+        except Exception:
+            line_movement_pct = 0.0
+            from_open_pct = 0.0
+        if abs(line_movement_pct) >= 1.5:
+            reason_tags.append(f"Line {line_movement_pct:+.1f}%")
         rows.append({
             "prediction_id": pick.get("prediction_id"),
             "event_id": pick.get("event_id"),
@@ -752,10 +873,10 @@ def build_signal_audit(predictions):
             "source_heuristic": pick.get("source_heuristic"),
             "kelly_full_pct": kelly_full,
             "kelly_quarter_pct": kelly_quarter,
-            "previous_odds": pick.get("odds"),
-            "opening_odds": pick.get("odds"),
-            "line_movement_pct": 0.0,
-            "from_open_pct": 0.0,
+            "previous_odds": previous_odds,
+            "opening_odds": opening_odds,
+            "line_movement_pct": line_movement_pct,
+            "from_open_pct": from_open_pct,
             "reason_tags": reason_tags[:4],
         })
 
@@ -1157,13 +1278,15 @@ def build_ui_live_candidate(row, market_key):
 
     prob = market["prob"](row)
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
+    league_name = (event.get("league") or {}).get("name") or "Unknown"
+    tier_info = get_league_tier_info(league_name)
     value = calc_value(prob, odds)
     if value <= 0:
         return None
     if odds > 1.65:
         return None
 
-    adj = adjusted_prob(prob, confidence)
+    adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     market_prob = market_prob_from_row_event(row, event, market_key)
     edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
     fit = ui_like_market_fit_score(row, market_key)
@@ -1200,7 +1323,9 @@ def build_ui_live_candidate(row, market_key):
         "ticket_score": round(ticket_score),
         "source_api": bool(source_api),
         "source_heuristic": bool(source_heuristic),
-        "league": (event.get("league") or {}).get("name") or "Unknown",
+        "league": league_name,
+        "league_tier": tier_info.get("tier"),
+        "adjustment_factor": round(dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds), 4),
         "event_id": event.get("id"),
         "prediction_id": row.get("id"),
         "date": event.get("event_date"),
@@ -1265,6 +1390,11 @@ def build_current_recommendation_rows(predictions, logged_at_iso):
             "source_heuristic": pick.get("source_heuristic"),
             "model_version": row.get("model_version"),
             "most_likely_score": pick.get("most_likely_score"),
+            "league_tier": pick.get("league_tier"),
+            "opening_odds": pick.get("odds"),
+            "previous_odds": pick.get("odds"),
+            "line_movement_pct": 0.0,
+            "from_open_pct": 0.0,
             "status": "pending",
             "won": None,
             "home_score": None,
@@ -1324,6 +1454,20 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
         first_logged_at = existing.get("first_logged_at") or existing.get("logged_at") or row.get("logged_at")
         row["first_logged_at"] = first_logged_at
         row["logged_at"] = row.get("logged_at") or existing.get("logged_at")
+        row["opening_odds"] = existing.get("opening_odds") if existing.get("opening_odds") is not None else row.get("odds")
+        row["previous_odds"] = existing.get("odds") if existing.get("odds") is not None else row.get("odds")
+        try:
+            if row.get("previous_odds") and row.get("odds"):
+                row["line_movement_pct"] = round(((float(row.get("odds")) - float(row.get("previous_odds"))) / float(row.get("previous_odds"))) * 100.0, 2)
+            else:
+                row["line_movement_pct"] = 0.0
+            if row.get("opening_odds") and row.get("odds"):
+                row["from_open_pct"] = round(((float(row.get("odds")) - float(row.get("opening_odds"))) / float(row.get("opening_odds"))) * 100.0, 2)
+            else:
+                row["from_open_pct"] = 0.0
+        except Exception:
+            row["line_movement_pct"] = 0.0
+            row["from_open_pct"] = 0.0
         row["status"] = existing.get("status") or row.get("status")
         row["won"] = existing.get("won")
         row["home_score"] = existing.get("home_score")
@@ -1771,8 +1915,8 @@ def main():
         history_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past_history}&date_to={today}")
         history_predictions, _history_prep = dedupe_and_filter_predictions(history_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     history_rows = build_history_rows(history_predictions)
-    signal_audit = build_signal_audit(predictions)
     recommendation_log = load_existing_json("recommendation_log.json", [])
+    signal_audit = build_signal_audit(predictions, recommendation_log=recommendation_log)
     current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat())
     finished_events = build_finished_event_index(history_predictions)
     recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
@@ -1827,7 +1971,7 @@ def main():
         "backtest_engine_bets": backtest["engine_bets"],
         "backtest_engine_roi": backtest["engine_roi"],
         "status": "ok",
-        "version": "v16-audit-engine-nolive-noo35",
+        "version": "v16.1-strategic-upgrade",
         "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
@@ -1835,6 +1979,12 @@ def main():
         "backtest_lookback_days": BACKTEST_LOOKBACK_DAYS,
         "history_lookback_days": HISTORY_LOOKBACK_DAYS,
         "excluded_markets": ["Over 3.5G"],
+        "strategy_upgrades": {
+            "smart_ev_dead_zone": [1.26, 1.45],
+            "league_tiering": True,
+            "dynamic_adjustment": True,
+            "line_movement_tracking": True,
+        },
         "data_health": data_health,
         "header_sync": header_sync,
         "bsd_status": status_metrics,
