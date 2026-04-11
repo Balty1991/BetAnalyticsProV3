@@ -341,6 +341,18 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .card-reco-odd{font-size:11px;font-weight:800;color:var(--acc);font-family:var(--mono)}
 .card-reco-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .card-reco-badge{padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:700;color:var(--txt)}
+.hybrid-prob-block{margin-top:10px;padding:10px 12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
+.hybrid-prob-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.hybrid-prob-title{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hybrid-prob-live{padding:4px 8px;border-radius:999px;border:1px solid rgba(59,130,246,.24);background:rgba(59,130,246,.10);font-size:10px;font-weight:800;color:var(--acc)}
+.hybrid-prob-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.hybrid-prob-item{padding:8px 6px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);text-align:center}
+.hybrid-prob-value{font-size:13px;font-weight:800;font-family:var(--mono);color:var(--txt)}
+.hybrid-prob-label{margin-top:4px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hybrid-prob-item.delta-positive .hybrid-prob-value{color:var(--grn)}
+.hybrid-prob-item.delta-negative .hybrid-prob-value{color:var(--red)}
+.hybrid-prob-item.delta-neutral .hybrid-prob-value{color:var(--muted)}
+@media(max-width:640px){.hybrid-prob-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .reason-list{gap:7px;margin-top:10px}
 .reason-pill{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.07)}
 
@@ -2841,6 +2853,27 @@ function poissonBadgeHtmlForBet(b){
   var positive = Number(b.poissonDelta || 0) >= 0;
   return '<span class="card-reco-badge" style="color:'+(positive ? 'var(--grn)' : 'var(--red)')+';border-color:'+(positive ? 'rgba(34,197,94,.24)' : 'rgba(239,68,68,.24)')+'">Poisson '+(positive ? '+' : '')+Number(b.poissonDelta || 0).toFixed(1)+'pp</span>';
 }
+function renderHybridProbabilityBlock(meta){
+  if(!meta) return '';
+  var apiProb = Number(meta.apiProb);
+  var poissonProb = Number(meta.poissonProb);
+  var hybridProb = Number(meta.hybridProb);
+  var delta = Number(meta.delta);
+  if(!isFinite(apiProb) || !isFinite(poissonProb) || !isFinite(hybridProb) || !isFinite(delta)) return '';
+  var deltaClass = Math.abs(delta) > 5 ? (delta > 0 ? 'delta-positive' : 'delta-negative') : 'delta-neutral';
+  return '<div class="hybrid-prob-block">'+
+    '<div class="hybrid-prob-head">'+
+      '<div class="hybrid-prob-title">Poisson vs API</div>'+
+      '<div class="hybrid-prob-live">Hybrid model active</div>'+
+    '</div>'+
+    '<div class="hybrid-prob-grid">'+
+      '<div class="hybrid-prob-item"><div class="hybrid-prob-value">'+apiProb.toFixed(1)+'%</div><div class="hybrid-prob-label">API</div></div>'+
+      '<div class="hybrid-prob-item"><div class="hybrid-prob-value">'+poissonProb.toFixed(1)+'%</div><div class="hybrid-prob-label">Poisson</div></div>'+
+      '<div class="hybrid-prob-item"><div class="hybrid-prob-value">'+hybridProb.toFixed(1)+'%</div><div class="hybrid-prob-label">Hybrid</div></div>'+
+      '<div class="hybrid-prob-item '+deltaClass+'"><div class="hybrid-prob-value">'+(delta >= 0 ? '+' : '')+delta.toFixed(1)+'pp</div><div class="hybrid-prob-label">Δ API vs P</div></div>'+
+    '</div>'+
+  '</div>';
+}
 
 function renderSignalAudit(){
   var summary = $('audit-summary-grid');
@@ -2890,6 +2923,7 @@ function renderSignalAudit(){
     var age = r.age_hours != null ? ageBucketLabel(r.age_hours) : (r.created_at ? ageBucketLabel(hoursSince(r.created_at)) : '—');
     var valuePct = Number(r.value || 0) * 100;
     var fairOdds = r.fair_odds != null ? Number(r.fair_odds).toFixed(2) : '—';
+    var hybridBlock = renderHybridProbabilityBlock({ apiProb:r.api_prob, poissonProb:r.poisson_prob, hybridProb:r.model_prob, delta:r.poisson_delta });
     return '<div class="audit-row">'+
       '<div class="audit-row-header">'+
         '<div class="audit-row-main">'+
@@ -2905,6 +2939,7 @@ function renderSignalAudit(){
         '</div>'+
       '</div>'+
       '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Kelly 1/4 '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
+      hybridBlock+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
         '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge_pct || 0))+'</div></div>'+
@@ -3121,6 +3156,7 @@ function renderAIMemory(){
 
   picks.innerHTML = pickRows.map(function(r, idx){
     var bonus = Number(r.memory_bonus || 0);
+    var hybridBlock = renderHybridProbabilityBlock({ apiProb:r.api_prob, poissonProb:r.poisson_prob, hybridProb:r.model_prob, delta:r.poisson_delta });
     var reasonsHtml = (r.reasons || []).map(function(reason){
       return '<span class="audit-reason">'+reason.label+' • '+(Number(reason.impact || 0) >= 0 ? '+' : '')+Number(reason.impact || 0).toFixed(1)+' • ROI '+(Number(reason.roi || 0) >= 0 ? '+' : '')+Number(reason.roi || 0).toFixed(1)+'%</span>';
     }).join('');
@@ -3139,6 +3175,7 @@ function renderAIMemory(){
         '</div>'+
       '</div>'+
       '<div class="audit-row-tags"><span class="audit-badge" style="color:'+(bonus >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(bonus >= 0 ? '+' : '')+bonus.toFixed(1)+'</span>'+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Sursă '+(r.source || '—')+'</span></div>'+
+      hybridBlock+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
         '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge_pct || 0))+'</div></div>'+
@@ -4001,6 +4038,7 @@ function renderMatches(){
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
+    var hybridBlock = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -4028,6 +4066,7 @@ function renderMatches(){
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
+        hybridBlock+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
@@ -5760,6 +5799,7 @@ function renderBilete(){
     var b = m.bestBet;
     var reasons = buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('');
     var why = m.why ? '<div class="compact-note" style="margin-top:6px">'+m.why+'</div>' : '';
+    var hybridBlock = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
     html += '<div class="bilet-row" style="display:block">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
         '<div class="bilet-match">'+
@@ -5776,6 +5816,7 @@ function renderBilete(){
         '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG Oaspeți</div></div>'+
         '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG Total</div></div>'+
       '</div>'+
+      hybridBlock+
       '<div class="reason-list">'+reasons+'</div>'+
       why+
     '</div>';
