@@ -1237,7 +1237,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
             <tbody>
               <tr><td style="padding:10px;border-bottom:1px solid var(--brd2)">🔥 Single Premium</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">1</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">4%</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">Scor ≥ 88, edge &gt; 10pp, cotă 1.70–2.40</td></tr>
               <tr><td style="padding:10px;border-bottom:1px solid var(--brd2)">✅ Double Confirmed</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">2</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">2.5%</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">Ambele ≥ 80, fără corelație, prob. compusă &gt; 45%</td></tr>
-              <tr><td style="padding:10px;border-bottom:1px solid var(--brd2)">⚖️ Triple Value</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">3</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">1.5%</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">Bankroll &gt; 1000 RON, min. un value underdog</td></tr>
+              <tr><td style="padding:10px;border-bottom:1px solid var(--brd2)">⚖️ Triple Value</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">3</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">1.5%</td><td style="padding:10px;border-bottom:1px solid var(--brd2)">Min. un value underdog și probabilitate compusă &gt; 25%</td></tr>
               <tr><td style="padding:10px">🎯 Contrarian Shot</td><td style="padding:10px">2-3</td><td style="padding:10px">0.8%</td><td style="padding:10px">Preț agresiv, edge pozitiv, doar ocazional</td></tr>
             </tbody>
           </table>
@@ -7096,7 +7096,7 @@ function getMathPortfolioMeta(type, source){
       icon:'⚖️',
       label:'Triple Value',
       riskLabel:'Mediu',
-      summary:'3 selecții • 75-85 • bankroll > 1000 RON • minim un value underdog',
+      summary:'3 selecții • 75-85 • minim un value underdog • prob. compusă > 25%',
       empty:'Nu există acum un Triple Value suficient de curat sau bankroll-ul este sub prag.',
       priority:3
     },
@@ -7329,7 +7329,6 @@ function buildMathTicketPreviewFromPool(type, source, pool){
     return makeMathTicketObject(type, source, bestDouble.picks, bestDouble.totalOdds, bestDouble.combinedProb, 'Double strict: exact 2 selecții necorelate, ambele validate matematic.');
   }
   if(type === 'triple'){
-    if(bankroll <= 1000) return makeEmptyMathTicket(type, source, 'Triple Value rămâne blocat sub bankroll actual de 1000 RON.');
     var triplePool = (pool || []).filter(function(item){
       return Number(item.score || 0) >= 75 && Number(item.score || 0) <= 89 && Number(item.prob || 0) >= 52 && Number(item.odds || 0) >= 1.28 && Number(item.odds || 0) <= 3.20;
     }).slice(0, 18);
@@ -7691,7 +7690,7 @@ function calcBankroll(){
   var cards = [
     {label:'🔥 Single Premium', pct:singlePct, stake:actualBk * singlePct / 100, sub:'Scor > 88 și edge real > 10pp', color:'var(--grn)'},
     {label:'✅ Double Confirmed', pct:doublePct, stake:actualBk * doublePct / 100, sub:'2 selecții necorelate, ambele > 80', color:'var(--acc)'},
-    {label:'⚖️ Triple Value', pct:triplePct, stake:actualBk * triplePct / 100, sub:'3 selecții doar peste bankroll 1000 RON', color:'var(--pur)'},
+    {label:'⚖️ Triple Value', pct:triplePct, stake:actualBk * triplePct / 100, sub:'3 selecții cu minim un underdog value', color:'var(--pur)'},
     {label:'🎯 Contrarian Shot', pct:contrarianPct, stake:actualBk * contrarianPct / 100, sub:'0.5-1% și max 1 pe săptămână', color:'var(--red)'}
   ];
   if($('bk-grid')){
