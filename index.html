@@ -298,26 +298,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .incident-team{font-size:9px;color:var(--muted)}
 .live-empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .live-empty-icon{font-size:48px;margin-bottom:12px}
-.live-analyzer-wrap{display:grid;gap:14px;margin-bottom:16px}
-.live-signal-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-family:var(--mono);border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05)}
-.live-signal-high{color:#fff;background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.48);box-shadow:0 0 0 1px rgba(239,68,68,.1),0 0 18px rgba(239,68,68,.18);animation:livePressureBlink 1.2s infinite}
-.live-signal-medium{color:var(--yel);background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.35)}
-.live-signal-watch{color:var(--acc);background:rgba(59,130,246,.14);border-color:rgba(59,130,246,.3)}
-.live-signal-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.live-signal-reason{font-size:11px;line-height:1.45;color:var(--txt);padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);margin-bottom:10px}
-.live-mini-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
-.live-mini-stat{padding:8px 6px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);text-align:center}
-.live-mini-stat strong{display:block;font-size:13px;font-family:var(--mono);color:var(--txt)}
-.live-mini-stat span{display:block;font-size:9px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
-.live-incident-strip{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.live-incident-pill{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:700;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--muted)}
-.live-incident-pill.goal{color:var(--grn);border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.1)}
-.live-incident-pill.card{color:var(--red);border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.1)}
-.live-incident-pill.substitution{color:var(--acc);border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.1)}
-.live-snapshot-note{font-size:10px;color:var(--muted);font-family:var(--mono)}
-.live-refresh-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;color:var(--muted);font-family:var(--mono)}
-@keyframes livePressureBlink{0%,100%{opacity:1}50%{opacity:.68}}
-@media(max-width:640px){.live-mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 
 /* COMPACT DASHBOARD / MATCH CARDS */
@@ -1155,21 +1135,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
   <!-- ===== LIVE TAB ===== -->
   <div class="tab-content" id="tab-meciuri">
-    <div class="section matches-section-card live-analyzer-wrap" id="live-pressure-section">
-      <div class="matches-card-head">
-        <div>
-          <div class="matches-card-title">🔴 Live Betting Module</div>
-          <div class="matches-card-sub">Presiune live, momentum, shotmap recent și impact de cartonaș roșu. Dacă există token BSD salvat, secțiunea se actualizează automat la 30 secunde.</div>
-        </div>
-        <div class="matches-chip-meta">
-          <span class="live-count-badge" id="live-pressure-count">0 live</span>
-          <span class="live-refresh-pill" id="live-refresh-status">snapshot</span>
-        </div>
-      </div>
-      <div id="live-pressure-grid" class="live-grid"></div>
-      <div class="live-snapshot-note" id="live-snapshot-note">Așteaptă date live...</div>
-    </div>
-
     <div class="section matches-section-card" id="matches-dashboard-hub" style="margin-bottom:14px">
       <div class="matches-card-head">
         <div>
@@ -1488,9 +1453,6 @@ var ALL_LEAGUES = [];
 var ALL_EVENTS = [];
 var ALL_TEAMS = [];
 var ALL_PLAYERS = [];
-var LIVE_MATCHES = [];
-var LIVE_POLL_TIMER = null;
-var LIVE_LAST_SOURCE = 'snapshot';
 var BACKTEST_SUMMARY = {};
 var HISTORY_ENGINE = [];
 var RECOMMENDATION_LOG = [];
@@ -1986,6 +1948,132 @@ function calcValue(prob, odds){
   if(!o || o < 1.01) return -999;
   return ((p / 100) * o) - 1;
 }
+function poissonPMF(lambda, k){
+  var lam = Math.max(0, Number(lambda || 0));
+  var idx = Math.max(0, Math.floor(Number(k || 0)));
+  if(!isFinite(lam) || !isFinite(idx)) return 0;
+  var prob = Math.exp(-lam);
+  for(var i = 1; i <= idx; i++) prob *= lam / i;
+  return prob;
+}
+function buildTotalGoalsDistribution(homeLambda, awayLambda, maxGoals){
+  var limit = Math.max(4, Math.floor(Number(maxGoals || 6)));
+  var totalLambda = Math.max(0, Number(homeLambda || 0)) + Math.max(0, Number(awayLambda || 0));
+  var dist = [];
+  var covered = 0;
+  for(var k = 0; k < limit; k++){
+    var p = poissonPMF(totalLambda, k);
+    dist.push({ goals: k, prob: +(p * 100).toFixed(2) });
+    covered += p;
+  }
+  dist.push({ goals: String(limit) + '+', prob: +Math.max(0, (1 - covered) * 100).toFixed(2) });
+  return dist;
+}
+function calculateOverUnderFromPoisson(homeLambda, awayLambda, threshold){
+  var th = Number(threshold == null ? 2.5 : threshold);
+  var totalLambda = Math.max(0, Number(homeLambda || 0)) + Math.max(0, Number(awayLambda || 0));
+  var cutoff = Math.floor(th);
+  var probUnder = 0;
+  for(var k = 0; k <= cutoff; k++) probUnder += poissonPMF(totalLambda, k);
+  var probOver = 1 - probUnder;
+  return {
+    totalLambda: +totalLambda.toFixed(3),
+    threshold: th,
+    under: +(probUnder * 100).toFixed(2),
+    over: +(probOver * 100).toFixed(2)
+  };
+}
+function buildPoissonSummary(homeLambda, awayLambda){
+  var o15 = calculateOverUnderFromPoisson(homeLambda, awayLambda, 1.5);
+  var o25 = calculateOverUnderFromPoisson(homeLambda, awayLambda, 2.5);
+  var o35 = calculateOverUnderFromPoisson(homeLambda, awayLambda, 3.5);
+  return {
+    totalLambda: o25.totalLambda,
+    over15: o15.over,
+    under15: o15.under,
+    over25: o25.over,
+    under25: o25.under,
+    over35: o35.over,
+    under35: o35.under,
+    distribution: buildTotalGoalsDistribution(homeLambda, awayLambda, 6)
+  };
+}
+function formatPoissonProb(prob){
+  var n = Number(prob || 0);
+  return isFinite(n) ? n.toFixed(1) + '%' : '—';
+}
+function formatSignedPp(prob){
+  var n = Number(prob || 0);
+  if(!isFinite(n)) return '—';
+  return (n >= 0 ? '+' : '') + n.toFixed(1) + 'pp';
+}
+function buildPoissonTitle(m){
+  if(!m || !m.poisson) return '';
+  var p = m.poisson;
+  var parts = [
+    'Poisson O1.5 ' + formatPoissonProb(p.over15),
+    'O2.5 ' + formatPoissonProb(p.over25),
+    'U3.5 ' + formatPoissonProb(p.under35)
+  ];
+  if(p.deltaOver25 != null) parts.push('Δ API O2.5 ' + formatSignedPp(p.deltaOver25));
+  if(p.marketEdgeOver25 != null) parts.push('vs piață O2.5 ' + formatSignedPp(p.marketEdgeOver25));
+  if(p.marketEdgeUnder35 != null) parts.push('vs piață U3.5 ' + formatSignedPp(p.marketEdgeUnder35));
+  return parts.join(' • ');
+}
+function buildPoissonBadgesHtml(m, b){
+  if(!m || !m.poisson) return '';
+  var p = m.poisson;
+  var title = buildPoissonTitle(m).replace(/"/g, '&quot;');
+  var html = '';
+  if(p.divergenceOver25){
+    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--pur);border-color:rgba(168,85,247,.24);background:rgba(168,85,247,.08)">Δ Poisson ' + formatSignedPp(p.deltaOver25) + '</span>';
+  }
+  if(p.valueOver25){
+    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--grn);border-color:rgba(34,197,94,.24);background:rgba(34,197,94,.08)">Poisson value</span>';
+  } else if(b && b.type === 'over25' && p.over25 >= 55){
+    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--acc);border-color:rgba(59,130,246,.24);background:rgba(59,130,246,.08)">Poisson O2.5 ' + formatPoissonProb(p.over25) + '</span>';
+  } else if(b && b.type === 'under35' && p.under35 >= 68){
+    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--cyan);border-color:rgba(6,182,212,.24);background:rgba(6,182,212,.08)">Poisson U3.5 ' + formatPoissonProb(p.under35) + '</span>';
+  }
+  return html;
+}
+function getPoissonOverlayForType(m, type){
+  var p = m && m.poisson;
+  var scoreBonus = 0;
+  var reasons = [];
+  if(!p) return { scoreBonus:0, reasons:[] };
+
+  if(type === 'over15'){
+    reasons.push('Poisson O1.5 ' + formatPoissonProb(p.over15));
+    if(p.over15 >= 78) scoreBonus += 5;
+    else if(p.over15 <= 68) scoreBonus -= 4;
+  }
+  if(type === 'over25'){
+    reasons.push('Poisson O2.5 ' + formatPoissonProb(p.over25));
+    if(p.divergenceOver25 && p.deltaOver25 > 0) reasons.push('Poisson > API ' + formatSignedPp(p.deltaOver25));
+    if(p.divergenceOver25 && p.deltaOver25 < 0) reasons.push('Poisson < API ' + formatSignedPp(p.deltaOver25));
+    if(p.deltaOver25 >= 5) scoreBonus += 7;
+    else if(p.deltaOver25 <= -5) scoreBonus -= 6;
+    if(p.marketEdgeOver25 != null && p.marketEdgeOver25 >= 4){
+      scoreBonus += 9;
+      reasons.push('Poisson > piață ' + formatSignedPp(p.marketEdgeOver25));
+    } else if(p.marketEdgeOver25 != null && p.marketEdgeOver25 <= -4){
+      scoreBonus -= 8;
+      reasons.push('Poisson sub piață ' + formatSignedPp(p.marketEdgeOver25));
+    }
+  }
+  if(type === 'under35'){
+    reasons.push('Poisson U3.5 ' + formatPoissonProb(p.under35));
+    if(p.marketEdgeUnder35 != null && p.marketEdgeUnder35 >= 3){
+      scoreBonus += 7;
+      reasons.push('Poisson > piață ' + formatSignedPp(p.marketEdgeUnder35));
+    } else if(p.marketEdgeUnder35 != null && p.marketEdgeUnder35 <= -4){
+      scoreBonus -= 7;
+      reasons.push('Poisson sub piață ' + formatSignedPp(p.marketEdgeUnder35));
+    }
+  }
+  return { scoreBonus:scoreBonus, reasons:uniqueReasons(reasons) };
+}
 function getBacktestRows(key){
   if(!BACKTEST_SUMMARY || !BACKTEST_SUMMARY[key] || !Array.isArray(BACKTEST_SUMMARY[key])) return [];
   return BACKTEST_SUMMARY[key];
@@ -2183,6 +2271,21 @@ function analyzeMatch(raw){
   var bestBet = null;
   var bestScore = -1;
   var allBets = [];
+  var xgHome = Number(raw.expected_home_goals || 0);
+  var xgAway = Number(raw.expected_away_goals || 0);
+  var xgTotal = xgHome + xgAway;
+  var poisson = buildPoissonSummary(xgHome, xgAway);
+  var apiOver25 = safePct(raw.prob_over_25);
+  var apiUnder35 = 100 - safePct(raw.prob_over_35);
+  var marketOver25 = getNoVigMarketProbFromRaw(raw, 'over25');
+  var marketUnder35 = getNoVigMarketProbFromRaw(raw, 'under35');
+  poisson.deltaOver25 = +(poisson.over25 - apiOver25).toFixed(2);
+  poisson.marketEdgeOver25 = marketOver25 != null ? +(poisson.over25 - marketOver25).toFixed(2) : null;
+  poisson.deltaUnder35 = +(poisson.under35 - apiUnder35).toFixed(2);
+  poisson.marketEdgeUnder35 = marketUnder35 != null ? +(poisson.under35 - marketUnder35).toFixed(2) : null;
+  poisson.divergenceOver25 = Math.abs(poisson.deltaOver25) >= 5;
+  poisson.valueOver25 = poisson.divergenceOver25 && poisson.marketEdgeOver25 != null && poisson.marketEdgeOver25 >= 4;
+  poisson.divergenceUnder35 = Math.abs(poisson.deltaUnder35) >= 5;
 
   BET_TYPES.forEach(function(bt){
     var prob = bt.probGetter ? safePct(bt.probGetter(raw)) : safePct(raw[bt.probField]);
@@ -2265,9 +2368,10 @@ function analyzeMatch(raw){
     status: e.status,
     confidence: conf,
     createdAt: raw.created_at || null,
-    xgHome: Number(raw.expected_home_goals || 0),
-    xgAway: Number(raw.expected_away_goals || 0),
-    xgTotal: Number(raw.expected_home_goals || 0) + Number(raw.expected_away_goals || 0),
+    xgHome: xgHome,
+    xgAway: xgAway,
+    xgTotal: xgTotal,
+    poisson: poisson,
     bestBet: bestBet,
     allBets: allBets,
     extraMarkets: extra,
@@ -2415,7 +2519,6 @@ function doRefresh(){
     getJson('/data/leagues.json', []),
     getJson('/data/events.json', []),
     getJson('/data/teams.json', []),
-    getJson('/data/live.json', []),
     getJson('/data/backtest.json', {}),
     getJson('/data/history_engine.json', []),
     getJson('/data/recommendation_log.json', []),
@@ -2427,12 +2530,11 @@ function doRefresh(){
     var leaguesData = results[2];
     var eventsData = results[3];
     var teamsData = results[4];
-    var liveData = results[5];
-    var backtestData = results[6];
-    var historyData = results[7];
-    var recommendationLogData = results[8];
-    var signalAuditData = results[9];
-    var aiMemoryData = results[10];
+    var backtestData = results[5];
+    var historyData = results[6];
+    var recommendationLogData = results[7];
+    var signalAuditData = results[8];
+    var aiMemoryData = results[9];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
@@ -2442,7 +2544,6 @@ function doRefresh(){
     ALL_LEAGUES = leaguesData.results || leaguesData || [];
     ALL_EVENTS = eventsData.results || eventsData || [];
     ALL_TEAMS = teamsData.results || teamsData || [];
-    LIVE_MATCHES = Array.isArray(liveData) ? liveData : (liveData.results || liveData || []);
     ALL_PLAYERS = [];
     HISTORY_ENGINE = Array.isArray(historyData) ? historyData : (historyData.results || historyData || []);
     RECOMMENDATION_LOG = Array.isArray(recommendationLogData) ? recommendationLogData : (recommendationLogData.results || recommendationLogData || []);
@@ -2473,237 +2574,6 @@ function doRefresh(){
 // ============================================================
 // LIVE TAB RENDERING
 // ============================================================
-function liveTeamName(v){
-  if(v && typeof v === 'object') return v.name || v.short_name || '—';
-  return v || '—';
-}
-function liveTeamApiId(match, side){
-  var obj = match && (match[side + '_team_obj'] || match[side + '_team']);
-  if(obj && typeof obj === 'object') return obj.api_id || obj.id || null;
-  return match ? (match[side + '_team_api_id'] || match[side + '_api_id'] || null) : null;
-}
-function getLiveMinute(match){
-  return Number(match && (match.current_minute != null ? match.current_minute : match.minute) || 0);
-}
-function getLiveShotmap(match){
-  return Array.isArray(match && match.shotmap) ? match.shotmap : [];
-}
-function getLiveMomentum(match){
-  return Array.isArray(match && match.momentum) ? match.momentum : [];
-}
-function getRecentLiveXg(match, windowMinutes){
-  var currentMinute = getLiveMinute(match);
-  return getLiveShotmap(match).filter(function(s){
-    var shotMinute = Number(s && (s.min != null ? s.min : s.minute));
-    return isFinite(shotMinute) && shotMinute >= Math.max(1, currentMinute - windowMinutes);
-  }).reduce(function(sum, s){ return sum + Number(s && s.xg || 0); }, 0);
-}
-function getRecentMomentumAvg(match, windowMinutes){
-  var currentMinute = getLiveMinute(match);
-  var rows = getLiveMomentum(match).filter(function(m){
-    var minute = Number(m && m.minute);
-    return isFinite(minute) && minute >= Math.max(1, currentMinute - windowMinutes);
-  });
-  if(!rows.length) return 0;
-  return rows.reduce(function(sum, m){ return sum + Math.abs(Number(m && m.value || 0)); }, 0) / rows.length;
-}
-function getMomentumDirection(match){
-  var currentMinute = getLiveMinute(match);
-  var rows = getLiveMomentum(match).filter(function(m){
-    var minute = Number(m && m.minute);
-    return isFinite(minute) && minute >= Math.max(1, currentMinute - 8);
-  });
-  if(!rows.length) return 0;
-  return rows.reduce(function(sum, m){ return sum + Number(m && m.value || 0); }, 0) / rows.length;
-}
-function summarizeLiveIncidents(match){
-  var incidents = Array.isArray(match && match.incidents) ? match.incidents.slice(-4) : [];
-  return incidents.map(function(inc){
-    var type = String(inc && inc.type || '').toLowerCase();
-    var label = type === 'goal' ? '⚽ Gol' : type === 'card' ? '🟥 Card' : type === 'substitution' ? '🔁 Schimbare' : 'ℹ️ Incident';
-    return {
-      type: type || 'info',
-      text: label + ' ' + (inc && inc.minute != null ? (inc.minute + "'") : '') + (inc && inc.player_name ? (' • ' + inc.player_name) : '')
-    };
-  });
-}
-function detectLiveSignal(match){
-  var minute = getLiveMinute(match);
-  var stats = match && match.live_stats || {};
-  var homeStats = stats.home || {};
-  var awayStats = stats.away || {};
-  var homeScore = Number(match && match.home_score || 0);
-  var awayScore = Number(match && match.away_score || 0);
-  var totalGoals = homeScore + awayScore;
-  var recentXg = getRecentLiveXg(match, 15);
-  var momentumAvg = getRecentMomentumAvg(match, 8);
-  var momentumDir = getMomentumDirection(match);
-  var shotsOnTarget = Number(homeStats.shots_on_target || 0) + Number(awayStats.shots_on_target || 0);
-  var corners = Number(homeStats.corner_kicks || 0) + Number(awayStats.corner_kicks || 0);
-  var homeRed = Number(homeStats.red_cards || 0);
-  var awayRed = Number(awayStats.red_cards || 0);
-  var dominantSide = momentumDir >= 0 ? 'home' : 'away';
-  var dominantTeam = dominantSide === 'home' ? liveTeamName(match.home_team) : liveTeamName(match.away_team);
-  var signal = null;
-
-  if(minute >= 20 && recentXg >= 1.2 && momentumAvg >= 18 && shotsOnTarget >= 4 && totalGoals <= 3){
-    signal = {
-      level: 'high',
-      label: '🔴 LIVE PRESIUNE',
-      reason: 'xG recent ' + recentXg.toFixed(2) + ' în ultimele 15 min • momentum ' + momentumAvg.toFixed(1) + ' • ' + shotsOnTarget + ' șuturi pe poartă',
-      lean: dominantTeam
-    };
-  } else if(minute >= 15 && recentXg >= 0.75 && momentumAvg >= 12 && (shotsOnTarget >= 2 || corners >= 6)){
-    signal = {
-      level: 'medium',
-      label: '🟠 PRESIUNE ÎN CREȘTERE',
-      reason: 'semnal live activ: xG ' + recentXg.toFixed(2) + ', momentum ' + momentumAvg.toFixed(1) + ', cornere totale ' + corners,
-      lean: dominantTeam
-    };
-  }
-
-  if(homeRed !== awayRed){
-    var impactedSide = homeRed > awayRed ? liveTeamName(match.home_team) : liveTeamName(match.away_team);
-    var advantagedSide = homeRed > awayRed ? liveTeamName(match.away_team) : liveTeamName(match.home_team);
-    if(!signal || signal.level !== 'high'){
-      signal = {
-        level: signal ? signal.level : 'watch',
-        label: '🟥 RED CARD IMPACT',
-        reason: impactedSide + ' este în inferioritate numerică. Presiune favorabilă pentru ' + advantagedSide + '.',
-        lean: advantagedSide
-      };
-    } else {
-      signal.reason += ' • avantaj numeric pentru ' + advantagedSide;
-    }
-  }
-
-  var subs = (Array.isArray(match && match.incidents) ? match.incidents : []).filter(function(inc){ return String(inc && inc.type || '').toLowerCase() === 'substitution'; });
-  if(signal && subs.length){
-    signal.reason += ' • ' + subs.length + ' schimbări consemnate';
-  }
-
-  return {
-    signal: signal,
-    recentXg: recentXg,
-    momentumAvg: momentumAvg,
-    shotsOnTarget: shotsOnTarget,
-    corners: corners,
-    totalGoals: totalGoals
-  };
-}
-function updateLiveRefreshStatus(source, when){
-  LIVE_LAST_SOURCE = source || LIVE_LAST_SOURCE || 'snapshot';
-  var el = $('live-refresh-status');
-  if(!el) return;
-  var stamp = when ? new Date(when) : new Date();
-  var text = (LIVE_LAST_SOURCE === 'api' ? 'API live' : 'snapshot') + ' • ' + stamp.toLocaleTimeString('ro-RO', {hour:'2-digit', minute:'2-digit'});
-  el.textContent = text;
-}
-function renderLivePressureCenter(){
-  var container = $('live-pressure-grid');
-  var countEl = $('live-pressure-count');
-  var noteEl = $('live-snapshot-note');
-  if(!container) return;
-
-  var rows = (LIVE_MATCHES || []).slice().map(function(match){
-    var pack = detectLiveSignal(match);
-    match.__live_pack = pack;
-    return match;
-  }).sort(function(a,b){
-    var aw = a.__live_pack && a.__live_pack.signal ? (a.__live_pack.signal.level === 'high' ? 3 : a.__live_pack.signal.level === 'medium' ? 2 : 1) : 0;
-    var bw = b.__live_pack && b.__live_pack.signal ? (b.__live_pack.signal.level === 'high' ? 3 : b.__live_pack.signal.level === 'medium' ? 2 : 1) : 0;
-    if(bw !== aw) return bw - aw;
-    return getLiveMinute(b) - getLiveMinute(a);
-  });
-
-  if(countEl) countEl.textContent = rows.length + ' live';
-
-  if(!rows.length){
-    container.innerHTML = '<div class="live-empty" style="grid-column:1/-1"><div class="live-empty-icon">📡</div><div>Nu există meciuri live acum.</div></div>';
-    if(noteEl) noteEl.textContent = API_TOKEN ? 'Polling live activ la 30 secunde.' : 'Nu ai token BSD în browser; secțiunea folosește doar snapshot-ul din repo.';
-    return;
-  }
-
-  if(noteEl) noteEl.textContent = API_TOKEN ? 'Polling live activ la 30 secunde. Dacă API-ul nu răspunde, rămâne ultimul snapshot bun.' : 'Afișează snapshot-ul live salvat de workflow. Pentru real-time complet, salvează tokenul BSD în localStorage.';
-
-  container.innerHTML = rows.map(function(match){
-    var pack = match.__live_pack || detectLiveSignal(match);
-    var signal = pack.signal;
-    var homeName = liveTeamName(match.home_team);
-    var awayName = liveTeamName(match.away_team);
-    var homeLogo = logoImgHtml(teamLogoUrl(liveTeamApiId(match, 'home')), homeName, 18);
-    var awayLogo = logoImgHtml(teamLogoUrl(liveTeamApiId(match, 'away')), awayName, 18);
-    var statPairs = [
-      ['Posesie', (match.live_stats && match.live_stats.home && match.live_stats.home.ball_possession) || 0, (match.live_stats && match.live_stats.away && match.live_stats.away.ball_possession) || 0],
-      ['Șuturi', (match.live_stats && match.live_stats.home && match.live_stats.home.total_shots) || 0, (match.live_stats && match.live_stats.away && match.live_stats.away.total_shots) || 0],
-      ['Pe poartă', (match.live_stats && match.live_stats.home && match.live_stats.home.shots_on_target) || 0, (match.live_stats && match.live_stats.away && match.live_stats.away.shots_on_target) || 0],
-      ['Cornere', (match.live_stats && match.live_stats.home && match.live_stats.home.corner_kicks) || 0, (match.live_stats && match.live_stats.away && match.live_stats.away.corner_kicks) || 0]
-    ];
-    var incidentsHtml = summarizeLiveIncidents(match).map(function(inc){
-      return '<span class="live-incident-pill ' + inc.type + '">' + inc.text + '</span>';
-    }).join('');
-    var badge = signal
-      ? '<span class="live-signal-badge live-signal-' + signal.level + '">' + signal.label + '</span>'
-      : '<span class="live-signal-badge live-signal-watch">👀 WATCHLIST LIVE</span>';
-    var reason = signal
-      ? '<div class="live-signal-reason"><strong style="color:var(--txt)">' + (signal.lean ? (signal.lean + ': ') : '') + '</strong>' + signal.reason + '</div>'
-      : '<div class="live-signal-reason">Momentan nu există semnal destul de puternic. Urmărește xG recent, momentum și eventuale cartonașe roșii.</div>';
-    var scoreLine = Number(match.home_score || 0) + ' - ' + Number(match.away_score || 0);
-    return '<div class="live-card">'+
-      '<div class="live-minute"><span class="pulse"></span>' + getLiveMinute(match) + "'" + (match.period ? (' • ' + match.period) : '') + '</div>'+
-      '<div class="live-signal-row">' + badge + '<span class="live-refresh-pill">Scor ' + scoreLine + '</span></div>'+
-      '<div class="live-teams">'+
-        '<div class="live-team"><div class="mc-team-row">' + homeLogo + '<span>' + homeName + '</span></div></div>'+
-        '<div class="live-score-wrap"><div class="live-score">' + scoreLine + '</div><div class="live-period">' + (match.league && (match.league.name || match.league) ? ((match.league.name || match.league)) : 'Live') + '</div></div>'+
-        '<div class="live-team away"><div class="mc-team-row">' + awayLogo + '<span>' + awayName + '</span></div></div>'+
-      '</div>'+
-      reason +
-      '<div class="live-mini-grid">'+
-        '<div class="live-mini-stat"><strong>' + pack.recentXg.toFixed(2) + '</strong><span>xG 15m</span></div>'+
-        '<div class="live-mini-stat"><strong>' + pack.momentumAvg.toFixed(1) + '</strong><span>Momentum</span></div>'+
-        '<div class="live-mini-stat"><strong>' + pack.shotsOnTarget + '</strong><span>Șuturi pe poartă</span></div>'+
-        '<div class="live-mini-stat"><strong>' + pack.corners + '</strong><span>Cornere</span></div>'+
-      '</div>'+
-      '<div class="live-stats-grid">' + statPairs.map(function(row){
-        var total = Number(row[1] || 0) + Number(row[2] || 0);
-        var homeWidth = total ? Math.max(8, (Number(row[1] || 0) / total) * 100) : 50;
-        var awayWidth = total ? Math.max(8, (Number(row[2] || 0) / total) * 100) : 50;
-        return '<div class="live-stat-home">' + row[1] + '</div><div class="live-stat-label">' + row[0] + '</div><div class="live-stat-away">' + row[2] + '</div><div class="live-stat-bar-wrap"><div class="live-bar-home" style="width:' + homeWidth + '%"></div><div class="live-bar-away" style="width:' + awayWidth + '%"></div></div>';
-      }).join('') + '</div>'+
-      (incidentsHtml ? '<div class="live-incident-strip">' + incidentsHtml + '</div>' : '') +
-    '</div>';
-  }).join('');
-}
-function fetchLiveDirect(background){
-  if(!API_TOKEN) return Promise.resolve(false);
-  return fetch('https://sports.bzzoiro.com/api/live/?tz=Europe/Bucharest&t=' + Date.now(), {
-    headers: { 'Authorization': 'Token ' + API_TOKEN },
-    cache: 'no-store'
-  }).then(function(r){
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  }).then(function(data){
-    LIVE_MATCHES = Array.isArray(data) ? data : (data.results || []);
-    renderLivePressureCenter();
-    updateLiveRefreshStatus('api', new Date().toISOString());
-    return true;
-  }).catch(function(err){
-    if(!background) toast('Live API indisponibil acum; rămâne ultimul snapshot bun.', 'warn');
-    console.warn('Live polling failed', err);
-    return false;
-  });
-}
-function startLivePolling(){
-  if(LIVE_POLL_TIMER){
-    clearInterval(LIVE_POLL_TIMER);
-    LIVE_POLL_TIMER = null;
-  }
-  renderLivePressureCenter();
-  updateLiveRefreshStatus(LIVE_LAST_SOURCE || 'snapshot', (APP_META && APP_META.live_updated_at) || (APP_META && APP_META.updated_at) || new Date().toISOString());
-  if(!API_TOKEN) return;
-  fetchLiveDirect(false);
-  LIVE_POLL_TIMER = setInterval(function(){ fetchLiveDirect(true); }, 30000);
-}
 
 // ============================================================
 // RENDER DASHBOARD
@@ -2935,6 +2805,8 @@ function buildMatchReasons(m){
   if(m.probOver25 >= 60) reasons.push('O2.5 ' + m.probOver25.toFixed(1) + '%');
   if(m.probUnder25 >= 56) reasons.push('U2.5 ' + m.probUnder25.toFixed(1) + '%');
   if(m.probUnder35 >= 68) reasons.push('U3.5 ' + m.probUnder35.toFixed(1) + '%');
+  if(m.poisson && m.poisson.valueOver25) reasons.push('Poisson value O2.5');
+  else if(m.poisson && m.poisson.divergenceOver25) reasons.push('Δ Poisson ' + formatSignedPp(m.poisson.deltaOver25));
   if(m.probBtts >= 58) reasons.push('BTTS ' + m.probBtts.toFixed(1) + '%');
   if(m.probBttsNo >= 58) reasons.push('NG ' + m.probBttsNo.toFixed(1) + '%');
   if(m.favoriteRecommend && m.favoriteProp) reasons.push('favorit ML ' + m.favoriteProp.toFixed(1) + '%');
@@ -2959,11 +2831,21 @@ function buildRecommendationReasons(m, b){
   } else if(t === 'draw'){
     reasons.push('echilibru xG ' + Math.abs(m.xgHome - m.xgAway).toFixed(2));
   }
+  if(m.poisson){
+    if(t === 'over25'){
+      reasons.push('Poisson O2.5 ' + formatPoissonProb(m.poisson.over25));
+      if(m.poisson.valueOver25) reasons.push('Poisson > piață ' + formatSignedPp(m.poisson.marketEdgeOver25));
+      else if(m.poisson.divergenceOver25) reasons.push('Δ API ' + formatSignedPp(m.poisson.deltaOver25));
+    } else if(t === 'under35'){
+      reasons.push('Poisson U3.5 ' + formatPoissonProb(m.poisson.under35));
+      if(m.poisson.marketEdgeUnder35 != null) reasons.push('vs piață ' + formatSignedPp(m.poisson.marketEdgeUnder35));
+    }
+  }
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
   if(m.leagueTierLabel) reasons.push('Ligă ' + m.leagueTierLabel);
   reasons.push('sursă ' + sourceLabelFromBet(b));
 
-  return uniqueReasons(reasons).slice(0, 4);
+  return uniqueReasons(reasons).slice(0, 5);
 }
 
 function renderSignalAudit(){
@@ -3930,6 +3812,7 @@ function renderML25(){
         '<span style="font-weight:700;color:var(--val)">Σ xG: '+m.xgTotal.toFixed(2)+'</span>'+
       '</div>'+
       '<div class="ml-picks"><span class="ml-pick" style="background:rgba(16,185,129,0.15);color:var(--val);font-size:11px;padding:4px 10px">🎯 Over 2.5G</span></div>'+
+      (m.poisson ? '<div style="font-size:9px;color:'+(m.poisson.valueOver25 ? 'var(--grn)' : 'var(--muted)')+';margin-top:7px">Poisson O2.5 <b>'+formatPoissonProb(m.poisson.over25)+'</b>'+(m.poisson.divergenceOver25 ? ' • Δ API '+formatSignedPp(m.poisson.deltaOver25) : '')+(m.poisson.valueOver25 ? ' • value' : '')+'</div>' : '')+
       (reasons ? '<div class="rec-tags" style="margin-top:7px">'+reasons+'</div>' : '')+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);gap:8px;flex-wrap:wrap">'+
         '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+prob25.toFixed(1)+'%</b>'+(odds25?' | Cotă: <b>'+odds25.toFixed(2)+'</b>':'')+'</div>'+
@@ -3969,6 +3852,7 @@ function renderML35(){
         '<span style="font-weight:700;color:var(--cyan)">Σ xG: '+m.xgTotal.toFixed(2)+'</span>'+
       '</div>'+
       '<div class="ml-picks"><span class="ml-pick" style="background:rgba(6,182,212,0.15);color:var(--cyan);font-size:11px;padding:4px 10px">🧊 Under 3.5G</span></div>'+
+      (m.poisson ? '<div style="font-size:9px;color:var(--cyan);margin-top:7px">Poisson U3.5 <b>'+formatPoissonProb(m.poisson.under35)+'</b>'+(m.poisson.marketEdgeUnder35 != null ? ' • vs piață '+formatSignedPp(m.poisson.marketEdgeUnder35) : '')+'</div>' : '')+
       (reasons ? '<div class="rec-tags" style="margin-top:7px">'+reasons+'</div>' : '')+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);gap:8px;flex-wrap:wrap">'+
         '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+prob35.toFixed(1)+'%</b>'+(odds35?' | Cotă: <b>'+odds35.toFixed(2)+'</b>':'')+'</div>'+
@@ -4124,6 +4008,7 @@ function renderMatches(){
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
+    var poissonBadges = b ? buildPoissonBadgesHtml(m, b) : '';
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -4150,7 +4035,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+ageBadge+poissonBadges+'</div>'+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
@@ -4331,7 +4216,8 @@ function buildMarketCandidate(m, type){
   if(m.leagueTier === 'avoid' && type !== 'under35') return null;
 
   var fit = marketFitAnalysis(m, type);
-  var reasons = uniqueReasons((fit && fit.reasons) || []);
+  var poissonOverlay = getPoissonOverlayForType(m, type);
+  var reasons = uniqueReasons(((fit && fit.reasons) || []).concat((poissonOverlay && poissonOverlay.reasons) || []));
   var edgePct = Number(b.edgePct || 0);
   var confBoost = Math.min(6, (m.confidence || 0) * 0.06);
 
@@ -4340,6 +4226,7 @@ function buildMarketCandidate(m, type){
   baseScore += (Math.max(0, edgePct) * 1.35);
   baseScore += (Math.max(0, b.value) * 100 * 0.18);
   baseScore += (fit && fit.score) || 0;
+  baseScore += (poissonOverlay && poissonOverlay.scoreBonus) || 0;
   baseScore += confBoost;
   if(b.sourceApi) baseScore += 4;
   if(b.sourceHeuristic) baseScore += 2;
@@ -7111,7 +6998,6 @@ function renderAll(){
   renderML25();
   renderML35();
   renderMlApiCenter();
-  startLivePolling();
   renderMatches();
   renderBilete();
   autoSyncTrackingStatuses();
