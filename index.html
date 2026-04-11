@@ -1948,132 +1948,6 @@ function calcValue(prob, odds){
   if(!o || o < 1.01) return -999;
   return ((p / 100) * o) - 1;
 }
-function poissonPMF(lambda, k){
-  var lam = Math.max(0, Number(lambda || 0));
-  var idx = Math.max(0, Math.floor(Number(k || 0)));
-  if(!isFinite(lam) || !isFinite(idx)) return 0;
-  var prob = Math.exp(-lam);
-  for(var i = 1; i <= idx; i++) prob *= lam / i;
-  return prob;
-}
-function buildTotalGoalsDistribution(homeLambda, awayLambda, maxGoals){
-  var limit = Math.max(4, Math.floor(Number(maxGoals || 6)));
-  var totalLambda = Math.max(0, Number(homeLambda || 0)) + Math.max(0, Number(awayLambda || 0));
-  var dist = [];
-  var covered = 0;
-  for(var k = 0; k < limit; k++){
-    var p = poissonPMF(totalLambda, k);
-    dist.push({ goals: k, prob: +(p * 100).toFixed(2) });
-    covered += p;
-  }
-  dist.push({ goals: String(limit) + '+', prob: +Math.max(0, (1 - covered) * 100).toFixed(2) });
-  return dist;
-}
-function calculateOverUnderFromPoisson(homeLambda, awayLambda, threshold){
-  var th = Number(threshold == null ? 2.5 : threshold);
-  var totalLambda = Math.max(0, Number(homeLambda || 0)) + Math.max(0, Number(awayLambda || 0));
-  var cutoff = Math.floor(th);
-  var probUnder = 0;
-  for(var k = 0; k <= cutoff; k++) probUnder += poissonPMF(totalLambda, k);
-  var probOver = 1 - probUnder;
-  return {
-    totalLambda: +totalLambda.toFixed(3),
-    threshold: th,
-    under: +(probUnder * 100).toFixed(2),
-    over: +(probOver * 100).toFixed(2)
-  };
-}
-function buildPoissonSummary(homeLambda, awayLambda){
-  var o15 = calculateOverUnderFromPoisson(homeLambda, awayLambda, 1.5);
-  var o25 = calculateOverUnderFromPoisson(homeLambda, awayLambda, 2.5);
-  var o35 = calculateOverUnderFromPoisson(homeLambda, awayLambda, 3.5);
-  return {
-    totalLambda: o25.totalLambda,
-    over15: o15.over,
-    under15: o15.under,
-    over25: o25.over,
-    under25: o25.under,
-    over35: o35.over,
-    under35: o35.under,
-    distribution: buildTotalGoalsDistribution(homeLambda, awayLambda, 6)
-  };
-}
-function formatPoissonProb(prob){
-  var n = Number(prob || 0);
-  return isFinite(n) ? n.toFixed(1) + '%' : '—';
-}
-function formatSignedPp(prob){
-  var n = Number(prob || 0);
-  if(!isFinite(n)) return '—';
-  return (n >= 0 ? '+' : '') + n.toFixed(1) + 'pp';
-}
-function buildPoissonTitle(m){
-  if(!m || !m.poisson) return '';
-  var p = m.poisson;
-  var parts = [
-    'Poisson O1.5 ' + formatPoissonProb(p.over15),
-    'O2.5 ' + formatPoissonProb(p.over25),
-    'U3.5 ' + formatPoissonProb(p.under35)
-  ];
-  if(p.deltaOver25 != null) parts.push('Δ API O2.5 ' + formatSignedPp(p.deltaOver25));
-  if(p.marketEdgeOver25 != null) parts.push('vs piață O2.5 ' + formatSignedPp(p.marketEdgeOver25));
-  if(p.marketEdgeUnder35 != null) parts.push('vs piață U3.5 ' + formatSignedPp(p.marketEdgeUnder35));
-  return parts.join(' • ');
-}
-function buildPoissonBadgesHtml(m, b){
-  if(!m || !m.poisson) return '';
-  var p = m.poisson;
-  var title = buildPoissonTitle(m).replace(/"/g, '&quot;');
-  var html = '';
-  if(p.divergenceOver25){
-    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--pur);border-color:rgba(168,85,247,.24);background:rgba(168,85,247,.08)">Δ Poisson ' + formatSignedPp(p.deltaOver25) + '</span>';
-  }
-  if(p.valueOver25){
-    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--grn);border-color:rgba(34,197,94,.24);background:rgba(34,197,94,.08)">Poisson value</span>';
-  } else if(b && b.type === 'over25' && p.over25 >= 55){
-    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--acc);border-color:rgba(59,130,246,.24);background:rgba(59,130,246,.08)">Poisson O2.5 ' + formatPoissonProb(p.over25) + '</span>';
-  } else if(b && b.type === 'under35' && p.under35 >= 68){
-    html += '<span class="card-reco-badge" title="' + title + '" style="color:var(--cyan);border-color:rgba(6,182,212,.24);background:rgba(6,182,212,.08)">Poisson U3.5 ' + formatPoissonProb(p.under35) + '</span>';
-  }
-  return html;
-}
-function getPoissonOverlayForType(m, type){
-  var p = m && m.poisson;
-  var scoreBonus = 0;
-  var reasons = [];
-  if(!p) return { scoreBonus:0, reasons:[] };
-
-  if(type === 'over15'){
-    reasons.push('Poisson O1.5 ' + formatPoissonProb(p.over15));
-    if(p.over15 >= 78) scoreBonus += 5;
-    else if(p.over15 <= 68) scoreBonus -= 4;
-  }
-  if(type === 'over25'){
-    reasons.push('Poisson O2.5 ' + formatPoissonProb(p.over25));
-    if(p.divergenceOver25 && p.deltaOver25 > 0) reasons.push('Poisson > API ' + formatSignedPp(p.deltaOver25));
-    if(p.divergenceOver25 && p.deltaOver25 < 0) reasons.push('Poisson < API ' + formatSignedPp(p.deltaOver25));
-    if(p.deltaOver25 >= 5) scoreBonus += 7;
-    else if(p.deltaOver25 <= -5) scoreBonus -= 6;
-    if(p.marketEdgeOver25 != null && p.marketEdgeOver25 >= 4){
-      scoreBonus += 9;
-      reasons.push('Poisson > piață ' + formatSignedPp(p.marketEdgeOver25));
-    } else if(p.marketEdgeOver25 != null && p.marketEdgeOver25 <= -4){
-      scoreBonus -= 8;
-      reasons.push('Poisson sub piață ' + formatSignedPp(p.marketEdgeOver25));
-    }
-  }
-  if(type === 'under35'){
-    reasons.push('Poisson U3.5 ' + formatPoissonProb(p.under35));
-    if(p.marketEdgeUnder35 != null && p.marketEdgeUnder35 >= 3){
-      scoreBonus += 7;
-      reasons.push('Poisson > piață ' + formatSignedPp(p.marketEdgeUnder35));
-    } else if(p.marketEdgeUnder35 != null && p.marketEdgeUnder35 <= -4){
-      scoreBonus -= 7;
-      reasons.push('Poisson sub piață ' + formatSignedPp(p.marketEdgeUnder35));
-    }
-  }
-  return { scoreBonus:scoreBonus, reasons:uniqueReasons(reasons) };
-}
 function getBacktestRows(key){
   if(!BACKTEST_SUMMARY || !BACKTEST_SUMMARY[key] || !Array.isArray(BACKTEST_SUMMARY[key])) return [];
   return BACKTEST_SUMMARY[key];
@@ -2271,21 +2145,6 @@ function analyzeMatch(raw){
   var bestBet = null;
   var bestScore = -1;
   var allBets = [];
-  var xgHome = Number(raw.expected_home_goals || 0);
-  var xgAway = Number(raw.expected_away_goals || 0);
-  var xgTotal = xgHome + xgAway;
-  var poisson = buildPoissonSummary(xgHome, xgAway);
-  var apiOver25 = safePct(raw.prob_over_25);
-  var apiUnder35 = 100 - safePct(raw.prob_over_35);
-  var marketOver25 = getNoVigMarketProbFromRaw(raw, 'over25');
-  var marketUnder35 = getNoVigMarketProbFromRaw(raw, 'under35');
-  poisson.deltaOver25 = +(poisson.over25 - apiOver25).toFixed(2);
-  poisson.marketEdgeOver25 = marketOver25 != null ? +(poisson.over25 - marketOver25).toFixed(2) : null;
-  poisson.deltaUnder35 = +(poisson.under35 - apiUnder35).toFixed(2);
-  poisson.marketEdgeUnder35 = marketUnder35 != null ? +(poisson.under35 - marketUnder35).toFixed(2) : null;
-  poisson.divergenceOver25 = Math.abs(poisson.deltaOver25) >= 5;
-  poisson.valueOver25 = poisson.divergenceOver25 && poisson.marketEdgeOver25 != null && poisson.marketEdgeOver25 >= 4;
-  poisson.divergenceUnder35 = Math.abs(poisson.deltaUnder35) >= 5;
 
   BET_TYPES.forEach(function(bt){
     var prob = bt.probGetter ? safePct(bt.probGetter(raw)) : safePct(raw[bt.probField]);
@@ -2368,10 +2227,9 @@ function analyzeMatch(raw){
     status: e.status,
     confidence: conf,
     createdAt: raw.created_at || null,
-    xgHome: xgHome,
-    xgAway: xgAway,
-    xgTotal: xgTotal,
-    poisson: poisson,
+    xgHome: Number(raw.expected_home_goals || 0),
+    xgAway: Number(raw.expected_away_goals || 0),
+    xgTotal: Number(raw.expected_home_goals || 0) + Number(raw.expected_away_goals || 0),
     bestBet: bestBet,
     allBets: allBets,
     extraMarkets: extra,
@@ -2805,8 +2663,6 @@ function buildMatchReasons(m){
   if(m.probOver25 >= 60) reasons.push('O2.5 ' + m.probOver25.toFixed(1) + '%');
   if(m.probUnder25 >= 56) reasons.push('U2.5 ' + m.probUnder25.toFixed(1) + '%');
   if(m.probUnder35 >= 68) reasons.push('U3.5 ' + m.probUnder35.toFixed(1) + '%');
-  if(m.poisson && m.poisson.valueOver25) reasons.push('Poisson value O2.5');
-  else if(m.poisson && m.poisson.divergenceOver25) reasons.push('Δ Poisson ' + formatSignedPp(m.poisson.deltaOver25));
   if(m.probBtts >= 58) reasons.push('BTTS ' + m.probBtts.toFixed(1) + '%');
   if(m.probBttsNo >= 58) reasons.push('NG ' + m.probBttsNo.toFixed(1) + '%');
   if(m.favoriteRecommend && m.favoriteProp) reasons.push('favorit ML ' + m.favoriteProp.toFixed(1) + '%');
@@ -2831,21 +2687,11 @@ function buildRecommendationReasons(m, b){
   } else if(t === 'draw'){
     reasons.push('echilibru xG ' + Math.abs(m.xgHome - m.xgAway).toFixed(2));
   }
-  if(m.poisson){
-    if(t === 'over25'){
-      reasons.push('Poisson O2.5 ' + formatPoissonProb(m.poisson.over25));
-      if(m.poisson.valueOver25) reasons.push('Poisson > piață ' + formatSignedPp(m.poisson.marketEdgeOver25));
-      else if(m.poisson.divergenceOver25) reasons.push('Δ API ' + formatSignedPp(m.poisson.deltaOver25));
-    } else if(t === 'under35'){
-      reasons.push('Poisson U3.5 ' + formatPoissonProb(m.poisson.under35));
-      if(m.poisson.marketEdgeUnder35 != null) reasons.push('vs piață ' + formatSignedPp(m.poisson.marketEdgeUnder35));
-    }
-  }
   if(m.mostLikelyScore) reasons.push('Scor probabil ' + m.mostLikelyScore);
   if(m.leagueTierLabel) reasons.push('Ligă ' + m.leagueTierLabel);
   reasons.push('sursă ' + sourceLabelFromBet(b));
 
-  return uniqueReasons(reasons).slice(0, 5);
+  return uniqueReasons(reasons).slice(0, 4);
 }
 
 function renderSignalAudit(){
@@ -3812,7 +3658,6 @@ function renderML25(){
         '<span style="font-weight:700;color:var(--val)">Σ xG: '+m.xgTotal.toFixed(2)+'</span>'+
       '</div>'+
       '<div class="ml-picks"><span class="ml-pick" style="background:rgba(16,185,129,0.15);color:var(--val);font-size:11px;padding:4px 10px">🎯 Over 2.5G</span></div>'+
-      (m.poisson ? '<div style="font-size:9px;color:'+(m.poisson.valueOver25 ? 'var(--grn)' : 'var(--muted)')+';margin-top:7px">Poisson O2.5 <b>'+formatPoissonProb(m.poisson.over25)+'</b>'+(m.poisson.divergenceOver25 ? ' • Δ API '+formatSignedPp(m.poisson.deltaOver25) : '')+(m.poisson.valueOver25 ? ' • value' : '')+'</div>' : '')+
       (reasons ? '<div class="rec-tags" style="margin-top:7px">'+reasons+'</div>' : '')+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);gap:8px;flex-wrap:wrap">'+
         '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+prob25.toFixed(1)+'%</b>'+(odds25?' | Cotă: <b>'+odds25.toFixed(2)+'</b>':'')+'</div>'+
@@ -3852,7 +3697,6 @@ function renderML35(){
         '<span style="font-weight:700;color:var(--cyan)">Σ xG: '+m.xgTotal.toFixed(2)+'</span>'+
       '</div>'+
       '<div class="ml-picks"><span class="ml-pick" style="background:rgba(6,182,212,0.15);color:var(--cyan);font-size:11px;padding:4px 10px">🧊 Under 3.5G</span></div>'+
-      (m.poisson ? '<div style="font-size:9px;color:var(--cyan);margin-top:7px">Poisson U3.5 <b>'+formatPoissonProb(m.poisson.under35)+'</b>'+(m.poisson.marketEdgeUnder35 != null ? ' • vs piață '+formatSignedPp(m.poisson.marketEdgeUnder35) : '')+'</div>' : '')+
       (reasons ? '<div class="rec-tags" style="margin-top:7px">'+reasons+'</div>' : '')+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);gap:8px;flex-wrap:wrap">'+
         '<div style="font-size:9px;color:var(--muted)">Prob: <b>'+prob35.toFixed(1)+'%</b>'+(odds35?' | Cotă: <b>'+odds35.toFixed(2)+'</b>':'')+'</div>'+
@@ -4008,7 +3852,6 @@ function renderMatches(){
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
-    var poissonBadges = b ? buildPoissonBadgesHtml(m, b) : '';
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -4035,7 +3878,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+ageBadge+poissonBadges+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+ageBadge+'</div>'+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
@@ -4216,8 +4059,7 @@ function buildMarketCandidate(m, type){
   if(m.leagueTier === 'avoid' && type !== 'under35') return null;
 
   var fit = marketFitAnalysis(m, type);
-  var poissonOverlay = getPoissonOverlayForType(m, type);
-  var reasons = uniqueReasons(((fit && fit.reasons) || []).concat((poissonOverlay && poissonOverlay.reasons) || []));
+  var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
   var confBoost = Math.min(6, (m.confidence || 0) * 0.06);
 
@@ -4226,7 +4068,6 @@ function buildMarketCandidate(m, type){
   baseScore += (Math.max(0, edgePct) * 1.35);
   baseScore += (Math.max(0, b.value) * 100 * 0.18);
   baseScore += (fit && fit.score) || 0;
-  baseScore += (poissonOverlay && poissonOverlay.scoreBonus) || 0;
   baseScore += confBoost;
   if(b.sourceApi) baseScore += 4;
   if(b.sourceHeuristic) baseScore += 2;
