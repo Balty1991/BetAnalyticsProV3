@@ -4,7 +4,7 @@ BetAnalytics Pro V16 - Fetcher + Audit Engine
 
 Ce face:
 - trage predictions si upcoming events din BSD API
-- salveaza si snapshot live pentru fallback UI
+- nu foloseste live in app
 - nu mai foloseste Over 3.5G ca piata recomandata/backtestata
 - construieste backtest mai serios: overall, pe piete, pe strategii, pe bucket-uri
 - salveaza si istoric rolling pentru engine-ul principal
@@ -1899,24 +1899,12 @@ def main():
     events = fetch_all_pages(f"/api/events/?tz={TZ}&date_from={today}&date_to={future}&status=notstarted")
     print(f"Total events: {len(events)}")
 
-    print("\n[3/6] Fetching live snapshot...")
-    try:
-        live_matches = fetch_url(f"{API_BASE}/api/live/?tz={TZ}")
-        if isinstance(live_matches, dict):
-            live_matches = live_matches.get("results", [])
-        if not isinstance(live_matches, list):
-            live_matches = []
-    except Exception as e:
-        print(f"WARN: live snapshot unavailable: {e}")
-        live_matches = []
-    print(f"Live snapshot matches: {len(live_matches)}")
-
-    print("\n[4/6] Fetching BSD status metrics...")
+    print("\n[3/6] Fetching BSD status metrics...")
     status_metrics = fetch_status_metrics()
     if status_metrics:
         print(f"Status ML predictions: {status_metrics.get('ml_predictions_upcoming')} | With odds: {status_metrics.get('with_odds')}")
 
-    print(f"\n[5/6] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
+    print(f"\n[4/6] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
     historical_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
     historical_predictions, historical_prep = dedupe_and_filter_predictions(historical_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     backtest = build_backtest_summary(historical_predictions, BACKTEST_LOOKBACK_DAYS)
@@ -1937,7 +1925,7 @@ def main():
     header_sync = build_header_sync_metrics(predictions)
 
     refresh_static = should_refresh_static(started_at)
-    print(f"\n[6/6] Static refresh window: {'YES' if refresh_static else 'NO'}")
+    print(f"\n[5/6] Static refresh window: {'YES' if refresh_static else 'NO'}")
 
     if refresh_static or not os.path.exists(os.path.join(DATA_DIR, "leagues.json")):
         leagues = fetch_all_pages("/api/leagues/")
@@ -1952,10 +1940,9 @@ def main():
     players_focus = []
     print(f"Leagues: {len(leagues)} | Teams: {len(teams)} | Players focus: 0")
 
-    print("\n[7/7] Saving files...")
+    print("\n[6/6] Saving files...")
     save_json(predictions, "predictions.json")
     save_json(events, "events.json")
-    save_json(live_matches, "live.json")
     save_json(leagues, "leagues.json")
     save_json(teams, "teams.json")
     save_json(players_focus, "players_focus.json")
@@ -1971,8 +1958,6 @@ def main():
         "predictions_count": len(predictions),
         "raw_predictions_count": upcoming_prep.get("input_count", len(predictions)),
         "events_count": len(events),
-        "live_count": len(live_matches),
-        "live_updated_at": datetime.now(timezone.utc).isoformat(),
         "leagues_count": len(leagues),
         "teams_count": len(teams),
         "players_focus_count": 0,
@@ -1986,7 +1971,7 @@ def main():
         "backtest_engine_bets": backtest["engine_bets"],
         "backtest_engine_roi": backtest["engine_roi"],
         "status": "ok",
-        "version": "v16.2-live-module",
+        "version": "v16.1-strategic-upgrade",
         "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
