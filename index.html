@@ -576,7 +576,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .focus-mini-item{padding:8px 10px}
   .match-card{padding:12px;border-radius:14px}
   .reason-list{display:none}
-  .card-reco-badges span:nth-child(n+4){display:none}
+  .card-reco-badges span:nth-child(n+5){display:none}
   .ticket-mini-grid-premium{grid-template-columns:repeat(2,1fr)}
   .ticket-mini-grid-premium .ticket-mini:last-child{grid-column:1 / -1}
   .matches-filter-advanced{grid-template-columns:1fr 1fr}
@@ -2075,6 +2075,33 @@ function buildPoissonBadgesHtml(m, b){
   }
   return html;
 }
+function buildVisiblePoissonLine(m, b){
+  if(!m || !m.poisson) return '';
+  var p = m.poisson;
+  var parts = [];
+  if(b && b.type === 'over15') {
+    parts.push('<strong>Poisson O1.5</strong> ' + formatPoissonProb(p.over15));
+    parts.push('<strong>O2.5</strong> ' + formatPoissonProb(p.over25));
+  } else if(b && b.type === 'over25') {
+    parts.push('<strong>Poisson O2.5</strong> ' + formatPoissonProb(p.over25));
+    if(p.deltaOver25 != null) parts.push('<strong>Δ API</strong> ' + formatSignedPp(p.deltaOver25));
+    if(p.marketEdgeOver25 != null) parts.push('<strong>vs piață</strong> ' + formatSignedPp(p.marketEdgeOver25));
+    if(p.valueOver25) parts.push('<strong>value confirmat</strong>');
+  } else if(b && b.type === 'under35') {
+    parts.push('<strong>Poisson U3.5</strong> ' + formatPoissonProb(p.under35));
+    if(p.marketEdgeUnder35 != null) parts.push('<strong>vs piață</strong> ' + formatSignedPp(p.marketEdgeUnder35));
+  } else if(b && b.type === 'btts') {
+    parts.push('<strong>Poisson O1.5</strong> ' + formatPoissonProb(p.over15));
+    parts.push('<strong>O2.5</strong> ' + formatPoissonProb(p.over25));
+    parts.push('<strong>U3.5</strong> ' + formatPoissonProb(p.under35));
+  } else {
+    parts.push('<strong>Poisson O1.5</strong> ' + formatPoissonProb(p.over15));
+    parts.push('<strong>O2.5</strong> ' + formatPoissonProb(p.over25));
+    parts.push('<strong>U3.5</strong> ' + formatPoissonProb(p.under35));
+  }
+  return parts.join(' • ');
+}
+
 function getPoissonOverlayForType(m, type){
   var p = m && m.poisson;
   var scoreBonus = 0;
@@ -4220,7 +4247,6 @@ function renderMatches(){
     var b = m.bestBet || null;
     if(!isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
-    if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
     if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
     if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
     if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.05)) return false;
@@ -4281,6 +4307,7 @@ function renderMatches(){
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
     var poissonBadges = b ? buildPoissonBadgesHtml(m, b) : '';
+    var poissonLine = b ? buildVisiblePoissonLine(m, b) : '';
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -4307,7 +4334,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+ageBadge+poissonBadges+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+poissonBadges+confBadge+tierBadge+ageBadge+'</div>'+(poissonLine ? '<div class="card-poisson-line">'+poissonLine+'</div>' : '')+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
