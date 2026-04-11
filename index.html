@@ -1942,6 +1942,116 @@ function safePct(v){
   if(n > 100) return 100;
   return n;
 }
+function factorial(n){
+  var num = Math.max(0, Math.floor(Number(n || 0)));
+  if(num <= 1) return 1;
+  var out = 1;
+  for(var i = 2; i <= num; i++) out *= i;
+  return out;
+}
+function poissonProbability(lambda, k){
+  var l = Math.max(0, Number(lambda || 0));
+  var goalCount = Math.max(0, Math.floor(Number(k || 0)));
+  return (Math.pow(l, goalCount) * Math.exp(-l)) / factorial(goalCount);
+}
+function poissonCdf(lambda, maxGoals){
+  var cutoff = Math.max(0, Math.floor(Number(maxGoals || 0)));
+  var total = 0;
+  for(var i = 0; i <= cutoff; i++) total += poissonProbability(lambda, i);
+  return total;
+}
+function calculatePoissonOverProbability(homeLambda, awayLambda, threshold){
+  var totalLambda = Math.max(0, Number(homeLambda || 0)) + Math.max(0, Number(awayLambda || 0));
+  return safePct((1 - poissonCdf(totalLambda, threshold)) * 100);
+}
+function calculatePoissonUnderProbability(homeLambda, awayLambda, threshold){
+  var totalLambda = Math.max(0, Number(homeLambda || 0)) + Math.max(0, Number(awayLambda || 0));
+  return safePct(poissonCdf(totalLambda, threshold) * 100);
+}
+function calculatePoissonBttsProbability(homeLambda, awayLambda){
+  var h = Math.max(0, Number(homeLambda || 0));
+  var a = Math.max(0, Number(awayLambda || 0));
+  var prob = 1 - Math.exp(-h) - Math.exp(-a) + Math.exp(-(h + a));
+  return safePct(prob * 100);
+}
+function buildPoissonMetrics(raw){
+  if(!raw) return null;
+  if(raw.__poissonMetrics) return raw.__poissonMetrics;
+  var homeLambda = Math.max(0, Number(raw.expected_home_goals || 0));
+  var awayLambda = Math.max(0, Number(raw.expected_away_goals || 0));
+  var totalLambda = homeLambda + awayLambda;
+  if(!(totalLambda > 0)){
+    raw.__poissonMetrics = null;
+    return null;
+  }
+  raw.__poissonMetrics = {
+    homeLambda: +homeLambda.toFixed(4),
+    awayLambda: +awayLambda.toFixed(4),
+    totalLambda: +totalLambda.toFixed(4),
+    over15: +calculatePoissonOverProbability(homeLambda, awayLambda, 1.5).toFixed(2),
+    under15: +calculatePoissonUnderProbability(homeLambda, awayLambda, 1.5).toFixed(2),
+    over25: +calculatePoissonOverProbability(homeLambda, awayLambda, 2.5).toFixed(2),
+    under25: +calculatePoissonUnderProbability(homeLambda, awayLambda, 2.5).toFixed(2),
+    under35: +calculatePoissonUnderProbability(homeLambda, awayLambda, 3.5).toFixed(2),
+    btts: +calculatePoissonBttsProbability(homeLambda, awayLambda).toFixed(2)
+  };
+  return raw.__poissonMetrics;
+}
+function getApiProbForMarket(raw, marketKey){
+  if(marketKey === 'homeWin') return safePct(raw.prob_home_win);
+  if(marketKey === 'draw') return safePct(raw.prob_draw);
+  if(marketKey === 'awayWin') return safePct(raw.prob_away_win);
+  if(marketKey === 'over15') return safePct(raw.prob_over_15);
+  if(marketKey === 'under15') return 100 - safePct(raw.prob_over_15);
+  if(marketKey === 'over25') return safePct(raw.prob_over_25);
+  if(marketKey === 'under25') return 100 - safePct(raw.prob_over_25);
+  if(marketKey === 'under35') return 100 - safePct(raw.prob_over_35);
+  if(marketKey === 'btts') return safePct(raw.prob_btts_yes);
+  return 0;
+}
+function getPoissonProbForMarket(metrics, marketKey){
+  if(!metrics) return null;
+  if(marketKey === 'over15') return metrics.over15;
+  if(marketKey === 'under15') return metrics.under15;
+  if(marketKey === 'over25') return metrics.over25;
+  if(marketKey === 'under25') return metrics.under25;
+  if(marketKey === 'under35') return metrics.under35;
+  if(marketKey === 'btts') return metrics.btts;
+  return null;
+}
+function buildHybridProbForMarket(raw, marketKey){
+  if(!raw) return { apiProb:0, poissonProb:null, effectiveProb:0, delta:null, alert:false, direction:'flat', totalLambda:null };
+  raw.__hybridProbCache = raw.__hybridProbCache || {};
+  if(raw.__hybridProbCache[marketKey]) return raw.__hybridProbCache[marketKey];
+  var apiProb = safePct(getApiProbForMarket(raw, marketKey));
+  var poisson = buildPoissonMetrics(raw);
+  var poissonProb = getPoissonProbForMarket(poisson, marketKey);
+  var effectiveProb = apiProb;
+  var delta = null;
+  var alert = false;
+  var direction = 'flat';
+  if(poissonProb != null){
+    delta = +(poissonProb - apiProb).toFixed(2);
+    alert = Math.abs(delta) > 5;
+    var apiWeight = alert ? 0.55 : 0.72;
+    var poissonWeight = 1 - apiWeight;
+    effectiveProb = +((apiProb * apiWeight) + (poissonProb * poissonWeight)).toFixed(2);
+    if(delta > 5) direction = 'value';
+    else if(delta < -5) direction = 'risk';
+  }
+  raw.__hybridProbCache[marketKey] = {
+    apiProb: +apiProb.toFixed(2),
+    poissonProb: poissonProb != null ? +Number(poissonProb).toFixed(2) : null,
+    effectiveProb: +effectiveProb.toFixed(2),
+    delta: delta,
+    alert: alert,
+    direction: direction,
+    totalLambda: poisson ? poisson.totalLambda : null,
+    homeLambda: poisson ? poisson.homeLambda : null,
+    awayLambda: poisson ? poisson.awayLambda : null
+  };
+  return raw.__hybridProbCache[marketKey];
+}
 function calcValue(prob, odds){
   var p = safePct(prob);
   var o = Number(odds || 0);
@@ -2145,9 +2255,17 @@ function analyzeMatch(raw){
   var bestBet = null;
   var bestScore = -1;
   var allBets = [];
+  var over15Meta = buildHybridProbForMarket(raw, 'over15');
+  var over25Meta = buildHybridProbForMarket(raw, 'over25');
+  var under25Meta = buildHybridProbForMarket(raw, 'under25');
+  var under35Meta = buildHybridProbForMarket(raw, 'under35');
+  var bttsMeta = buildHybridProbForMarket(raw, 'btts');
+  var poissonMetrics = buildPoissonMetrics(raw);
 
   BET_TYPES.forEach(function(bt){
-    var prob = bt.probGetter ? safePct(bt.probGetter(raw)) : safePct(raw[bt.probField]);
+    var probMeta = buildHybridProbForMarket(raw, bt.key);
+    var fallbackProb = bt.probGetter ? safePct(bt.probGetter(raw)) : safePct(raw[bt.probField]);
+    var prob = probMeta && probMeta.effectiveProb != null ? safePct(probMeta.effectiveProb) : fallbackProb;
     var odds = Number(e[bt.oddsField] || 0);
     if(!prob || !odds || !isSaneOddsForType(bt.key, odds)) return;
 
@@ -2156,12 +2274,21 @@ function analyzeMatch(raw){
     var edgePct = marketProb != null ? +(prob - marketProb).toFixed(2) : null;
     var adjProb = calcAdjustedProb(prob, conf, e.league ? e.league.name : '', bt.key, odds);
     var score = calcSmartScore(adjProb, value, conf, edgePct);
+    if(probMeta && probMeta.alert){
+      score += probMeta.direction === 'value' ? 2 : -3;
+    }
     var verdict = getVerdict(adjProb, value, conf);
 
     var item = {
       type: bt.key,
       label: bt.label,
       prob: prob,
+      apiProb: probMeta ? probMeta.apiProb : fallbackProb,
+      poissonProb: probMeta ? probMeta.poissonProb : null,
+      poissonDelta: probMeta ? probMeta.delta : null,
+      poissonAlert: !!(probMeta && probMeta.alert),
+      poissonDirection: probMeta ? probMeta.direction : 'flat',
+      totalLambda: probMeta ? probMeta.totalLambda : null,
       odds: odds,
       value: +value.toFixed(4),
       adjProb: adjProb,
@@ -2170,7 +2297,8 @@ function analyzeMatch(raw){
       marketProb: marketProb,
       edgePct: edgePct,
       sourceApi: apiRecommendForRaw(raw, bt.key),
-      sourceHeuristic: heuristicRecommendForRaw(raw, bt.key)
+      sourceHeuristic: heuristicRecommendForRaw(raw, bt.key),
+      probabilityEngine: (probMeta && probMeta.poissonProb != null) ? 'hybrid' : 'api'
     };
 
     allBets.push(item);
@@ -2230,6 +2358,7 @@ function analyzeMatch(raw){
     xgHome: Number(raw.expected_home_goals || 0),
     xgAway: Number(raw.expected_away_goals || 0),
     xgTotal: Number(raw.expected_home_goals || 0) + Number(raw.expected_away_goals || 0),
+    poisson: poissonMetrics,
     bestBet: bestBet,
     allBets: allBets,
     extraMarkets: extra,
@@ -2248,14 +2377,24 @@ function analyzeMatch(raw){
     fairOddsX2: extra.fairOddsX2,
     fairOdds12: extra.fairOdds12,
     doubleChancePick: doubleChancePick,
-    probOver15: safePct(raw.prob_over_15),
-    probUnder15: 100 - safePct(raw.prob_over_15),
-    probOver25: safePct(raw.prob_over_25),
-    probUnder25: 100 - safePct(raw.prob_over_25),
+    probOver15: over15Meta.effectiveProb,
+    apiProbOver15: over15Meta.apiProb,
+    poissonProbOver15: over15Meta.poissonProb,
+    probUnder15: 100 - over15Meta.effectiveProb,
+    probOver25: over25Meta.effectiveProb,
+    apiProbOver25: over25Meta.apiProb,
+    poissonProbOver25: over25Meta.poissonProb,
+    probUnder25: under25Meta.effectiveProb,
+    apiProbUnder25: under25Meta.apiProb,
+    poissonProbUnder25: under25Meta.poissonProb,
     probOver35: safePct(raw.prob_over_35),
-    probUnder35: 100 - safePct(raw.prob_over_35),
-    probBtts: safePct(raw.prob_btts_yes),
-    probBttsNo: 100 - safePct(raw.prob_btts_yes),
+    probUnder35: under35Meta.effectiveProb,
+    apiProbUnder35: under35Meta.apiProb,
+    poissonProbUnder35: under35Meta.poissonProb,
+    probBtts: bttsMeta.effectiveProb,
+    apiProbBtts: bttsMeta.apiProb,
+    poissonProbBtts: bttsMeta.poissonProb,
+    probBttsNo: 100 - bttsMeta.effectiveProb,
     mostLikelyScore: raw.most_likely_score || null,
     favorite: raw.favorite || null,
     favoriteProp: raw.favorite_prob || null,
@@ -2655,6 +2794,7 @@ function buildMatchReasons(m){
   var reasons = [];
   if(m.analysisState && m.analysisState !== 'ELIGIBLE') reasons.push(getAnalysisStateMeta(m.analysisState).label.replace(/[✅⚠️🧠⛔🛰️ ]/g,''));
   if(m.bestBet && m.bestBet.edgePct != null) reasons.push('No-vig ' + (m.bestBet.edgePct >= 0 ? '+' : '') + m.bestBet.edgePct.toFixed(1) + 'pp');
+  if(m.bestBet && m.bestBet.poissonAlert && m.bestBet.poissonDelta != null) reasons.push('Poisson ' + (m.bestBet.poissonDelta >= 0 ? '+' : '') + m.bestBet.poissonDelta.toFixed(1) + 'pp');
   if(m.bestBet && m.bestBet.value >= 0.03) reasons.push('EV+ ' + fmtPct(m.bestBet.value * 100));
   if(m.bestBet) reasons.push('sursă ' + sourceLabelFromBet(m.bestBet));
 
@@ -2667,8 +2807,8 @@ function buildMatchReasons(m){
   if(m.probBttsNo >= 58) reasons.push('NG ' + m.probBttsNo.toFixed(1) + '%');
   if(m.favoriteRecommend && m.favoriteProp) reasons.push('favorit ML ' + m.favoriteProp.toFixed(1) + '%');
   if(m.doubleChancePick) reasons.push(m.doubleChancePick.label + ' ' + m.doubleChancePick.prob.toFixed(1) + '%');
-    if(m.mostLikelyScore) reasons.push('scor probabil ' + m.mostLikelyScore);
-  return uniqueReasons(reasons).slice(0, 4);
+  if(m.mostLikelyScore) reasons.push('scor probabil ' + m.mostLikelyScore);
+  return uniqueReasons(reasons).slice(0, 5);
 }
 
 function buildRecommendationReasons(m, b){
@@ -2676,6 +2816,9 @@ function buildRecommendationReasons(m, b){
   var reasons = [];
   var t = b.type;
   reasons.push('Șansă estimată ' + b.adjProb.toFixed(1) + '%');
+  if(b.poissonAlert && b.poissonDelta != null){
+    reasons.push('Poisson ' + (b.poissonDelta >= 0 ? '+' : '') + b.poissonDelta.toFixed(1) + 'pp vs API');
+  }
   if(t === 'over15' || t === 'over25' || t === 'under25' || t === 'under35'){
     reasons.push('xG total ' + m.xgTotal.toFixed(2));
   } else if(t === 'btts'){
@@ -2691,7 +2834,12 @@ function buildRecommendationReasons(m, b){
   if(m.leagueTierLabel) reasons.push('Ligă ' + m.leagueTierLabel);
   reasons.push('sursă ' + sourceLabelFromBet(b));
 
-  return uniqueReasons(reasons).slice(0, 4);
+  return uniqueReasons(reasons).slice(0, 5);
+}
+function poissonBadgeHtmlForBet(b){
+  if(!b || !b.poissonAlert || b.poissonDelta == null) return '';
+  var positive = Number(b.poissonDelta || 0) >= 0;
+  return '<span class="card-reco-badge" style="color:'+(positive ? 'var(--grn)' : 'var(--red)')+';border-color:'+(positive ? 'rgba(34,197,94,.24)' : 'rgba(239,68,68,.24)')+'">Poisson '+(positive ? '+' : '')+Number(b.poissonDelta || 0).toFixed(1)+'pp</span>';
 }
 
 function renderSignalAudit(){
@@ -2756,7 +2904,7 @@ function renderSignalAudit(){
           '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+'<span class="audit-badge">Kelly 1/4 '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
+      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Kelly 1/4 '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
         '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge_pct || 0))+'</div></div>'+
@@ -2990,7 +3138,7 @@ function renderAIMemory(){
           '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="audit-row-tags"><span class="audit-badge" style="color:'+(bonus >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(bonus >= 0 ? '+' : '')+bonus.toFixed(1)+'</span><span class="audit-badge">Sursă '+(r.source || '—')+'</span></div>'+
+      '<div class="audit-row-tags"><span class="audit-badge" style="color:'+(bonus >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(bonus >= 0 ? '+' : '')+bonus.toFixed(1)+'</span>'+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Sursă '+(r.source || '—')+'</span></div>'+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
         '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge_pct || 0))+'</div></div>'+
@@ -3849,6 +3997,7 @@ function renderMatches(){
     var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
     var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
     var tierBadge = b && m.leagueTierLabel ? ('<span class="card-reco-badge">'+m.leagueTierLabel+'</span>') : '';
+    var poissonBadge = b ? poissonBadgeHtmlForBet(b) : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
@@ -3878,7 +4027,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
       '</div>'+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
     '</div>';
@@ -5619,7 +5768,7 @@ function renderBilete(){
         '</div>'+
         '<div class="bilet-pick">'+
           '<div class="bilet-pick-type">'+b.label+' @ '+b.odds.toFixed(2)+' '+sourceChipHtmlForBet(b)+'</div>'+
-          '<div class="bilet-pick-prob">Prob: '+fmtPct(b.adjProb)+' • Confidence: '+m.confidence.toFixed(0)+'%</div>'+
+          '<div class="bilet-pick-prob">Prob: '+fmtPct(b.adjProb)+' • Confidence: '+m.confidence.toFixed(0)+'%'+(b.poissonAlert && b.poissonDelta != null ? (' • Poisson '+(b.poissonDelta >= 0 ? '+' : '')+Number(b.poissonDelta).toFixed(1)+'pp') : '')+'</div>'+
         '</div>'+
       '</div>'+
       '<div class="ticket-mini-grid">'+
