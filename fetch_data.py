@@ -1954,6 +1954,7 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
             "market": market_label,
             "market_key": market_key,
             "odds": row.get("odds"),
+            "model_prob": row.get("model_prob"),
             "api_prob": row.get("api_prob"),
             "poisson_prob": row.get("poisson_prob"),
             "poisson_delta": row.get("poisson_delta"),
