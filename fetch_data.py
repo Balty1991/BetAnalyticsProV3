@@ -180,6 +180,114 @@ def calc_value(prob, odds):
     return ((pct(prob) / 100.0) * o) - 1.0
 
 
+def poisson_probability(lmbda, k):
+    try:
+        lmbda = max(0.0, float(lmbda or 0.0))
+        k = int(k)
+    except Exception:
+        return 0.0
+    if k < 0:
+        return 0.0
+    return (math.pow(lmbda, k) * math.exp(-lmbda)) / math.factorial(k)
+
+
+def poisson_cdf(lmbda, max_goals):
+    try:
+        cutoff = max(0, int(math.floor(float(max_goals))))
+    except Exception:
+        cutoff = 0
+    return sum(poisson_probability(lmbda, i) for i in range(cutoff + 1))
+
+
+def poisson_over_probability(home_lambda, away_lambda, threshold=2.5):
+    total_lambda = max(0.0, float(home_lambda or 0.0)) + max(0.0, float(away_lambda or 0.0))
+    return max(0.0, min(100.0, (1.0 - poisson_cdf(total_lambda, threshold)) * 100.0))
+
+
+def poisson_under_probability(home_lambda, away_lambda, threshold=2.5):
+    total_lambda = max(0.0, float(home_lambda or 0.0)) + max(0.0, float(away_lambda or 0.0))
+    return max(0.0, min(100.0, poisson_cdf(total_lambda, threshold) * 100.0))
+
+
+def poisson_btts_probability(home_lambda, away_lambda):
+    home_lambda = max(0.0, float(home_lambda or 0.0))
+    away_lambda = max(0.0, float(away_lambda or 0.0))
+    prob = 1.0 - math.exp(-home_lambda) - math.exp(-away_lambda) + math.exp(-(home_lambda + away_lambda))
+    return max(0.0, min(100.0, prob * 100.0))
+
+
+def build_poisson_metrics(row):
+    try:
+        home_lambda = max(0.0, float(row.get("expected_home_goals") or 0.0))
+        away_lambda = max(0.0, float(row.get("expected_away_goals") or 0.0))
+    except Exception:
+        return None
+    total_lambda = home_lambda + away_lambda
+    if total_lambda <= 0:
+        return None
+    return {
+        "home_lambda": round(home_lambda, 4),
+        "away_lambda": round(away_lambda, 4),
+        "total_lambda": round(total_lambda, 4),
+        "over15": round(poisson_over_probability(home_lambda, away_lambda, 1.5), 2),
+        "under15": round(poisson_under_probability(home_lambda, away_lambda, 1.5), 2),
+        "over25": round(poisson_over_probability(home_lambda, away_lambda, 2.5), 2),
+        "under25": round(poisson_under_probability(home_lambda, away_lambda, 2.5), 2),
+        "under35": round(poisson_under_probability(home_lambda, away_lambda, 3.5), 2),
+        "btts": round(poisson_btts_probability(home_lambda, away_lambda), 2),
+    }
+
+
+def api_market_probability(row, market_key):
+    mapping = {
+        "homeWin": pct(row.get("prob_home_win")),
+        "draw": pct(row.get("prob_draw")),
+        "awayWin": pct(row.get("prob_away_win")),
+        "over15": pct(row.get("prob_over_15")),
+        "under15": 100.0 - pct(row.get("prob_over_15")),
+        "over25": pct(row.get("prob_over_25")),
+        "under25": 100.0 - pct(row.get("prob_over_25")),
+        "under35": 100.0 - pct(row.get("prob_over_35")),
+        "btts": pct(row.get("prob_btts_yes")),
+    }
+    return round(mapping.get(market_key, 0.0), 2)
+
+
+def poisson_market_probability(metrics, market_key):
+    if not metrics:
+        return None
+    return metrics.get(market_key)
+
+
+def blend_model_probability(row, market_key):
+    api_prob = api_market_probability(row, market_key)
+    metrics = build_poisson_metrics(row)
+    poisson_prob = poisson_market_probability(metrics, market_key)
+    effective_prob = api_prob
+    delta = None
+    alert = False
+    direction = "flat"
+    if poisson_prob is not None:
+        delta = round(float(poisson_prob) - float(api_prob), 2)
+        alert = abs(delta) > 5.0
+        api_weight = 0.55 if alert else 0.72
+        poisson_weight = 1.0 - api_weight
+        effective_prob = round((api_prob * api_weight) + (float(poisson_prob) * poisson_weight), 2)
+        if delta > 5.0:
+            direction = "value"
+        elif delta < -5.0:
+            direction = "risk"
+    return {
+        "api_prob": round(api_prob, 2),
+        "poisson_prob": round(float(poisson_prob), 2) if poisson_prob is not None else None,
+        "effective_prob": round(effective_prob, 2),
+        "poisson_delta": delta,
+        "poisson_alert": alert,
+        "poisson_direction": direction,
+        "poisson": metrics or {},
+    }
+
+
 def odds_in_ranges(odds, ranges):
     try:
         o = float(odds or 0)
@@ -509,7 +617,8 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         return None
     if odds < 1.01:
         return None
-    prob = market["prob"](row)
+    prob_meta = blend_model_probability(row, market_key)
+    prob = prob_meta.get("effective_prob")
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
     league_name = (event.get("league") or {}).get("name") or "Unknown"
     tier_info = get_league_tier_info(league_name)
@@ -530,6 +639,12 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         "market_key": market_key,
         "odds": round(odds, 3),
         "prob": round(prob, 2),
+        "api_prob": prob_meta.get("api_prob"),
+        "poisson_prob": prob_meta.get("poisson_prob"),
+        "poisson_delta": prob_meta.get("poisson_delta"),
+        "poisson_alert": bool(prob_meta.get("poisson_alert")),
+        "poisson_direction": prob_meta.get("poisson_direction"),
+        "total_lambda": (prob_meta.get("poisson") or {}).get("total_lambda"),
         "adj_prob": round(adj, 2),
         "value": round(value, 4),
         "confidence": round(confidence, 2),
@@ -773,7 +888,8 @@ def build_signal_audit(predictions, recommendation_log=None):
                 odds = 0.0
             if odds < 1.01:
                 continue
-            prob = market["prob"](row)
+            prob_meta = blend_model_probability(row, market_key)
+            prob = prob_meta.get("effective_prob")
             confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
             value = calc_value(prob, odds)
             league_name = (event.get("league") or {}).get("name") or "Unknown"
@@ -791,6 +907,11 @@ def build_signal_audit(predictions, recommendation_log=None):
                 "market_key": market_key,
                 "odds": round(odds, 3),
                 "prob": round(prob, 2),
+                "api_prob": prob_meta.get("api_prob"),
+                "poisson_prob": prob_meta.get("poisson_prob"),
+                "poisson_delta": prob_meta.get("poisson_delta"),
+                "poisson_alert": bool(prob_meta.get("poisson_alert")),
+                "poisson_direction": prob_meta.get("poisson_direction"),
                 "adj_prob": round(adj, 2),
                 "value": round(value, 4),
                 "confidence": round(confidence, 2),
@@ -827,6 +948,8 @@ def build_signal_audit(predictions, recommendation_log=None):
             reason_tags.append(f"No-vig {pick['edge_pct']:+.1f}pp")
         if pick.get("value") is not None:
             reason_tags.append(f"EV+ {pick['value']*100:+.1f}%")
+        if pick.get("poisson_alert") and pick.get("poisson_delta") is not None:
+            reason_tags.append(f"Poisson {pick['poisson_delta']:+.1f}pp")
         if pick.get("market_key") in {"over15", "over25", "under25", "under35"}:
             xg_total = round(float(row.get("expected_home_goals") or 0) + float(row.get("expected_away_goals") or 0), 2)
             reason_tags.append(f"xG {xg_total:.2f}")
@@ -863,6 +986,10 @@ def build_signal_audit(predictions, recommendation_log=None):
             "book_odds": pick.get("odds"),
             "market_prob": pick.get("market_prob"),
             "model_prob": pick.get("prob"),
+            "api_prob": pick.get("api_prob"),
+            "poisson_prob": pick.get("poisson_prob"),
+            "poisson_delta": pick.get("poisson_delta"),
+            "poisson_alert": pick.get("poisson_alert"),
             "adjusted_prob": pick.get("adj_prob"),
             "fair_odds": fair_odds,
             "edge_pct": pick.get("edge_pct"),
@@ -1276,7 +1403,8 @@ def build_ui_live_candidate(row, market_key):
     if hard_contradiction(row, market_key):
         return None
 
-    prob = market["prob"](row)
+    prob_meta = blend_model_probability(row, market_key)
+    prob = prob_meta.get("effective_prob")
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
     league_name = (event.get("league") or {}).get("name") or "Unknown"
     tier_info = get_league_tier_info(league_name)
@@ -1304,6 +1432,8 @@ def build_ui_live_candidate(row, market_key):
         ticket_score += 4.0
     if source_heuristic:
         ticket_score += 2.0
+    if prob_meta.get("poisson_alert"):
+        ticket_score += 1.5 if prob_meta.get("poisson_direction") == "value" else -2.5
     if 1.18 <= odds <= 1.75:
         ticket_score += 4.0
     if odds > 2.20:
@@ -1314,6 +1444,11 @@ def build_ui_live_candidate(row, market_key):
         "market_key": market_key,
         "odds": round(odds, 3),
         "model_prob": round(prob, 2),
+        "api_prob": prob_meta.get("api_prob"),
+        "poisson_prob": prob_meta.get("poisson_prob"),
+        "poisson_delta": prob_meta.get("poisson_delta"),
+        "poisson_alert": bool(prob_meta.get("poisson_alert")),
+        "poisson_direction": prob_meta.get("poisson_direction"),
         "adjusted_prob": round(adj, 2),
         "market_prob": round(market_prob, 2) if market_prob is not None else None,
         "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
@@ -1380,6 +1515,10 @@ def build_current_recommendation_rows(predictions, logged_at_iso):
             "market_key": pick.get("market_key"),
             "odds": pick.get("odds"),
             "model_prob": pick.get("model_prob"),
+            "api_prob": pick.get("api_prob"),
+            "poisson_prob": pick.get("poisson_prob"),
+            "poisson_delta": pick.get("poisson_delta"),
+            "poisson_alert": pick.get("poisson_alert"),
             "adjusted_prob": pick.get("adjusted_prob"),
             "market_prob": pick.get("market_prob"),
             "edge_pct": pick.get("edge_pct"),
@@ -1815,6 +1954,10 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
             "market": market_label,
             "market_key": market_key,
             "odds": row.get("odds"),
+            "api_prob": row.get("api_prob"),
+            "poisson_prob": row.get("poisson_prob"),
+            "poisson_delta": row.get("poisson_delta"),
+            "poisson_alert": row.get("poisson_alert"),
             "adjusted_prob": row.get("adjusted_prob"),
             "edge_pct": row.get("edge_pct"),
             "confidence": row.get("confidence"),
