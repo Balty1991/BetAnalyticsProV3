@@ -7715,6 +7715,173 @@ window.addEventListener('DOMContentLoaded', function(){
   calcBankroll();
 });
 
+/* ===== History 21 categories override ===== */
+function getHistory21LivePendingRows(){
+  return (ALL_MATCHES || []).filter(function(m){
+    return m && isMatchStillDisplayable(m) && m.analysisState === 'ELIGIBLE' && m.bestBet;
+  }).map(function(m){
+    var b = m.bestBet || {};
+    return {
+      source: 'matches',
+      status: 'pending',
+      won: null,
+      event_id: m.eventId != null ? m.eventId : null,
+      eventId: m.eventId != null ? m.eventId : null,
+      prediction_id: m.id != null ? m.id : null,
+      home: m.home,
+      away: m.away,
+      league: m.league,
+      event_date: m.date,
+      date: m.date,
+      market: b.label || '—',
+      market_key: b.type || inferMarketTypeFromLabel(b.label || ''),
+      odds: Number(b.odds || 0),
+      adjusted_prob: Number(b.adjProb || 0),
+      edge_pct: Number(b.edgePct || 0),
+      value: Number(b.value || 0),
+      verdict: m.verdict || b.verdict || null,
+      score: Number(m.smartScore || b.score || 0),
+      model_version: m.modelVersion || null,
+      most_likely_score: m.mostLikelyScore || null,
+      logged_at: null,
+      prediction_created_at: m.createdAt || null,
+      home_score: null,
+      away_score: null
+    };
+  });
+}
+function getHistory21CategoryDefs(rows){
+  var defs = [
+    {key:'all', label:'Toate'},
+    {key:'safe', label:'Top analizate'},
+    {key:'value', label:'Value'},
+    {key:'over15', label:'Over 1.5G'},
+    {key:'over25', label:'Over 2.5G'},
+    {key:'btts', label:'BTTS'},
+    {key:'under35', label:'Under 3.5G'}
+  ];
+  var known = {};
+  defs.forEach(function(def){ known[def.key] = true; });
+  var extra = {};
+  (rows || []).forEach(function(row){
+    var mk = row.market_key || inferMarketTypeFromLabel(row.market || '');
+    var label = row.market || mk || '';
+    if(!mk || known[mk] || extra[mk]) return;
+    extra[mk] = {key:mk, label:label};
+  });
+  Object.keys(extra).forEach(function(k){ defs.push(extra[k]); });
+  return defs;
+}
+function historyRowMatchesCategory(row, categoryKey){
+  var mk = row.market_key || inferMarketTypeFromLabel(row.market || '');
+  if(categoryKey === 'all') return true;
+  if(categoryKey === 'safe') return String(row.verdict || '').toLowerCase() === 'safe' || Number(row.score || 0) >= 80;
+  if(categoryKey === 'value') return Number(row.value || 0) >= 0.05;
+  return mk === categoryKey;
+}
+function buildHistory21Group(label, key, rows){
+  var list = (rows || []).slice().sort(function(a,b){
+    return new Date(b.event_date || b.logged_at || b.prediction_created_at || 0) - new Date(a.event_date || a.logged_at || a.prediction_created_at || 0);
+  });
+  var settled = list.filter(function(r){ return r.source === 'log' && (r.status === 'win' || r.status === 'lose'); });
+  var pending = list.filter(function(r){ return r.status === 'pending'; });
+  var bets = settled.length;
+  var wins = settled.filter(function(r){ return r.status === 'win'; }).length;
+  var profit = settled.reduce(function(acc, r){
+    var o = Number(r.odds || 0);
+    return acc + (r.status === 'win' ? (o > 1 ? (o - 1) : 0) : -1);
+  }, 0);
+  return {
+    market: key,
+    label: label,
+    total: list.length,
+    bets: bets,
+    wins: wins,
+    pending: pending.length,
+    losses: bets - wins,
+    winrate: bets ? (wins * 100 / bets) : 0,
+    roi: bets ? (profit * 100 / bets) : 0,
+    avgOdds: bets ? settled.reduce(function(acc,r){ return acc + Number(r.odds || 0); }, 0) / bets : 0,
+    list: list
+  };
+}
+function renderHistory21(){
+  var root = $('history21-root');
+  if(!root) return;
+  var now = new Date();
+  var cutoff = new Date(now.getTime() - (21 * 86400000));
+  var settledRows = getHistory21SettledRows(cutoff);
+  var livePendingRows = getHistory21LivePendingRows();
+
+  var mergedMap = {};
+  settledRows.forEach(function(r){ mergedMap[getHistory21RowKey(r)] = r; });
+  livePendingRows.forEach(function(r){ mergedMap[getHistory21RowKey(r)] = r; });
+  var rows = Object.keys(mergedMap).map(function(k){ return mergedMap[k]; });
+  if(!rows.length){
+    root.innerHTML = '<div class="empty-state">Nu există încă recomandări reale salvate pe ultimele 21 de zile.</div>';
+    return;
+  }
+
+  var categoryDefs = getHistory21CategoryDefs(rows);
+  var summary = categoryDefs.map(function(def){
+    return buildHistory21Group(def.label, def.key, rows.filter(function(r){ return historyRowMatchesCategory(r, def.key); }));
+  });
+
+  if(!ACTIVE_HISTORY_MARKET && summary.length) ACTIVE_HISTORY_MARKET = summary[0].market;
+  if(summary.every(function(s){ return s.market !== ACTIVE_HISTORY_MARKET; })) ACTIVE_HISTORY_MARKET = summary[0].market;
+
+  var cards = '<div class="stats-grid" style="margin-bottom:14px">' + summary.map(function(s){
+    var active = ACTIVE_HISTORY_MARKET === s.market;
+    var marketSafe = String(s.market || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    var roiText = s.bets ? ((s.roi >= 0 ? '+' : '') + s.roi.toFixed(1) + '%') : '—';
+    var roiColor = !s.bets ? 'var(--muted)' : (s.roi >= 0 ? 'var(--grn)' : 'var(--red)');
+    return '<button onclick="setHistoryMarket(&quot;'+marketSafe+'&quot;)" style="text-align:left;cursor:pointer;border-radius:16px;padding:14px;border:1px solid '+(active ? 'rgba(59,130,246,.35)' : 'rgba(255,255,255,.08)')+';background:'+(active ? 'linear-gradient(135deg,rgba(59,130,246,.12),rgba(34,197,94,.08))' : 'rgba(255,255,255,.03)')+';box-shadow:none;opacity:'+(s.total ? '1' : '.7')+'">'+
+      '<div style="font-size:26px;font-weight:800;color:'+ roiColor +'">'+roiText+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin:6px 0">'+s.label+'</div>'+
+      '<div style="font-size:12px;color:var(--txt)">'+s.wins+'/'+s.bets+' win</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">Total afișate '+s.total+' • Pending live '+s.pending+' • '+(s.bets ? ('Cotă '+s.avgOdds.toFixed(2)) : 'fără meciuri închise încă')+'</div>'+
+    '</button>';
+  }).join('') + '</div>';
+
+  var current = summary.find(function(s){ return s.market === ACTIVE_HISTORY_MARKET; }) || summary[0];
+  var rowsHtml = current.list.length ? current.list.map(function(r){
+    var status = r.status || getHistory21Status(r);
+    var verdict = status === 'win' ? 'WIN' : (status === 'lose' ? 'LOSE' : 'PENDING');
+    var color = status === 'win' ? 'var(--grn)' : (status === 'lose' ? 'var(--red)' : 'var(--yel)');
+    var bg = status === 'win' ? 'rgba(34,197,94,.12)' : (status === 'lose' ? 'rgba(239,68,68,.12)' : 'rgba(245,158,11,.12)');
+    var brd = status === 'win' ? 'rgba(34,197,94,.22)' : (status === 'lose' ? 'rgba(239,68,68,.22)' : 'rgba(245,158,11,.22)');
+    var edge = Number(r.edge_pct || 0);
+    var adj = Number(r.adjusted_prob || 0);
+    var value = Number(r.value || 0);
+    var eventName = getHistoryEventName(r);
+    var scoreText = (r.home_score != null && r.away_score != null) ? ('Scor '+r.home_score+'-'+r.away_score) : (r.source === 'matches' ? 'Live din secțiunea Meciuri' : 'Meci neînchis');
+    var sourceChip = r.source === 'log'
+      ? '<span style="font-size:10px;color:var(--pur);border:1px solid rgba(168,85,247,.22);padding:2px 7px;border-radius:999px;background:rgba(168,85,247,.10)">ISTORIC FIX</span>'
+      : '<span style="font-size:10px;color:var(--acc);border:1px solid rgba(59,130,246,.22);padding:2px 7px;border-radius:999px;background:rgba(59,130,246,.10)">LIVE MECIURI</span>';
+    var metaLine = r.source === 'log'
+      ? ((r.event_date ? ('Meci '+fmtDateTime(r.event_date)+' • ') : '')+'Logat '+fmtDateTime(r.logged_at || r.prediction_created_at)+' • '+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2))
+      : ((r.event_date ? ('Meci '+fmtDateTime(r.event_date)+' • ') : '')+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+' • sincronizat din Meciuri');
+    return '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+        '<div>'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div style="font-size:13px;font-weight:800;color:var(--txt)">'+(eventName || r.league || '—')+'</div>'+sourceChip+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px">'+(r.league || '—')+'</div>'+
+          '<div style="font-size:11px;color:var(--txt);margin-top:3px">'+metaLine+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. ajustată '+adj.toFixed(1)+'% • Edge '+(edge>=0?'+':'')+edge.toFixed(1)+'% • Value '+(value>=0?'+':'')+(value*100).toFixed(1)+'% • Score '+Number(r.score || 0).toFixed(1)+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:4px">'+scoreText+'</div>'+
+        '</div>'+
+        '<div style="padding:6px 10px;border-radius:999px;background:'+bg+';border:1px solid '+brd+';color:'+color+';font-size:11px;font-weight:800">'+verdict+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('') : '<div class="empty-state">Nu există recomandări pentru această categorie în ultimele 21 de zile.</div>';
+
+  var details = '<div class="section" style="margin-bottom:14px">'+
+    '<div class="sec-hdr" style="margin-bottom:8px"><div class="sec-title">'+current.label+'</div><div style="font-size:11px;color:var(--muted)">'+current.wins+'/'+current.bets+' win • ROI '+(current.bets ? ((current.roi>=0?'+':'')+current.roi.toFixed(1)+'%') : '—')+' • Pending live '+current.pending+' • Total afișate '+current.total+'</div></div>'+
+    '<div style="padding:0 4px">'+rowsHtml+'</div>'+
+  '</div>';
+  root.innerHTML = cards + details;
+}
+
 </script>
 </body>
 </html>
