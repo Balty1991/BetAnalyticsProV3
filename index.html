@@ -7909,10 +7909,20 @@ function renderHistory21(){
       var active = ACTIVE_HISTORY_MARKET === s.market;
       var marketSafe = String(s.market || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       return '<button onclick="setHistoryMarket(&quot;'+marketSafe+'&quot;)" style="text-align:left;cursor:pointer;border-radius:16px;padding:14px;border:1px solid '+(active ? 'rgba(59,130,246,.35)' : 'rgba(255,255,255,.08)')+';background:'+(active ? 'linear-gradient(135deg,rgba(59,130,246,.12),rgba(34,197,94,.08))' : 'rgba(255,255,255,.03)')+';box-shadow:none;opacity:'+(s.total ? '1' : '.72')+'">'+
-        '<div style="font-size:26px;font-weight:800;color:'+v.color+'">'+v.big+'</div>'+
-        '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin:6px 0">'+s.label+'</div>'+
-        '<div style="font-size:11px;color:var(--muted)">'+v.sub+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);margin-top:4px">Total afișate '+s.total+' • Pending live '+s.pending+' • '+(s.bets ? ('cotă ' + s.avgOdds.toFixed(2)) : 'fără sample închis')+'</div>'+
+        '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">ROI 21 zile</div>'+
+        '<div style="font-size:28px;font-weight:900;color:'+v.color+';margin-top:4px">'+v.big+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin:8px 0 10px">'+s.label+'</div>'+
+        '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'+
+          '<div style="padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Win rate</div><div style="font-size:15px;font-weight:800;color:var(--txt);margin-top:4px">'+(s.bets ? s.winrate.toFixed(1)+'%' : '—')+'</div></div>'+
+          '<div style="padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Win / jucate</div><div style="font-size:15px;font-weight:800;color:var(--txt);margin-top:4px">'+s.wins+'/'+s.bets+'</div></div>'+
+          '<div style="padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Break-even</div><div style="font-size:15px;font-weight:800;color:var(--txt);margin-top:4px">'+(s.bets ? getHistory21BreakEven(s).toFixed(1)+'%' : '—')+'</div></div>'+
+          '<div style="padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Delta vs BE</div><div style="font-size:15px;font-weight:800;color:'+(s.bets ? ((s.winrate - getHistory21BreakEven(s)) >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+';margin-top:4px">'+(s.bets ? (((s.winrate - getHistory21BreakEven(s)) >= 0 ? '+' : '') + (s.winrate - getHistory21BreakEven(s)).toFixed(1) + 'pp') : '—')+'</div></div>'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px">'+
+          '<div style="padding:8px;border-radius:12px;background:rgba(255,255,255,.02)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Total</div><div style="font-size:13px;font-weight:800;color:var(--txt);margin-top:4px">'+s.total+'</div></div>'+
+          '<div style="padding:8px;border-radius:12px;background:rgba(255,255,255,.02)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Pending</div><div style="font-size:13px;font-weight:800;color:var(--txt);margin-top:4px">'+s.pending+'</div></div>'+
+          '<div style="padding:8px;border-radius:12px;background:rgba(255,255,255,.02)"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Cotă medie</div><div style="font-size:13px;font-weight:800;color:var(--txt);margin-top:4px">'+(s.bets ? s.avgOdds.toFixed(2) : '—')+'</div></div>'+
+        '</div>'+
       '</button>';
     }).join('') + '</div></div>';
 
