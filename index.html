@@ -449,6 +449,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 /* FOCUS MODE */
 .focus-shell{margin:0 0 16px;padding:16px;border-radius:18px;background:linear-gradient(180deg,rgba(14,22,40,.98),rgba(17,24,39,.98));border:1px solid rgba(84,119,255,.16);box-shadow:0 14px 34px rgba(0,0,0,.18)}
 .focus-path,.focus-sub,.focus-card-sub,.focus-side-sub,.dashboard-insights-sub,.matches-card-sub,.welcome-text{display:none!important}
+#focus-shell{display:none!important}
+#dashboard-insights-shell{display:none!important}
 .focus-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .focus-title{font-size:16px;font-weight:800;color:var(--txt)}
 .focus-sub{font-size:12px;color:var(--muted);line-height:1.55;max-width:760px;margin-top:4px}
@@ -764,7 +766,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
       <div class="visual-card-head" style="margin-bottom:12px">
         <div>
           <div class="visual-card-title">📊 Statistici vizuale rapide</div>
-          <div class="visual-card-sub">Trend profit/pierdere, distribuție win/loss și randament pe categorie, fără să ieși din dashboard.</div>
+          <div class="visual-card-sub">Statistici reale pe ultimele 21 de zile, aliniate cu Istoric 21.</div>
         </div>
         <div class="visual-mini-meta">Tracking + bankroll</div>
       </div>
@@ -773,7 +775,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           <div class="visual-card-head">
             <div>
               <div class="visual-card-title">Profit / pierdere pe bilet</div>
-              <div class="visual-card-sub">Ultimele bilete înregistrate în Tracking.</div>
+              <div class="visual-card-sub">Ultimele recomandări închise din jurnalul real pe 21 zile.</div>
             </div>
             <div class="visual-mini-meta" id="dash-profit-meta">—</div>
           </div>
@@ -783,7 +785,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           <div class="visual-card-head">
             <div>
               <div class="visual-card-title">Distribuție win / loss</div>
-              <div class="visual-card-sub">Biletele închise vs. cele încă pending.</div>
+              <div class="visual-card-sub">Recomandările închise vs. cele încă pending din perioada de 21 zile.</div>
             </div>
             <div class="visual-mini-meta" id="dash-dist-meta">—</div>
           </div>
@@ -793,7 +795,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           <div class="visual-card-head">
             <div>
               <div class="visual-card-title">Randament pe categorie</div>
-              <div class="visual-card-sub">ROI pe tipurile de bilet deja jucate.</div>
+              <div class="visual-card-sub">ROI pe categoriile din Istoric 21, în aceeași perioadă de 21 zile.</div>
             </div>
             <div class="visual-mini-meta" id="dash-category-meta">—</div>
           </div>
@@ -805,7 +807,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 <div class="section" id="market-performance-panel" style="margin-top:0;margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(59,130,246,.04));border:1px solid rgba(34,197,94,.16);box-shadow:0 10px 28px rgba(0,0,0,.14)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <div style="font-size:12px;font-weight:700;color:var(--txt)">🎯 Performanță pe fiecare pronostic</div>
-        <div style="font-size:10px;color:var(--muted)">win rate • ROI • win/jucate • cota medie</div>
+        <div style="font-size:10px;color:var(--muted)">istoric real 21 zile • ROI • win/jucate • cota medie</div>
       </div>
       <div id="market-performance-table"></div>
     </div>
@@ -1222,7 +1224,18 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
     <div style="display:grid;gap:16px;margin-bottom:22px">
       
 <div class="bilet-card" style="margin-bottom:0;padding:16px">
-<div class="generator-board">
+<div style="margin-bottom:14px;padding:16px;border:1px solid rgba(59,130,246,.18);border-radius:14px;background:linear-gradient(180deg,rgba(14,22,40,.92),rgba(10,16,30,.96))">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div class="sec-title" style="margin-bottom:6px">📦 Portfolio Daily</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.55">Generează automat biletele zilei și evidențiază recomandarea #1 pe baza probabilității de reușită. Contrarian rămâne separat, manual.</div>
+            </div>
+            <button class="btn btn-green" style="justify-content:center" onclick="generateDailyPortfolioTickets()">📦 Generează Portfolio Daily</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Single → Double → Triple. La generare, aplicația încarcă automat recomandarea cea mai puternică a zilei în biletul principal.</div>
+          <div id="daily-portfolio-output" style="display:grid;gap:12px"></div>
+        </div>
+        <div class="generator-board">
           <div class="generator-section">
             <div class="generator-section-title"><strong>Generatoare portofoliu</strong><span class="generator-tag">Curat și compact</span></div>
             <div class="grid cols-2">
@@ -1376,17 +1389,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         </div>
         <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Mizele sugerate pentru biletele generate se calculează în RON direct din procentele tale. Profitul și pierderea vin din Tracking, nu din povești pescărești.</div>
         <div class="bk-grid" id="bk-grid"></div>
-        <div id="portfolio-daily-shell" style="margin-top:16px;padding:16px;border:1px solid rgba(59,130,246,.18);border-radius:14px;background:linear-gradient(180deg,rgba(14,22,40,.92),rgba(10,16,30,.96))">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px">
-            <div>
-              <div class="sec-title" style="margin-bottom:6px">📦 Portfolio Daily</div>
-              <div style="font-size:12px;color:var(--muted);line-height:1.55">Portofoliul zilnic ține de disciplină și alocare, deci stă aici, lângă bankroll. Generează automat Single → Double → Triple în ordinea priorității.</div>
-            </div>
-            <button class="btn btn-green" style="justify-content:center" onclick="generateDailyPortfolioTickets()">📦 Generează Portfolio Daily</button>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Contrarian rămâne manual. Portofoliul nu mai încarcă automat biletul principal; îl deschizi doar dacă vrei.</div>
-          <div id="daily-portfolio-output" style="display:grid;gap:12px"></div>
-        </div>
+
         <div class="trend-shell" id="bankroll-trend-shell">
           <div class="trend-head">
             <div>
@@ -1772,33 +1775,36 @@ function renderWinLossDistribution(targetId, stats){
   target.innerHTML = '<div class="visual-distribution"><div class="visual-dist-big">'+total+' bilete</div><div class="visual-dist-stack"><div class="visual-dist-seg" style="width:'+wp.toFixed(1)+'%;background:var(--grn)"></div><div class="visual-dist-seg" style="width:'+lp.toFixed(1)+'%;background:var(--red)"></div><div class="visual-dist-seg" style="width:'+pp.toFixed(1)+'%;background:var(--yel)"></div></div><div class="visual-dist-legend"><span class="visual-dist-pill">WIN '+(stats.win||0)+' • '+wp.toFixed(0)+'%</span><span class="visual-dist-pill">LOSS '+(stats.loss||0)+' • '+lp.toFixed(0)+'%</span><span class="visual-dist-pill">PENDING '+(stats.pending||0)+' • '+pp.toFixed(0)+'%</span></div></div>';
 }
 function renderDashboardVisuals(){
-  var tickets = Array.isArray(TRACKING) ? TRACKING.slice() : [];
-  if($('dash-profit-meta')) $('dash-profit-meta').textContent = tickets.length ? ('ultimele ' + Math.min(12, tickets.length)) : '—';
-  var profitItems = tickets.slice(0, 12).reverse().map(function(t, idx){ return { label:'B' + (idx + 1), value:Number(t.profit || 0) }; });
+  var cutoff = new Date(Date.now() - (21 * 86400000));
+  var settledRows = getHistory21SettledRows(cutoff);
+  var livePendingRows = getHistory21LivePendingRows();
+  if($('dash-profit-meta')) $('dash-profit-meta').textContent = settledRows.length ? ('ultimele ' + Math.min(12, settledRows.length) + ' închise • 21 zile') : '21 zile';
+  var profitItems = settledRows.slice().sort(function(a,b){ return new Date(a.logged_at || a.prediction_created_at || 0) - new Date(b.logged_at || b.prediction_created_at || 0); }).slice(-12).map(function(r, idx){
+    var o = Number(r.odds || 0);
+    var profit = r.status === 'win' ? (o > 1 ? (o - 1) : 0) : -1;
+    return { label:'R' + (idx + 1), value:profit };
+  });
   renderProfitTrendChart('dash-profit-chart', profitItems);
 
-  var dist = {win:0, loss:0, pending:0};
-  tickets.forEach(function(t){
-    if(t.status === 'win') dist.win++;
-    else if(t.status === 'loss') dist.loss++;
-    else dist.pending++;
-  });
-  if($('dash-dist-meta')) $('dash-dist-meta').textContent = tickets.length ? 'tracking' : '—';
+  var dist = {win:0, loss:0, pending:livePendingRows.length};
+  settledRows.forEach(function(r){ if(r.status === 'win') dist.win++; else if(r.status === 'lose') dist.loss++; });
+  if($('dash-dist-meta')) $('dash-dist-meta').textContent = 'istoric real • 21 zile';
   renderWinLossDistribution('dash-winloss-chart', dist);
 
-  var byCat = {};
-  tickets.forEach(function(t){
-    var cat = normalizeTicketCategory(t);
-    byCat[cat] = byCat[cat] || {stake:0, profit:0, count:0};
-    byCat[cat].stake += Number(t.stake || 0);
-    byCat[cat].profit += Number(t.profit || 0);
-    byCat[cat].count += 1;
+  var rows = settledRows.concat(livePendingRows);
+  var categoryDefs = [
+    {key:'all', label:'Toate'},
+    {key:'safe', label:'Top analizate'},
+    {key:'value', label:'Value'},
+    {key:'over15', label:'Over 1.5G'},
+    {key:'over25', label:'Over 2.5G'},
+    {key:'btts', label:'BTTS'},
+    {key:'under35', label:'Under 3.5G'}
+  ];
+  var catRows = categoryDefs.map(function(def){ return buildHistory21Group(def.label, def.key, rows.filter(function(r){ return historyRowMatchesCategory(r, def.key); })); }).map(function(s){
+    return {label:s.label + ' • ' + s.total, value:Number(s.roi || 0), color:Number(s.roi || 0) >= 0 ? 'var(--grn)' : 'var(--red)'};
   });
-  var catRows = Object.keys(byCat).map(function(key){
-    var roi = byCat[key].stake > 0 ? (byCat[key].profit * 100 / byCat[key].stake) : 0;
-    return {label:key + ' • ' + byCat[key].count, value:roi, color:roi >= 0 ? 'var(--grn)' : 'var(--red)'};
-  }).sort(function(a,b){ return Math.abs(Number(b.value||0)) - Math.abs(Number(a.value||0)); }).slice(0,6);
-  if($('dash-category-meta')) $('dash-category-meta').textContent = catRows.length ? (catRows.length + ' categorii') : '—';
+  if($('dash-category-meta')) $('dash-category-meta').textContent = 'aceleași categorii • 21 zile';
   renderVisualBarList('dash-category-chart', catRows, function(v){ return (v>=0?'+':'') + v.toFixed(1) + '%'; });
 }
 function renderAuditVisuals(){
@@ -6455,39 +6461,43 @@ function renderMarketDistribution(){
 
 function renderMarketPerformance(){
   var target = $('market-performance-table');
-  if(!target || !BACKTEST_SUMMARY || !Array.isArray(BACKTEST_SUMMARY.by_market)) return;
-  var supported = (BET_TYPES || []).map(function(b){ return b.label; });
-  var rows = BACKTEST_SUMMARY.by_market.filter(function(item){
-    return item && supported.indexOf(item.key) !== -1;
-  }).sort(function(a,b){
-    if((b.bets || 0) !== (a.bets || 0)) return (b.bets || 0) - (a.bets || 0);
-    return (b.winrate || 0) - (a.winrate || 0);
-  });
-  if(!rows.length){
-    target.innerHTML = '<div class="empty-state">Nu există încă breakdown pe piețe în backtest.</div>';
+  if(!target) return;
+  var cutoff = new Date(Date.now() - (21 * 86400000));
+  var settledRows = getHistory21SettledRows(cutoff);
+  var livePendingRows = getHistory21LivePendingRows();
+  var rows = settledRows.concat(livePendingRows);
+  var defs = [
+    {key:'over15', label:'Over 1.5G'},
+    {key:'over25', label:'Over 2.5G'},
+    {key:'btts', label:'BTTS'},
+    {key:'under35', label:'Under 3.5G'},
+    {key:'safe', label:'Top analizate'},
+    {key:'value', label:'Value'}
+  ];
+  var groups = defs.map(function(def){ return buildHistory21Group(def.label, def.key, rows.filter(function(r){ return historyRowMatchesCategory(r, def.key); })); }).filter(function(g){ return g.total > 0; });
+  if(!groups.length){
+    target.innerHTML = '<div class="empty-state">Nu există încă breakdown real pe ultimele 21 de zile.</div>';
     return;
   }
   var html = '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">'+
     '<thead><tr style="text-align:left;color:var(--muted)">'+
-      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08)">Pronostic</th>'+
-      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Win rate</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08)">Categorie</th>'+
       '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">ROI</th>'+
       '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Win / jucate</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Win rate</th>'+
       '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Cotă medie</th>'+
-      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Edge mediu</th>'+
+      '<th style="padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right">Pending</th>'+
     '</tr></thead><tbody>';
-  rows.forEach(function(item){
+  groups.forEach(function(item){
     var roi = Number(item.roi || 0);
     var wr = Number(item.winrate || 0);
-    var avgOdds = Number(item.avg_odds || 0);
-    var avgEdge = Number(item.avg_edge || 0);
     html += '<tr>'+
-      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);font-weight:700">'+(item.key || '—')+'</td>'+
-      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+ (wr >= 65 ? 'var(--grn)' : 'var(--txt)') +'">'+wr.toFixed(1)+'%</td>'+
-      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+ (roi >= 0 ? 'var(--grn)' : 'var(--red)') +'">'+(roi>=0?'+':'')+roi.toFixed(1)+'%</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);font-weight:700">'+(item.label || '—')+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+(roi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(roi>=0?'+':'')+roi.toFixed(1)+'%</td>'+
       '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+Number(item.wins || 0)+'/'+Number(item.bets || 0)+'</td>'+
-      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+avgOdds.toFixed(2)+'</td>'+
-      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+ (avgEdge >= 0 ? 'var(--acc)' : 'var(--red)') +'">'+(avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+(wr >= 65 ? 'var(--grn)' : 'var(--txt)')+'">'+(item.bets ? wr.toFixed(1)+'%' : '—')+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+(item.bets ? item.avgOdds.toFixed(2) : '—')+'</td>'+
+      '<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+Number(item.pending || 0)+'</td>'+
     '</tr>';
   });
   html += '</tbody></table></div>';
@@ -6899,35 +6909,21 @@ function toggleDashboardInsights(){
 function arrangeDashboardLayout(){
   var dash = $('tab-dashboard');
   if(!dash) return;
-  var stats = $('dashboard-stats');
   var focus = $('focus-shell');
+  if(focus) focus.style.display = 'none';
+  var shell = $('dashboard-insights-shell');
+  if(shell) shell.style.display = 'none';
+  var stats = $('dashboard-stats');
   var health = $('health-panel');
   var visual = $('dashboard-visual-panel');
   var market = $('market-performance-panel');
-  var legend = $('audit-legend-box');
-  var api = $('ml-api-box');
   var help = $('dashboard-help-panel');
   if(stats) stats.style.marginTop = '12px';
-
-  var shell = $('dashboard-insights-shell');
-  var body = $('dashboard-insights-body');
-  if(!shell){
-    shell = document.createElement('div');
-    shell.className = 'focus-shell dashboard-insights-shell';
-    shell.id = 'dashboard-insights-shell';
-    shell.innerHTML = '<div class="dashboard-insights-toggle" onclick="toggleDashboardInsights()"><div><div class="dashboard-insights-title">📦 Detalii tehnice și performanță</div><div class="dashboard-insights-sub">Le-am scos din zona principală. Le deschizi doar când vrei context de backtest, piețe și AI.</div></div><div class="focus-badge muted">Detalii</div></div><div class="dashboard-insights-body" id="dashboard-insights-body"></div>';
-    if(focus && focus.parentNode === dash && focus.nextSibling) dash.insertBefore(shell, focus.nextSibling);
-    else if(focus && focus.parentNode === dash) dash.appendChild(shell);
-    else dash.appendChild(shell);
-    body = $('dashboard-insights-body');
-  }
-
-  [health, visual, market, legend, api].forEach(function(el){
-    if(el && body) body.appendChild(el);
+  [health, visual, market].forEach(function(el){
+    if(el && el.parentNode !== dash) dash.appendChild(el);
+    if(el) el.style.display = '';
   });
-
   if(help && help.parentNode !== dash) dash.appendChild(help);
-  else if(help) dash.appendChild(help);
 }
 
 function getCurrentDayKey(){
@@ -7860,55 +7856,20 @@ function renderHistory21(){
   root.innerHTML = cards + details;
 }
 
-/* ===== History 21 visual tuning override ===== */
+/* ===== History 21 unified ROI view ===== */
 function getHistory21BreakEven(summaryRow){
   return summaryRow && summaryRow.avgOdds ? (100 / Number(summaryRow.avgOdds || 0)) : 0;
 }
 function getHistory21CardVisual(summaryRow){
-  var key = String(summaryRow.market || '');
   var bets = Number(summaryRow.bets || 0);
-  var winrate = Number(summaryRow.winrate || 0);
   var roi = Number(summaryRow.roi || 0);
   var be = getHistory21BreakEven(summaryRow);
-  var delta = bets ? (winrate - be) : 0;
-  var isMeta = key === 'all' || key === 'safe' || key === 'value';
-  if(isMeta){
-    return {
-      big: bets ? (winrate.toFixed(1) + '%') : '—',
-      color: 'var(--acc)',
-      sub: bets ? ('ROI ' + (roi >= 0 ? '+' : '') + roi.toFixed(1) + '% • prag BE ' + be.toFixed(1) + '%') : 'categorie compusă',
-      tone: 'meta'
-    };
-  }
-  if(bets < 8){
-    return {
-      big: 'Sample mic',
-      color: 'var(--muted)',
-      sub: bets ? (summaryRow.wins + '/' + bets + ' win • ROI ' + (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%') : 'nu sunt suficiente meciuri închise',
-      tone: 'muted'
-    };
-  }
-  if(delta >= 3){
-    return {
-      big: winrate.toFixed(1) + '%',
-      color: 'var(--grn)',
-      sub: 'ROI ' + (roi >= 0 ? '+' : '') + roi.toFixed(1) + '% • peste break-even cu ' + delta.toFixed(1) + 'pp',
-      tone: 'good'
-    };
-  }
-  if(delta <= -4 && bets >= 15){
-    return {
-      big: winrate.toFixed(1) + '%',
-      color: 'var(--red)',
-      sub: 'ROI ' + (roi >= 0 ? '+' : '') + roi.toFixed(1) + '% • sub break-even cu ' + Math.abs(delta).toFixed(1) + 'pp',
-      tone: 'bad'
-    };
-  }
+  var delta = bets ? (Number(summaryRow.winrate || 0) - be) : 0;
+  var color = !bets ? 'var(--muted)' : (roi >= 0 ? 'var(--grn)' : 'var(--red)');
   return {
-    big: winrate.toFixed(1) + '%',
-    color: 'var(--yel)',
-    sub: 'ROI ' + (roi >= 0 ? '+' : '') + roi.toFixed(1) + '% • aproape de break-even (' + delta.toFixed(1) + 'pp)',
-    tone: 'warn'
+    big: bets ? ((roi >= 0 ? '+' : '') + roi.toFixed(1) + '%') : '—',
+    color: color,
+    sub: bets ? (summaryRow.wins + '/' + bets + ' win • BE ' + be.toFixed(1) + '% • Δ ' + (delta >= 0 ? '+' : '') + delta.toFixed(1) + 'pp') : 'fără meciuri închise încă'
   };
 }
 function renderHistory21(){
@@ -7926,35 +7887,34 @@ function renderHistory21(){
     root.innerHTML = '<div class="empty-state">Nu există încă recomandări reale salvate pe ultimele 21 de zile.</div>';
     return;
   }
-  var categoryDefs = getHistory21CategoryDefs(rows);
+  var categoryDefs = [
+    {key:'all', label:'Toate'},
+    {key:'safe', label:'Top analizate'},
+    {key:'value', label:'Value'},
+    {key:'over15', label:'Over 1.5G'},
+    {key:'over25', label:'Over 2.5G'},
+    {key:'btts', label:'BTTS'},
+    {key:'under35', label:'Under 3.5G'}
+  ];
   var summary = categoryDefs.map(function(def){
     return buildHistory21Group(def.label, def.key, rows.filter(function(r){ return historyRowMatchesCategory(r, def.key); }));
   });
   if(!ACTIVE_HISTORY_MARKET && summary.length) ACTIVE_HISTORY_MARKET = summary[0].market;
   if(summary.every(function(s){ return s.market !== ACTIVE_HISTORY_MARKET; })) ACTIVE_HISTORY_MARKET = summary[0].market;
 
-  var metaCards = summary.filter(function(s){ return s.market === 'all' || s.market === 'safe' || s.market === 'value'; });
-  var marketCards = summary.filter(function(s){ return !(s.market === 'all' || s.market === 'safe' || s.market === 'value'); });
-
-  function renderCardGrid(cards, title, subtitle){
-    if(!cards.length) return '';
-    return '<div class="section" style="margin-bottom:14px">'+
-      '<div class="sec-hdr" style="margin-bottom:8px"><div class="sec-title">'+title+'</div><div style="font-size:11px;color:var(--muted)">'+subtitle+'</div></div>'+
-      '<div class="stats-grid">' + cards.map(function(s){
-        var v = getHistory21CardVisual(s);
-        var active = ACTIVE_HISTORY_MARKET === s.market;
-        var marketSafe = String(s.market || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        var border = active ? 'rgba(59,130,246,.35)' : 'rgba(255,255,255,.08)';
-        var background = active ? 'linear-gradient(135deg,rgba(59,130,246,.12),rgba(34,197,94,.08))' : 'rgba(255,255,255,.03)';
-        return '<button onclick="setHistoryMarket(&quot;'+marketSafe+'&quot;)" style="text-align:left;cursor:pointer;border-radius:16px;padding:14px;border:1px solid '+border+';background:'+background+';box-shadow:none;opacity:'+(s.total ? '1' : '.72')+'">'+
-          '<div style="font-size:26px;font-weight:800;color:'+v.color+'">'+v.big+'</div>'+
-          '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin:6px 0">'+s.label+'</div>'+
-          '<div style="font-size:12px;color:var(--txt)">'+s.wins+'/'+s.bets+' win</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+v.sub+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:4px">Total afișate '+s.total+' • Pending live '+s.pending+'</div>'+
-        '</button>';
-      }).join('') + '</div></div>';
-  }
+  var cards = '<div class="section" style="margin-bottom:14px">'+
+    '<div class="sec-hdr" style="margin-bottom:8px"><div class="sec-title">📊 Toate categoriile • 21 zile</div><div style="font-size:11px;color:var(--muted)">ROI este afișat mare pe card. Toate, Top analizate, Value și piețele individuale sunt într-o singură grilă.</div></div>'+
+    '<div class="stats-grid">' + summary.map(function(s){
+      var v = getHistory21CardVisual(s);
+      var active = ACTIVE_HISTORY_MARKET === s.market;
+      var marketSafe = String(s.market || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return '<button onclick="setHistoryMarket(&quot;'+marketSafe+'&quot;)" style="text-align:left;cursor:pointer;border-radius:16px;padding:14px;border:1px solid '+(active ? 'rgba(59,130,246,.35)' : 'rgba(255,255,255,.08)')+';background:'+(active ? 'linear-gradient(135deg,rgba(59,130,246,.12),rgba(34,197,94,.08))' : 'rgba(255,255,255,.03)')+';box-shadow:none;opacity:'+(s.total ? '1' : '.72')+'">'+
+        '<div style="font-size:26px;font-weight:800;color:'+v.color+'">'+v.big+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);text-transform:uppercase;margin:6px 0">'+s.label+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+v.sub+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:4px">Total afișate '+s.total+' • Pending live '+s.pending+' • '+(s.bets ? ('cotă ' + s.avgOdds.toFixed(2)) : 'fără sample închis')+'</div>'+
+      '</button>';
+    }).join('') + '</div></div>';
 
   var current = summary.find(function(s){ return s.market === ACTIVE_HISTORY_MARKET; }) || summary[0];
   var currentBe = getHistory21BreakEven(current);
@@ -7994,15 +7954,13 @@ function renderHistory21(){
     '<div class="sec-hdr" style="margin-bottom:8px"><div class="sec-title">'+current.label+'</div><div style="font-size:11px;color:var(--muted)">'+current.wins+'/'+current.bets+' win • ROI '+(current.bets ? ((current.roi>=0?'+':'')+current.roi.toFixed(1)+'%') : '—')+' • break-even '+(current.bets ? currentBe.toFixed(1)+'%' : '—')+' • delta '+(current.bets ? ((currentDelta>=0?'+':'')+currentDelta.toFixed(1)+'pp') : '—')+' • Pending live '+current.pending+'</div></div>'+
     '<div style="padding:0 4px">'+rowsHtml+'</div>'+
   '</div>';
-
-  root.innerHTML = renderCardGrid(metaCards, '📚 Categorii compuse', 'Toate / Top analizate / Value sunt agregate și se suprapun parțial.') +
-                   renderCardGrid(marketCards, '🎯 Piețe individuale', 'Aici vezi piețele reale din Meciuri, separate de agregatele de mai sus.') +
-                   details;
+  root.innerHTML = cards + details;
 }
 
 
 /* ===== Daily Portfolio exact generator ===== */
 var DAILY_PORTFOLIO = [];
+var DAILY_PORTFOLIO_BEST_IDX = 0;
 function generateDailyPortfolioTickets(){
   var bankroll = getActualBankrollValue();
   var tickets = [];
@@ -8030,9 +7988,14 @@ function generateDailyPortfolioTickets(){
     value.stakePct = 1.5;
     tickets.push(value);
   }
-  DAILY_PORTFOLIO = tickets;
+  DAILY_PORTFOLIO = tickets.sort(function(a,b){ return Number(a.priority || 99) - Number(b.priority || 99); });
+  DAILY_PORTFOLIO_BEST_IDX = 0;
+  if(DAILY_PORTFOLIO.length){
+    DAILY_PORTFOLIO.forEach(function(t, idx){ if(Number(t.combinedProb || 0) > Number(DAILY_PORTFOLIO[DAILY_PORTFOLIO_BEST_IDX].combinedProb || 0)) DAILY_PORTFOLIO_BEST_IDX = idx; });
+    applyPortfolioPreview(DAILY_PORTFOLIO[DAILY_PORTFOLIO_BEST_IDX], true);
+  }
   renderDailyPortfolio();
-  toast(DAILY_PORTFOLIO.length ? ('Portfolio Daily generat: ' + DAILY_PORTFOLIO.length + ' bilete') : 'Nu există setup-uri suficiente pentru Portfolio Daily.', DAILY_PORTFOLIO.length ? 'ok' : 'warn');
+  toast(DAILY_PORTFOLIO.length ? ('Portfolio Daily generat: ' + DAILY_PORTFOLIO.length + ' bilete • recomandarea #1 a fost încărcată în biletul principal') : 'Nu există setup-uri suficiente pentru Portfolio Daily.', DAILY_PORTFOLIO.length ? 'ok' : 'warn');
 }
 function openDailyPortfolioTicket(idx){
   var ticket = DAILY_PORTFOLIO[idx];
@@ -8047,7 +8010,9 @@ function renderDailyPortfolio(){
     target.innerHTML = '<div class="empty-state" style="padding:12px">Apasă pe <strong>Generează Portfolio Daily</strong> ca să primești automat portofoliul zilei.</div>';
     return;
   }
-  target.innerHTML = DAILY_PORTFOLIO.map(function(ticket, idx){
+  var bestTicket = DAILY_PORTFOLIO[DAILY_PORTFOLIO_BEST_IDX] || DAILY_PORTFOLIO[0];
+  var bestCard = bestTicket ? '<div class="bilet-card" style="margin-bottom:0;border-color:rgba(34,197,94,.22);background:linear-gradient(180deg,rgba(18,32,28,.96),rgba(12,20,18,.96))"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:16px;font-weight:900;color:var(--grn)">⭐ Recomandarea #1 a zilei</div><div style="font-size:12px;color:var(--txt);margin-top:4px">'+bestTicket.label+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">aleasă după probabilitatea de reușită dintre biletele generate azi</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--grn)">'+Number(bestTicket.combinedProb || 0).toFixed(1)+'%</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă</div></div></div><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><div style="font-size:11px;color:var(--muted)">Cotă '+Number(bestTicket.totalOdds || 1).toFixed(2)+'x • Stake '+Number(bestTicket.stake || 0).toFixed(2)+' RON</div><button class="btn btn-green" onclick="openDailyPortfolioTicket('+DAILY_PORTFOLIO_BEST_IDX+')">Deschide recomandarea #1</button></div></div>' : '';
+  target.innerHTML = bestCard + DAILY_PORTFOLIO.map(function(ticket, idx){
     var picksHtml = (ticket.picks || []).map(function(p){
       var bet = p.bestBet || p;
       return '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid rgba(255,255,255,.06)"><div><div style="font-size:12px;font-weight:700;color:var(--txt)">'+p.home+' vs '+p.away+'</div><div style="font-size:10px;color:var(--muted);margin-top:3px">'+(p.league || '—')+' • '+(p.dateLabel || '')+' '+(p.timeLabel || '')+'</div></div><div style="text-align:right;font-size:11px;color:var(--acc);font-weight:700">'+bet.label+' @ '+Number(bet.odds || 0).toFixed(2)+'</div></div>';
@@ -8085,15 +8050,17 @@ function buildRelaxedMathTicketPreviewFromPool(type, source, pool){
 
   if(type === 'premium'){
     var premium = pool.filter(function(item){
-      return Number(item.score || 0) >= 84 && Number(item.prob || 0) >= 72 && Number(item.odds || 0) >= 1.60 && Number(item.odds || 0) <= 2.55 && Math.max(Number(item.edge || 0), Number(item.edgeToPrice || 0)) > 7;
+      return Number(item.score || 0) >= 84 && Number(item.prob || 0) >= 72 && Number(item.odds || 0) >= 1.40 && Number(item.odds || 0) <= 2.10 && Math.max(Number(item.edge || 0), Number(item.edgeToPrice || 0)) > 7;
     });
     if(!premium.length) return makeEmptyMathTicket(type, source, 'Nici măcar pe praguri relaxate nu există un single premium suficient de curat.');
+    premium.sort(function(a,b){ if(Number(b.score||0)!==Number(a.score||0)) return Number(b.score||0)-Number(a.score||0); return Number(a.odds||0)-Number(b.odds||0); });
     return makeTicket([premium[0]], premium[0].odds, premium[0].prob, 'Single premium cu praguri relaxate');
   }
 
   if(type === 'double'){
     var strict = buildMathTicketPreviewFromPool(type, source, pool);
     var strictSig = strict && strict.picks && strict.picks.length ? strict.picks.map(function(p){ return String(p.eventId || p.event_id || (p.home + '|' + p.away + '|' + (p.marketKey || p.market || ''))); }).sort().join('::') : '';
+    var strictOdds = strict && strict.totalOdds ? Number(strict.totalOdds || 0) : 0;
     var list = pool.filter(function(item){
       return Number(item.score || 0) >= 74 && Number(item.prob || 0) >= 56 && Number(item.odds || 0) >= 1.16 && Number(item.odds || 0) <= 2.55;
     }).slice(0, 22);
@@ -8115,7 +8082,13 @@ function buildRelaxedMathTicketPreviewFromPool(type, source, pool){
     var best = candidates[0];
     for(var c=0;c<candidates.length;c++){
       var sig = candidates[c].picks.map(function(p){ return String(p.eventId || p.event_id || (p.home + '|' + p.away + '|' + (p.marketKey || p.market || ''))); }).sort().join('::');
-      if(!strictSig || sig !== strictSig){ best = candidates[c]; break; }
+      var lowerOdds = !strictOdds || Number(candidates[c].totalOdds || 0) < strictOdds;
+      if((!strictSig || sig !== strictSig) && lowerOdds){ best = candidates[c]; break; }
+    }
+    if(strictOdds && Number(best.totalOdds || 0) >= strictOdds){
+      for(var c2=0;c2<candidates.length;c2++){
+        if(Number(candidates[c2].totalOdds || 0) < strictOdds){ best = candidates[c2]; break; }
+      }
     }
     return makeTicket(best.picks, best.totalOdds, best.combinedProb, 'Double confirmed cu praguri relaxate');
   }
@@ -8134,7 +8107,7 @@ function buildRelaxedMathTicketPreviewFromPool(type, source, pool){
           var picks = [a,b,c];
           var totalOdds = picks.reduce(function(acc, item){ return acc * Number(item.odds || 1); }, 1);
           var combinedProb = picks.reduce(function(acc, item){ return acc * (Number(item.prob || 0) / 100); }, 1) * 100;
-          if(totalOdds < 3.80 || totalOdds > 8.60) continue;
+          if(totalOdds < 3.30 || totalOdds > 6.80) continue;
           if(combinedProb <= 20) continue;
           var rank = rankMathSelection(type, picks, totalOdds, combinedProb);
           if(!best || rank > best.rank) best = {picks:picks, totalOdds:totalOdds, combinedProb:combinedProb, rank:rank};
@@ -8184,7 +8157,7 @@ function getGeneratorAvailability(source, type){
   var label = type === 'premium' ? 'candidați premium' : type === 'double' ? 'candidați strong' : type === 'triple' ? 'candidați value' : 'candidați contrarian';
   return {
     count: count,
-    text: count ? ('Disponibile acum: ' + count + ' ' + label) : ('0 ' + label + ' pe pragurile actuale'),
+    text: count ? ('Candidați inițiali: ' + count + ' ' + label) : ('0 ' + label + ' pe pragurile actuale'),
     klass: count ? 'ok' : 'warn'
   };
 }
