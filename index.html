@@ -562,6 +562,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .btn#btn-refresh{padding:7px 10px;font-size:11px}
   .mobile-nav,.mobile-sheet{display:none!important}
   .desktop-more-panel{padding:10px 12px 0}
+  .desktop-more-panel.show{padding:14px 12px 22px}
   .more-grid{grid-template-columns:1fr}
   #dashboard-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
   #dashboard-stats .stat-card{padding:12px}
@@ -661,7 +662,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .tabs{position:sticky;top:64px;z-index:48;background:rgba(8,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 16px}
 .tab{font-size:12px;font-weight:800;border-radius:14px;padding:11px 14px;justify-content:center}
 .desktop-more-panel{display:none;max-width:1400px;margin:0 auto 14px;padding:14px 16px 0}
-.desktop-more-panel.show{display:block}
+.desktop-more-panel.show{display:block;position:fixed;left:0;right:0;bottom:0;top:var(--more-panel-top,140px);max-width:none;margin:0;padding:16px 16px 26px;background:rgba(8,12,20,.985);border-top:1px solid rgba(255,255,255,.06);overflow:auto;z-index:170}
+.desktop-more-panel.show .desktop-more-head,.desktop-more-panel.show .more-grid{max-width:1400px;margin-left:auto;margin-right:auto}
+body.more-open{overflow:hidden}
 .desktop-more-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .desktop-more-title{font-size:15px;font-weight:800;color:var(--txt)}
 .desktop-more-sub{font-size:11px;color:var(--muted);line-height:1.55;max-width:720px;margin-top:4px}
@@ -2072,10 +2075,18 @@ function getCurrentActiveTabName(){
   var active = document.querySelector('.tab-content.active');
   return active ? String(active.id || '').replace('tab-','') : 'dashboard';
 }
+function updateMorePanelOffset(){
+  var tabs = document.querySelector('.tabs');
+  if(!tabs) return;
+  var rect = tabs.getBoundingClientRect();
+  document.documentElement.style.setProperty('--more-panel-top', Math.max(0, Math.round(rect.bottom)) + 'px');
+}
 function toggleDesktopMore(){
   var panel = $('desktop-more-panel');
   if(!panel) return;
+  updateMorePanelOffset();
   panel.classList.toggle('show');
+  document.body.classList.toggle('more-open', panel.classList.contains('show'));
   if(panel.classList.contains('show')){
     document.querySelectorAll('.tab').forEach(function(btn){ btn.classList.remove('active'); });
     var moreBtn = document.querySelector('.tab[data-tab="more"]');
@@ -2087,8 +2098,14 @@ function toggleDesktopMore(){
 function closeDesktopMore(skipActive){
   var panel = $('desktop-more-panel');
   if(panel) panel.classList.remove('show');
+  document.body.classList.remove('more-open');
   if(!skipActive) setDesktopTabActive(getCurrentActiveTabName());
 }
+window.addEventListener('resize', updateMorePanelOffset, {passive:true});
+window.addEventListener('scroll', function(){
+  var panel = $('desktop-more-panel');
+  if(panel && panel.classList.contains('show')) updateMorePanelOffset();
+}, {passive:true});
 function toggleMobileMore(){
   var sheet = $('mobile-sheet');
   if(!sheet) return;
