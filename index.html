@@ -1245,6 +1245,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         <div style="padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.16);margin-bottom:14px;font-size:12px;line-height:1.55;color:var(--muted)">
           <strong style="color:var(--txt)">Regula de aur:</strong> dacă nu există minim <strong style="color:var(--txt)">2 meciuri cu scor &gt; 80</strong> în fereastra activă, generatorul nu forțează combo-uri. Disciplina &gt; volum.
         </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-green" style="justify-content:center" onclick="generateDailyPortfolioTickets()">📦 Generează Portfolio Daily</button>
+          <div style="font-size:11px;color:var(--muted)">Single → Double → Triple, în ordinea priorității. Contrarian rămâne manual.</div>
+        </div>
+        <div id="daily-portfolio-output" style="display:grid;gap:12px;margin-bottom:14px"></div>
         <div class="generator-board">
           <div class="generator-section">
             <div class="generator-section-title"><strong>Prioritate mare</strong><span class="generator-tag">Edge curat</span></div>
@@ -8016,6 +8021,78 @@ function renderHistory21(){
                    renderCardGrid(marketCards, '🎯 Piețe individuale', 'Aici vezi piețele reale din Meciuri, separate de agregatele de mai sus.') +
                    details;
 }
+
+
+/* ===== Daily Portfolio exact generator ===== */
+var DAILY_PORTFOLIO = [];
+function generateDailyPortfolioTickets(){
+  var bankroll = getActualBankrollValue();
+  var tickets = [];
+  var premium = buildPortfolioTicketPreview('premium');
+  var strong = buildPortfolioTicketPreview('double');
+  var value = buildPortfolioTicketPreview('triple');
+  if(premium && premium.picks && premium.picks.length){
+    premium.priority = 1;
+    premium.portfolioType = 'SINGLE_PREMIUM';
+    premium.stake = +(bankroll * 0.04).toFixed(2);
+    premium.stakePct = 4;
+    tickets.push(premium);
+  }
+  if(strong && strong.picks && strong.picks.length){
+    strong.priority = 2;
+    strong.portfolioType = 'DOUBLE_CONFIRMED';
+    strong.stake = +(bankroll * 0.025).toFixed(2);
+    strong.stakePct = 2.5;
+    tickets.push(strong);
+  }
+  if(value && value.picks && value.picks.length){
+    value.priority = 3;
+    value.portfolioType = 'TRIPLE_VALUE';
+    value.stake = +(bankroll * 0.015).toFixed(2);
+    value.stakePct = 1.5;
+    tickets.push(value);
+  }
+  DAILY_PORTFOLIO = tickets;
+  renderDailyPortfolio();
+  if(DAILY_PORTFOLIO.length) applyPortfolioPreview(DAILY_PORTFOLIO[0], true);
+  toast(DAILY_PORTFOLIO.length ? ('Portfolio Daily generat: ' + DAILY_PORTFOLIO.length + ' bilete') : 'Nu există setup-uri suficiente pentru Portfolio Daily.', DAILY_PORTFOLIO.length ? 'ok' : 'warn');
+}
+function openDailyPortfolioTicket(idx){
+  var ticket = DAILY_PORTFOLIO[idx];
+  if(!ticket) return;
+  applyPortfolioPreview(ticket, true);
+  toast(ticket.label + ' încărcat în panoul principal.', 'ok');
+}
+function renderDailyPortfolio(){
+  var target = $('daily-portfolio-output');
+  if(!target) return;
+  if(!DAILY_PORTFOLIO || !DAILY_PORTFOLIO.length){
+    target.innerHTML = '<div class="empty-state" style="padding:12px">Apasă pe <strong>Generează Portfolio Daily</strong> ca să primești automat portofoliul zilei.</div>';
+    return;
+  }
+  target.innerHTML = DAILY_PORTFOLIO.map(function(ticket, idx){
+    var picksHtml = (ticket.picks || []).map(function(p){
+      var bet = p.bestBet || p;
+      return '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid rgba(255,255,255,.06)"><div><div style="font-size:12px;font-weight:700;color:var(--txt)">'+p.home+' vs '+p.away+'</div><div style="font-size:10px;color:var(--muted);margin-top:3px">'+(p.league || '—')+' • '+(p.dateLabel || '')+' '+(p.timeLabel || '')+'</div></div><div style="text-align:right;font-size:11px;color:var(--acc);font-weight:700">'+bet.label+' @ '+Number(bet.odds || 0).toFixed(2)+'</div></div>';
+    }).join('');
+    return '<div class="bilet-card" style="margin-bottom:0">'+
+      '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">'+
+        '<div><div style="font-size:15px;font-weight:800">#'+ticket.priority+' • '+ticket.label+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+(ticket.summary || 'Portfolio Daily')+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+Number(ticket.totalOdds || 1).toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Stake '+Number(ticket.stake || 0).toFixed(2)+' RON • '+Number(ticket.stakePct || 0).toFixed(1)+'%</div></div>'+
+      '</div>'+
+      '<div class="ticket-mini-grid" style="margin-top:12px">'+
+        '<div class="ticket-mini"><div class="v">'+(ticket.picks ? ticket.picks.length : 0)+'</div><div class="l">Selecții</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+Number(ticket.combinedProb || 0).toFixed(1)+'%</div><div class="l">Prob. compusă</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+((Number(ticket.avgEdge || 0) * 100).toFixed(1))+'%</div><div class="l">Edge mediu</div></div>'+
+      '</div>'+
+      '<div style="margin-top:12px">'+picksHtml+'</div>'+
+      '<div style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn btn-primary" onclick="openDailyPortfolioTicket('+idx+')">Deschide în biletul principal</button></div>'+
+    '</div>';
+  }).join('');
+}
+window.addEventListener('DOMContentLoaded', function(){
+  renderDailyPortfolio();
+});
 
 </script>
 </body>
