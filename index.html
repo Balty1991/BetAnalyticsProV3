@@ -1272,6 +1272,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
             </div>
           </div>
         </div>
+<div id="ticket-generator-status-board" style="display:grid;gap:10px;margin-top:14px"></div>
       </div>
 
       <div class="extra-form" id="custom-builder">
@@ -8294,6 +8295,69 @@ function renderAiMemoryGenerators(){
 window.addEventListener('DOMContentLoaded', function(){
   enhanceGeneratorCards();
   setTimeout(updateGeneratorStatusBadges, 200);
+});
+
+
+/* ===== Ticket generators status board ===== */
+function getSourcePoolForGenerator(source){
+  if(source === 'audit') return typeof getAuditMathPool === 'function' ? getAuditMathPool() : [];
+  if(source === 'aimemory') return typeof getAiMemoryMathPool === 'function' ? getAiMemoryMathPool() : [];
+  if(source === 'portfolio') return typeof getPortfolioMatchPool === 'function' ? getPortfolioMatchPool() : [];
+  return [];
+}
+function generatePortfolioTicketVariant(type, relaxed, silent){
+  var preview = relaxed ? buildRelaxedMathTicketPreviewFromPool(type, 'portfolio', getPortfolioMatchPool()) : buildPortfolioTicketPreview(type);
+  applyPortfolioPreview(preview, !!silent);
+  renderTicketGeneratorStatusBoard();
+  if(!silent && preview && preview.picks && preview.picks.length) toast((preview.label || type) + (relaxed ? ' generat (relaxat)!' : ' generat!'), 'ok');
+  else if(!silent && preview && preview.error) toast(preview.error, 'warn');
+  return preview;
+}
+function handleGeneratePortfolioTicketRelaxed(type, btn){
+  setButtonBusy(btn, true, 'Relaxat', 'Se generează...');
+  setTimeout(function(){
+    generatePortfolioTicketVariant(type, true, true);
+    setButtonBusy(btn, false, 'Relaxat', 'Se generează...');
+    renderTicketGeneratorStatusBoard();
+  }, 120);
+}
+function renderTicketGeneratorStatusBoard(){
+  var target = $('ticket-generator-status-board');
+  if(!target) return;
+  var defs = [
+    {type:'premium', label:'🔥 Single Premium', sub:'1 selecție • prioritate 1'},
+    {type:'double', label:'✅ Double Confirmed', sub:'2 selecții • prioritate 2'},
+    {type:'triple', label:'⚖️ Triple Value', sub:'3 selecții • prioritate 3'},
+    {type:'contrarian', label:'🎯 Contrarian Shot', sub:'manual / oportunist'}
+  ];
+  target.innerHTML = defs.map(function(def){
+    var info = getGeneratorAvailability('portfolio', def.type);
+    return '<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">'+
+        '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+def.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+def.sub+'</div></div>'+
+        '<div style="display:grid;grid-template-columns:1fr 110px;gap:8px;min-width:min(100%,320px);flex:1;max-width:420px">'+
+          '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generatePortfolioTicketVariant(&quot;'+def.type+'&quot;, false, true)">Generează</button>'+
+          '<button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGeneratePortfolioTicketRelaxed(&quot;'+def.type+'&quot;, this)">Relaxat</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="margin-top:8px;font-size:11px;color:'+(info.klass === 'ok' ? 'var(--grn)' : 'var(--yel)')+'">'+info.text+'</div>'+
+    '</div>';
+  }).join('');
+}
+var _origGeneratePortfolioTicket = generatePortfolioTicket;
+function generatePortfolioTicket(type, silent){
+  var out = _origGeneratePortfolioTicket(type, silent);
+  renderTicketGeneratorStatusBoard();
+  return out;
+}
+var _origGenerateDailyPortfolioTickets = generateDailyPortfolioTickets;
+function generateDailyPortfolioTickets(){
+  var out = _origGenerateDailyPortfolioTickets();
+  renderTicketGeneratorStatusBoard();
+  return out;
+}
+window.addEventListener('DOMContentLoaded', function(){
+  renderTicketGeneratorStatusBoard();
 });
 
 </script>
