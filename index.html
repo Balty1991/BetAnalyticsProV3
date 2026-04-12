@@ -8432,19 +8432,19 @@ function updateGeneratorStatusBadges(){
   });
 }
 
-var _origGeneratePortfolioTicket = generatePortfolioTicket;
-function generatePortfolioTicket(type, silent){
+var _origGeneratePortfolioTicket = window.generatePortfolioTicket;
+window.generatePortfolioTicket = function(type, silent){
   var out = _origGeneratePortfolioTicket(type, silent);
   if(out) PORTFOLIO_TICKETS[type] = Object.assign({}, out, { relaxed:false, generatedAt:(out.generatedAt || new Date().toISOString()) });
   updateGeneratorStatusBadges();
   return out;
-}
-var _origGenerateDailyPortfolioTickets = generateDailyPortfolioTickets;
-function generateDailyPortfolioTickets(){
+};
+var _origGenerateDailyPortfolioTickets = window.generateDailyPortfolioTickets;
+window.generateDailyPortfolioTickets = function(){
   var out = _origGenerateDailyPortfolioTickets();
   try { updateGeneratorStatusBadges(); } catch(err){ console.error('Generator badges update failed:', err); }
   return out;
-}
+};
 window.addEventListener('DOMContentLoaded', function(){
   enhanceGeneratorCards();
   setTimeout(updateGeneratorStatusBadges, 200);
