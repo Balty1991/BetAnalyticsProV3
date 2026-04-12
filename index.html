@@ -537,8 +537,10 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .mobile-sheet{display:none}
 .mobile-sheet.show{display:block}
 .mobile-sheet{position:fixed;left:12px;right:12px;bottom:84px;z-index:180;background:rgba(10,14,23,.98);border:1px solid var(--brd2);border-radius:18px;padding:12px;box-shadow:0 18px 38px rgba(0,0,0,.38);backdrop-filter:blur(14px)}
-.mobile-sheet-btn{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:var(--txt);font-size:13px;font-weight:700;text-align:left;display:block;margin-bottom:8px}
+.mobile-sheet-btn{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:var(--txt);font-size:13px;font-weight:700;text-align:left;display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .mobile-sheet-btn:last-child{margin-bottom:0}
+.sheet-btn-title{font-size:13px;font-weight:800;color:var(--txt)}
+.sheet-btn-sub{font-size:10px;color:var(--muted);font-weight:600}
 .dashboard-insights-shell{margin-top:14px}
 .dashboard-insights-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
 .dashboard-insights-title{font-size:14px;font-weight:800;color:var(--txt)}
@@ -561,6 +563,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .mobile-nav-btn{border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;border-radius:14px;font-size:17px;font-weight:800}
   .mobile-nav-btn small{font-size:10px;color:inherit;font-weight:700}
   .mobile-nav-btn.active{background:rgba(59,130,246,.12);color:var(--acc)}
+  .desktop-more-panel{display:none!important}
   #dashboard-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
   #dashboard-stats .stat-card{padding:12px}
   #dashboard-stats .stat-card:nth-child(n+4){display:none}
@@ -656,8 +659,29 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 /* ===== v17 UX refresh ===== */
 .main{max-width:1460px;margin:0 auto;padding-bottom:108px}
-.tabs{position:sticky;top:64px;z-index:48;background:rgba(8,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
-.tab{font-size:12px;font-weight:800;border-radius:14px;padding:11px 14px}
+.tabs{position:sticky;top:64px;z-index:48;background:rgba(8,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 16px}
+.tab{font-size:12px;font-weight:800;border-radius:14px;padding:11px 14px;justify-content:center}
+.desktop-more-panel{display:none;max-width:1400px;margin:0 auto 14px;padding:14px 16px 0}
+.desktop-more-panel.show{display:block}
+.desktop-more-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.desktop-more-title{font-size:15px;font-weight:800;color:var(--txt)}
+.desktop-more-sub{font-size:11px;color:var(--muted);line-height:1.55;max-width:720px;margin-top:4px}
+.more-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.more-card-btn{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(20,30,55,.92),rgba(13,20,36,.96));color:var(--txt);text-align:left;display:flex;flex-direction:column;gap:6px;box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.more-card-btn:hover{border-color:rgba(84,119,255,.22);transform:translateY(-1px)}
+.more-card-title{font-size:13px;font-weight:800;color:var(--txt)}
+.more-card-sub{font-size:11px;line-height:1.5;color:var(--muted)}
+.view-mode-switch{display:inline-flex;gap:6px;padding:4px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.view-mode-btn{border:none;background:transparent;color:var(--muted);font-size:11px;font-weight:800;padding:8px 12px;border-radius:999px;cursor:pointer}
+.view-mode-btn.active{background:rgba(59,130,246,.14);color:var(--acc)}
+.match-inline-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.match-inline-chip{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-size:10px;font-weight:700;color:var(--txt)}
+.match-inline-summary{margin-top:8px;font-size:11px;color:var(--muted);line-height:1.55}
+.match-inline-summary strong{color:var(--txt)}
+.hybrid-prob-inline{margin-top:8px;font-size:11px;color:var(--txt);line-height:1.55;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}
+.hybrid-prob-inline .delta-pos{color:var(--grn);font-weight:800}
+.hybrid-prob-inline .delta-neg{color:var(--red);font-weight:800}
+.hybrid-prob-inline .delta-neutral{color:var(--muted);font-weight:800}
 .section,.bankroll-card,.bilet-card,.help-panel,.visual-card,.trend-shell,.memory-shell,.focus-shell,.stat-card,.extra-form{border-radius:18px!important}
 .compact-context-panel{background:linear-gradient(180deg,rgba(13,18,31,.92),rgba(10,15,27,.94));border:1px solid rgba(255,255,255,.07)}
 #dashboard-stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;gap:10px!important}
@@ -767,14 +791,42 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('dashboard')">⭐ Start</button>
-  <button class="tab" onclick="switchTab('bilete')">🎫 Bilete</button>
-  <button class="tab" onclick="switchTab(&#39;meciuri&#39;)">⚽ Analiză</button>
-  <button class="tab" onclick="switchTab('tracking')">📈 Tracking</button>
-  <button class="tab" onclick="switchTab('bankroll')">💰 Bankroll</button>
-  <button class="tab" onclick="switchTab('istoric21')">🧾 Istoric 21 zile</button>
-  <button class="tab" onclick="switchTab('audit')">🎯 Audit Kelly</button>
-  <button class="tab" onclick="switchTab('aimemory')">🧠 AI Memory</button>
+  <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">🏠 Dashboard</button>
+  <button class="tab" data-tab="meciuri" onclick="switchTab('meciuri')">⚽ Meciuri</button>
+  <button class="tab" data-tab="bilete" onclick="switchTab('bilete')">🎫 Bilete</button>
+  <button class="tab" data-tab="more" onclick="toggleDesktopMore()">☰ Mai mult</button>
+</div>
+
+<div class="desktop-more-panel" id="desktop-more-panel">
+  <div class="desktop-more-head">
+    <div>
+      <div class="desktop-more-title">Mai mult</div>
+      <div class="desktop-more-sub">Secțiunile avansate rămân la un click distanță, fără să aglomereze navigarea principală.</div>
+    </div>
+    <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="closeDesktopMore()">Închide</button>
+  </div>
+  <div class="more-grid">
+    <button class="more-card-btn" onclick="switchTab('tracking')">
+      <span class="more-card-title">📈 Tracking</span>
+      <span class="more-card-sub">Jurnalul biletelor generate, status și rezultate.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('bankroll')">
+      <span class="more-card-title">💰 Bankroll</span>
+      <span class="more-card-sub">Mize, evoluție bankroll și disciplină de staking.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('istoric21')">
+      <span class="more-card-title">🧾 Istoric 21</span>
+      <span class="more-card-sub">Rezultate reale și trenduri pe ultimele 21 de zile.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('audit')">
+      <span class="more-card-title">🎯 Audit Kelly</span>
+      <span class="more-card-sub">Selecții filtrate prin Kelly, edge și value.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('aimemory')">
+      <span class="more-card-title">🧠 AI Memory</span>
+      <span class="more-card-sub">Pattern-uri validate și scor adaptiv din istoric.</span>
+    </button>
+  </div>
 </div>
 
 <div class="main">
@@ -1233,7 +1285,10 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
           <div class="matches-card-title">ℹ️ Info meciuri</div>
           <div class="matches-card-sub">Tot ce ține de filtrare și sortare este grupat aici, compact și mai ușor de urmărit pe mobil.</div>
         </div>
-        <span class="sec-badge" style="color:var(--pur);border-color:rgba(168,85,247,.22);background:rgba(168,85,247,.08)">Filtre rapide</span>
+        <div class="view-mode-switch">
+          <button class="view-mode-btn active" data-mode="simple" onclick="setMatchCardMode('simple', this)">Simplu</button>
+          <button class="view-mode-btn" data-mode="expert" onclick="setMatchCardMode('expert', this)">Expert</button>
+        </div>
       </div>
 
       <div class="filter-bar matches-filter-toolbar">
@@ -1521,17 +1576,17 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 </div><!-- /main -->
 
 <div class="mobile-nav" id="mobile-nav">
-  <button class="mobile-nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')"><span>⭐</span><small>Start</small></button>
-  <button class="mobile-nav-btn" data-tab="bilete" onclick="switchTab('bilete')"><span>🎫</span><small>Bilete</small></button>
+  <button class="mobile-nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')"><span>🏠</span><small>Dashboard</small></button>
   <button class="mobile-nav-btn" data-tab="meciuri" onclick="switchTab('meciuri')"><span>⚽</span><small>Meciuri</small></button>
+  <button class="mobile-nav-btn" data-tab="bilete" onclick="switchTab('bilete')"><span>🎫</span><small>Bilete</small></button>
   <button class="mobile-nav-btn" data-tab="more" onclick="toggleMobileMore()"><span>☰</span><small>Mai mult</small></button>
 </div>
 <div class="mobile-sheet" id="mobile-sheet">
-  <button class="mobile-sheet-btn" onclick="switchTab('tracking');closeMobileMore()">📈 Tracking</button>
-  <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()">💰 Bankroll</button>
-  <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()">🧾 Istoric 21</button>
-  <button class="mobile-sheet-btn" onclick="switchTab('audit');closeMobileMore()">🎯 Audit</button>
-  <button class="mobile-sheet-btn" onclick="switchTab('aimemory');closeMobileMore()">🧠 AI Memory</button>
+  <button class="mobile-sheet-btn" onclick="switchTab('tracking');closeMobileMore()"><span class="sheet-btn-title">📈 Tracking</span><small class="sheet-btn-sub">Bilete generate și rezultate</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('audit');closeMobileMore()"><span class="sheet-btn-title">🎯 Audit</span><small class="sheet-btn-sub">Selecții validate prin Kelly</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('aimemory');closeMobileMore()"><span class="sheet-btn-title">🧠 AI Memory</span><small class="sheet-btn-sub">Pattern-uri și scor adaptiv</small></button>
 </div>
 
 <script>
@@ -1556,6 +1611,7 @@ var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
+var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
 var TICKET_JOURNAL = JSON.parse(localStorage.getItem('bet_ticket_journal') || '[]');
 var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{"initial":1000,"single":4,"double":2.5,"triple":1.5,"contrarian":0.8}');
@@ -2000,15 +2056,39 @@ function logoImgHtml(url, alt, size){
 // TAB SWITCHING
 // ============================================================
 function setMobileNavActive(name){
-  var primary = ['dashboard','bilete','meciuri'];
+  var primary = ['dashboard','meciuri','bilete'];
   document.querySelectorAll('.mobile-nav-btn').forEach(function(btn){ btn.classList.remove('active'); });
   var activeKey = primary.indexOf(name) >= 0 ? name : 'more';
   var target = document.querySelector('.mobile-nav-btn[data-tab="'+activeKey+'"]');
   if(target) target.classList.add('active');
 }
+function setDesktopTabActive(name){
+  var primary = ['dashboard','meciuri','bilete'];
+  document.querySelectorAll('.tab').forEach(function(btn){ btn.classList.remove('active'); });
+  var activeKey = primary.indexOf(name) >= 0 ? name : 'more';
+  var target = document.querySelector('.tab[data-tab="'+activeKey+'"]');
+  if(target) target.classList.add('active');
+}
 function getCurrentActiveTabName(){
   var active = document.querySelector('.tab-content.active');
   return active ? String(active.id || '').replace('tab-','') : 'dashboard';
+}
+function toggleDesktopMore(){
+  var panel = $('desktop-more-panel');
+  if(!panel) return;
+  panel.classList.toggle('show');
+  if(panel.classList.contains('show')){
+    document.querySelectorAll('.tab').forEach(function(btn){ btn.classList.remove('active'); });
+    var moreBtn = document.querySelector('.tab[data-tab="more"]');
+    if(moreBtn) moreBtn.classList.add('active');
+  } else {
+    setDesktopTabActive(getCurrentActiveTabName());
+  }
+}
+function closeDesktopMore(skipActive){
+  var panel = $('desktop-more-panel');
+  if(panel) panel.classList.remove('show');
+  if(!skipActive) setDesktopTabActive(getCurrentActiveTabName());
 }
 function toggleMobileMore(){
   var sheet = $('mobile-sheet');
@@ -2021,15 +2101,20 @@ function closeMobileMore(){
   if(sheet) sheet.classList.remove('show');
   setMobileNavActive(getCurrentActiveTabName());
 }
+function setMatchCardMode(mode, btn){
+  MATCH_CARD_MODE = mode === 'expert' ? 'expert' : 'simple';
+  localStorage.setItem('bet_match_card_mode', MATCH_CARD_MODE);
+  document.querySelectorAll('.view-mode-btn').forEach(function(el){
+    el.classList.toggle('active', el.getAttribute('data-mode') === MATCH_CARD_MODE);
+  });
+  if(typeof renderMatches === 'function') renderMatches();
+}
 function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
-  document.querySelectorAll('.tab').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
-  var names=['dashboard','bilete','meciuri','tracking','bankroll','istoric21','audit','aimemory'];
-  var tabs=document.querySelectorAll('.tab');
-  var idx=names.indexOf(name);
-  if(idx>=0 && tabs[idx]) tabs[idx].classList.add('active');
+  closeDesktopMore(true);
   closeMobileMore();
+  setDesktopTabActive(name);
   setMobileNavActive(name);
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   if(name==='tracking') renderTracking();
@@ -2996,6 +3081,16 @@ function renderHybridProbabilityBlock(meta){
       '<div class="hybrid-prob-item '+deltaClass+'"><div class="hybrid-prob-value">'+(delta >= 0 ? '+' : '')+delta.toFixed(1)+'pp</div><div class="hybrid-prob-label">Δ API vs P</div></div>'+
     '</div>'+
   '</div>';
+}
+function renderHybridProbabilityInline(meta){
+  if(!meta) return '';
+  var apiProb = Number(meta.apiProb);
+  var poissonProb = Number(meta.poissonProb);
+  var hybridProb = Number(meta.hybridProb);
+  var delta = Number(meta.delta);
+  if(!isFinite(apiProb) || !isFinite(poissonProb) || !isFinite(hybridProb) || !isFinite(delta)) return '';
+  var deltaClass = Math.abs(delta) > 5 ? (delta > 0 ? 'delta-pos' : 'delta-neg') : 'delta-neutral';
+  return '<div class="hybrid-prob-inline">API <strong>'+apiProb.toFixed(1)+'%</strong> • Poisson <strong>'+poissonProb.toFixed(1)+'%</strong> • Hybrid <strong>'+hybridProb.toFixed(1)+'%</strong> • Δ <span class="'+deltaClass+'">'+(delta >= 0 ? '+' : '')+delta.toFixed(1)+'pp</span></div>';
 }
 
 function renderSignalAudit(){
@@ -4094,6 +4189,9 @@ function renderMatches(){
   var proMode = $('match-pro-mode') ? $('match-pro-mode').value : 'all';
   var minProb = $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0;
   var minEdge = $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0;
+  document.querySelectorAll('.view-mode-btn').forEach(function(el){
+    el.classList.toggle('active', el.getAttribute('data-mode') === MATCH_CARD_MODE);
+  });
   var now = Date.now();
 
   var filtered = ALL_MATCHES.filter(function(m){
@@ -4162,7 +4260,42 @@ function renderMatches(){
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
     var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
     var hybridBlock = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
+    var hybridInline = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityInline({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
+    var simpleMetrics = '<div class="match-inline-row">'+
+      '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
+      '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
+      (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
+      '</div>';
+    var simpleSummary = b ? ('<div class="match-inline-summary">Șansă <strong>'+fmtPct(Number(b.adjProb || 0))+'</strong> • Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(recOdd ? ' • Cotă <strong>@ '+recOdd+'</strong>' : '')+'</div>') : '';
+    var expertDetails = '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
+        '<div class="ticket-mini"><div class="v">'+Number(m.xgHome || 0).toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
+      '</div>'+
+      '<div class="card-reco-main">'+
+        '<div class="card-reco-head">'+
+          '<div class="card-reco-title">Pronostic recomandat</div>'+
+          (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
+        '</div>'+
+        '<div class="card-reco-pick">'+recLabel+'</div>'+
+        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
+        hybridBlock+
+      '</div>'+
+      compactWhy+
+      (reasons ? '<div class="reason-list">'+reasons+'</div>' : '');
+    var simpleDetails = '<div class="card-reco-main">'+
+        '<div class="card-reco-head">'+
+          '<div class="card-reco-title">Pronostic recomandat</div>'+
+          (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
+        '</div>'+
+        '<div class="card-reco-pick">'+recLabel+'</div>'+
+        simpleSummary+
+        simpleMetrics+
+        hybridInline+
+      '</div>'+
+      compactWhy;
+    var detailBlock = MATCH_CARD_MODE === 'expert' ? expertDetails : simpleDetails;
     return '<div class="match-card '+verdictClass+'">'+
       '<div class="mc-head">'+
         '<div class="mc-league">'+leagueLogo+' 🌍 '+m.country+' • '+m.league+'</div>'+
@@ -4178,21 +4311,7 @@ function renderMatches(){
         sourceBadge+
         (b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3 ? '<div class="mc-value-chip">VALUE +' + fmtPct((b.value||0)*100) + '</div>' : '')+
       '</div>'+
-      '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
-        '<div class="ticket-mini"><div class="v">'+m.xgHome.toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
-        '<div class="ticket-mini"><div class="v">'+m.xgAway.toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
-        '<div class="ticket-mini"><div class="v">'+m.xgTotal.toFixed(2)+'</div><div class="l">xG total</div></div>'+
-      '</div>'+
-      '<div class="card-reco-main">'+
-        '<div class="card-reco-head">'+
-          '<div class="card-reco-title">Pronostic recomandat</div>'+
-          (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
-        '</div>'+
-        '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
-        hybridBlock+
-      '</div>'+
-      (reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+
+      detailBlock+
     '</div>';
   }
 
