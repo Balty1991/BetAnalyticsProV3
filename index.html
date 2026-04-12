@@ -7971,12 +7971,26 @@ function renderHistory21(){
 /* ===== Daily Portfolio exact generator ===== */
 var DAILY_PORTFOLIO = [];
 var DAILY_PORTFOLIO_BEST_IDX = 0;
+function getDailyPortfolioCandidate(type){
+  var strict = buildPortfolioTicketPreview(type);
+  if(strict && strict.picks && strict.picks.length){
+    strict.dailyMode = 'strict';
+    return strict;
+  }
+  var relaxed = buildRelaxedMathTicketPreviewFromPool(type, 'portfolio', getPortfolioMatchPool());
+  if(relaxed && relaxed.picks && relaxed.picks.length){
+    relaxed.dailyMode = 'relaxed';
+    relaxed.summary = (relaxed.summary || '') + ' • fallback Daily relaxat';
+    return relaxed;
+  }
+  return strict || relaxed || null;
+}
 function generateDailyPortfolioTickets(){
   var bankroll = getActualBankrollValue();
   var tickets = [];
-  var premium = buildPortfolioTicketPreview('premium');
-  var strong = buildPortfolioTicketPreview('double');
-  var value = buildPortfolioTicketPreview('triple');
+  var premium = getDailyPortfolioCandidate('premium');
+  var strong = getDailyPortfolioCandidate('double');
+  var value = getDailyPortfolioCandidate('triple');
   if(premium && premium.picks && premium.picks.length){
     premium.priority = 1;
     premium.portfolioType = 'SINGLE_PREMIUM';
@@ -8005,7 +8019,13 @@ function generateDailyPortfolioTickets(){
     applyPortfolioPreview(DAILY_PORTFOLIO[DAILY_PORTFOLIO_BEST_IDX], true);
   }
   renderDailyPortfolio();
-  toast(DAILY_PORTFOLIO.length ? ('Portfolio Daily generat: ' + DAILY_PORTFOLIO.length + ' bilete • recomandarea #1 a fost încărcată în biletul principal') : 'Nu există setup-uri suficiente pentru Portfolio Daily.', DAILY_PORTFOLIO.length ? 'ok' : 'warn');
+  if(typeof updateGeneratorStatusBadges === 'function') updateGeneratorStatusBadges();
+  if(DAILY_PORTFOLIO.length){
+    toast('Portfolio Daily generat: ' + DAILY_PORTFOLIO.length + ' bilete • recomandarea #1 a fost încărcată în biletul principal', 'ok');
+  } else {
+    var hints = [premium && premium.error, strong && strong.error, value && value.error].filter(Boolean).slice(0, 2).join(' • ');
+    toast(hints || 'Nu există setup-uri suficiente pentru Portfolio Daily.', 'warn');
+  }
 }
 function openDailyPortfolioTicket(idx){
   var ticket = DAILY_PORTFOLIO[idx];
@@ -8017,11 +8037,11 @@ function renderDailyPortfolio(){
   var target = $('daily-portfolio-output');
   if(!target) return;
   if(!DAILY_PORTFOLIO || !DAILY_PORTFOLIO.length){
-    target.innerHTML = '<div class="empty-state" style="padding:12px">Apasă pe <strong>Generează Portfolio Daily</strong> ca să primești automat portofoliul zilei.</div>';
+    target.innerHTML = '<div class="empty-state" style="padding:12px">Apasă pe <strong>Generează Portfolio Daily</strong> ca să primești automat portofoliul zilei. Dacă nu există setup-uri valide, secțiunea îți va afișa explicit de ce.</div>';
     return;
   }
   var bestTicket = DAILY_PORTFOLIO[DAILY_PORTFOLIO_BEST_IDX] || DAILY_PORTFOLIO[0];
-  var bestCard = bestTicket ? '<div class="bilet-card" style="margin-bottom:0;border-color:rgba(34,197,94,.22);background:linear-gradient(180deg,rgba(18,32,28,.96),rgba(12,20,18,.96))"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:16px;font-weight:900;color:var(--grn)">⭐ Recomandarea #1 a zilei</div><div style="font-size:12px;color:var(--txt);margin-top:4px">'+bestTicket.label+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">aleasă după probabilitatea de reușită dintre biletele generate azi</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--grn)">'+Number(bestTicket.combinedProb || 0).toFixed(1)+'%</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă</div></div></div><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><div style="font-size:11px;color:var(--muted)">Cotă '+Number(bestTicket.totalOdds || 1).toFixed(2)+'x • Stake '+Number(bestTicket.stake || 0).toFixed(2)+' RON</div><button class="btn btn-green" onclick="openDailyPortfolioTicket('+DAILY_PORTFOLIO_BEST_IDX+')">Deschide recomandarea #1</button></div></div>' : '';
+  var bestCard = bestTicket ? '<div class="bilet-card" style="margin-bottom:0;border-color:rgba(34,197,94,.22);background:linear-gradient(180deg,rgba(18,32,28,.96),rgba(12,20,18,.96))"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><div style="font-size:16px;font-weight:900;color:var(--grn)">⭐ Recomandarea #1 a zilei</div><div style="font-size:12px;color:var(--txt);margin-top:4px">'+bestTicket.label+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">aleasă după probabilitatea de reușită dintre biletele generate azi</div><div style="font-size:10px;color:var(--muted);margin-top:6px">Mod Daily: '+(bestTicket.dailyMode === 'relaxed' ? 'fallback relaxat' : 'strict')+'</div></div><div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--grn)">'+Number(bestTicket.combinedProb || 0).toFixed(1)+'%</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă</div></div></div><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><div style="font-size:11px;color:var(--muted)">Cotă '+Number(bestTicket.totalOdds || 1).toFixed(2)+'x • Stake '+Number(bestTicket.stake || 0).toFixed(2)+' RON</div><button class="btn btn-green" onclick="openDailyPortfolioTicket('+DAILY_PORTFOLIO_BEST_IDX+')">Deschide recomandarea #1</button></div></div>' : '';
   target.innerHTML = bestCard + DAILY_PORTFOLIO.map(function(ticket, idx){
     var picksHtml = (ticket.picks || []).map(function(p){
       var bet = p.bestBet || p;
