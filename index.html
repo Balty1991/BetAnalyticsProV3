@@ -8059,8 +8059,15 @@ function generateDailyPortfolioTickets(){
 function handleGenerateDailyPortfolio(btn){
   setButtonBusy(btn, true, '📦 Generează Portfolio Daily', 'Se generează...');
   setTimeout(function(){
-    generateDailyPortfolioTickets();
-    setButtonBusy(btn, false, '📦 Generează Portfolio Daily', 'Se generează...');
+    try {
+      generateDailyPortfolioTickets();
+    } catch(err){
+      console.error('Portfolio Daily runtime error:', err);
+      renderDailyPortfolioRuntimeError(err);
+      toast('Portfolio Daily a întâlnit o eroare internă.', 'warn');
+    } finally {
+      setButtonBusy(btn, false, '📦 Generează Portfolio Daily', 'Se generează...');
+    }
   }, 120);
 }
 function openDailyPortfolioTicket(idx){
@@ -8106,6 +8113,13 @@ window.addEventListener('DOMContentLoaded', function(){
   renderDailyPortfolio();
 });
 
+function renderDailyPortfolioRuntimeError(err){
+  var target = $('daily-portfolio-output');
+  var msg = err && err.message ? err.message : String(err || 'Eroare necunoscută');
+  if(target){
+    target.innerHTML = '<div class="bilet-card" style="margin-bottom:0;border-color:rgba(239,68,68,.22)"><div style="font-size:14px;font-weight:800;color:var(--red);margin-bottom:8px">Eroare internă la Portfolio Daily</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Butonul a fost apăsat, dar generatorul a fost întrerupt de o eroare JS. Mai jos vezi mesajul brut.</div><div style="padding:10px;border-radius:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);font-size:11px;color:var(--txt);word-break:break-word">'+msg.replace(/</g,'&lt;')+'</div></div>';
+  }
+}
 
 /* ===== Generator availability + relaxed mode ===== */
 function buildRelaxedMathTicketPreviewFromPool(type, source, pool){
@@ -8428,7 +8442,7 @@ function generatePortfolioTicket(type, silent){
 var _origGenerateDailyPortfolioTickets = generateDailyPortfolioTickets;
 function generateDailyPortfolioTickets(){
   var out = _origGenerateDailyPortfolioTickets();
-  updateGeneratorStatusBadges();
+  try { updateGeneratorStatusBadges(); } catch(err){ console.error('Generator badges update failed:', err); }
   return out;
 }
 window.addEventListener('DOMContentLoaded', function(){
