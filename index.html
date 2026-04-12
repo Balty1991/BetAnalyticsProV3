@@ -1252,17 +1252,12 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
         <div id="daily-portfolio-output" style="display:grid;gap:12px;margin-bottom:14px"></div>
         <div class="generator-board">
           <div class="generator-section">
-            <div class="generator-section-title"><strong>Prioritate mare</strong><span class="generator-tag">Edge curat</span></div>
-            <div class="generator-grid">
-              <button class="generator-tile primary" onclick="generatePortfolioTicket('premium')"><span class="icon">🔥</span><span class="text"><span class="title">Single Premium</span><span class="badge">1 selecție</span></span></button>
-              <button class="generator-tile goals" onclick="generatePortfolioTicket('double')"><span class="icon">✅</span><span class="text"><span class="title">Double Confirmed</span><span class="badge">2 selecții</span></span></button>
-            </div>
-          </div>
-          <div class="generator-section">
-            <div class="generator-section-title"><strong>Expunere controlată</strong><span class="generator-tag">Portfolio</span></div>
-            <div class="generator-grid">
-              <button class="generator-tile mix" onclick="generatePortfolioTicket('triple')"><span class="icon">⚖️</span><span class="text"><span class="title">Triple Value</span><span class="badge">3 selecții</span></span></button>
-              <button class="generator-tile bigwin" onclick="generatePortfolioTicket('contrarian')"><span class="icon">🎯</span><span class="text"><span class="title">Contrarian Shot</span><span class="badge">2-3 selecții</span></span></button>
+            <div class="generator-section-title"><strong>Generatoare portofoliu</strong><span class="generator-tag">Curat și compact</span></div>
+            <div class="grid cols-2">
+              <div class="memory-generator-card premium"><div class="memory-generator-title">🔥 Single Premium</div><div class="memory-generator-sub">1 selecție cu edge dominant. Prioritate maximă în ziua curentă.</div><button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGeneratePortfolioTicket('premium', this)">Generează</button><div class="generator-status" id="portfolio-status-premium">Verifică pool-ul curent.</div></div>
+              <div class="memory-generator-card double"><div class="memory-generator-title">✅ Double Confirmed</div><div class="memory-generator-sub">2 selecții necorelate, doar dacă probabilitatea compusă rămâne curată.</div><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGeneratePortfolioTicket('double', this)">Generează</button><div class="generator-status" id="portfolio-status-double">Verifică pool-ul curent.</div></div>
+              <div class="memory-generator-card triple"><div class="memory-generator-title">⚖️ Triple Value</div><div class="memory-generator-sub">3 selecții doar când setup-ul are logică și minim un underdog value.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--yel),var(--acc))" onclick="handleGeneratePortfolioTicket('triple', this)">Generează</button><div class="generator-status" id="portfolio-status-triple">Verifică pool-ul curent.</div></div>
+              <div class="memory-generator-card contrarian"><div class="memory-generator-title">🎯 Contrarian Shot</div><div class="memory-generator-sub">2-3 selecții oportuniste, cu expunere mică și frecvență redusă.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGeneratePortfolioTicket('contrarian', this)">Generează</button><div class="generator-status" id="portfolio-status-contrarian">Verifică pool-ul curent.</div></div>
             </div>
           </div>
           <div class="generator-section">
@@ -1272,7 +1267,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
             </div>
           </div>
         </div>
-<div id="ticket-generator-status-board" style="display:grid;gap:10px;margin-top:14px"></div>
       </div>
 
       <div class="extra-form" id="custom-builder">
@@ -8298,7 +8292,10 @@ window.addEventListener('DOMContentLoaded', function(){
 });
 
 
-/* ===== Ticket generators status board ===== */
+/* ===== Portfolio generators inline status ===== */
+var PORTFOLIO_TICKETS = window.PORTFOLIO_TICKETS || {premium:null, double:null, triple:null, contrarian:null};
+window.PORTFOLIO_TICKETS = PORTFOLIO_TICKETS;
+
 function getSourcePoolForGenerator(source){
   if(source === 'audit') return typeof getAuditMathPool === 'function' ? getAuditMathPool() : [];
   if(source === 'aimemory') return typeof getAiMemoryMathPool === 'function' ? getAiMemoryMathPool() : [];
@@ -8307,58 +8304,105 @@ function getSourcePoolForGenerator(source){
 }
 function generatePortfolioTicketVariant(type, relaxed, silent){
   var preview = relaxed ? buildRelaxedMathTicketPreviewFromPool(type, 'portfolio', getPortfolioMatchPool()) : buildPortfolioTicketPreview(type);
+  if(preview){ preview.relaxed = !!relaxed; PORTFOLIO_TICKETS[type] = preview; }
   applyPortfolioPreview(preview, !!silent);
-  renderTicketGeneratorStatusBoard();
+  updateGeneratorStatusBadges();
   if(!silent && preview && preview.picks && preview.picks.length) toast((preview.label || type) + (relaxed ? ' generat (relaxat)!' : ' generat!'), 'ok');
   else if(!silent && preview && preview.error) toast(preview.error, 'warn');
   return preview;
 }
+function handleGeneratePortfolioTicket(type, btn){
+  setButtonBusy(btn, true, 'Generează', 'Se generează...');
+  setTimeout(function(){
+    generatePortfolioTicketVariant(type, false, false);
+    setButtonBusy(btn, false, 'Generează', 'Se generează...');
+    updateGeneratorStatusBadges();
+  }, 120);
+}
 function handleGeneratePortfolioTicketRelaxed(type, btn){
   setButtonBusy(btn, true, 'Relaxat', 'Se generează...');
   setTimeout(function(){
-    generatePortfolioTicketVariant(type, true, true);
+    generatePortfolioTicketVariant(type, true, false);
     setButtonBusy(btn, false, 'Relaxat', 'Se generează...');
-    renderTicketGeneratorStatusBoard();
+    updateGeneratorStatusBadges();
   }, 120);
 }
-function renderTicketGeneratorStatusBoard(){
-  var target = $('ticket-generator-status-board');
-  if(!target) return;
-  var defs = [
-    {type:'premium', label:'🔥 Single Premium', sub:'1 selecție • prioritate 1'},
-    {type:'double', label:'✅ Double Confirmed', sub:'2 selecții • prioritate 2'},
-    {type:'triple', label:'⚖️ Triple Value', sub:'3 selecții • prioritate 3'},
-    {type:'contrarian', label:'🎯 Contrarian Shot', sub:'manual / oportunist'}
-  ];
-  target.innerHTML = defs.map(function(def){
-    var info = getGeneratorAvailability('portfolio', def.type);
-    return '<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)">'+
-      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">'+
-        '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+def.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+def.sub+'</div></div>'+
-        '<div style="display:grid;grid-template-columns:1fr 110px;gap:8px;min-width:min(100%,320px);flex:1;max-width:420px">'+
-          '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generatePortfolioTicketVariant(&quot;'+def.type+'&quot;, false, true)">Generează</button>'+
-          '<button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGeneratePortfolioTicketRelaxed(&quot;'+def.type+'&quot;, this)">Relaxat</button>'+
-        '</div>'+
-      '</div>'+
-      '<div style="margin-top:8px;font-size:11px;color:'+(info.klass === 'ok' ? 'var(--grn)' : 'var(--yel)')+'">'+info.text+'</div>'+
-    '</div>';
-  }).join('');
+
+function enhanceGeneratorCards(){
+  document.querySelectorAll('.memory-generator-card').forEach(function(card){
+    if(card.dataset.relaxedEnhanced === '1') return;
+    var status = card.querySelector('.generator-status');
+    var primaryBtn = card.querySelector('button.btn');
+    if(!status || !primaryBtn) return;
+    var type = '';
+    var mode = '';
+    if(status.id.indexOf('audit-status-') === 0){ type = status.id.replace('audit-status-', ''); mode = 'audit'; }
+    else if(status.id.indexOf('aimemory-status-') === 0){ type = status.id.replace('aimemory-status-', ''); mode = 'aimemory'; }
+    else if(status.id.indexOf('portfolio-status-') === 0){ type = status.id.replace('portfolio-status-', ''); mode = 'portfolio'; }
+    else return;
+    var row = document.createElement('div');
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '1fr 110px';
+    row.style.gap = '8px';
+    row.style.marginBottom = '8px';
+    primaryBtn.parentNode.insertBefore(row, primaryBtn);
+    row.appendChild(primaryBtn);
+    primaryBtn.style.width = '100%';
+    var relaxedBtn = document.createElement('button');
+    relaxedBtn.className = 'btn';
+    relaxedBtn.textContent = 'Relaxat';
+    relaxedBtn.style.width = '100%';
+    relaxedBtn.style.justifyContent = 'center';
+    relaxedBtn.style.background = 'rgba(255,255,255,.06)';
+    relaxedBtn.style.border = '1px solid rgba(255,255,255,.12)';
+    relaxedBtn.style.color = 'var(--txt)';
+    relaxedBtn.onclick = function(){
+      if(mode === 'audit') handleGenerateAuditTicketRelaxed(type, relaxedBtn);
+      else if(mode === 'aimemory') handleGenerateAiMemoryTicketRelaxed(type, relaxedBtn);
+      else handleGeneratePortfolioTicketRelaxed(type, relaxedBtn);
+    };
+    row.appendChild(relaxedBtn);
+    card.dataset.relaxedEnhanced = '1';
+  });
 }
+
+function updateGeneratorStatusBadges(){
+  ['premium','double','triple','contrarian'].forEach(function(type){
+    var auditInfo = getGeneratorAvailability('audit', type);
+    var auditTicket = AUDIT_TICKETS[type];
+    if(auditTicket && auditTicket.picks && auditTicket.picks.length) setGeneratorStatus('audit-status-' + type, 'Pool: ' + auditInfo.count + ' • ultima generare ' + fmtDateTime(auditTicket.generatedAt || new Date().toISOString()) + (auditTicket.relaxed ? ' • relaxat' : ''), 'ok');
+    else setGeneratorStatus('audit-status-' + type, auditInfo.text, auditInfo.klass);
+
+    var aiInfo = getGeneratorAvailability('aimemory', type);
+    var aiTicket = AI_MEMORY_TICKETS[type];
+    if(aiTicket && aiTicket.picks && aiTicket.picks.length) setGeneratorStatus('aimemory-status-' + type, 'Pool: ' + aiInfo.count + ' • ultima generare ' + fmtDateTime(aiTicket.generatedAt || new Date().toISOString()) + (aiTicket.relaxed ? ' • relaxat' : ''), 'ok');
+    else setGeneratorStatus('aimemory-status-' + type, aiInfo.text, aiInfo.klass);
+
+    var portfolioInfo = getGeneratorAvailability('portfolio', type);
+    var portfolioTicket = PORTFOLIO_TICKETS[type];
+    if(portfolioTicket && portfolioTicket.picks && portfolioTicket.picks.length) setGeneratorStatus('portfolio-status-' + type, 'Pool: ' + portfolioInfo.count + ' • ultima generare ' + fmtDateTime(portfolioTicket.generatedAt || new Date().toISOString()) + (portfolioTicket.relaxed ? ' • relaxat' : ''), 'ok');
+    else setGeneratorStatus('portfolio-status-' + type, portfolioInfo.text, portfolioInfo.klass);
+  });
+}
+
 var _origGeneratePortfolioTicket = generatePortfolioTicket;
 function generatePortfolioTicket(type, silent){
   var out = _origGeneratePortfolioTicket(type, silent);
-  renderTicketGeneratorStatusBoard();
+  if(out) PORTFOLIO_TICKETS[type] = Object.assign({}, out, { relaxed:false, generatedAt:(out.generatedAt || new Date().toISOString()) });
+  updateGeneratorStatusBadges();
   return out;
 }
 var _origGenerateDailyPortfolioTickets = generateDailyPortfolioTickets;
 function generateDailyPortfolioTickets(){
   var out = _origGenerateDailyPortfolioTickets();
-  renderTicketGeneratorStatusBoard();
+  updateGeneratorStatusBadges();
   return out;
 }
 window.addEventListener('DOMContentLoaded', function(){
-  renderTicketGeneratorStatusBoard();
+  enhanceGeneratorCards();
+  setTimeout(updateGeneratorStatusBadges, 200);
 });
+
 
 </script>
 </body>
