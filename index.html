@@ -8094,6 +8094,208 @@ window.addEventListener('DOMContentLoaded', function(){
   renderDailyPortfolio();
 });
 
+
+/* ===== Generator availability + relaxed mode ===== */
+function buildRelaxedMathTicketPreviewFromPool(type, source, pool){
+  pool = Array.isArray(pool) ? pool.slice() : [];
+  if(!pool.length) return makeEmptyMathTicket(type, source, 'Nu există date populate în pool pentru acest generator.');
+
+  function makeTicket(picks, totalOdds, combinedProb, summary){
+    var t = makeMathTicketObject(type, source, picks, totalOdds, combinedProb, summary + ' • mod relaxat');
+    t.relaxed = true;
+    return t;
+  }
+
+  if(type === 'premium'){
+    var premium = pool.filter(function(item){
+      return Number(item.score || 0) >= 84 && Number(item.prob || 0) >= 72 && Number(item.odds || 0) >= 1.60 && Number(item.odds || 0) <= 2.55 && Math.max(Number(item.edge || 0), Number(item.edgeToPrice || 0)) > 7;
+    });
+    if(!premium.length) return makeEmptyMathTicket(type, source, 'Nici măcar pe praguri relaxate nu există un single premium suficient de curat.');
+    return makeTicket([premium[0]], premium[0].odds, premium[0].prob, 'Single premium cu praguri relaxate');
+  }
+
+  if(type === 'double'){
+    var list = pool.filter(function(item){
+      return Number(item.score || 0) >= 76 && Number(item.prob || 0) >= 58 && Number(item.odds || 0) >= 1.18 && Number(item.odds || 0) <= 2.40;
+    }).slice(0, 20);
+    var best = null;
+    for(var i=0;i<list.length;i++){
+      for(var j=i+1;j<list.length;j++){
+        var a = list[i], b = list[j];
+        if(areRowsCorrelated(a, b)) continue;
+        var totalOdds = Number(a.odds || 1) * Number(b.odds || 1);
+        var combinedProb = Number(a.prob || 0) * Number(b.prob || 0) / 100;
+        if(totalOdds < 2.35 || totalOdds > 4.40) continue;
+        if(combinedProb <= 38) continue;
+        var rank = rankMathSelection(type, [a, b], totalOdds, combinedProb);
+        if(!best || rank > best.rank) best = {picks:[a,b], totalOdds:totalOdds, combinedProb:combinedProb, rank:rank};
+      }
+    }
+    if(!best) return makeEmptyMathTicket(type, source, 'Nu există double valid nici pe praguri relaxate.');
+    return makeTicket(best.picks, best.totalOdds, best.combinedProb, 'Double confirmed cu praguri relaxate');
+  }
+
+  if(type === 'triple'){
+    var list = pool.filter(function(item){
+      return Number(item.score || 0) >= 70 && Number(item.prob || 0) >= 48 && Number(item.odds || 0) >= 1.22 && Number(item.odds || 0) <= 3.30;
+    }).slice(0, 20);
+    var best = null;
+    for(var i=0;i<list.length;i++){
+      for(var j=i+1;j<list.length;j++){
+        if(areRowsCorrelated(list[i], list[j])) continue;
+        for(var k=j+1;k<list.length;k++){
+          var a = list[i], b = list[j], c = list[k];
+          if(areRowsCorrelated(a, c) || areRowsCorrelated(b, c)) continue;
+          var picks = [a,b,c];
+          var totalOdds = picks.reduce(function(acc, item){ return acc * Number(item.odds || 1); }, 1);
+          var combinedProb = picks.reduce(function(acc, item){ return acc * (Number(item.prob || 0) / 100); }, 1) * 100;
+          if(totalOdds < 3.80 || totalOdds > 8.60) continue;
+          if(combinedProb <= 20) continue;
+          var rank = rankMathSelection(type, picks, totalOdds, combinedProb);
+          if(!best || rank > best.rank) best = {picks:picks, totalOdds:totalOdds, combinedProb:combinedProb, rank:rank};
+        }
+      }
+    }
+    if(!best) return makeEmptyMathTicket(type, source, 'Nu există triple suficient de bun nici pe praguri relaxate.');
+    return makeTicket(best.picks, best.totalOdds, best.combinedProb, 'Triple value cu praguri relaxate');
+  }
+
+  if(type === 'contrarian'){
+    var list = pool.filter(function(item){
+      return Number(item.score || 0) >= 66 && Number(item.odds || 0) >= 1.75 && Number(item.odds || 0) <= 3.60 && Number(item.edgeToPrice || 0) >= 3;
+    }).slice(0, 18);
+    var best = null;
+    for(var i=0;i<list.length;i++){
+      for(var j=i+1;j<list.length;j++){
+        var pair = [list[i], list[j]];
+        if(areRowsCorrelated(pair[0], pair[1])) continue;
+        var pairOdds = pair.reduce(function(acc, item){ return acc * Number(item.odds || 1); }, 1);
+        var pairProb = pair.reduce(function(acc, item){ return acc * (Number(item.prob || 0) / 100); }, 1) * 100;
+        if(pairOdds >= 5.5 && pairOdds <= 15 && pairProb >= 12 && pairProb <= 25){
+          var pairRank = rankMathSelection(type, pair, pairOdds, pairProb);
+          if(!best || pairRank > best.rank) best = {picks:pair, totalOdds:pairOdds, combinedProb:pairProb, rank:pairRank};
+        }
+      }
+    }
+    if(!best) return makeEmptyMathTicket(type, source, 'Nu există contrarian valid nici pe praguri relaxate.');
+    return makeTicket(best.picks, best.totalOdds, best.combinedProb, 'Contrarian cu praguri relaxate');
+  }
+
+  return makeEmptyMathTicket(type, source, 'Tip necunoscut.');
+}
+function getSourcePoolForGenerator(source){
+  if(source === 'audit') return typeof getAuditMathPool === 'function' ? getAuditMathPool() : [];
+  if(source === 'aimemory') return typeof getAiMemoryMathPool === 'function' ? getAiMemoryMathPool() : [];
+  return [];
+}
+function getGeneratorAvailability(source, type){
+  var pool = getSourcePoolForGenerator(source);
+  if(!pool.length) return {count:0, text:'Nu există date populate în pool.', klass:'warn'};
+  var count = 0;
+  if(type === 'premium') count = pool.filter(function(item){ return Number(item.score || 0) >= 88; }).length;
+  else if(type === 'double') count = pool.filter(function(item){ return Number(item.score || 0) >= 80; }).length;
+  else if(type === 'triple') count = pool.filter(function(item){ return Number(item.score || 0) >= 70 && Number(item.score || 0) < 90; }).length;
+  else if(type === 'contrarian') count = pool.filter(function(item){ return Number(item.score || 0) >= 70 && Number(item.edgeToPrice || 0) >= 4; }).length;
+  var label = type === 'premium' ? 'candidați premium' : type === 'double' ? 'candidați strong' : type === 'triple' ? 'candidați value' : 'candidați contrarian';
+  return {
+    count: count,
+    text: count ? ('Disponibile acum: ' + count + ' ' + label) : ('0 ' + label + ' pe pragurile actuale'),
+    klass: count ? 'ok' : 'warn'
+  };
+}
+function generateAuditTicketVariant(type, relaxed, silent){
+  AUDIT_TICKETS[type] = relaxed ? buildRelaxedMathTicketPreviewFromPool(type, 'audit', getAuditMathPool()) : buildMathTicketPreviewFromPool(type, 'audit', getAuditMathPool());
+  renderAuditTicket(type);
+  if(!silent) toast(AUDIT_TICKETS[type].label + ((AUDIT_TICKETS[type].picks && AUDIT_TICKETS[type].picks.length) ? (relaxed ? ' generat (relaxat)!' : ' generat!') : ' indisponibil acum'), AUDIT_TICKETS[type].picks && AUDIT_TICKETS[type].picks.length ? 'ok' : 'warn');
+}
+function generateAiMemoryTicketVariant(type, relaxed, silent){
+  AI_MEMORY_TICKETS[type] = relaxed ? buildRelaxedMathTicketPreviewFromPool(type, 'aimemory', getAiMemoryMathPool()) : buildMathTicketPreviewFromPool(type, 'aimemory', getAiMemoryMathPool());
+  renderAiMemoryTicket(type);
+  if(!silent) toast(AI_MEMORY_TICKETS[type].label + ((AI_MEMORY_TICKETS[type].picks && AI_MEMORY_TICKETS[type].picks.length) ? (relaxed ? ' generat (relaxat)!' : ' generat!') : ' indisponibil acum'), AI_MEMORY_TICKETS[type].picks && AI_MEMORY_TICKETS[type].picks.length ? 'ok' : 'warn');
+}
+function handleGenerateAuditTicketRelaxed(type, btn){
+  setButtonBusy(btn, true, 'Relaxat', 'Se generează...');
+  setTimeout(function(){
+    generateAuditTicketVariant(type, true, false);
+    setButtonBusy(btn, false, 'Relaxat', 'Se generează...');
+    updateGeneratorStatusBadges();
+  }, 120);
+}
+function handleGenerateAiMemoryTicketRelaxed(type, btn){
+  setButtonBusy(btn, true, 'Relaxat', 'Se generează...');
+  setTimeout(function(){
+    generateAiMemoryTicketVariant(type, true, false);
+    setButtonBusy(btn, false, 'Relaxat', 'Se generează...');
+    updateGeneratorStatusBadges();
+  }, 120);
+}
+function enhanceGeneratorCards(){
+  document.querySelectorAll('.memory-generator-card').forEach(function(card){
+    if(card.dataset.relaxedEnhanced === '1') return;
+    var status = card.querySelector('.generator-status');
+    var primaryBtn = card.querySelector('button.btn');
+    if(!status || !primaryBtn) return;
+    var type = '';
+    var mode = '';
+    if(status.id.indexOf('audit-status-') === 0){ type = status.id.replace('audit-status-', ''); mode = 'audit'; }
+    else if(status.id.indexOf('aimemory-status-') === 0){ type = status.id.replace('aimemory-status-', ''); mode = 'aimemory'; }
+    else return;
+    var row = document.createElement('div');
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '1fr 110px';
+    row.style.gap = '8px';
+    row.style.marginBottom = '8px';
+    primaryBtn.parentNode.insertBefore(row, primaryBtn);
+    row.appendChild(primaryBtn);
+    primaryBtn.style.width = '100%';
+    var relaxedBtn = document.createElement('button');
+    relaxedBtn.className = 'btn';
+    relaxedBtn.textContent = 'Relaxat';
+    relaxedBtn.style.width = '100%';
+    relaxedBtn.style.justifyContent = 'center';
+    relaxedBtn.style.background = 'rgba(255,255,255,.06)';
+    relaxedBtn.style.border = '1px solid rgba(255,255,255,.12)';
+    relaxedBtn.style.color = 'var(--txt)';
+    relaxedBtn.onclick = function(){
+      if(mode === 'audit') handleGenerateAuditTicketRelaxed(type, relaxedBtn);
+      else handleGenerateAiMemoryTicketRelaxed(type, relaxedBtn);
+    };
+    row.appendChild(relaxedBtn);
+    card.dataset.relaxedEnhanced = '1';
+  });
+}
+function updateGeneratorStatusBadges(){
+  ['premium','double','triple','contrarian'].forEach(function(type){
+    var auditInfo = getGeneratorAvailability('audit', type);
+    var auditTicket = AUDIT_TICKETS[type];
+    if(auditTicket && auditTicket.picks && auditTicket.picks.length) setGeneratorStatus('audit-status-' + type, 'Pool: ' + auditInfo.count + ' • ultima generare ' + fmtDateTime(auditTicket.generatedAt || new Date().toISOString()) + (auditTicket.relaxed ? ' • relaxat' : ''), 'ok');
+    else setGeneratorStatus('audit-status-' + type, auditInfo.text, auditInfo.klass);
+
+    var aiInfo = getGeneratorAvailability('aimemory', type);
+    var aiTicket = AI_MEMORY_TICKETS[type];
+    if(aiTicket && aiTicket.picks && aiTicket.picks.length) setGeneratorStatus('aimemory-status-' + type, 'Pool: ' + aiInfo.count + ' • ultima generare ' + fmtDateTime(aiTicket.generatedAt || new Date().toISOString()) + (aiTicket.relaxed ? ' • relaxat' : ''), 'ok');
+    else setGeneratorStatus('aimemory-status-' + type, aiInfo.text, aiInfo.klass);
+  });
+}
+function renderAuditGenerators(){
+  enhanceGeneratorCards();
+  getMathPortfolioTypes().forEach(function(type){
+    if(AUDIT_TICKETS[type]) renderAuditTicket(type);
+  });
+  updateGeneratorStatusBadges();
+}
+function renderAiMemoryGenerators(){
+  enhanceGeneratorCards();
+  getMathPortfolioTypes().forEach(function(type){
+    if(AI_MEMORY_TICKETS[type]) renderAiMemoryTicket(type);
+  });
+  updateGeneratorStatusBadges();
+}
+window.addEventListener('DOMContentLoaded', function(){
+  enhanceGeneratorCards();
+  setTimeout(updateGeneratorStatusBadges, 200);
+});
+
 </script>
 </body>
 </html>
