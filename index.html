@@ -684,6 +684,53 @@ body.more-open{overflow:hidden}
 .hybrid-prob-inline .delta-pos{color:var(--grn);font-weight:800}
 .hybrid-prob-inline .delta-neg{color:var(--red);font-weight:800}
 .hybrid-prob-inline .delta-neutral{color:var(--muted);font-weight:800}
+#tab-dashboard > :not(#dashboard-modern-shell){display:none!important}
+#dashboard-modern-shell{display:grid;gap:14px}
+.modern-monitor-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:20px;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(16,185,129,.08) 52%,rgba(168,85,247,.10));border:1px solid rgba(84,119,255,.22);box-shadow:0 16px 32px rgba(0,0,0,.18);position:relative;overflow:hidden}
+.modern-monitor-hero::after{content:'';position:absolute;inset:auto -20% -65% auto;width:280px;height:280px;background:radial-gradient(circle,rgba(59,130,246,.24),transparent 65%);pointer-events:none;animation:monitorPulse 4.6s ease-in-out infinite}
+.modern-kicker{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
+.modern-title{font-size:28px;font-weight:900;line-height:1.05;color:var(--txt);margin-top:6px}
+.modern-sub{font-size:12px;color:var(--muted);line-height:1.6;max-width:760px;margin-top:8px}
+.modern-meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.modern-meta-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.modern-live-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(10,14,23,.42);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:800;color:var(--txt)}
+.modern-live-dot{width:10px;height:10px;border-radius:50%;background:var(--grn);box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:monitorPulseDot 1.8s ease infinite}
+.modern-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.modern-kpi{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(12,18,32,.97));border:1px solid rgba(255,255,255,.07);box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.modern-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.modern-kpi-value{margin-top:8px;font-size:24px;font-weight:900;line-height:1;color:var(--txt);font-family:var(--mono)}
+.modern-kpi-sub{margin-top:8px;font-size:11px;line-height:1.45;color:var(--muted)}
+.modern-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
+.modern-panel{padding:15px 16px;border-radius:20px;background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07);box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.modern-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.modern-panel-title{font-size:14px;font-weight:800;color:var(--txt)}
+.modern-panel-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
+.modern-panel-chip{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;font-weight:800;color:var(--muted)}
+.monitor-flow{display:grid;gap:10px}
+.monitor-flow-row{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)}
+.monitor-flow-row:first-child{border-top:none;padding-top:0}
+.monitor-flow-label{font-size:11px;font-weight:800;color:var(--txt)}
+.monitor-flow-track{height:10px;border-radius:999px;background:rgba(255,255,255,.05);overflow:hidden;position:relative}
+.monitor-flow-fill{height:100%;border-radius:999px;position:relative;overflow:hidden}
+.monitor-flow-fill::after{content:'';position:absolute;top:0;bottom:0;left:-35%;width:35%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:monitorSweep 2.8s linear infinite}
+.monitor-flow-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.modern-list{display:grid;gap:10px}
+.modern-list-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.modern-list-label{font-size:12px;font-weight:700;color:var(--txt)}
+.modern-list-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.modern-list-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.modern-action-card{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(59,130,246,.10),rgba(15,23,42,.96));border:1px solid rgba(84,119,255,.18)}
+.modern-action-title{font-size:12px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.08em}
+.modern-action-main{font-size:18px;font-weight:900;color:var(--txt);line-height:1.3;margin-top:8px}
+.modern-action-sub{font-size:11px;line-height:1.6;color:var(--muted);margin-top:8px}
+.modern-action-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.modern-action-pill{padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
+@keyframes monitorPulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.08);opacity:1}}
+@keyframes monitorPulseDot{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@keyframes monitorSweep{0%{left:-35%}100%{left:115%}}
+@media(max-width:1100px){.modern-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.modern-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.modern-title{font-size:22px}.modern-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.modern-panel,.modern-monitor-hero{padding:14px}.monitor-flow-row{grid-template-columns:86px 1fr auto;gap:8px}}
+@media(max-width:520px){.modern-kpi-grid{grid-template-columns:1fr 1fr}.modern-action-main{font-size:16px}.modern-monitor-hero{padding:13px 12px}.modern-grid{gap:10px}}
 .section,.bankroll-card,.bilet-card,.help-panel,.visual-card,.trend-shell,.memory-shell,.focus-shell,.stat-card,.extra-form{border-radius:18px!important}
 .compact-context-panel{background:linear-gradient(180deg,rgba(13,18,31,.92),rgba(10,15,27,.94));border:1px solid rgba(255,255,255,.07)}
 #dashboard-stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;gap:10px!important}
@@ -835,6 +882,7 @@ body.more-open{overflow:hidden}
 
   <!-- ===== DASHBOARD ===== -->
   <div class="tab-content active" id="tab-dashboard">
+    <div id="dashboard-modern-shell"></div>
 
     <!-- Stats row -->
     <div class="stats-grid" id="dashboard-stats" style="margin-top:12px;margin-bottom:12px">
@@ -1956,6 +2004,7 @@ function renderDashboardVisuals(){
   if($('dash-category-meta')) $('dash-category-meta').textContent = 'aceleași categorii • 21 zile';
   renderVisualBarList('dash-category-chart', catRows, function(v){ return (v>=0?'+':'') + v.toFixed(1) + '%'; });
   renderDashboardMonitor();
+  renderModernDashboard();
 }
 
 function renderDashboardMonitor(){
@@ -1993,6 +2042,125 @@ function renderDashboardMonitor(){
       '<div class="monitor-meta">'+card.meta+'</div>'+
     '</div>';
   }).join('');
+}
+
+
+function renderModernDashboard(){
+  var target = $('dashboard-modern-shell');
+  if(!target) return;
+  var displayable = (ALL_MATCHES || []).filter(function(m){ return m && isMatchStillDisplayable(m); });
+  var eligible = displayable.filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE'; });
+  var valueStrong = eligible.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
+  var premiumSingles = eligible.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
+  var trackingOpen = (TRACKING || []).filter(function(t){ return t.status === 'pending'; });
+  var tracked = (TRACKING || []).length;
+  var auditRows = Array.isArray((SIGNAL_AUDIT || {}).rows) ? SIGNAL_AUDIT.rows : [];
+  var memoryRows = Array.isArray((AI_MEMORY || {}).by_market) ? AI_MEMORY.by_market : [];
+  var updatedAt = APP_META.generated_at || APP_META.updated_at || APP_META.last_refresh || null;
+  var nextMatch = eligible.slice().sort(function(a,b){ return new Date(a.date) - new Date(b.date); })[0] || null;
+  var bestMatch = eligible.slice().sort(function(a,b){
+    var as = (Number(a.smartScore || 0) * 0.5) + (Number((a.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((a.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((a.bestBet || {}).value || 0)) * 100 * 0.4);
+    var bs = (Number(b.smartScore || 0) * 0.5) + (Number((b.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((b.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((b.bestBet || {}).value || 0)) * 100 * 0.4);
+    return bs - as;
+  })[0] || null;
+  var marketCounts = {};
+  eligible.forEach(function(m){
+    var label = ((m.bestBet || {}).label) || '—';
+    marketCounts[label] = (marketCounts[label] || 0) + 1;
+  });
+  var marketRows = Object.keys(marketCounts).map(function(key){ return { label:key, value:marketCounts[key], sub:marketCounts[key] + ' setup-uri active' }; }).sort(function(a,b){ return b.value - a.value; }).slice(0,4);
+  var leagueCounts = {};
+  eligible.forEach(function(m){
+    var key = m.league || '—';
+    leagueCounts[key] = (leagueCounts[key] || 0) + 1;
+  });
+  var leagueRows = Object.keys(leagueCounts).map(function(key){ return { label:key, value:leagueCounts[key], sub:leagueCounts[key] + ' meciuri eligibile' }; }).sort(function(a,b){ return b.value - a.value; }).slice(0,4);
+  var verdictCounts = {safe:0, moderate:0, avoid:0};
+  displayable.forEach(function(m){ verdictCounts[m.verdict || 'avoid'] = (verdictCounts[m.verdict || 'avoid'] || 0) + 1; });
+  var flowRows = [
+    {label:'Evenimente', value:displayable.length, color:'linear-gradient(90deg,#3b82f6,#60a5fa)'},
+    {label:'Eligibile', value:eligible.length, color:'linear-gradient(90deg,#22c55e,#10b981)'},
+    {label:'Value+', value:valueStrong.length, color:'linear-gradient(90deg,#f59e0b,#f97316)'},
+    {label:'Audit', value:auditRows.length, color:'linear-gradient(90deg,#a855f7,#6366f1)'},
+    {label:'AI Memory', value:memoryRows.length, color:'linear-gradient(90deg,#06b6d4,#3b82f6)'},
+    {label:'Tracking', value:tracked, color:'linear-gradient(90deg,#f43f5e,#fb7185)'}
+  ];
+  var flowMax = flowRows.reduce(function(acc,row){ return Math.max(acc, row.value); }, 1) || 1;
+  var avgConfidence = eligible.length ? (eligible.reduce(function(acc,m){ return acc + Number(m.confidence || 0); }, 0) / eligible.length) : 0;
+  var coveragePct = displayable.length ? ((eligible.length * 100) / displayable.length) : 0;
+  var updatedText = updatedAt ? fmtDateTime(updatedAt) : '—';
+
+  function kpi(label, value, sub){
+    return '<div class="modern-kpi"><div class="modern-kpi-label">'+label+'</div><div class="modern-kpi-value">'+value+'</div><div class="modern-kpi-sub">'+sub+'</div></div>';
+  }
+  function flow(row){
+    var pct = Math.max(8, Math.round((Number(row.value || 0) * 100) / flowMax));
+    return '<div class="monitor-flow-row"><div class="monitor-flow-label">'+row.label+'</div><div class="monitor-flow-track"><div class="monitor-flow-fill" style="width:'+pct+'%;background:'+row.color+'"></div></div><div class="monitor-flow-value">'+row.value+'</div></div>';
+  }
+  function listRow(row, formatter){
+    return '<div class="modern-list-row"><div><div class="modern-list-label">'+row.label+'</div><div class="modern-list-sub">'+(row.sub || '')+'</div></div><div class="modern-list-value">'+formatter(row.value)+'</div></div>';
+  }
+
+  target.innerHTML = ''+
+    '<div class="modern-monitor-hero">'+
+      '<div>'+
+        '<div class="modern-kicker">Control Center</div>'+
+        '<div class="modern-title">Monitor grafic al aplicației</div>'+
+        '<div class="modern-sub">Panou compact și esențial: vezi instant ce intră în motor, cât de curat este pool-ul actual și unde merită să intri prima dată.</div>'+
+        '<div class="modern-meta-row">'+
+          '<span class="modern-meta-pill">Update '+updatedText+'</span>'+
+          '<span class="modern-meta-pill">Coverage '+coveragePct.toFixed(0)+'%</span>'+
+          '<span class="modern-meta-pill">Confidence mediu '+avgConfidence.toFixed(0)+'%</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="modern-live-badge"><span class="modern-live-dot"></span> monitor live</div>'+
+    '</div>'+
+    '<div class="modern-kpi-grid">'+
+      kpi('Live', displayable.length, 'meciuri încă afișabile în aplicație')+
+      kpi('Eligibile', eligible.length, 'setup-uri valide cu pronostic activ')+
+      kpi('Value+', valueStrong.length, 'edge real ≥ 3pp și value ≥ 8%')+
+      kpi('Premium', premiumSingles.length, 'single-uri de top în pool')+
+      kpi('Tracking', tracked, trackingOpen.length + ' încă deschise')+
+      kpi('Audit', auditRows.length, 'rânduri validate în audit')+
+    '</div>'+
+    '<div class="modern-grid">'+
+      '<div class="modern-panel">'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Flux motor</div><div class="modern-panel-sub">Unde se află volumul util: de la evenimente brute la selecții urmărite.</div></div><div class="modern-panel-chip">pipeline</div></div>'+
+        '<div class="monitor-flow">'+flowRows.map(flow).join('')+'</div>'+
+      '</div>'+
+      '<div class="modern-panel">'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Calitatea pool-ului</div><div class="modern-panel-sub">Distribuție rapidă a verdictelor curente din listă.</div></div><div class="modern-panel-chip">verdict</div></div>'+
+        '<div class="modern-list">'+
+          listRow({label:'Safe', sub:verdictCounts.safe + ' meciuri curate'}, function(v){ return String(v); })+
+          listRow({label:'Moderate', sub:verdictCounts.moderate + ' setup-uri de urmărit'}, function(v){ return String(v); })+
+          listRow({label:'Avoid', sub:verdictCounts.avoid + ' meciuri slabe sau fără setup'}, function(v){ return String(v); })+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modern-grid">'+
+      '<div class="modern-panel">'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Piețe și ligi dominante</div><div class="modern-panel-sub">Cele mai active zone din pool, utile pentru orientare rapidă.</div></div><div class="modern-panel-chip">snapshot</div></div>'+
+        '<div class="modern-list">'+
+          (marketRows.length ? marketRows.map(function(row){ return listRow(row, function(v){ return String(v); }); }).join('') : '<div class="visual-empty">Nu există încă suficiente piețe active.</div>')+
+        '</div>'+
+        '<div class="modern-list" style="margin-top:10px">'+
+          (leagueRows.length ? leagueRows.map(function(row){ return listRow(row, function(v){ return String(v); }); }).join('') : '')+
+        '</div>'+
+      '</div>'+
+      '<div class="modern-panel">'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Acțiune rapidă</div><div class="modern-panel-sub">Ce merită verificat prima dată fără să intri în toate taburile.</div></div><div class="modern-panel-chip">focus</div></div>'+
+        '<div class="modern-action-card">'+
+          '<div class="modern-action-title">Top oportunitate curentă</div>'+
+          '<div class="modern-action-main">'+(bestMatch ? (bestMatch.home + ' vs ' + bestMatch.away + ' — ' + ((bestMatch.bestBet || {}).label || '—')) : 'Nu există încă o selecție dominantă')+'</div>'+
+          '<div class="modern-action-sub">'+(bestMatch ? ('Șansă ' + fmtPct(Number((bestMatch.bestBet || {}).adjProb || 0)) + ' • edge ' + (Number((bestMatch.bestBet || {}).edgePct || 0) >= 0 ? '+' : '') + Number((bestMatch.bestBet || {}).edgePct || 0).toFixed(1) + 'pp • ' + ((bestMatch.why && String(bestMatch.why).trim()) ? bestMatch.why : buildRecommendationReasons(bestMatch, bestMatch.bestBet).slice(0,2).join(' • '))) : 'Așteaptă reîmprospătarea pool-ului pentru o recomandare mai puternică.')+'</div>'+
+          '<div class="modern-action-pills">'+
+            '<span class="modern-action-pill">Next '+(nextMatch ? (nextMatch.home + ' vs ' + nextMatch.away) : '—')+'</span>'+
+            '<span class="modern-action-pill">Refresh '+updatedText+'</span>'+
+            '<span class="modern-action-pill">Open tracking '+trackingOpen.length+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
 }
 
 function renderAuditVisuals(){
@@ -2133,6 +2301,7 @@ function switchTab(name){
   setDesktopTabActive(name);
   setMobileNavActive(name);
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  if(name==='dashboard') renderModernDashboard();
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
