@@ -1343,32 +1343,36 @@ body.more-open{overflow:hidden}
       <div id="smartbet-summary-grid"></div>
     </div>
 
-    <div id="smartbet-live-section">
-      <div style="display:grid;grid-template-columns:minmax(0,1.9fr) minmax(280px,1fr);gap:12px;align-items:start">
-        <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(59,130,246,.05),rgba(16,185,129,.03));border:1px solid rgba(59,130,246,.16);border-radius:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-            <div>
-              <div style="font-size:13px;font-weight:800;color:var(--txt)">🎯 Selecții validate</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:3px">Tabel compact cu toate informațiile esențiale.</div>
-            </div>
-            <div id="smartbet-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
-          </div>
-          <div id="smartbet-list"></div>
-        </div>
 
-        <div style="display:grid;gap:12px">
-          <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(16,185,129,.03));border:1px solid rgba(34,197,94,.16);border-radius:14px">
-            <div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">✅ Confirmări AI Memory</div>
-            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Pattern-uri pozitive în format compact.</div>
+    <div id="smartbet-live-section">
+      <div class="section" style="margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.04),rgba(239,68,68,.03));border:1px solid rgba(255,255,255,.08);border-radius:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:var(--txt)">🧩 Confirmări AI Memory / Blocaje active</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Tabel dublu, compact, cu pattern-urile pozitive și cele eliminate.</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+          <div>
+            <div style="font-size:12px;font-weight:800;color:var(--grn);margin-bottom:8px">✅ Confirmări AI Memory</div>
             <div id="smartbet-patterns-good"></div>
           </div>
-
-          <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(239,68,68,.05),rgba(168,85,247,.03));border:1px solid rgba(239,68,68,.16);border-radius:14px">
-            <div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">⛔ Blocaje active</div>
-            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Pattern-uri eliminate din pool-ul final.</div>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:var(--red);margin-bottom:8px">⛔ Blocaje active</div>
             <div id="smartbet-patterns-bad"></div>
           </div>
         </div>
+      </div>
+
+      <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(59,130,246,.05),rgba(16,185,129,.03));border:1px solid rgba(59,130,246,.16);border-radius:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:var(--txt)">🎯 Selecții validate</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Lista rămâne lizibilă, cu meciurile afișate clar.</div>
+          </div>
+          <div id="smartbet-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+        </div>
+        <div id="smartbet-list"></div>
       </div>
     </div>
 
@@ -9812,6 +9816,326 @@ function renderSmartBetHistory(){
         '<th style="padding:0 6px 8px 6px;font-weight:600">Logat</th>'+
         '<th style="padding:0 0 8px 6px;font-weight:600">Status</th>'+
       '</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+}
+
+
+/* ===== SMARTBET JOURNAL + READABLE LIVE LIST OVERRIDES ===== */
+var SMARTBET_HISTORY_ACTIVE_MARKET = window.SMARTBET_HISTORY_ACTIVE_MARKET || '';
+var SMARTBET_HISTORY_STORAGE_KEY = 'smartbet_history_journal_v20260413';
+function getSmartBetHistoryEntryKey(row){
+  if(!row) return 'na';
+  if(row.event_id != null) return String(row.event_id) + '|' + normalizeSmartBetMarketKey(row.marketKey || row.market_key || row.market);
+  return [String(row.home || '').toLowerCase(), String(row.away || '').toLowerCase(), row.event_date || row.date || '', normalizeSmartBetMarketKey(row.marketKey || row.market_key || row.market)].join('|');
+}
+function loadSmartBetHistoryJournal(){
+  try{
+    var raw = localStorage.getItem(SMARTBET_HISTORY_STORAGE_KEY);
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  }catch(err){ return []; }
+}
+function saveSmartBetHistoryJournal(rows){
+  try{ localStorage.setItem(SMARTBET_HISTORY_STORAGE_KEY, JSON.stringify(rows || [])); }catch(err){}
+}
+function getSmartBetOutcomeFromSources(entry){
+  var marketKey = normalizeSmartBetMarketKey(entry.marketKey || entry.market);
+  var hit = (HISTORY_ENGINE || []).find(function(r){
+    return normalizeSmartBetMarketKey(r.market_key || r.market) === marketKey &&
+      ((entry.event_id != null && r.event_id != null && Number(r.event_id) === Number(entry.event_id)) ||
+       (String(r.league || '').toLowerCase() === String(entry.league || '').toLowerCase() &&
+        String(r.market || '').toLowerCase() === String(entry.market || '').toLowerCase() &&
+        String(r.date || r.event_date || '').slice(0,10) === String(entry.event_date || '').slice(0,10)));
+  });
+  if(hit && hit.won != null){
+    return {
+      status: hit.won ? 'win' : 'lose',
+      settled_at: hit.date || hit.created_at || new Date().toISOString(),
+      home_score: hit.home_score,
+      away_score: hit.away_score
+    };
+  }
+  var logHit = (RECOMMENDATION_LOG || []).find(function(r){
+    return normalizeSmartBetMarketKey(r.market_key || r.market) === marketKey &&
+      ((entry.event_id != null && r.event_id != null && Number(r.event_id) === Number(entry.event_id)) ||
+       (String(r.home || '').toLowerCase() === String(entry.home || '').toLowerCase() &&
+        String(r.away || '').toLowerCase() === String(entry.away || '').toLowerCase() &&
+        String(r.event_date || '').slice(0,10) === String(entry.event_date || '').slice(0,10)));
+  });
+  if(logHit && logHit.status && String(logHit.status).toLowerCase() !== 'pending'){
+    return {
+      status: String(logHit.status).toLowerCase(),
+      settled_at: logHit.logged_at || logHit.prediction_created_at || new Date().toISOString(),
+      home_score: logHit.home_score,
+      away_score: logHit.away_score
+    };
+  }
+  return null;
+}
+function syncSmartBetHistoryJournal(pool){
+  var journal = loadSmartBetHistoryJournal();
+  var map = {};
+  journal.forEach(function(entry){ map[getSmartBetHistoryEntryKey(entry)] = entry; });
+
+  (pool || []).forEach(function(row){
+    var eventTime = new Date(row.event_date || 0).getTime();
+    if(isFinite(eventTime) && eventTime < new Date().setHours(0,0,0,0)) return;
+    var key = getSmartBetHistoryEntryKey(row);
+    if(!map[key]){
+      map[key] = {
+        event_id: row.event_id,
+        home: row.home || '',
+        away: row.away || '',
+        league: row.league || '',
+        event_date: row.event_date || '',
+        market: smartBetMarketLabel(row.marketKey, row),
+        marketKey: normalizeSmartBetMarketKey(row.marketKey || row.market),
+        odds: Number(row.displayOdds || row.odds || 0),
+        adjusted_prob: Number(row.prob || row.adjusted_prob || 0),
+        edge_pct: Number(row.edge || row.edge_pct || 0),
+        score: Number(row.smartScore || row.score || 0),
+        smart_score: Number(row.smartScore || row.score || 0),
+        logged_at: new Date().toISOString(),
+        status: 'pending',
+        result_label: ''
+      };
+    }else if(map[key].status === 'pending'){
+      map[key].odds = Number(row.displayOdds || row.odds || map[key].odds || 0);
+      map[key].adjusted_prob = Number(row.prob || row.adjusted_prob || map[key].adjusted_prob || 0);
+      map[key].edge_pct = Number(row.edge || row.edge_pct || map[key].edge_pct || 0);
+      map[key].score = Number(row.smartScore || row.score || map[key].score || 0);
+      map[key].smart_score = Number(row.smartScore || row.score || map[key].smart_score || 0);
+    }
+  });
+
+  var out = Object.keys(map).map(function(k){
+    var entry = map[k];
+    if(entry.status === 'pending'){
+      var outcome = getSmartBetOutcomeFromSources(entry);
+      if(outcome){
+        entry.status = outcome.status;
+        entry.settled_at = outcome.settled_at;
+        entry.home_score = outcome.home_score;
+        entry.away_score = outcome.away_score;
+      }
+    }
+    return entry;
+  }).sort(function(a,b){
+    return new Date(b.logged_at || 0).getTime() - new Date(a.logged_at || 0).getTime();
+  });
+
+  saveSmartBetHistoryJournal(out);
+  return out;
+}
+function getSmartBetHistoryRows(){
+  var cutoff = getSmartBetHistoryCutoff();
+  return loadSmartBetHistoryJournal().filter(function(r){
+    var when = new Date(r.logged_at || 0);
+    return !cutoff || (isFinite(when.getTime()) && when >= cutoff);
+  });
+}
+function renderSmartBetPatternLists(analysis){
+  var good = $('smartbet-patterns-good');
+  var bad = $('smartbet-patterns-bad');
+  function buildTable(list, positive){
+    if(!list || !list.length) return '<div class="empty-state" style="padding:10px">Nicio intrare disponibilă.</div>';
+    var color = positive ? 'var(--grn)' : 'var(--red)';
+    return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:280px">'+
+      '<thead><tr style="color:var(--muted);text-align:left">'+
+        '<th style="padding:0 0 8px 0;font-weight:600">Pattern</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Score</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">ROI</th>'+
+        '<th style="padding:0 0 8px 6px;font-weight:600">Meciuri</th>'+
+      '</tr></thead>'+
+      '<tbody>'+list.map(function(p){
+        return '<tr style="border-top:1px solid rgba(255,255,255,.06)">'+
+          '<td style="padding:8px 6px 8px 0;color:var(--txt);font-weight:600">'+(p.label || '—')+'</td>'+
+          '<td style="padding:8px 6px;color:'+color+';font-family:var(--mono)">'+Number(p.memory_score || 0).toFixed(0)+'</td>'+
+          '<td style="padding:8px 6px;color:'+(Number(p.roi || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+fmtSignedPct(Number(p.roi || 0))+'</td>'+
+          '<td style="padding:8px 0 8px 6px;color:var(--txt)">'+(p.raw_bets || 0)+'</td>'+
+        '</tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+  if(good) good.innerHTML = buildTable(analysis.topPositive || [], true);
+  if(bad) bad.innerHTML = buildTable(analysis.avoidPatterns || [], false);
+}
+function renderSmartBet(){
+  var summary = $('smartbet-summary-grid');
+  var list = $('smartbet-list');
+  var updated = $('smartbet-updated');
+  var meta = $('smartbet-list-meta');
+  if(!summary || !list) return;
+
+  var analysis = getSmartBetAnalysis();
+  var pool = analysis.pool || [];
+  var blocked = analysis.blocked || [];
+  syncSmartBetHistoryJournal(pool);
+
+  if(updated){
+    var ts = (AI_MEMORY && AI_MEMORY.updated_at) || (SIGNAL_AUDIT && SIGNAL_AUDIT.updated_at) || (APP_META && APP_META.updated_at) || '';
+    updated.textContent = ts ? ('SmartBet actualizat: ' + fmtDateTime(ts)) : 'SmartBet: —';
+  }
+  if(meta) meta.textContent = pool.length + ' validate • ' + blocked.length + ' blocate';
+
+  var avgScore = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.smartScore || 0); },0) / pool.length) : 0;
+  var avgEdge = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.edge || 0); },0) / pool.length) : 0;
+  var avgValue = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.value || 0) * 100; },0) / pool.length) : 0;
+  var avgProb = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.prob || 0); },0) / pool.length) : 0;
+
+  var cards = [
+    {label:'Validate', value:String(pool.length), sub:'trecute prin ambele filtre', color:'var(--acc)'},
+    {label:'Blocate', value:String(blocked.length), sub:'tăiate de pattern negativ', color:'var(--red)'},
+    {label:'Smart score', value:pool.length ? avgScore.toFixed(1) : '—', sub:'media scorului final', color:'var(--pur)'},
+    {label:'Prob. medie', value:pool.length ? fmtPct(avgProb) : '—', sub:'probabilitate ajustată medie', color:'var(--grn)'},
+    {label:'Edge mediu', value:pool.length ? fmtSignedPct(avgEdge) : '—', sub:'avantaj model vs piață', color:'var(--yel)'},
+    {label:'Value mediu', value:pool.length ? fmtSignedPct(avgValue) : '—', sub:'EV mediu rămas în pool', color:'var(--cyan)'}
+  ];
+  summary.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">'+
+    cards.map(function(card){ return smartBetSafeCell(card, card.color); }).join('')+
+  '</div>';
+
+  if(!pool.length){
+    list.innerHTML = '<div class="empty-state">În acest refresh nu există selecții care să treacă simultan filtrul Audit Kelly și validarea AI Memory.</div>';
+    renderSmartBetPatternLists(analysis);
+    setSmartBetView(SMARTBET_VIEW || 'live');
+    return;
+  }
+
+  list.innerHTML = pool.map(function(r, idx){
+    var valuePct = Number(r.value || 0) * 100;
+    return '<div class="audit-row" style="margin-bottom:10px">'+
+      '<div class="audit-row-header">'+
+        '<div class="audit-row-main">'+
+          '<div class="audit-row-titleline"><span class="audit-row-rank">#'+(idx+1)+'</span><div class="audit-row-teams">'+(r.home || '—')+' vs '+(r.away || '—')+'</div></div>'+
+          '<div class="audit-row-meta">'+(r.league || '—')+' • '+(r.event_date ? (fmtDate(r.event_date)+' • '+fmtTime(r.event_date)) : '—')+' • '+(r.directAdaptive ? 'AI direct' : 'Pattern confirmat')+'</div>'+
+        '</div>'+
+        '<div class="audit-pick-box">'+
+          '<div class="audit-pick-label">SmartBet pick</div>'+
+          '<div class="audit-pick-value">'+smartBetMarketLabel(r.marketKey, r)+' @ '+Number(r.displayOdds || 0).toFixed(2)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="audit-row-tags">'+
+        '<span class="audit-badge" style="color:var(--pur)">Smart '+Number(r.smartScore || 0).toFixed(0)+'</span>'+
+        '<span class="audit-badge" style="color:'+(Number(r.memoryBonus || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(Number(r.memoryBonus || 0) >= 0 ? '+' : '')+Number(r.memoryBonus || 0).toFixed(1)+'</span>'+
+        '<span class="audit-badge">Kelly '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span>'+
+      '</div>'+
+      '<div class="audit-stat-grid">'+
+        '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.prob || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Value</div><div class="audit-stat-value">'+fmtSignedPct(valuePct)+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Adaptive</div><div class="audit-stat-value">'+Number(r.adaptiveScore || 0).toFixed(0)+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  renderSmartBetPatternLists(analysis);
+  setSmartBetView(SMARTBET_VIEW || 'live');
+  setSmartBetHistoryRange(SMARTBET_HISTORY_RANGE || '30d');
+}
+function setSmartBetHistoryRange(range){
+  SMARTBET_HISTORY_RANGE = range || '30d';
+  ['7d','30d','90d','180d','365d','all'].forEach(function(key){
+    var el = $('smartbet-range-' + key);
+    if(!el) return;
+    el.style.background = 'rgba(255,255,255,.04)';
+    el.style.border = '1px solid rgba(255,255,255,.10)';
+    el.style.color = 'var(--txt)';
+    if(key === SMARTBET_HISTORY_RANGE){
+      el.style.background = 'rgba(168,85,247,.14)';
+      el.style.border = '1px solid rgba(168,85,247,.28)';
+      el.style.color = 'var(--pur)';
+    }
+  });
+  renderSmartBetHistory();
+}
+function renderSmartBetHistory(){
+  var root = $('smartbet-history-root');
+  if(!root) return;
+  var rows = getSmartBetHistoryRows();
+  if(!rows.length){
+    root.innerHTML = '<div class="empty-state">Istoricul SmartBet pornește de azi înainte. Deocamdată nu există intrări salvate pe intervalul selectat.</div>';
+    return;
+  }
+
+  var byMarket = {};
+  rows.forEach(function(r){
+    var k = r.marketKey || 'misc';
+    if(!byMarket[k]) byMarket[k] = {market:k, label:smartBetMarketLabel(k, r), list:[], pending:0, settled:0, wins:0, profit:0};
+    byMarket[k].list.push(r);
+    if(r.status === 'pending') byMarket[k].pending += 1;
+    else {
+      byMarket[k].settled += 1;
+      byMarket[k].wins += r.status === 'win' ? 1 : 0;
+      byMarket[k].profit += r.status === 'win' ? (Number(r.odds || 0) - 1) : -1;
+    }
+  });
+  var groups = Object.keys(byMarket).map(function(k){
+    var g = byMarket[k];
+    g.roi = g.settled ? (g.profit / g.settled) * 100 : 0;
+    g.winrate = g.settled ? (g.wins / g.settled) * 100 : 0;
+    return g;
+  }).sort(function(a,b){ return a.label.localeCompare(b.label); });
+
+  if(!SMARTBET_HISTORY_ACTIVE_MARKET && groups.length) SMARTBET_HISTORY_ACTIVE_MARKET = groups[0].market;
+  if(groups.every(function(g){ return g.market !== SMARTBET_HISTORY_ACTIVE_MARKET; })) SMARTBET_HISTORY_ACTIVE_MARKET = groups[0].market;
+
+  var settled = rows.filter(function(r){ return r.status !== 'pending'; });
+  var pending = rows.filter(function(r){ return r.status === 'pending'; });
+  var bets = settled.length;
+  var wins = settled.filter(function(r){ return r.status === 'win'; }).length;
+  var profit = settled.reduce(function(acc,r){ return acc + (r.status === 'win' ? (Number(r.odds || 0) - 1) : -1); }, 0);
+  var roi = bets ? (profit / bets) * 100 : 0;
+  var winrate = bets ? (wins / bets) * 100 : 0;
+  var avgOdds = bets ? (settled.reduce(function(acc,r){ return acc + Number(r.odds || 0); },0) / bets) : 0;
+
+  var cards = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px">'+
+    smartBetSafeCell({label:'ROI', value:bets ? ((roi >= 0 ? '+' : '') + roi.toFixed(1)+'%') : '—', sub:'din meciurile închise'}, bets ? (roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+
+    smartBetSafeCell({label:'Win rate', value:bets ? winrate.toFixed(1)+'%' : '—', sub:'câștigate / jucate'}, 'var(--acc)')+
+    smartBetSafeCell({label:'Meciuri', value:String(bets), sub:'închise în interval'}, 'var(--txt)')+
+    smartBetSafeCell({label:'Pending', value:String(pending.length), sub:'în așteptare'}, 'var(--yel)')+
+    smartBetSafeCell({label:'Profit unit', value:bets ? (profit >= 0 ? '+' : '') + profit.toFixed(2) : '—', sub:'miza 1 unit / pick'}, profit >= 0 ? 'var(--grn)' : 'var(--red)')+
+    smartBetSafeCell({label:'Cota medie', value:bets ? avgOdds.toFixed(2) : '—', sub:'pe meciurile închise'}, 'var(--pur)')+
+  '</div>';
+
+  var marketButtons = '<div class="history-card-grid" style="margin-bottom:12px">'+groups.map(function(g){
+    var active = SMARTBET_HISTORY_ACTIVE_MARKET === g.market;
+    var roiText = g.settled ? ((g.roi >= 0 ? '+' : '') + g.roi.toFixed(1)+'%') : '—';
+    return '<button class="history-summary-card'+(active ? ' active' : '')+'" onclick="setSmartBetHistoryMarket(&quot;'+g.market+'&quot;)">'+
+      '<div class="history-summary-top">'+
+        '<div><div class="history-summary-label">'+g.label+'</div><div class="history-summary-note">'+SMARTBET_HISTORY_RANGE+'</div></div>'+
+        '<div class="history-summary-roi" style="color:'+(g.settled ? (g.roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+'">'+roiText+'</div>'+
+      '</div>'+
+      '<div class="history-metric-row">'+
+        '<div class="history-metric"><div class="k">Win rate</div><div class="v">'+(g.settled ? g.winrate.toFixed(1)+'%' : '—')+'</div></div>'+
+        '<div class="history-metric"><div class="k">Win / jucate</div><div class="v">'+g.wins+'/'+g.settled+'</div></div>'+
+        '<div class="history-metric"><div class="k">Pending</div><div class="v">'+g.pending+'</div></div>'+
+        '<div class="history-metric"><div class="k">Total</div><div class="v">'+g.list.length+'</div></div>'+
+      '</div>'+
+    '</button>';
+  }).join('')+'</div>';
+
+  var current = groups.find(function(g){ return g.market === SMARTBET_HISTORY_ACTIVE_MARKET; }) || groups[0];
+  var rowsHtml = current.list.length ? current.list.map(function(r){
+    var color = r.status === 'win' ? 'var(--grn)' : (r.status === 'lose' ? 'var(--red)' : 'var(--yel)');
+    var label = r.status === 'win' ? 'WIN' : (r.status === 'lose' ? 'LOSE' : 'PENDING');
+    return '<div class="history-row">'+
+      '<div class="history-row-head">'+
+        '<div>'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="history-row-title">'+(r.home || '—')+' vs '+(r.away || '—')+'</div><span style="font-size:10px;color:var(--acc);border:1px solid rgba(59,130,246,.22);padding:2px 7px;border-radius:999px;background:rgba(59,130,246,.10)">'+(r.market || '—')+'</span></div>'+
+          '<div class="history-row-sub">'+(r.league || '—')+'</div>'+
+          '<div class="history-row-meta">Logat '+fmtDateTime(r.logged_at || '')+' • Meci '+(r.event_date ? fmtDateTime(r.event_date) : '—')+' • '+Number(r.odds || 0).toFixed(2)+'</div>'+
+          '<div class="history-row-meta">Prob. ajustată '+Number(r.adjusted_prob || 0).toFixed(1)+'% • Edge '+(Number(r.edge_pct || 0) >= 0 ? '+' : '')+Number(r.edge_pct || 0).toFixed(1)+'% • Smart '+Number(r.smart_score || r.score || 0).toFixed(1)+'</div>'+
+          '<div class="history-row-meta">'+((r.home_score != null && r.away_score != null) ? ('Scor final ' + r.home_score + '-' + r.away_score) : 'În așteptare / neînchis încă')+'</div>'+
+        '</div>'+
+        '<div class="history-status-pill" style="background:'+(r.status === 'win' ? 'rgba(34,197,94,.12)' : (r.status === 'lose' ? 'rgba(239,68,68,.12)' : 'rgba(245,158,11,.12)'))+';border:1px solid rgba(255,255,255,.08);color:'+color+'">'+label+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('') : '<div class="empty-state" style="margin-top:8px">Nu există încă evenimente pentru categoria selectată.</div>';
+
+  root.innerHTML = cards + marketButtons + '<div class="history-detail-card">'+rowsHtml+'</div>';
+}
+function setSmartBetHistoryMarket(market){
+  SMARTBET_HISTORY_ACTIVE_MARKET = market;
+  renderSmartBetHistory();
 }
 
 
