@@ -747,13 +747,33 @@ body.more-open{overflow:hidden}
 #history21-root .history-row-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
 #history21-root .history-row-meta{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.55}
 #history21-root .history-status-pill{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800}
+#smartbet-history-root .history-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin-bottom:14px}
+#smartbet-history-root .history-summary-card{border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(17,25,42,.94),rgba(12,18,32,.96));border-radius:16px;padding:12px;cursor:pointer;transition:all .18s ease;text-align:left}
+#smartbet-history-root .history-summary-card:hover{transform:translateY(-1px);border-color:rgba(84,119,255,.22)}
+#smartbet-history-root .history-summary-card.active{border-color:rgba(59,130,246,.34);background:linear-gradient(135deg,rgba(59,130,246,.13),rgba(34,197,94,.06))}
+#smartbet-history-root .history-summary-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+#smartbet-history-root .history-summary-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+#smartbet-history-root .history-summary-roi{font-size:24px;font-weight:900;font-family:var(--mono);line-height:1}
+#smartbet-history-root .history-summary-note{font-size:10px;color:var(--muted);margin-top:4px}
+#smartbet-history-root .history-metric-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+#smartbet-history-root .history-metric{padding:8px 9px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+#smartbet-history-root .history-metric .k{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+#smartbet-history-root .history-metric .v{font-size:13px;font-weight:800;color:var(--txt);margin-top:4px}
+#smartbet-history-root .history-detail-card{padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(17,25,42,.94),rgba(12,18,32,.96))}
+#smartbet-history-root .history-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+#smartbet-history-root .history-row{padding:12px 0;border-top:1px solid rgba(255,255,255,.06)}
+#smartbet-history-root .history-row-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+#smartbet-history-root .history-row-title{font-size:13px;font-weight:800;color:var(--txt)}
+#smartbet-history-root .history-row-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+#smartbet-history-root .history-row-meta{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.55}
+#smartbet-history-root .history-status-pill{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800}
 .visual-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .visual-card-title{font-size:14px!important}
 .visual-card-sub{font-size:11px!important;line-height:1.55}
 #focus-shell{display:none!important}
 @media(max-width:980px){.generator-board{grid-template-columns:1fr}.dashboard-monitor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:620px){.dashboard-monitor-grid,#history21-root .history-card-grid{grid-template-columns:1fr 1fr}.match-card .ticket-mini-grid.ticket-mini-grid-premium{grid-template-columns:repeat(3,1fr)}.card-reco-pick{font-size:16px!important}}
-@media(max-width:520px){.dashboard-monitor-grid,#history21-root .history-card-grid{grid-template-columns:1fr}.bilet-title{font-size:16px!important}.match-card{padding:12px!important}}
+@media(max-width:620px){.dashboard-monitor-grid,#history21-root .history-card-grid,#smartbet-history-root .history-card-grid{grid-template-columns:1fr 1fr}.match-card .ticket-mini-grid.ticket-mini-grid-premium{grid-template-columns:repeat(3,1fr)}.card-reco-pick{font-size:16px!important}}
+@media(max-width:520px){.dashboard-monitor-grid,#history21-root .history-card-grid,#smartbet-history-root .history-card-grid{grid-template-columns:1fr}.bilet-title{font-size:16px!important}.match-card{padding:12px!important}}
 
 
 #tab-dashboard > :not(#dashboard-modern-shell){display:none!important}
