@@ -2056,7 +2056,7 @@ function renderModernDashboard(){
   var statusTime = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : '';
   var rawMl = Number(statusMetrics.ml || 0);
   var rawOdds = Number(statusMetrics.odds || 0);
-  var eligibleLocal = (ALL_MATCHES || []).filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE'; });
+  var eligibleLocal = (ALL_MATCHES || []).filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE' && isMatchStillDisplayable(m); });
   var dashboardAllPredictions = eligibleLocal.length;
   var valueStrong = eligibleLocal.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
   var premiumSingles = eligibleLocal.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
