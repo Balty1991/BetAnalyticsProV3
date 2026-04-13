@@ -2113,7 +2113,7 @@ function renderModernDashboard(){
     '<div class="modern-kpi-grid">'+
       kpi('Toate predicțiile', dashboardAllPredictions, 'apasă pentru lista completă din categoria Meciuri', "openDashboardStream('all_predictions')")+
       kpi('Doar Pro', proActiveCount, 'apasă pentru lista cu filtrul Pro activat', "openDashboardStream('pro_active')")+
-      kpi('Value+', valueStrong.length, 'value local ≥ 8% și edge ≥ 3pp')+
+      kpi('Value+', valueStrong.length, 'apasă pentru lista Value din categoria Meciuri', "openDashboardStream('value_active')")+
       kpi('Premium', premiumSingles.length, 'single-uri locale de top')+
       kpi('Tracking', tracked, trackingOpen + ' încă deschise')+
       kpi('Audit', auditRows.length, 'rânduri validate în audit')+
@@ -4337,13 +4337,18 @@ function setFilter(f, btn){
 }
 
 
-function openDashboardStream(type){
-  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : ((type === 'all_predictions' || type === 'pro_active') ? 'all' : 'dashboard_ml_sync');
+function activateMatchFilterButton(filterKey){
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-  if(type === 'all_predictions' || type === 'pro_active'){
-    var allBtn = document.querySelector('.filter-btn');
-    if(allBtn) allBtn.classList.add('active');
-  }
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.filter-btn'));
+  var target = buttons.find(function(btn){
+    return String(btn.getAttribute('onclick') || '').indexOf("setFilter('" + filterKey + "'") !== -1;
+  });
+  if(target) target.classList.add('active');
+}
+
+function openDashboardStream(type){
+  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : ((type === 'all_predictions' || type === 'pro_active') ? 'all' : (type === 'value_active' ? 'value' : 'dashboard_ml_sync'));
+  activateMatchFilterButton(type === 'value_active' ? 'value' : ((type === 'all_predictions' || type === 'pro_active') ? 'all' : ''));
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
