@@ -10095,8 +10095,11 @@ function renderSmartBetHistory(){
     return g;
   }).sort(function(a,b){ return a.label.localeCompare(b.label); });
 
-  if(!SMARTBET_HISTORY_ACTIVE_MARKET && groups.length) SMARTBET_HISTORY_ACTIVE_MARKET = groups[0].market;
-  if(groups.every(function(g){ return g.market !== SMARTBET_HISTORY_ACTIVE_MARKET; })) SMARTBET_HISTORY_ACTIVE_MARKET = groups[0].market;
+  var rangeLabelMap = {'7d':'7 zile','30d':'30 zile','90d':'3 luni','180d':'6 luni','365d':'1 an','all':'Total'};
+  var rangeLabel = rangeLabelMap[SMARTBET_HISTORY_RANGE] || '30 zile';
+
+  if(!SMARTBET_HISTORY_ACTIVE_MARKET) SMARTBET_HISTORY_ACTIVE_MARKET = 'all';
+  if(SMARTBET_HISTORY_ACTIVE_MARKET !== 'all' && groups.every(function(g){ return g.market !== SMARTBET_HISTORY_ACTIVE_MARKET; })) SMARTBET_HISTORY_ACTIVE_MARKET = 'all';
 
   var settled = rows.filter(function(r){ return r.status !== 'pending'; });
   var pending = rows.filter(function(r){ return r.status === 'pending'; });
@@ -10116,24 +10119,40 @@ function renderSmartBetHistory(){
     smartBetSafeCell({label:'Cota medie', value:bets ? avgOdds.toFixed(2) : '—', sub:'pe meciurile închise'}, 'var(--pur)')+
   '</div>';
 
-  var marketButtons = '<div class="history-card-grid" style="margin-bottom:12px">'+groups.map(function(g){
+  var allGroup = {
+    market:'all',
+    label:'TOATE',
+    list:rows.slice(),
+    pending:pending.length,
+    settled:bets,
+    wins:wins,
+    profit:profit,
+    roi:roi,
+    winrate:winrate
+  };
+
+  var displayGroups = [allGroup].concat(groups);
+
+  var marketButtons = '<div class="history-card-grid" style="margin-bottom:12px">'+displayGroups.map(function(g){
     var active = SMARTBET_HISTORY_ACTIVE_MARKET === g.market;
     var roiText = g.settled ? ((g.roi >= 0 ? '+' : '') + g.roi.toFixed(1)+'%') : '—';
     return '<button class="history-summary-card'+(active ? ' active' : '')+'" onclick="setSmartBetHistoryMarket(&quot;'+g.market+'&quot;)">'+
       '<div class="history-summary-top">'+
-        '<div><div class="history-summary-label">'+g.label+'</div><div class="history-summary-note">'+SMARTBET_HISTORY_RANGE+'</div></div>'+
+        '<div><div class="history-summary-label">'+g.label+'</div><div class="history-summary-note">'+rangeLabel+'</div></div>'+
         '<div class="history-summary-roi" style="color:'+(g.settled ? (g.roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+'">'+roiText+'</div>'+
       '</div>'+
       '<div class="history-metric-row">'+
         '<div class="history-metric"><div class="k">Win rate</div><div class="v">'+(g.settled ? g.winrate.toFixed(1)+'%' : '—')+'</div></div>'+
-        '<div class="history-metric"><div class="k">Win / jucate</div><div class="v">'+g.wins+'/'+g.settled+'</div></div>'+
-        '<div class="history-metric"><div class="k">Pending</div><div class="v">'+g.pending+'</div></div>'+
-        '<div class="history-metric"><div class="k">Total</div><div class="v">'+g.list.length+'</div></div>'+
+        '<div class="history-metric"><div class="k">Win / jucate</div><div class="v">'+(g.wins || 0)+'/'+(g.settled || 0)+'</div></div>'+
+        '<div class="history-metric"><div class="k">Pending</div><div class="v">'+(g.pending || 0)+'</div></div>'+
+        '<div class="history-metric"><div class="k">Total</div><div class="v">'+(g.list ? g.list.length : 0)+'</div></div>'+
       '</div>'+
     '</button>';
   }).join('')+'</div>';
 
-  var current = groups.find(function(g){ return g.market === SMARTBET_HISTORY_ACTIVE_MARKET; }) || groups[0];
+  var current = SMARTBET_HISTORY_ACTIVE_MARKET === 'all'
+    ? allGroup
+    : (groups.find(function(g){ return g.market === SMARTBET_HISTORY_ACTIVE_MARKET; }) || allGroup);
   var rowsHtml = current.list.length ? current.list.map(function(r){
     var color = r.status === 'win' ? 'var(--grn)' : (r.status === 'lose' ? 'var(--red)' : 'var(--yel)');
     var label = r.status === 'win' ? 'WIN' : (r.status === 'lose' ? 'LOSE' : 'PENDING');
