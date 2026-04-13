@@ -1386,48 +1386,9 @@ body.more-open{overflow:hidden}
       </div>
     </div>
 
-    <div class="section memory-panel memory-mix" style="margin-top:14px">
-      <div class="memory-shell-head">
-        <div>
-          <div class="memory-shell-title">🎫 Generatoare SmartBet</div>
-          <div class="memory-shell-sub">Bilete construite exclusiv din pool-ul validat prin fuziunea Audit + AI Memory.</div>
-        </div>
-        <div class="memory-shell-meta">SafeBet / HybridBet / ValueBet</div>
-      </div>
-      <div class="memory-generator-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
-        <div class="memory-generator-card premium">
-          <div class="memory-generator-title">🛡️ SafeBet</div>
-          <div class="memory-generator-sub">2-3 selecții cu probabilitate ridicată, scor mare și memorie favorabilă.</div>
-          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px">
-            <button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGenerateSmartBetTicket('safe', this, false)">Generează</button>
-            <button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGenerateSmartBetTicket('safe', this, true)">Relaxat</button>
-          </div>
-          <div class="generator-status" id="smartbet-status-safe">Așteaptă o generare.</div>
-          <div id="smartbet-ticket-safe" style="margin-top:12px"></div>
-        </div>
-
-        <div class="memory-generator-card double">
-          <div class="memory-generator-title">⚖️ HybridBet</div>
-          <div class="memory-generator-sub">3-4 selecții echilibrate între edge, value și confirmare istorică.</div>
-          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px">
-            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGenerateSmartBetTicket('hybrid', this, false)">Generează</button>
-            <button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGenerateSmartBetTicket('hybrid', this, true)">Relaxat</button>
-          </div>
-          <div class="generator-status" id="smartbet-status-hybrid">Așteaptă o generare.</div>
-          <div id="smartbet-ticket-hybrid" style="margin-top:12px"></div>
-        </div>
-
-        <div class="memory-generator-card contrarian">
-          <div class="memory-generator-title">🚀 ValueBet</div>
-          <div class="memory-generator-sub">2-4 selecții cu value mai puternic și preț total mai agresiv, dar validate de ambele motoare.</div>
-          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px">
-            <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGenerateSmartBetTicket('value', this, false)">Generează</button>
-            <button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGenerateSmartBetTicket('value', this, true)">Relaxat</button>
-          </div>
-          <div class="generator-status" id="smartbet-status-value">Așteaptă o generare.</div>
-          <div id="smartbet-ticket-value" style="margin-top:12px"></div>
-        </div>
-      </div>
+        <div class="section" style="margin-top:14px;padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(168,85,247,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px">
+      <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:6px">ℹ️ SmartBet rămâne doar filtru de selecție</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">La cererea ta, generatoarele SmartBet au fost scoase. Tabul rămâne dedicat exclusiv listei validate și confirmărilor din AI Memory.</div>
     </div>
   </div>
 
@@ -9160,8 +9121,18 @@ function getSmartBetAnalysis(){
     var patternOnly = !directAdaptive && !!bestPositive;
     if(!directAdaptive && !patternOnly) return;
 
+    var probAdj = Number(row.adjusted_prob || 0);
+    var kellyPct = Number(row.kelly_quarter_pct || 0);
+    var edgePct = Number(row.edge_pct || 0);
+    if(directAdaptive){
+      if(probAdj < 74 || edgePct < 4) return;
+    } else {
+      if(probAdj < 78 || kellyPct <= 0.5 || edgePct < 5.5) return;
+      if(bestPositive && Number(bestPositive.raw_bets || 0) < 6) return;
+    }
+
     var memoryBonus = directAdaptive ? Number(adaptive.memory_bonus || 0) : Number(bestPositive && bestPositive.memory_score || 0);
-    var adaptiveScore = directAdaptive ? Number(adaptive.adaptive_score || 0) : Math.max(60, Number(row.adjusted_prob || 0) + Number(bestPositive && bestPositive.memory_score || 0) * 2.4);
+    var adaptiveScore = directAdaptive ? Number(adaptive.adaptive_score || 0) : Math.max(60, Math.min(88, probAdj + Number(bestPositive && bestPositive.memory_score || 0) * 1.2));
     var smartScore = (
       Number(row.score || 0) * 0.48 +
       Math.min(100, adaptiveScore) * 0.26 +
@@ -9172,7 +9143,7 @@ function getSmartBetAnalysis(){
       Math.max(0, Number(row.poisson_delta || 0)) * 0.18 +
       Math.max(0, Number(bestPositive && bestPositive.roi || 0)) * 0.05
     );
-    if(patternOnly) smartScore -= 4;
+    if(patternOnly) smartScore -= 10;
     smartScore = clampMathScore(smartScore);
 
     var confirmLabels = [];
@@ -9309,7 +9280,6 @@ function renderSmartBet(){
   if(!pool.length){
     list.innerHTML = '<div class="empty-state">În acest refresh nu există selecții care să treacă simultan filtrul Audit Kelly și validarea AI Memory.</div>';
     renderSmartBetPatternLists(analysis);
-    renderSmartBetGenerators();
     return;
   }
 
@@ -9345,7 +9315,6 @@ function renderSmartBet(){
   }).join('');
 
   renderSmartBetPatternLists(analysis);
-  renderSmartBetGenerators();
 }
 function getSmartBetStakePct(type){
   var settings = Object.assign({cons:2, balanced:4, goals:3}, BANKROLL_SETTINGS || {});
