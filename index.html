@@ -533,8 +533,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 
 /* MOBILE-FIRST NAV */
-.mobile-nav{display:none!important}
-.mobile-sheet{display:none!important}
+.mobile-nav{display:none}
+.mobile-sheet{display:none}
 .mobile-sheet.show{display:block}
 .mobile-sheet{position:fixed;left:12px;right:12px;bottom:84px;z-index:180;background:rgba(10,14,23,.98);border:1px solid var(--brd2);border-radius:18px;padding:12px;box-shadow:0 18px 38px rgba(0,0,0,.38);backdrop-filter:blur(14px)}
 .mobile-sheet-btn{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:var(--txt);font-size:13px;font-weight:700;text-align:left;display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
@@ -548,9 +548,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .dashboard-insights-body{padding-top:12px}
 #dashboard-insights-body:not(.open), #matches-hub-body:not(.open){display:none}
 @media(max-width:768px){
-  .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px 12px;top:70px}
-  .tab{font-size:11px;padding:10px 6px;border-radius:12px}
-  .main{padding:14px 12px 28px}
+  .tabs{display:none}
+  .main{padding:14px 12px 110px}
   .header{padding:10px 12px}
   .header-inner{align-items:flex-start}
   .header-tools{width:100%;justify-content:flex-start}
@@ -560,10 +559,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .logo-title{font-size:15px}
   .status-bar{font-size:10px}
   .btn#btn-refresh{padding:7px 10px;font-size:11px}
-  .mobile-nav,.mobile-sheet{display:none!important}
-  .desktop-more-panel{padding:10px 12px 0}
-  .desktop-more-panel.show{padding:14px 12px 22px}
-  .more-grid{grid-template-columns:1fr}
+  .mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:fixed;left:10px;right:10px;bottom:10px;z-index:190;background:rgba(10,14,23,.97);border:1px solid var(--brd2);border-radius:20px;padding:8px;box-shadow:0 16px 36px rgba(0,0,0,.42);backdrop-filter:blur(16px)}
+  .mobile-nav-btn{border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;border-radius:14px;font-size:17px;font-weight:800}
+  .mobile-nav-btn small{font-size:10px;color:inherit;font-weight:700}
+  .mobile-nav-btn.active{background:rgba(59,130,246,.12);color:var(--acc)}
+  .desktop-more-panel{display:none!important}
   #dashboard-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
   #dashboard-stats .stat-card{padding:12px}
   #dashboard-stats .stat-card:nth-child(n+4){display:none}
@@ -662,9 +662,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .tabs{position:sticky;top:64px;z-index:48;background:rgba(8,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 16px}
 .tab{font-size:12px;font-weight:800;border-radius:14px;padding:11px 14px;justify-content:center}
 .desktop-more-panel{display:none;max-width:1400px;margin:0 auto 14px;padding:14px 16px 0}
-.desktop-more-panel.show{display:block;position:fixed;left:0;right:0;bottom:0;top:var(--more-panel-top,140px);max-width:none;margin:0;padding:16px 16px 26px;background:rgba(8,12,20,.985);border-top:1px solid rgba(255,255,255,.06);overflow:auto;z-index:170}
-.desktop-more-panel.show .desktop-more-head,.desktop-more-panel.show .more-grid{max-width:1400px;margin-left:auto;margin-right:auto}
-body.more-open{overflow:hidden}
+.desktop-more-panel.show{display:block}
 .desktop-more-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .desktop-more-title{font-size:15px;font-weight:800;color:var(--txt)}
 .desktop-more-sub{font-size:11px;color:var(--muted);line-height:1.55;max-width:720px;margin-top:4px}
@@ -755,57 +753,6 @@ body.more-open{overflow:hidden}
 @media(max-width:620px){.dashboard-monitor-grid,#history21-root .history-card-grid{grid-template-columns:1fr 1fr}.match-card .ticket-mini-grid.ticket-mini-grid-premium{grid-template-columns:repeat(3,1fr)}.card-reco-pick{font-size:16px!important}}
 @media(max-width:520px){.dashboard-monitor-grid,#history21-root .history-card-grid{grid-template-columns:1fr}.bilet-title{font-size:16px!important}.match-card{padding:12px!important}}
 
-
-#tab-dashboard > :not(#dashboard-modern-shell){display:none!important}
-#dashboard-modern-shell{display:grid;gap:14px}
-.modern-monitor-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:20px;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(16,185,129,.08) 52%,rgba(168,85,247,.10));border:1px solid rgba(84,119,255,.22);box-shadow:0 16px 32px rgba(0,0,0,.18);position:relative;overflow:hidden}
-.modern-monitor-hero::after{content:'';position:absolute;inset:auto -20% -65% auto;width:280px;height:280px;background:radial-gradient(circle,rgba(59,130,246,.24),transparent 65%);pointer-events:none;animation:monitorPulse 4.6s ease-in-out infinite}
-.modern-kicker{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
-.modern-title{font-size:28px;font-weight:900;line-height:1.05;color:var(--txt);margin-top:6px}
-.modern-sub{font-size:12px;color:var(--muted);line-height:1.6;max-width:760px;margin-top:8px}
-.modern-meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.modern-meta-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt);font-family:var(--mono)}
-.modern-live-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(10,14,23,.42);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:800;color:var(--txt)}
-.modern-live-dot{width:10px;height:10px;border-radius:50%;background:var(--grn);box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:monitorPulseDot 1.8s ease infinite}
-.modern-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-.modern-kpi{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(12,18,32,.97));border:1px solid rgba(255,255,255,.07);box-shadow:0 10px 24px rgba(0,0,0,.16)}
-.modern-kpi.clickable{cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
-.modern-kpi.clickable:hover{transform:translateY(-2px);border-color:rgba(84,119,255,.24);box-shadow:0 14px 28px rgba(0,0,0,.22)}
-.modern-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.modern-kpi-value{margin-top:8px;font-size:24px;font-weight:900;line-height:1;color:var(--txt);font-family:var(--mono)}
-.modern-kpi-sub{margin-top:8px;font-size:11px;line-height:1.45;color:var(--muted)}
-.modern-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
-.modern-panel{padding:15px 16px;border-radius:20px;background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07);box-shadow:0 12px 28px rgba(0,0,0,.16)}
-.modern-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.modern-panel-title{font-size:14px;font-weight:800;color:var(--txt)}
-.modern-panel-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
-.modern-panel-chip{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;font-weight:800;color:var(--muted)}
-.monitor-flow{display:grid;gap:10px}
-.monitor-flow-row{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)}
-.monitor-flow-row:first-child{border-top:none;padding-top:0}
-.monitor-flow-label{font-size:11px;font-weight:800;color:var(--txt)}
-.monitor-flow-track{height:10px;border-radius:999px;background:rgba(255,255,255,.05);overflow:hidden;position:relative}
-.monitor-flow-fill{height:100%;border-radius:999px;position:relative;overflow:hidden}
-.monitor-flow-fill::after{content:'';position:absolute;top:0;bottom:0;left:-35%;width:35%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:monitorSweep 2.8s linear infinite}
-.monitor-flow-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
-.modern-list{display:grid;gap:10px}
-.modern-list-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
-.modern-list-label{font-size:12px;font-weight:700;color:var(--txt)}
-.modern-list-sub{font-size:10px;color:var(--muted);margin-top:3px}
-.modern-list-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
-.modern-action-card{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(59,130,246,.10),rgba(15,23,42,.96));border:1px solid rgba(84,119,255,.18)}
-.modern-action-title{font-size:12px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.08em}
-.modern-action-main{font-size:18px;font-weight:900;color:var(--txt);line-height:1.3;margin-top:8px}
-.modern-action-sub{font-size:11px;line-height:1.6;color:var(--muted);margin-top:8px}
-.modern-action-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.modern-action-pill{padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
-@keyframes monitorPulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.08);opacity:1}}
-@keyframes monitorPulseDot{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-@keyframes monitorSweep{0%{left:-35%}100%{left:115%}}
-@media(max-width:1100px){.modern-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.modern-grid{grid-template-columns:1fr}}
-@media(max-width:768px){.modern-title{font-size:22px}.modern-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.modern-panel,.modern-monitor-hero{padding:14px}.monitor-flow-row{grid-template-columns:86px 1fr auto;gap:8px}}
-@media(max-width:520px){.modern-kpi-grid{grid-template-columns:1fr 1fr}.modern-action-main{font-size:16px}.modern-monitor-hero{padding:13px 12px}.modern-grid{gap:10px}}
-
 </style>
 </head>
 <body>
@@ -834,8 +781,8 @@ body.more-open{overflow:hidden}
     <div class="header-tools">
       <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh()">🔄 Reimprospateaza</button>
       <div class="header-quick-stats" id="header-quick-stats">
-        <div class="header-stat-pill"><strong id="hq-ml">—</strong><span>ML</span></div>
-        <div class="header-stat-pill"><strong id="hq-odds">—</strong><span>Cote</span></div>
+        <button class="header-stat-pill" type="button" onclick="openApiInputStream('ml_sync')"><strong id="hq-ml">—</strong><span>ML</span></button>
+        <button class="header-stat-pill" type="button" onclick="openApiInputStream('with_odds')"><strong id="hq-odds">—</strong><span>Cote</span></button>
         <div class="header-stat-pill"><strong id="hq-safe">—</strong><span>Safe</span></div>
       </div>
     </div>
@@ -886,7 +833,6 @@ body.more-open{overflow:hidden}
 
   <!-- ===== DASHBOARD ===== -->
   <div class="tab-content active" id="tab-dashboard">
-    <div id="dashboard-modern-shell"></div>
 
     <!-- Stats row -->
     <div class="stats-grid" id="dashboard-stats" style="margin-top:12px;margin-bottom:12px">
@@ -1650,6 +1596,7 @@ body.more-open{overflow:hidden}
 // GLOBAL STATE
 // ============================================================
 var ALL_MATCHES = [];
+var RAW_PREDICTIONS = [];
 var ALL_LEAGUES = [];
 var ALL_EVENTS = [];
 var ALL_TEAMS = [];
@@ -2008,7 +1955,6 @@ function renderDashboardVisuals(){
   if($('dash-category-meta')) $('dash-category-meta').textContent = 'aceleași categorii • 21 zile';
   renderVisualBarList('dash-category-chart', catRows, function(v){ return (v>=0?'+':'') + v.toFixed(1) + '%'; });
   renderDashboardMonitor();
-  renderModernDashboard();
 }
 
 function renderDashboardMonitor(){
@@ -2030,125 +1976,24 @@ function renderDashboardMonitor(){
   var best = summary[0] || null;
   var trackingTotal = (TRACKING || []).length;
   var trackingOpen = (TRACKING || []).filter(function(t){ return t.status === 'pending'; }).length;
+  var statusMetrics = getStatusDisplayMetrics();
   var cards = [
-    {kicker:'Live', value:visibleMatches.length, label:'Meciuri afișate acum', meta:'după filtrele curente din Analiză'},
-    {kicker:'Eligibile', value:eligible.length, label:'Meciuri cu setup valid', meta:'au pronostic activ și pot intra în bilete'},
+    {kicker:'ML sync', value:statusMetrics.ml, label:'Predicții brute din API', meta:'apasă pentru lista completă din input', action:"openApiInputStream('ml_sync')"},
+    {kicker:'Cu cote', value:statusMetrics.odds, label:'Evenimente brute cu cote', meta:'apasă pentru lista completă din input', action:"openApiInputStream('with_odds')"},
     {kicker:'Premium', value:premiumSingles.length, label:'Single-uri premium în pool', meta:'scor ≥ 88 și edge real ≥ 10pp'},
     {kicker:'Istoric', value:allRows.length, label:'Recomandări în 21 zile', meta:settledRows.length + ' închise • ' + livePendingRows.length + ' pending'},
     {kicker:'Tracking', value:trackingTotal, label:'Bilete în jurnal', meta:trackingOpen + ' încă deschise'},
     {kicker:'Top piață', value:best ? ((Number(best.roi || 0) >= 0 ? '+' : '') + Number(best.roi || 0).toFixed(1) + '%') : '—', label:best ? best.label : 'Fără sample suficient', meta:best ? ('win rate ' + Number(best.winrate || 0).toFixed(1) + '% • ' + Number(best.wins || 0) + '/' + Number(best.bets || 0)) : 'așteaptă mai mult istoric'}
   ];
   target.innerHTML = cards.map(function(card){
-    return '<div class="monitor-card">'+
+    var attrs = card.action ? (' class="monitor-card" style="cursor:pointer" onclick="'+card.action+'"') : ' class="monitor-card"';
+    return '<div'+attrs+'>'+
       '<div class="monitor-kicker">'+card.kicker+'</div>'+
       '<div class="monitor-value">'+card.value+'</div>'+
       '<div class="monitor-label">'+card.label+'</div>'+
       '<div class="monitor-meta">'+card.meta+'</div>'+
     '</div>';
   }).join('');
-}
-
-
-function renderModernDashboard(){
-  var target = $('dashboard-modern-shell');
-  if(!target) return;
-  var statusMetrics = typeof getStatusDisplayMetrics === 'function' ? getStatusDisplayMetrics() : {ml:ALL_MATCHES.length, odds:ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE'; }).length};
-  var statusTime = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : '';
-  var rawMl = Number(statusMetrics.ml || 0);
-  var rawOdds = Number(statusMetrics.odds || 0);
-  var eligibleLocal = (ALL_MATCHES || []).filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE'; });
-  var valueStrong = eligibleLocal.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
-  var premiumSingles = eligibleLocal.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
-  var tracked = (TRACKING || []).length;
-  var trackingOpen = (TRACKING || []).filter(function(t){ return t.status === 'pending'; }).length;
-  var auditRows = Array.isArray((SIGNAL_AUDIT || {}).rows) ? SIGNAL_AUDIT.rows : [];
-  var memoryRows = Array.isArray((AI_MEMORY || {}).by_market) ? AI_MEMORY.by_market : [];
-  var updatedText = statusTime || '—';
-  var coveragePct = rawMl ? ((rawOdds * 100) / rawMl) : 0;
-  var avgConfidence = eligibleLocal.length ? (eligibleLocal.reduce(function(acc,m){ return acc + Number(m.confidence || 0); }, 0) / eligibleLocal.length) : 0;
-  var bestMatch = eligibleLocal.slice().sort(function(a,b){
-    var as = (Number(a.smartScore || 0) * 0.5) + (Number((a.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((a.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((a.bestBet || {}).value || 0)) * 100 * 0.4);
-    var bs = (Number(b.smartScore || 0) * 0.5) + (Number((b.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((b.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((b.bestBet || {}).value || 0)) * 100 * 0.4);
-    return bs - as;
-  })[0] || null;
-  var marketCounts = {};
-  eligibleLocal.forEach(function(m){ var label = ((m.bestBet || {}).label) || '—'; marketCounts[label] = (marketCounts[label] || 0) + 1; });
-  var marketRows = Object.keys(marketCounts).map(function(key){ return { label:key, value:marketCounts[key], sub:marketCounts[key] + ' setup-uri locale' }; }).sort(function(a,b){ return b.value - a.value; }).slice(0,4);
-  var flowRows = [
-    {label:'ML sync', value:rawMl, color:'linear-gradient(90deg,#3b82f6,#60a5fa)'},
-    {label:'Cu cote', value:rawOdds, color:'linear-gradient(90deg,#22c55e,#10b981)'},
-    {label:'Eligibile', value:eligibleLocal.length, color:'linear-gradient(90deg,#f59e0b,#f97316)'},
-    {label:'Value+', value:valueStrong.length, color:'linear-gradient(90deg,#a855f7,#6366f1)'},
-    {label:'Audit', value:auditRows.length, color:'linear-gradient(90deg,#06b6d4,#3b82f6)'},
-    {label:'Tracking', value:tracked, color:'linear-gradient(90deg,#f43f5e,#fb7185)'}
-  ];
-  var flowMax = flowRows.reduce(function(acc,row){ return Math.max(acc, row.value); }, 1) || 1;
-  function kpi(label, value, sub, action){
-    var attrs = action ? (' class="modern-kpi clickable" onclick="'+action+'"') : ' class="modern-kpi"';
-    return '<div'+attrs+'><div class="modern-kpi-label">'+label+'</div><div class="modern-kpi-value">'+value+'</div><div class="modern-kpi-sub">'+sub+'</div></div>';
-  }
-  function flow(row){
-    var pct = Math.max(8, Math.round((Number(row.value || 0) * 100) / flowMax));
-    return '<div class="monitor-flow-row"><div class="monitor-flow-label">'+row.label+'</div><div class="monitor-flow-track"><div class="monitor-flow-fill" style="width:'+pct+'%;background:'+row.color+'"></div></div><div class="monitor-flow-value">'+row.value+'</div></div>';
-  }
-  function listRow(row, formatter){
-    return '<div class="modern-list-row"><div><div class="modern-list-label">'+row.label+'</div><div class="modern-list-sub">'+(row.sub || '')+'</div></div><div class="modern-list-value">'+formatter(row.value)+'</div></div>';
-  }
-  target.innerHTML = ''+
-    '<div class="modern-monitor-hero">'+
-      '<div>'+
-        '<div class="modern-kicker">Control Center</div>'+
-        '<div class="modern-title">Monitor grafic al aplicației</div>'+
-        '<div class="modern-sub">Datele principale sunt sincronizate cu bara de status de sus, iar restul elementelor oferă context local din motorul intern.</div>'+
-        '<div class="modern-meta-row">'+
-          '<span class="modern-meta-pill">Update '+updatedText+'</span>'+
-          '<span class="modern-meta-pill">Coverage '+coveragePct.toFixed(0)+'%</span>'+
-          '<span class="modern-meta-pill">Confidence mediu '+avgConfidence.toFixed(0)+'%</span>'+
-        '</div>'+
-      '</div>'+
-      '<div class="modern-live-badge"><span class="modern-live-dot"></span> monitor live</div>'+
-    '</div>'+
-    '<div class="modern-kpi-grid">'+
-      kpi('ML sync', rawMl, 'apasă pentru lista tuturor predicțiilor sync', "openDashboardStream('ml_sync')")+
-      kpi('Cu cote', rawOdds, 'apasă pentru lista evenimentelor cu cote', "openDashboardStream('with_odds')")+
-      kpi('Value+', valueStrong.length, 'value local ≥ 8% și edge ≥ 3pp')+
-      kpi('Premium', premiumSingles.length, 'single-uri locale de top')+
-      kpi('Tracking', tracked, trackingOpen + ' încă deschise')+
-      kpi('Audit', auditRows.length, 'rânduri validate în audit')+
-    '</div>'+
-    '<div class="modern-grid">'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Flux motor</div><div class="modern-panel-sub">Primele două valori sunt sincronizate cu headerul; restul descriu pool-ul intern al aplicației.</div></div><div class="modern-panel-chip">sync + local</div></div>'+
-        '<div class="monitor-flow">'+flowRows.map(flow).join('')+'</div>'+
-      '</div>'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Piețe locale dominante</div><div class="modern-panel-sub">Distribuția piețelor în pool-ul intern eligibil.</div></div><div class="modern-panel-chip">local</div></div>'+
-        '<div class="modern-list">'+(marketRows.length ? marketRows.map(function(row){ return listRow(row, function(v){ return String(v); }); }).join('') : '<div class="visual-empty">Nu există încă suficiente piețe locale.</div>')+'</div>'+
-      '</div>'+
-    '</div>'+
-    '<div class="modern-grid">'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Repere rapide</div><div class="modern-panel-sub">Rezumat compact pentru orientare imediată.</div></div><div class="modern-panel-chip">essential</div></div>'+
-        '<div class="modern-list">'+
-          listRow({label:'Header sync', sub:'ML predictions / cu cote / ora'}, function(){ return rawMl + ' / ' + rawOdds + ' / ' + updatedText; })+
-          listRow({label:'Pool local eligibil', sub:'setup-uri analizate intern'}, function(){ return String(eligibleLocal.length); })+
-          listRow({label:'AI Memory', sub:'piețe în memoria adaptivă'}, function(){ return String(memoryRows.length); })+
-        '</div>'+
-      '</div>'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Acțiune rapidă</div><div class="modern-panel-sub">Cea mai bună oportunitate locală din motorul intern.</div></div><div class="modern-panel-chip">focus</div></div>'+
-        '<div class="modern-action-card">'+
-          '<div class="modern-action-title">Top oportunitate locală</div>'+
-          '<div class="modern-action-main">'+(bestMatch ? (bestMatch.home + ' vs ' + bestMatch.away + ' — ' + ((bestMatch.bestBet || {}).label || '—')) : 'Nu există încă o selecție dominantă')+'</div>'+
-          '<div class="modern-action-sub">'+(bestMatch ? ('Șansă ' + fmtPct(Number((bestMatch.bestBet || {}).adjProb || 0)) + ' • edge ' + (Number((bestMatch.bestBet || {}).edgePct || 0) >= 0 ? '+' : '') + Number((bestMatch.bestBet || {}).edgePct || 0).toFixed(1) + 'pp • ' + ((bestMatch.why && String(bestMatch.why).trim()) ? bestMatch.why : buildRecommendationReasons(bestMatch, bestMatch.bestBet).slice(0,2).join(' • '))) : 'Așteaptă reîmprospătarea pool-ului pentru o recomandare mai puternică.')+'</div>'+
-          '<div class="modern-action-pills">'+
-            '<span class="modern-action-pill">Header '+rawMl+' / '+rawOdds+'</span>'+
-            '<span class="modern-action-pill">Update '+updatedText+'</span>'+
-            '<span class="modern-action-pill">Tracking '+trackingOpen+'</span>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
 }
 
 function renderAuditVisuals(){
@@ -2231,18 +2076,10 @@ function getCurrentActiveTabName(){
   var active = document.querySelector('.tab-content.active');
   return active ? String(active.id || '').replace('tab-','') : 'dashboard';
 }
-function updateMorePanelOffset(){
-  var tabs = document.querySelector('.tabs');
-  if(!tabs) return;
-  var rect = tabs.getBoundingClientRect();
-  document.documentElement.style.setProperty('--more-panel-top', Math.max(0, Math.round(rect.bottom)) + 'px');
-}
 function toggleDesktopMore(){
   var panel = $('desktop-more-panel');
   if(!panel) return;
-  updateMorePanelOffset();
   panel.classList.toggle('show');
-  document.body.classList.toggle('more-open', panel.classList.contains('show'));
   if(panel.classList.contains('show')){
     document.querySelectorAll('.tab').forEach(function(btn){ btn.classList.remove('active'); });
     var moreBtn = document.querySelector('.tab[data-tab="more"]');
@@ -2254,14 +2091,8 @@ function toggleDesktopMore(){
 function closeDesktopMore(skipActive){
   var panel = $('desktop-more-panel');
   if(panel) panel.classList.remove('show');
-  document.body.classList.remove('more-open');
   if(!skipActive) setDesktopTabActive(getCurrentActiveTabName());
 }
-window.addEventListener('resize', updateMorePanelOffset, {passive:true});
-window.addEventListener('scroll', function(){
-  var panel = $('desktop-more-panel');
-  if(panel && panel.classList.contains('show')) updateMorePanelOffset();
-}, {passive:true});
 function toggleMobileMore(){
   var sheet = $('mobile-sheet');
   if(!sheet) return;
@@ -2289,7 +2120,6 @@ function switchTab(name){
   setDesktopTabActive(name);
   setMobileNavActive(name);
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  if(name==='dashboard') renderModernDashboard();
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
@@ -2927,6 +2757,7 @@ function doRefresh(){
     var aiMemoryData = results[9];
 
     var preds = predData.results || predData || [];
+    RAW_PREDICTIONS = Array.isArray(preds) ? preds.slice() : [];
     APP_META = meta || {};
     BACKTEST_SUMMARY = backtestData || {};
     ALL_MATCHES = preds.map(analyzeMatch);
@@ -4328,9 +4159,25 @@ function setFilter(f, btn){
   renderMatches();
 }
 
-
-function openDashboardStream(type){
-  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : 'dashboard_ml_sync';
+function rawApiPredictionHasOdds(raw){
+  if(!raw) return false;
+  if(raw.has_odds === true || raw.hasOdds === true) return true;
+  var e = raw.event || {};
+  var fields = ['odds_home','odds_draw','odds_away','odds_over_15','odds_under_15','odds_over_25','odds_under_25','odds_over_35','odds_under_35','odds_btts_yes','odds_btts_no'];
+  return fields.some(function(key){ return Number(e[key] || raw[key] || 0) > 1.01; });
+}
+function getRawApiInputStream(type){
+  var items = Array.isArray(RAW_PREDICTIONS) ? RAW_PREDICTIONS.slice() : [];
+  if(type === 'with_odds') items = items.filter(rawApiPredictionHasOdds);
+  items.sort(function(a,b){
+    var da = new Date((((a||{}).event||{}).event_date) || 0).getTime();
+    var db = new Date((((b||{}).event||{}).event_date) || 0).getTime();
+    return da - db;
+  });
+  return items;
+}
+function openApiInputStream(type){
+  CURRENT_FILTER = type === 'with_odds' ? 'api_input_with_odds' : 'api_input_ml_sync';
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
@@ -4343,17 +4190,61 @@ function openDashboardStream(type){
   renderMatches();
   setTimeout(function(){
     var target = $('matches-container');
-    if(target && typeof target.scrollIntoView === 'function'){
-      target.scrollIntoView({ behavior:'smooth', block:'start' });
-    }
-  }, 120);
+    if(target && typeof target.scrollIntoView === 'function') target.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 140);
 }
-
-function hasSyncedOdds(match){
-  if(!match) return false;
-  if(match.hasOdds === true || match.has_odds === true) return true;
-  var fields = ['oddsHome','oddsDraw','oddsAway','oddsOver15','oddsUnder15','oddsOver25','oddsUnder25','oddsOver35','oddsUnder35','oddsBtts','oddsBttsNo'];
-  return fields.some(function(key){ return Number(match[key] || 0) > 1.01; });
+function renderRawApiInputList(items, type){
+  var title = type === 'with_odds' ? 'Lista celor cu cote din inputul API' : 'Lista tuturor predicțiilor ML din inputul API';
+  var sub = type === 'with_odds' ? 'Aceasta este lista brută a evenimentelor venite din API care au cote disponibile în payload.' : 'Aceasta este lista brută completă a predicțiilor ML venite din API, înainte de selecția motorului intern.';
+  function buildOddsLine(raw){
+    var e = raw.event || {};
+    var parts = [];
+    if(Number(e.odds_home || 0) > 1.01) parts.push('1 @ ' + Number(e.odds_home).toFixed(2));
+    if(Number(e.odds_draw || 0) > 1.01) parts.push('X @ ' + Number(e.odds_draw).toFixed(2));
+    if(Number(e.odds_away || 0) > 1.01) parts.push('2 @ ' + Number(e.odds_away).toFixed(2));
+    if(Number(e.odds_over_15 || 0) > 1.01) parts.push('O1.5 @ ' + Number(e.odds_over_15).toFixed(2));
+    if(Number(e.odds_over_25 || 0) > 1.01) parts.push('O2.5 @ ' + Number(e.odds_over_25).toFixed(2));
+    if(Number(e.odds_under_35 || 0) > 1.01) parts.push('U3.5 @ ' + Number(e.odds_under_35).toFixed(2));
+    if(Number(e.odds_btts_yes || 0) > 1.01) parts.push('BTTS @ ' + Number(e.odds_btts_yes).toFixed(2));
+    return parts.length ? parts.join(' • ') : 'fără cote în payload';
+  }
+  function renderItem(raw, idx){
+    var e = raw.event || {};
+    var lg = e.league || {};
+    var dt = e.event_date ? new Date(e.event_date) : null;
+    var dateLabel = dt && isFinite(dt.getTime()) ? dt.toLocaleDateString('ro-RO') : '—';
+    var timeLabel = dt && isFinite(dt.getTime()) ? dt.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'}) : '—';
+    var conf = Number(raw.confidence != null ? raw.confidence : raw.favorite_prob || 0);
+    return '<div class="match-card moderate">'+
+      '<div class="mc-head">'+
+        '<div class="mc-league">🌍 ' + (lg.country || '') + ' • ' + (lg.name || 'Ligă') + '</div>'+
+        '<div class="mc-time"><span>#' + (idx + 1) + ' • 🕒 ' + dateLabel + ' • ' + timeLabel + '</span></div>'+
+      '</div>'+
+      '<div class="mc-teams mc-teams-premium">'+
+        '<div class="mc-team"><div class="mc-team-row"><span>' + (e.home_team || 'Gazde') + '</span></div></div>'+
+        '<div class="mc-vs">VS</div>'+
+        '<div class="mc-team away"><div class="mc-team-row"><span>' + (e.away_team || 'Oaspeți') + '</span></div></div>'+
+      '</div>'+
+      '<div class="mc-midrow">'+
+        '<div class="mc-verdict" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:#8fb2ff">INPUT API</div>'+
+        '<span class="card-reco-badge">Confidence ' + conf.toFixed(0) + '%</span>'+
+        '<span class="card-reco-badge">Rezultat ' + String(raw.predicted_result || '—') + '</span>'+
+        '<span class="card-reco-badge">Scor ' + String(raw.most_likely_score || '—') + '</span>'+
+      '</div>'+
+      '<div class="card-reco-main">'+
+        '<div class="card-reco-head"><div class="card-reco-title">Date brute din API</div><div class="card-reco-odd">' + String(raw.model_version || 'model') + '</div></div>'+
+        '<div class="match-inline-row">'+
+          '<span class="match-inline-chip">xG gazde ' + Number(raw.expected_home_goals || 0).toFixed(2) + '</span>'+
+          '<span class="match-inline-chip">xG oaspeți ' + Number(raw.expected_away_goals || 0).toFixed(2) + '</span>'+
+          '<span class="match-inline-chip">O1.5 ' + safePct(raw.prob_over_15).toFixed(1) + '%</span>'+
+          '<span class="match-inline-chip">O2.5 ' + safePct(raw.prob_over_25).toFixed(1) + '%</span>'+
+          '<span class="match-inline-chip">BTTS ' + safePct(raw.prob_btts_yes).toFixed(1) + '%</span>'+
+        '</div>'+
+        '<div class="match-inline-summary">' + buildOddsLine(raw) + '</div>'+
+      '</div>'+
+    '</div>';
+  }
+  return '<div class="compact-context-panel" style="margin-bottom:12px;padding:12px 14px"><div style="font-size:13px;font-weight:900;color:var(--txt);margin-bottom:5px">📥 ' + title + '</div><div style="font-size:11px;color:var(--muted);line-height:1.55">' + sub + '</div></div><div class="matches-grid">' + items.map(renderItem).join('') + '</div>';
 }
 
 function resetMatchFilters(){
@@ -4393,31 +4284,33 @@ function renderMatches(){
   document.querySelectorAll('.view-mode-btn').forEach(function(el){
     el.classList.toggle('active', el.getAttribute('data-mode') === MATCH_CARD_MODE);
   });
+  if(CURRENT_FILTER === 'api_input_ml_sync' || CURRENT_FILTER === 'api_input_with_odds'){
+    var rawType = CURRENT_FILTER === 'api_input_with_odds' ? 'with_odds' : 'ml_sync';
+    var rawItems = getRawApiInputStream(rawType);
+    $('filter-count').textContent = (rawType === 'with_odds' ? 'Input API cu cote • ' : 'Input API ML sync • ') + rawItems.length + ' meciuri';
+    if(!rawItems.length){
+      container.innerHTML = '<div class="empty-state">Nu există intrări brute în payload pentru această listă.</div>';
+      return;
+    }
+    container.innerHTML = renderRawApiInputList(rawItems, rawType);
+    return;
+  }
   var now = Date.now();
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
-    var isDashboardMlSync = CURRENT_FILTER === 'dashboard_ml_sync';
-    var isDashboardWithOdds = CURRENT_FILTER === 'dashboard_with_odds';
-    var isDashboardStream = isDashboardMlSync || isDashboardWithOdds;
-    if(!isDashboardStream && !isMatchStillDisplayable(m)) return false;
+    if(!isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
-    if(isDashboardMlSync){
-      // show the full synced ML list, not only the currently displayable subset
-    } else if(isDashboardWithOdds){
-      if(!hasSyncedOdds(m)) return false;
-    } else {
-      if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
-      if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
-      if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
-      if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)) return false;
-      if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
-      if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
-      if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
-      if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
-      if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
-      if(!b) return false;
-    }
+    if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
+    if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
+    if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
+    if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)) return false;
+    if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
+    if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
+    if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
+    if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
+    if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
+    if(!b) return false;
 
     if(dateF === 'today'){
       if(fmtDateKey(m.date) !== fmtDateKey(new Date().toISOString())) return false;
@@ -4444,7 +4337,7 @@ function renderMatches(){
     return new Date(a.date) - new Date(b.date);
   });
 
-  $('filter-count').textContent = (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Lista ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Lista cu cote • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri')));
+  $('filter-count').textContent = filtered.length + ' meciuri';
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
     return;
