@@ -2056,8 +2056,9 @@ function renderModernDashboard(){
   var statusTime = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : '';
   var rawMl = Number(statusMetrics.ml || 0);
   var rawOdds = Number(statusMetrics.odds || 0);
-  var eligibleLocal = (ALL_MATCHES || []).filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE' && isMatchStillDisplayable(m); });
+  var eligibleLocal = (ALL_MATCHES || []).filter(passesSelectionFilter);
   var dashboardAllPredictions = eligibleLocal.length;
+  var proActiveCount = eligibleLocal.filter(isProActiveMatch).length;
   var valueStrong = eligibleLocal.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
   var premiumSingles = eligibleLocal.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
   var tracked = (TRACKING || []).length;
@@ -2111,7 +2112,7 @@ function renderModernDashboard(){
     '</div>'+
     '<div class="modern-kpi-grid">'+
       kpi('Toate predicțiile', dashboardAllPredictions, 'apasă pentru lista completă din categoria Meciuri', "openDashboardStream('all_predictions')")+
-      kpi('Cu cote', rawOdds, 'apasă pentru lista evenimentelor cu cote', "openDashboardStream('with_odds')")+
+      kpi('Doar Pro', proActiveCount, 'apasă pentru lista cu filtrul Pro activat', "openDashboardStream('pro_active')")+
       kpi('Value+', valueStrong.length, 'value local ≥ 8% și edge ≥ 3pp')+
       kpi('Premium', premiumSingles.length, 'single-uri locale de top')+
       kpi('Tracking', tracked, trackingOpen + ' încă deschise')+
@@ -2828,6 +2829,12 @@ function isMatchStillDisplayable(m){
 function passesSelectionFilter(m){
   if(!m || !m.bestBet || m.analysisState !== 'ELIGIBLE') return false;
   return isMatchStillDisplayable(m);
+}
+
+function isProActiveMatch(m){
+  if(!passesSelectionFilter(m)) return false;
+  var b = m.bestBet || {};
+  return m.leagueTier !== 'avoid' && Number(b.adjProb || 0) >= 72 && Number(b.edgePct != null ? b.edgePct : -999) >= 1.5 && Number(b.value || 0) >= 0.01;
 }
 
 function getBetByType(m, type){
@@ -4331,16 +4338,16 @@ function setFilter(f, btn){
 
 
 function openDashboardStream(type){
-  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : (type === 'all_predictions' ? 'all' : 'dashboard_ml_sync');
+  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : ((type === 'all_predictions' || type === 'pro_active') ? 'all' : 'dashboard_ml_sync');
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-  if(type === 'all_predictions'){
+  if(type === 'all_predictions' || type === 'pro_active'){
     var allBtn = document.querySelector('.filter-btn');
     if(allBtn) allBtn.classList.add('active');
   }
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
-  if($('match-pro-mode')) $('match-pro-mode').value = 'all';
+  if($('match-pro-mode')) $('match-pro-mode').value = (type === 'pro_active' ? 'pro' : 'all');
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
   if($('sort-select')) $('sort-select').value = 'date';
