@@ -2057,6 +2057,7 @@ function renderModernDashboard(){
   var rawMl = Number(statusMetrics.ml || 0);
   var rawOdds = Number(statusMetrics.odds || 0);
   var eligibleLocal = (ALL_MATCHES || []).filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE'; });
+  var dashboardAllPredictions = eligibleLocal.length;
   var valueStrong = eligibleLocal.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
   var premiumSingles = eligibleLocal.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
   var tracked = (TRACKING || []).length;
@@ -2109,7 +2110,7 @@ function renderModernDashboard(){
       '<div class="modern-live-badge"><span class="modern-live-dot"></span> monitor live</div>'+
     '</div>'+
     '<div class="modern-kpi-grid">'+
-      kpi('ML sync', rawMl, 'apasă pentru lista tuturor predicțiilor sync', "openDashboardStream('ml_sync')")+
+      kpi('Toate predicțiile', dashboardAllPredictions, 'apasă pentru lista completă din categoria Meciuri', "openDashboardStream('all_predictions')")+
       kpi('Cu cote', rawOdds, 'apasă pentru lista evenimentelor cu cote', "openDashboardStream('with_odds')")+
       kpi('Value+', valueStrong.length, 'value local ≥ 8% și edge ≥ 3pp')+
       kpi('Premium', premiumSingles.length, 'single-uri locale de top')+
@@ -4330,8 +4331,12 @@ function setFilter(f, btn){
 
 
 function openDashboardStream(type){
-  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : 'dashboard_ml_sync';
+  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : (type === 'all_predictions' ? 'all' : 'dashboard_ml_sync');
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  if(type === 'all_predictions'){
+    var allBtn = document.querySelector('.filter-btn');
+    if(allBtn) allBtn.classList.add('active');
+  }
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
