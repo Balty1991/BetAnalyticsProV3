@@ -769,6 +769,8 @@ body.more-open{overflow:hidden}
 .modern-live-dot{width:10px;height:10px;border-radius:50%;background:var(--grn);box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:monitorPulseDot 1.8s ease infinite}
 .modern-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .modern-kpi{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(12,18,32,.97));border:1px solid rgba(255,255,255,.07);box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.modern-kpi.clickable{cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.modern-kpi.clickable:hover{transform:translateY(-2px);border-color:rgba(84,119,255,.24);box-shadow:0 14px 28px rgba(0,0,0,.22)}
 .modern-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .modern-kpi-value{margin-top:8px;font-size:24px;font-weight:900;line-height:1;color:var(--txt);font-family:var(--mono)}
 .modern-kpi-sub{margin-top:8px;font-size:11px;line-height:1.45;color:var(--muted)}
@@ -2081,8 +2083,9 @@ function renderModernDashboard(){
     {label:'Tracking', value:tracked, color:'linear-gradient(90deg,#f43f5e,#fb7185)'}
   ];
   var flowMax = flowRows.reduce(function(acc,row){ return Math.max(acc, row.value); }, 1) || 1;
-  function kpi(label, value, sub){
-    return '<div class="modern-kpi"><div class="modern-kpi-label">'+label+'</div><div class="modern-kpi-value">'+value+'</div><div class="modern-kpi-sub">'+sub+'</div></div>';
+  function kpi(label, value, sub, action){
+    var attrs = action ? (' class="modern-kpi clickable" onclick="'+action+'"') : ' class="modern-kpi"';
+    return '<div'+attrs+'><div class="modern-kpi-label">'+label+'</div><div class="modern-kpi-value">'+value+'</div><div class="modern-kpi-sub">'+sub+'</div></div>';
   }
   function flow(row){
     var pct = Math.max(8, Math.round((Number(row.value || 0) * 100) / flowMax));
@@ -2106,8 +2109,8 @@ function renderModernDashboard(){
       '<div class="modern-live-badge"><span class="modern-live-dot"></span> monitor live</div>'+
     '</div>'+
     '<div class="modern-kpi-grid">'+
-      kpi('ML sync', rawMl, 'aceeași valoare din bara de sus')+
-      kpi('Cu cote', rawOdds, 'aceeași valoare din bara de sus')+
+      kpi('ML sync', rawMl, 'apasă pentru lista tuturor predicțiilor sync', "openDashboardStream('ml_sync')")+
+      kpi('Cu cote', rawOdds, 'apasă pentru lista evenimentelor cu cote', "openDashboardStream('with_odds')")+
       kpi('Value+', valueStrong.length, 'value local ≥ 8% și edge ≥ 3pp')+
       kpi('Premium', premiumSingles.length, 'single-uri locale de top')+
       kpi('Tracking', tracked, trackingOpen + ' încă deschise')+
@@ -4325,6 +4328,21 @@ function setFilter(f, btn){
   renderMatches();
 }
 
+
+function openDashboardStream(type){
+  CURRENT_FILTER = type === 'with_odds' ? 'dashboard_with_odds' : 'dashboard_ml_sync';
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  if($('league-filter')) $('league-filter').value = '';
+  if($('match-date-filter')) $('match-date-filter').value = 'all';
+  if($('match-market-filter')) $('match-market-filter').value = '';
+  if($('match-pro-mode')) $('match-pro-mode').value = 'all';
+  if($('match-min-prob')) $('match-min-prob').value = 0;
+  if($('match-min-edge')) $('match-min-edge').value = 0;
+  if($('sort-select')) $('sort-select').value = 'date';
+  switchTab('meciuri');
+  renderMatches();
+}
+
 function resetMatchFilters(){
   CURRENT_FILTER = 'all';
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -4366,18 +4384,26 @@ function renderMatches(){
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
+    var isDashboardMlSync = CURRENT_FILTER === 'dashboard_ml_sync';
+    var isDashboardWithOdds = CURRENT_FILTER === 'dashboard_with_odds';
     if(!isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
-    if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
-    if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
-    if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
-    if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)) return false;
-    if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
-    if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
-    if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
-    if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
-    if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
-    if(!b) return false;
+    if(isDashboardMlSync){
+      // show all synced predictions that are still displayable
+    } else if(isDashboardWithOdds){
+      if(!(b && (b.sourceApi || b.apiProb != null))) return false;
+    } else {
+      if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
+      if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
+      if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
+      if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)) return false;
+      if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
+      if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
+      if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
+      if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
+      if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
+      if(!b) return false;
+    }
 
     if(dateF === 'today'){
       if(fmtDateKey(m.date) !== fmtDateKey(new Date().toISOString())) return false;
@@ -4404,7 +4430,7 @@ function renderMatches(){
     return new Date(a.date) - new Date(b.date);
   });
 
-  $('filter-count').textContent = filtered.length + ' meciuri';
+  $('filter-count').textContent = (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Stream ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Stream cu cote • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri')));
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
     return;
