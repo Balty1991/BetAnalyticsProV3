@@ -871,15 +871,7 @@ body.more-open{overflow:hidden}
       <span class="more-card-title">🧾 Istoric 21</span>
       <span class="more-card-sub">Rezultate reale și trenduri pe ultimele 21 de zile.</span>
     </button>
-    <button class="more-card-btn" onclick="switchTab('audit')">
-      <span class="more-card-title">🎯 Audit Kelly</span>
-      <span class="more-card-sub">Selecții filtrate prin Kelly, edge și value.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('aimemory')">
-      <span class="more-card-title">🧠 AI Memory</span>
-      <span class="more-card-sub">Pattern-uri validate și scor adaptiv din istoric.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('smartbet')">
+<button class="more-card-btn" onclick="switchTab('smartbet')">
       <span class="more-card-title">🧬 SmartBet Engine</span>
       <span class="more-card-sub">Fuziune Audit + AI Memory, cu filtre și bilete unificate.</span>
     </button>
@@ -1323,75 +1315,83 @@ body.more-open{overflow:hidden}
   </div>
 
 
+
   <!-- ===== SMARTBET TAB ===== -->
   <div class="tab-content" id="tab-smartbet">
     <div class="help-panel" style="border-color:rgba(168,85,247,.22);background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08))">
       <div class="help-head">
         <div>
           <div class="help-title">🧬 SmartBet Engine</div>
-          <div class="help-sub">Fuziunea dintre <b>Audit Kelly</b> și <b>AI Memory</b>: trece mai întâi prin value + edge + Kelly, apoi este confirmată de pattern-uri istorice și scorul adaptiv. Dacă memoria marchează un pattern negativ, selecția este eliminată automat.</div>
+          <div class="help-sub">Fuziunea dintre <b>Audit Kelly</b> și <b>AI Memory</b>: filtrul rămâne strict, dar afișarea devine mai compactă, mai clară și mai utilă pentru verificare rapidă.</div>
         </div>
-        <div class="action-row"><span class="sec-badge" style="color:var(--pur);border-color:rgba(168,85,247,.28);background:rgba(168,85,247,.10)">Audit + Memory</span></div>
-      </div>
-      <div class="help-chip-row">
-        <button class="help-chip" onclick="switchTab('audit')">Vezi Audit Kelly</button>
-        <button class="help-chip" onclick="switchTab('aimemory')">Vezi AI Memory</button>
+        <div class="action-row">
+          <span class="sec-badge" style="color:var(--pur);border-color:rgba(168,85,247,.28);background:rgba(168,85,247,.10)">Audit + Memory</span>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" id="smartbet-view-live-btn" onclick="setSmartBetView('live')">Listă validată</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" id="smartbet-view-history-btn" onclick="setSmartBetView('history')">Istoric</button>
+        </div>
       </div>
     </div>
 
-    <div class="section memory-panel memory-hero">
-      <div class="memory-shell-head">
+    <div class="section" style="margin-bottom:12px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <div>
-          <div class="memory-shell-title">🧬 Lista unică de meciuri validate</div>
-          <div class="memory-shell-sub">Aici vezi doar selecțiile care au trecut dublul filtru: <b>value matematic</b> și <b>validare istorică</b>.</div>
+          <div style="font-size:15px;font-weight:800;color:var(--txt)">🧬 Lista unică de meciuri validate</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Toate informațiile rămân prezente, dar într-un format mult mai compact.</div>
         </div>
-        <div id="smartbet-updated" class="memory-shell-meta">—</div>
+        <div id="smartbet-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
       </div>
-      <div class="audit-grid" id="smartbet-summary-grid"></div>
-      <div class="memory-note">Protocolul respectă logica din ghid: Audit Kelly este filtrul primar, iar AI Memory confirmă sau blochează selecția în funcție de pattern-uri și scor adaptiv.</div>
+      <div id="smartbet-summary-grid"></div>
     </div>
 
-    <div class="memory-layout-two">
-      <div class="section memory-panel memory-indigo">
-        <div class="memory-shell-head">
+    <div id="smartbet-live-section">
+      <div style="display:grid;grid-template-columns:minmax(0,1.9fr) minmax(280px,1fr);gap:12px;align-items:start">
+        <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(59,130,246,.05),rgba(16,185,129,.03));border:1px solid rgba(59,130,246,.16);border-radius:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--txt)">🎯 Selecții validate</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:3px">Tabel compact cu toate informațiile esențiale.</div>
+            </div>
+            <div id="smartbet-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+          </div>
+          <div id="smartbet-list"></div>
+        </div>
+
+        <div style="display:grid;gap:12px">
+          <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(16,185,129,.03));border:1px solid rgba(34,197,94,.16);border-radius:14px">
+            <div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">✅ Confirmări AI Memory</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Pattern-uri pozitive în format compact.</div>
+            <div id="smartbet-patterns-good"></div>
+          </div>
+
+          <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(239,68,68,.05),rgba(168,85,247,.03));border:1px solid rgba(239,68,68,.16);border-radius:14px">
+            <div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">⛔ Blocaje active</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Pattern-uri eliminate din pool-ul final.</div>
+            <div id="smartbet-patterns-bad"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="smartbet-history-section" style="display:none">
+      <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(59,130,246,.03));border:1px solid rgba(168,85,247,.16);border-radius:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
           <div>
-            <div class="memory-shell-title">🎯 Selecții SmartBet validate</div>
-            <div class="memory-shell-sub">Top selecții după Smart Score, ordonate din cele mai robuste spre cele mai speculative.</div>
+            <div style="font-size:13px;font-weight:800;color:var(--txt)">🧾 Istoric SmartBet Engine</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Istoric nelimitat, filtrabil pe intervale, pentru a vedea ROI, win-rate și evoluția selecțiilor.</div>
           </div>
-          <div class="memory-shell-meta" id="smartbet-list-meta">—</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="smartbet-history-range-controls">
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('7d')" id="smartbet-range-7d">7 zile</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('30d')" id="smartbet-range-30d">30 zile</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('90d')" id="smartbet-range-90d">3 luni</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('180d')" id="smartbet-range-180d">6 luni</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('365d')" id="smartbet-range-365d">1 an</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('all')" id="smartbet-range-all">Total</button>
+          </div>
         </div>
-        <div id="smartbet-list" class="audit-list"></div>
+        <div id="smartbet-history-root"></div>
       </div>
-
-      <div class="memory-side-stack">
-        <div class="section memory-panel memory-green">
-          <div class="memory-shell-head">
-            <div>
-              <div class="memory-shell-title">✅ Confirmări AI Memory</div>
-              <div class="memory-shell-sub">Pattern-uri pozitive care susțin selecțiile ajunse în SmartBet Engine.</div>
-            </div>
-          </div>
-          <div id="smartbet-patterns-good" class="memory-pattern-list"></div>
-        </div>
-
-        <div class="section memory-panel memory-red">
-          <div class="memory-shell-head">
-            <div>
-              <div class="memory-shell-title">⛔ Blocaje active</div>
-              <div class="memory-shell-sub">Tiparele negative care scot automat selecțiile din pool-ul final.</div>
-            </div>
-          </div>
-          <div id="smartbet-patterns-bad" class="memory-pattern-list"></div>
-        </div>
-      </div>
-    </div>
-
-        <div class="section" style="margin-top:14px;padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(168,85,247,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px">
-      <div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:6px">ℹ️ SmartBet rămâne doar filtru de selecție</div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.6">La cererea ta, generatoarele SmartBet au fost scoase. Tabul rămâne dedicat exclusiv listei validate și confirmărilor din AI Memory.</div>
     </div>
   </div>
-
 
   <!-- ===== LIVE TAB ===== -->
   <div class="tab-content" id="tab-meciuri">
@@ -1714,9 +1714,7 @@ body.more-open{overflow:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('tracking');closeMobileMore()"><span class="sheet-btn-title">📈 Tracking</span><small class="sheet-btn-sub">Bilete generate și rezultate</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('audit');closeMobileMore()"><span class="sheet-btn-title">🎯 Audit</span><small class="sheet-btn-sub">Selecții validate prin Kelly</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('aimemory');closeMobileMore()"><span class="sheet-btn-title">🧠 AI Memory</span><small class="sheet-btn-sub">Pattern-uri și scor adaptiv</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 SmartBet Engine</span><small class="sheet-btn-sub">Audit + Memory într-un singur filtru</small></button>
+<button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 SmartBet Engine</span><small class="sheet-btn-sub">Audit + Memory într-un singur filtru</small></button>
 </div>
 
 <script>
@@ -9486,6 +9484,335 @@ window.addEventListener('DOMContentLoaded', function(){
     try { renderSmartBet(); } catch(err){ console.error('SmartBet initial render failed:', err); }
   }, 250);
 });
+
+
+/* ===== SMARTBET UI COMPACT + HISTORY OVERRIDES ===== */
+var SMARTBET_VIEW = window.SMARTBET_VIEW || 'live';
+var SMARTBET_HISTORY_RANGE = window.SMARTBET_HISTORY_RANGE || '30d';
+
+function smartBetMarketLabel(key, row){
+  var k = normalizeSmartBetMarketKey(key || (row && (row.market_key || row.market)));
+  if(k === 'over15') return 'Over 1.5G';
+  if(k === 'over25') return 'Over 2.5G';
+  if(k === 'under35') return 'Under 3.5G';
+  if(k === 'btts') return 'BTTS';
+  if(k === '1x') return '1X';
+  if(k === 'x2') return 'X2';
+  if(k === '12') return '12';
+  if(k === 'doublechance') return 'Double Chance';
+  return row && row.market ? row.market : (key || '—');
+}
+function smartBetSafeCell(value, color){
+  return '<div style="padding:8px 10px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.03)"><div style="font-size:10px;color:var(--muted);margin-bottom:3px">'+value.label+'</div><div style="font-size:15px;font-weight:800;color:'+(color || 'var(--txt)')+'">'+value.value+'</div><div style="font-size:9px;color:var(--muted);margin-top:3px;line-height:1.35">'+value.sub+'</div></div>';
+}
+function setSmartBetView(view){
+  SMARTBET_VIEW = view === 'history' ? 'history' : 'live';
+  var live = $('smartbet-live-section');
+  var history = $('smartbet-history-section');
+  if(live) live.style.display = SMARTBET_VIEW === 'live' ? '' : 'none';
+  if(history) history.style.display = SMARTBET_VIEW === 'history' ? '' : 'none';
+
+  var liveBtn = $('smartbet-view-live-btn');
+  var histBtn = $('smartbet-view-history-btn');
+  [liveBtn, histBtn].forEach(function(btn){
+    if(!btn) return;
+    btn.style.background = 'rgba(255,255,255,.04)';
+    btn.style.border = '1px solid rgba(255,255,255,.10)';
+    btn.style.color = 'var(--txt)';
+  });
+  if(liveBtn && SMARTBET_VIEW === 'live'){
+    liveBtn.style.background = 'rgba(59,130,246,.14)';
+    liveBtn.style.border = '1px solid rgba(59,130,246,.28)';
+    liveBtn.style.color = 'var(--acc)';
+  }
+  if(histBtn && SMARTBET_VIEW === 'history'){
+    histBtn.style.background = 'rgba(168,85,247,.14)';
+    histBtn.style.border = '1px solid rgba(168,85,247,.28)';
+    histBtn.style.color = 'var(--pur)';
+  }
+  if(SMARTBET_VIEW === 'history') renderSmartBetHistory();
+}
+function setSmartBetHistoryRange(range){
+  SMARTBET_HISTORY_RANGE = range || '30d';
+  ['7d','30d','90d','180d','365d','all'].forEach(function(key){
+    var el = $('smartbet-range-' + key);
+    if(!el) return;
+    el.style.background = 'rgba(255,255,255,.04)';
+    el.style.border = '1px solid rgba(255,255,255,.10)';
+    el.style.color = 'var(--txt)';
+    if(key === SMARTBET_HISTORY_RANGE){
+      el.style.background = 'rgba(168,85,247,.14)';
+      el.style.border = '1px solid rgba(168,85,247,.28)';
+      el.style.color = 'var(--pur)';
+    }
+  });
+  renderSmartBetHistory();
+}
+function renderSmartBetPatternLists(analysis){
+  var good = $('smartbet-patterns-good');
+  var bad = $('smartbet-patterns-bad');
+  function buildTable(list, positive){
+    if(!list || !list.length) return '<div class="empty-state" style="padding:10px">Nicio intrare disponibilă.</div>';
+    var color = positive ? 'var(--grn)' : 'var(--red)';
+    return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:280px">'+
+      '<thead><tr style="color:var(--muted);text-align:left">'+
+        '<th style="padding:0 0 8px 0;font-weight:600">Pattern</th>'+
+        '<th style="padding:0 0 8px 0;font-weight:600">Score</th>'+
+        '<th style="padding:0 0 8px 0;font-weight:600">ROI</th>'+
+        '<th style="padding:0 0 8px 0;font-weight:600">Meciuri</th>'+
+      '</tr></thead>'+
+      '<tbody>'+list.map(function(p){
+        return '<tr style="border-top:1px solid rgba(255,255,255,.06)">'+
+          '<td style="padding:8px 6px 8px 0;color:var(--txt);font-weight:600">'+(p.label || '—')+'</td>'+
+          '<td style="padding:8px 6px;color:'+color+';font-family:var(--mono)">'+Number(p.memory_score || 0).toFixed(0)+'</td>'+
+          '<td style="padding:8px 6px;color:'+(Number(p.roi || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+fmtSignedPct(Number(p.roi || 0))+'</td>'+
+          '<td style="padding:8px 0;color:var(--txt)">'+(p.raw_bets || 0)+'</td>'+
+        '</tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+  if(good) good.innerHTML = buildTable(analysis.topPositive || [], true);
+  if(bad) bad.innerHTML = buildTable(analysis.avoidPatterns || [], false);
+}
+function renderSmartBet(){
+  var summary = $('smartbet-summary-grid');
+  var list = $('smartbet-list');
+  var updated = $('smartbet-updated');
+  var meta = $('smartbet-list-meta');
+  if(!summary || !list) return;
+
+  var analysis = getSmartBetAnalysis();
+  var pool = analysis.pool || [];
+  var blocked = analysis.blocked || [];
+
+  if(updated){
+    var ts = (AI_MEMORY && AI_MEMORY.updated_at) || (SIGNAL_AUDIT && SIGNAL_AUDIT.updated_at) || (APP_META && APP_META.updated_at) || '';
+    updated.textContent = ts ? ('SmartBet actualizat: ' + fmtDateTime(ts)) : 'SmartBet: —';
+  }
+  if(meta) meta.textContent = pool.length + ' validate • ' + blocked.length + ' blocate';
+
+  var avgScore = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.smartScore || 0); },0) / pool.length) : 0;
+  var avgEdge = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.edge || 0); },0) / pool.length) : 0;
+  var avgValue = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.value || 0) * 100; },0) / pool.length) : 0;
+  var avgProb = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.prob || 0); },0) / pool.length) : 0;
+
+  var cards = [
+    {label:'Validate', value:String(pool.length), sub:'trecute prin ambele filtre', color:'var(--acc)'},
+    {label:'Blocate', value:String(blocked.length), sub:'tăiate de pattern negativ', color:'var(--red)'},
+    {label:'Smart score', value:pool.length ? avgScore.toFixed(1) : '—', sub:'media scorului final', color:'var(--pur)'},
+    {label:'Prob. medie', value:pool.length ? fmtPct(avgProb) : '—', sub:'probabilitate ajustată medie', color:'var(--grn)'},
+    {label:'Edge mediu', value:pool.length ? fmtSignedPct(avgEdge) : '—', sub:'avantaj model vs piață', color:'var(--yel)'},
+    {label:'Value mediu', value:pool.length ? fmtSignedPct(avgValue) : '—', sub:'EV mediu rămas în pool', color:'var(--cyan)'}
+  ];
+  summary.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">'+
+    cards.map(function(card){ return smartBetSafeCell(card, card.color); }).join('')+
+  '</div>';
+
+  if(!pool.length){
+    list.innerHTML = '<div class="empty-state">În acest refresh nu există selecții care să treacă simultan filtrul Audit Kelly și validarea AI Memory.</div>';
+    renderSmartBetPatternLists(analysis);
+    setSmartBetView(SMARTBET_VIEW || 'live');
+    return;
+  }
+
+  list.innerHTML = '<div style="overflow-x:auto">'+
+    '<table style="width:100%;min-width:980px;border-collapse:collapse;font-size:11px">'+
+      '<thead><tr style="text-align:left;color:var(--muted)">'+
+        '<th style="padding:0 0 8px 0;font-weight:600">Meci</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Pick</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Cota</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Prob</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Edge</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Value</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Kelly</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Adaptive</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Smart</th>'+
+        '<th style="padding:0 0 8px 6px;font-weight:600">Confirmare</th>'+
+      '</tr></thead>'+
+      '<tbody>'+pool.map(function(r){
+        return '<tr style="border-top:1px solid rgba(255,255,255,.06)">'+
+          '<td style="padding:8px 8px 8px 0;vertical-align:top">'+
+            '<div style="font-size:11px;font-weight:700;color:var(--txt)">'+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+            '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+(r.league || '—')+'</div>'+
+            '<div style="font-size:10px;color:var(--muted)">'+(r.event_date ? (fmtDate(r.event_date)+' '+fmtTime(r.event_date)) : '—')+'</div>'+
+          '</td>'+
+          '<td style="padding:8px 6px;color:var(--acc);font-weight:700">'+smartBetMarketLabel(r.marketKey, r)+'</td>'+
+          '<td style="padding:8px 6px;font-family:var(--mono);color:var(--txt)">'+Number(r.displayOdds || 0).toFixed(2)+'</td>'+
+          '<td style="padding:8px 6px;color:var(--txt)">'+fmtPct(Number(r.prob || 0))+'</td>'+
+          '<td style="padding:8px 6px;color:'+(Number(r.edge || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+fmtSignedPct(Number(r.edge || 0))+'</td>'+
+          '<td style="padding:8px 6px;color:'+(Number(r.value || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+fmtSignedPct(Number(r.value || 0) * 100)+'</td>'+
+          '<td style="padding:8px 6px;color:var(--txt)">'+fmtPct(Number(r.kelly_quarter_pct || 0))+'</td>'+
+          '<td style="padding:8px 6px;color:'+(r.directAdaptive ? 'var(--grn)' : 'var(--yel)')+'">'+Number(r.adaptiveScore || 0).toFixed(0)+'</td>'+
+          '<td style="padding:8px 6px;color:var(--pur);font-weight:800">'+Number(r.smartScore || 0).toFixed(0)+'</td>'+
+          '<td style="padding:8px 0 8px 6px">'+
+            '<div style="display:flex;gap:4px;flex-wrap:wrap">'+
+              '<span style="font-size:10px;padding:2px 6px;border-radius:999px;background:'+(r.directAdaptive ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)')+';border:1px solid '+(r.directAdaptive ? 'rgba(34,197,94,.22)' : 'rgba(245,158,11,.22)')+';color:'+(r.directAdaptive ? 'var(--grn)' : 'var(--yel)')+'">'+(r.directAdaptive ? 'AI direct' : 'Pattern')+'</span>'+
+              '<span style="font-size:10px;padding:2px 6px;border-radius:999px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.22);color:var(--pur)">Mem '+(Number(r.memoryBonus || 0) >= 0 ? '+' : '')+Number(r.memoryBonus || 0).toFixed(1)+'</span>'+
+            '</div>'+
+          '</td>'+
+        '</tr>';
+      }).join('')+'</tbody>'+
+    '</table></div>';
+
+  renderSmartBetPatternLists(analysis);
+  setSmartBetView(SMARTBET_VIEW || 'live');
+  setSmartBetHistoryRange(SMARTBET_HISTORY_RANGE || '30d');
+}
+function getSmartBetHistoryCutoff(){
+  if(SMARTBET_HISTORY_RANGE === 'all') return null;
+  var daysMap = {'7d':7,'30d':30,'90d':90,'180d':180,'365d':365};
+  var days = daysMap[SMARTBET_HISTORY_RANGE] || 30;
+  return new Date(Date.now() - days * 86400000);
+}
+function buildSmartBetHistoryBaseRows(){
+  var rows = [];
+  (HISTORY_ENGINE || []).forEach(function(r){
+    if(!r || !smartBetSupportedMarket(r)) return;
+    if(Number(r.adjusted_prob || 0) < 74 || Number(r.edge_pct || 0) < 4) return;
+    rows.push({
+      source:'history_engine',
+      marketKey:normalizeSmartBetMarketKey(r.market_key || r.market),
+      market:smartBetMarketLabel(r.market_key || r.market, r),
+      event_id:r.event_id,
+      home:r.home || '',
+      away:r.away || '',
+      league:r.league || '',
+      event_date:r.date || r.event_date || r.created_at || '',
+      created_at:r.created_at || r.date || '',
+      odds:Number(r.odds || 0),
+      adjusted_prob:Number(r.adjusted_prob || 0),
+      edge_pct:Number(r.edge_pct || 0),
+      score:Number(r.score || 0),
+      value:Number(r.value || 0),
+      status:r.won === true ? 'win' : (r.won === false ? 'lose' : 'pending'),
+      home_score:r.home_score,
+      away_score:r.away_score
+    });
+  });
+  (RECOMMENDATION_LOG || []).forEach(function(r){
+    if(!r || !smartBetSupportedMarket(r)) return;
+    if(String(r.status || '').toLowerCase() !== 'pending') return;
+    if(Number(r.adjusted_prob || 0) < 74 || Number(r.edge_pct || 0) < 4) return;
+    rows.push({
+      source:'recommendation_log',
+      marketKey:normalizeSmartBetMarketKey(r.market_key || r.market),
+      market:smartBetMarketLabel(r.market_key || r.market, r),
+      event_id:r.event_id,
+      home:r.home || '',
+      away:r.away || '',
+      league:r.league || '',
+      event_date:r.event_date || '',
+      created_at:r.logged_at || r.prediction_created_at || '',
+      odds:Number(r.odds || 0),
+      adjusted_prob:Number(r.adjusted_prob || 0),
+      edge_pct:Number(r.edge_pct || 0),
+      score:Number(r.score || 0),
+      value:Number(r.value || 0),
+      status:'pending',
+      home_score:r.home_score,
+      away_score:r.away_score
+    });
+  });
+  var dedup = {};
+  rows.forEach(function(r){
+    var key = [r.event_id || '', r.marketKey || '', r.status, r.created_at || r.event_date || ''].join('|');
+    dedup[key] = r;
+  });
+  return Object.keys(dedup).map(function(k){ return dedup[k]; }).sort(function(a,b){
+    return new Date(b.created_at || b.event_date || 0).getTime() - new Date(a.created_at || a.event_date || 0).getTime();
+  });
+}
+function getSmartBetHistoryRows(){
+  var cutoff = getSmartBetHistoryCutoff();
+  return buildSmartBetHistoryBaseRows().filter(function(r){
+    var when = new Date(r.created_at || r.event_date || 0);
+    return !cutoff || (isFinite(when.getTime()) && when >= cutoff);
+  });
+}
+function renderSmartBetHistory(){
+  var root = $('smartbet-history-root');
+  if(!root) return;
+  var rows = getSmartBetHistoryRows();
+  if(!rows.length){
+    root.innerHTML = '<div class="empty-state">Nu există încă suficiente intrări pentru istoricul SmartBet pe intervalul selectat.</div>';
+    return;
+  }
+
+  var settled = rows.filter(function(r){ return r.status !== 'pending'; });
+  var pending = rows.filter(function(r){ return r.status === 'pending'; });
+  var bets = settled.length;
+  var wins = settled.filter(function(r){ return r.status === 'win'; }).length;
+  var profit = settled.reduce(function(acc,r){ return acc + (r.status === 'win' ? (Number(r.odds || 0) - 1) : -1); }, 0);
+  var roi = bets ? (profit / bets) * 100 : 0;
+  var winrate = bets ? (wins / bets) * 100 : 0;
+  var avgOdds = bets ? (settled.reduce(function(acc,r){ return acc + Number(r.odds || 0); },0) / bets) : 0;
+
+  var byMarket = {};
+  rows.forEach(function(r){
+    var k = r.marketKey || 'misc';
+    if(!byMarket[k]) byMarket[k] = {label:smartBetMarketLabel(k, r), total:0, settled:0, wins:0, pending:0, profit:0, avgOddsSum:0};
+    byMarket[k].total += 1;
+    if(r.status === 'pending') byMarket[k].pending += 1;
+    else {
+      byMarket[k].settled += 1;
+      byMarket[k].wins += r.status === 'win' ? 1 : 0;
+      byMarket[k].profit += r.status === 'win' ? (Number(r.odds || 0) - 1) : -1;
+      byMarket[k].avgOddsSum += Number(r.odds || 0);
+    }
+  });
+  var marketCards = Object.keys(byMarket).map(function(k){
+    var m = byMarket[k];
+    var mRoi = m.settled ? (m.profit / m.settled) * 100 : 0;
+    var mWr = m.settled ? (m.wins / m.settled) * 100 : 0;
+    return '<div style="padding:8px 10px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.03)">'+
+      '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--txt)">'+m.label+'</div>'+
+        '<div style="font-size:12px;font-weight:800;color:'+(mRoi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(m.settled ? (mRoi >= 0 ? '+' : '') + mRoi.toFixed(1)+'%' : '—')+'</div>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:5px">WR '+(m.settled ? mWr.toFixed(1)+'%' : '—')+' • '+m.wins+'/'+m.settled+' • pending '+m.pending+'</div>'+
+    '</div>';
+  }).join('');
+
+  var rowsHtml = rows.slice(0, 40).map(function(r){
+    var color = r.status === 'win' ? 'var(--grn)' : (r.status === 'lose' ? 'var(--red)' : 'var(--yel)');
+    var label = r.status === 'win' ? 'WIN' : (r.status === 'lose' ? 'LOSE' : 'PENDING');
+    var bg = r.status === 'win' ? 'rgba(34,197,94,.12)' : (r.status === 'lose' ? 'rgba(239,68,68,.12)' : 'rgba(245,158,11,.12)');
+    return '<tr style="border-top:1px solid rgba(255,255,255,.06)">'+
+      '<td style="padding:8px 8px 8px 0">'+
+        '<div style="font-size:11px;font-weight:700;color:var(--txt)">'+(r.home || '—')+' vs '+(r.away || '—')+'</div>'+
+        '<div style="font-size:10px;color:var(--muted)">'+(r.league || '—')+'</div>'+
+      '</td>'+
+      '<td style="padding:8px 6px;color:var(--acc);font-weight:700">'+r.market+'</td>'+
+      '<td style="padding:8px 6px;color:var(--txt)">'+Number(r.odds || 0).toFixed(2)+'</td>'+
+      '<td style="padding:8px 6px;color:var(--txt)">'+fmtPct(Number(r.adjusted_prob || 0))+'</td>'+
+      '<td style="padding:8px 6px;color:'+(Number(r.edge_pct || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+fmtSignedPct(Number(r.edge_pct || 0))+'</td>'+
+      '<td style="padding:8px 6px;color:var(--pur)">'+Number(r.score || 0).toFixed(0)+'</td>'+
+      '<td style="padding:8px 6px;color:var(--muted)">'+(r.created_at ? fmtDateTime(r.created_at) : '—')+'</td>'+
+      '<td style="padding:8px 0"><span style="font-size:10px;padding:2px 6px;border-radius:999px;background:'+bg+';border:1px solid rgba(255,255,255,.08);color:'+color+'">'+label+'</span></td>'+
+    '</tr>';
+  }).join('');
+
+  root.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px">'+
+      smartBetSafeCell({label:'ROI', value:bets ? ((roi >= 0 ? '+' : '') + roi.toFixed(1)+'%') : '—', sub:'profit / meci închis'}, bets ? (roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+
+      smartBetSafeCell({label:'Win rate', value:bets ? winrate.toFixed(1)+'%' : '—', sub:'câștigate / jucate'}, 'var(--acc)')+
+      smartBetSafeCell({label:'Meciuri', value:String(bets), sub:'închise în interval'}, 'var(--txt)')+
+      smartBetSafeCell({label:'Pending', value:String(pending.length), sub:'încă neînchise'}, 'var(--yel)')+
+      smartBetSafeCell({label:'Profit unit', value:bets ? (profit >= 0 ? '+' : '') + profit.toFixed(2) : '—', sub:'miza 1 unit / pick'}, profit >= 0 ? 'var(--grn)' : 'var(--red)')+
+      smartBetSafeCell({label:'Cota medie', value:bets ? avgOdds.toFixed(2) : '—', sub:'pe meciurile închise'}, 'var(--pur)')+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:12px">'+marketCards+'</div>'+
+    '<div style="overflow-x:auto"><table style="width:100%;min-width:900px;border-collapse:collapse;font-size:11px">'+
+      '<thead><tr style="text-align:left;color:var(--muted)">'+
+        '<th style="padding:0 0 8px 0;font-weight:600">Meci</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Piață</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Cota</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Prob</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Edge</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Score</th>'+
+        '<th style="padding:0 6px 8px 6px;font-weight:600">Logat</th>'+
+        '<th style="padding:0 0 8px 6px;font-weight:600">Status</th>'+
+      '</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+}
 
 
 </script>
