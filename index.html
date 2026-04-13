@@ -879,6 +879,10 @@ body.more-open{overflow:hidden}
       <span class="more-card-title">🧠 AI Memory</span>
       <span class="more-card-sub">Pattern-uri validate și scor adaptiv din istoric.</span>
     </button>
+    <button class="more-card-btn" onclick="switchTab('smartbet')">
+      <span class="more-card-title">🧬 SmartBet Engine</span>
+      <span class="more-card-sub">Fuziune Audit + AI Memory, cu filtre și bilete unificate.</span>
+    </button>
   </div>
 </div>
 
@@ -1318,6 +1322,116 @@ body.more-open{overflow:hidden}
     </div>
   </div>
 
+
+  <!-- ===== SMARTBET TAB ===== -->
+  <div class="tab-content" id="tab-smartbet">
+    <div class="help-panel" style="border-color:rgba(168,85,247,.22);background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08))">
+      <div class="help-head">
+        <div>
+          <div class="help-title">🧬 SmartBet Engine</div>
+          <div class="help-sub">Fuziunea dintre <b>Audit Kelly</b> și <b>AI Memory</b>: trece mai întâi prin value + edge + Kelly, apoi este confirmată de pattern-uri istorice și scorul adaptiv. Dacă memoria marchează un pattern negativ, selecția este eliminată automat.</div>
+        </div>
+        <div class="action-row"><span class="sec-badge" style="color:var(--pur);border-color:rgba(168,85,247,.28);background:rgba(168,85,247,.10)">Audit + Memory</span></div>
+      </div>
+      <div class="help-chip-row">
+        <button class="help-chip" onclick="switchTab('audit')">Vezi Audit Kelly</button>
+        <button class="help-chip" onclick="switchTab('aimemory')">Vezi AI Memory</button>
+      </div>
+    </div>
+
+    <div class="section memory-panel memory-hero">
+      <div class="memory-shell-head">
+        <div>
+          <div class="memory-shell-title">🧬 Lista unică de meciuri validate</div>
+          <div class="memory-shell-sub">Aici vezi doar selecțiile care au trecut dublul filtru: <b>value matematic</b> și <b>validare istorică</b>.</div>
+        </div>
+        <div id="smartbet-updated" class="memory-shell-meta">—</div>
+      </div>
+      <div class="audit-grid" id="smartbet-summary-grid"></div>
+      <div class="memory-note">Protocolul respectă logica din ghid: Audit Kelly este filtrul primar, iar AI Memory confirmă sau blochează selecția în funcție de pattern-uri și scor adaptiv.</div>
+    </div>
+
+    <div class="memory-layout-two">
+      <div class="section memory-panel memory-indigo">
+        <div class="memory-shell-head">
+          <div>
+            <div class="memory-shell-title">🎯 Selecții SmartBet validate</div>
+            <div class="memory-shell-sub">Top selecții după Smart Score, ordonate din cele mai robuste spre cele mai speculative.</div>
+          </div>
+          <div class="memory-shell-meta" id="smartbet-list-meta">—</div>
+        </div>
+        <div id="smartbet-list" class="audit-list"></div>
+      </div>
+
+      <div class="memory-side-stack">
+        <div class="section memory-panel memory-green">
+          <div class="memory-shell-head">
+            <div>
+              <div class="memory-shell-title">✅ Confirmări AI Memory</div>
+              <div class="memory-shell-sub">Pattern-uri pozitive care susțin selecțiile ajunse în SmartBet Engine.</div>
+            </div>
+          </div>
+          <div id="smartbet-patterns-good" class="memory-pattern-list"></div>
+        </div>
+
+        <div class="section memory-panel memory-red">
+          <div class="memory-shell-head">
+            <div>
+              <div class="memory-shell-title">⛔ Blocaje active</div>
+              <div class="memory-shell-sub">Tiparele negative care scot automat selecțiile din pool-ul final.</div>
+            </div>
+          </div>
+          <div id="smartbet-patterns-bad" class="memory-pattern-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section memory-panel memory-mix" style="margin-top:14px">
+      <div class="memory-shell-head">
+        <div>
+          <div class="memory-shell-title">🎫 Generatoare SmartBet</div>
+          <div class="memory-shell-sub">Bilete construite exclusiv din pool-ul validat prin fuziunea Audit + AI Memory.</div>
+        </div>
+        <div class="memory-shell-meta">SafeBet / HybridBet / ValueBet</div>
+      </div>
+      <div class="memory-generator-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+        <div class="memory-generator-card premium">
+          <div class="memory-generator-title">🛡️ SafeBet</div>
+          <div class="memory-generator-sub">2-3 selecții cu probabilitate ridicată, scor mare și memorie favorabilă.</div>
+          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px">
+            <button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGenerateSmartBetTicket('safe', this, false)">Generează</button>
+            <button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGenerateSmartBetTicket('safe', this, true)">Relaxat</button>
+          </div>
+          <div class="generator-status" id="smartbet-status-safe">Așteaptă o generare.</div>
+          <div id="smartbet-ticket-safe" style="margin-top:12px"></div>
+        </div>
+
+        <div class="memory-generator-card double">
+          <div class="memory-generator-title">⚖️ HybridBet</div>
+          <div class="memory-generator-sub">3-4 selecții echilibrate între edge, value și confirmare istorică.</div>
+          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px">
+            <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGenerateSmartBetTicket('hybrid', this, false)">Generează</button>
+            <button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGenerateSmartBetTicket('hybrid', this, true)">Relaxat</button>
+          </div>
+          <div class="generator-status" id="smartbet-status-hybrid">Așteaptă o generare.</div>
+          <div id="smartbet-ticket-hybrid" style="margin-top:12px"></div>
+        </div>
+
+        <div class="memory-generator-card contrarian">
+          <div class="memory-generator-title">🚀 ValueBet</div>
+          <div class="memory-generator-sub">2-4 selecții cu value mai puternic și preț total mai agresiv, dar validate de ambele motoare.</div>
+          <div style="display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px">
+            <button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGenerateSmartBetTicket('value', this, false)">Generează</button>
+            <button class="btn" style="width:100%;justify-content:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt)" onclick="handleGenerateSmartBetTicket('value', this, true)">Relaxat</button>
+          </div>
+          <div class="generator-status" id="smartbet-status-value">Așteaptă o generare.</div>
+          <div id="smartbet-ticket-value" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- ===== LIVE TAB ===== -->
   <div class="tab-content" id="tab-meciuri">
     <div class="section matches-section-card" id="matches-dashboard-hub" style="margin-bottom:14px">
@@ -1641,6 +1755,7 @@ body.more-open{overflow:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('audit');closeMobileMore()"><span class="sheet-btn-title">🎯 Audit</span><small class="sheet-btn-sub">Selecții validate prin Kelly</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('aimemory');closeMobileMore()"><span class="sheet-btn-title">🧠 AI Memory</span><small class="sheet-btn-sub">Pattern-uri și scor adaptiv</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 SmartBet Engine</span><small class="sheet-btn-sub">Audit + Memory într-un singur filtru</small></button>
 </div>
 
 <script>
@@ -8934,6 +9049,473 @@ window.generateDailyPortfolioTickets = function(){
 window.addEventListener('DOMContentLoaded', function(){
   enhanceGeneratorCards();
   setTimeout(updateGeneratorStatusBadges, 200);
+});
+
+
+/* ===== SMARTBET ENGINE (fusion Audit Kelly + AI Memory) ===== */
+var SMARTBET_TICKETS = window.SMARTBET_TICKETS || {safe:null, hybrid:null, value:null};
+window.SMARTBET_TICKETS = SMARTBET_TICKETS;
+var SMARTBET_LAST_ANALYSIS = null;
+
+function normalizeSmartBetMarketKey(raw){
+  var key = String(raw || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if(key.indexOf('over15') >= 0) return 'over15';
+  if(key.indexOf('over25') >= 0) return 'over25';
+  if(key.indexOf('under35') >= 0) return 'under35';
+  if(key.indexOf('btts') >= 0 || key.indexOf('gg') >= 0) return 'btts';
+  if(key === '1x' || key === 'x2' || key === '12' || key.indexOf('doublechance') >= 0) return key || 'doublechance';
+  return key || 'misc';
+}
+function normalizeSmartBetSource(row){
+  if(!row) return 'unknown';
+  if(row.source) return String(row.source).toLowerCase();
+  if(row.source_api && row.source_heuristic) return 'mixed';
+  if(row.source_api) return 'api';
+  if(row.source_heuristic) return 'heuristic';
+  return 'unknown';
+}
+function smartBetSupportedMarket(row){
+  var key = normalizeSmartBetMarketKey(row && (row.market_key || row.market));
+  return ['over15','over25','under35','btts','1x','x2','12','doublechance'].indexOf(key) >= 0;
+}
+function getSmartBetAdaptiveMap(){
+  var map = {};
+  ((AI_MEMORY && AI_MEMORY.adaptive_picks) || []).forEach(function(p){
+    if(!p) return;
+    var marketKey = normalizeSmartBetMarketKey(p.market_key || p.market);
+    var key1 = String(p.event_id || '') + '|' + marketKey;
+    var key2 = [String(p.home || '').toLowerCase(), String(p.away || '').toLowerCase(), marketKey].join('|');
+    map[key1] = p;
+    map[key2] = p;
+  });
+  return map;
+}
+function getSmartBetPatternMaps(){
+  var out = { top:{}, avoid:{} };
+  ['top','avoid'].forEach(function(bucket){
+    var src = bucket === 'top' ? ((AI_MEMORY && AI_MEMORY.top_patterns) || []) : ((AI_MEMORY && AI_MEMORY.avoid_patterns) || []);
+    src.forEach(function(p){
+      if(!p || !p.kind || !p.key) return;
+      if(!out[bucket][p.kind]) out[bucket][p.kind] = {};
+      out[bucket][p.kind][p.key] = p;
+    });
+  });
+  return out;
+}
+function getSmartBetPatternKeys(row){
+  var marketKey = normalizeSmartBetMarketKey(row.market_key || row.market);
+  var league = String(row.league || '').trim();
+  var source = normalizeSmartBetSource(row);
+  return {
+    market: marketKey,
+    market_league: marketKey + '|' + league,
+    market_source: marketKey + '|' + source
+  };
+}
+function getSmartBetPatternMatchInfo(row, patternMaps){
+  var keys = getSmartBetPatternKeys(row);
+  var positive = [];
+  var avoid = [];
+  ['market_league','market','market_source'].forEach(function(kind){
+    if(patternMaps.top[kind] && patternMaps.top[kind][keys[kind]]) positive.push(patternMaps.top[kind][keys[kind]]);
+    if(patternMaps.avoid[kind] && patternMaps.avoid[kind][keys[kind]]) avoid.push(patternMaps.avoid[kind][keys[kind]]);
+  });
+  positive.sort(function(a,b){ return Number(b.memory_score || 0) - Number(a.memory_score || 0); });
+  avoid.sort(function(a,b){ return Number(a.memory_score || 0) - Number(b.memory_score || 0); });
+  return { positive:positive, avoid:avoid };
+}
+function getSmartBetAnalysis(){
+  var auditRows = ((SIGNAL_AUDIT && SIGNAL_AUDIT.rows) || []).slice();
+  var adaptiveMap = getSmartBetAdaptiveMap();
+  var patternMaps = getSmartBetPatternMaps();
+  var pool = [];
+  var blocked = [];
+  var adaptiveConfirmed = 0;
+  var patternConfirmed = 0;
+
+  auditRows.forEach(function(row){
+    if(!row || !smartBetSupportedMarket(row)) return;
+    if(Number(row.edge_pct || 0) <= 0 || Number(row.value || 0) <= 0) return;
+    if(Number(row.book_odds || 0) < 1.20) return;
+
+    var marketKey = normalizeSmartBetMarketKey(row.market_key || row.market);
+    var adaptive = adaptiveMap[String(row.event_id || '') + '|' + marketKey] ||
+                   adaptiveMap[[String(row.home || '').toLowerCase(), String(row.away || '').toLowerCase(), marketKey].join('|')] ||
+                   null;
+    var patternInfo = getSmartBetPatternMatchInfo(row, patternMaps);
+    var bestPositive = patternInfo.positive[0] || null;
+    var worstNegative = patternInfo.avoid[0] || null;
+    var blockedByMemory = !!worstNegative;
+
+    if(blockedByMemory){
+      blocked.push({
+        row: row,
+        reason: worstNegative,
+        marketKey: marketKey
+      });
+      return;
+    }
+
+    var directAdaptive = !!adaptive;
+    var patternOnly = !directAdaptive && !!bestPositive;
+    if(!directAdaptive && !patternOnly) return;
+
+    var memoryBonus = directAdaptive ? Number(adaptive.memory_bonus || 0) : Number(bestPositive && bestPositive.memory_score || 0);
+    var adaptiveScore = directAdaptive ? Number(adaptive.adaptive_score || 0) : Math.max(60, Number(row.adjusted_prob || 0) + Number(bestPositive && bestPositive.memory_score || 0) * 2.4);
+    var smartScore = (
+      Number(row.score || 0) * 0.48 +
+      Math.min(100, adaptiveScore) * 0.26 +
+      Number(row.adjusted_prob || 0) * 0.14 +
+      Math.max(0, Number(row.edge_pct || 0)) * 0.55 +
+      Math.max(0, Number(row.kelly_quarter_pct || 0)) * 0.70 +
+      Math.max(0, memoryBonus) * 0.80 +
+      Math.max(0, Number(row.poisson_delta || 0)) * 0.18 +
+      Math.max(0, Number(bestPositive && bestPositive.roi || 0)) * 0.05
+    );
+    if(patternOnly) smartScore -= 4;
+    smartScore = clampMathScore(smartScore);
+
+    var confirmLabels = [];
+    if(directAdaptive) confirmLabels.push('AI direct');
+    if(bestPositive) confirmLabels.push(bestPositive.label);
+    var reasons = [];
+    reasons.push('Kelly 1/4 ' + fmtPct(Number(row.kelly_quarter_pct || 0)));
+    reasons.push('Edge ' + fmtSignedPct(Number(row.edge_pct || 0)));
+    if(bestPositive) reasons.push('Pattern ' + bestPositive.label);
+    if(directAdaptive && adaptive.reasons && adaptive.reasons.length){
+      adaptive.reasons.slice(0,2).forEach(function(r){ reasons.push(r.label + ' ' + (Number(r.impact || 0) >= 0 ? '+' : '') + Number(r.impact || 0).toFixed(1)); });
+    }
+
+    pool.push(Object.assign({}, row, {
+      source:'smartbet',
+      eventKey:getGenericEventKey(row),
+      marketKey: marketKey,
+      displayMarket: row.market || '—',
+      displayOdds: Number(row.book_odds || 0),
+      odds: Number(row.book_odds || 0),
+      prob: Number(row.adjusted_prob || 0),
+      value: Number(row.value || 0),
+      edge: Number(row.edge_pct || 0),
+      edgeToPrice: +(Number(row.adjusted_prob || 0) - impliedProbFromOdds(Number(row.book_odds || 0))).toFixed(2),
+      smartScore: smartScore,
+      score: smartScore,
+      ticketScore: smartScore,
+      adaptiveScore: adaptiveScore,
+      memoryBonus: memoryBonus,
+      directAdaptive: directAdaptive,
+      patternOnly: patternOnly,
+      bestPositivePattern: bestPositive,
+      positivePatterns: patternInfo.positive,
+      confirmationLabel: confirmLabels.join(' • ') || 'Pattern confirmat',
+      reasonsSmart: reasons.slice(0,5),
+      aiReasons: adaptive && adaptive.reasons ? adaptive.reasons.slice(0,3) : [],
+      mostLikelyScore: directAdaptive ? adaptive.most_likely_score : null
+    }));
+    if(directAdaptive) adaptiveConfirmed += 1;
+    if(patternOnly || bestPositive) patternConfirmed += 1;
+  });
+
+  pool.sort(function(a,b){
+    if(Number(b.smartScore || 0) !== Number(a.smartScore || 0)) return Number(b.smartScore || 0) - Number(a.smartScore || 0);
+    if(Number(b.edge || 0) !== Number(a.edge || 0)) return Number(b.edge || 0) - Number(a.edge || 0);
+    return Number(b.value || 0) - Number(a.value || 0);
+  });
+
+  var topPositive = (((AI_MEMORY && AI_MEMORY.top_patterns) || []).filter(function(p){
+    var key = normalizeSmartBetMarketKey(String(p && p.key || '').split('|')[0]);
+    return ['over15','over25','under35','btts','1x','x2','12','doublechance'].indexOf(key) >= 0;
+  }).sort(function(a,b){
+    if(Number(b.memory_score || 0) !== Number(a.memory_score || 0)) return Number(b.memory_score || 0) - Number(a.memory_score || 0);
+    return Number(b.roi || 0) - Number(a.roi || 0);
+  })).slice(0,6);
+
+  var avoidPatterns = (((AI_MEMORY && AI_MEMORY.avoid_patterns) || []).filter(function(p){
+    var key = normalizeSmartBetMarketKey(String(p && p.key || '').split('|')[0]);
+    return ['over15','over25','under35','btts','1x','x2','12','doublechance'].indexOf(key) >= 0;
+  }).sort(function(a,b){
+    if(Number(a.memory_score || 0) !== Number(b.memory_score || 0)) return Number(a.memory_score || 0) - Number(b.memory_score || 0);
+    return Number(a.roi || 0) - Number(b.roi || 0);
+  })).slice(0,6);
+
+  SMARTBET_LAST_ANALYSIS = {
+    pool: pool,
+    blocked: blocked,
+    adaptiveConfirmed: adaptiveConfirmed,
+    patternConfirmed: patternConfirmed,
+    topPositive: topPositive,
+    avoidPatterns: avoidPatterns
+  };
+  return SMARTBET_LAST_ANALYSIS;
+}
+function renderSmartBetPatternLists(analysis){
+  var good = $('smartbet-patterns-good');
+  var bad = $('smartbet-patterns-bad');
+  if(good){
+    var pos = analysis.topPositive || [];
+    good.innerHTML = pos.length ? pos.map(function(p){
+      return '<div class="memory-pattern-item good">'+
+        '<div class="memory-pattern-top"><span class="memory-pattern-label">'+(p.label || '—')+'</span><span class="memory-pattern-pill">score '+Number(p.memory_score || 0).toFixed(0)+'</span></div>'+
+        '<div class="memory-pattern-meta">'+(p.kind || 'pattern')+' • '+(p.raw_bets || 0)+' exemple • ROI '+fmtSignedPct(Number(p.roi || 0))+'</div>'+
+      '</div>';
+    }).join('') : '<div class="empty-state">Nu există încă pattern-uri pozitive suficiente pentru piețele urmărite.</div>';
+  }
+  if(bad){
+    var neg = analysis.avoidPatterns || [];
+    bad.innerHTML = neg.length ? neg.map(function(p){
+      return '<div class="memory-pattern-item bad">'+
+        '<div class="memory-pattern-top"><span class="memory-pattern-label">'+(p.label || '—')+'</span><span class="memory-pattern-pill">score '+Number(p.memory_score || 0).toFixed(0)+'</span></div>'+
+        '<div class="memory-pattern-meta">'+(p.kind || 'pattern')+' • '+(p.raw_bets || 0)+' exemple • ROI '+fmtSignedPct(Number(p.roi || 0))+'</div>'+
+      '</div>';
+    }).join('') : '<div class="empty-state">Nu există pattern-uri negative învățate pentru piețele active.</div>';
+  }
+}
+function renderSmartBet(){
+  var summary = $('smartbet-summary-grid');
+  var list = $('smartbet-list');
+  var updated = $('smartbet-updated');
+  var meta = $('smartbet-list-meta');
+  if(!summary || !list) return;
+
+  var analysis = getSmartBetAnalysis();
+  var pool = analysis.pool || [];
+  var blocked = analysis.blocked || [];
+
+  if(updated){
+    var ts = (AI_MEMORY && AI_MEMORY.updated_at) || (SIGNAL_AUDIT && SIGNAL_AUDIT.updated_at) || (APP_META && APP_META.updated_at) || '';
+    updated.textContent = ts ? ('SmartBet actualizat: ' + fmtDateTime(ts)) : 'SmartBet: —';
+  }
+  if(meta) meta.textContent = pool.length + ' validate • ' + blocked.length + ' blocate';
+
+  var avgScore = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.smartScore || 0); },0) / pool.length) : 0;
+  var avgEdge = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.edge || 0); },0) / pool.length) : 0;
+  var avgValue = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.value || 0) * 100; },0) / pool.length) : 0;
+
+  var cards = [
+    {label:'Selecții validate', value: pool.length, sub:'au trecut dublul filtru Audit + Memory', color:'var(--acc)'},
+    {label:'Blocate de memorie', value: blocked.length, sub:'eliminate pentru pattern negativ activ', color:'var(--red)'},
+    {label:'Smart score mediu', value: pool.length ? avgScore.toFixed(1) : '—', sub:'scorul compozit final al fuziunii', color:'var(--pur)'},
+    {label:'Edge mediu', value: pool.length ? fmtSignedPct(avgEdge) : '—', sub:'avantaj matematic rămas după validare', color:'var(--grn)'},
+    {label:'Value mediu', value: pool.length ? fmtSignedPct(avgValue) : '—', sub:'EV mediu al selecțiilor păstrate', color:'var(--yel)'},
+    {label:'Adaptive / Pattern', value: analysis.adaptiveConfirmed + ' / ' + analysis.patternConfirmed, sub:'confirmări directe și contextuale din AI Memory', color:'var(--cyan)'}
+  ];
+  summary.innerHTML = cards.map(function(c){
+    return '<div class="audit-card">'+
+      '<div class="audit-card-label">'+c.label+'</div>'+
+      '<div class="audit-card-value" style="color:'+c.color+'">'+c.value+'</div>'+
+      '<div class="audit-card-sub">'+c.sub+'</div>'+
+    '</div>';
+  }).join('');
+
+  if(!pool.length){
+    list.innerHTML = '<div class="empty-state">În acest refresh nu există selecții care să treacă simultan filtrul Audit Kelly și validarea AI Memory.</div>';
+    renderSmartBetPatternLists(analysis);
+    renderSmartBetGenerators();
+    return;
+  }
+
+  list.innerHTML = pool.slice(0,18).map(function(r, idx){
+    var reasonHtml = (r.reasonsSmart || []).map(function(tag){ return '<span class="audit-reason">'+tag+'</span>'; }).join('');
+    var evDate = r.event_date ? (fmtDate(r.event_date) + ' • ' + fmtTime(r.event_date)) : '—';
+    var valuePct = Number(r.value || 0) * 100;
+    var sourceBadge = '<span class="audit-badge" style="color:'+(r.directAdaptive ? 'var(--grn)' : 'var(--acc)')+'">'+(r.directAdaptive ? 'AI direct' : 'Pattern confirmat')+'</span>';
+    var scoreBadge = '<span class="audit-badge" style="color:var(--pur)">Smart '+Number(r.smartScore || 0).toFixed(0)+'</span>';
+    var memBadge = '<span class="audit-badge" style="color:'+(Number(r.memoryBonus || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(Number(r.memoryBonus || 0) >= 0 ? '+' : '')+Number(r.memoryBonus || 0).toFixed(1)+'</span>';
+    var hybridBlock = renderHybridProbabilityBlock({ apiProb:r.api_prob, poissonProb:r.poisson_prob, hybridProb:r.model_prob, delta:r.poisson_delta });
+    return '<div class="audit-row">'+
+      '<div class="audit-row-header">'+
+        '<div class="audit-row-main">'+
+          '<div class="audit-row-titleline"><span class="audit-row-rank">#'+(idx+1)+'</span><div class="audit-row-teams">'+(r.home || '—')+' vs '+(r.away || '—')+'</div></div>'+
+          '<div class="audit-row-meta">'+(r.league || '—')+' • '+evDate+' • '+(r.confirmationLabel || '—')+'</div>'+
+        '</div>'+
+        '<div class="audit-pick-box">'+
+          '<div class="audit-pick-label">SmartBet pick</div>'+
+          '<div class="audit-pick-value">'+(r.displayMarket || '—')+' @ '+Number(r.displayOdds || 0).toFixed(2)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="audit-row-tags">'+sourceBadge+scoreBadge+memBadge+'<span class="audit-badge">Kelly '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span></div>'+
+      hybridBlock+
+      '<div class="audit-stat-grid">'+
+        '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.prob || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Edge</div><div class="audit-stat-value">'+fmtSignedPct(Number(r.edge || 0))+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Value</div><div class="audit-stat-value">'+fmtSignedPct(valuePct)+'</div></div>'+
+        '<div class="audit-stat"><div class="audit-stat-label">Adaptive</div><div class="audit-stat-value">'+Number(r.adaptiveScore || 0).toFixed(0)+'</div></div>'+
+      '</div>'+
+      ((reasonHtml || r.bestPositivePattern) ? '<div class="audit-row-foot">'+reasonHtml+(r.bestPositivePattern ? '<span class="audit-reason">ROI mem '+fmtSignedPct(Number(r.bestPositivePattern.roi || 0))+'</span>' : '')+'</div>' : '')+
+    '</div>';
+  }).join('');
+
+  renderSmartBetPatternLists(analysis);
+  renderSmartBetGenerators();
+}
+function getSmartBetStakePct(type){
+  var settings = Object.assign({cons:2, balanced:4, goals:3}, BANKROLL_SETTINGS || {});
+  if(type === 'safe') return Number(settings.cons || 2);
+  if(type === 'hybrid') return Number(settings.balanced || 4);
+  return Math.max(0.8, Number(settings.goals || 3) * 0.6);
+}
+function getSmartBetProfile(type, relaxed){
+  var map = {
+    safe:   {icon:'🛡️', label:'SafeBet',   minPicks:2, maxPicks:3, minScore:81, minProb:67, minOdd:1.20, maxOdd:1.62, targetMinOdds:1.90, targetMaxOdds:3.90, maxSameMarket:1, minBonus:0},
+    hybrid: {icon:'⚖️', label:'HybridBet', minPicks:3, maxPicks:4, minScore:75, minProb:60, minOdd:1.20, maxOdd:1.82, targetMinOdds:3.00, targetMaxOdds:6.50, maxSameMarket:2, minBonus:-1},
+    value:  {icon:'🚀', label:'ValueBet',  minPicks:2, maxPicks:4, minScore:71, minProb:55, minOdd:1.28, maxOdd:2.25, targetMinOdds:3.40, targetMaxOdds:8.80, maxSameMarket:2, minBonus:-2}
+  };
+  var p = Object.assign({}, map[type] || map.hybrid);
+  if(relaxed){
+    p.minScore -= 4;
+    p.minProb -= 4;
+    p.maxOdd += 0.18;
+    p.minBonus -= 1.5;
+    p.targetMaxOdds += (type === 'value' ? 1.8 : 0.9);
+  }
+  return p;
+}
+function getSmartBetRank(type, picks, totalOdds, combinedProb){
+  var scoreAvg = picks.length ? picks.reduce(function(acc,p){ return acc + Number(p.smartScore || p.score || 0); },0) / picks.length : 0;
+  var edgeAvg = picks.length ? picks.reduce(function(acc,p){ return acc + Number(p.edge || 0); },0) / picks.length : 0;
+  var valueSum = picks.reduce(function(acc,p){ return acc + Number(p.value || 0) * 100; },0);
+  var memAvg = picks.length ? picks.reduce(function(acc,p){ return acc + Number(p.memoryBonus || 0); },0) / picks.length : 0;
+  var targetMid = type === 'safe' ? 2.8 : type === 'hybrid' ? 4.5 : 6.4;
+  var oddsPenalty = Math.abs(Number(totalOdds || 1) - targetMid) * (type === 'safe' ? 5.0 : 3.8);
+  return scoreAvg * 1.35 + combinedProb * 0.55 + edgeAvg * 1.10 + valueSum * (type === 'value' ? 0.55 : 0.32) + memAvg * 2.4 - oddsPenalty;
+}
+function buildSmartBetTicket(type, relaxed){
+  var analysis = SMARTBET_LAST_ANALYSIS || getSmartBetAnalysis();
+  var profile = getSmartBetProfile(type, relaxed);
+  var pool = (analysis.pool || []).filter(function(item){
+    return Number(item.smartScore || 0) >= profile.minScore &&
+           Number(item.prob || 0) >= profile.minProb &&
+           Number(item.odds || 0) >= profile.minOdd &&
+           Number(item.odds || 0) <= profile.maxOdd &&
+           Number(item.memoryBonus || 0) >= profile.minBonus;
+  }).slice(0, 14);
+
+  if(pool.length < profile.minPicks){
+    return {
+      type:type, relaxed:!!relaxed, label:profile.icon + ' ' + profile.label, picks:[], totalOdds:1, combinedProb:0,
+      summary:'Pool prea mic pentru ' + profile.label,
+      stakePct:getSmartBetStakePct(type), stake:getSuggestedStakeFromPct(type === 'safe' ? 'premium' : (type === 'hybrid' ? 'double' : 'triple')),
+      generatedAt:new Date().toISOString(),
+      error:'Nu există suficiente selecții validate pentru ' + profile.label + (relaxed ? ' (relaxat).' : '.')
+    };
+  }
+
+  var best = null;
+  function walk(start, chosen){
+    if(chosen.length >= profile.minPicks){
+      var totalOdds = chosen.reduce(function(acc,p){ return acc * Number(p.odds || 1); },1);
+      var combinedProb = chosen.reduce(function(acc,p){ return acc * Number(p.prob || 0) / 100; }, 1) * 100;
+      if(totalOdds >= profile.targetMinOdds && totalOdds <= profile.targetMaxOdds){
+        var rank = getSmartBetRank(type, chosen, totalOdds, combinedProb);
+        if(!best || rank > best.rank){
+          best = { picks: chosen.slice(), totalOdds: totalOdds, combinedProb: combinedProb, rank: rank };
+        }
+      }
+    }
+    if(chosen.length === profile.maxPicks) return;
+    for(var i=start;i<pool.length;i++){
+      var item = pool[i];
+      var correlated = chosen.some(function(existing){ return areRowsCorrelated(existing, item); });
+      if(correlated) continue;
+      var sameMarketCount = chosen.filter(function(existing){ return String(existing.marketKey || '') === String(item.marketKey || ''); }).length;
+      if(sameMarketCount >= profile.maxSameMarket) continue;
+      chosen.push(item);
+      walk(i + 1, chosen);
+      chosen.pop();
+    }
+  }
+  walk(0, []);
+
+  if(!best){
+    return {
+      type:type, relaxed:!!relaxed, label:profile.icon + ' ' + profile.label, picks:[], totalOdds:1, combinedProb:0,
+      summary:'Nu există combinație curată pe pragurile curente.',
+      stakePct:getSmartBetStakePct(type), stake:getSuggestedStakeFromPct(type === 'safe' ? 'premium' : (type === 'hybrid' ? 'double' : 'triple')),
+      generatedAt:new Date().toISOString(),
+      error:'Nu există combinație necorelată care să păstreze pragurile SmartBet pentru ' + profile.label + (relaxed ? ' (relaxat).' : '.')
+    };
+  }
+
+  var stakePct = getSmartBetStakePct(type);
+  return {
+    type:type,
+    relaxed:!!relaxed,
+    label:profile.icon + ' ' + profile.label,
+    picks:best.picks,
+    totalOdds:Number(best.totalOdds || 1),
+    combinedProb:Number(best.combinedProb || 0),
+    summary:(type === 'safe' ? '2-3 selecții cu accent pe probabilitate și confirmare istorică.' : (type === 'hybrid' ? 'Combo echilibrat între edge, value și pattern-uri pozitive.' : 'Selecții validate de ambele motoare, dar cu potențial de preț superior.')),
+    stakePct:stakePct,
+    stake:+(getActualBankrollValue() * stakePct / 100).toFixed(2),
+    generatedAt:new Date().toISOString()
+  };
+}
+function renderSmartBetTicket(type){
+  var target = $('smartbet-ticket-' + type);
+  if(!target) return;
+  var ticket = SMARTBET_TICKETS[type];
+  if(!ticket || !ticket.picks || !ticket.picks.length){
+    var msg = ticket && ticket.error ? ticket.error : 'Apasă pe Generează pentru a construi biletul SmartBet.';
+    target.innerHTML = '<div class="empty-state" style="padding:10px">' + msg + '</div>';
+    return;
+  }
+  var html = '<div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+      '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+ticket.label+(ticket.relaxed ? ' • Relaxat' : '')+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+ticket.picks.length+' selecții • '+ticket.summary+(ticket.generatedAt ? ' • '+fmtDateTime(ticket.generatedAt) : '')+'</div></div>'+
+      '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+ticket.totalOdds.toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Prob. compusă '+ticket.combinedProb.toFixed(1)+'% • stake '+ticket.stakePct.toFixed(1)+'%</div></div>'+
+    '</div>';
+  ticket.picks.forEach(function(row){
+    var tags = (row.reasonsSmart || []).slice(0, 3).map(function(tag){ return '<span class="reason-pill">'+tag+'</span>'; }).join('');
+    html += '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.06)">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+        '<div><div style="font-size:12px;font-weight:700;color:var(--txt)">'+(row.home || '—')+' vs '+(row.away || '—')+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+(row.league || '—')+' • '+(row.event_date ? (fmtDate(row.event_date)+' '+fmtTime(row.event_date)) : '—')+'</div></div>'+
+        '<div style="text-align:right"><div style="font-size:12px;font-weight:800;color:var(--acc)">'+(row.displayMarket || row.market || '—')+' @ '+Number(row.displayOdds || row.odds || 0).toFixed(2)+'</div><div style="font-size:10px;color:'+(Number(row.memoryBonus || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+';margin-top:4px">Smart '+Number(row.smartScore || 0).toFixed(0)+' • Mem '+(Number(row.memoryBonus || 0) >= 0 ? '+' : '')+Number(row.memoryBonus || 0).toFixed(1)+'</div></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="reason-pill">Prob '+fmtPct(Number(row.prob || 0))+'</span><span class="reason-pill">Edge '+fmtSignedPct(Number(row.edge || 0))+'</span><span class="reason-pill">Value '+fmtSignedPct(Number(row.value || 0) * 100)+'</span><span class="reason-pill">Adaptive '+Number(row.adaptiveScore || 0).toFixed(0)+'</span>'+(tags || '')+'</div>'+
+    '</div>';
+  });
+  html += '</div>';
+  target.innerHTML = html;
+}
+function renderSmartBetGenerators(){
+  ['safe','hybrid','value'].forEach(function(type){
+    if(SMARTBET_TICKETS[type]) renderSmartBetTicket(type);
+    var ticket = SMARTBET_TICKETS[type];
+    var poolCount = SMARTBET_LAST_ANALYSIS && SMARTBET_LAST_ANALYSIS.pool ? SMARTBET_LAST_ANALYSIS.pool.length : 0;
+    if(ticket && ticket.picks && ticket.picks.length) setGeneratorStatus('smartbet-status-' + type, 'Pool: ' + poolCount + ' • ultima generare ' + fmtDateTime(ticket.generatedAt || new Date().toISOString()) + (ticket.relaxed ? ' • relaxat' : ''), 'ok');
+    else if(ticket && ticket.error) setGeneratorStatus('smartbet-status-' + type, ticket.error, 'warn');
+    else setGeneratorStatus('smartbet-status-' + type, 'Pool curent: ' + poolCount + ' selecții validate.', poolCount ? 'ok' : 'warn');
+  });
+}
+function handleGenerateSmartBetTicket(type, btn, relaxed){
+  setButtonBusy(btn, true, relaxed ? 'Relaxat' : 'Generează', 'Se generează...');
+  setTimeout(function(){
+    SMARTBET_TICKETS[type] = buildSmartBetTicket(type, !!relaxed);
+    renderSmartBetGenerators();
+    setButtonBusy(btn, false, relaxed ? 'Relaxat' : 'Generează', 'Se generează...');
+    var ticket = SMARTBET_TICKETS[type];
+    if(ticket && ticket.picks && ticket.picks.length) toast(ticket.label + (relaxed ? ' generat (relaxat)!' : ' generat!'), 'ok');
+    else if(ticket && ticket.error) toast(ticket.error, 'warn');
+  }, 120);
+}
+
+var _smartbetSwitchTab = window.switchTab;
+window.switchTab = function(name){
+  _smartbetSwitchTab(name);
+  if(name === 'smartbet'){
+    try { renderSmartBet(); } catch(err){ console.error('renderSmartBet failed:', err); }
+  }
+};
+
+var _smartbetRenderAll = window.renderAll;
+window.renderAll = function(){
+  var out = _smartbetRenderAll();
+  try { renderSmartBet(); } catch(err){ console.error('SmartBet renderAll failed:', err); }
+  return out;
+};
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    try { renderSmartBet(); } catch(err){ console.error('SmartBet initial render failed:', err); }
+  }, 250);
 });
 
 
