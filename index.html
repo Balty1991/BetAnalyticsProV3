@@ -4341,6 +4341,12 @@ function openDashboardStream(type){
   if($('sort-select')) $('sort-select').value = 'date';
   switchTab('meciuri');
   renderMatches();
+  setTimeout(function(){
+    var target = $('matches-container');
+    if(target && typeof target.scrollIntoView === 'function'){
+      target.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  }, 120);
 }
 
 function hasSyncedOdds(match){
@@ -4393,10 +4399,11 @@ function renderMatches(){
     var b = m.bestBet || null;
     var isDashboardMlSync = CURRENT_FILTER === 'dashboard_ml_sync';
     var isDashboardWithOdds = CURRENT_FILTER === 'dashboard_with_odds';
-    if(!isMatchStillDisplayable(m)) return false;
+    var isDashboardStream = isDashboardMlSync || isDashboardWithOdds;
+    if(!isDashboardStream && !isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
     if(isDashboardMlSync){
-      // show all synced predictions that are still displayable
+      // show the full synced ML list, not only the currently displayable subset
     } else if(isDashboardWithOdds){
       if(!hasSyncedOdds(m)) return false;
     } else {
@@ -4437,7 +4444,7 @@ function renderMatches(){
     return new Date(a.date) - new Date(b.date);
   });
 
-  $('filter-count').textContent = (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Stream ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Stream cu cote • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri')));
+  $('filter-count').textContent = (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Lista ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Lista cu cote • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri')));
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
     return;
