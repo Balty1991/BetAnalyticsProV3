@@ -533,7 +533,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 
 
 /* MOBILE-FIRST NAV */
-.mobile-nav{display:none!important}
+.mobile-nav{display:none}
 .mobile-sheet{display:none}
 .mobile-sheet.show{display:block}
 .mobile-sheet{position:fixed;left:12px;right:12px;bottom:84px;z-index:180;background:rgba(10,14,23,.98);border:1px solid var(--brd2);border-radius:18px;padding:12px;box-shadow:0 18px 38px rgba(0,0,0,.38);backdrop-filter:blur(14px)}
@@ -548,9 +548,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .dashboard-insights-body{padding-top:12px}
 #dashboard-insights-body:not(.open), #matches-hub-body:not(.open){display:none}
 @media(max-width:768px){
-  .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px 12px;top:70px}
-  .tab{font-size:11px;padding:10px 6px;border-radius:12px}
-  .main{padding:14px 12px 28px}
+  .tabs{display:none}
+  .main{padding:14px 12px 110px}
   .header{padding:10px 12px}
   .header-inner{align-items:flex-start}
   .header-tools{width:100%;justify-content:flex-start}
@@ -560,10 +559,11 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
   .logo-title{font-size:15px}
   .status-bar{font-size:10px}
   .btn#btn-refresh{padding:7px 10px;font-size:11px}
-  .mobile-nav,.mobile-sheet{display:none!important}
-  .desktop-more-panel{padding:10px 12px 0}
-  .desktop-more-panel.show{padding:14px 12px 22px}
-  .more-grid{grid-template-columns:1fr}
+  .mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:fixed;left:10px;right:10px;bottom:10px;z-index:190;background:rgba(10,14,23,.97);border:1px solid var(--brd2);border-radius:20px;padding:8px;box-shadow:0 16px 36px rgba(0,0,0,.42);backdrop-filter:blur(16px)}
+  .mobile-nav-btn{border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;border-radius:14px;font-size:17px;font-weight:800}
+  .mobile-nav-btn small{font-size:10px;color:inherit;font-weight:700}
+  .mobile-nav-btn.active{background:rgba(59,130,246,.12);color:var(--acc)}
+  .desktop-more-panel{display:none!important}
   #dashboard-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
   #dashboard-stats .stat-card{padding:12px}
   #dashboard-stats .stat-card:nth-child(n+4){display:none}
@@ -662,9 +662,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .tabs{position:sticky;top:64px;z-index:48;background:rgba(8,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 16px}
 .tab{font-size:12px;font-weight:800;border-radius:14px;padding:11px 14px;justify-content:center}
 .desktop-more-panel{display:none;max-width:1400px;margin:0 auto 14px;padding:14px 16px 0}
-.desktop-more-panel.show{display:block;position:fixed;left:0;right:0;bottom:0;top:var(--more-panel-top,140px);max-width:none;margin:0;padding:16px 16px 26px;background:rgba(8,12,20,.985);border-top:1px solid rgba(255,255,255,.06);overflow:auto;z-index:170}
-.desktop-more-panel.show .desktop-more-head,.desktop-more-panel.show .more-grid{max-width:1400px;margin-left:auto;margin-right:auto}
-body.more-open{overflow:hidden}
+.desktop-more-panel.show{display:block}
 .desktop-more-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .desktop-more-title{font-size:15px;font-weight:800;color:var(--txt)}
 .desktop-more-sub{font-size:11px;color:var(--muted);line-height:1.55;max-width:720px;margin-top:4px}
@@ -684,53 +682,6 @@ body.more-open{overflow:hidden}
 .hybrid-prob-inline .delta-pos{color:var(--grn);font-weight:800}
 .hybrid-prob-inline .delta-neg{color:var(--red);font-weight:800}
 .hybrid-prob-inline .delta-neutral{color:var(--muted);font-weight:800}
-#tab-dashboard > :not(#dashboard-modern-shell){display:none!important}
-#dashboard-modern-shell{display:grid;gap:14px}
-.modern-monitor-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:20px;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(16,185,129,.08) 52%,rgba(168,85,247,.10));border:1px solid rgba(84,119,255,.22);box-shadow:0 16px 32px rgba(0,0,0,.18);position:relative;overflow:hidden}
-.modern-monitor-hero::after{content:'';position:absolute;inset:auto -20% -65% auto;width:280px;height:280px;background:radial-gradient(circle,rgba(59,130,246,.24),transparent 65%);pointer-events:none;animation:monitorPulse 4.6s ease-in-out infinite}
-.modern-kicker{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
-.modern-title{font-size:28px;font-weight:900;line-height:1.05;color:var(--txt);margin-top:6px}
-.modern-sub{font-size:12px;color:var(--muted);line-height:1.6;max-width:760px;margin-top:8px}
-.modern-meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.modern-meta-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt);font-family:var(--mono)}
-.modern-live-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(10,14,23,.42);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:800;color:var(--txt)}
-.modern-live-dot{width:10px;height:10px;border-radius:50%;background:var(--grn);box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:monitorPulseDot 1.8s ease infinite}
-.modern-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-.modern-kpi{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(12,18,32,.97));border:1px solid rgba(255,255,255,.07);box-shadow:0 10px 24px rgba(0,0,0,.16)}
-.modern-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.modern-kpi-value{margin-top:8px;font-size:24px;font-weight:900;line-height:1;color:var(--txt);font-family:var(--mono)}
-.modern-kpi-sub{margin-top:8px;font-size:11px;line-height:1.45;color:var(--muted)}
-.modern-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
-.modern-panel{padding:15px 16px;border-radius:20px;background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07);box-shadow:0 12px 28px rgba(0,0,0,.16)}
-.modern-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.modern-panel-title{font-size:14px;font-weight:800;color:var(--txt)}
-.modern-panel-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
-.modern-panel-chip{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;font-weight:800;color:var(--muted)}
-.monitor-flow{display:grid;gap:10px}
-.monitor-flow-row{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)}
-.monitor-flow-row:first-child{border-top:none;padding-top:0}
-.monitor-flow-label{font-size:11px;font-weight:800;color:var(--txt)}
-.monitor-flow-track{height:10px;border-radius:999px;background:rgba(255,255,255,.05);overflow:hidden;position:relative}
-.monitor-flow-fill{height:100%;border-radius:999px;position:relative;overflow:hidden}
-.monitor-flow-fill::after{content:'';position:absolute;top:0;bottom:0;left:-35%;width:35%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:monitorSweep 2.8s linear infinite}
-.monitor-flow-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
-.modern-list{display:grid;gap:10px}
-.modern-list-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
-.modern-list-label{font-size:12px;font-weight:700;color:var(--txt)}
-.modern-list-sub{font-size:10px;color:var(--muted);margin-top:3px}
-.modern-list-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
-.modern-action-card{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(59,130,246,.10),rgba(15,23,42,.96));border:1px solid rgba(84,119,255,.18)}
-.modern-action-title{font-size:12px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.08em}
-.modern-action-main{font-size:18px;font-weight:900;color:var(--txt);line-height:1.3;margin-top:8px}
-.modern-action-sub{font-size:11px;line-height:1.6;color:var(--muted);margin-top:8px}
-.modern-action-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.modern-action-pill{padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
-@keyframes monitorPulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.08);opacity:1}}
-@keyframes monitorPulseDot{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
-@keyframes monitorSweep{0%{left:-35%}100%{left:115%}}
-@media(max-width:1100px){.modern-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.modern-grid{grid-template-columns:1fr}}
-@media(max-width:768px){.modern-title{font-size:22px}.modern-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.modern-panel,.modern-monitor-hero{padding:14px}.monitor-flow-row{grid-template-columns:86px 1fr auto;gap:8px}}
-@media(max-width:520px){.modern-kpi-grid{grid-template-columns:1fr 1fr}.modern-action-main{font-size:16px}.modern-monitor-hero{padding:13px 12px}.modern-grid{gap:10px}}
 .section,.bankroll-card,.bilet-card,.help-panel,.visual-card,.trend-shell,.memory-shell,.focus-shell,.stat-card,.extra-form{border-radius:18px!important}
 .compact-context-panel{background:linear-gradient(180deg,rgba(13,18,31,.92),rgba(10,15,27,.94));border:1px solid rgba(255,255,255,.07)}
 #dashboard-stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;gap:10px!important}
@@ -801,6 +752,55 @@ body.more-open{overflow:hidden}
 @media(max-width:980px){.generator-board{grid-template-columns:1fr}.dashboard-monitor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.dashboard-monitor-grid,#history21-root .history-card-grid{grid-template-columns:1fr 1fr}.match-card .ticket-mini-grid.ticket-mini-grid-premium{grid-template-columns:repeat(3,1fr)}.card-reco-pick{font-size:16px!important}}
 @media(max-width:520px){.dashboard-monitor-grid,#history21-root .history-card-grid{grid-template-columns:1fr}.bilet-title{font-size:16px!important}.match-card{padding:12px!important}}
+
+
+#tab-dashboard > :not(#dashboard-modern-shell){display:none!important}
+#dashboard-modern-shell{display:grid;gap:14px}
+.modern-monitor-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border-radius:20px;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(16,185,129,.08) 52%,rgba(168,85,247,.10));border:1px solid rgba(84,119,255,.22);box-shadow:0 16px 32px rgba(0,0,0,.18);position:relative;overflow:hidden}
+.modern-monitor-hero::after{content:'';position:absolute;inset:auto -20% -65% auto;width:280px;height:280px;background:radial-gradient(circle,rgba(59,130,246,.24),transparent 65%);pointer-events:none;animation:monitorPulse 4.6s ease-in-out infinite}
+.modern-kicker{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
+.modern-title{font-size:28px;font-weight:900;line-height:1.05;color:var(--txt);margin-top:6px}
+.modern-sub{font-size:12px;color:var(--muted);line-height:1.6;max-width:760px;margin-top:8px}
+.modern-meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.modern-meta-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.modern-live-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(10,14,23,.42);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:800;color:var(--txt)}
+.modern-live-dot{width:10px;height:10px;border-radius:50%;background:var(--grn);box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:monitorPulseDot 1.8s ease infinite}
+.modern-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.modern-kpi{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(12,18,32,.97));border:1px solid rgba(255,255,255,.07);box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.modern-kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.modern-kpi-value{margin-top:8px;font-size:24px;font-weight:900;line-height:1;color:var(--txt);font-family:var(--mono)}
+.modern-kpi-sub{margin-top:8px;font-size:11px;line-height:1.45;color:var(--muted)}
+.modern-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
+.modern-panel{padding:15px 16px;border-radius:20px;background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07);box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.modern-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.modern-panel-title{font-size:14px;font-weight:800;color:var(--txt)}
+.modern-panel-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
+.modern-panel-chip{padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:10px;font-weight:800;color:var(--muted)}
+.monitor-flow{display:grid;gap:10px}
+.monitor-flow-row{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)}
+.monitor-flow-row:first-child{border-top:none;padding-top:0}
+.monitor-flow-label{font-size:11px;font-weight:800;color:var(--txt)}
+.monitor-flow-track{height:10px;border-radius:999px;background:rgba(255,255,255,.05);overflow:hidden;position:relative}
+.monitor-flow-fill{height:100%;border-radius:999px;position:relative;overflow:hidden}
+.monitor-flow-fill::after{content:'';position:absolute;top:0;bottom:0;left:-35%;width:35%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:monitorSweep 2.8s linear infinite}
+.monitor-flow-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.modern-list{display:grid;gap:10px}
+.modern-list-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.modern-list-label{font-size:12px;font-weight:700;color:var(--txt)}
+.modern-list-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.modern-list-value{font-size:11px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.modern-action-card{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(59,130,246,.10),rgba(15,23,42,.96));border:1px solid rgba(84,119,255,.18)}
+.modern-action-title{font-size:12px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.08em}
+.modern-action-main{font-size:18px;font-weight:900;color:var(--txt);line-height:1.3;margin-top:8px}
+.modern-action-sub{font-size:11px;line-height:1.6;color:var(--muted);margin-top:8px}
+.modern-action-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.modern-action-pill{padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
+@keyframes monitorPulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.08);opacity:1}}
+@keyframes monitorPulseDot{0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@keyframes monitorSweep{0%{left:-35%}100%{left:115%}}
+@media(max-width:1100px){.modern-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.modern-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.modern-title{font-size:22px}.modern-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.modern-panel,.modern-monitor-hero{padding:14px}.monitor-flow-row{grid-template-columns:86px 1fr auto;gap:8px}}
+@media(max-width:520px){.modern-kpi-grid{grid-template-columns:1fr 1fr}.modern-action-main{font-size:16px}.modern-monitor-hero{padding:13px 12px}.modern-grid{gap:10px}}
 
 </style>
 </head>
@@ -2048,48 +2048,37 @@ function renderDashboardMonitor(){
 function renderModernDashboard(){
   var target = $('dashboard-modern-shell');
   if(!target) return;
-  var displayable = (ALL_MATCHES || []).filter(function(m){ return m && isMatchStillDisplayable(m); });
-  var eligible = displayable.filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE'; });
-  var valueStrong = eligible.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
-  var premiumSingles = eligible.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
-  var trackingOpen = (TRACKING || []).filter(function(t){ return t.status === 'pending'; });
+  var statusMetrics = typeof getStatusDisplayMetrics === 'function' ? getStatusDisplayMetrics() : {ml:ALL_MATCHES.length, odds:ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE'; }).length};
+  var statusTime = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : '';
+  var rawMl = Number(statusMetrics.ml || 0);
+  var rawOdds = Number(statusMetrics.odds || 0);
+  var eligibleLocal = (ALL_MATCHES || []).filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE'; });
+  var valueStrong = eligibleLocal.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
+  var premiumSingles = eligibleLocal.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
   var tracked = (TRACKING || []).length;
+  var trackingOpen = (TRACKING || []).filter(function(t){ return t.status === 'pending'; }).length;
   var auditRows = Array.isArray((SIGNAL_AUDIT || {}).rows) ? SIGNAL_AUDIT.rows : [];
   var memoryRows = Array.isArray((AI_MEMORY || {}).by_market) ? AI_MEMORY.by_market : [];
-  var updatedAt = APP_META.generated_at || APP_META.updated_at || APP_META.last_refresh || null;
-  var nextMatch = eligible.slice().sort(function(a,b){ return new Date(a.date) - new Date(b.date); })[0] || null;
-  var bestMatch = eligible.slice().sort(function(a,b){
+  var updatedText = statusTime || '—';
+  var coveragePct = rawMl ? ((rawOdds * 100) / rawMl) : 0;
+  var avgConfidence = eligibleLocal.length ? (eligibleLocal.reduce(function(acc,m){ return acc + Number(m.confidence || 0); }, 0) / eligibleLocal.length) : 0;
+  var bestMatch = eligibleLocal.slice().sort(function(a,b){
     var as = (Number(a.smartScore || 0) * 0.5) + (Number((a.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((a.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((a.bestBet || {}).value || 0)) * 100 * 0.4);
     var bs = (Number(b.smartScore || 0) * 0.5) + (Number((b.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((b.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((b.bestBet || {}).value || 0)) * 100 * 0.4);
     return bs - as;
   })[0] || null;
   var marketCounts = {};
-  eligible.forEach(function(m){
-    var label = ((m.bestBet || {}).label) || '—';
-    marketCounts[label] = (marketCounts[label] || 0) + 1;
-  });
-  var marketRows = Object.keys(marketCounts).map(function(key){ return { label:key, value:marketCounts[key], sub:marketCounts[key] + ' setup-uri active' }; }).sort(function(a,b){ return b.value - a.value; }).slice(0,4);
-  var leagueCounts = {};
-  eligible.forEach(function(m){
-    var key = m.league || '—';
-    leagueCounts[key] = (leagueCounts[key] || 0) + 1;
-  });
-  var leagueRows = Object.keys(leagueCounts).map(function(key){ return { label:key, value:leagueCounts[key], sub:leagueCounts[key] + ' meciuri eligibile' }; }).sort(function(a,b){ return b.value - a.value; }).slice(0,4);
-  var verdictCounts = {safe:0, moderate:0, avoid:0};
-  displayable.forEach(function(m){ verdictCounts[m.verdict || 'avoid'] = (verdictCounts[m.verdict || 'avoid'] || 0) + 1; });
+  eligibleLocal.forEach(function(m){ var label = ((m.bestBet || {}).label) || '—'; marketCounts[label] = (marketCounts[label] || 0) + 1; });
+  var marketRows = Object.keys(marketCounts).map(function(key){ return { label:key, value:marketCounts[key], sub:marketCounts[key] + ' setup-uri locale' }; }).sort(function(a,b){ return b.value - a.value; }).slice(0,4);
   var flowRows = [
-    {label:'Evenimente', value:displayable.length, color:'linear-gradient(90deg,#3b82f6,#60a5fa)'},
-    {label:'Eligibile', value:eligible.length, color:'linear-gradient(90deg,#22c55e,#10b981)'},
-    {label:'Value+', value:valueStrong.length, color:'linear-gradient(90deg,#f59e0b,#f97316)'},
-    {label:'Audit', value:auditRows.length, color:'linear-gradient(90deg,#a855f7,#6366f1)'},
-    {label:'AI Memory', value:memoryRows.length, color:'linear-gradient(90deg,#06b6d4,#3b82f6)'},
+    {label:'ML sync', value:rawMl, color:'linear-gradient(90deg,#3b82f6,#60a5fa)'},
+    {label:'Cu cote', value:rawOdds, color:'linear-gradient(90deg,#22c55e,#10b981)'},
+    {label:'Eligibile', value:eligibleLocal.length, color:'linear-gradient(90deg,#f59e0b,#f97316)'},
+    {label:'Value+', value:valueStrong.length, color:'linear-gradient(90deg,#a855f7,#6366f1)'},
+    {label:'Audit', value:auditRows.length, color:'linear-gradient(90deg,#06b6d4,#3b82f6)'},
     {label:'Tracking', value:tracked, color:'linear-gradient(90deg,#f43f5e,#fb7185)'}
   ];
   var flowMax = flowRows.reduce(function(acc,row){ return Math.max(acc, row.value); }, 1) || 1;
-  var avgConfidence = eligible.length ? (eligible.reduce(function(acc,m){ return acc + Number(m.confidence || 0); }, 0) / eligible.length) : 0;
-  var coveragePct = displayable.length ? ((eligible.length * 100) / displayable.length) : 0;
-  var updatedText = updatedAt ? fmtDateTime(updatedAt) : '—';
-
   function kpi(label, value, sub){
     return '<div class="modern-kpi"><div class="modern-kpi-label">'+label+'</div><div class="modern-kpi-value">'+value+'</div><div class="modern-kpi-sub">'+sub+'</div></div>';
   }
@@ -2100,13 +2089,12 @@ function renderModernDashboard(){
   function listRow(row, formatter){
     return '<div class="modern-list-row"><div><div class="modern-list-label">'+row.label+'</div><div class="modern-list-sub">'+(row.sub || '')+'</div></div><div class="modern-list-value">'+formatter(row.value)+'</div></div>';
   }
-
   target.innerHTML = ''+
     '<div class="modern-monitor-hero">'+
       '<div>'+
         '<div class="modern-kicker">Control Center</div>'+
         '<div class="modern-title">Monitor grafic al aplicației</div>'+
-        '<div class="modern-sub">Panou compact și esențial: vezi instant ce intră în motor, cât de curat este pool-ul actual și unde merită să intri prima dată.</div>'+
+        '<div class="modern-sub">Datele principale sunt sincronizate cu bara de status de sus, iar restul elementelor oferă context local din motorul intern.</div>'+
         '<div class="modern-meta-row">'+
           '<span class="modern-meta-pill">Update '+updatedText+'</span>'+
           '<span class="modern-meta-pill">Coverage '+coveragePct.toFixed(0)+'%</span>'+
@@ -2116,47 +2104,42 @@ function renderModernDashboard(){
       '<div class="modern-live-badge"><span class="modern-live-dot"></span> monitor live</div>'+
     '</div>'+
     '<div class="modern-kpi-grid">'+
-      kpi('Live', displayable.length, 'meciuri încă afișabile în aplicație')+
-      kpi('Eligibile', eligible.length, 'setup-uri valide cu pronostic activ')+
-      kpi('Value+', valueStrong.length, 'edge real ≥ 3pp și value ≥ 8%')+
-      kpi('Premium', premiumSingles.length, 'single-uri de top în pool')+
-      kpi('Tracking', tracked, trackingOpen.length + ' încă deschise')+
+      kpi('ML sync', rawMl, 'aceeași valoare din bara de sus')+
+      kpi('Cu cote', rawOdds, 'aceeași valoare din bara de sus')+
+      kpi('Value+', valueStrong.length, 'value local ≥ 8% și edge ≥ 3pp')+
+      kpi('Premium', premiumSingles.length, 'single-uri locale de top')+
+      kpi('Tracking', tracked, trackingOpen + ' încă deschise')+
       kpi('Audit', auditRows.length, 'rânduri validate în audit')+
     '</div>'+
     '<div class="modern-grid">'+
       '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Flux motor</div><div class="modern-panel-sub">Unde se află volumul util: de la evenimente brute la selecții urmărite.</div></div><div class="modern-panel-chip">pipeline</div></div>'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Flux motor</div><div class="modern-panel-sub">Primele două valori sunt sincronizate cu headerul; restul descriu pool-ul intern al aplicației.</div></div><div class="modern-panel-chip">sync + local</div></div>'+
         '<div class="monitor-flow">'+flowRows.map(flow).join('')+'</div>'+
       '</div>'+
       '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Calitatea pool-ului</div><div class="modern-panel-sub">Distribuție rapidă a verdictelor curente din listă.</div></div><div class="modern-panel-chip">verdict</div></div>'+
-        '<div class="modern-list">'+
-          listRow({label:'Safe', sub:verdictCounts.safe + ' meciuri curate'}, function(v){ return String(v); })+
-          listRow({label:'Moderate', sub:verdictCounts.moderate + ' setup-uri de urmărit'}, function(v){ return String(v); })+
-          listRow({label:'Avoid', sub:verdictCounts.avoid + ' meciuri slabe sau fără setup'}, function(v){ return String(v); })+
-        '</div>'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Piețe locale dominante</div><div class="modern-panel-sub">Distribuția piețelor în pool-ul intern eligibil.</div></div><div class="modern-panel-chip">local</div></div>'+
+        '<div class="modern-list">'+(marketRows.length ? marketRows.map(function(row){ return listRow(row, function(v){ return String(v); }); }).join('') : '<div class="visual-empty">Nu există încă suficiente piețe locale.</div>')+'</div>'+
       '</div>'+
     '</div>'+
     '<div class="modern-grid">'+
       '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Piețe și ligi dominante</div><div class="modern-panel-sub">Cele mai active zone din pool, utile pentru orientare rapidă.</div></div><div class="modern-panel-chip">snapshot</div></div>'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Repere rapide</div><div class="modern-panel-sub">Rezumat compact pentru orientare imediată.</div></div><div class="modern-panel-chip">essential</div></div>'+
         '<div class="modern-list">'+
-          (marketRows.length ? marketRows.map(function(row){ return listRow(row, function(v){ return String(v); }); }).join('') : '<div class="visual-empty">Nu există încă suficiente piețe active.</div>')+
-        '</div>'+
-        '<div class="modern-list" style="margin-top:10px">'+
-          (leagueRows.length ? leagueRows.map(function(row){ return listRow(row, function(v){ return String(v); }); }).join('') : '')+
+          listRow({label:'Header sync', sub:'ML predictions / cu cote / ora'}, function(){ return rawMl + ' / ' + rawOdds + ' / ' + updatedText; })+
+          listRow({label:'Pool local eligibil', sub:'setup-uri analizate intern'}, function(){ return String(eligibleLocal.length); })+
+          listRow({label:'AI Memory', sub:'piețe în memoria adaptivă'}, function(){ return String(memoryRows.length); })+
         '</div>'+
       '</div>'+
       '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Acțiune rapidă</div><div class="modern-panel-sub">Ce merită verificat prima dată fără să intri în toate taburile.</div></div><div class="modern-panel-chip">focus</div></div>'+
+        '<div class="modern-panel-head"><div><div class="modern-panel-title">Acțiune rapidă</div><div class="modern-panel-sub">Cea mai bună oportunitate locală din motorul intern.</div></div><div class="modern-panel-chip">focus</div></div>'+
         '<div class="modern-action-card">'+
-          '<div class="modern-action-title">Top oportunitate curentă</div>'+
+          '<div class="modern-action-title">Top oportunitate locală</div>'+
           '<div class="modern-action-main">'+(bestMatch ? (bestMatch.home + ' vs ' + bestMatch.away + ' — ' + ((bestMatch.bestBet || {}).label || '—')) : 'Nu există încă o selecție dominantă')+'</div>'+
           '<div class="modern-action-sub">'+(bestMatch ? ('Șansă ' + fmtPct(Number((bestMatch.bestBet || {}).adjProb || 0)) + ' • edge ' + (Number((bestMatch.bestBet || {}).edgePct || 0) >= 0 ? '+' : '') + Number((bestMatch.bestBet || {}).edgePct || 0).toFixed(1) + 'pp • ' + ((bestMatch.why && String(bestMatch.why).trim()) ? bestMatch.why : buildRecommendationReasons(bestMatch, bestMatch.bestBet).slice(0,2).join(' • '))) : 'Așteaptă reîmprospătarea pool-ului pentru o recomandare mai puternică.')+'</div>'+
           '<div class="modern-action-pills">'+
-            '<span class="modern-action-pill">Next '+(nextMatch ? (nextMatch.home + ' vs ' + nextMatch.away) : '—')+'</span>'+
-            '<span class="modern-action-pill">Refresh '+updatedText+'</span>'+
-            '<span class="modern-action-pill">Open tracking '+trackingOpen.length+'</span>'+
+            '<span class="modern-action-pill">Header '+rawMl+' / '+rawOdds+'</span>'+
+            '<span class="modern-action-pill">Update '+updatedText+'</span>'+
+            '<span class="modern-action-pill">Tracking '+trackingOpen+'</span>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -2243,18 +2226,10 @@ function getCurrentActiveTabName(){
   var active = document.querySelector('.tab-content.active');
   return active ? String(active.id || '').replace('tab-','') : 'dashboard';
 }
-function updateMorePanelOffset(){
-  var tabs = document.querySelector('.tabs');
-  if(!tabs) return;
-  var rect = tabs.getBoundingClientRect();
-  document.documentElement.style.setProperty('--more-panel-top', Math.max(0, Math.round(rect.bottom)) + 'px');
-}
 function toggleDesktopMore(){
   var panel = $('desktop-more-panel');
   if(!panel) return;
-  updateMorePanelOffset();
   panel.classList.toggle('show');
-  document.body.classList.toggle('more-open', panel.classList.contains('show'));
   if(panel.classList.contains('show')){
     document.querySelectorAll('.tab').forEach(function(btn){ btn.classList.remove('active'); });
     var moreBtn = document.querySelector('.tab[data-tab="more"]');
@@ -2266,14 +2241,8 @@ function toggleDesktopMore(){
 function closeDesktopMore(skipActive){
   var panel = $('desktop-more-panel');
   if(panel) panel.classList.remove('show');
-  document.body.classList.remove('more-open');
   if(!skipActive) setDesktopTabActive(getCurrentActiveTabName());
 }
-window.addEventListener('resize', updateMorePanelOffset, {passive:true});
-window.addEventListener('scroll', function(){
-  var panel = $('desktop-more-panel');
-  if(panel && panel.classList.contains('show')) updateMorePanelOffset();
-}, {passive:true});
 function toggleMobileMore(){
   var sheet = $('mobile-sheet');
   if(!sheet) return;
