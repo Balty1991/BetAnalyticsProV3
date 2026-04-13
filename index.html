@@ -4343,6 +4343,13 @@ function openDashboardStream(type){
   renderMatches();
 }
 
+function hasSyncedOdds(match){
+  if(!match) return false;
+  if(match.hasOdds === true || match.has_odds === true) return true;
+  var fields = ['oddsHome','oddsDraw','oddsAway','oddsOver15','oddsUnder15','oddsOver25','oddsUnder25','oddsOver35','oddsUnder35','oddsBtts','oddsBttsNo'];
+  return fields.some(function(key){ return Number(match[key] || 0) > 1.01; });
+}
+
 function resetMatchFilters(){
   CURRENT_FILTER = 'all';
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -4391,7 +4398,7 @@ function renderMatches(){
     if(isDashboardMlSync){
       // show all synced predictions that are still displayable
     } else if(isDashboardWithOdds){
-      if(!(b && (b.sourceApi || b.apiProb != null))) return false;
+      if(!hasSyncedOdds(m)) return false;
     } else {
       if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
       if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
