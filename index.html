@@ -826,6 +826,68 @@ body.more-open{overflow:hidden}
 @media(max-width:768px){.modern-title{font-size:22px}.modern-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.modern-panel,.modern-monitor-hero{padding:14px}.monitor-flow-row{grid-template-columns:86px 1fr auto;gap:8px}}
 @media(max-width:520px){.modern-kpi-grid{grid-template-columns:1fr 1fr}.modern-action-main{font-size:16px}.modern-monitor-hero{padding:13px 12px}.modern-grid{gap:10px}}
 
+
+/* ===== Dashboard v16 redesign ===== */
+.dashboard-v16-shell{display:grid;gap:14px}
+.dashboard-v16-topbar,.dashboard-v16-greeting,.dashboard-v16-section,.dashboard-v16-performance,.dashboard-v16-reco{padding:16px 18px;border-radius:20px;background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07);box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.dashboard-v16-topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(16,185,129,.07) 52%,rgba(168,85,247,.10))}
+.dashboard-v16-brand{display:flex;align-items:center;gap:12px;min-width:0}
+.dashboard-v16-logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(59,130,246,.22),rgba(168,85,247,.18));border:1px solid rgba(84,119,255,.22);font-size:20px;box-shadow:0 10px 22px rgba(0,0,0,.16)}
+.dashboard-v16-brand-text{min-width:0}
+.dashboard-v16-brand-title{font-size:20px;font-weight:900;color:var(--txt);line-height:1.05}
+.dashboard-v16-brand-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.dashboard-v16-header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dashboard-v16-icon-btn,.dashboard-v16-pro-btn{height:40px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--txt);display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;cursor:pointer;padding:0 12px;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.dashboard-v16-icon-btn{width:40px;padding:0;position:relative}
+.dashboard-v16-icon-btn:hover,.dashboard-v16-pro-btn:hover,.dashboard-v16-quick-btn:hover,.dashboard-v16-opp-card:hover{transform:translateY(-2px);border-color:rgba(84,119,255,.24);background:rgba(255,255,255,.06)}
+.dashboard-v16-badge{position:absolute;top:-5px;right:-3px;min-width:18px;height:18px;border-radius:999px;background:var(--red);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px}
+.dashboard-v16-pro-btn{background:linear-gradient(135deg,rgba(168,85,247,.20),rgba(59,130,246,.16));color:#e9d5ff}
+.dashboard-v16-greeting{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.dashboard-v16-greeting-title{font-size:18px;font-weight:900;color:var(--txt)}
+.dashboard-v16-greeting-sub{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
+.dashboard-v16-mini-pills{display:flex;gap:8px;flex-wrap:wrap}
+.dashboard-v16-mini-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.dashboard-v16-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.dashboard-v16-section-title{font-size:15px;font-weight:900;color:var(--txt);display:flex;align-items:center;gap:8px}
+.dashboard-v16-section-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
+.dashboard-v16-swipe-note{font-size:10px;color:var(--muted);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}
+.dashboard-v16-opp-scroll{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);gap:12px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x proximity}
+.dashboard-v16-opp-scroll::-webkit-scrollbar{height:6px}
+.dashboard-v16-opp-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px}
+.dashboard-v16-opp-card{scroll-snap-align:start;padding:15px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(20,30,55,.96),rgba(12,18,32,.98));display:grid;gap:10px;cursor:pointer;min-height:182px;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.dashboard-v16-opp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.dashboard-v16-rank{padding:5px 9px;border-radius:999px;background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.25);font-size:10px;font-weight:800;color:var(--acc);font-family:var(--mono)}
+.dashboard-v16-score{font-size:28px;font-weight:900;color:var(--txt);line-height:1}
+.dashboard-v16-score-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:right}
+.dashboard-v16-opp-match{font-size:16px;font-weight:900;color:var(--txt);line-height:1.35}
+.dashboard-v16-opp-meta{font-size:11px;color:var(--muted);line-height:1.55}
+.dashboard-v16-opp-bet{padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:800;color:var(--txt)}
+.dashboard-v16-opp-pills{display:flex;gap:8px;flex-wrap:wrap}
+.dashboard-v16-opp-pill{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
+.dashboard-v16-performance{display:grid;grid-template-columns:1.25fr .85fr;gap:14px}
+.dashboard-v16-chart-wrap{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(20,30,55,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07)}
+.dashboard-v16-chart-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.dashboard-v16-chart-title{font-size:12px;font-weight:800;color:var(--txt)}
+.dashboard-v16-chart-note{font-size:10px;color:var(--muted)}
+.dashboard-v16-chart{height:160px;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.00));border:1px solid rgba(255,255,255,.05)}
+.dashboard-v16-chart svg{width:100%;height:100%;display:block}
+.dashboard-v16-perf-stats{display:grid;gap:10px}
+.dashboard-v16-stat-card{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(20,30,55,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07)}
+.dashboard-v16-stat-k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.dashboard-v16-stat-v{margin-top:8px;font-size:28px;font-weight:900;color:var(--txt);line-height:1}
+.dashboard-v16-stat-sub{margin-top:7px;font-size:11px;color:var(--muted);line-height:1.5}
+.dashboard-v16-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.dashboard-v16-quick-btn{padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,rgba(20,30,55,.96),rgba(12,18,32,.98));color:var(--txt);text-align:left;cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.dashboard-v16-quick-k{font-size:12px;font-weight:900;color:var(--txt)}
+.dashboard-v16-quick-s{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5}
+.dashboard-v16-reco-main{font-size:16px;font-weight:900;color:var(--txt);line-height:1.4}
+.dashboard-v16-reco-sub{font-size:12px;color:var(--muted);line-height:1.65;margin-top:8px}
+.dashboard-v16-reco-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.dashboard-v16-reco-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
+.dashboard-v16-empty{padding:16px;border-radius:18px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.10);font-size:12px;color:var(--muted);text-align:center}
+@media(max-width:980px){.dashboard-v16-performance{grid-template-columns:1fr}.dashboard-v16-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.dashboard-v16-topbar,.dashboard-v16-greeting,.dashboard-v16-section,.dashboard-v16-performance,.dashboard-v16-reco{padding:14px 13px}.dashboard-v16-brand-title{font-size:18px}.dashboard-v16-greeting-title{font-size:16px}.dashboard-v16-opp-scroll{grid-auto-columns:84vw}.dashboard-v16-score{font-size:24px}.dashboard-v16-quick-grid{grid-template-columns:1fr 1fr}.dashboard-v16-stat-v{font-size:24px}.dashboard-v16-chart{height:140px}}
+
 </style>
 </head>
 <body>
@@ -2150,105 +2212,220 @@ function renderDashboardMonitor(){
 function renderModernDashboard(){
   var target = $('dashboard-modern-shell');
   if(!target) return;
+
+  function esc(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+  function signed(n, suffix){
+    var num = Number(n || 0);
+    return (num >= 0 ? '+' : '') + num.toFixed(1) + (suffix || '');
+  }
+  function getGreeting(){
+    var h = new Date().getHours();
+    if(h < 12) return 'Bună dimineața';
+    if(h < 18) return 'Bună ziua';
+    return 'Bună seara';
+  }
+  function isSameLocalDay(iso){
+    if(!iso) return false;
+    var d = new Date(iso); if(!isFinite(d.getTime())) return false;
+    var now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  }
+  function eventStamp(obj){
+    var raw = obj && (obj.event_date || obj.eventDate || obj.date || obj.logged_at || obj.prediction_created_at || null);
+    var ms = raw ? new Date(raw).getTime() : NaN;
+    return isFinite(ms) ? ms : 0;
+  }
+  function oppSortScore(m){
+    return (Number(m.smartScore || 0) * 0.54) +
+      (Number((m.bestBet || {}).adjProb || 0) * 0.30) +
+      (Math.max(0, Number((m.bestBet || {}).edgePct || 0)) * 2.6) +
+      (Math.max(0, Number((m.bestBet || {}).value || 0)) * 100 * 0.55);
+  }
+  function spark(values){
+    var series = Array.isArray(values) && values.length ? values.slice() : [100,100];
+    if(series.length === 1) series.push(series[0]);
+    var w = 520, h = 160, pad = 14;
+    var min = Math.min.apply(null, series);
+    var max = Math.max.apply(null, series);
+    if(min === max){ min -= 1; max += 1; }
+    var pts = series.map(function(v, i){
+      var x = pad + ((w - pad * 2) * (series.length === 1 ? 0 : i / (series.length - 1)));
+      var y = h - pad - (((v - min) / (max - min)) * (h - pad * 2));
+      return [x, y];
+    });
+    var line = pts.map(function(p){ return p[0].toFixed(2)+','+p[1].toFixed(2); }).join(' ');
+    var area = 'M '+pts[0][0].toFixed(2)+' '+(h-pad).toFixed(2)+' L '+pts.map(function(p){ return p[0].toFixed(2)+' '+p[1].toFixed(2); }).join(' L ')+' L '+pts[pts.length-1][0].toFixed(2)+' '+(h-pad).toFixed(2)+' Z';
+    var guides = [25,50,75].map(function(p){
+      var y = (h-pad) - ((h - pad * 2) * p / 100);
+      return '<line x1="'+pad+'" y1="'+y.toFixed(2)+'" x2="'+(w-pad)+'" y2="'+y.toFixed(2)+'" stroke="rgba(255,255,255,.06)" stroke-dasharray="4 6" />';
+    }).join('');
+    return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+
+      '<defs><linearGradient id="dashAreaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(59,130,246,.30)"/><stop offset="100%" stop-color="rgba(59,130,246,0)"/></linearGradient><linearGradient id="dashLineGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#34d399"/></linearGradient></defs>'+
+      guides+
+      '<path d="'+area+'" fill="url(#dashAreaGrad)"></path>'+
+      '<polyline points="'+line+'" fill="none" stroke="url(#dashLineGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>'+
+      '<circle cx="'+pts[pts.length-1][0].toFixed(2)+'" cy="'+pts[pts.length-1][1].toFixed(2)+'" r="5" fill="#22c55e" stroke="rgba(15,23,42,.95)" stroke-width="2"></circle>'+
+    '</svg>';
+  }
+
   var statusMetrics = typeof getStatusDisplayMetrics === 'function' ? getStatusDisplayMetrics() : {ml:ALL_MATCHES.length, odds:ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE'; }).length};
   var statusTime = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : '';
   var rawMl = Number(statusMetrics.ml || 0);
   var rawOdds = Number(statusMetrics.odds || 0);
-  var eligibleLocal = (ALL_MATCHES || []).filter(passesSelectionFilter);
-  var dashboardAllPredictions = eligibleLocal.length;
-  var proActiveCount = eligibleLocal.filter(isProActiveMatch).length;
-  var valueStrong = eligibleLocal.filter(function(m){ return Number((m.bestBet || {}).value || 0) >= 0.08 && Number((m.bestBet || {}).edgePct || 0) >= 3; });
-  var premiumSingles = eligibleLocal.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
-  var tracked = (TRACKING || []).length;
+  var eligibleLocal = (ALL_MATCHES || []).filter(function(m){ return m && passesSelectionFilter(m); });
+  var analyzedCount = eligibleLocal.length;
+  var proActiveCount = eligibleLocal.filter(function(m){ return isProActiveMatch(m); }).length;
   var trackingOpen = (TRACKING || []).filter(function(t){ return t.status === 'pending'; }).length;
-  var auditRows = Array.isArray((SIGNAL_AUDIT || {}).rows) ? SIGNAL_AUDIT.rows : [];
-  var memoryRows = Array.isArray((AI_MEMORY || {}).by_market) ? AI_MEMORY.by_market : [];
-  var updatedText = statusTime || '—';
-  var coveragePct = rawMl ? ((rawOdds * 100) / rawMl) : 0;
-  var avgConfidence = eligibleLocal.length ? (eligibleLocal.reduce(function(acc,m){ return acc + Number(m.confidence || 0); }, 0) / eligibleLocal.length) : 0;
-  var bestMatch = eligibleLocal.slice().sort(function(a,b){
-    var as = (Number(a.smartScore || 0) * 0.5) + (Number((a.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((a.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((a.bestBet || {}).value || 0)) * 100 * 0.4);
-    var bs = (Number(b.smartScore || 0) * 0.5) + (Number((b.bestBet || {}).adjProb || 0) * 0.35) + (Math.max(0, Number((b.bestBet || {}).edgePct || 0)) * 2.2) + (Math.max(0, Number((b.bestBet || {}).value || 0)) * 100 * 0.4);
-    return bs - as;
-  })[0] || null;
-  var marketCounts = {};
-  eligibleLocal.forEach(function(m){ var label = ((m.bestBet || {}).label) || '—'; marketCounts[label] = (marketCounts[label] || 0) + 1; });
-  var marketRows = Object.keys(marketCounts).map(function(key){ return { label:key, value:marketCounts[key], sub:marketCounts[key] + ' setup-uri locale' }; }).sort(function(a,b){ return b.value - a.value; }).slice(0,4);
-  var flowRows = [
-    {label:'ML sync', value:rawMl, color:'linear-gradient(90deg,#3b82f6,#60a5fa)'},
-    {label:'Cu cote', value:rawOdds, color:'linear-gradient(90deg,#22c55e,#10b981)'},
-    {label:'Eligibile', value:eligibleLocal.length, color:'linear-gradient(90deg,#f59e0b,#f97316)'},
-    {label:'Value+', value:valueStrong.length, color:'linear-gradient(90deg,#a855f7,#6366f1)'},
-    {label:'Audit', value:auditRows.length, color:'linear-gradient(90deg,#06b6d4,#3b82f6)'},
-    {label:'Tracking', value:tracked, color:'linear-gradient(90deg,#f43f5e,#fb7185)'}
-  ];
-  var flowMax = flowRows.reduce(function(acc,row){ return Math.max(acc, row.value); }, 1) || 1;
-  function kpi(label, value, sub, action){
-    var attrs = action ? (' class="modern-kpi clickable" onclick="'+action+'"') : ' class="modern-kpi"';
-    return '<div'+attrs+'><div class="modern-kpi-label">'+label+'</div><div class="modern-kpi-value">'+value+'</div><div class="modern-kpi-sub">'+sub+'</div></div>';
+  var topMatches = eligibleLocal.slice().sort(function(a,b){ return oppSortScore(b) - oppSortScore(a); });
+  var above90 = topMatches.filter(function(m){ return Number(m.smartScore || 0) >= 90; });
+  var topOpps = (above90.length ? above90 : topMatches).slice(0,3);
+
+  var cutoff30 = new Date(Date.now() - (30 * 86400000));
+  var settled30 = typeof getHistory21SettledRows === 'function' ? getHistory21SettledRows(cutoff30).filter(function(r){ return eventStamp(r) >= cutoff30.getTime(); }) : [];
+  var pending30 = typeof getHistory21LivePendingRows === 'function' ? getHistory21LivePendingRows().filter(function(r){ return eventStamp(r) >= cutoff30.getTime(); }) : [];
+  settled30.sort(function(a,b){ return eventStamp(a) - eventStamp(b); });
+  var bets30 = settled30.length;
+  var wins30 = settled30.filter(function(r){ return r.status === 'win'; }).length;
+  var profit30 = settled30.reduce(function(acc, r){
+    var odds = Number(r.odds || 0);
+    return acc + (r.status === 'win' ? (odds > 1 ? (odds - 1) : 0) : -1);
+  }, 0);
+  var roi30 = bets30 ? (profit30 * 100 / bets30) : 0;
+  var winrate30 = bets30 ? (wins30 * 100 / bets30) : 0;
+  var bankrollSeries = [100];
+  var running = 100;
+  settled30.forEach(function(r){
+    var odds = Number(r.odds || 0);
+    running += (r.status === 'win' ? (odds > 1 ? (odds - 1) : 0) : -1);
+    bankrollSeries.push(+running.toFixed(2));
+  });
+  if(bankrollSeries.length < 2) bankrollSeries.push(bankrollSeries[0]);
+  var perfChart = spark(bankrollSeries);
+
+  var combined30 = [];
+  var merged = {};
+  settled30.forEach(function(r){ merged[getHistory21RowKey ? getHistory21RowKey(r) : String(Math.random())] = r; });
+  pending30.forEach(function(r){ merged[getHistory21RowKey ? getHistory21RowKey(r) : String(Math.random())] = r; });
+  combined30 = Object.keys(merged).map(function(k){ return merged[k]; });
+  var bestHistoryMarket = null;
+  if(typeof getHistory21CategoryDefs === 'function' && typeof buildHistory21Group === 'function' && combined30.length){
+    var defs = getHistory21CategoryDefs(combined30).filter(function(def){ return ['all','safe','value'].indexOf(def.key) === -1; });
+    var groups = defs.map(function(def){
+      return buildHistory21Group(def.label, def.key, combined30.filter(function(r){ return historyRowMatchesCategory(r, def.key); }));
+    }).filter(function(g){ return g && g.total > 0; });
+    groups.sort(function(a,b){
+      var aScore = (Number(a.roi || 0) * 1.3) + (Number(a.winrate || 0) * 0.45) + (Number(a.bets || 0) * 0.4);
+      var bScore = (Number(b.roi || 0) * 1.3) + (Number(b.winrate || 0) * 0.45) + (Number(b.bets || 0) * 0.4);
+      return bScore - aScore;
+    });
+    bestHistoryMarket = groups[0] || null;
   }
-  function flow(row){
-    var pct = Math.max(8, Math.round((Number(row.value || 0) * 100) / flowMax));
-    return '<div class="monitor-flow-row"><div class="monitor-flow-label">'+row.label+'</div><div class="monitor-flow-track"><div class="monitor-flow-fill" style="width:'+pct+'%;background:'+row.color+'"></div></div><div class="monitor-flow-value">'+row.value+'</div></div>';
+
+  var availableToday = 0;
+  if(bestHistoryMarket){
+    availableToday = eligibleLocal.filter(function(m){
+      return inferMarketTypeFromLabel(((m.bestBet || {}).label) || '') === bestHistoryMarket.market && isSameLocalDay(m.event_date || m.eventDate);
+    }).length;
+    if(!availableToday){
+      availableToday = eligibleLocal.filter(function(m){
+        return inferMarketTypeFromLabel(((m.bestBet || {}).label) || '') === bestHistoryMarket.market;
+      }).length;
+    }
   }
-  function listRow(row, formatter){
-    return '<div class="modern-list-row"><div><div class="modern-list-label">'+row.label+'</div><div class="modern-list-sub">'+(row.sub || '')+'</div></div><div class="modern-list-value">'+formatter(row.value)+'</div></div>';
-  }
-  target.innerHTML = ''+
-    '<div class="modern-monitor-hero">'+
-      '<div>'+
-        '<div class="modern-kicker">Control Center</div>'+
-        '<div class="modern-title">Monitor grafic al aplicației</div>'+
-        '<div class="modern-sub">Datele principale sunt sincronizate cu bara de status de sus, iar restul elementelor oferă context local din motorul intern.</div>'+
-        '<div class="modern-meta-row">'+
-          '<span class="modern-meta-pill">Update '+updatedText+'</span>'+
-          '<span class="modern-meta-pill">Coverage '+coveragePct.toFixed(0)+'%</span>'+
-          '<span class="modern-meta-pill">Confidence mediu '+avgConfidence.toFixed(0)+'%</span>'+
-        '</div>'+
+
+  var recommendationMain = bestHistoryMarket
+    ? ('Bazat pe istoricul recent, ai semnal bun pe „' + esc(bestHistoryMarket.label) + '”.')
+    : 'Nu există încă suficient istoric închis pentru o recomandare personalizată.';
+  var recommendationSub = bestHistoryMarket
+    ? (availableToday + ' meciuri disponibile ' + (availableToday && eligibleLocal.some(function(m){ return inferMarketTypeFromLabel(((m.bestBet || {}).label) || '') === bestHistoryMarket.market && isSameLocalDay(m.event_date || m.eventDate); }) ? 'azi' : 'în pool-ul curent') + ' în această piață • ROI ' + signed(bestHistoryMarket.roi || 0, '%') + ' • win ' + Number(bestHistoryMarket.winrate || 0).toFixed(1) + '% • ' + Number(bestHistoryMarket.wins || 0) + '/' + Number(bestHistoryMarket.bets || 0) + ' închise.')
+    : 'Pe măsură ce se închid recomandările, dashboard-ul îți va sugera automat piețele unde performezi mai bine.';
+
+  var topOppHtml = topOpps.length ? topOpps.map(function(m, idx){
+    var bestBet = m.bestBet || {};
+    var score = Math.round(Number(m.smartScore || oppSortScore(m) || 0));
+    var edge = Number(bestBet.edgePct || 0);
+    var adj = Number(bestBet.adjProb || 0);
+    var odds = Number(bestBet.odds || 0);
+    var metaDate = m.event_date ? fmtDateTime(m.event_date) : (m.league || '—');
+    return '<button class="dashboard-v16-opp-card" onclick="switchTab(\'meciuri\')">'+
+      '<div class="dashboard-v16-opp-top"><span class="dashboard-v16-rank">TOP ' + (idx + 1) + '</span><div><div class="dashboard-v16-score">' + score + '</div><div class="dashboard-v16-score-label">smart score</div></div></div>'+
+      '<div class="dashboard-v16-opp-match">' + esc((m.home || '—') + ' vs ' + (m.away || '—')) + '</div>'+
+      '<div class="dashboard-v16-opp-meta">' + esc((m.league || '—')) + ' • ' + esc(metaDate) + '</div>'+
+      '<div class="dashboard-v16-opp-bet">' + esc((bestBet.label || 'Pronostic indisponibil')) + (odds > 1 ? (' @ ' + odds.toFixed(2)) : '') + '</div>'+
+      '<div class="dashboard-v16-opp-pills">'+
+        '<span class="dashboard-v16-opp-pill">Prob ' + adj.toFixed(1) + '%</span>'+
+        '<span class="dashboard-v16-opp-pill">Edge ' + (edge >= 0 ? '+' : '') + edge.toFixed(1) + 'pp</span>'+
+        '<span class="dashboard-v16-opp-pill">Val ' + signed(Number(bestBet.value || 0) * 100, '%') + '</span>'+
       '</div>'+
-      '<div class="modern-live-badge"><span class="modern-live-dot"></span> monitor live</div>'+
+    '</button>';
+  }).join('') : '<div class="dashboard-v16-empty">Nu există încă oportunități eligibile în pool-ul curent.</div>';
+
+  var todayLiveCount = eligibleLocal.filter(function(m){ return isSameLocalDay(m.event_date || m.eventDate); }).length || analyzedCount;
+  var helloText = getGreeting() + '. Astăzi avem ' + todayLiveCount + ' meciuri analizate.';
+
+  target.innerHTML = '<div class="dashboard-v16-shell">'+
+    '<div class="dashboard-v16-topbar">'+
+      '<div class="dashboard-v16-brand">'+
+        '<div class="dashboard-v16-logo">📊</div>'+
+        '<div class="dashboard-v16-brand-text"><div class="dashboard-v16-brand-title">BetAnalytics Pro v16</div><div class="dashboard-v16-brand-sub">Dashboard strategic • status live ' + esc(statusTime || '—') + '</div></div>'+
+      '</div>'+
+      '<div class="dashboard-v16-header-actions">'+
+        '<button class="dashboard-v16-icon-btn" onclick="switchTab(\'tracking\')">🔔' + (trackingOpen ? '<span class="dashboard-v16-badge">' + trackingOpen + '</span>' : '') + '</button>'+
+        '<button class="dashboard-v16-icon-btn" onclick="switchTab(\'bankroll\')">⚙️</button>'+
+        '<button class="dashboard-v16-pro-btn" onclick="switchTab(\'meciuri\')">PRO</button>'+
+      '</div>'+
     '</div>'+
-    '<div class="modern-kpi-grid">'+
-      kpi('Toate predicțiile', dashboardAllPredictions, 'apasă pentru lista completă din categoria Meciuri', "openDashboardStream('all_predictions')")+
-      kpi('Doar Pro', proActiveCount, 'apasă pentru lista cu filtrul Pro activat', "openDashboardStream('pro_active')")+
-      kpi('Value+', valueStrong.length, 'apasă pentru lista Value din categoria Meciuri', "openDashboardStream('value_active')")+
-      kpi('Premium', premiumSingles.length, 'single-uri locale de top')+
-      kpi('Tracking', tracked, trackingOpen + ' încă deschise')+
-      kpi('Audit', auditRows.length, 'rânduri validate în audit')+
+
+    '<div class="dashboard-v16-greeting">'+
+      '<div><div class="dashboard-v16-greeting-title">' + helloText + '</div><div class="dashboard-v16-greeting-sub">Header sync: ' + rawMl + ' ML • ' + rawOdds + ' cu cote • ' + proActiveCount + ' cu filtru Pro • update ' + esc(statusTime || '—') + '.</div></div>'+
+      '<div class="dashboard-v16-mini-pills"><span class="dashboard-v16-mini-pill">Pool ' + analyzedCount + '</span><span class="dashboard-v16-mini-pill">Pro ' + proActiveCount + '</span><span class="dashboard-v16-mini-pill">Live ' + todayLiveCount + '</span></div>'+
     '</div>'+
-    '<div class="modern-grid">'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Flux motor</div><div class="modern-panel-sub">Primele două valori sunt sincronizate cu headerul; restul descriu pool-ul intern al aplicației.</div></div><div class="modern-panel-chip">sync + local</div></div>'+
-        '<div class="monitor-flow">'+flowRows.map(flow).join('')+'</div>'+
+
+    '<div class="dashboard-v16-section">'+
+      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">🔥 TOP 3 OPORTUNITĂȚI</div><div class="dashboard-v16-section-sub">Scor SmartBet ridicat și context bun în pool-ul curent. Cardurile pot fi glisate orizontal.</div></div><div class="dashboard-v16-swipe-note">Swipe →</div></div>'+
+      '<div class="dashboard-v16-opp-scroll">' + topOppHtml + '</div>'+
+    '</div>'+
+
+    '<div class="dashboard-v16-performance">'+
+      '<div class="dashboard-v16-chart-wrap">'+
+        '<div class="dashboard-v16-chart-head"><div><div class="dashboard-v16-chart-title">📊 PERFORMANȚA TA · ultimele 30 zile</div><div class="dashboard-v16-chart-note">Model 1 unit / recomandare închisă • pending separat</div></div><div class="dashboard-v16-swipe-note">' + bets30 + ' închise • ' + pending30.length + ' pending</div></div>'+
+        '<div class="dashboard-v16-chart">' + perfChart + '</div>'+
       '</div>'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Piețe locale dominante</div><div class="modern-panel-sub">Distribuția piețelor în pool-ul intern eligibil.</div></div><div class="modern-panel-chip">local</div></div>'+
-        '<div class="modern-list">'+(marketRows.length ? marketRows.map(function(row){ return listRow(row, function(v){ return String(v); }); }).join('') : '<div class="visual-empty">Nu există încă suficiente piețe locale.</div>')+'</div>'+
+      '<div class="dashboard-v16-perf-stats">'+
+        '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">ROI</div><div class="dashboard-v16-stat-v" style="color:' + (bets30 ? (roi30 >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)') + '">' + (bets30 ? signed(roi30, '%') : '—') + '</div><div class="dashboard-v16-stat-sub">rentabilitate pe recomandările închise din ultimele 30 de zile</div></div>'+
+        '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">Win</div><div class="dashboard-v16-stat-v">' + (bets30 ? winrate30.toFixed(1) + '%' : '—') + '</div><div class="dashboard-v16-stat-sub">' + wins30 + ' câștigate din ' + bets30 + ' închise</div></div>'+
+        '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">Profit unit</div><div class="dashboard-v16-stat-v" style="color:' + (bets30 ? (profit30 >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)') + '">' + (bets30 ? signed(profit30, 'u') : '—') + '</div><div class="dashboard-v16-stat-sub">bankroll modelat de la 100u • pending ' + pending30.length + '</div></div>'+
       '</div>'+
     '</div>'+
-    '<div class="modern-grid">'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Repere rapide</div><div class="modern-panel-sub">Rezumat compact pentru orientare imediată.</div></div><div class="modern-panel-chip">essential</div></div>'+
-        '<div class="modern-list">'+
-          listRow({label:'Header sync', sub:'ML predictions / cu cote / ora'}, function(){ return rawMl + ' / ' + rawOdds + ' / ' + updatedText; })+
-          listRow({label:'Pool local eligibil', sub:'setup-uri analizate intern'}, function(){ return String(eligibleLocal.length); })+
-          listRow({label:'AI Memory', sub:'piețe în memoria adaptivă'}, function(){ return String(memoryRows.length); })+
-        '</div>'+
+
+    '<div class="dashboard-v16-section">'+
+      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">⚡ ACȚIUNI RAPIDE</div><div class="dashboard-v16-section-sub">Scurtături spre zonele pe care le folosești cel mai des.</div></div></div>'+
+      '<div class="dashboard-v16-quick-grid">'+
+        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'bilete\')"><div class="dashboard-v16-quick-k">Generează Bilet</div><div class="dashboard-v16-quick-s">Intră direct în generator și vezi selecțiile disponibile.</div></button>'+
+        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'meciuri\')"><div class="dashboard-v16-quick-k">Vezi Analize</div><div class="dashboard-v16-quick-s">Deschide lista completă de meciuri și filtrele active.</div></button>'+
+        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'bankroll\')"><div class="dashboard-v16-quick-k">Simulare</div><div class="dashboard-v16-quick-s">Urmărește bankroll-ul și stake-urile recomandate.</div></button>'+
+        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'istoric21\')"><div class="dashboard-v16-quick-k">Istoric</div><div class="dashboard-v16-quick-s">Verifică rapid ROI, win rate și trendurile reale.</div></button>'+
       '</div>'+
-      '<div class="modern-panel">'+
-        '<div class="modern-panel-head"><div><div class="modern-panel-title">Acțiune rapidă</div><div class="modern-panel-sub">Cea mai bună oportunitate locală din motorul intern.</div></div><div class="modern-panel-chip">focus</div></div>'+
-        '<div class="modern-action-card">'+
-          '<div class="modern-action-title">Top oportunitate locală</div>'+
-          '<div class="modern-action-main">'+(bestMatch ? (bestMatch.home + ' vs ' + bestMatch.away + ' — ' + ((bestMatch.bestBet || {}).label || '—')) : 'Nu există încă o selecție dominantă')+'</div>'+
-          '<div class="modern-action-sub">'+(bestMatch ? ('Șansă ' + fmtPct(Number((bestMatch.bestBet || {}).adjProb || 0)) + ' • edge ' + (Number((bestMatch.bestBet || {}).edgePct || 0) >= 0 ? '+' : '') + Number((bestMatch.bestBet || {}).edgePct || 0).toFixed(1) + 'pp • ' + ((bestMatch.why && String(bestMatch.why).trim()) ? bestMatch.why : buildRecommendationReasons(bestMatch, bestMatch.bestBet).slice(0,2).join(' • '))) : 'Așteaptă reîmprospătarea pool-ului pentru o recomandare mai puternică.')+'</div>'+
-          '<div class="modern-action-pills">'+
-            '<span class="modern-action-pill">Header '+rawMl+' / '+rawOdds+'</span>'+
-            '<span class="modern-action-pill">Update '+updatedText+'</span>'+
-            '<span class="modern-action-pill">Tracking '+trackingOpen+'</span>'+
-          '</div>'+
-        '</div>'+
+    '</div>'+
+
+    '<div class="dashboard-v16-reco">'+
+      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">🎯 RECOMANDĂRI PENTRU TINE</div><div class="dashboard-v16-section-sub">Motorul caută piața cu semnal istoric mai bun și o compară cu meciurile disponibile acum.</div></div></div>'+
+      '<div class="dashboard-v16-reco-main">' + recommendationMain + '</div>'+
+      '<div class="dashboard-v16-reco-sub">' + recommendationSub + '</div>'+
+      '<div class="dashboard-v16-reco-pills">'+
+        '<span class="dashboard-v16-reco-pill">ML sync ' + rawMl + '</span>'+
+        '<span class="dashboard-v16-reco-pill">Cu cote ' + rawOdds + '</span>'+
+        '<span class="dashboard-v16-reco-pill">Pool eligibil ' + analyzedCount + '</span>'+
       '</div>'+
-    '</div>';
+    '</div>'+
+  '</div>';
 }
 
 function renderAuditVisuals(){
