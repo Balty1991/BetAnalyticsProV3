@@ -2382,11 +2382,13 @@ function renderModernDashboard(){
     var edge = Number(bestBet.edgePct || 0);
     var adj = Number(bestBet.adjProb || 0);
     var odds = Number(bestBet.odds || 0);
-    var metaDate = m.event_date ? fmtDateTime(m.event_date) : (m.league || '—');
+    var rawKickoff = m.event_date || m.eventDate || m.date || m.starts_at || m.kickoff || m.start_time || '';
+    var kickoffLabel = rawKickoff ? (function(v){ var d = new Date(v); return isFinite(d.getTime()) ? (d.toLocaleDateString('ro-RO') + ' • ' + d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'})) : String(v); })(rawKickoff) : 'Data indisponibilă';
     return '<button class="dashboard-v16-opp-card" onclick="switchTab(\'meciuri\')">'+
       '<div class="dashboard-v16-opp-top"><span class="dashboard-v16-rank">TOP ' + (idx + 1) + '</span><div><div class="dashboard-v16-score">' + score + '</div><div class="dashboard-v16-score-label">smart score</div></div></div>'+
       '<div class="dashboard-v16-opp-match">' + esc((m.home || '—') + ' vs ' + (m.away || '—')) + '</div>'+
-      '<div class="dashboard-v16-opp-meta">' + esc((m.league || '—')) + ' • ' + esc(metaDate) + '</div>'+
+      '<div class="dashboard-v16-opp-meta">' + esc((m.league || '—')) + '</div>'+
+      '<div class="dashboard-v16-opp-meta">📅 ' + esc(kickoffLabel) + '</div>'+
       '<div class="dashboard-v16-opp-bet">' + esc((bestBet.label || 'Pronostic indisponibil')) + (odds > 1 ? (' @ ' + odds.toFixed(2)) : '') + '</div>'+
       '<div class="dashboard-v16-opp-pills">'+
         '<span class="dashboard-v16-opp-pill">Prob ' + adj.toFixed(1) + '%</span>'+
