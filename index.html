@@ -954,6 +954,44 @@ body.more-open{overflow:hidden}
 .match-card-v16 .m16-extra.open{display:grid;gap:10px}
 @media(max-width:640px){.match-card-v16 .m16-teams{grid-template-columns:1fr auto 1fr}.match-card-v16 .m16-team-name{font-size:15px}.match-card-v16 .m16-team-prob{font-size:19px}.match-card-v16 .m16-reco-main{font-size:20px}.match-card-v16 .m16-actions{grid-template-columns:1fr}}
 
+
+/* ===== Add-on features: alerts / simulator / charts ===== */
+.addon-grid{display:grid;gap:14px}
+.addon-card{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07);box-shadow:0 12px 28px rgba(0,0,0,.16)}
+.addon-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.addon-title{font-size:15px;font-weight:900;color:var(--txt)}
+.addon-sub{font-size:11px;color:var(--muted);line-height:1.6;margin-top:4px}
+.addon-chip{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
+.addon-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.addon-label{font-size:11px;color:var(--muted);margin-bottom:4px;display:block}
+.addon-input,.addon-select{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--txt);padding:10px 11px;border-radius:12px;font-size:12px;font-family:var(--mono)}
+.addon-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.addon-stat{padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.addon-stat .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.addon-stat .v{margin-top:8px;font-size:24px;font-weight:900;color:var(--txt)}
+.addon-stat .s{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.5}
+.alert-log-list,.alert-candidate-list{display:grid;gap:10px}
+.alert-row{padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.alert-row-title{font-size:12px;font-weight:800;color:var(--txt)}
+.alert-row-meta{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
+.heatmap-table{width:100%;border-collapse:separate;border-spacing:8px}
+.heatmap-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:800;text-align:center;padding:0 4px}
+.heatmap-table td{padding:0}
+.heat-cell{min-width:92px;padding:12px 8px;border-radius:14px;text-align:center;border:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:800;color:var(--txt)}
+.heat-cell small{display:block;font-size:10px;color:rgba(255,255,255,.72);margin-top:4px;font-weight:600}
+.radar-wrap,.sankey-wrap{padding:12px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.radar-wrap svg,.sankey-wrap svg{width:100%;height:auto;display:block}
+.sankey-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.sankey-pill{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
+.whatif-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.whatif-panel{padding:12px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.whatif-metric{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06)}
+.whatif-metric:first-child{border-top:none;padding-top:0}
+.whatif-metric span{font-size:11px;color:var(--muted)}
+.whatif-metric strong{font-size:14px;color:var(--txt);font-family:var(--mono)}
+@media(max-width:640px){.addon-form{grid-template-columns:1fr 1fr}.whatif-grid{grid-template-columns:1fr}.heat-cell{min-width:76px;padding:10px 6px}}
+@media(max-width:420px){.addon-form{grid-template-columns:1fr}.addon-stats{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -1636,6 +1674,30 @@ body.more-open{overflow:hidden}
           <label for="match-min-edge">Min. edge</label>
           <input id="match-min-edge" class="bk-input" type="number" min="-20" max="50" step="0.5" value="0" onchange="renderMatches()">
         </div>
+        <div class="filter-field">
+          <label for="match-kickoff-filter">Kickoff max</label>
+          <select class="league-filter-select" id="match-kickoff-filter" onchange="renderMatches()">
+            <option value="all">Oricând</option>
+            <option value="2">≤ 2h</option>
+            <option value="6">≤ 6h</option>
+            <option value="12">≤ 12h</option>
+            <option value="24">≤ 24h</option>
+            <option value="48">≤ 48h</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-tier-filter">Liga confidence</label>
+          <select class="league-filter-select" id="match-tier-filter" onchange="renderMatches()">
+            <option value="all">Toate</option>
+            <option value="high">Tier 1</option>
+            <option value="neutral">Tier 2</option>
+            <option value="avoid">Tier 3</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-min-score">Min. smart score</label>
+          <input id="match-min-score" class="bk-input" type="number" min="0" max="150" step="1" value="0" onchange="renderMatches()">
+        </div>
       </div>
     </div>
 
@@ -1854,6 +1916,61 @@ body.more-open{overflow:hidden}
     <div id="history21-root"></div>
   </div>
 
+
+  <div class="tab-content" id="tab-alerts">
+    <div class="addon-grid">
+      <div class="addon-card">
+        <div class="addon-head"><div><div class="addon-title">🔔 Alerte & notificări</div><div class="addon-sub">Notificări locale în browser când aplicația este deschisă, plus centru intern de alerte. Pentru push reale în fundal ar trebui și infrastructură dedicată.</div></div><div class="addon-chip" id="alerts-permission-chip">permisiune: —</div></div>
+        <div class="addon-form" style="margin-bottom:12px">
+          <div><label class="addon-label">Motor alerte</label><select id="alert-enabled" class="addon-select" onchange="saveAlertSettings()"><option value="off">Oprit</option><option value="on">Pornit</option></select></div>
+          <div><label class="addon-label">Browser notification</label><select id="alert-browser" class="addon-select" onchange="saveAlertSettings()"><option value="off">Doar în app</option><option value="on">În app + browser</option></select></div>
+          <div><label class="addon-label">Smart score minim</label><input id="alert-min-smart" class="addon-input" type="number" min="0" max="150" step="1" value="88" onchange="saveAlertSettings()"></div>
+          <div><label class="addon-label">Edge minim</label><input id="alert-min-edge" class="addon-input" type="number" min="0" max="50" step="0.5" value="5" onchange="saveAlertSettings()"></div>
+          <div><label class="addon-label">Kickoff max (ore)</label><input id="alert-max-kickoff" class="addon-input" type="number" min="1" max="72" step="1" value="6" onchange="saveAlertSettings()"></div>
+          <div><label class="addon-label">Pro only</label><select id="alert-pro-only" class="addon-select" onchange="saveAlertSettings()"><option value="on">Da</option><option value="off">Nu</option></select></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="requestAlertPermission()">Permite notificări</button><button class="btn" onclick="testAlertNow()" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">Test notificare</button><button class="btn" onclick="evaluateAlertEngine(true)" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.22);color:var(--grn)">Rulează scanare</button></div>
+      </div>
+      <div class="addon-card"><div class="addon-head"><div><div class="addon-title">⚡ Canditați activi</div><div class="addon-sub">Meciurile care trec acum de regula de alertare.</div></div><div class="addon-chip" id="alerts-candidates-chip">0 active</div></div><div id="alerts-candidates" class="alert-candidate-list"></div></div>
+      <div class="addon-card"><div class="addon-head"><div><div class="addon-title">🧾 Jurnal alerte</div><div class="addon-sub">Ultimele alerte generate de motor.</div></div><button class="btn" onclick="clearAlertLog()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.22);color:var(--red)">Șterge</button></div><div id="alerts-log" class="alert-log-list"></div></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-simulator">
+    <div class="addon-grid">
+      <div class="addon-card">
+        <div class="addon-head"><div><div class="addon-title">🧪 Simulator de scenarii (What-If)</div><div class="addon-sub">Vezi imediat cum se schimbă EV, fair odds, Kelly și break-even când modifici cota sau probabilitatea.</div></div><div class="addon-chip">manual sandbox</div></div>
+        <div class="addon-form" style="margin-bottom:12px">
+          <div><label class="addon-label">Cota curentă</label><input id="sim-current-odds" class="addon-input" type="number" min="1.01" step="0.01" value="1.65" oninput="renderScenarioSimulator()"></div>
+          <div><label class="addon-label">Prob. estimată %</label><input id="sim-current-prob" class="addon-input" type="number" min="1" max="99" step="0.1" value="62" oninput="renderScenarioSimulator()"></div>
+          <div><label class="addon-label">Miză</label><input id="sim-stake" class="addon-input" type="number" min="1" step="1" value="50" oninput="renderScenarioSimulator()"></div>
+          <div><label class="addon-label">Cota scenariu</label><input id="sim-next-odds" class="addon-input" type="number" min="1.01" step="0.01" value="1.80" oninput="renderScenarioSimulator()"></div>
+          <div><label class="addon-label">Prob. scenariu %</label><input id="sim-next-prob" class="addon-input" type="number" min="1" max="99" step="0.1" value="58" oninput="renderScenarioSimulator()"></div>
+          <div><label class="addon-label">Legs combo</label><input id="sim-legs" class="addon-input" type="number" min="1" max="10" step="1" value="1" oninput="renderScenarioSimulator()"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="applyScenarioPreset('value')">Preset value</button><button class="btn btn-green" onclick="applyScenarioPreset('drift')">Preset drift cote</button><button class="btn" onclick="applyScenarioPreset('risk')" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">Preset risc</button></div>
+      </div>
+      <div id="simulator-output"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-charts">
+    <div class="addon-grid">
+      <div class="addon-card">
+        <div class="addon-head"><div><div class="addon-title">🧱 Heatmap ligă × piață</div><div class="addon-sub">ROI recent pe combinațiile cele mai folosite. Verde = mai bine, roșu = mai slab.</div></div><div class="addon-chip">ultimele 30 zile</div></div>
+        <div id="advanced-heatmap"></div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-head"><div><div class="addon-title">🛸 Radar operațional</div><div class="addon-sub">Pulse check pe motorul curent: coverage, confidence, edge, value, pro rate, win rate.</div></div><div class="addon-chip">live + istoric</div></div>
+        <div class="radar-wrap" id="advanced-radar"></div>
+      </div>
+      <div class="addon-card">
+        <div class="addon-head"><div><div class="addon-title">🌊 Flow tip sankey</div><div class="addon-sub">Cum curge pool-ul din total meciuri spre cu cote, eligibile, Pro și Value.</div></div><div class="addon-chip">funnel vizual</div></div>
+        <div class="sankey-wrap" id="advanced-sankey"></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /main -->
 
 <div class="mobile-nav" id="mobile-nav">
@@ -1867,6 +1984,9 @@ body.more-open{overflow:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
 <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 SmartBet Engine</span><small class="sheet-btn-sub">Audit + Memory într-un singur filtru</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
 </div>
 
 <script>
@@ -1899,6 +2019,9 @@ var API_TOKEN = ''; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
+var ALERT_SETTINGS = JSON.parse(localStorage.getItem('bet_alert_settings_v16') || '{"enabled":false,"browser":false,"minSmart":88,"minEdge":5,"maxKickoffHours":6,"proOnly":true}');
+var ALERT_LOG = JSON.parse(localStorage.getItem('bet_alert_log_v16') || '[]');
+var ALERT_NOTIFIED_KEYS = JSON.parse(localStorage.getItem('bet_alert_notified_v16') || '[]');
 
 // ============================================================
 // UTILS
@@ -2640,6 +2763,9 @@ function switchTab(name){
   if(name==='istoric21') renderHistory21();
   if(name==='audit'){ renderSignalAudit(); renderAuditGenerators(); }
   if(name==='aimemory') renderAIMemory();
+  if(name==='alerts') renderAlertsCenter();
+  if(name==='simulator') renderScenarioSimulator();
+  if(name==='charts') renderAdvancedCharts();
 }
 
 // ============================================================
@@ -4807,6 +4933,9 @@ function renderMatches(){
   var proMode = $('match-pro-mode') ? $('match-pro-mode').value : 'all';
   var minProb = $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0;
   var minEdge = $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0;
+  var kickoffF = $('match-kickoff-filter') ? $('match-kickoff-filter').value : 'all';
+  var tierF = $('match-tier-filter') ? $('match-tier-filter').value : 'all';
+  var minScore = $('match-min-score') ? Number($('match-min-score').value || 0) : 0;
   document.querySelectorAll('.view-mode-btn').forEach(function(el){
     el.classList.toggle('active', el.getAttribute('data-mode') === MATCH_CARD_MODE);
   });
@@ -4847,6 +4976,12 @@ function renderMatches(){
     if(proMode === 'pro' && !(m.leagueTier !== 'avoid' && (b.adjProb || 0) >= 72 && (b.edgePct || -999) >= 1.5 && (b.value || 0) >= 0.01)) return false;
     if((b.adjProb || 0) < minProb) return false;
     if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
+    if((m.smartScore || 0) < minScore) return false;
+    if(tierF !== 'all' && String(m.leagueTier || 'neutral') !== tierF) return false;
+    if(kickoffF !== 'all'){
+      var hrsToKick = getHoursToKickoff(m);
+      if(hrsToKick == null || hrsToKick < 0 || hrsToKick > Number(kickoffF)) return false;
+    }
     return true;
   });
 
@@ -7871,6 +8006,186 @@ function getStatusDisplayTime(){
   return dt.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
 }
 
+
+function getAddonStamp(obj){ var raw = obj && (obj.event_date || obj.eventDate || obj.date || obj.logged_at || obj.prediction_created_at || null); var ms = raw ? new Date(raw).getTime() : NaN; return isFinite(ms) ? ms : 0; }
+function getHoursToKickoff(m){
+  var raw = m && (m.event_date || m.eventDate || m.date || m.starts_at || m.kickoff || m.start_time || null);
+  if(!raw) return null;
+  var diff = (new Date(raw).getTime() - Date.now()) / 36e5;
+  return isFinite(diff) ? diff : null;
+}
+function getAlertPermissionStatus(){
+  return (typeof Notification === 'undefined') ? 'unsupported' : (Notification.permission || 'default');
+}
+function saveAlertSettings(){
+  ALERT_SETTINGS = {
+    enabled: $('alert-enabled') ? $('alert-enabled').value === 'on' : !!ALERT_SETTINGS.enabled,
+    browser: $('alert-browser') ? $('alert-browser').value === 'on' : !!ALERT_SETTINGS.browser,
+    minSmart: $('alert-min-smart') ? Number($('alert-min-smart').value || 88) : Number(ALERT_SETTINGS.minSmart || 88),
+    minEdge: $('alert-min-edge') ? Number($('alert-min-edge').value || 5) : Number(ALERT_SETTINGS.minEdge || 5),
+    maxKickoffHours: $('alert-max-kickoff') ? Number($('alert-max-kickoff').value || 6) : Number(ALERT_SETTINGS.maxKickoffHours || 6),
+    proOnly: $('alert-pro-only') ? $('alert-pro-only').value === 'on' : !!ALERT_SETTINGS.proOnly
+  };
+  localStorage.setItem('bet_alert_settings_v16', JSON.stringify(ALERT_SETTINGS));
+  renderAlertsCenter();
+  evaluateAlertEngine(true);
+}
+function requestAlertPermission(){
+  if(typeof Notification === 'undefined'){ toast('Browserul nu suportă Notification API aici', 'err'); return; }
+  Notification.requestPermission().then(function(){ renderAlertsCenter(); toast('Permisiunea pentru notificări a fost actualizată', 'ok'); });
+}
+function pushLocalNotification(title, body){
+  if(ALERT_SETTINGS.browser && typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+    try{ new Notification(title, { body: body, icon: 'icon-192.png' }); }catch(err){}
+  }
+}
+function getAlertEligibleMatches(){
+  return (ALL_MATCHES || []).filter(function(m){
+    var b = m.bestBet || null;
+    if(!m || !b || m.analysisState !== 'ELIGIBLE') return false;
+    if(ALERT_SETTINGS.proOnly && !isProActiveMatch(m)) return false;
+    if(Number(m.smartScore || 0) < Number(ALERT_SETTINGS.minSmart || 0)) return false;
+    if(Number(b.edgePct || 0) < Number(ALERT_SETTINGS.minEdge || 0)) return false;
+    var hrs = getHoursToKickoff(m);
+    if(hrs == null || hrs < 0 || hrs > Number(ALERT_SETTINGS.maxKickoffHours || 999)) return false;
+    return true;
+  }).sort(function(a,b){ return Number(b.smartScore || 0) - Number(a.smartScore || 0); });
+}
+function evaluateAlertEngine(force){
+  if(!ALERT_SETTINGS.enabled && !force) return;
+  var candidates = getAlertEligibleMatches();
+  candidates.forEach(function(m){
+    var key = getMatchCardKey(m);
+    if(ALERT_NOTIFIED_KEYS.indexOf(key) >= 0 && !force) return;
+    var b = m.bestBet || {};
+    ALERT_NOTIFIED_KEYS.push(key);
+    ALERT_LOG.unshift({ key:key, createdAt:new Date().toISOString(), home:m.home, away:m.away, league:m.league, label:b.label || '—', odds:Number(b.odds || 0), smart:Number(m.smartScore || 0), edge:Number(b.edgePct || 0), kickoff:getMatchKickoffLabel(m) });
+    ALERT_LOG = ALERT_LOG.slice(0,80);
+    localStorage.setItem('bet_alert_notified_v16', JSON.stringify(ALERT_NOTIFIED_KEYS));
+    localStorage.setItem('bet_alert_log_v16', JSON.stringify(ALERT_LOG));
+    pushLocalNotification('BetAnalytics alertă PRO', m.home + ' vs ' + m.away + ' • ' + (b.label || '—') + ' @ ' + Number(b.odds || 0).toFixed(2));
+  });
+  renderAlertsCenter();
+}
+function clearAlertLog(){ ALERT_LOG = []; ALERT_NOTIFIED_KEYS = []; localStorage.setItem('bet_alert_log_v16', '[]'); localStorage.setItem('bet_alert_notified_v16', '[]'); renderAlertsCenter(); }
+function testAlertNow(){ pushLocalNotification('Test alertă BetAnalytics', 'Notificările locale sunt funcționale.'); toast('Test alertă trimis', 'ok'); }
+function renderAlertsCenter(){
+  if($('alert-enabled')) $('alert-enabled').value = ALERT_SETTINGS.enabled ? 'on' : 'off';
+  if($('alert-browser')) $('alert-browser').value = ALERT_SETTINGS.browser ? 'on' : 'off';
+  if($('alert-min-smart')) $('alert-min-smart').value = ALERT_SETTINGS.minSmart;
+  if($('alert-min-edge')) $('alert-min-edge').value = ALERT_SETTINGS.minEdge;
+  if($('alert-max-kickoff')) $('alert-max-kickoff').value = ALERT_SETTINGS.maxKickoffHours;
+  if($('alert-pro-only')) $('alert-pro-only').value = ALERT_SETTINGS.proOnly ? 'on' : 'off';
+  if($('alerts-permission-chip')) $('alerts-permission-chip').textContent = 'permisiune: ' + getAlertPermissionStatus();
+  var candidates = getAlertEligibleMatches();
+  if($('alerts-candidates-chip')) $('alerts-candidates-chip').textContent = candidates.length + ' active';
+  if($('alerts-candidates')) $('alerts-candidates').innerHTML = candidates.length ? candidates.slice(0,12).map(function(m){ var b=m.bestBet||{}; return '<div class="alert-row"><div class="alert-row-title">'+m.home+' vs '+m.away+'</div><div class="alert-row-meta">'+(m.league||'—')+' • '+getMatchKickoffLabel(m)+' • '+(b.label||'—')+' @ '+Number(b.odds||0).toFixed(2)+' • Smart '+Math.round(Number(m.smartScore||0))+' • Edge '+(Number(b.edgePct||0)>=0?'+':'')+Number(b.edgePct||0).toFixed(1)+'pp</div></div>'; }).join('') : '<div class="empty-state">Niciun candidat activ pe regula curentă.</div>';
+  if($('alerts-log')) $('alerts-log').innerHTML = ALERT_LOG.length ? ALERT_LOG.slice(0,30).map(function(r){ return '<div class="alert-row"><div class="alert-row-title">'+r.home+' vs '+r.away+'</div><div class="alert-row-meta">'+(r.league||'—')+' • '+(r.kickoff||'—')+' • '+(r.label||'—')+' @ '+Number(r.odds||0).toFixed(2)+' • Smart '+Math.round(Number(r.smart||0))+' • Edge '+(Number(r.edge||0)>=0?'+':'')+Number(r.edge||0).toFixed(1)+'pp • '+fmtDateTime(r.createdAt)+'</div></div>'; }).join('') : '<div class="empty-state">Jurnalul de alerte este gol.</div>';
+}
+function applyScenarioPreset(kind){
+  if(kind === 'value'){ $('sim-current-odds').value = 1.55; $('sim-current-prob').value = 72; $('sim-next-odds').value = 1.72; $('sim-next-prob').value = 74; $('sim-legs').value = 1; }
+  if(kind === 'drift'){ $('sim-current-odds').value = 1.80; $('sim-current-prob').value = 63; $('sim-next-odds').value = 2.05; $('sim-next-prob').value = 60; $('sim-legs').value = 2; }
+  if(kind === 'risk'){ $('sim-current-odds').value = 2.30; $('sim-current-prob').value = 49; $('sim-next-odds').value = 1.95; $('sim-next-prob').value = 54; $('sim-legs').value = 3; }
+  renderScenarioSimulator();
+}
+function calcScenarioMetrics(odds, prob, stake, legs){
+  odds = Math.max(1.01, Number(odds || 1.01));
+  prob = Math.max(0.01, Math.min(99.99, Number(prob || 0))) / 100;
+  stake = Math.max(1, Number(stake || 1));
+  legs = Math.max(1, Number(legs || 1));
+  var comboOdds = Math.pow(odds, legs);
+  var comboProb = Math.pow(prob, legs);
+  var fairOdds = 1 / comboProb;
+  var ev = (comboProb * comboOdds) - 1;
+  var be = 1 / comboOdds;
+  var kelly = ((comboProb * (comboOdds - 1)) - (1 - comboProb)) / Math.max(0.0001, comboOdds - 1);
+  return { comboOdds:comboOdds, comboProb:comboProb, fairOdds:fairOdds, ev:ev, be:be, kelly:kelly, winProfit:(comboOdds - 1) * stake };
+}
+function renderScenarioSimulator(){
+  var out = $('simulator-output');
+  if(!out) return;
+  var stake = Number(($('sim-stake') && $('sim-stake').value) || 50);
+  var legs = Number(($('sim-legs') && $('sim-legs').value) || 1);
+  var cur = calcScenarioMetrics(($('sim-current-odds') && $('sim-current-odds').value), ($('sim-current-prob') && $('sim-current-prob').value), stake, legs);
+  var nxt = calcScenarioMetrics(($('sim-next-odds') && $('sim-next-odds').value), ($('sim-next-prob') && $('sim-next-prob').value), stake, legs);
+  var deltaEv = (nxt.ev - cur.ev) * 100;
+  function panel(title, m, accent){
+    return '<div class="whatif-panel"><div style="font-size:13px;font-weight:900;color:'+accent+';margin-bottom:10px">'+title+'</div>'+
+      '<div class="whatif-metric"><span>Odds compuse</span><strong>'+m.comboOdds.toFixed(2)+'</strong></div>'+
+      '<div class="whatif-metric"><span>Prob. compusă</span><strong>'+ (m.comboProb*100).toFixed(1)+'%</strong></div>'+
+      '<div class="whatif-metric"><span>Fair odds</span><strong>'+m.fairOdds.toFixed(2)+'</strong></div>'+
+      '<div class="whatif-metric"><span>EV</span><strong style="color:'+(m.ev>=0?'var(--grn)':'var(--red)')+'">'+(m.ev>=0?'+':'')+(m.ev*100).toFixed(1)+'%</strong></div>'+
+      '<div class="whatif-metric"><span>Break-even</span><strong>'+(m.be*100).toFixed(1)+'%</strong></div>'+
+      '<div class="whatif-metric"><span>Kelly</span><strong style="color:'+(m.kelly>=0?'var(--acc)':'var(--red)')+'">'+(m.kelly*100).toFixed(1)+'%</strong></div>'+
+      '<div class="whatif-metric"><span>Profit dacă intră</span><strong>'+m.winProfit.toFixed(2)+' RON</strong></div></div>';
+  }
+  out.innerHTML = '<div class="whatif-grid"><div class="addon-card">'+panel('Scenariu curent', cur, 'var(--acc)')+'</div><div class="addon-card">'+panel('Scenariu nou', nxt, 'var(--grn)')+'</div></div>'+
+    '<div class="addon-card"><div class="addon-head"><div><div class="addon-title">Δ impact</div><div class="addon-sub">Diferența dintre scenariul nou și cel curent.</div></div><div class="addon-chip">legs '+legs+'</div></div><div class="addon-stats">'+
+    '<div class="addon-stat"><div class="k">EV delta</div><div class="v" style="color:'+(deltaEv>=0?'var(--grn)':'var(--red)')+'">'+(deltaEv>=0?'+':'')+deltaEv.toFixed(1)+'pp</div><div class="s">schimbarea de valoare a pariului</div></div>'+
+    '<div class="addon-stat"><div class="k">Odds delta</div><div class="v">'+(nxt.comboOdds-cur.comboOdds>=0?'+':'')+(nxt.comboOdds-cur.comboOdds).toFixed(2)+'</div><div class="s">din noul scenariu</div></div>'+
+    '<div class="addon-stat"><div class="k">Prob delta</div><div class="v">'+((nxt.comboProb-cur.comboProb)>=0?'+':'')+((nxt.comboProb-cur.comboProb)*100).toFixed(1)+'pp</div><div class="s">impact pe probabilitatea compusă</div></div>'+
+    '</div></div>';
+}
+function getRecentRows(days){
+  var cutoff = new Date(Date.now() - days * 86400000);
+  var settled = typeof getHistory21SettledRows === 'function' ? getHistory21SettledRows(cutoff).filter(function(r){ return getAddonStamp(r) >= cutoff.getTime(); }) : [];
+  var pending = typeof getHistory21LivePendingRows === 'function' ? getHistory21LivePendingRows().filter(function(r){ return getAddonStamp(r) >= cutoff.getTime(); }) : [];
+  var map = {}; settled.forEach(function(r){ map[getHistory21RowKey(r)] = r; }); pending.forEach(function(r){ map[getHistory21RowKey(r)] = r; });
+  return Object.keys(map).map(function(k){ return map[k]; });
+}
+function heatColor(roi, bets){
+  if(!bets) return 'rgba(255,255,255,.05)';
+  if(roi >= 10) return 'rgba(34,197,94,.28)';
+  if(roi >= 0) return 'rgba(59,130,246,.22)';
+  if(roi >= -5) return 'rgba(245,158,11,.22)';
+  return 'rgba(239,68,68,.24)';
+}
+function buildRadarSvg(metrics){
+  var labels = metrics.map(function(m){ return m.label; });
+  var values = metrics.map(function(m){ return Math.max(0, Math.min(100, Number(m.value || 0))); });
+  var w=420,h=320,cx=210,cy=160,r=108;
+  var rings = [25,50,75,100].map(function(p){ var rr=r*p/100; return '<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="none" stroke="rgba(255,255,255,.08)" />'; }).join('');
+  var axes = values.map(function(v,i){ var a=(-Math.PI/2)+(Math.PI*2*i/values.length); var x=cx+Math.cos(a)*r; var y=cy+Math.sin(a)*r; var lx=cx+Math.cos(a)*(r+24); var ly=cy+Math.sin(a)*(r+24); return '<line x1="'+cx+'" y1="'+cy+'" x2="'+x.toFixed(2)+'" y2="'+y.toFixed(2)+'" stroke="rgba(255,255,255,.08)"/><text x="'+lx.toFixed(2)+'" y="'+ly.toFixed(2)+'" fill="rgba(255,255,255,.82)" font-size="11" text-anchor="middle">'+labels[i]+'</text>'; }).join('');
+  var pts = values.map(function(v,i){ var a=(-Math.PI/2)+(Math.PI*2*i/values.length); var rr=r*v/100; return (cx+Math.cos(a)*rr).toFixed(2)+','+(cy+Math.sin(a)*rr).toFixed(2); }).join(' ');
+  return '<svg viewBox="0 0 '+w+' '+h+'">'+rings+axes+'<polygon points="'+pts+'" fill="rgba(59,130,246,.20)" stroke="#60a5fa" stroke-width="3"></polygon></svg>';
+}
+function buildSankeySvg(nodes){
+  var w=720,h=220, y=60, boxW=120, boxH=54;
+  var positions = [20,170,320,470,620];
+  var links='';
+  for(var i=0;i<nodes.length-1;i++){
+    var x1=positions[i]+boxW, x2=positions[i+1], mid=(x1+x2)/2;
+    links += '<path d="M '+x1+' '+(y+boxH/2)+' C '+mid+' '+(y+boxH/2)+', '+mid+' '+(y+boxH/2)+', '+x2+' '+(y+boxH/2)+'" fill="none" stroke="rgba(96,165,250,.35)" stroke-width="'+Math.max(10, nodes[i+1].value/4)+'" stroke-linecap="round" />';
+  }
+  var boxes = nodes.map(function(n, idx){ return '<g><rect x="'+positions[idx]+'" y="'+y+'" rx="16" ry="16" width="'+boxW+'" height="'+boxH+'" fill="rgba(18,28,50,.96)" stroke="rgba(255,255,255,.08)"/><text x="'+(positions[idx]+boxW/2)+'" y="'+(y+20)+'" fill="rgba(255,255,255,.72)" font-size="11" text-anchor="middle">'+n.label+'</text><text x="'+(positions[idx]+boxW/2)+'" y="'+(y+40)+'" fill="#fff" font-size="20" font-weight="800" text-anchor="middle">'+n.value+'</text></g>'; }).join('');
+  return '<svg viewBox="0 0 '+w+' '+h+'">'+links+boxes+'</svg>';
+}
+function renderAdvancedCharts(){
+  var rows30 = getRecentRows(30);
+  var markets = ['Over 1.5G','Over 2.5G','Under 3.5G','BTTS'];
+  var byLeague = {};
+  rows30.forEach(function(r){ var lg=r.league||'—'; var mk=r.market||r.market_key||'—'; if(!byLeague[lg]) byLeague[lg]={}; if(!byLeague[lg][mk]) byLeague[lg][mk]={bets:0,wins:0,pending:0,profit:0}; var c=byLeague[lg][mk]; if(r.status==='pending'){ c.pending++; } else { c.bets++; if(r.status==='win') { c.wins++; c.profit += Math.max(0, Number(r.odds||0)-1); } else if(r.status==='lose'){ c.profit -= 1; } } });
+  var leagues = Object.keys(byLeague).sort(function(a,b){ var at=0,bt=0; Object.keys(byLeague[a]||{}).forEach(function(k){ at += (byLeague[a][k].bets||0) + (byLeague[a][k].pending||0); }); Object.keys(byLeague[b]||{}).forEach(function(k){ bt += (byLeague[b][k].bets||0) + (byLeague[b][k].pending||0); }); return bt-at; }).slice(0,8);
+  if($('advanced-heatmap')) $('advanced-heatmap').innerHTML = leagues.length ? '<div style="overflow:auto"><table class="heatmap-table"><thead><tr><th style="text-align:left;padding-left:4px">Ligă</th>'+markets.map(function(m){ return '<th>'+m+'</th>'; }).join('')+'</tr></thead><tbody>'+leagues.map(function(lg){ return '<tr><th style="text-align:left;padding:0 8px 0 4px;color:var(--txt);font-size:11px">'+lg+'</th>'+markets.map(function(m){ var c=((byLeague[lg]||{})[m])||{bets:0,pending:0,profit:0}; var roi=c.bets?(c.profit*100/c.bets):0; return '<td><div class="heat-cell" style="background:'+heatColor(roi,c.bets)+'">'+(c.bets?((roi>=0?'+':'')+roi.toFixed(1)+'%'):'—')+'<small>'+(c.bets?c.bets+' închise':'fără sample')+'</small></div></td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>' : '<div class="empty-state">Nu există încă suficiente date pentru heatmap.</div>';
+  var eligible = (ALL_MATCHES || []).filter(function(m){ return m.analysisState === 'ELIGIBLE'; });
+  var confAvg = eligible.length ? eligible.reduce(function(a,m){ return a + Number(m.confidence || 0); },0)/eligible.length : 0;
+  var edgeAvg = eligible.length ? eligible.reduce(function(a,m){ return a + Math.max(0, Number((m.bestBet||{}).edgePct || 0)); },0)/eligible.length : 0;
+  var valueAvg = eligible.length ? eligible.reduce(function(a,m){ return a + Math.max(0, Number((m.bestBet||{}).value || 0)*100); },0)/eligible.length : 0;
+  var proRate = eligible.length ? eligible.filter(isProActiveMatch).length * 100 / eligible.length : 0;
+  var coverage = ALL_MATCHES.length ? eligible.length * 100 / ALL_MATCHES.length : 0;
+  var settled30 = rows30.filter(function(r){ return r.status === 'win' || r.status === 'lose'; });
+  var win30 = settled30.length ? settled30.filter(function(r){ return r.status === 'win'; }).length * 100 / settled30.length : 0;
+  if($('advanced-radar')) $('advanced-radar').innerHTML = buildRadarSvg([
+    {label:'Coverage', value:coverage}, {label:'Confidence', value:confAvg}, {label:'Edge', value:Math.min(100, edgeAvg*8)}, {label:'Value', value:Math.min(100, valueAvg*3)}, {label:'Pro rate', value:proRate}, {label:'Win30', value:win30}
+  ]);
+  var withOdds = (ALL_MATCHES || []).filter(function(m){ return (m.bestBet || {}).odds; }).length;
+  var pro = eligible.filter(isProActiveMatch).length;
+  var value = eligible.filter(function(m){ return Number((m.bestBet||{}).value || 0) >= 0.05; }).length;
+  if($('advanced-sankey')) $('advanced-sankey').innerHTML = buildSankeySvg([
+    {label:'Toate', value:ALL_MATCHES.length}, {label:'Cu cote', value:withOdds}, {label:'Eligibile', value:eligible.length}, {label:'PRO', value:pro}, {label:'Value', value:value}
+  ]) + '<div class="sankey-legend"><span class="sankey-pill">Toate → pool brut</span><span class="sankey-pill">Cu cote → disponibile pe piață</span><span class="sankey-pill">PRO → filtru intern strict</span><span class="sankey-pill">Value → EV mai bun</span></div>';
+}
+
 function renderAll(){
   LAST_DAY_KEY = getCurrentDayKey();
   var total = ALL_MATCHES.length;
@@ -7918,6 +8233,10 @@ function renderAll(){
   renderMlApiCenter();
   renderMatches();
   renderBilete();
+  renderAlertsCenter();
+  renderScenarioSimulator();
+  renderAdvancedCharts();
+  evaluateAlertEngine(false);
   autoSyncTrackingStatuses();
   renderTracking();
 }
