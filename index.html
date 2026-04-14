@@ -992,6 +992,20 @@ body.more-open{overflow:hidden}
 @media(max-width:640px){.addon-form{grid-template-columns:1fr 1fr}.whatif-grid{grid-template-columns:1fr}.heat-cell{min-width:76px;padding:10px 6px}}
 @media(max-width:420px){.addon-form{grid-template-columns:1fr}.addon-stats{grid-template-columns:1fr 1fr}}
 
+
+/* ===== Visible PRO launchers ===== */
+.feature-launch-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.feature-launch-btn{padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,rgba(20,30,55,.96),rgba(12,18,32,.98));color:var(--txt);text-align:left;cursor:pointer;display:grid;gap:6px;position:relative;overflow:hidden}
+.feature-launch-btn:hover{transform:translateY(-1px);border-color:rgba(84,119,255,.22)}
+.feature-launch-title{font-size:13px;font-weight:900;color:var(--txt)}
+.feature-launch-sub{font-size:10px;color:var(--muted);line-height:1.5}
+.feature-launch-badge{position:absolute;top:10px;right:10px;padding:4px 7px;border-radius:999px;background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.22);font-size:9px;font-weight:900;color:var(--grn)}
+.pro-filters-strip{margin-bottom:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(59,130,246,.10),rgba(168,85,247,.08));border:1px solid rgba(84,119,255,.18)}
+.pro-filters-strip-title{font-size:13px;font-weight:900;color:var(--txt)}
+.pro-filters-strip-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
+@media(max-width:980px){.feature-launch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.feature-launch-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -1701,7 +1715,9 @@ body.more-open{overflow:hidden}
       </div>
     </div>
 
-    <div class="section compact-context-panel" style="margin-bottom:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">🧩 Cum să citești un card de meci</div><div style="font-size:11px;color:var(--muted);line-height:1.55">Vezi întâi <b>pronosticul recomandat</b>, apoi <b>șansa</b> și linia <b>De ce a fost ales</b>. Restul informațiilor rămân compacte, ca suport, nu ca zgomot.</div></div>
+    <div class="pro-filters-strip"><div class="pro-filters-strip-title">🆕 Filtre PRO noi active în Meciuri</div><div class="pro-filters-strip-sub">Ai acum filtre dedicate pentru <b>time to kickoff</b>, <b>league confidence</b> și <b>min smart score</b>, pe lângă probabilitate și edge.</div></div>
+
+<div class="section compact-context-panel" style="margin-bottom:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">🧩 Cum să citești un card de meci</div><div style="font-size:11px;color:var(--muted);line-height:1.55">Vezi întâi <b>pronosticul recomandat</b>, apoi <b>șansa</b> și linia <b>De ce a fost ales</b>. Restul informațiilor rămân compacte, ca suport, nu ca zgomot.</div></div>
 
     <div id="matches-container"></div>
   </div>
@@ -1984,9 +2000,9 @@ body.more-open{overflow:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
 <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 SmartBet Engine</span><small class="sheet-btn-sub">Audit + Memory într-un singur filtru</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🆕 🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🆕 🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">🆕 📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
 </div>
 
 <script>
@@ -2603,6 +2619,16 @@ function renderModernDashboard(){
         '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'meciuri\')"><div class="dashboard-v16-quick-k">Vezi Analize</div><div class="dashboard-v16-quick-s">Deschide lista completă de meciuri și filtrele active.</div></button>'+
         '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'bankroll\')"><div class="dashboard-v16-quick-k">Simulare</div><div class="dashboard-v16-quick-s">Urmărește bankroll-ul și stake-urile recomandate.</div></button>'+
         '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'istoric21\')"><div class="dashboard-v16-quick-k">Istoric</div><div class="dashboard-v16-quick-s">Verifică rapid ROI, win rate și trendurile reale.</div></button>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="dashboard-v16-section">'+
+      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">🆕 MODULE PRO NOI</div><div class="dashboard-v16-section-sub">Acces direct la cele 4 lucruri noi adăugate în aplicație.</div></div></div>'+
+      '<div class="feature-launch-grid">'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'alerts\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">🔔 Alerte PRO</div><div class="feature-launch-sub">Notificări locale + centru de alerte active.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'simulator\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">🧪 Simulator What-If</div><div class="feature-launch-sub">Testezi scenarii pe odds, EV și Kelly.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'charts\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">📊 Grafice avansate</div><div class="feature-launch-sub">Heatmap, radar și flow tip sankey.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">⚡ Filtre PRO</div><div class="feature-launch-sub">Kickoff, league confidence și smart score minim.</div></button>'+
       '</div>'+
     '</div>'+
 
