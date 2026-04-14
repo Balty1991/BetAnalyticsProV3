@@ -1017,6 +1017,31 @@ body.more-open{overflow:hidden}
 .flow-mobile-arrow{font-size:18px;color:var(--acc);text-align:center}
 @media(max-width:640px){.radar-wrap,.sankey-wrap{padding:10px}.heatmap-table{border-spacing:6px}.heatmap-table th{font-size:9px}.heat-cell{min-width:66px;padding:8px 5px;font-size:11px}.heat-cell small{font-size:9px}}
 
+
+/* ===== Onboarding wizard ===== */
+.onboarding-overlay{position:fixed;inset:0;background:rgba(2,6,16,.82);backdrop-filter:blur(10px);z-index:9999;display:none;align-items:center;justify-content:center;padding:18px}
+.onboarding-overlay.show{display:flex}
+.onboarding-card{width:min(720px,100%);max-height:min(92vh,860px);overflow:auto;padding:18px;border-radius:24px;background:linear-gradient(180deg,rgba(18,28,50,.98),rgba(10,16,30,.98));border:1px solid rgba(84,119,255,.22);box-shadow:0 24px 60px rgba(0,0,0,.42)}
+.onboarding-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.onboarding-step{font-size:11px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.08em}
+.onboarding-title{font-size:28px;font-weight:900;color:var(--txt);line-height:1.1;margin-top:6px}
+.onboarding-sub{font-size:13px;color:var(--muted);line-height:1.65;margin-top:8px}
+.onboarding-progress{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:14px 0 18px}
+.onboarding-dot{height:8px;border-radius:999px;background:rgba(255,255,255,.08)}
+.onboarding-dot.active{background:linear-gradient(90deg,#60a5fa,#34d399)}
+.onboarding-body{display:grid;gap:14px}
+.onboarding-panel{padding:14px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.onboarding-panel-title{font-size:15px;font-weight:900;color:var(--txt);margin-bottom:8px}
+.onboarding-list{display:grid;gap:8px}
+.onboarding-item{padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--txt);line-height:1.55}
+.onboarding-item small{display:block;color:var(--muted);margin-top:4px;font-size:11px}
+.onboarding-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.onboarding-form label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.onboarding-form select,.onboarding-form input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--txt);padding:10px 11px;border-radius:12px;font-size:12px;font-family:var(--mono)}
+.onboarding-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px}
+.onboarding-actions-left,.onboarding-actions-right{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:640px){.onboarding-card{padding:14px;border-radius:20px}.onboarding-title{font-size:22px}.onboarding-form{grid-template-columns:1fr}.onboarding-actions{flex-direction:column}.onboarding-actions-left,.onboarding-actions-right{width:100%;justify-content:space-between}}
+
 </style>
 </head>
 <body>
@@ -2014,6 +2039,26 @@ body.more-open{overflow:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🆕 🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🆕 🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">🆕 📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
+</div>
+
+
+<div class="onboarding-overlay" id="onboarding-overlay">
+  <div class="onboarding-card">
+    <div class="onboarding-top">
+      <div>
+        <div class="onboarding-step" id="onboarding-step-label">Pas 1 / 6</div>
+        <div class="onboarding-title" id="onboarding-title">Bine ai venit în BetAnalytics Pro</div>
+        <div class="onboarding-sub" id="onboarding-sub">Ghid rapid pentru utilizatori noi.</div>
+      </div>
+      <button class="btn" onclick="skipOnboarding()" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--txt)">Skip</button>
+    </div>
+    <div class="onboarding-progress" id="onboarding-progress"></div>
+    <div class="onboarding-body" id="onboarding-body"></div>
+    <div class="onboarding-actions">
+      <div class="onboarding-actions-left"><button class="btn" id="onboarding-back-btn" onclick="prevOnboarding()" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--txt)">Înapoi</button></div>
+      <div class="onboarding-actions-right"><button class="btn btn-primary" id="onboarding-next-btn" onclick="nextOnboarding()">Înainte</button><button class="btn btn-green" id="onboarding-finish-btn" onclick="finishOnboarding()" style="display:none">Finalizează</button></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -10870,6 +10915,63 @@ function setSmartBetHistoryMarket(market){
   renderSmartBetHistory();
 }
 
+
+
+var ONBOARDING_STATE_KEY = 'bet_onboarding_state_v16';
+var ONBOARDING_STEP = 0;
+function getOnboardingState(){ try{ return JSON.parse(localStorage.getItem(ONBOARDING_STATE_KEY) || '{}'); }catch(err){ return {}; } }
+function saveOnboardingState(state){ localStorage.setItem(ONBOARDING_STATE_KEY, JSON.stringify(state || {})); }
+function getOnboardingSteps(){
+  return [
+    {title:'Bine ai venit în BetAnalytics Pro', sub:'Wizard-ul te ajută să înțelegi rapid ce vezi în aplicație și să pornești cu setări bune.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Ce rezolvi aici</div><div class="onboarding-list"><div class="onboarding-item">📊 vezi meciuri analizate și recomandări clare<small>Meciuri, score, edge, value și fair odds.</small></div><div class="onboarding-item">🧬 verifici filtrul SmartBet și istoricul lui<small>Audit Kelly + AI Memory într-un singur loc.</small></div><div class="onboarding-item">🎫 generezi bilete și le trimiți în jurnal<small>Single, combo, manual din card și tracking.</small></div></div></div>'; }},
+    {title:'Cum citești un card de meci', sub:'Cardul nou este gândit să-ți dea verdictul fără să te îngroape în text.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Ordinea corectă de citire</div><div class="onboarding-list"><div class="onboarding-item">1. UITĂ-TE LA RECOMANDARE<small>Piața, cota și scorul general.</small></div><div class="onboarding-item">2. UITĂ-TE LA EDGE + FAIR ODDS<small>Acolo vezi dacă pariul are logică matematică.</small></div><div class="onboarding-item">3. UITĂ-TE LA VALUE ȘI CONTEXT<small>Trend, scor probabil, xG și motivul principal.</small></div></div></div>'; }},
+    {title:'Cum funcționează SmartBet', sub:'SmartBet nu e doar o listă; e filtrul strict al aplicației.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Pe scurt</div><div class="onboarding-list"><div class="onboarding-item">Audit Kelly filtrează valoarea matematică</div><div class="onboarding-item">AI Memory validează pattern-urile și evită capcanele istorice</div><div class="onboarding-item">Istoricul SmartBet îți arată dacă selecțiile chiar performează</div></div></div>'; }},
+    {title:'Cum generezi un bilet', sub:'Poți folosi generatoarele, sau poți construi unul manual din cardurile de meci.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">2 fluxuri rapide</div><div class="onboarding-list"><div class="onboarding-item">🎯 Din tabul Bilete<small>Folosești generatoarele sau constructorul personalizat.</small></div><div class="onboarding-item">🧩 Dintr-un card de meci<small>Butonul „Adaugă în bilet” îți face direct un bilet manual.</small></div></div></div>'; }},
+    {title:'Setări rapide inițiale', sub:'Alege stilul de joc și preferințele de bază. Le aplic imediat în filtre.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Profil & preferințe</div><div class="onboarding-form"><div><label>Profil</label><select id="ob-profile"><option value="safe">Safe</option><option value="balanced" selected>Balanced</option><option value="aggressive">Aggressive</option></select></div><div><label>Piață preferată</label><select id="ob-market"><option value="">Fără preferință</option><option value="Over 1.5G">Over 1.5G</option><option value="Over 2.5G">Over 2.5G</option><option value="Under 3.5G">Under 3.5G</option><option value="BTTS">BTTS</option></select></div><div><label>Probabilitate minimă %</label><input id="ob-minprob" type="number" min="0" max="100" step="1" value="72"></div><div><label>Pornește alertele PRO</label><select id="ob-alerts"><option value="yes">Da</option><option value="no">Nu</option></select></div></div></div>'; }},
+    {title:'Ești gata', sub:'După Finish, aplic setările inițiale și te las în dashboard.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Ce rămâne activ</div><div class="onboarding-list"><div class="onboarding-item">✅ Wizard-ul nu mai apare la fiecare intrare</div><div class="onboarding-item">✅ Îl poți relansa oricând din Mai mult → Onboarding wizard</div><div class="onboarding-item">✅ Preferințele inițiale sunt aplicate automat în filtre</div></div></div>'; }}
+  ];
+}
+function renderOnboarding(){
+  var steps = getOnboardingSteps();
+  var step = steps[ONBOARDING_STEP] || steps[0];
+  if($('onboarding-step-label')) $('onboarding-step-label').textContent = 'Pas ' + (ONBOARDING_STEP + 1) + ' / ' + steps.length;
+  if($('onboarding-title')) $('onboarding-title').textContent = step.title;
+  if($('onboarding-sub')) $('onboarding-sub').textContent = step.sub;
+  if($('onboarding-body')) $('onboarding-body').innerHTML = step.body();
+  if($('onboarding-progress')) $('onboarding-progress').innerHTML = steps.map(function(_, idx){ return '<div class="onboarding-dot'+(idx <= ONBOARDING_STEP ? ' active' : '')+'"></div>'; }).join('');
+  if($('onboarding-back-btn')) $('onboarding-back-btn').style.visibility = ONBOARDING_STEP === 0 ? 'hidden' : 'visible';
+  if($('onboarding-next-btn')) $('onboarding-next-btn').style.display = ONBOARDING_STEP === steps.length - 1 ? 'none' : 'inline-flex';
+  if($('onboarding-finish-btn')) $('onboarding-finish-btn').style.display = ONBOARDING_STEP === steps.length - 1 ? 'inline-flex' : 'none';
+}
+function openOnboarding(force){
+  var state = getOnboardingState();
+  if(state.completed && !force) return;
+  ONBOARDING_STEP = 0;
+  var overlay = $('onboarding-overlay');
+  if(overlay) overlay.classList.add('show');
+  renderOnboarding();
+}
+function closeOnboarding(){ var overlay = $('onboarding-overlay'); if(overlay) overlay.classList.remove('show'); }
+function nextOnboarding(){ var steps = getOnboardingSteps(); ONBOARDING_STEP = Math.min(steps.length - 1, ONBOARDING_STEP + 1); renderOnboarding(); }
+function prevOnboarding(){ ONBOARDING_STEP = Math.max(0, ONBOARDING_STEP - 1); renderOnboarding(); }
+function skipOnboarding(){ saveOnboardingState({completed:true, skippedAt:new Date().toISOString()}); closeOnboarding(); }
+function applyOnboardingPrefs(){
+  var profile = $('ob-profile') ? $('ob-profile').value : 'balanced';
+  var market = $('ob-market') ? $('ob-market').value : '';
+  var minProb = $('ob-minprob') ? Number($('ob-minprob').value || 72) : 72;
+  var alerts = $('ob-alerts') ? $('ob-alerts').value === 'yes' : true;
+  if($('match-market-filter')) $('match-market-filter').value = market;
+  if($('match-min-prob')) $('match-min-prob').value = minProb;
+  if(profile === 'safe'){ if($('match-min-edge')) $('match-min-edge').value = 4; if($('match-min-score')) $('match-min-score').value = 82; if($('match-pro-mode')) $('match-pro-mode').value = 'pro'; }
+  if(profile === 'balanced'){ if($('match-min-edge')) $('match-min-edge').value = 2; if($('match-min-score')) $('match-min-score').value = 76; }
+  if(profile === 'aggressive'){ if($('match-min-edge')) $('match-min-edge').value = 0; if($('match-min-score')) $('match-min-score').value = 68; }
+  ALERT_SETTINGS.enabled = alerts;
+  localStorage.setItem('bet_alert_settings_v16', JSON.stringify(ALERT_SETTINGS));
+  try{ saveAlertSettings(); }catch(err){}
+  try{ renderMatches(); }catch(err){}
+}
+function finishOnboarding(){ applyOnboardingPrefs(); saveOnboardingState({completed:true, completedAt:new Date().toISOString()}); closeOnboarding(); toast('Onboarding finalizat', 'ok'); switchTab('dashboard'); }
+window.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ var state = getOnboardingState(); if(!state.completed) openOnboarding(false); }, 500); });
 
 </script>
 </body>
