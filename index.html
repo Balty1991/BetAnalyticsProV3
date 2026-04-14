@@ -945,7 +945,7 @@ body.more-open{overflow:hidden}
 .match-card-v16 .m16-signal-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .match-card-v16 .m16-signal-pill{padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
 .match-card-v16 .m16-signal-text{font-size:11px;color:var(--txt);line-height:1.6;overflow-wrap:anywhere}
-.match-card-v16 .m16-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.match-card-v16 .m16-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .match-card-v16 .m16-btn{padding:11px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--txt);font-size:11px;font-weight:800;cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease}
 .match-card-v16 .m16-btn:hover{transform:translateY(-1px);border-color:rgba(84,119,255,.22);background:rgba(255,255,255,.06)}
 .match-card-v16 .m16-btn.primary{background:linear-gradient(135deg,rgba(34,197,94,.16),rgba(59,130,246,.12));border-color:rgba(34,197,94,.22)}
@@ -4777,17 +4777,12 @@ function toggleMatchAnalysisDetails(key){
 function quickAddMatchToTicket(key){
   var m = findMatchByCardKey(key);
   if(!m || !m.bestBet) return toast('Nu există o selecție activă pentru acest meci', 'err');
-  localStorage.setItem('bet_quick_ticket_focus_v16', JSON.stringify({
-    key:key,
-    eventId:m.id || m.eventId || null,
-    home:m.home,
-    away:m.away,
-    market:m.bestBet.label || '—',
-    odds:Number(m.bestBet.odds || 0),
-    savedAt:new Date().toISOString()
-  }));
+  var cloned = JSON.parse(JSON.stringify(m));
+  BILETE = makeTicketPreview('single', '🧩 Bilet manual din card', [cloned], Number((cloned.bestBet || {}).odds || 1), 'Scăzut', 'Selecție trimisă manual din cardul de meci. O găsești direct în lista de creare bilet.');
+  BILETE.stake = getStakeForTicket('single');
   switchTab('bilete');
-  toast('Selecția a fost trimisă în focus pentru Bilete', 'ok');
+  renderBilete();
+  toast('Selecția a fost adăugată direct în lista de creare bilet', 'ok');
 }
 function toggleLiveAlert(key){
   var idx = MATCH_ALERTS.indexOf(key);
@@ -4967,13 +4962,12 @@ function renderMatches(){
         '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+'</div>'+
       '</div>'+
       '<div class="m16-signals">'+
-        '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(valueDetected ? '🔥 Value detectat' : 'ℹ️ Fără value major')+'</div></div>'+
+        '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
         '<div class="m16-signal-text">ℹ️ '+infoLine+'</div>'+
       '</div>'+
       '<div class="m16-actions">'+
         '<button class="m16-btn primary" onclick="quickAddMatchToTicket(&quot;'+key+'&quot;)">Adaugă în bilet</button>'+
         '<button class="m16-btn" onclick="toggleMatchAnalysisDetails(&quot;'+key+'&quot;)">Detalii analiză</button>'+
-        '<button class="m16-btn warn" onclick="toggleLiveAlert(&quot;'+key+'&quot;)">'+(hasLiveAlert(key) ? 'Alertă salvată' : 'Alertă live')+'</button>'+
       '</div>'+
       '<div class="m16-extra" id="match-extra-'+key+'">'+detailBlock+(reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+'</div>'+
     '</div>';
