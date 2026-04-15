@@ -1977,6 +1977,49 @@ body.more-open{overflow:hidden}
     <div id="history21-root"></div>
   </div>
 
+  <div class="tab-content" id="tab-cota2">
+    <div class="section" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(34,197,94,.07),rgba(59,130,246,.05));border:1px solid rgba(34,197,94,.18)">
+      <div class="sec-hdr" style="margin-bottom:0">
+        <div>
+          <div class="sec-title">🎯 Cota 2 a zilei</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:6px">Motor dedicat pentru 2-4 selecții din oferta de <b>azi</b>, optimizat să stea cât mai aproape de <b>2.00x</b>, fără să coboare sub <b>1.70x</b> și fără să depășească <b>5.00x</b>. Prioritizarea folosește <b>smart score</b>, <b>value</b>, <b>edge vs preț</b>, <b>Poisson delta</b> și reguli de necorelare.</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono)">target 2.00x • floor 1.70x • cap 5.00x</div>
+      </div>
+    </div>
+
+    <div class="bilet-card" style="margin-bottom:14px;padding:16px;border-color:rgba(34,197,94,.20);background:linear-gradient(180deg,rgba(15,29,26,.96),rgba(10,17,22,.96))">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <div class="sec-title" style="margin-bottom:6px">🧠 Generator automat</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55">Alege doar cele mai bune setup-uri disponibile astăzi și construiește biletul pe logica de profitabilitate pe termen lung, nu pe forțarea cotei.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="generateCota2DayTicket(true)">🎯 Generează</button>
+          <button class="btn btn-primary" onclick="openCota2TicketInMain()">🎫 Deschide în Bilete</button>
+          <button class="btn" style="background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.22);color:var(--acc)" onclick="placeCota2Ticket()">📌 Trimite în Tracking</button>
+        </div>
+      </div>
+      <div id="cota2-day-output"></div>
+    </div>
+
+    <div class="section" style="margin-bottom:0;padding:14px;background:linear-gradient(180deg,rgba(14,22,40,.94),rgba(10,16,30,.96));border:1px solid rgba(84,119,255,.16)">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div class="sec-title" style="margin-bottom:6px">📈 Istoric Cota 2</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.55">Aici vezi performanța biletelor din această categorie deja trimise în Tracking: <b>ROI</b>, <b>win rate</b>, profit, pending și distribuția pe 2 / 3 / 4 selecții.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="cota2-range-21d" style="font-size:11px;padding:6px 10px" onclick="setCota2HistoryRange('21d')">21 zile</button>
+          <button class="btn btn-ghost" id="cota2-range-90d" style="font-size:11px;padding:6px 10px" onclick="setCota2HistoryRange('90d')">90 zile</button>
+          <button class="btn btn-ghost" id="cota2-range-all" style="font-size:11px;padding:6px 10px" onclick="setCota2HistoryRange('all')">Total</button>
+          <button class="btn btn-primary" style="font-size:11px;padding:6px 10px" onclick="switchTab('tracking')">Deschide Tracking</button>
+        </div>
+      </div>
+      <div id="cota2-history-root"></div>
+    </div>
+  </div>
+
 
   <div class="tab-content" id="tab-alerts">
     <div class="addon-grid">
@@ -2853,6 +2896,7 @@ function switchTab(name){
   if(name==='tracking') renderTracking();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
+  if(name==='cota2') renderCota2Day();
   if(name==='audit'){ renderSignalAudit(); renderAuditGenerators(); }
   if(name==='aimemory') renderAIMemory();
   if(name==='alerts') renderAlertsCenter();
@@ -9538,6 +9582,440 @@ function renderDailyPortfolioRuntimeError(err){
   if(target){
     target.innerHTML = '<div class="bilet-card" style="margin-bottom:0;border-color:rgba(239,68,68,.22)"><div style="font-size:14px;font-weight:800;color:var(--red);margin-bottom:8px">Eroare internă la Portfolio Daily</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Butonul a fost apăsat, dar generatorul a fost întrerupt de o eroare JS. Mai jos vezi mesajul brut.</div><div style="padding:10px;border-radius:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);font-size:11px;color:var(--txt);word-break:break-word">'+msg.replace(/</g,'&lt;')+'</div></div>';
   }
+}
+
+/* ===== Cota 2 a zilei ===== */
+var COTA2_DAILY_TICKET = null;
+var COTA2_HISTORY_RANGE = '21d';
+
+function cota2EscapeHtml(value){
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function cota2GetLocalDayStamp(input){
+  var d = input instanceof Date ? input : new Date(input || 0);
+  if(!(d instanceof Date) || !isFinite(d.getTime())) return '';
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+}
+function cota2IsTodayMatch(item){
+  var raw = item && (item.event_date || item.date || item.kickoff || item.start_time);
+  if(!raw) return false;
+  return cota2GetLocalDayStamp(raw) === cota2GetLocalDayStamp(new Date());
+}
+function cota2GetTodayPool(profile){
+  profile = profile || {};
+  var out = [];
+  (getPortfolioMatchPool() || []).forEach(function(item){
+    if(!item || !item.bestBet) return;
+    if(!cota2IsTodayMatch(item)) return;
+    var odds = Number(item.odds || 0);
+    var prob = Number(item.prob || 0);
+    var score = Number(item.score || item.portfolioScore || item.ticketScore || 0);
+    var smart = Number(item.smartScore || 0);
+    var edge = Math.max(Number(item.edgeToPrice || 0), Number(item.edge || 0));
+    var valuePct = Number(item.value || 0) * 100;
+    var poissonDelta = Number((item.bestBet && item.bestBet.poissonDelta != null ? item.bestBet.poissonDelta : item.poissonDelta) || 0);
+    var confidence = Number(item.confidence || 0);
+    if(odds < Number(profile.minOdds || 1.18) || odds > Number(profile.maxOdds || 2.20)) return;
+    if(prob < Number(profile.minProb || 58)) return;
+    if(score < Number(profile.minScore || 74)) return;
+    if(edge < Number(profile.minEdge || 2)) return;
+    if(valuePct <= Number(profile.minValuePct || 0)) return;
+    var cota2Score = 0;
+    cota2Score += score * 0.42;
+    cota2Score += smart * 0.18;
+    cota2Score += prob * 0.24;
+    cota2Score += Math.max(0, edge) * 1.20;
+    cota2Score += Math.max(0, valuePct) * 0.38;
+    cota2Score += Math.max(0, confidence) * 0.10;
+    cota2Score += Math.max(0, poissonDelta) * 0.55;
+    if(item.bestBet && item.bestBet.sourceApi) cota2Score += 2.5;
+    if(item.leagueTier === 'high') cota2Score += 2.5;
+    if(item.leagueTier === 'avoid') cota2Score -= 5;
+    if(odds >= 1.24 && odds <= 1.72) cota2Score += 4.5;
+    if(odds > 2.05) cota2Score -= (odds - 2.05) * 6.5;
+    out.push(Object.assign({}, item, {
+      cota2Score: clampMathScore(cota2Score),
+      cota2Edge: edge,
+      cota2ValuePct: valuePct,
+      cota2PoissonDelta: poissonDelta
+    }));
+  });
+  out.sort(function(a, b){
+    if(Number(b.cota2Score || 0) !== Number(a.cota2Score || 0)) return Number(b.cota2Score || 0) - Number(a.cota2Score || 0);
+    if(Number(b.cota2Edge || 0) !== Number(a.cota2Edge || 0)) return Number(b.cota2Edge || 0) - Number(a.cota2Edge || 0);
+    return Number(b.cota2ValuePct || 0) - Number(a.cota2ValuePct || 0);
+  });
+  return out.slice(0, Number(profile.limit || 18));
+}
+function cota2EvaluateCombo(picks){
+  if(!picks || !picks.length) return null;
+  var totalOdds = picks.reduce(function(acc, item){ return acc * Number(item.odds || 1); }, 1);
+  var combinedProb = computeConservativeCombinedProb(picks);
+  var minCombined = picks.length === 2 ? 36 : (picks.length === 3 ? 24 : 16);
+  if(totalOdds < 1.70 || totalOdds > 5.00) return null;
+  if(combinedProb < minCombined) return null;
+  var scoreSum = picks.reduce(function(acc, item){ return acc + Number(item.cota2Score || 0); }, 0);
+  var edgeSum = picks.reduce(function(acc, item){ return acc + Math.max(0, Number(item.cota2Edge || 0)); }, 0);
+  var valueSum = picks.reduce(function(acc, item){ return acc + Math.max(0, Number(item.cota2ValuePct || 0)); }, 0);
+  var poissonSum = picks.reduce(function(acc, item){ return acc + Math.max(0, Number(item.cota2PoissonDelta || 0)); }, 0);
+  var rank = scoreSum + (combinedProb * 0.70) + (edgeSum * 2.00) + (valueSum * 0.22) + (poissonSum * 0.65);
+  rank -= Math.abs(totalOdds - 2.00) * 18;
+  rank -= Math.max(0, picks.length - 2) * 3.5;
+  if(totalOdds >= 1.92 && totalOdds <= 2.20) rank += 8;
+  else if(totalOdds >= 1.80 && totalOdds < 1.92) rank += 4;
+  else if(totalOdds > 2.20 && totalOdds <= 2.80) rank += 2;
+  if(totalOdds > 4.20) rank -= 8;
+  return {
+    picks: picks.slice(),
+    totalOdds: +totalOdds.toFixed(2),
+    combinedProb: +Number(combinedProb || 0).toFixed(1),
+    avgEdge: picks.length ? +(picks.reduce(function(acc, item){ return acc + Number(item.value || 0); }, 0) / picks.length).toFixed(4) : 0,
+    avgEdgePct: picks.length ? +(picks.reduce(function(acc, item){ return acc + Number(item.cota2Edge || 0); }, 0) / picks.length).toFixed(2) : 0,
+    avgValuePct: picks.length ? +(picks.reduce(function(acc, item){ return acc + Number(item.cota2ValuePct || 0); }, 0) / picks.length).toFixed(2) : 0,
+    rank: rank
+  };
+}
+function cota2FindBestTicketFromPool(pool){
+  pool = Array.isArray(pool) ? pool.slice(0, 18) : [];
+  if(pool.length < 2) return null;
+  var best = null;
+  function consider(arr){
+    var evaluated = cota2EvaluateCombo(arr);
+    if(!evaluated) return;
+    if(!best || Number(evaluated.rank || 0) > Number(best.rank || 0)) best = evaluated;
+  }
+  for(var i = 0; i < pool.length; i++){
+    var a = pool[i];
+    for(var j = i + 1; j < pool.length; j++){
+      var b = pool[j];
+      if(areRowsCorrelated(a, b)) continue;
+      consider([a, b]);
+      for(var k = j + 1; k < pool.length; k++){
+        var c = pool[k];
+        if(areRowsCorrelated(a, c) || areRowsCorrelated(b, c)) continue;
+        consider([a, b, c]);
+        for(var m = k + 1; m < pool.length; m++){
+          var d = pool[m];
+          if(areRowsCorrelated(a, d) || areRowsCorrelated(b, d) || areRowsCorrelated(c, d)) continue;
+          consider([a, b, c, d]);
+        }
+      }
+    }
+  }
+  return best;
+}
+function buildCota2DayTicket(){
+  var profiles = [
+    {label:'strict', minScore:78, minProb:62, minEdge:3, minValuePct:0, minOdds:1.18, maxOdds:2.10, limit:16},
+    {label:'balanced', minScore:74, minProb:58, minEdge:2, minValuePct:0, minOdds:1.16, maxOdds:2.20, limit:18},
+    {label:'relaxed', minScore:70, minProb:54, minEdge:0.5, minValuePct:-2, minOdds:1.12, maxOdds:2.30, limit:20}
+  ];
+  for(var idx = 0; idx < profiles.length; idx++){
+    var profile = profiles[idx];
+    var pool = cota2GetTodayPool(profile);
+    var best = cota2FindBestTicketFromPool(pool);
+    if(best && best.picks && best.picks.length){
+      var floorNote = best.totalOdds < 1.80 ? 'sub ținta ideală, dar încă peste floor-ul de siguranță' : 'în intervalul optim pentru target 2.00x';
+      return {
+        type:'cota2_day',
+        label:'🎯 Cota 2 a zilei',
+        criteria:'Cota 2 a zilei',
+        source:'cota2',
+        sourceName:'Mai mult • Cota 2 a zilei',
+        picks: best.picks,
+        totalOdds: Number(best.totalOdds || 1),
+        combinedProb: Number(best.combinedProb || 0),
+        avgEdge: Number(best.avgEdge || 0),
+        avgEdgePct: Number(best.avgEdgePct || 0),
+        avgValuePct: Number(best.avgValuePct || 0),
+        riskLabel: best.picks.length <= 2 ? 'Controlat' : 'Echilibrat',
+        summary:'Selecții prioritizate după scor brut, edge, value și Poisson; cota finală este ' + floorNote + '.',
+        stakePct:getStakePctForTicket('double'),
+        stake:getSuggestedStakeFromPct('double'),
+        generatedAt:new Date().toISOString(),
+        generationMode:profile.label,
+        candidateCount:pool.length,
+        targetOdds:2.00,
+        floorOdds:1.70,
+        capOdds:5.00,
+        isEmpty:false
+      };
+    }
+  }
+  return {
+    type:'cota2_day',
+    label:'🎯 Cota 2 a zilei',
+    criteria:'Cota 2 a zilei',
+    source:'cota2',
+    sourceName:'Mai mult • Cota 2 a zilei',
+    picks:[],
+    totalOdds:1,
+    combinedProb:0,
+    avgEdge:0,
+    avgEdgePct:0,
+    avgValuePct:0,
+    riskLabel:'—',
+    summary:'Nu există astăzi o combinație suficient de curată care să stea în intervalul 1.70-5.00x fără să forțeze selecții slabe.',
+    stakePct:getStakePctForTicket('double'),
+    stake:getSuggestedStakeFromPct('double'),
+    generatedAt:new Date().toISOString(),
+    generationMode:'none',
+    candidateCount:0,
+    targetOdds:2.00,
+    floorOdds:1.70,
+    capOdds:5.00,
+    isEmpty:true,
+    error:'Generatorul a refuzat să forțeze cota când pool-ul de azi nu este suficient de curat.'
+  };
+}
+function cloneCota2TicketForMain(ticket){
+  return {
+    type: ticket.type,
+    label: ticket.label,
+    criteria: ticket.criteria,
+    source: ticket.source,
+    sourceName: ticket.sourceName,
+    picks: (ticket.picks || []).map(function(item){ return Object.assign({}, item, { bestBet: item.bestBet ? Object.assign({}, item.bestBet) : item.bestBet }); }),
+    totalOdds: Number(ticket.totalOdds || 1),
+    combinedProb: Number(ticket.combinedProb || 0),
+    avgEdge: Number(ticket.avgEdge || 0),
+    riskLabel: ticket.riskLabel,
+    summary: ticket.summary,
+    stakePct: Number(ticket.stakePct || 0),
+    stake: Number(ticket.stake || 0),
+    generatedAt: ticket.generatedAt,
+    targetOdds: ticket.targetOdds,
+    floorOdds: ticket.floorOdds,
+    capOdds: ticket.capOdds
+  };
+}
+function generateCota2DayTicket(forceToast){
+  COTA2_DAILY_TICKET = buildCota2DayTicket();
+  renderCota2DayOutput();
+  renderCota2History();
+  if(forceToast){
+    if(COTA2_DAILY_TICKET && COTA2_DAILY_TICKET.picks && COTA2_DAILY_TICKET.picks.length) toast('Cota 2 a zilei a fost generată.', 'ok');
+    else toast((COTA2_DAILY_TICKET && COTA2_DAILY_TICKET.error) || 'Nu există setup suficient de bun azi.', 'warn');
+  }
+  return COTA2_DAILY_TICKET;
+}
+function openCota2TicketInMain(){
+  var ticket = COTA2_DAILY_TICKET && COTA2_DAILY_TICKET.picks && COTA2_DAILY_TICKET.picks.length ? COTA2_DAILY_TICKET : generateCota2DayTicket(false);
+  if(!ticket || !ticket.picks || !ticket.picks.length){
+    toast((ticket && ticket.error) || 'Nu există un bilet valid pentru azi.', 'warn');
+    return;
+  }
+  BILETE = cloneCota2TicketForMain(ticket);
+  renderBilete();
+  switchTab('bilete');
+  toast('Biletul Cota 2 a zilei a fost încărcat în Bilete.', 'ok');
+}
+function buildTrackingTicketFromPreview(preview, stake){
+  return {
+    id: Date.now(),
+    date: new Date().toLocaleDateString('ro-RO'),
+    placedAt: new Date().toISOString(),
+    picks: (preview.picks || []).map(function(m){
+      var b = m.bestBet || m;
+      return {
+        eventId: m.eventId || m.event_id || null,
+        predictionId: m.id || null,
+        eventDate: m.event_date || m.date || null,
+        home: m.home,
+        away: m.away,
+        bet: b.label,
+        marketType: b.type || m.marketKey || inferMarketTypeFromLabel(b.label),
+        odds: Number(b.odds || 0),
+        prob: Number(b.adjProb || m.prob || 0),
+        league: m.league,
+        dateLabel: m.dateLabel || '',
+        timeLabel: m.timeLabel || '',
+        score: m.mostLikelyScore || null,
+        why: m.why || '',
+        matchStatus: 'pending',
+        result: 'pending'
+      };
+    }),
+    totalOdds: Number(preview.totalOdds || 1),
+    stake: Number(stake || 0),
+    status: 'pending',
+    profit: 0,
+    type: 'cota2_day',
+    criteria: preview.criteria || 'Cota 2 a zilei',
+    manualOverride: false,
+    autoUpdatedAt: null,
+    autoSettledOdds: null,
+    sourceName: preview.sourceName || 'Mai mult • Cota 2 a zilei',
+    label: preview.label || '🎯 Cota 2 a zilei'
+  };
+}
+function placeCota2Ticket(){
+  var ticket = COTA2_DAILY_TICKET && COTA2_DAILY_TICKET.picks && COTA2_DAILY_TICKET.picks.length ? COTA2_DAILY_TICKET : generateCota2DayTicket(false);
+  if(!ticket || !ticket.picks || !ticket.picks.length){
+    toast((ticket && ticket.error) || 'Nu există un bilet valid pentru azi.', 'warn');
+    return;
+  }
+  var suggested = Math.max(1, Math.round(Number(ticket.stake || getSuggestedStakeFromPct('double') || 0)));
+  var stake = prompt('Introdu miza pentru Cota 2 a zilei (RON):', String(suggested));
+  if(stake === null) return;
+  stake = parseFloat(String(stake).replace(',', '.'));
+  if(!isFinite(stake) || stake <= 0){ toast('Miză invalidă', 'err'); return; }
+  TRACKING.unshift(buildTrackingTicketFromPreview(ticket, stake));
+  localStorage.setItem('bet_tracking', JSON.stringify(TRACKING));
+  autoSyncTrackingStatuses();
+  renderTracking();
+  calcBankroll();
+  renderCota2History();
+  toast('Cota 2 a zilei a fost trimisă în Tracking.', 'ok');
+}
+function renderCota2DayOutput(){
+  var target = $('cota2-day-output');
+  if(!target) return;
+  var ticket = COTA2_DAILY_TICKET;
+  if(!ticket){
+    target.innerHTML = '<div class="empty-state" style="padding:14px">Apasă pe <strong>Generează</strong> ca să primești combinația optimă a zilei pentru target 2.00x.</div>';
+    return;
+  }
+  if(!ticket.picks || !ticket.picks.length){
+    target.innerHTML = '<div class="bilet-card" style="margin-bottom:0;border-color:rgba(245,158,11,.22)"><div style="font-size:15px;font-weight:800;color:var(--yel);margin-bottom:8px">Astăzi nu există un setup suficient de curat</div><div style="font-size:11px;color:var(--muted);line-height:1.6">'+cota2EscapeHtml(ticket.error || ticket.summary || 'Generatorul a refuzat să forțeze selecții slabe doar pentru a atinge o cotă.')+'</div></div>';
+    return;
+  }
+  var picksHtml = ticket.picks.map(function(p, idx){
+    var bet = p.bestBet || p;
+    var poisson = Number((bet && bet.poissonDelta != null ? bet.poissonDelta : p.cota2PoissonDelta) || 0);
+    var valuePct = Number(p.cota2ValuePct != null ? p.cota2ValuePct : ((bet && bet.value != null ? bet.value * 100 : 0)) || 0);
+    var reasons = buildRecommendationReasons(p, bet).slice(0,3).map(function(reason){ return '<span class="reason-pill">'+cota2EscapeHtml(reason)+'</span>'; }).join('');
+    return '<div class="bilet-row" style="display:block">'+
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+        '<div class="bilet-match"><div class="bilet-match-name">#'+(idx + 1)+' • '+cota2EscapeHtml(p.home || '—')+' vs '+cota2EscapeHtml(p.away || '—')+'</div><div class="bilet-match-info">'+cota2EscapeHtml(p.league || '—')+' • '+cota2EscapeHtml((p.dateLabel || '') + ' ' + (p.timeLabel || ''))+'</div></div>'+
+        '<div class="bilet-pick"><div class="bilet-pick-type">'+cota2EscapeHtml(bet.label || '—')+' @ '+Number(bet.odds || 0).toFixed(2)+'</div><div class="bilet-pick-prob">Prob '+fmtPct(Number(bet.adjProb || p.prob || 0))+' • Edge '+fmtSignedPct(Number(p.cota2Edge || bet.edgePct || 0))+' • Value '+fmtSignedPct(valuePct)+'</div></div>'+
+      '</div>'+
+      '<div class="ticket-mini-grid" style="margin-top:10px">'+
+        '<div class="ticket-mini"><div class="v">'+Number(p.cota2Score || 0).toFixed(0)+'</div><div class="l">Scor C2</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+Number(p.smartScore || 0).toFixed(0)+'</div><div class="l">Smart score</div></div>'+
+        '<div class="ticket-mini"><div class="v" style="color:'+(poisson >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(poisson >= 0 ? '+' : '')+poisson.toFixed(1)+'pp</div><div class="l">Poisson Δ</div></div>'+
+      '</div>'+
+      '<div class="reason-list" style="margin-top:8px">'+reasons+'</div>'+
+    '</div>';
+  }).join('');
+  target.innerHTML = '<div class="bilet-card" style="margin-bottom:0;border-color:rgba(34,197,94,.22)">'+
+    '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">'+
+      '<div><div style="font-size:16px;font-weight:900;color:var(--grn)">Biletul zilei: target 2.00x</div><div style="font-size:11px;color:var(--muted);margin-top:5px">'+cota2EscapeHtml(ticket.summary || '')+'</div><div style="font-size:10px;color:var(--muted);margin-top:6px">Motor '+cota2EscapeHtml(ticket.generationMode || 'balanced')+' • '+Number(ticket.candidateCount || 0)+' candidați validați azi</div></div>'+
+      '<div style="text-align:right"><div class="bilet-cota" style="color:var(--grn)">'+Number(ticket.totalOdds || 1).toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+(Number(ticket.totalOdds || 0) >= 1.70 && Number(ticket.totalOdds || 0) <= 5.00 ? 'în intervalul permis' : 'în afara intervalului')+'</div></div>'+
+    '</div>'+
+    '<div class="ticket-mini-grid" style="margin-top:12px">'+
+      '<div class="ticket-mini"><div class="v">'+(ticket.picks ? ticket.picks.length : 0)+'</div><div class="l">Selecții</div></div>'+
+      '<div class="ticket-mini"><div class="v">'+Number(ticket.combinedProb || 0).toFixed(1)+'%</div><div class="l">Prob. compusă</div></div>'+
+      '<div class="ticket-mini"><div class="v">'+fmtSignedPct(Number(ticket.avgEdgePct || 0))+'</div><div class="l">Edge mediu</div></div>'+
+      '<div class="ticket-mini"><div class="v">'+fmtSignedPct(Number(ticket.avgValuePct || 0))+'</div><div class="l">Value mediu</div></div>'+
+    '</div>'+
+    '<div style="margin-top:12px">'+picksHtml+'</div>'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><div style="font-size:11px;color:var(--muted)">Stake sugerat '+Number(ticket.stake || 0).toFixed(0)+' RON • '+Number(ticket.stakePct || 0).toFixed(1)+'% bankroll</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="openCota2TicketInMain()">Deschide în Bilete</button><button class="btn btn-green" onclick="placeCota2Ticket()">Trimite în Tracking</button></div></div>'+
+  '</div>';
+}
+function isCota2TrackingTicket(ticket){
+  if(!ticket) return false;
+  var raw = String((ticket.type || ticket.criteria || ticket.label || '')).toLowerCase();
+  return raw.indexOf('cota2_day') >= 0 || raw.indexOf('cota 2') >= 0;
+}
+function getCota2HistoryTickets(){
+  autoSyncTrackingStatuses();
+  var now = Date.now();
+  var cutoff = COTA2_HISTORY_RANGE === '90d' ? now - (90 * 86400000) : (COTA2_HISTORY_RANGE === '21d' ? now - (21 * 86400000) : 0);
+  return (TRACKING || []).filter(function(ticket){
+    if(!isCota2TrackingTicket(ticket)) return false;
+    if(!cutoff) return true;
+    var ts = new Date(ticket.placedAt || ticket.createdAt || ticket.generatedAt || ticket.date || 0).getTime();
+    return isFinite(ts) && ts >= cutoff;
+  });
+}
+function syncCota2HistoryRangeButtons(){
+  ['21d','90d','all'].forEach(function(key){
+    var btn = $('cota2-range-' + key);
+    if(!btn) return;
+    btn.style.background = 'rgba(255,255,255,.04)';
+    btn.style.border = '1px solid rgba(255,255,255,.10)';
+    btn.style.color = 'var(--txt)';
+    if(key === COTA2_HISTORY_RANGE){
+      btn.style.background = 'rgba(34,197,94,.14)';
+      btn.style.border = '1px solid rgba(34,197,94,.28)';
+      btn.style.color = 'var(--grn)';
+    }
+  });
+}
+function setCota2HistoryRange(range){
+  COTA2_HISTORY_RANGE = range || '21d';
+  syncCota2HistoryRangeButtons();
+  renderCota2History();
+}
+function renderCota2History(){
+  var root = $('cota2-history-root');
+  if(!root) return;
+  syncCota2HistoryRangeButtons();
+  var tickets = getCota2HistoryTickets();
+  if(!tickets.length){
+    root.innerHTML = '<div class="empty-state">Nu există încă bilete din categoria <strong>Cota 2 a zilei</strong> în intervalul selectat. Generează-l și trimite-l în Tracking ca să înceapă istoricul.</div>';
+    return;
+  }
+  var settled = tickets.filter(function(t){ return t.status === 'win' || t.status === 'loss' || t.status === 'co' || t.status === 'anulat'; });
+  var wins = settled.filter(function(t){ return t.status === 'win'; }).length;
+  var pending = tickets.filter(function(t){ return t.status === 'pending'; }).length;
+  var totalProfit = tickets.reduce(function(acc, t){ return acc + Number(t.profit || 0); }, 0);
+  var totalStake = tickets.reduce(function(acc, t){ return acc + Number(t.stake || 0); }, 0);
+  var roi = totalStake > 0 ? ((totalProfit / totalStake) * 100) : 0;
+  var winrate = settled.length ? ((wins / settled.length) * 100) : 0;
+  var avgOdds = tickets.length ? (tickets.reduce(function(acc, t){ return acc + Number(t.totalOdds || 0); }, 0) / tickets.length) : 0;
+  var avgPicks = tickets.length ? (tickets.reduce(function(acc, t){ return acc + Number((t.picks && t.picks.length) || 0); }, 0) / tickets.length) : 0;
+  var breakdown = [2,3,4].map(function(count){
+    var subset = tickets.filter(function(t){ return Number((t.picks && t.picks.length) || 0) === count; });
+    var subSettled = subset.filter(function(t){ return t.status === 'win' || t.status === 'loss' || t.status === 'co' || t.status === 'anulat'; });
+    var subWins = subSettled.filter(function(t){ return t.status === 'win'; }).length;
+    var subProfit = subset.reduce(function(acc, t){ return acc + Number(t.profit || 0); }, 0);
+    var subStake = subset.reduce(function(acc, t){ return acc + Number(t.stake || 0); }, 0);
+    return {
+      label: count + ' selecții',
+      total: subset.length,
+      winrate: subSettled.length ? ((subWins / subSettled.length) * 100) : 0,
+      roi: subStake > 0 ? ((subProfit / subStake) * 100) : 0
+    };
+  });
+  var cards = '<div class="history-card-grid">'+
+    '<div class="history-summary-card active"><div class="history-summary-top"><div><div class="history-summary-label">ROI</div><div class="history-summary-note">interval selectat</div></div><div class="history-summary-roi" style="color:'+(roi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(totalStake > 0 ? ((roi >= 0 ? '+' : '') + roi.toFixed(1) + '%') : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Profit</div><div class="v" style="color:'+(totalProfit >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(totalProfit >= 0 ? '+' : '')+totalProfit.toFixed(2)+' RON</div></div><div class="history-metric"><div class="k">Miză</div><div class="v">'+totalStake.toFixed(2)+' RON</div></div></div></div>'+
+    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Win rate</div><div class="history-summary-note">meciuri închise</div></div><div class="history-summary-roi" style="color:var(--acc)">'+(settled.length ? winrate.toFixed(1)+'%' : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Win / jucate</div><div class="v">'+wins+'/'+settled.length+'</div></div><div class="history-metric"><div class="k">Pending</div><div class="v">'+pending+'</div></div></div></div>'+
+    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Cota medie</div><div class="history-summary-note">bilete trimise</div></div><div class="history-summary-roi" style="color:var(--pur)">'+(tickets.length ? avgOdds.toFixed(2)+'x' : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Bilete</div><div class="v">'+tickets.length+'</div></div><div class="history-metric"><div class="k">Selecții medii</div><div class="v">'+(tickets.length ? avgPicks.toFixed(1) : '—')+'</div></div></div></div>'+
+  '</div>';
+  var breakdownHtml = '<div class="history-card-grid" style="margin-top:10px">'+breakdown.map(function(row){
+    return '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">'+row.label+'</div><div class="history-summary-note">structură</div></div><div class="history-summary-roi" style="color:'+(row.total ? (row.roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+'">'+(row.total ? ((row.roi >= 0 ? '+' : '') + row.roi.toFixed(1)+'%') : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Bilete</div><div class="v">'+row.total+'</div></div><div class="history-metric"><div class="k">Win rate</div><div class="v">'+(row.total ? row.winrate.toFixed(1)+'%' : '—')+'</div></div></div></div>';
+  }).join('')+'</div>';
+  var rowsHtml = tickets.map(function(t){
+    var status = t.status || 'pending';
+    var verdict = status === 'win' ? 'WIN' : (status === 'loss' ? 'LOSE' : (status === 'co' ? 'CO' : (status === 'anulat' ? 'VOID' : 'PENDING')));
+    var color = status === 'win' ? 'var(--grn)' : (status === 'loss' ? 'var(--red)' : (status === 'co' ? 'var(--yel)' : 'var(--acc)'));
+    var bg = status === 'win' ? 'rgba(34,197,94,.12)' : (status === 'loss' ? 'rgba(239,68,68,.12)' : (status === 'co' ? 'rgba(245,158,11,.12)' : 'rgba(59,130,246,.10)'));
+    var brd = status === 'win' ? 'rgba(34,197,94,.22)' : (status === 'loss' ? 'rgba(239,68,68,.22)' : (status === 'co' ? 'rgba(245,158,11,.22)' : 'rgba(59,130,246,.18)'));
+    var profit = Number(t.profit || 0);
+    var picks = (t.picks || []).map(function(p){
+      return '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.05)"><div style="font-size:12px;color:var(--txt);font-weight:700">'+cota2EscapeHtml((p.home || '—') + ' vs ' + (p.away || '—'))+'</div><div style="font-size:10px;color:var(--muted);margin-top:3px">'+cota2EscapeHtml(p.bet || '—')+' @ '+Number(p.odds || 0).toFixed(2)+' • '+cota2EscapeHtml(p.league || '—')+'</div></div>';
+    }).join('');
+    return '<div class="history-row">'+
+      '<div class="history-row-head">'+
+        '<div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="history-row-title">🎯 Cota 2 a zilei</div><span style="font-size:10px;color:var(--acc);border:1px solid rgba(59,130,246,.22);padding:2px 7px;border-radius:999px;background:rgba(59,130,246,.10)">'+Number((t.picks && t.picks.length) || 0)+' selecții</span></div><div class="history-row-sub">'+fmtDateTime(t.placedAt || t.generatedAt || t.date)+'</div><div class="history-row-meta">Cotă '+Number(t.totalOdds || 0).toFixed(2)+'x • Miză '+Number(t.stake || 0).toFixed(2)+' RON • Profit '+(profit >= 0 ? '+' : '')+profit.toFixed(2)+' RON</div></div>'+
+        '<div class="history-status-pill" style="background:'+bg+';border:1px solid '+brd+';color:'+color+'">'+verdict+'</div>'+
+      '</div>'+
+      '<div style="margin-top:8px">'+picks+'</div>'+
+    '</div>';
+  }).join('');
+  root.innerHTML = cards + breakdownHtml + '<div class="history-detail-card" style="margin-top:12px"><div class="history-detail-head"><div><div class="sec-title" style="margin-bottom:4px">Monitorizare bilete</div><div style="font-size:11px;color:var(--muted)">Override manual, cash out și editarea cotei rămân în tabul Tracking. Aici vezi rezumatul categoriei și componența fiecărui bilet trimis.</div></div></div>'+rowsHtml+'</div>';
+}
+function renderCota2Day(){
+  if((!COTA2_DAILY_TICKET || !COTA2_DAILY_TICKET.generatedAt) && ALL_MATCHES && ALL_MATCHES.length) generateCota2DayTicket(false);
+  else renderCota2DayOutput();
+  renderCota2History();
 }
 
 /* ===== Generator availability + relaxed mode ===== */
