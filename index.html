@@ -1244,12 +1244,12 @@ body.more-open{overflow:hidden}
     <!-- Top Recomandări Ale Zilei -->
     <div class="section" style="margin-bottom:12px">
       <div class="sec-hdr collapsible-header" onclick="toggleSection('todaybest')" style="border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;background:rgba(34,197,94,.05);margin-bottom:0;cursor:pointer">
-        <div class="sec-title">🔥 Top 2-4 evenimente ale zilei <span class="sec-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--grn)">Doar azi</span> <span class="collapse-count" id="todaybest-count">—</span></div>
+        <div class="sec-title">🔥 Top recomandări ale zilei <span class="sec-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--grn)">Top 2-4</span> <span class="collapse-count" id="todaybest-count">—</span></div>
         <span class="collapse-toggle" id="todaybest-toggle" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">▼</span>
       </div>
       <div class="collapsible-body" id="todaybest-body">
         <div style="margin-top:10px;margin-bottom:12px;padding:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
-          <strong style="color:var(--grn)">Selecție strictă pentru azi:</strong> aplicația alege automat între 2 și 4 evenimente doar din oferta zilei în curs. Nu extinde spre mâine și nu forțează selecții slabe doar ca să umple rubrica.
+          <strong style="color:var(--grn)">Selecție dinamică:</strong> aplicația alege automat între 2 și 4 pariuri pentru ziua curentă, doar dacă oferta disponibilă trece pragurile de probabilitate, edge și structură de piață.
         </div>
         <div class="matches-grid" id="today-best-grid"></div>
       </div>
@@ -3730,7 +3730,7 @@ function loadTodayBestTicket(){
   BILETE.stake = getStakeForTicket(picks.length <= 2 ? 'simple' : 'medium');
   switchTab('bilete');
   renderBilete();
-  toast('Topul zilei în curs a fost încărcat în biletul principal.', 'ok');
+  toast('Topul zilei a fost încărcat în biletul principal.', 'ok');
 }
 
 function renderTodayBest(){
@@ -3742,13 +3742,13 @@ function renderTodayBest(){
   if(badge) badge.textContent = list.length ? (list.length + ' evenimente') : '0 evenimente';
 
   if(list.length === 0){
-    container.innerHTML = '<div class="empty-state">Nu am găsit minimum 2 evenimente suficient de curate în oferta de astăzi. Rubrica rămâne goală dacă ziua curentă nu oferă selecții bune.</div>';
+    container.innerHTML = '<div class="empty-state">Nu am găsit minimum 2 evenimente suficient de curate pentru ziua curentă. Widgetul nu forțează selecții doar ca să umple spațiul.</div>';
     return;
   }
 
   var cta = '<div class="match-card" style="border-color:rgba(34,197,94,.25);background:linear-gradient(180deg,rgba(18,32,28,.98),rgba(12,20,18,.96))">'+
-    '<div class="sec-title" style="margin-bottom:8px">🔥 Topul zilei în curs</div>'+
-    '<div style="font-size:12px;color:var(--txt);line-height:1.55">Am selectat automat <strong>'+list.length+'</strong> evenimente doar din oferta disponibilă astăzi, ordonate după probabilitate ajustată, edge, tip de piață și cota utilizabilă.</div>'+
+    '<div class="sec-title" style="margin-bottom:8px">🔥 Pachetul zilei</div>'+
+    '<div style="font-size:12px;color:var(--txt);line-height:1.55">Am selectat automat <strong>'+list.length+'</strong> evenimente din oferta disponibilă de azi, ordonate după probabilitate ajustată, edge, tip de piață și cotă utilizabilă.</div>'+
     '<div class="ticket-mini-grid" style="margin-top:12px">'+
       '<div class="ticket-mini"><div class="v">'+list.length+'</div><div class="l">Evenimente</div></div>'+
       '<div class="ticket-mini"><div class="v">'+list.reduce(function(acc,m){ return acc * Number(((m || {}).bestBet || {}).odds || 1); }, 1).toFixed(2)+'x</div><div class="l">Cotă combo</div></div>'+
@@ -3779,7 +3779,7 @@ function renderTodayBest(){
         '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--acc)">'+Number(b.adjProb || 0).toFixed(1)+'%</div><div class="tp-metric-lbl">Șansă</div></div>'+
         '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--yel)">'+(edgePct >= 0 ? '+' : '')+edgePct.toFixed(1)+'pp</div><div class="tp-metric-lbl">Edge</div></div>'+
       '</div>'+
-      renderHybridProbInline(m, b)+
+      renderHybridProbabilityInline({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta })+
       '<div class="tp-rec" style="margin-top:8px">🎯 '+(b.label || '—')+' @ '+Number(b.odds || 0).toFixed(2)+'</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
         '<button class="btn btn-green" style="flex:1;justify-content:center" onclick="quickAddMatchToTicket(&quot;'+key+'&quot;)">Adaugă în bilet</button>'+
@@ -6864,7 +6864,7 @@ function renderPresetTicketCards(targetId){
         '</div>'+
       '</div>'+
       '<div class="focus-card-metrics">'+
-        '<div class="focus-metric"><div class="v">'+(picks.length || 0)+'</div><div class="l">Selecții</div></div>'+
+        '<div class="focus-metric"><div class="v">'+(picks.length || 0)+'</div><div class="l">Evenimente</div></div>'+
         '<div class="focus-metric"><div class="v">'+((t.totalOdds || 1).toFixed(2))+'x</div><div class="l">Cotă</div></div>'+
         '<div class="focus-metric"><div class="v">'+(t.isEmpty ? '—' : (t.combinedProb || 0).toFixed(1)+'%')+'</div><div class="l">Prob. cons.</div></div>'+
       '</div>'+
@@ -8159,7 +8159,7 @@ function checkDailyRefresh(){
     LAST_DAY_KEY = current;
     renderTodayBest();
     renderMatches();
-    toast('Topul zilei în curs a fost actualizat pentru noua zi', 'ok');
+    toast('Top 2 pronosticuri ale zilei a fost actualizat pentru noua zi', 'ok');
   }
 }
 
@@ -9518,7 +9518,7 @@ function renderDailyPortfolio(){
         '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:var(--grn)">'+Number(ticket.totalOdds || 1).toFixed(2)+'x</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Stake '+Number(ticket.stake || 0).toFixed(2)+' RON • '+Number(ticket.stakePct || 0).toFixed(1)+'%</div></div>'+
       '</div>'+
       '<div class="ticket-mini-grid" style="margin-top:12px">'+
-        '<div class="ticket-mini"><div class="v">'+(ticket.picks ? ticket.picks.length : 0)+'</div><div class="l">Selecții</div></div>'+
+        '<div class="ticket-mini"><div class="v">'+(ticket.picks ? ticket.picks.length : 0)+'</div><div class="l">Evenimente</div></div>'+
         '<div class="ticket-mini"><div class="v">'+Number(ticket.combinedProb || 0).toFixed(1)+'%</div><div class="l">Prob. compusă</div></div>'+
         '<div class="ticket-mini"><div class="v">'+((Number(ticket.avgEdge || 0) * 100).toFixed(1))+'%</div><div class="l">Edge mediu</div></div>'+
       '</div>'+
