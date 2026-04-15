@@ -2615,14 +2615,14 @@ function renderModernDashboard(){
     var kickoffLabel = rawKickoff ? (function(v){ var d = new Date(v); return isFinite(d.getTime()) ? (d.toLocaleDateString('ro-RO') + ' • ' + d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'})) : String(v); })(rawKickoff) : 'Data indisponibilă';
     return '<button class="dashboard-v16-opp-card" onclick="switchTab(\'meciuri\')">'+
       '<div class="dashboard-v16-opp-top"><span class="dashboard-v16-rank">TOP ' + (idx + 1) + '</span><div><div class="dashboard-v16-score">' + score + '</div><div class="dashboard-v16-score-label">smart score</div></div></div>'+
-      '<div class="dashboard-v16-opp-match">' + escHtml((m.home || '—') + ' vs ' + (m.away || '—')) + '</div>'+
-      '<div class="dashboard-v16-opp-meta">' + escHtml((m.league || '—')) + '</div>'+
-      '<div class="dashboard-v16-opp-meta">📅 ' + escHtml(kickoffLabel) + '</div>'+
-      '<div class="dashboard-v16-opp-bet">' + escHtml((bestBet.label || 'Pronostic indisponibil')) + (odds > 1 ? (' @ ' + odds.toFixed(2)) : '') + '</div>'+
+      '<div class="dashboard-v16-opp-match">' + esc((m.home || '—') + ' vs ' + (m.away || '—')) + '</div>'+
+      '<div class="dashboard-v16-opp-meta">' + esc((m.league || '—')) + '</div>'+
+      '<div class="dashboard-v16-opp-meta">📅 ' + esc(kickoffLabel) + '</div>'+
+      '<div class="dashboard-v16-opp-bet">' + esc((bestBet.label || 'Pronostic indisponibil')) + (odds > 1 ? (' @ ' + odds.toFixed(2)) : '') + '</div>'+
       '<div class="dashboard-v16-opp-pills">'+
         '<span class="dashboard-v16-opp-pill">Prob ' + adj.toFixed(1) + '%</span>'+
         '<span class="dashboard-v16-opp-pill">Edge ' + (edge >= 0 ? '+' : '') + edge.toFixed(1) + 'pp</span>'+
-        '<span class="dashboard-v16-opp-pill">Val ' + signedLocal(Number(bestBet.value || 0) * 100, '%') + '</span>'+
+        '<span class="dashboard-v16-opp-pill">Val ' + signed(Number(bestBet.value || 0) * 100, '%') + '</span>'+
       '</div>'+
     '</button>';
   }).join('') : '<div class="dashboard-v16-empty">Nu există încă oportunități eligibile în pool-ul curent.</div>';
@@ -2654,12 +2654,14 @@ function renderModernDashboard(){
     '</div>'+
 
     '<div class="dashboard-v16-section">'+
-      '<div class="dashboard-v16-section-head">'+
-        '<div><div class="dashboard-v16-section-title">🔥 Top recomandări ale zilei</div><div class="dashboard-v16-section-sub">Strict din oferta zilei curente. Cardurile folosesc aceeași prezentare ca Top 3.</div></div>'+
-        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="dashboard-v16-opp-pill" style="border-color:rgba(34,197,94,.28);color:var(--grn)">Top 2-4</span><span class="dashboard-v16-opp-pill" id="todaybest-count">0 evenimente</span></div>'+
+      '<div class="sec-hdr collapsible-header" onclick="toggleSection(\'todaybest\')" style="border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;background:rgba(34,197,94,.05);margin-bottom:0;cursor:pointer">'+
+        '<div class="sec-title">🔥 Top recomandări ale zilei <span class="sec-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--grn)">Top 2-4</span> <span class="collapse-count" id="todaybest-count">—</span></div>'+
+        '<span class="collapse-toggle" id="todaybest-toggle" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">▼</span>'+
       '</div>'+
-      '<div style="margin-top:10px;margin-bottom:12px;padding:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;font-size:11px;color:var(--muted)"><strong style="color:var(--grn)">Doar azi:</strong> aplicația alege automat între 2 și 4 evenimente din oferta zilei curente, doar dacă trec pragurile de probabilitate, edge și structură de piață.</div>'+
-      '<div class="dashboard-v16-opp-scroll" id="today-best-grid"></div>'+
+      '<div class="collapsible-body" id="todaybest-body">'+
+        '<div style="margin-top:10px;margin-bottom:12px;padding:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;font-size:11px;color:var(--muted)"><strong style="color:var(--grn)">Doar azi:</strong> aplicația alege automat între 2 și 4 pariuri din oferta zilei curente, doar dacă trec pragurile de probabilitate, edge și structură de piață.</div>'+
+        '<div class="matches-grid" id="today-best-grid"></div>'+
+      '</div>'+
     '</div>'+
 
     '<div class="dashboard-v16-performance">'+
@@ -3537,6 +3539,8 @@ function doRefresh(){
 function getDailyRecommendationCards(){
   var now = new Date();
   var todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var tomorrow = new Date(now.getTime() + 86400000);
+  var tomorrowKey = tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
 
   function supportsLikelyScore(m, type){
     var ls = parseLikelyScore(m.mostLikelyScore);
@@ -3704,16 +3708,19 @@ function getDailyRecommendationCards(){
     }
   ];
 
-  for(var pi = 0; pi < profiles.length; pi++){
-    var raw = (ALL_MATCHES || []).filter(function(m){
-      return baseFilter(m, profiles[pi], [todayKey]);
-    }).sort(function(a,b){
-      return rank(b) - rank(a);
-    });
-    var deduped = uniqueEventList(raw);
-    if(deduped.length >= 4) return deduped.slice(0,4);
-    if(deduped.length >= 3) return deduped.slice(0,3);
-    if(deduped.length >= 2) return deduped.slice(0,2);
+  var keySets = [[todayKey], [todayKey, tomorrowKey]];
+  for(var ks = 0; ks < keySets.length; ks++){
+    for(var pi = 0; pi < profiles.length; pi++){
+      var raw = (ALL_MATCHES || []).filter(function(m){
+        return baseFilter(m, profiles[pi], keySets[ks]);
+      }).sort(function(a,b){
+        return rank(b) - rank(a);
+      });
+      var deduped = uniqueEventList(raw);
+      if(deduped.length >= 4) return deduped.slice(0,4);
+      if(deduped.length >= 3) return deduped.slice(0,3);
+      if(deduped.length >= 2) return deduped.slice(0,2);
+    }
   }
   return [];
 }
@@ -3734,72 +3741,57 @@ function renderTodayBest(){
   var badge = $('todaybest-count');
   if(!container) return;
 
-  function escHtml(v){
-    return String(v == null ? '' : v)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#39;');
-  }
-  function signedLocal(n, suffix){
-    var num = Number(n || 0);
-    return (num > 0 ? '+' : '') + num.toFixed(1) + (suffix || '');
-  }
-  function escAttr(v){
-    return escHtml(String(v == null ? '' : v));
-  }
-
   var list = getDailyRecommendationCards();
-  if(badge) badge.textContent = list.length ? (list.length + ' evenimente') : '0 evenimente';
+  if(badge) badge.textContent = list.length ? (list.length + ' selecții') : '0 selecții';
 
   if(list.length === 0){
-    container.innerHTML = '<div class="dashboard-v16-empty">Nu am găsit minimum 2 evenimente suficient de curate pentru ziua curentă. Widgetul nu forțează selecții doar ca să umple spațiul.</div>';
+    container.innerHTML = '<div class="empty-state">Nu am găsit minimum 2 recomandări suficient de curate pentru ziua curentă. Widgetul nu forțează selecții doar ca să umple spațiul.</div>';
     return;
   }
 
-  var cards = list.map(function(m, idx){
-    var bestBet = m.bestBet || {};
-    var edge = Math.max(Number(bestBet.edgePct || 0), Number(bestBet.edge_to_price_pct || 0), Number(bestBet.edgeToPrice || 0));
-    var odds = Number(bestBet.odds || 0);
-    var score = Math.round(Number(m.smartScore || rank(m) || 0));
-    var rawKickoff = m.event_date || m.eventDate || m.date || m.starts_at || m.kickoff || m.start_time || '';
-    var kickoffLabel = rawKickoff ? (function(v){ var d = new Date(v); return isFinite(d.getTime()) ? (d.toLocaleDateString('ro-RO') + ' • ' + d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'})) : String(v); })(rawKickoff) : 'Data indisponibilă';
-    var hybridInline = bestBet && bestBet.probabilityEngine === 'hybrid'
-      ? renderHybridProbabilityInline({ apiProb:bestBet.apiProb, poissonProb:bestBet.poissonProb, hybridProb:bestBet.prob, delta:bestBet.poissonDelta })
-      : '';
-    return '<div class="dashboard-v16-opp-card">'+
-      '<div class="dashboard-v16-opp-top"><span class="dashboard-v16-rank">TOP ' + (idx + 1) + '</span><div><div class="dashboard-v16-score">' + score + '</div><div class="dashboard-v16-score-label">daily score</div></div></div>'+
-      '<div class="dashboard-v16-opp-match">' + escHtml((m.home || '—') + ' vs ' + (m.away || '—')) + '</div>'+
-      '<div class="dashboard-v16-opp-meta">' + escHtml((m.league || '—')) + '</div>'+
-      '<div class="dashboard-v16-opp-meta">📅 ' + escHtml(kickoffLabel) + '</div>'+
-      '<div class="dashboard-v16-opp-bet">' + escHtml((bestBet.label || 'Pronostic indisponibil')) + (odds > 1 ? (' @ ' + odds.toFixed(2)) : '') + '</div>'+
-      '<div class="dashboard-v16-opp-pills">'+
-        '<span class="dashboard-v16-opp-pill">Prob ' + Number(bestBet.adjProb || 0).toFixed(1) + '%</span>'+
-        '<span class="dashboard-v16-opp-pill">Edge ' + (edge >= 0 ? '+' : '') + edge.toFixed(1) + 'pp</span>'+
-        '<span class="dashboard-v16-opp-pill">Val ' + signedLocal(Number(bestBet.value || 0) * 100, '%') + '</span>'+
+  var cta = '<div class="match-card" style="border-color:rgba(34,197,94,.25);background:linear-gradient(180deg,rgba(18,32,28,.98),rgba(12,20,18,.96))">'+
+    '<div class="sec-title" style="margin-bottom:8px">🔥 Pachetul zilei</div>'+
+    '<div style="font-size:12px;color:var(--txt);line-height:1.55">Am selectat automat <strong>'+list.length+'</strong> pariuri din oferta disponibilă, ordonate după probabilitate ajustată, edge, tip de piață și cota utilizabilă.</div>'+
+    '<div class="ticket-mini-grid" style="margin-top:12px">'+
+      '<div class="ticket-mini"><div class="v">'+list.length+'</div><div class="l">Selecții</div></div>'+
+      '<div class="ticket-mini"><div class="v">'+list.reduce(function(acc,m){ return acc * Number(((m || {}).bestBet || {}).odds || 1); }, 1).toFixed(2)+'x</div><div class="l">Cotă combo</div></div>'+
+      '<div class="ticket-mini"><div class="v">'+(list.reduce(function(acc,m){ return acc + Number((((m || {}).bestBet || {}).adjProb) || 0); }, 0) / Math.max(1, list.length)).toFixed(1)+'%</div><div class="l">Prob. medie</div></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+      '<button class="btn btn-green" onclick="loadTodayBestTicket()">Încarcă topul în bilet</button>'+
+      '<button class="btn btn-primary" onclick="switchTab(\'meciuri\')">Vezi toate meciurile</button>'+
+    '</div>'+
+  '</div>';
+
+  var cards = list.map(function(m, i){
+    var b = m.bestBet || {};
+    var key = getMatchCardKey(m);
+    var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 18);
+    var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 18);
+    var valStr = Number(b.value || 0) >= 0 ? '+'+fmtPct(Number(b.value || 0)*100) : fmtPct(Number(b.value || 0)*100);
+    var edgePct = Math.max(Number(b.edgePct || 0), Number(b.edge_to_price_pct || 0), Number(b.edgeToPrice || 0));
+    var scoreStr = m.mostLikelyScore ? '<span class="score-badge" style="margin-left:6px;font-size:10px">⚽ '+m.mostLikelyScore+'</span>' : '';
+    return '<div class="top-pick-card" style="border-color:'+(i === 0 ? 'rgba(34,197,94,.35)' : 'rgba(59,130,246,.25)')+'">'+
+      '<div class="tp-rank">#'+(i+1)+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="tp-badge '+(i === 0 ? 'tp-badge-safe' : 'tp-badge-mod')+'">'+(i === 0 ? '⭐ #1 AZI' : '✅ TOP DAY')+'</div>'+sourceChipHtmlForBet(b)+'</div>'+
+      '<div class="tp-teams" style="display:flex;align-items:center;gap:6px">'+hLogo+' '+m.home+' vs '+m.away+' '+aLogo+'</div>'+
+      '<div style="text-align:center;margin:6px 0">'+scoreStr+'</div>'+
+      '<div class="tp-league">'+(m.league || '—')+' • '+(m.dateLabel || '')+' '+(m.timeLabel || '')+'</div>'+
+      '<div class="tp-metrics">'+
+        '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--grn)">'+valStr+'</div><div class="tp-metric-lbl">Value</div></div>'+
+        '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--acc)">'+Number(b.adjProb || 0).toFixed(1)+'%</div><div class="tp-metric-lbl">Șansă</div></div>'+
+        '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--yel)">'+(edgePct >= 0 ? '+' : '')+edgePct.toFixed(1)+'pp</div><div class="tp-metric-lbl">Edge</div></div>'+
       '</div>'+
-      (hybridInline ? hybridInline : '') +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+
-        '<button class="btn btn-green" style="flex:1;justify-content:center" onclick="event.stopPropagation();quickAddMatchToTicket(&quot;'+escAttr(getMatchCardKey(m))+'&quot;)">Adaugă în bilet</button>'+
-        '<button class="btn" style="flex:1;justify-content:center" onclick="event.stopPropagation();switchTab(&quot;meciuri&quot;)">Vezi în Meciuri</button>'+
+      renderHybridProbInline(m, b)+
+      '<div class="tp-rec" style="margin-top:8px">🎯 '+(b.label || '—')+' @ '+Number(b.odds || 0).toFixed(2)+'</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
+        '<button class="btn btn-green" style="flex:1;justify-content:center" onclick="quickAddMatchToTicket(&quot;'+key+'&quot;)">Adaugă în bilet</button>'+
+        '<button class="btn" style="flex:1;justify-content:center" onclick="switchTab(\'meciuri\')">Vezi în Meciuri</button>'+
       '</div>'+
     '</div>';
   }).join('');
 
-  var summary = '<div class="dashboard-v16-empty" style="min-width:220px;border-style:solid;background:linear-gradient(180deg,rgba(18,32,28,.96),rgba(12,20,18,.98));border-color:rgba(34,197,94,.18)">'+
-    '<div style="font-size:14px;font-weight:900;color:var(--grn);margin-bottom:8px">Pachetul zilei</div>'+
-    '<div style="font-size:12px;color:var(--txt);line-height:1.55">Am selectat automat <strong>' + list.length + '</strong> evenimente din oferta de azi. Sunt ordonate după probabilitate ajustată, edge, tip de piață și cotă utilizabilă.</div>'+
-    '<div class="dashboard-v16-opp-pills" style="margin-top:12px">'+
-      '<span class="dashboard-v16-opp-pill">Cotă combo ' + list.reduce(function(acc,m){ return acc * Number(((m || {}).bestBet || {}).odds || 1); }, 1).toFixed(2) + 'x</span>'+
-      '<span class="dashboard-v16-opp-pill">Prob. medie ' + (list.reduce(function(acc,m){ return acc + Number((((m || {}).bestBet || {}).adjProb) || 0); }, 0) / Math.max(1, list.length)).toFixed(1) + '%</span>'+
-    '</div>'+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
-      '<button class="btn btn-green" onclick="loadTodayBestTicket()">Încarcă topul în bilet</button>'+
-    '</div>'+
-  '</div>';
-
-  container.innerHTML = summary + cards;
+  container.innerHTML = cta + cards;
 }
 
 
