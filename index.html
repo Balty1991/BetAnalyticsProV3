@@ -1111,10 +1111,6 @@ body.more-open{overflow:hidden}
       <span class="more-card-title">🧬 SmartBet Engine</span>
       <span class="more-card-sub">Fuziune Audit + AI Memory, cu filtre și bilete unificate.</span>
     </button>
-    <button class="more-card-btn" onclick="switchTab('cota2')">
-      <span class="more-card-title">🎯 Cota 2 a zilei</span>
-      <span class="more-card-sub">Biletul zilei optimizat pentru profit pe termen lung.</span>
-    </button>
     <button class="more-card-btn" onclick="openOnboarding(true);closeDesktopMore()">
       <span class="more-card-title">🧭 Onboarding wizard</span>
       <span class="more-card-sub">Relansează ghidul complet pentru utilizatori noi.</span>
@@ -2092,7 +2088,6 @@ body.more-open{overflow:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
 <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 SmartBet Engine</span><small class="sheet-btn-sub">Audit + Memory într-un singur filtru</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 a zilei</span><small class="sheet-btn-sub">Selecția optimizată pentru cota 2</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🆕 🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🆕 🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">🆕 📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
@@ -9967,55 +9962,95 @@ function renderCota2History(){
     root.innerHTML = '<div class="empty-state">Nu există încă bilete din categoria <strong>Cota 2 a zilei</strong> în intervalul selectat. Generează-l și trimite-l în Tracking ca să înceapă istoricul.</div>';
     return;
   }
-  var settled = tickets.filter(function(t){ return t.status === 'win' || t.status === 'loss' || t.status === 'co' || t.status === 'anulat'; });
+  var isSettledStatus = function(status){ return status === 'win' || status === 'loss' || status === 'co' || status === 'anulat'; };
+  var settled = tickets.filter(function(t){ return isSettledStatus(t.status); });
   var wins = settled.filter(function(t){ return t.status === 'win'; }).length;
-  var pending = tickets.filter(function(t){ return t.status === 'pending'; }).length;
-  var totalProfit = tickets.reduce(function(acc, t){ return acc + Number(t.profit || 0); }, 0);
-  var totalStake = tickets.reduce(function(acc, t){ return acc + Number(t.stake || 0); }, 0);
+  var losses = settled.filter(function(t){ return t.status === 'loss'; }).length;
+  var pendingTickets = tickets.filter(function(t){ return t.status === 'pending'; });
+  var pending = pendingTickets.length;
+  var totalProfit = settled.reduce(function(acc, t){ return acc + Number(t.profit || 0); }, 0);
+  var totalStake = settled.reduce(function(acc, t){ return acc + Number(t.stake || 0); }, 0);
+  var pendingStake = pendingTickets.reduce(function(acc, t){ return acc + Number(t.stake || 0); }, 0);
   var roi = totalStake > 0 ? ((totalProfit / totalStake) * 100) : 0;
   var winrate = settled.length ? ((wins / settled.length) * 100) : 0;
   var avgOdds = tickets.length ? (tickets.reduce(function(acc, t){ return acc + Number(t.totalOdds || 0); }, 0) / tickets.length) : 0;
   var avgPicks = tickets.length ? (tickets.reduce(function(acc, t){ return acc + Number((t.picks && t.picks.length) || 0); }, 0) / tickets.length) : 0;
+  var voided = settled.filter(function(t){ return t.status === 'anulat'; }).length;
+  var cashedOut = settled.filter(function(t){ return t.status === 'co'; }).length;
   var breakdown = [2,3,4].map(function(count){
     var subset = tickets.filter(function(t){ return Number((t.picks && t.picks.length) || 0) === count; });
-    var subSettled = subset.filter(function(t){ return t.status === 'win' || t.status === 'loss' || t.status === 'co' || t.status === 'anulat'; });
+    var subSettled = subset.filter(function(t){ return isSettledStatus(t.status); });
     var subWins = subSettled.filter(function(t){ return t.status === 'win'; }).length;
-    var subProfit = subset.reduce(function(acc, t){ return acc + Number(t.profit || 0); }, 0);
-    var subStake = subset.reduce(function(acc, t){ return acc + Number(t.stake || 0); }, 0);
+    var subProfit = subSettled.reduce(function(acc, t){ return acc + Number(t.profit || 0); }, 0);
+    var subStake = subSettled.reduce(function(acc, t){ return acc + Number(t.stake || 0); }, 0);
+    var subPending = subset.filter(function(t){ return t.status === 'pending'; }).length;
     return {
       label: count + ' selecții',
       total: subset.length,
+      settled: subSettled.length,
+      pending: subPending,
       winrate: subSettled.length ? ((subWins / subSettled.length) * 100) : 0,
       roi: subStake > 0 ? ((subProfit / subStake) * 100) : 0
     };
   });
   var cards = '<div class="history-card-grid">'+
-    '<div class="history-summary-card active"><div class="history-summary-top"><div><div class="history-summary-label">ROI</div><div class="history-summary-note">interval selectat</div></div><div class="history-summary-roi" style="color:'+(roi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(totalStake > 0 ? ((roi >= 0 ? '+' : '') + roi.toFixed(1) + '%') : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Profit</div><div class="v" style="color:'+(totalProfit >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(totalProfit >= 0 ? '+' : '')+totalProfit.toFixed(2)+' RON</div></div><div class="history-metric"><div class="k">Miză</div><div class="v">'+totalStake.toFixed(2)+' RON</div></div></div></div>'+
-    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Win rate</div><div class="history-summary-note">meciuri închise</div></div><div class="history-summary-roi" style="color:var(--acc)">'+(settled.length ? winrate.toFixed(1)+'%' : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Win / jucate</div><div class="v">'+wins+'/'+settled.length+'</div></div><div class="history-metric"><div class="k">Pending</div><div class="v">'+pending+'</div></div></div></div>'+
-    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Cota medie</div><div class="history-summary-note">bilete trimise</div></div><div class="history-summary-roi" style="color:var(--pur)">'+(tickets.length ? avgOdds.toFixed(2)+'x' : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Bilete</div><div class="v">'+tickets.length+'</div></div><div class="history-metric"><div class="k">Selecții medii</div><div class="v">'+(tickets.length ? avgPicks.toFixed(1) : '—')+'</div></div></div></div>'+
+    '<div class="history-summary-card active"><div class="history-summary-top"><div><div class="history-summary-label">ROI</div><div class="history-summary-note">doar bilete închise</div></div><div class="history-summary-roi" style="color:'+(settled.length ? (roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+'">'+(settled.length ? ((roi >= 0 ? '+' : '') + roi.toFixed(1) + '%') : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Profit închis</div><div class="v" style="color:'+(settled.length ? (totalProfit >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+'">'+(settled.length ? ((totalProfit >= 0 ? '+' : '')+totalProfit.toFixed(2)+' RON') : '—')+'</div></div><div class="history-metric"><div class="k">Miză închisă</div><div class="v">'+(settled.length ? totalStake.toFixed(2)+' RON' : '—')+'</div></div></div></div>'+
+    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Win rate</div><div class="history-summary-note">bilete închise</div></div><div class="history-summary-roi" style="color:var(--acc)">'+(settled.length ? winrate.toFixed(1)+'%' : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">WIN / jucate</div><div class="v">'+wins+'/'+settled.length+'</div></div><div class="history-metric"><div class="k">LOSE / Pending</div><div class="v">'+losses+' / '+pending+'</div></div></div></div>'+
+    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Cota medie</div><div class="history-summary-note">toate biletele trimise</div></div><div class="history-summary-roi" style="color:var(--pur)">'+(tickets.length ? avgOdds.toFixed(2)+'x' : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Bilete</div><div class="v">'+tickets.length+'</div></div><div class="history-metric"><div class="k">Expunere pending</div><div class="v">'+(pending ? pendingStake.toFixed(2)+' RON' : '0.00 RON')+'</div></div></div></div>'+
+  '</div>';
+  var monitoringCards = '<div class="history-card-grid" style="margin-top:10px">'+
+    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Monitorizare bilet WIN</div><div class="history-summary-note">verdict final pe bilet</div></div><div class="history-summary-roi" style="color:var(--grn)">'+wins+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Bilete WIN</div><div class="v">'+wins+'</div></div><div class="history-metric"><div class="k">Win monitorizat</div><div class="v">'+(settled.length ? Math.round((wins/settled.length)*100) + '%' : '—')+'</div></div></div></div>'+
+    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Monitorizare bilet NO WIN</div><div class="history-summary-note">pierdere, cash out, void</div></div><div class="history-summary-roi" style="color:' + ((losses + cashedOut + voided) ? 'var(--red)' : 'var(--muted)') + '">'+(losses + cashedOut + voided)+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">LOSE</div><div class="v">'+losses+'</div></div><div class="history-metric"><div class="k">CO / VOID</div><div class="v">'+cashedOut+' / '+voided+'</div></div></div></div>'+
+    '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">Monitorizare activă</div><div class="history-summary-note">în Tracking, neînchise</div></div><div class="history-summary-roi" style="color:' + (pending ? 'var(--acc)' : 'var(--muted)') + '">'+pending+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Pending</div><div class="v">'+pending+'</div></div><div class="history-metric"><div class="k">Selecții medii</div><div class="v">'+(tickets.length ? avgPicks.toFixed(1) : '—')+'</div></div></div></div>'+
   '</div>';
   var breakdownHtml = '<div class="history-card-grid" style="margin-top:10px">'+breakdown.map(function(row){
-    return '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">'+row.label+'</div><div class="history-summary-note">structură</div></div><div class="history-summary-roi" style="color:'+(row.total ? (row.roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+'">'+(row.total ? ((row.roi >= 0 ? '+' : '') + row.roi.toFixed(1)+'%') : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Bilete</div><div class="v">'+row.total+'</div></div><div class="history-metric"><div class="k">Win rate</div><div class="v">'+(row.total ? row.winrate.toFixed(1)+'%' : '—')+'</div></div></div></div>';
-  }).join('')+'</div>';
+    return '<div class="history-summary-card"><div class="history-summary-top"><div><div class="history-summary-label">'+row.label+'</div><div class="history-summary-note">structură</div></div><div class="history-summary-roi" style="color:'+(row.settled ? (row.roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)')+'">'+(row.settled ? ((row.roi >= 0 ? '+' : '') + row.roi.toFixed(1)+'%') : '—')+'</div></div><div class="history-metric-row"><div class="history-metric"><div class="k">Bilete</div><div class="v">'+row.total+'</div></div><div class="history-metric"><div class="k">WIN / Pending</div><div class="v">'+(row.settled ? row.winrate.toFixed(1)+'%' : '—')+' / '+row.pending+'</div></div></div></div>';
+  }).join('')+'</div>'+
+  '<div style="font-size:11px;color:var(--muted);margin-top:10px">Istoricul categoriei calculează <strong style="color:var(--txt)">ROI, profit și miză doar pe biletele închise</strong>. Pentru <strong style="color:var(--txt)">Cota 2 a zilei</strong>, monitorizarea principală este pe <strong style="color:var(--txt)">verdictul final al biletului</strong>: WIN, NO WIN sau PENDING în Tracking.</div>';
   var rowsHtml = tickets.map(function(t){
     var status = t.status || 'pending';
     var verdict = status === 'win' ? 'WIN' : (status === 'loss' ? 'LOSE' : (status === 'co' ? 'CO' : (status === 'anulat' ? 'VOID' : 'PENDING')));
+    var verdictText = status === 'win' ? 'DA' : (status === 'loss' ? 'NU' : (status === 'co' ? 'PARȚIAL / CASH OUT' : (status === 'anulat' ? 'ANULAT' : 'ÎNCĂ ÎN JOC')));
     var color = status === 'win' ? 'var(--grn)' : (status === 'loss' ? 'var(--red)' : (status === 'co' ? 'var(--yel)' : 'var(--acc)'));
     var bg = status === 'win' ? 'rgba(34,197,94,.12)' : (status === 'loss' ? 'rgba(239,68,68,.12)' : (status === 'co' ? 'rgba(245,158,11,.12)' : 'rgba(59,130,246,.10)'));
     var brd = status === 'win' ? 'rgba(34,197,94,.22)' : (status === 'loss' ? 'rgba(239,68,68,.22)' : (status === 'co' ? 'rgba(245,158,11,.22)' : 'rgba(59,130,246,.18)'));
     var profit = Number(t.profit || 0);
+    var wonPicks = (t.picks || []).filter(function(p){ return (p.result || 'pending') === 'win'; }).length;
+    var lostPicks = (t.picks || []).filter(function(p){ return (p.result || 'pending') === 'loss'; }).length;
+    var pendingPicks = (t.picks || []).filter(function(p){ return (p.result || 'pending') === 'pending'; }).length;
+    var voidPicks = (t.picks || []).filter(function(p){ return (p.result || 'pending') === 'anulat'; }).length;
     var picks = (t.picks || []).map(function(p){
-      return '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.05)"><div style="font-size:12px;color:var(--txt);font-weight:700">'+cota2EscapeHtml((p.home || '—') + ' vs ' + (p.away || '—'))+'</div><div style="font-size:10px;color:var(--muted);margin-top:3px">'+cota2EscapeHtml(p.bet || '—')+' @ '+Number(p.odds || 0).toFixed(2)+' • '+cota2EscapeHtml(p.league || '—')+'</div></div>';
+      var pickStatus = p.result || 'pending';
+      var actualScore = (p.homeScore != null && p.awayScore != null) ? (p.homeScore+'-'+p.awayScore) : '—';
+      var monitorLabel = pickStatus === 'win' ? 'OK' : (pickStatus === 'loss' ? 'NU' : (pickStatus === 'anulat' ? 'VOID' : 'PENDING'));
+      return '<div style="padding:8px 0;border-top:1px solid rgba(255,255,255,.05)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">'+
+          '<div><div style="font-size:12px;color:var(--txt);font-weight:700">'+cota2EscapeHtml((p.home || '—') + ' vs ' + (p.away || '—'))+'</div><div style="font-size:10px;color:var(--muted);margin-top:3px">'+cota2EscapeHtml(p.bet || '—')+' @ '+Number(p.odds || 0).toFixed(2)+' • '+cota2EscapeHtml(p.league || '—')+'</div></div>'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+getPickStatusBadgeHtml(pickStatus)+'<span style="font-size:10px;color:var(--muted)">Validare: '+monitorLabel+'</span></div>'+
+        '</div>'+
+        '<div style="font-size:10px;color:var(--muted);margin-top:4px">Scor final: '+cota2EscapeHtml(String(actualScore))+'</div>'+
+      '</div>';
     }).join('');
     return '<div class="history-row">'+
       '<div class="history-row-head">'+
         '<div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="history-row-title">🎯 Cota 2 a zilei</div><span style="font-size:10px;color:var(--acc);border:1px solid rgba(59,130,246,.22);padding:2px 7px;border-radius:999px;background:rgba(59,130,246,.10)">'+Number((t.picks && t.picks.length) || 0)+' selecții</span></div><div class="history-row-sub">'+fmtDateTime(t.placedAt || t.generatedAt || t.date)+'</div><div class="history-row-meta">Cotă '+Number(t.totalOdds || 0).toFixed(2)+'x • Miză '+Number(t.stake || 0).toFixed(2)+' RON • Profit '+(profit >= 0 ? '+' : '')+profit.toFixed(2)+' RON</div></div>'+
         '<div class="history-status-pill" style="background:'+bg+';border:1px solid '+brd+';color:'+color+'">'+verdict+'</div>'+
       '</div>'+
+      '<div style="margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.025)">'+
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
+          '<div><div style="font-size:11px;color:var(--muted)">Monitorizare bilet în Tracking</div><div style="font-size:15px;font-weight:900;color:'+color+'">Bilet WIN: '+verdictText+'</div></div>'+
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+            '<span style="font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.18);color:var(--grn)">OK '+wonPicks+'</span>'+
+            '<span style="font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.18);color:var(--red)">NU '+lostPicks+'</span>'+
+            '<span style="font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.18);color:var(--acc)">Pending '+pendingPicks+'</span>'+
+            '<span style="font-size:10px;padding:4px 8px;border-radius:999px;background:rgba(100,116,139,.12);border:1px solid rgba(100,116,139,.18);color:var(--muted)">Void '+voidPicks+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
       '<div style="margin-top:8px">'+picks+'</div>'+
     '</div>';
   }).join('');
-  root.innerHTML = cards + breakdownHtml + '<div class="history-detail-card" style="margin-top:12px"><div class="history-detail-head"><div><div class="sec-title" style="margin-bottom:4px">Monitorizare bilete</div><div style="font-size:11px;color:var(--muted)">Override manual, cash out și editarea cotei rămân în tabul Tracking. Aici vezi rezumatul categoriei și componența fiecărui bilet trimis.</div></div></div>'+rowsHtml+'</div>';
+  root.innerHTML = cards + monitoringCards + breakdownHtml + '<div class="history-detail-card" style="margin-top:12px"><div class="history-detail-head"><div><div class="sec-title" style="margin-bottom:4px">Monitorizare bilete</div><div style="font-size:11px;color:var(--muted)">Pentru Cota 2 a zilei, focusul este pe verdictul <strong style="color:var(--txt)">biletului</strong> din Tracking. Sub fiecare bilet vezi și validarea fiecărei selecții: OK / NU / PENDING / VOID.</div></div></div>'+rowsHtml+'</div>';
 }
 function renderCota2Day(){
   if((!COTA2_DAILY_TICKET || !COTA2_DAILY_TICKET.generatedAt) && ALL_MATCHES && ALL_MATCHES.length) generateCota2DayTicket(false);
