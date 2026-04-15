@@ -8344,9 +8344,13 @@ function enumerateCota2Combos(pool, learning, settings){
 }
 function getCota2CandidatePool(learning, settings){
   var cfg = getCota2StrategyConfig(settings.strategy);
+  var todayKey = getCurrentDayKey();
   var candidates = getPortfolioMatchPool().filter(function(item){
     var eventMs = getEventDateMs(item);
-    if(eventMs != null && eventMs < Date.now() - (20 * 60000)) return false;
+    var eventKey = item && (item.dateKey || (item.date ? fmtDateKey(item.date) : ''));
+    if(!eventKey || eventKey !== todayKey) return false;
+    if(eventMs == null || !isFinite(eventMs)) return false;
+    if(eventMs < Date.now() - (20 * 60000)) return false;
     if(Number(item.odds || 0) < 1.12 || Number(item.odds || 0) > Math.max(2.20, cfg.maxCandidateOdds + 0.15)) return false;
     if(Number(item.prob || 0) < Math.max(48, cfg.minProb - 4)) return false;
     if(Number(item.score || 0) < Math.max(66, cfg.minScore - 6)) return false;
