@@ -1987,6 +1987,7 @@ body.more-open{overflow:hidden}
         </div>
         <div class="action-row">
           <span class="sec-badge" style="color:var(--yel);border-color:rgba(245,158,11,.24);background:rgba(245,158,11,.08)">adaptive engine</span>
+          <div id="cota2-daymode-switch" style="display:flex;gap:8px;flex-wrap:wrap"></div>
           <button class="btn btn-primary" style="font-size:11px;padding:6px 10px" onclick="generateCota2DailyTicket()">🔄 Generează acum</button>
         </div>
       </div>
@@ -2028,6 +2029,13 @@ body.more-open{overflow:hidden}
             <option value="safe">Safe</option>
             <option value="balanced">Balanced</option>
             <option value="value">Value</option>
+          </select>
+        </div>
+        <div>
+          <label class="addon-label">Orizont meciuri</label>
+          <select id="cota2-day-mode" class="addon-select" onchange="saveCota2Settings(true);renderCota2Section()">
+            <option value="today">Azi</option>
+            <option value="tomorrow">Mâine</option>
           </select>
         </div>
         <div>
@@ -8018,7 +8026,7 @@ function clearJournal(){
 // ============================================================
 
 function getDefaultCota2Settings(){
-  return {minTotalOdds:1.70,maxTotalOdds:3.00,minLegs:2,maxLegs:4,strategy:'balanced',adaptive:true};
+  return {minTotalOdds:1.70,maxTotalOdds:3.00,minLegs:2,maxLegs:4,strategy:'balanced',dayMode:'today',adaptive:true};
 }
 function sanitizeCota2Settings(raw){
   var base = getDefaultCota2Settings();
@@ -8029,8 +8037,50 @@ function sanitizeCota2Settings(raw){
   out.minLegs = Math.max(2, Math.min(4, Math.round(Number(out.minLegs || base.minLegs))));
   out.maxLegs = Math.max(out.minLegs, Math.min(4, Math.round(Number(out.maxLegs || base.maxLegs))));
   out.strategy = ['safe','balanced','value'].indexOf(String(out.strategy || 'balanced')) >= 0 ? String(out.strategy) : 'balanced';
+  out.dayMode = String(out.dayMode || base.dayMode) === 'tomorrow' ? 'tomorrow' : 'today';
   out.adaptive = !!out.adaptive;
   return out;
+}
+function getDayKeyWithOffset(offset){
+  var d = new Date();
+  d.setHours(12,0,0,0);
+  d.setDate(d.getDate() + Number(offset || 0));
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function getCota2TargetMeta(settings){
+  var mode = settings && String(settings.dayMode || 'today') === 'tomorrow' ? 'tomorrow' : 'today';
+  var offset = mode === 'tomorrow' ? 1 : 0;
+  return {
+    mode: mode,
+    offset: offset,
+    dayKey: getDayKeyWithOffset(offset),
+    label: mode === 'tomorrow' ? 'mâine' : 'azi',
+    title: mode === 'tomorrow' ? 'Mâine' : 'Azi'
+  };
+}
+function renderCota2DayModeUi(){
+  var meta = getCota2TargetMeta(COTA2_SETTINGS);
+  if($('cota2-day-mode')) $('cota2-day-mode').value = meta.mode;
+  var wrap = $('cota2-daymode-switch');
+  if(!wrap) return;
+  function buttonHtml(mode, icon, label){
+    var active = meta.mode === mode;
+    return '<button class="btn" onclick="setCota2DayMode(\''+mode+'\', true)" style="font-size:11px;padding:6px 10px;'+(active ? 'background:rgba(59,130,246,.18);color:var(--acc);border:1px solid rgba(59,130,246,.34)' : 'background:rgba(255,255,255,.05);color:var(--txt);border:1px solid rgba(255,255,255,.08)')+'">'+icon+' '+label+'</button>';
+  }
+  wrap.innerHTML = buttonHtml('today', '📅', 'Azi') + buttonHtml('tomorrow', '🌙', 'Mâine');
+}
+function setCota2DayMode(mode, autoGenerate){
+  COTA2_SETTINGS = sanitizeCota2Settings(Object.assign({}, COTA2_SETTINGS, {dayMode: mode === 'tomorrow' ? 'tomorrow' : 'today'}));
+  localStorage.setItem('bet_cota2_settings', JSON.stringify(COTA2_SETTINGS));
+  loadCota2SettingsIntoUi();
+  renderCota2DayModeUi();
+  COTA2_TICKET = null;
+  persistCota2Ticket();
+  if(autoGenerate){
+    generateCota2DailyTicket();
+  }else{
+    renderCota2Section();
+  }
 }
 function loadCota2SettingsIntoUi(){
   if($('cota2-min-total')) $('cota2-min-total').value = Number(COTA2_SETTINGS.minTotalOdds || 1.7).toFixed(2);
@@ -8038,8 +8088,10 @@ function loadCota2SettingsIntoUi(){
   if($('cota2-min-legs')) $('cota2-min-legs').value = Number(COTA2_SETTINGS.minLegs || 2);
   if($('cota2-max-legs')) $('cota2-max-legs').value = Number(COTA2_SETTINGS.maxLegs || 4);
   if($('cota2-strategy')) $('cota2-strategy').value = COTA2_SETTINGS.strategy || 'balanced';
+  if($('cota2-day-mode')) $('cota2-day-mode').value = COTA2_SETTINGS.dayMode || 'today';
   if($('cota2-learning')) $('cota2-learning').checked = !!COTA2_SETTINGS.adaptive;
   if($('cota2-learning-proxy')) $('cota2-learning-proxy').value = COTA2_SETTINGS.adaptive ? 'on' : 'off';
+  renderCota2DayModeUi();
 }
 function saveCota2Settings(silent){
   COTA2_SETTINGS = sanitizeCota2Settings({
@@ -8048,6 +8100,7 @@ function saveCota2Settings(silent){
     minLegs: $('cota2-min-legs') ? $('cota2-min-legs').value : COTA2_SETTINGS.minLegs,
     maxLegs: $('cota2-max-legs') ? $('cota2-max-legs').value : COTA2_SETTINGS.maxLegs,
     strategy: $('cota2-strategy') ? $('cota2-strategy').value : COTA2_SETTINGS.strategy,
+    dayMode: $('cota2-day-mode') ? $('cota2-day-mode').value : COTA2_SETTINGS.dayMode,
     adaptive: $('cota2-learning') ? $('cota2-learning').checked : COTA2_SETTINGS.adaptive
   });
   localStorage.setItem('bet_cota2_settings', JSON.stringify(COTA2_SETTINGS));
@@ -8344,13 +8397,13 @@ function enumerateCota2Combos(pool, learning, settings){
 }
 function getCota2CandidatePool(learning, settings){
   var cfg = getCota2StrategyConfig(settings.strategy);
-  var todayKey = getCurrentDayKey();
+  var targetMeta = getCota2TargetMeta(settings);
   var candidates = getPortfolioMatchPool().filter(function(item){
     var eventMs = getEventDateMs(item);
     var eventKey = item && (item.dateKey || (item.date ? fmtDateKey(item.date) : ''));
-    if(!eventKey || eventKey !== todayKey) return false;
+    if(!eventKey || eventKey !== targetMeta.dayKey) return false;
     if(eventMs == null || !isFinite(eventMs)) return false;
-    if(eventMs < Date.now() - (20 * 60000)) return false;
+    if(targetMeta.mode === 'today' && eventMs < Date.now() - (20 * 60000)) return false;
     if(Number(item.odds || 0) < 1.12 || Number(item.odds || 0) > Math.max(2.20, cfg.maxCandidateOdds + 0.15)) return false;
     if(Number(item.prob || 0) < Math.max(48, cfg.minProb - 4)) return false;
     if(Number(item.score || 0) < Math.max(66, cfg.minScore - 6)) return false;
@@ -8375,16 +8428,19 @@ function getCota2RecommendedStakePct(combo, settings, learning){
   return Math.max(0.45, +(base * factor).toFixed(2));
 }
 function makeCota2TicketObject(combo, alternatives, learning, settings){
+  var dayMeta = getCota2TargetMeta(settings);
   if(!combo || !combo.picks || !combo.picks.length){
     return {
       type:'cota2',
-      label:'🎯 Cota 2 Daily',
-      criteria:'Cota 2 Daily',
+      label:'🎯 Cota 2 ' + dayMeta.title,
+      criteria:'Cota 2 ' + dayMeta.title,
       picks:[],
       totalOdds:1,
       combinedProb:0,
       riskLabel:'În așteptare',
-      error:'Astăzi nu există o combinație destul de curată în intervalul setat. Păstrăm disciplina și nu forțăm biletul.',
+      targetDayMode:dayMeta.mode,
+      targetDateKey:dayMeta.dayKey,
+      error:'Pentru ' + dayMeta.label + ' nu există o combinație destul de curată în intervalul setat. Păstrăm disciplina și nu forțăm biletul.',
       generatedAt:new Date().toISOString(),
       alternatives:[]
     };
@@ -8397,8 +8453,8 @@ function makeCota2TicketObject(combo, alternatives, learning, settings){
   if(learning.bestBand) profileLine += ' și banda ' + learning.bestBand.key;
   return {
     type:'cota2',
-    label:'🎯 Cota 2 Daily',
-    criteria:'Cota 2 Daily',
+    label:'🎯 Cota 2 ' + dayMeta.title,
+    criteria:'Cota 2 ' + dayMeta.title,
     picks:combo.picks,
     totalOdds:combo.totalOdds,
     combinedProb:combo.combinedProb,
@@ -8408,10 +8464,12 @@ function makeCota2TicketObject(combo, alternatives, learning, settings){
     stakePct:stakePct,
     stake:stake,
     strategy:settings.strategy,
+    targetDayMode:dayMeta.mode,
+    targetDateKey:dayMeta.dayKey,
     settings:sanitizeCota2Settings(settings),
     generatedAt:new Date().toISOString(),
-    learningLine:'Motor ' + (settings.adaptive ? 'adaptive' : 'static') + ' • ' + profileLine + (strongestMarkets ? (' • piețe tari: ' + strongestMarkets) : ''),
-    summary:'Obiectiv cotă ' + Number(settings.minTotalOdds || 1.7).toFixed(2) + '–' + Number(settings.maxTotalOdds || 3).toFixed(2) + ' • ' + combo.picks.length + ' selecții • EV estimat ' + (combo.expectedUnit >= 0 ? '+' : '') + (combo.expectedUnit * 100).toFixed(1) + '% pe unitate.',
+    learningLine:'Motor ' + (settings.adaptive ? 'adaptive' : 'static') + ' • target ' + dayMeta.label + ' • ' + profileLine + (strongestMarkets ? (' • piețe tari: ' + strongestMarkets) : ''),
+    summary:'Target ' + dayMeta.label + ' • obiectiv cotă ' + Number(settings.minTotalOdds || 1.7).toFixed(2) + '–' + Number(settings.maxTotalOdds || 3).toFixed(2) + ' • ' + combo.picks.length + ' selecții • EV estimat ' + (combo.expectedUnit >= 0 ? '+' : '') + (combo.expectedUnit * 100).toFixed(1) + '% pe unitate.',
     alternatives:(alternatives || []).slice(0, 3)
   };
 }
@@ -8431,10 +8489,11 @@ function persistCota2Ticket(){
 function generateCota2DailyTicket(){
   saveCota2Settings(true);
   var learning = buildCota2LearningSnapshot();
+  var targetMeta = getCota2TargetMeta(COTA2_SETTINGS);
   COTA2_TICKET = buildCota2TicketPreview(COTA2_SETTINGS, learning);
   persistCota2Ticket();
   renderCota2Section();
-  toast(COTA2_TICKET && COTA2_TICKET.picks && COTA2_TICKET.picks.length ? 'Cota 2 Daily generat' : 'Astăzi nu avem încă un Cota 2 destul de curat', COTA2_TICKET && COTA2_TICKET.picks && COTA2_TICKET.picks.length ? 'ok' : 'warn');
+  toast(COTA2_TICKET && COTA2_TICKET.picks && COTA2_TICKET.picks.length ? ('Cota 2 ' + targetMeta.title + ' generat') : ('Pentru ' + targetMeta.label + ' nu avem încă un Cota 2 destul de curat'), COTA2_TICKET && COTA2_TICKET.picks && COTA2_TICKET.picks.length ? 'ok' : 'warn');
 }
 function buildTrackingEntryFromTicket(ticket, forcedType, stake){
   if(!ticket || !ticket.picks || !ticket.picks.length) return null;
@@ -8593,7 +8652,8 @@ function renderCota2TicketCard(learning){
   var target = $('cota2-ticket-container');
   if(!target) return;
   if(!COTA2_TICKET || !COTA2_TICKET.picks || !COTA2_TICKET.picks.length){
-    target.innerHTML = '<div class="cota2-panel"><div class="empty-state">Nu există încă un bilet Cota 2 generat. Apasă pe „Generează azi”, iar motorul va căuta cea mai bună combinație în intervalul setat.</div></div>';
+    var emptyMeta = getCota2TargetMeta(COTA2_SETTINGS);
+    target.innerHTML = '<div class="cota2-panel"><div class="empty-state">Nu există încă un bilet Cota 2 generat pentru ' + emptyMeta.label + '. Apasă pe „Generează acum”, iar motorul va căuta cea mai bună combinație în intervalul setat.</div></div>';
     return;
   }
   var ticket = COTA2_TICKET;
@@ -8676,7 +8736,8 @@ function renderCota2History(){
 }
 function renderCota2Section(){
   loadCota2SettingsIntoUi();
-  if(!COTA2_TICKET || !COTA2_TICKET.generatedAt || fmtDateKey(COTA2_TICKET.generatedAt) !== fmtDateKey(new Date().toISOString())){
+  var targetMeta = getCota2TargetMeta(COTA2_SETTINGS);
+  if(!COTA2_TICKET || !COTA2_TICKET.generatedAt || COTA2_TICKET.targetDateKey !== targetMeta.dayKey || COTA2_TICKET.targetDayMode !== targetMeta.mode || (targetMeta.mode === 'today' && fmtDateKey(COTA2_TICKET.generatedAt) !== fmtDateKey(new Date().toISOString()))){
     var learningInit = buildCota2LearningSnapshot();
     COTA2_TICKET = buildCota2TicketPreview(COTA2_SETTINGS, learningInit);
     persistCota2Ticket();
@@ -8835,6 +8896,7 @@ function checkDailyRefresh(){
     LAST_DAY_KEY = current;
     renderTodayBest();
     renderMatches();
+    renderCota2Section();
     toast('Top 2 pronosticuri ale zilei a fost actualizat pentru noua zi', 'ok');
   }
 }
