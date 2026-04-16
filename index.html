@@ -8646,6 +8646,29 @@ function renderCota2Summary(learning){
     return '<div class="track-stat"><div class="track-num" style="color:'+card.color+';font-size:24px">'+card.value+'</div><div class="track-lbl">'+card.label+'</div><div style="font-size:10px;color:var(--muted);margin-top:6px">'+card.sub+'</div></div>';
   }).join('');
 }
+function openCota2Alternative(idx){
+  if(!COTA2_TICKET || !COTA2_TICKET.alternatives || !COTA2_TICKET.alternatives[idx]){
+    toast('Alternativa nu mai este disponibilă', 'warn');
+    return;
+  }
+  var learning = buildCota2LearningSnapshot();
+  var currentCombo = {
+    picks: JSON.parse(JSON.stringify(COTA2_TICKET.picks || [])),
+    totalOdds: Number(COTA2_TICKET.totalOdds || 1),
+    combinedProb: Number(COTA2_TICKET.combinedProb || 0),
+    avgEdge: Number(COTA2_TICKET.avgEdge || 0) * 100,
+    expectedUnit: Number(COTA2_TICKET.expectedUnit || 0),
+    score: 0,
+    ticketBand: getCota2TicketOddsBand(COTA2_TICKET.totalOdds)
+  };
+  var selected = JSON.parse(JSON.stringify(COTA2_TICKET.alternatives[idx]));
+  var nextAlternatives = (COTA2_TICKET.alternatives || []).filter(function(_, i){ return i !== idx; });
+  if(currentCombo.picks.length) nextAlternatives.unshift(currentCombo);
+  COTA2_TICKET = makeCota2TicketObject(selected, nextAlternatives.slice(0, 3), learning, COTA2_SETTINGS);
+  persistCota2Ticket();
+  renderCota2Section();
+  toast('Alternativa ' + (idx + 1) + ' a fost încărcată', 'ok');
+}
 function renderCota2TicketCard(learning){
   var target = $('cota2-ticket-container');
   if(!target) return;
@@ -8656,9 +8679,15 @@ function renderCota2TicketCard(learning){
   }
   var ticket = COTA2_TICKET;
   var altHtml = (ticket.alternatives || []).slice(0, 3).map(function(alt, idx){
+    var picksHtml = (alt.picks || []).slice(0, 4).map(function(match){
+      var bet = match.bestBet || match;
+      return '<div style="padding:7px 0;border-top:1px solid rgba(255,255,255,.06)"><div style="font-size:11px;font-weight:700;color:var(--txt)">'+match.home+' vs '+match.away+'</div><div style="font-size:10px;color:var(--muted);margin-top:3px">'+(bet.label || match.market || '—')+' @ '+Number(bet.odds || match.odds || 0).toFixed(2)+'</div></div>';
+    }).join('');
     return '<div class="cota2-alt-card">'+
       '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><div style="font-size:12px;font-weight:800;color:var(--txt)">Alternativa '+(idx + 1)+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+alt.picks.length+' selecții • '+alt.ticketBand+'</div></div><div style="font-size:18px;font-weight:900;color:var(--grn)">'+Number(alt.totalOdds || 0).toFixed(2)+'x</div></div>'+
       '<div class="ticket-mini-grid" style="margin-top:10px"><div class="ticket-mini"><div class="v">'+Number(alt.combinedProb || 0).toFixed(1)+'%</div><div class="l">Prob.</div></div><div class="ticket-mini"><div class="v">'+(Number(alt.expectedUnit || 0) >= 0 ? '+' : '')+(Number(alt.expectedUnit || 0) * 100).toFixed(1)+'%</div><div class="l">EV/unit</div></div><div class="ticket-mini"><div class="v">'+Number(alt.avgEdge || 0).toFixed(1)+'%</div><div class="l">Edge mediu</div></div></div>'+
+      '<div style="margin-top:10px">'+picksHtml+'</div>'+
+      '<div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn btn-primary" onclick="openCota2Alternative('+idx+')" style="padding:8px 12px;font-size:11px">👁️ Vezi biletul</button></div>'+
     '</div>';
   }).join('');
   var html = '<div class="cota2-panel">'+
