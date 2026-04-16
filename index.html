@@ -843,10 +843,15 @@ body.more-open{overflow:hidden}
 .dashboard-v16-badge{position:absolute;top:-5px;right:-3px;min-width:18px;height:18px;border-radius:999px;background:var(--red);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;padding:0 4px}
 .dashboard-v16-pro-btn{background:linear-gradient(135deg,rgba(168,85,247,.20),rgba(59,130,246,.16));color:#e9d5ff}
 .dashboard-v16-greeting{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.dashboard-v16-greeting-title{font-size:18px;font-weight:900;color:var(--txt)}
+.dashboard-v16-greeting{position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(59,130,246,.10),rgba(16,185,129,.08) 45%,rgba(168,85,247,.08));}
+.dashboard-v16-greeting:before{content:'';position:absolute;inset:auto -80px -80px auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,.20),rgba(59,130,246,0));filter:blur(10px);animation:pulse 3.2s ease-in-out infinite}
+.dashboard-v16-greeting>*{position:relative;z-index:1}
+.dashboard-v16-greeting-title{font-size:20px;font-weight:900;color:var(--txt);letter-spacing:-.02em}
 .dashboard-v16-greeting-sub{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
 .dashboard-v16-mini-pills{display:flex;gap:8px;flex-wrap:wrap}
 .dashboard-v16-mini-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt);font-family:var(--mono)}
+.dashboard-v16-mini-pill.live{background:rgba(16,185,129,.14);border-color:rgba(16,185,129,.24);color:#d1fae5;animation:pulse 1.8s ease-in-out infinite}
+.dashboard-v16-mini-pill.update{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.22);color:#dbeafe}
 .dashboard-v16-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .dashboard-v16-section-title{font-size:15px;font-weight:900;color:var(--txt);display:flex;align-items:center;gap:8px}
 .dashboard-v16-section-sub{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
@@ -2737,7 +2742,7 @@ function renderModernDashboard(){
   }).join('') : '<div class="dashboard-v16-empty">Nu există încă oportunități eligibile în pool-ul curent.</div>';
 
   var todayLiveCount = eligibleLocal.filter(function(m){ return isSameLocalDay(m.event_date || m.eventDate); }).length || analyzedCount;
-  var helloText = getGreeting() + '. Astăzi avem ' + todayLiveCount + ' meciuri analizate.';
+  var helloText = todayLiveCount + ' meciuri disponibile azi';
 
   target.innerHTML = '<div class="dashboard-v16-shell">'+
     '<div class="dashboard-v16-topbar">'+
@@ -2745,16 +2750,11 @@ function renderModernDashboard(){
         '<div class="dashboard-v16-logo">📊</div>'+
         '<div class="dashboard-v16-brand-text"><div class="dashboard-v16-brand-title">BetAnalytics Pro v16</div><div class="dashboard-v16-brand-sub">Dashboard strategic • status live ' + esc(statusTime || '—') + '</div></div>'+
       '</div>'+
-      '<div class="dashboard-v16-header-actions">'+
-        '<button class="dashboard-v16-icon-btn" onclick="switchTab(\'tracking\')">🔔' + (trackingOpen ? '<span class="dashboard-v16-badge">' + trackingOpen + '</span>' : '') + '</button>'+
-        '<button class="dashboard-v16-icon-btn" onclick="switchTab(\'bankroll\')">⚙️</button>'+
-        '<button class="dashboard-v16-pro-btn" onclick="switchTab(\'meciuri\')">PRO</button>'+
-      '</div>'+
     '</div>'+
 
     '<div class="dashboard-v16-greeting">'+
-      '<div><div class="dashboard-v16-greeting-title">' + helloText + '</div><div class="dashboard-v16-greeting-sub">Header sync: ' + rawMl + ' ML • ' + rawOdds + ' cu cote • ' + proActiveCount + ' cu filtru Pro • update ' + esc(statusTime || '—') + '.</div></div>'+
-      '<div class="dashboard-v16-mini-pills"><span class="dashboard-v16-mini-pill">Pool ' + analyzedCount + '</span><span class="dashboard-v16-mini-pill">Pro ' + proActiveCount + '</span><span class="dashboard-v16-mini-pill">Live ' + todayLiveCount + '</span></div>'+
+      '<div><div class="dashboard-v16-greeting-title">' + helloText + '</div><div class="dashboard-v16-greeting-sub">' + rawMl + ' ML • ' + rawOdds + ' cu cote • ' + proActiveCount + ' filtru Pro • actualizat ' + esc(statusTime || '—') + '</div></div>'+
+      '<div class="dashboard-v16-mini-pills"><span class="dashboard-v16-mini-pill live">Azi ' + todayLiveCount + '</span><span class="dashboard-v16-mini-pill">ML ' + rawMl + '</span><span class="dashboard-v16-mini-pill">Cote ' + rawOdds + '</span><span class="dashboard-v16-mini-pill">Pro ' + proActiveCount + '</span><span class="dashboard-v16-mini-pill update">Update ' + esc(statusTime || '—') + '</span></div>'+
     '</div>'+
 
     '<div class="dashboard-v16-section">'+
@@ -2775,22 +2775,16 @@ function renderModernDashboard(){
     '</div>'+
 
     '<div class="dashboard-v16-section">'+
-      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">⚡ ACȚIUNI RAPIDE</div><div class="dashboard-v16-section-sub">Scurtături spre zonele pe care le folosești cel mai des.</div></div></div>'+
-      '<div class="dashboard-v16-quick-grid">'+
-        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'bilete\')"><div class="dashboard-v16-quick-k">Generează Bilet</div><div class="dashboard-v16-quick-s">Intră direct în generator și vezi selecțiile disponibile.</div></button>'+
-        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'meciuri\')"><div class="dashboard-v16-quick-k">Vezi Analize</div><div class="dashboard-v16-quick-s">Deschide lista completă de meciuri și filtrele active.</div></button>'+
-        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'bankroll\')"><div class="dashboard-v16-quick-k">Simulare</div><div class="dashboard-v16-quick-s">Urmărește bankroll-ul și stake-urile recomandate.</div></button>'+
-        '<button class="dashboard-v16-quick-btn" onclick="switchTab(\'istoric21\')"><div class="dashboard-v16-quick-k">Istoric</div><div class="dashboard-v16-quick-s">Verifică rapid ROI, win rate și trendurile reale.</div></button>'+
-      '</div>'+
-    '</div>'+
-
-    '<div class="dashboard-v16-section">'+
-      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">🆕 MODULE PRO NOI</div><div class="dashboard-v16-section-sub">Acces direct la cele 4 lucruri noi adăugate în aplicație.</div></div></div>'+
+      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">⚡ COMENZI RAPIDE</div><div class="dashboard-v16-section-sub">Am compactat acțiunile rapide și modulele utile într-o singură zonă, mai curată și mai rapidă.</div></div></div>'+
       '<div class="feature-launch-grid">'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'alerts\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">🔔 Alerte PRO</div><div class="feature-launch-sub">Notificări locale + centru de alerte active.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'simulator\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">🧪 Simulator What-If</div><div class="feature-launch-sub">Testezi scenarii pe odds, EV și Kelly.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'charts\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">📊 Grafice avansate</div><div class="feature-launch-sub">Heatmap, radar și flow tip sankey.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">NEW</span><div class="feature-launch-title">⚡ Filtre PRO</div><div class="feature-launch-sub">Kickoff, league confidence și smart score minim.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'bilete\')"><span class="feature-launch-badge">GO</span><div class="feature-launch-title">🎫 Generează bilet</div><div class="feature-launch-sub">Intră direct în generator și vezi selecțiile disponibile.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">LIVE</span><div class="feature-launch-title">⚽ Vezi analize</div><div class="feature-launch-sub">Lista completă de meciuri, predicții și filtre active.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'istoric21\')"><span class="feature-launch-badge">DATA</span><div class="feature-launch-title">📚 Istoric</div><div class="feature-launch-sub">Verifică rapid ROI, win rate și trendurile reale.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'tracking\')"><span class="feature-launch-badge">AUTO</span><div class="feature-launch-title">📌 Tracking</div><div class="feature-launch-sub">Vezi biletele urmărite și starea lor actuală.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'alerts\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">🔔 Alerte PRO</div><div class="feature-launch-sub">Notificări locale și centru de alerte active.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'charts\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">📊 Grafice avansate</div><div class="feature-launch-sub">Heatmap, radar și flow pentru citire rapidă.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'bankroll\')"><span class="feature-launch-badge">BANK</span><div class="feature-launch-title">💰 Bankroll</div><div class="feature-launch-sub">Stake, progres și controlul capitalului într-un singur loc.</div></button>'+
+        '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">⚡ Filtre PRO</div><div class="feature-launch-sub">Kickoff, league confidence și smart score minim.</div></button>'+
       '</div>'+
     '</div>'+
 
