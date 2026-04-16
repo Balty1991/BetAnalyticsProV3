@@ -984,34 +984,7 @@ body.more-open{overflow:hidden}
 .ticket-quickpeek-list{margin-top:10px;display:grid;gap:7px}
 .ticket-quickpeek-item{padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);font-size:11px;color:var(--txt);line-height:1.45}
 .ticket-quickpeek-actions{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
-.profit-focus-shell{display:grid;gap:12px}
-.profit-focus-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.profit-focus-card{padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));display:grid;gap:10px;box-shadow:0 12px 28px rgba(0,0,0,.16)}
-.profit-focus-card.primary{border-color:rgba(34,197,94,.20);background:linear-gradient(180deg,rgba(14,28,24,.98),rgba(10,18,16,.98))}
-.profit-focus-card.long{border-color:rgba(168,85,247,.20)}
-.profit-focus-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.profit-focus-title{font-size:15px;font-weight:900;color:var(--txt)}
-.profit-focus-sub{font-size:11px;color:var(--muted);line-height:1.55}
-.profit-focus-big{font-size:28px;font-weight:900;color:var(--txt);line-height:1}
-.profit-focus-pills{display:flex;gap:8px;flex-wrap:wrap}
-.profit-focus-pill{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:10px;font-weight:800;color:var(--txt)}
-.profit-focus-list{display:grid;gap:8px}
-.profit-focus-item{padding:9px 10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:11px;color:var(--txt);line-height:1.5}
-.profit-focus-chart{height:120px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0));border:1px solid rgba(255,255,255,.06)}
-.profit-focus-chart svg{width:100%;height:100%;display:block}
-.profit-learning-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.profit-learning-card{padding:12px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
-.profit-learning-title{font-size:12px;font-weight:800;color:var(--txt);margin-bottom:8px}
-.profit-learning-row{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:var(--txt)}
-.profit-learning-row:first-child{border-top:none;padding-top:0}
-.profit-learning-note{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5}
-.profit-top3-monitor{padding:14px;border-radius:18px;background:linear-gradient(180deg,rgba(18,28,50,.96),rgba(12,18,32,.98));border:1px solid rgba(255,255,255,.07)}
-.profit-top3-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
-.profit-top3-kpi{padding:12px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
-.profit-top3-kpi .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.profit-top3-kpi .v{margin-top:6px;font-size:20px;font-weight:900;color:var(--txt)}
-.bilete-simplify-note{padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(16,185,129,.06));border:1px solid rgba(59,130,246,.16);font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:14px}
-@media(max-width:900px){.profit-focus-grid,.profit-learning-grid{grid-template-columns:1fr}.profit-top3-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:640px){.match-card-v16 .m16-teams{grid-template-columns:1fr auto 1fr}.match-card-v16 .m16-team-name{font-size:15px}.match-card-v16 .m16-team-prob{font-size:19px}.match-card-v16 .m16-reco-main{font-size:20px}.match-card-v16 .m16-actions{grid-template-columns:1fr}.analysis-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ticket-quickpeek{left:12px;right:12px;bottom:12px;width:auto}.profit-top3-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.match-card-v16 .m16-teams{grid-template-columns:1fr auto 1fr}.match-card-v16 .m16-team-name{font-size:15px}.match-card-v16 .m16-team-prob{font-size:19px}.match-card-v16 .m16-reco-main{font-size:20px}.match-card-v16 .m16-actions{grid-template-columns:1fr}.analysis-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ticket-quickpeek{left:12px;right:12px;bottom:12px;width:auto}}
 
 
 /* ===== Add-on features: alerts / simulator / charts ===== */
@@ -1859,7 +1832,6 @@ body.more-open{overflow:hidden}
   <!-- ===== BILETE ===== -->
   <div class="tab-content" id="tab-bilete">
     <div style="display:grid;gap:16px;margin-bottom:22px">
-      <div id="profit-focus-ticket-hub"></div>
       
 <div class="bilet-card" style="margin-bottom:0;padding:16px">
 <div style="margin-bottom:14px;padding:16px;border:1px solid rgba(59,130,246,.18);border-radius:14px;background:linear-gradient(180deg,rgba(14,22,40,.92),rgba(10,16,30,.96))">
@@ -2218,6 +2190,9 @@ body.more-open{overflow:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
 <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 SmartBet Engine</span><small class="sheet-btn-sub">Audit + Memory într-un singur filtru</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🆕 🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🆕 🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">🆕 📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
   <button class="mobile-sheet-btn" onclick="openOnboarding(true);closeMobileMore()"><span class="sheet-btn-title">🧭 Onboarding wizard</span><small class="sheet-btn-sub">Relansează ghidul complet pentru utilizatori noi</small></button>
 </div>
 
@@ -2652,357 +2627,6 @@ function renderDashboardMonitor(){
 }
 
 
-
-var TOP3_MONITOR_LOG = JSON.parse(localStorage.getItem('bet_top3_monitor_log_v16') || '[]');
-var PROFIT_FOCUS_STATE = null;
-function persistTop3MonitorLog(){ localStorage.setItem('bet_top3_monitor_log_v16', JSON.stringify(TOP3_MONITOR_LOG || [])); }
-function getTicketOddsBand(totalOdds){
-  var o = Number(totalOdds || 0);
-  if(!isFinite(o) || o <= 0) return 'n/a';
-  if(o < 1.8) return '<1.80';
-  if(o < 2.3) return '1.80-2.29';
-  if(o < 3.2) return '2.30-3.19';
-  if(o < 5) return '3.20-4.99';
-  if(o < 8) return '5.00-7.99';
-  return '8.00+';
-}
-function getProfitFocusClosedTracking(){
-  return (TRACKING || []).filter(function(ticket){
-    return ticket && Array.isArray(ticket.picks) && ticket.picks.length && ['win','loss','anulat'].indexOf(String(ticket.status || '')) >= 0;
-  });
-}
-function buildProfitLearningModel(){
-  var tickets = getProfitFocusClosedTracking();
-  var marketMap = {};
-  var legsMap = {};
-  var bandMap = {};
-  var comboMap = {};
-  tickets.forEach(function(ticket){
-    var totalOdds = Number(ticket.autoSettledOdds || ticket.totalOdds || 1);
-    var band = getTicketOddsBand(totalOdds);
-    var legKey = String((ticket.picks || []).length || 0);
-    var ticketUnit = ticket.status === 'win' ? Math.max(0, totalOdds - 1) : (ticket.status === 'loss' ? -1 : 0);
-    [
-      {map:legsMap,key:legKey},
-      {map:bandMap,key:band}
-    ].forEach(function(bundle){
-      if(!bundle.map[bundle.key]) bundle.map[bundle.key] = {key:bundle.key,bets:0,wins:0,profitUnit:0};
-      bundle.map[bundle.key].bets++;
-      if(ticket.status === 'win') bundle.map[bundle.key].wins++;
-      bundle.map[bundle.key].profitUnit += ticketUnit;
-    });
-    var comboKey = (ticket.picks || []).map(function(p){ return p.marketType || inferMarketTypeFromLabel((p.bet || p.market || '')); }).filter(Boolean).sort().join(' + ');
-    if(comboKey){
-      if(!comboMap[comboKey]) comboMap[comboKey] = {key:comboKey,bets:0,wins:0,profitUnit:0};
-      comboMap[comboKey].bets++;
-      if(ticket.status === 'win') comboMap[comboKey].wins++;
-      comboMap[comboKey].profitUnit += ticketUnit;
-    }
-    (ticket.picks || []).forEach(function(pick){
-      if(!pick || ['win','loss'].indexOf(String(pick.result || '')) < 0) return;
-      var market = pick.marketType || inferMarketTypeFromLabel((pick.bet || pick.market || '')) || 'other';
-      if(!marketMap[market]) marketMap[market] = {key:market,bets:0,wins:0,profitUnit:0,avgOdds:0};
-      marketMap[market].bets++;
-      if(String(pick.result) === 'win') marketMap[market].wins++;
-      marketMap[market].profitUnit += String(pick.result) === 'win' ? Math.max(0, Number(pick.odds || 1) - 1) : -1;
-      marketMap[market].avgOdds += Number(pick.odds || 0);
-    });
-  });
-  function finalize(map){
-    return Object.keys(map).map(function(key){
-      var item = map[key];
-      item.roi = item.bets ? (item.profitUnit / item.bets * 100) : 0;
-      item.winrate = item.bets ? (item.wins * 100 / item.bets) : 0;
-      item.avgOdds = item.bets ? (item.avgOdds / item.bets) : 0;
-      item.breakEven = item.avgOdds > 1 ? (100 / item.avgOdds) : 0;
-      item.learnScore = (item.roi * 0.85) + ((item.winrate - (item.breakEven || 0)) * 0.9) + Math.min(item.bets, 12) * 0.6;
-      return item;
-    }).sort(function(a,b){ return Number(b.learnScore || 0) - Number(a.learnScore || 0); });
-  }
-  var markets = finalize(marketMap);
-  var legs = finalize(legsMap);
-  var bands = finalize(bandMap);
-  var combos = finalize(comboMap);
-  return {
-    tickets:tickets.length,
-    markets:markets,
-    legs:legs,
-    bands:bands,
-    combos:combos,
-    marketMap:markets.reduce(function(acc,item){ acc[item.key] = item; return acc; }, {}),
-    comboMap:combos.reduce(function(acc,item){ acc[item.key] = item; return acc; }, {}),
-    bestLeg:legs[0] || null,
-    bestBand:bands[0] || null,
-    strongestMarkets:markets.filter(function(item){ return item.bets >= 3; }).slice(0,3),
-    weakCombos:combos.filter(function(item){ return item.bets >= 2 && item.roi < 0; }).slice(0,3)
-  };
-}
-function getScopedPortfolioPool(scope, learning){
-  var now = Date.now();
-  return getPortfolioMatchPool().filter(function(item){
-    var ms = new Date(item.event_date || item.eventDate || item.date || '').getTime();
-    if(!isFinite(ms) || ms < now - (20 * 60000)) return false;
-    if(scope === 'today') return isSameLocalDay(item.event_date || item.eventDate || item.date);
-    var days = (ms - now) / 86400000;
-    if(scope === 'week') return days >= 0 && days <= 7.05;
-    return true;
-  }).map(function(item){
-    var market = item.marketKey || inferMarketTypeFromLabel(item.market || '');
-    var stat = learning && learning.marketMap ? learning.marketMap[market] : null;
-    var marketBoost = stat && stat.bets >= 3 ? Math.max(-12, Math.min(18, Number(stat.learnScore || 0) * 0.22)) : 0;
-    var bandBoost = learning && learning.bestBand && getTicketOddsBand(item.odds) === learning.bestBand.key ? 4 : 0;
-    return Object.assign({}, item, {
-      profitWeightedScore: Number(item.score || 0) + marketBoost + bandBoost,
-      learningMarketBoost: marketBoost,
-      learningBandBoost: bandBoost
-    });
-  }).sort(function(a,b){
-    if(Number(b.profitWeightedScore || 0) !== Number(a.profitWeightedScore || 0)) return Number(b.profitWeightedScore || 0) - Number(a.profitWeightedScore || 0);
-    return Number(b.prob || 0) - Number(a.prob || 0);
-  });
-}
-function getComboMarketKey(picks){
-  return (picks || []).map(function(item){ return item.marketKey || inferMarketTypeFromLabel(item.market || ''); }).filter(Boolean).sort().join(' + ');
-}
-function evaluateAdaptiveCombo(picks, learning, opts){
-  var totalOdds = picks.reduce(function(acc, item){ return acc * Number(item.odds || 1); }, 1);
-  var combinedProb = picks.reduce(function(acc, item){ return acc * (Number(item.prob || 0) / 100); }, 1) * 100;
-  var avgScore = picks.reduce(function(acc, item){ return acc + Number(item.profitWeightedScore || item.score || 0); }, 0) / picks.length;
-  var avgEdge = picks.reduce(function(acc, item){ return acc + Number(item.edge || 0); }, 0) / picks.length;
-  var avgProb = picks.reduce(function(acc, item){ return acc + Number(item.prob || 0); }, 0) / picks.length;
-  var comboKey = getComboMarketKey(picks);
-  var comboStat = learning && learning.comboMap ? learning.comboMap[comboKey] : null;
-  var legStat = learning && learning.legs ? learning.legs.find(function(item){ return String(item.key) === String(picks.length); }) : null;
-  var bandStat = learning && learning.bands ? learning.bands.find(function(item){ return item.key === getTicketOddsBand(totalOdds); }) : null;
-  var score = avgScore + (combinedProb * (opts.scope === 'week' ? 0.58 : 0.82)) + (avgProb * 0.28) + (avgEdge * 1.2);
-  if(legStat && legStat.bets >= 2) score += Math.max(-10, Math.min(12, Number(legStat.learnScore || 0) * 0.18));
-  if(bandStat && bandStat.bets >= 2) score += Math.max(-10, Math.min(12, Number(bandStat.learnScore || 0) * 0.18));
-  if(comboStat && comboStat.bets >= 2) score += Math.max(-14, Math.min(10, Number(comboStat.learnScore || 0) * 0.16));
-  if(opts.scope === 'today' && picks.length >= 4 && avgProb < 72) score -= 12;
-  if(opts.scope === 'week' && picks.length < 4) score -= 16;
-  return {picks:picks,totalOdds:totalOdds,combinedProb:combinedProb,score:score,avgEdge:avgEdge,comboKey:comboKey};
-}
-function enumerateAdaptiveProfitCombos(pool, learning, opts){
-  var out = [];
-  var list = (pool || []).slice(0, opts.limit || 12);
-  function rec(start, picks){
-    if(picks.length >= opts.minLegs){
-      var combo = evaluateAdaptiveCombo(picks.slice(), learning, opts);
-      if(combo.totalOdds >= opts.minOdds && combo.totalOdds <= opts.maxOdds && combo.combinedProb >= opts.minCombinedProb){
-        out.push(combo);
-      }
-    }
-    if(picks.length >= opts.maxLegs) return;
-    for(var i=start;i<list.length;i++){
-      var item = list[i];
-      if(!item) continue;
-      if(picks.some(function(existing){ return getGenericEventKey(existing) === getGenericEventKey(item) || areRowsCorrelated(existing, item); })) continue;
-      picks.push(item);
-      rec(i + 1, picks);
-      picks.pop();
-    }
-  }
-  rec(0, []);
-  return out.sort(function(a,b){ return Number(b.score || 0) - Number(a.score || 0); });
-}
-function buildProfitFocusTicket(label, combo, kind, stakePct, summary){
-  if(!combo || !combo.picks || !combo.picks.length) return null;
-  var stake = +(getActualBankrollValue() * (Number(stakePct || 1.5) / 100)).toFixed(2);
-  return {
-    type:'profit_focus',
-    kind:kind,
-    label:label,
-    criteria:label,
-    picks:combo.picks,
-    totalOdds:+Number(combo.totalOdds || 1).toFixed(2),
-    combinedProb:+Number(combo.combinedProb || 0).toFixed(1),
-    avgEdge:+Number(combo.avgEdge || 0).toFixed(2),
-    riskLabel:combo.picks.length <= 3 ? 'Controlat' : 'Extins',
-    summary:summary,
-    stakePct:Number(stakePct || 1.5),
-    stake:stake,
-    generatedAt:new Date().toISOString()
-  };
-}
-function buildProfitFocusState(){
-  var learning = buildProfitLearningModel();
-  var todayPool = getScopedPortfolioPool('today', learning);
-  var richOffer = todayPool.length >= 8;
-  var dailyCombos = enumerateAdaptiveProfitCombos(todayPool, learning, {scope:'today',minLegs:2,maxLegs:richOffer ? 4 : 3,minOdds:1.60,maxOdds:3.30,minCombinedProb:36,limit:10});
-  var primary = buildProfitFocusTicket('🎯 Recomandarea zilei', dailyCombos[0], 'daily_primary', 1.8, 'Biletul principal este generat doar dacă trece pragurile de probabilitate compusă, cotă și disciplină pe corelație.');
-  var secondary = null;
-  if(richOffer && dailyCombos.length > 1){
-    var alt = dailyCombos.find(function(combo){
-      if(!combo || combo === dailyCombos[0]) return false;
-      var overlap = combo.picks.filter(function(item){ return dailyCombos[0].picks.some(function(base){ return getGenericEventKey(base) === getGenericEventKey(item); }); }).length;
-      return overlap <= 1 && Number(combo.score || 0) >= Number(dailyCombos[0].score || 0) * 0.90;
-    });
-    if(alt) secondary = buildProfitFocusTicket('🧩 A doua recomandare', alt, 'daily_secondary', 1.2, 'Apare doar când oferta este suficient de bogată și a doua combinație rămâne aproape de scorul primei.');
-  }
-  var weekPool = getScopedPortfolioPool('week', learning);
-  var longCombos = enumerateAdaptiveProfitCombos(weekPool, learning, {scope:'week',minLegs:4,maxLegs:Math.min(8, learning.bestLeg && Number(learning.bestLeg.key || 5) > 3 ? Number(learning.bestLeg.key) : 6),minOdds:4.20,maxOdds:12.50,minCombinedProb:14,limit:12});
-  var longTerm = buildProfitFocusTicket('📆 Bilet extins 1–7 zile', longCombos[0], 'long_term', 0.8, 'Bilet pe termen mai lung, doar dacă extinderea pe 1–7 zile păstrează probabilitate compusă decentă și nu forțează corelații slabe.');
-  var settled = getProfitFocusClosedTracking().slice().sort(function(a,b){ return new Date(a.autoUpdatedAt || a.placedAt || 0) - new Date(b.autoUpdatedAt || b.placedAt || 0); });
-  var curve = [100];
-  settled.slice(-14).forEach(function(ticket){
-    var last = curve[curve.length - 1];
-    var unit = ticket.status === 'win' ? Math.max(0, Number(ticket.autoSettledOdds || ticket.totalOdds || 1) - 1) : (ticket.status === 'loss' ? -1 : 0);
-    curve.push(+(last + unit).toFixed(2));
-  });
-  return {
-    richOffer:richOffer,
-    learning:learning,
-    primary:primary,
-    secondary:secondary,
-    longTerm:longTerm,
-    curve:curve,
-    poolToday:todayPool.length,
-    poolWeek:weekPool.length,
-    generatedAt:new Date().toISOString()
-  };
-}
-function formatProfitFocusTicketLines(ticket){
-  if(!ticket || !ticket.picks) return '';
-  return ticket.picks.slice(0,5).map(function(item){
-    return '<div class="profit-focus-item"><strong>' + esc((item.home || '—') + ' vs ' + (item.away || '—')) + '</strong><br>' + esc((item.market || item.displayMarket || 'Selecție') + ' @ ' + Number(item.odds || 0).toFixed(2)) + ' • Prob ' + Number(item.prob || 0).toFixed(1) + '%</div>';
-  }).join('') + (ticket.picks.length > 5 ? '<div class="profit-focus-item">+' + (ticket.picks.length - 5) + ' selecții suplimentare</div>' : '');
-}
-function openProfitFocusTicket(kind){
-  if(!PROFIT_FOCUS_STATE) PROFIT_FOCUS_STATE = buildProfitFocusState();
-  var ticket = kind === 'secondary' ? PROFIT_FOCUS_STATE.secondary : (kind === 'long' ? PROFIT_FOCUS_STATE.longTerm : PROFIT_FOCUS_STATE.primary);
-  if(!ticket || !ticket.picks || !ticket.picks.length) return toast('Nu există încă o recomandare validă pentru acest slot', 'warn');
-  BILETE = JSON.parse(JSON.stringify(ticket));
-  renderBilete();
-  switchTab('bilete');
-  toast(ticket.label + ' încărcat în biletul principal', 'ok');
-}
-function renderProfitFocusBileteHub(){
-  simplifyBileteExperience();
-  var root = $('profit-focus-ticket-hub');
-  if(!root) return;
-  PROFIT_FOCUS_STATE = buildProfitFocusState();
-  var state = PROFIT_FOCUS_STATE;
-  var learning = state.learning || {strongestMarkets:[], weakCombos:[], bestLeg:null, bestBand:null};
-  var cards = [];
-  function cardHtml(ticket, kind, extraClass){
-    if(!ticket || !ticket.picks || !ticket.picks.length){
-      return '<div class="profit-focus-card '+(extraClass || '')+'"><div class="profit-focus-head"><div><div class="profit-focus-title">'+(kind === 'long' ? '📆 Bilet extins 1–7 zile' : kind === 'secondary' ? '🧩 A doua recomandare' : '🎯 Recomandarea zilei')+'</div><div class="profit-focus-sub">Momentan nu trece pragurile de probabilitate, cotă și disciplină.</div></div></div><div class="profit-focus-item">Astăzi nu forțăm biletul. Mai bine fără volum decât cu volum prost.</div></div>';
-    }
-    return '<div class="profit-focus-card '+(extraClass || '')+'">'+
-      '<div class="profit-focus-head"><div><div class="profit-focus-title">'+ticket.label+'</div><div class="profit-focus-sub">'+ticket.summary+'</div></div><div><div class="profit-focus-big" style="color:'+(kind === 'long' ? 'var(--pur)' : 'var(--grn)')+'">'+Number(ticket.totalOdds || 1).toFixed(2)+'x</div><div class="profit-focus-sub" style="text-align:right">Prob. '+Number(ticket.combinedProb || 0).toFixed(1)+'%</div></div></div>'+
-      '<div class="profit-focus-pills"><span class="profit-focus-pill">'+ticket.picks.length+' selecții</span><span class="profit-focus-pill">Stake '+Number(ticket.stake || 0).toFixed(2)+' RON</span><span class="profit-focus-pill">Edge mediu '+(Number(ticket.avgEdge || 0) >= 0 ? '+' : '')+Number(ticket.avgEdge || 0).toFixed(2)+'%</span></div>'+
-      '<div class="profit-focus-list">'+formatProfitFocusTicketLines(ticket)+'</div>'+
-      '<button class="btn '+(kind === 'primary' ? 'btn-green' : 'btn-primary')+'" style="width:100%;justify-content:center" onclick="openProfitFocusTicket(\''+(kind === 'long' ? 'long' : kind === 'secondary' ? 'secondary' : 'primary')+'\')">Deschide acest bilet</button>'+
-    '</div>';
-  }
-  cards.push(cardHtml(state.primary, 'primary', 'primary'));
-  cards.push(cardHtml(state.secondary, 'secondary', ''));
-  cards.push(cardHtml(state.longTerm, 'long', 'long'));
-  var recentChart = state.curve && state.curve.length > 1 ? spark(state.curve) : '<div class="empty-state" style="padding:20px 12px">Graficul apare după ce există bilete închise.</div>';
-  root.innerHTML = '<div class="profit-focus-shell">'+
-    '<div class="bilete-simplify-note"><strong style="color:var(--txt)">Flux simplificat:</strong> păstrăm recomandările automate + constructorul manual. Generatoarele vechi nu dispar din cod, dar nu mai sunt puse în față. Obiectivul principal rămâne profitabilitatea pe termen mediu și lung, nu volumul.</div>'+
-    '<div class="profit-focus-grid">'+cards.join('')+'</div>'+
-    '<div class="profit-focus-card" style="margin-top:0"><div class="profit-focus-head"><div><div class="profit-focus-title">🧠 Învățare automată din istoric</div><div class="profit-focus-sub">Modelul ajustează preferințele după ce închizi bilete în Tracking. Nu promite imposibilul, dar taie din combinațiile slabe și favorizează ce a mers mai bine.</div></div><div class="profit-focus-pill">Pool azi '+state.poolToday+'</div></div><div class="profit-learning-grid">'+
-      '<div class="profit-learning-card"><div class="profit-learning-title">Piețe puternice</div>'+((learning.strongestMarkets || []).length ? learning.strongestMarkets.slice(0,3).map(function(item){ return '<div class="profit-learning-row"><span>'+item.key+'</span><strong style="color:'+(item.roi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(item.roi >= 0 ? '+' : '')+item.roi.toFixed(1)+'%</strong></div>'; }).join('') : '<div class="profit-learning-note">Încă nu avem sample suficient. Până atunci modelul rămâne mai conservator.</div>')+'</div>'+
-      '<div class="profit-learning-card"><div class="profit-learning-title">Structură preferată</div>'+((learning.bestLeg || learning.bestBand) ? '<div class="profit-learning-row"><span>Legs</span><strong>'+((learning.bestLeg && learning.bestLeg.key) || '—')+'</strong></div><div class="profit-learning-row"><span>Bandă cotă</span><strong>'+((learning.bestBand && learning.bestBand.key) || '—')+'</strong></div>' : '<div class="profit-learning-note">După ce închidem câteva bilete, aici apare structura recomandată.</div>')+'<div class="profit-learning-note">Această zonă influențează direct alegerea între 1 sau 2 bilete și numărul de selecții.</div></div>'+
-      '<div class="profit-learning-card"><div class="profit-learning-title">Combinații de evitat</div>'+((learning.weakCombos || []).length ? learning.weakCombos.slice(0,3).map(function(item){ return '<div class="profit-learning-row"><span>'+item.key+'</span><strong style="color:var(--red)">'+item.roi.toFixed(1)+'%</strong></div>'; }).join('') : '<div class="profit-learning-note">Nu există încă suficiente combinații slabe confirmate. Modelul continuă să învețe.</div>')+'</div>'+
-    '</div><div class="profit-focus-chart" style="margin-top:12px">'+recentChart+'</div></div>'+
-  '</div>';
-}
-function simplifyBileteExperience(){
-  var daily = $('daily-portfolio-output');
-  if(daily && daily.parentElement) daily.parentElement.style.display = 'none';
-  var board = document.querySelector('#tab-bilete .generator-board');
-  if(board){
-    var sections = board.querySelectorAll('.generator-section');
-    if(sections[0]) sections[0].style.display = 'none';
-    if(sections[1]){
-      var strong = sections[1].querySelector('.generator-section-title strong');
-      var tag = sections[1].querySelector('.generator-tag');
-      if(strong) strong.textContent = 'Constructor manual';
-      if(tag) tag.textContent = 'Păstrat';
-    }
-  }
-}
-function syncTop3MonitorHistory(topOpps){
-  var todayKey = fmtDateKey(new Date().toISOString());
-  (topOpps || []).slice(0,3).forEach(function(match, idx){
-    var bestBet = match.bestBet || {};
-    var uniqueKey = [todayKey, getMatchCardKey(match), bestBet.label || 'bet'].join('::');
-    if(TOP3_MONITOR_LOG.some(function(item){ return item.uniqueKey === uniqueKey; })) return;
-    TOP3_MONITOR_LOG.unshift({
-      uniqueKey:uniqueKey,
-      dayKey:todayKey,
-      topRank:idx + 1,
-      home:match.home,
-      away:match.away,
-      league:match.league,
-      eventId:match.id || match.eventId || match.event_id || null,
-      eventDate:match.event_date || match.eventDate || match.date || null,
-      bet:bestBet.label || 'Selecție',
-      marketType:bestBet.type || inferMarketTypeFromLabel(bestBet.label || ''),
-      odds:Number(bestBet.odds || 1),
-      result:'pending',
-      matchStatus:'pending',
-      loggedAt:new Date().toISOString()
-    });
-  });
-  TOP3_MONITOR_LOG.forEach(function(entry){
-    if(!entry || ['win','loss','anulat'].indexOf(String(entry.result || '')) >= 0) return;
-    var settlement = getAutoSettlementForPick(entry);
-    applyAutoSettlementToPick(entry, settlement);
-  });
-  TOP3_MONITOR_LOG = TOP3_MONITOR_LOG.slice(0, 120);
-  persistTop3MonitorLog();
-}
-function buildTop3MonitorDashboardHtml(){
-  var rows = (TOP3_MONITOR_LOG || []).slice();
-  var settled = rows.filter(function(item){ return ['win','loss'].indexOf(String(item.result || '')) >= 0; });
-  var wins = settled.filter(function(item){ return String(item.result) === 'win'; }).length;
-  var roi = settled.length ? (settled.reduce(function(acc,item){ return acc + (String(item.result) === 'win' ? Math.max(0, Number(item.odds || 1) - 1) : -1); }, 0) / settled.length * 100) : 0;
-  var winrate = settled.length ? (wins * 100 / settled.length) : 0;
-  var recentCurve = [100];
-  settled.slice().sort(function(a,b){ return new Date(a.loggedAt || 0) - new Date(b.loggedAt || 0); }).slice(-18).forEach(function(item){
-    var last = recentCurve[recentCurve.length - 1];
-    recentCurve.push(+(last + (String(item.result) === 'win' ? Math.max(0, Number(item.odds || 1) - 1) : -1)).toFixed(2));
-  });
-  return '<div class="profit-top3-monitor">'+
-    '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">📌 MONITORIZARE TOP 3</div><div class="dashboard-v16-section-sub">Păstrăm Top 3 pe dashboard, dar îl urmărim separat în timp ca să vezi dacă rămâne cu adevărat puternic.</div></div><div class="dashboard-v16-swipe-note">monitor dedicat</div></div>'+
-    '<div class="profit-top3-grid">'+
-      '<div class="profit-top3-kpi"><div class="k">Total monitorizate</div><div class="v">'+rows.length+'</div></div>'+
-      '<div class="profit-top3-kpi"><div class="k">Închise</div><div class="v">'+settled.length+'</div></div>'+
-      '<div class="profit-top3-kpi"><div class="k">Win rate</div><div class="v">'+(settled.length ? winrate.toFixed(1)+'%' : '—')+'</div></div>'+
-      '<div class="profit-top3-kpi"><div class="k">ROI unit</div><div class="v" style="color:'+(settled.length ? (roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)')+'">'+(settled.length ? ((roi >= 0 ? '+' : '') + roi.toFixed(1)+'%') : '—')+'</div></div>'+
-    '</div>'+
-    '<div class="profit-focus-chart" style="margin-top:12px">'+(recentCurve.length > 1 ? spark(recentCurve) : '<div class="empty-state" style="padding:18px 12px">Curba apare după ce se închid suficiente selecții Top 3.</div>')+'</div>'+
-  '</div>';
-}
-function buildProfitFocusDashboardHtml(state){
-  if(!state) return '';
-  var learning = state.learning || {};
-  var head = '<div class="dashboard-v16-section"><div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">💸 PROFIT FOCUS</div><div class="dashboard-v16-section-sub">Dashboard-ul se mută spre decizie: 1 bilet principal, încă unul doar dacă oferta permite și un bilet extins doar când probabilitatea rămâne suficient de curată.</div></div><div class="dashboard-v16-swipe-note">pool azi '+state.poolToday+'</div></div>';
-  var cards = '<div class="profit-focus-grid">';
-  [
-    {ticket:state.primary, kind:'primary', cls:'primary'},
-    {ticket:state.secondary, kind:'secondary', cls:''},
-    {ticket:state.longTerm, kind:'long', cls:'long'}
-  ].forEach(function(item){
-    var ticket = item.ticket;
-    if(!ticket || !ticket.picks || !ticket.picks.length){
-      cards += '<div class="profit-focus-card '+item.cls+'"><div class="profit-focus-title">'+(item.kind === 'long' ? '📆 Bilet extins' : item.kind === 'secondary' ? '🧩 A doua recomandare' : '🎯 Recomandarea zilei')+'</div><div class="profit-focus-sub">Nu forțăm bilete când oferta nu susține pragurile. Asta protejează win rate-ul pe termen lung.</div></div>';
-    } else {
-      cards += '<div class="profit-focus-card '+item.cls+'"><div class="profit-focus-head"><div><div class="profit-focus-title">'+ticket.label+'</div><div class="profit-focus-sub">'+ticket.summary+'</div></div><div><div class="profit-focus-big" style="color:'+(item.kind === 'long' ? 'var(--pur)' : 'var(--grn)')+'">'+Number(ticket.totalOdds || 1).toFixed(2)+'x</div><div class="profit-focus-sub" style="text-align:right">Prob. '+Number(ticket.combinedProb || 0).toFixed(1)+'%</div></div></div><div class="profit-focus-pills"><span class="profit-focus-pill">'+ticket.picks.length+' selecții</span><span class="profit-focus-pill">Stake '+Number(ticket.stake || 0).toFixed(2)+' RON</span></div><button class="btn '+(item.kind === 'primary' ? 'btn-green' : 'btn-primary')+'" style="width:100%;justify-content:center" onclick="openProfitFocusTicket(\''+(item.kind === 'long' ? 'long' : item.kind === 'secondary' ? 'secondary' : 'primary')+'\')">Deschide</button></div>';
-    }
-  });
-  cards += '</div>';
-  var learningHtml = '<div class="profit-learning-grid" style="margin-top:12px">'+
-    '<div class="profit-learning-card"><div class="profit-learning-title">Piețe mai bune</div>'+((learning.strongestMarkets || []).length ? learning.strongestMarkets.slice(0,3).map(function(item){ return '<div class="profit-learning-row"><span>'+item.key+'</span><strong style="color:'+(item.roi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(item.roi >= 0 ? '+' : '')+item.roi.toFixed(1)+'%</strong></div>'; }).join('') : '<div class="profit-learning-note">Încă nu avem sample suficient pentru direcții tari.</div>')+'</div>'+
-    '<div class="profit-learning-card"><div class="profit-learning-title">Structură preferată</div>'+((learning.bestLeg || learning.bestBand) ? '<div class="profit-learning-row"><span>Nr. selecții</span><strong>'+((learning.bestLeg && learning.bestLeg.key) || '—')+'</strong></div><div class="profit-learning-row"><span>Bandă cotă</span><strong>'+((learning.bestBand && learning.bestBand.key) || '—')+'</strong></div>' : '<div class="profit-learning-note">Modelul va învăța după ce închidem mai multe bilete.</div>')+'</div>'+
-    '<div class="profit-learning-card"><div class="profit-learning-title">Combinații penalizate</div>'+((learning.weakCombos || []).length ? learning.weakCombos.slice(0,3).map(function(item){ return '<div class="profit-learning-row"><span>'+item.key+'</span><strong style="color:var(--red)">'+item.roi.toFixed(1)+'%</strong></div>'; }).join('') : '<div class="profit-learning-note">Nu există încă suficiente dovezi negative pentru a bloca un pattern clar.</div>')+'</div>'+
-  '</div>';
-  return head + cards + learningHtml + '</div>';
-}
-
 function renderModernDashboard(){
   var target = $('dashboard-modern-shell');
   if(!target) return;
@@ -3141,11 +2765,6 @@ function renderModernDashboard(){
     ? (availableToday + ' meciuri disponibile ' + (availableToday && eligibleLocal.some(function(m){ return inferMarketTypeFromLabel(((m.bestBet || {}).label) || '') === bestHistoryMarket.market && isSameLocalDay(m.event_date || m.eventDate); }) ? 'azi' : 'în pool-ul curent') + ' în această piață • ROI ' + signed(bestHistoryMarket.roi || 0, '%') + ' • win ' + Number(bestHistoryMarket.winrate || 0).toFixed(1) + '% • ' + Number(bestHistoryMarket.wins || 0) + '/' + Number(bestHistoryMarket.bets || 0) + ' închise.')
     : 'Pe măsură ce se închid recomandările, dashboard-ul îți va sugera automat piețele unde performezi mai bine.';
 
-  syncTop3MonitorHistory(topOpps);
-  PROFIT_FOCUS_STATE = buildProfitFocusState();
-  var profitFocusDashboardHtml = buildProfitFocusDashboardHtml(PROFIT_FOCUS_STATE);
-  var top3MonitorHtml = buildTop3MonitorDashboardHtml();
-
   var topOppHtml = topOpps.length ? topOpps.map(function(m, idx){
     var bestBet = m.bestBet || {};
     var score = Math.round(Number(m.smartScore || oppSortScore(m) || 0));
@@ -3184,14 +2803,10 @@ function renderModernDashboard(){
       '<div class="dashboard-v16-mini-pills"><span class="dashboard-v16-mini-pill live">Azi ' + todayLiveCount + '</span><span class="dashboard-v16-mini-pill">ML ' + rawMl + '</span><span class="dashboard-v16-mini-pill">Cote ' + rawOdds + '</span><span class="dashboard-v16-mini-pill">Pro ' + proActiveCount + '</span><span class="dashboard-v16-mini-pill update">Update ' + esc(statusTime || '—') + '</span></div>'+
     '</div>'+
 
-    profitFocusDashboardHtml +
-
     '<div class="dashboard-v16-section">'+
       '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">🔥 TOP 3 OPORTUNITĂȚI</div><div class="dashboard-v16-section-sub">Scor SmartBet ridicat și context bun în pool-ul curent. Cardurile pot fi glisate orizontal.</div></div><div class="dashboard-v16-swipe-note">Swipe →</div></div>'+
       '<div class="dashboard-v16-opp-scroll">' + topOppHtml + '</div>'+
     '</div>'+
-
-    top3MonitorHtml +
 
     '<div class="dashboard-v16-performance">'+
       '<div class="dashboard-v16-chart-wrap">'+
@@ -7492,8 +7107,6 @@ function renderTicketLaneBoard(){
 }
 
 function renderBilete(){
-  simplifyBileteExperience();
-  renderProfitFocusBileteHub();
   var container = $('bilete-container');
 
   if(!BILETE || BILETE.picks.length === 0){
@@ -8121,7 +7734,6 @@ function renderTicketDetail(idx){
 function toggleTicketDetail(idx){
   OPEN_TICKET_IDX = (OPEN_TICKET_IDX === idx ? null : idx);
   renderTracking();
-  renderProfitFocusBileteHub();
 }
 
 function deleteTicket(idx){
@@ -9685,7 +9297,6 @@ function renderAll(){
   renderMlApiCenter();
   renderMatches();
   renderBilete();
-  renderProfitFocusBileteHub();
   renderAlertsCenter();
   renderScenarioSimulator();
   renderAdvancedCharts();
