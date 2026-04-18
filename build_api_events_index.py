@@ -49,11 +49,23 @@ def main():
     valid_seasons = load_existing_json("api_seasons_history_valid.json", [])
     selected = select_recent_valid_seasons(valid_seasons)
     rows = []
+    failures = []
     for season in selected:
         season_id = season.get("id")
         if not season_id:
             continue
-        meta = fetch_events_count_for_season(season_id)
+        try:
+            meta = fetch_events_count_for_season(season_id)
+        except Exception as exc:
+            failures.append({
+                "season_id": season_id,
+                "season_name": season.get("name"),
+                "league": season.get("league"),
+                "year": season.get("year"),
+                "error": str(exc),
+            })
+            print(f"Skip season {season_id} because events index fetch failed: {exc}")
+            continue
         rows.append({
             "season_id": season_id,
             "season_name": season.get("name"),
@@ -66,18 +78,28 @@ def main():
             "sample_count": meta.get("sample_count"),
             "pagination_supported": meta.get("pagination_supported"),
         })
+
+    if not rows:
+        cached_rows = load_existing_json("api_events_history_index.json", [])
+        if cached_rows:
+            rows = cached_rows
+            print("Fallback to cached api_events_history_index.json because all live season count fetches failed")
+
     rows.sort(key=lambda r: (int(r.get("year") or 0), int(r.get("events_count") or 0)), reverse=True)
     summary = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "timezone": TZ,
         "season_lookback_years": SEASON_LOOKBACK_YEARS,
         "seasons_indexed": len(rows),
+        "seasons_failed": len(failures),
         "total_events_counted": sum(int(r.get("events_count") or 0) for r in rows),
         "max_events_in_season": max([int(r.get("events_count") or 0) for r in rows], default=0),
         "top_rows": rows[:25],
+        "failed_seasons_preview": failures[:15],
     }
     save_json(rows, "api_events_history_index.json")
     save_json(summary, "api_events_history_summary.json")
+    save_json(failures, "api_events_history_failures.json")
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     print("=== Done API events history index ===")
 
