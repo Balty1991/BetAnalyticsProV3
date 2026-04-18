@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from fetch_data import ensure_token, fetch_all_pages, load_existing_json, save_json, TZ
 
 
-MAX_TRAINING_SEASONS = 16
-MAX_TRAINING_ROWS = 10000
+MAX_TRAINING_SEASONS = 40
+MAX_TRAINING_ROWS = 15000
 MIN_SEASON_YEAR = datetime.now(timezone.utc).year - 2
 
 
@@ -18,7 +18,28 @@ def select_training_seasons(rows):
     rows = [r for r in (rows or []) if isinstance(r, dict)]
     rows = [r for r in rows if int(r.get("year") or 0) >= MIN_SEASON_YEAR]
     rows.sort(key=lambda r: (int(r.get("year") or 0), int(r.get("events_count") or 0), str(r.get("league") or "")), reverse=True)
-    return rows[:MAX_TRAINING_SEASONS]
+
+    selected = []
+    seen_leagues = set()
+    for row in rows:
+        league = str(row.get("league") or "")
+        if league in seen_leagues:
+            continue
+        selected.append(row)
+        seen_leagues.add(league)
+
+    if len(selected) < MAX_TRAINING_SEASONS:
+        selected_keys = {str(r.get("season_id")) for r in selected}
+        for row in rows:
+            key = str(row.get("season_id"))
+            if key in selected_keys:
+                continue
+            selected.append(row)
+            selected_keys.add(key)
+            if len(selected) >= MAX_TRAINING_SEASONS:
+                break
+
+    return selected[:MAX_TRAINING_SEASONS]
 
 
 def normalize_training_row(event, season_meta):
