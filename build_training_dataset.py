@@ -8,6 +8,39 @@ from fetch_data import ensure_token, fetch_all_pages, load_existing_json, save_j
 MAX_TRAINING_SEASONS = 40
 MAX_TRAINING_ROWS = 15000
 MIN_SEASON_YEAR = datetime.now(timezone.utc).year - 2
+FINAL_STATUSES = {
+    "finished",
+    "ft",
+    "full_time",
+    "fulltime",
+    "full-time",
+    "completed",
+    "complete",
+    "closed",
+    "ended",
+    "final",
+    "aet",
+    "after_extra_time",
+    "after_extra",
+    "penalties",
+    "penalty_shootout",
+}
+BLOCKED_STATUSES = {
+    "notstarted",
+    "live",
+    "1st_half",
+    "2nd_half",
+    "halftime",
+    "half_time",
+    "et",
+    "break",
+    "postponed",
+    "canceled",
+    "cancelled",
+    "abandoned",
+    "suspended",
+    "interrupted",
+}
 
 
 def bool01(value):
@@ -17,7 +50,10 @@ def bool01(value):
 def select_training_seasons(rows):
     rows = [r for r in (rows or []) if isinstance(r, dict)]
     rows = [r for r in rows if int(r.get("year") or 0) >= MIN_SEASON_YEAR]
-    rows.sort(key=lambda r: (int(r.get("year") or 0), int(r.get("events_count") or 0), str(r.get("league") or "")), reverse=True)
+    rows.sort(
+        key=lambda r: (int(r.get("year") or 0), int(r.get("events_count") or 0), str(r.get("league") or "")),
+        reverse=True,
+    )
 
     selected = []
     seen_leagues = set()
@@ -42,8 +78,63 @@ def select_training_seasons(rows):
     return selected[:MAX_TRAINING_SEASONS]
 
 
+def normalize_status(value):
+    return str(value or "").strip().lower()
+
+
+def is_final_status(value):
+    status = normalize_status(value)
+    if not status:
+        return False
+    if status in FINAL_STATUSES:
+        return True
+    if status in BLOCKED_STATUSES:
+        return False
+    return False
+
+
+def pick_event_date(event):
+    if not isinstance(event, dict):
+        return None
+    direct_keys = [
+        "event_date",
+        "date",
+        "starting_at",
+        "start_time",
+        "datetime",
+        "kickoff",
+        "kickoff_at",
+    ]
+    for key in direct_keys:
+        value = event.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+        if isinstance(value, dict):
+            for nested_key in ("date_time", "datetime", "iso", "value", "utc", "local"):
+                nested_value = value.get(nested_key)
+                if isinstance(nested_value, str) and nested_value.strip():
+                    return nested_value.strip()
+
+    time_obj = event.get("time")
+    if isinstance(time_obj, dict):
+        starting = time_obj.get("starting_at") or time_obj.get("start") or time_obj.get("kickoff")
+        if isinstance(starting, str) and starting.strip():
+            return starting.strip()
+        if isinstance(starting, dict):
+            for nested_key in ("date_time", "datetime", "iso", "value", "utc", "local"):
+                nested_value = starting.get(nested_key)
+                if isinstance(nested_value, str) and nested_value.strip():
+                    return nested_value.strip()
+
+    return None
+
+
 def normalize_training_row(event, season_meta):
     event = event or {}
+    status = event.get("status")
+    if not is_final_status(status):
+        return None
+
     home_score = event.get("home_score")
     away_score = event.get("away_score")
     if home_score is None or away_score is None:
@@ -53,11 +144,16 @@ def normalize_training_row(event, season_meta):
         away_score = int(away_score)
     except Exception:
         return None
+
+    event_id = event.get("id")
+    if not event_id:
+        return None
+
     total_goals = home_score + away_score
     return {
-        "event_id": event.get("id"),
-        "date": event.get("date"),
-        "status": event.get("status"),
+        "event_id": event_id,
+        "date": pick_event_date(event),
+        "status": normalize_status(status),
         "league_id": season_meta.get("league_id"),
         "league": season_meta.get("league"),
         "season_id": season_meta.get("season_id"),
@@ -87,6 +183,8 @@ def main():
     dataset = []
     failures = []
     seasons_loaded = 0
+    seen_event_ids = set()
+    duplicate_events_removed = 0
 
     for season in seasons:
         season_id = season.get("season_id")
@@ -95,26 +193,36 @@ def main():
         try:
             events = fetch_all_pages(f"/api/events/?season={season_id}&tz={TZ}")
         except Exception as exc:
-            failures.append({
-                "season_id": season_id,
-                "season_name": season.get("season_name"),
-                "league": season.get("league"),
-                "year": season.get("year"),
-                "error": str(exc),
-            })
+            failures.append(
+                {
+                    "season_id": season_id,
+                    "season_name": season.get("season_name"),
+                    "league": season.get("league"),
+                    "year": season.get("year"),
+                    "error": str(exc),
+                }
+            )
             print(f"Skip season {season_id} because of fetch error: {exc}")
             continue
         seasons_loaded += 1
+
         for event in events or []:
             row = normalize_training_row(event, season)
-            if row:
-                dataset.append(row)
+            if not row:
+                continue
+            event_key = str(row.get("event_id"))
+            if event_key in seen_event_ids:
+                duplicate_events_removed += 1
+                continue
+            seen_event_ids.add(event_key)
+            dataset.append(row)
             if len(dataset) >= MAX_TRAINING_ROWS:
                 break
         if len(dataset) >= MAX_TRAINING_ROWS:
             break
 
-    dataset.sort(key=lambda r: (r.get("date") or "", r.get("event_id") or 0), reverse=True)
+    dataset.sort(key=lambda r: ((r.get("date") or ""), r.get("event_id") or 0), reverse=True)
+    rows_with_dates = sum(1 for row in dataset if row.get("date"))
     summary = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "timezone": TZ,
@@ -124,6 +232,9 @@ def main():
         "seasons_failed": len(failures),
         "rows_total": len(dataset),
         "rows_limit": MAX_TRAINING_ROWS,
+        "rows_with_dates": rows_with_dates,
+        "rows_missing_dates": len(dataset) - rows_with_dates,
+        "duplicate_events_removed": duplicate_events_removed,
         "markets_ready": ["1X2", "BTTS", "Over1.5", "Over2.5", "Under3.5"],
         "leagues": sorted(list({str(r.get("league") or "") for r in dataset if r.get("league")})),
         "failed_seasons_preview": failures[:10],
