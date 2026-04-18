@@ -2,7 +2,7 @@
 import json
 from datetime import datetime, timezone
 
-from fetch_data import ensure_token, fetch_all_pages, save_json, TZ
+from fetch_data import ensure_token, fetch_all_pages, load_existing_json, save_json, TZ
 
 
 CURRENT_YEAR = datetime.now(timezone.utc).year
@@ -88,13 +88,15 @@ def build_league_summary(seasons):
     return out
 
 
-def build_api_history_summary(raw_seasons, valid_seasons, league_summary_valid, anomalies):
+def build_api_history_summary(raw_seasons, valid_seasons, league_summary_valid, anomalies, source_mode, fetch_error=None):
     raw_years = sorted([r.get("year") for r in raw_seasons if r.get("year") is not None])
     valid_years = sorted([r.get("year") for r in valid_seasons if r.get("year") is not None])
     return {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "timezone": TZ,
         "source": "bsd_api_seasons",
+        "source_mode": source_mode,
+        "fetch_error": fetch_error,
         "current_year": CURRENT_YEAR,
         "validation_rules": {
             "valid_max_year": VALID_MAX_YEAR,
@@ -120,14 +122,25 @@ def build_api_history_summary(raw_seasons, valid_seasons, league_summary_valid, 
 def main():
     ensure_token()
     print("=== Build API history catalog ===")
-    seasons_raw = fetch_all_pages("/api/seasons/")
+    source_mode = "live_api"
+    fetch_error = None
+    try:
+        seasons_raw = fetch_all_pages("/api/seasons/")
+    except Exception as exc:
+        fetch_error = str(exc)
+        seasons_raw = load_existing_json("api_seasons_history.json", [])
+        source_mode = "cached_fallback"
+        print(f"Fallback to cached api_seasons_history.json because live fetch failed: {fetch_error}")
+        if not seasons_raw:
+            raise
+
     seasons = [classify_season(normalize_season(row)) for row in seasons_raw if isinstance(row, dict)]
     seasons.sort(key=lambda r: ((r.get("league") or ""), (r.get("year") or 0), r.get("start_date") or "", r.get("id") or 0), reverse=True)
 
     valid_seasons = [r for r in seasons if r.get("is_valid_historical")]
     anomalies = [r for r in seasons if not r.get("is_valid_historical")]
     league_summary_valid = build_league_summary(valid_seasons)
-    summary = build_api_history_summary(seasons, valid_seasons, league_summary_valid, anomalies)
+    summary = build_api_history_summary(seasons, valid_seasons, league_summary_valid, anomalies, source_mode, fetch_error=fetch_error)
 
     save_json(seasons, "api_seasons_history.json")
     save_json(valid_seasons, "api_seasons_history_valid.json")
