@@ -5,10 +5,22 @@ window.API_HISTORY_LEAGUES=Array.isArray(window.API_HISTORY_LEAGUES)?window.API_
 window.FULL_HISTORY_RANGE=window.FULL_HISTORY_RANGE||'total';
 window.FULL_HISTORY_MARKET=window.FULL_HISTORY_MARKET||'';
 
+async function fetchJsonFallback(paths,fallback){
+ for(var i=0;i<paths.length;i++){
+  try{
+   if(typeof getJson==='function') return await getJson(paths[i],fallback);
+   var res=await fetch(paths[i],{cache:'no-store'});
+   if(!res.ok) continue;
+   return await res.json();
+  }catch(e){}
+ }
+ return fallback;
+}
+
 async function loadExtraHistoryData(){
- try{var d=await getJson('/data/recommendation_journal.json',[]);window.RECOMMENDATION_JOURNAL=Array.isArray(d)?d:(d&&d.results)||[];}catch(e){}
- try{window.API_HISTORY_SUMMARY=await getJson('/data/api_history_summary.json',null);}catch(e){window.API_HISTORY_SUMMARY=null;}
- try{var l=await getJson('/data/api_history_leagues.json',[]);window.API_HISTORY_LEAGUES=Array.isArray(l)?l:(l&&l.results)||[];}catch(e){window.API_HISTORY_LEAGUES=[];}
+ try{var d=await fetchJsonFallback(['./data/recommendation_journal.json','data/recommendation_journal.json','/BetAnalyticsProV3/data/recommendation_journal.json','/data/recommendation_journal.json'],[]);window.RECOMMENDATION_JOURNAL=Array.isArray(d)?d:(d&&d.results)||[];}catch(e){}
+ try{window.API_HISTORY_SUMMARY=await fetchJsonFallback(['./data/api_history_summary.json','data/api_history_summary.json','/BetAnalyticsProV3/data/api_history_summary.json','/data/api_history_summary.json'],null);}catch(e){window.API_HISTORY_SUMMARY=null;}
+ try{var l=await fetchJsonFallback(['./data/api_history_leagues.json','data/api_history_leagues.json','/BetAnalyticsProV3/data/api_history_leagues.json','/data/api_history_leagues.json'],[]);window.API_HISTORY_LEAGUES=Array.isArray(l)?l:(l&&l.results)||[];}catch(e){window.API_HISTORY_LEAGUES=[];}
 }
 
 function patch(){
