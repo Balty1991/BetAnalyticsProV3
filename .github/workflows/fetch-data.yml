@@ -15,7 +15,7 @@ concurrency:
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -45,6 +45,11 @@ jobs:
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python build_api_events_index.py
+
+      - name: Build training dataset
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_dataset.py
 
       - name: Build full history journal and patch index
         env:
