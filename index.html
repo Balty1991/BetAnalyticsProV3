@@ -2232,6 +2232,9 @@ var HISTORY_ENGINE = [];
 var RECOMMENDATION_LOG = [];
 var SIGNAL_AUDIT = {};
 var AI_MEMORY = {};
+var TRAINING_MARKET_BASELINES = [];
+var TRAINING_SCORING_SUMMARY = {};
+var TRAINING_BASELINE_MAP = new Map();
 var AI_MEMORY_TICKETS = {premium:null, double:null, triple:null, contrarian:null};
 var AUDIT_TICKETS = {premium:null, double:null, triple:null, contrarian:null};
 var ACTIVE_HISTORY_MARKET = '';
@@ -3343,6 +3346,118 @@ function getDoubleChancePick(raw, extra, confidence){
   };
 }
 
+
+function normalizeTrainingLeagueKey(name){
+  return String(name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+function rebuildTrainingBaselineMap(){
+  TRAINING_BASELINE_MAP = new Map();
+  (Array.isArray(TRAINING_MARKET_BASELINES) ? TRAINING_MARKET_BASELINES : []).forEach(function(row){
+    if(!row) return;
+    var league = String(row.league || '').trim();
+    if(!league) return;
+    TRAINING_BASELINE_MAP.set(league, row);
+    var normalized = normalizeTrainingLeagueKey(league);
+    if(normalized) TRAINING_BASELINE_MAP.set(normalized, row);
+  });
+}
+function getTrainingBaselineForLeague(leagueName){
+  var name = String(leagueName || '').trim();
+  if(!name || !TRAINING_BASELINE_MAP || !TRAINING_BASELINE_MAP.size) return null;
+  return TRAINING_BASELINE_MAP.get(name) || TRAINING_BASELINE_MAP.get(normalizeTrainingLeagueKey(name)) || null;
+}
+function trainingMarketIsSupported(type){
+  return ['over15','over25','under35','btts'].indexOf(String(type || '')) !== -1;
+}
+function getTrainingSummaryRateForType(type){
+  var summary = TRAINING_SCORING_SUMMARY || {};
+  if(type === 'over15') return Number(summary.over_15_rate_total || 0);
+  if(type === 'over25') return Number(summary.over_25_rate_total || 0);
+  if(type === 'under35') return Number(summary.under_35_rate_total || 0);
+  if(type === 'btts') return Number(summary.btts_yes_rate_total || 0);
+  return 0;
+}
+function getTrainingBaselineRateForType(baseline, type){
+  var row = baseline || {};
+  if(type === 'over15') return Number(row.over_15_rate || 0);
+  if(type === 'over25') return Number(row.over_25_rate || 0);
+  if(type === 'under35') return Number(row.under_35_rate || 0);
+  if(type === 'btts') return Number(row.btts_yes_rate || 0);
+  return 0;
+}
+function getTrainingMarketGate(type){
+  if(type === 'over15') return { minRate:74, minProb:74, maxBoost:10 };
+  if(type === 'over25') return { minRate:50, minProb:60, maxBoost:10 };
+  if(type === 'under35') return { minRate:71, minProb:68, maxBoost:9 };
+  if(type === 'btts') return { minRate:53, minProb:60, maxBoost:9 };
+  return { minRate:0, minProb:0, maxBoost:0 };
+}
+function getTrainingBoostMeta(m, type, bet){
+  if(!m || !bet || !trainingMarketIsSupported(type)){
+    return { boost:0, reason:'', eligible:false, leagueRate:null, globalRate:null, deltaVsGlobal:null, matches:0 };
+  }
+  if(!Array.isArray(TRAINING_MARKET_BASELINES) || !TRAINING_MARKET_BASELINES.length){
+    return { boost:0, reason:'', eligible:false, leagueRate:null, globalRate:null, deltaVsGlobal:null, matches:0 };
+  }
+
+  var leagueName = String(m.league || '').trim();
+  var baseline = getTrainingBaselineForLeague(leagueName);
+  var globalRate = getTrainingSummaryRateForType(type);
+  var gate = getTrainingMarketGate(type);
+  var prob = Number(bet.adjProb != null ? bet.adjProb : bet.prob || 0);
+
+  if(!baseline){
+    if(!leagueName){
+      return { boost:0, reason:'', eligible:false, leagueRate:null, globalRate:isFinite(globalRate) ? globalRate : null, deltaVsGlobal:null, matches:0 };
+    }
+    return {
+      boost:-4,
+      reason:'Training -4.0 (ligă fără istoric eligibil)',
+      eligible:false,
+      leagueRate:null,
+      globalRate:isFinite(globalRate) ? globalRate : null,
+      deltaVsGlobal:null,
+      matches:0
+    };
+  }
+
+  var leagueRate = getTrainingBaselineRateForType(baseline, type);
+  var matches = Number(baseline.matches || 0);
+  var minMatches = Number((TRAINING_SCORING_SUMMARY || {}).min_scoring_matches || 120);
+  var deltaVsGlobal = (isFinite(globalRate) ? (leagueRate - globalRate) : 0);
+  var boost = 0;
+
+  boost += Math.max(-4, Math.min(5, (leagueRate - gate.minRate) * 0.35));
+  boost += Math.max(-2.5, Math.min(3.5, (prob - gate.minProb) * 0.18));
+  boost += Math.max(-3, Math.min(3, deltaVsGlobal * 0.25));
+
+  if(matches >= minMatches * 2) boost += 0.8;
+  else if(matches >= minMatches * 1.4) boost += 0.4;
+
+  if(leagueRate >= gate.minRate + 6 && prob >= gate.minProb + 8) boost += 1.0;
+  if(leagueRate <= gate.minRate - 5 && prob <= gate.minProb - 4) boost -= 1.0;
+
+  boost = Math.max(-5, Math.min(gate.maxBoost, boost));
+  boost = Math.round(boost * 10) / 10;
+
+  var reason = 'Training ' + (boost >= 0 ? '+' : '') + boost.toFixed(1) + ' (Liga ' + leagueRate.toFixed(1) + '% vs global ' + globalRate.toFixed(1) + '%)';
+  return {
+    boost: boost,
+    reason: reason,
+    eligible: true,
+    leagueRate: leagueRate,
+    globalRate: globalRate,
+    deltaVsGlobal: deltaVsGlobal,
+    matches: matches
+  };
+}
+
 function analyzeMatch(raw){
   var e = raw.event || {};
   var conf = normalizeConfidence(raw.confidence != null ? raw.confidence : raw.favorite_prob);
@@ -3577,10 +3692,12 @@ function syncRecommendationEngine(){
       m.smartScore = eligible[0].ticketScore || m.bestBet.score || 0;
       m.verdict = m.bestBet.verdict || 'moderate';
       m.analysisState = 'ELIGIBLE';
+      m.why = eligible[0].why || '';
     } else {
       m.bestBet = null;
       m.smartScore = 0;
       m.verdict = 'avoid';
+      m.why = '';
       if(!anyOdds) m.analysisState = 'NO_ODDS';
       else if(positive.length && positive.every(function(t){ return isHardContradiction(m, t); })) m.analysisState = 'CONTRADICTED';
       else if(positive.length) m.analysisState = 'FILTERED_OUT';
@@ -3620,7 +3737,9 @@ function doRefresh(){
     getJson('/data/history_engine.json', []),
     getJson('/data/recommendation_log.json', []),
     getJson('/data/signal_audit.json', {}),
-    getJson('/data/ai_memory.json', {})
+    getJson('/data/ai_memory.json', {}),
+    getJson('/data/training_market_baselines.json', []),
+    getJson('/data/training_scoring_summary.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -3632,10 +3751,15 @@ function doRefresh(){
     var recommendationLogData = results[7];
     var signalAuditData = results[8];
     var aiMemoryData = results[9];
+    var trainingBaselinesData = results[10];
+    var trainingSummaryData = results[11];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
     BACKTEST_SUMMARY = backtestData || {};
+    TRAINING_MARKET_BASELINES = Array.isArray(trainingBaselinesData) ? trainingBaselinesData : (trainingBaselinesData.results || trainingBaselinesData || []);
+    TRAINING_SCORING_SUMMARY = trainingSummaryData || {};
+    rebuildTrainingBaselineMap();
     ALL_MATCHES = preds.map(analyzeMatch);
     syncRecommendationEngine();
     ALL_LEAGUES = leaguesData.results || leaguesData || [];
@@ -5609,15 +5733,32 @@ function buildMarketCandidate(m, type){
   if(m.leagueTier === 'avoid') baseScore -= 8;
   if(b.odds > 2.20) baseScore -= 8;
 
+  var trainingMeta = getTrainingBoostMeta(m, type, b);
+  if(trainingMeta && isFinite(Number(trainingMeta.boost))){
+    baseScore += Number(trainingMeta.boost || 0);
+    if(trainingMeta.reason){
+      if(Math.abs(Number(trainingMeta.boost || 0)) >= 3) reasons.unshift(trainingMeta.reason);
+      else reasons.push(trainingMeta.reason);
+    }
+  }
+
   var risk = 'MEDIU';
   if(b.adjProb >= 76 && edgePct >= 2 && (m.confidence || 0) >= 56) risk = 'LOW';
   else if(b.adjProb < 58 || b.odds > 2.10 || edgePct < 1) risk = 'HIGH';
 
   return Object.assign({}, m, {
-    bestBet: Object.assign({}, b),
+    bestBet: Object.assign({}, b, {
+      trainingBoost: Number(trainingMeta && trainingMeta.boost || 0),
+      trainingEligibleLeague: !!(trainingMeta && trainingMeta.eligible),
+      trainingLeagueRate: trainingMeta && trainingMeta.leagueRate != null ? Number(trainingMeta.leagueRate) : null,
+      trainingGlobalRate: trainingMeta && trainingMeta.globalRate != null ? Number(trainingMeta.globalRate) : null,
+      trainingDeltaVsGlobal: trainingMeta && trainingMeta.deltaVsGlobal != null ? Number(trainingMeta.deltaVsGlobal) : null,
+      trainingMatches: Number(trainingMeta && trainingMeta.matches || 0),
+      trainingReason: trainingMeta && trainingMeta.reason ? trainingMeta.reason : ''
+    }),
     ticketScore: Math.round(baseScore),
     ticketRisk: risk,
-    why: reasons.slice(0, 3).join(' • '),
+    why: uniqueReasons(reasons).slice(0, 3).join(' • '),
     proEligible: (m.leagueTier !== 'avoid') && (b.adjProb >= 72) && ((b.edgePct || 0) >= 1.5) && ((b.value || 0) >= 0.01)
   });
 }
