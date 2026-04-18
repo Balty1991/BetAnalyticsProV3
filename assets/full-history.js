@@ -5,13 +5,17 @@ window.API_HISTORY_LEAGUES=Array.isArray(window.API_HISTORY_LEAGUES)?window.API_
 window.FULL_HISTORY_RANGE=window.FULL_HISTORY_RANGE||'total';
 window.FULL_HISTORY_MARKET=window.FULL_HISTORY_MARKET||'';
 
+async function loadExtraHistoryData(){
+ try{var d=await getJson('/data/recommendation_journal.json',[]);window.RECOMMENDATION_JOURNAL=Array.isArray(d)?d:(d&&d.results)||[];}catch(e){}
+ try{window.API_HISTORY_SUMMARY=await getJson('/data/api_history_summary.json',null);}catch(e){window.API_HISTORY_SUMMARY=null;}
+ try{var l=await getJson('/data/api_history_leagues.json',[]);window.API_HISTORY_LEAGUES=Array.isArray(l)?l:(l&&l.results)||[];}catch(e){window.API_HISTORY_LEAGUES=[];}
+}
+
 function patch(){
  if(typeof window.doRefresh==='function'&&!window.__fh_refresh){
   var o=window.doRefresh;window.doRefresh=async function(){
    var r=await o.apply(this,arguments);
-   try{var d=await getJson('/data/recommendation_journal.json',[]);window.RECOMMENDATION_JOURNAL=Array.isArray(d)?d:(d&&d.results)||[];}catch(e){}
-   try{window.API_HISTORY_SUMMARY=await getJson('/data/api_history_summary.json',null);}catch(e){window.API_HISTORY_SUMMARY=null;}
-   try{var l=await getJson('/data/api_history_leagues.json',[]);window.API_HISTORY_LEAGUES=Array.isArray(l)?l:(l&&l.results)||[];}catch(e){window.API_HISTORY_LEAGUES=[];}
+   await loadExtraHistoryData();
    try{ensureUI();if($('tab-istoricfull')&&$('tab-istoricfull').classList.contains('active'))renderFullHistory();if($('tab-apihistory')&&$('tab-apihistory').classList.contains('active'))renderApiHistory();}catch(e){}
    return r
   };window.__fh_refresh=1;
@@ -19,6 +23,7 @@ function patch(){
  if(typeof window.switchTab==='function'&&!window.__fh_tab){var s=window.switchTab;window.switchTab=function(n){var r=s.apply(this,arguments);if(n==='istoricfull')setTimeout(renderFullHistory,0);if(n==='apihistory')setTimeout(renderApiHistory,0);return r};window.__fh_tab=1;}
  if(typeof window.renderAll==='function'&&!window.__fh_render){var a=window.renderAll;window.renderAll=function(){var r=a.apply(this,arguments);try{ensureUI();}catch(e){}return r};window.__fh_render=1;}
  ensureUI();
+ loadExtraHistoryData().then(function(){try{if($('tab-apihistory')&&$('tab-apihistory').classList.contains('active'))renderApiHistory();if($('tab-istoricfull')&&$('tab-istoricfull').classList.contains('active'))renderFullHistory();}catch(e){}});
 }
 
 function norm(x,src){if(!x)return null;return {journal_id:x.journal_id||null,source_kind:x.source_kind||x.source||src||'archive',status:x.status||getHistory21Status(x),won:x.won,event_id:x.event_id,prediction_id:x.prediction_id,home:x.home||'',away:x.away||'',league:x.league||'',event_date:x.event_date||x.date||'',date:x.event_date||x.date||'',market:x.market||inferMarketTypeFromLabel(x.market||''),market_key:x.market_key||inferMarketTypeFromLabel(x.market||''),odds:Number(x.odds||x.book_odds||0),adjusted_prob:Number(x.adjusted_prob||x.prob||0),edge_pct:Number(x.edge_pct||x.edge||0),value:Number(x.value||0),score:Number(x.score||0),logged_at:x.first_logged_at||x.logged_at||x.created_at||x.prediction_created_at||x.event_date||x.date||null,prediction_created_at:x.prediction_created_at||x.created_at||null,home_score:x.home_score!=null?Number(x.home_score):null,away_score:x.away_score!=null?Number(x.away_score):null,snapshot_count:Number(x.snapshot_count||1),opening_odds:x.opening_odds!=null?Number(x.opening_odds):null,previous_odds:x.previous_odds!=null?Number(x.previous_odds):null,line_movement_pct:Number(x.line_movement_pct||0),from_open_pct:Number(x.from_open_pct||0)};}
