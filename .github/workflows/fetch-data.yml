@@ -15,7 +15,7 @@ concurrency:
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -36,11 +36,19 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python fetch_data.py
 
+      - name: Build full history journal and patch index
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          FULL_HISTORY_LOOKBACK_DAYS: '730'
+          FULL_HISTORY_MAX_ROWS: '60000'
+          FULL_HISTORY_PREDICTION_MAX_AGE_HOURS: '17544'
+        run: python build_full_history.py
+
       - name: Commit and push changes when data changed
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data/
+          git add data/ index.html
 
           if git diff --staged --quiet; then
             echo "No data changes detected. Skipping commit."
