@@ -56,6 +56,11 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python build_training_scores.py
 
+      - name: Build training insights
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_insights.py
+
       - name: Build full history journal and patch index
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
