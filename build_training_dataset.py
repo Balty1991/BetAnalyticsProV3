@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from fetch_data import ensure_token, fetch_all_pages, load_existing_json, save_json, TZ
 
 
-MAX_TRAINING_SEASONS = 24
-MAX_TRAINING_ROWS = 15000
+MAX_TRAINING_SEASONS = 16
+MAX_TRAINING_ROWS = 10000
 MIN_SEASON_YEAR = datetime.now(timezone.utc).year - 2
 
 
@@ -64,12 +64,26 @@ def main():
     index_rows = load_existing_json("api_events_history_index.json", [])
     seasons = select_training_seasons(index_rows)
     dataset = []
+    failures = []
+    seasons_loaded = 0
 
     for season in seasons:
         season_id = season.get("season_id")
         if not season_id:
             continue
-        events = fetch_all_pages(f"/api/events/?season={season_id}&tz={TZ}")
+        try:
+            events = fetch_all_pages(f"/api/events/?season={season_id}&tz={TZ}")
+        except Exception as exc:
+            failures.append({
+                "season_id": season_id,
+                "season_name": season.get("season_name"),
+                "league": season.get("league"),
+                "year": season.get("year"),
+                "error": str(exc),
+            })
+            print(f"Skip season {season_id} because of fetch error: {exc}")
+            continue
+        seasons_loaded += 1
         for event in events or []:
             row = normalize_training_row(event, season)
             if row:
@@ -85,13 +99,17 @@ def main():
         "timezone": TZ,
         "min_season_year": MIN_SEASON_YEAR,
         "seasons_selected": len(seasons),
+        "seasons_loaded": seasons_loaded,
+        "seasons_failed": len(failures),
         "rows_total": len(dataset),
         "rows_limit": MAX_TRAINING_ROWS,
         "markets_ready": ["1X2", "BTTS", "Over1.5", "Over2.5", "Under3.5"],
         "leagues": sorted(list({str(r.get("league") or "") for r in dataset if r.get("league")})),
+        "failed_seasons_preview": failures[:10],
     }
     save_json(dataset, "training_matches.json")
     save_json(summary, "training_dataset_summary.json")
+    save_json(failures, "training_dataset_failures.json")
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     print("=== Done training dataset ===")
 
