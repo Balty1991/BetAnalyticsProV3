@@ -10,8 +10,8 @@ window.FULL_HISTORY_MARKET=window.FULL_HISTORY_MARKET||'';
 async function fetchJsonFallback(paths,fallback){
  for(var i=0;i<paths.length;i++){
   try{
-   if(typeof getJson==='function') return await getJson(paths[i],fallback);
-   var res=await fetch(paths[i],{cache:'no-store'});
+   var url=paths[i]+(paths[i].indexOf('?')>=0?'&':'?')+'v=20260418b';
+   var res=await fetch(url,{cache:'no-store'});
    if(!res.ok) continue;
    return await res.json();
   }catch(e){}
