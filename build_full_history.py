@@ -230,44 +230,127 @@ def ensure_full_history_script_tag(index_path="index.html"):
     return True
 
 
+def build_lookback_candidates():
+    base = [
+        FULL_HISTORY_LOOKBACK_DAYS,
+        540,
+        365,
+        270,
+        180,
+        120,
+        90,
+        60,
+        45,
+        30,
+        21,
+        14,
+        7,
+    ]
+    out = []
+    seen = set()
+    for days in base:
+        try:
+            days = int(days)
+        except Exception:
+            continue
+        if days <= 0 or days in seen:
+            continue
+        out.append(days)
+        seen.add(days)
+    return out
+
+
+def fetch_predictions_with_fallback(started_at, today):
+    last_error = None
+    attempts = []
+    for lookback_days in build_lookback_candidates():
+        past = (started_at - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+        try:
+            print(f"Full history fetch attempt: lookback_days={lookback_days} from={past} to={today}")
+            predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
+            return predictions, lookback_days, attempts, None
+        except Exception as e:
+            last_error = str(e)
+            attempts.append({"lookback_days": lookback_days, "error": last_error})
+            print(f"WARN: full history fetch failed for lookback_days={lookback_days}: {last_error}")
+    return [], 0, attempts, last_error
+
+
 def main():
     ensure_token()
     started_at = datetime.now(timezone.utc)
     today = started_at.strftime("%Y-%m-%d")
-    past = (started_at - timedelta(days=FULL_HISTORY_LOOKBACK_DAYS)).strftime("%Y-%m-%d")
 
-    predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
-    predictions, prep = dedupe_and_filter_predictions(
-        predictions,
-        now_utc=started_at,
-        max_age_hours=FULL_HISTORY_PREDICTION_MAX_AGE_HOURS,
-    )
-    history_rows = build_enriched_history_rows(predictions)
-    finished_events = build_finished_event_index(predictions)
     recommendation_log = load_existing_json("recommendation_log.json", [])
     recommendation_journal = load_existing_json("recommendation_journal.json", [])
     settled_at_iso = datetime.now(timezone.utc).isoformat()
-    recommendation_journal = update_recommendation_journal(
-        recommendation_journal,
-        recommendation_log,
-        finished_events,
-        settled_at_iso,
-        history_rows=history_rows,
-    )
+
+    predictions, effective_lookback_days, fetch_attempts, fetch_error = fetch_predictions_with_fallback(started_at, today)
+
+    if predictions:
+        predictions, prep = dedupe_and_filter_predictions(
+            predictions,
+            now_utc=started_at,
+            max_age_hours=FULL_HISTORY_PREDICTION_MAX_AGE_HOURS,
+        )
+        history_rows = build_enriched_history_rows(predictions)
+        finished_events = build_finished_event_index(predictions)
+        recommendation_journal = update_recommendation_journal(
+            recommendation_journal,
+            recommendation_log,
+            finished_events,
+            settled_at_iso,
+            history_rows=history_rows,
+        )
+        meta = {
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "status": "ok_partial" if effective_lookback_days and effective_lookback_days < FULL_HISTORY_LOOKBACK_DAYS else "ok",
+            "lookback_days": effective_lookback_days or FULL_HISTORY_LOOKBACK_DAYS,
+            "lookback_days_requested": FULL_HISTORY_LOOKBACK_DAYS,
+            "prediction_rows": len(predictions),
+            "history_rows": len(history_rows),
+            "journal_rows": len(recommendation_journal),
+            "preprocess": prep,
+            "fetch_attempts": fetch_attempts,
+        }
+        if fetch_error and effective_lookback_days and effective_lookback_days < FULL_HISTORY_LOOKBACK_DAYS:
+            meta["warning"] = f"Lookback redus automat din cauza erorilor API. Ultima eroare: {fetch_error}"
+    else:
+        history_rows = []
+        finished_events = {}
+        recommendation_journal = update_recommendation_journal(
+            recommendation_journal,
+            recommendation_log,
+            finished_events,
+            settled_at_iso,
+            history_rows=[],
+        )
+        meta = {
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "status": "fallback_existing",
+            "lookback_days": 0,
+            "lookback_days_requested": FULL_HISTORY_LOOKBACK_DAYS,
+            "prediction_rows": 0,
+            "history_rows": 0,
+            "journal_rows": len(recommendation_journal),
+            "preprocess": {
+                "input_count": 0,
+                "kept_count": 0,
+                "stale_removed": 0,
+                "duplicate_removed": 0,
+                "max_age_hours": FULL_HISTORY_PREDICTION_MAX_AGE_HOURS,
+            },
+            "fetch_error": fetch_error or "unknown error",
+            "fetch_attempts": fetch_attempts,
+            "warning": "BSD API a răspuns cu erori la backfill-ul istoric. Workflow-ul continuă folosind jurnalul existent.",
+        }
+
     save_json(recommendation_journal, "recommendation_journal.json")
-    save_json({
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "lookback_days": FULL_HISTORY_LOOKBACK_DAYS,
-        "prediction_rows": len(predictions),
-        "history_rows": len(history_rows),
-        "journal_rows": len(recommendation_journal),
-        "preprocess": prep,
-    }, "full_history_meta.json")
+    save_json(meta, "full_history_meta.json")
     index_changed = ensure_full_history_script_tag("index.html")
     print(
-        f"Full history built: predictions={len(predictions)} history_rows={len(history_rows)} journal_rows={len(recommendation_journal)} index_changed={index_changed}"
+        f"Full history built: predictions={len(predictions)} history_rows={len(history_rows)} journal_rows={len(recommendation_journal)} index_changed={index_changed} status={meta.get('status')} lookback={meta.get('lookback_days')}"
     )
-
 
 if __name__ == "__main__":
     main()
