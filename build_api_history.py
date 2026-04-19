@@ -6,8 +6,8 @@ from fetch_data import ensure_token, fetch_all_pages, load_existing_json, save_j
 
 
 CURRENT_YEAR = datetime.now(timezone.utc).year
-VALID_MAX_YEAR = CURRENT_YEAR + 1
-VALID_MAX_DATE_YEAR = CURRENT_YEAR + 2
+VALID_MAX_YEAR = CURRENT_YEAR
+VALID_MAX_DATE_YEAR = CURRENT_YEAR
 
 
 def to_int(value):
@@ -134,11 +134,12 @@ def main():
         if not seasons_raw:
             raise
 
-    seasons = [classify_season(normalize_season(row)) for row in seasons_raw if isinstance(row, dict)]
-    seasons.sort(key=lambda r: ((r.get("league") or ""), (r.get("year") or 0), r.get("start_date") or "", r.get("id") or 0), reverse=True)
+    classified = [classify_season(normalize_season(row)) for row in seasons_raw if isinstance(row, dict)]
+    classified.sort(key=lambda r: ((r.get("league") or ""), (r.get("year") or 0), r.get("start_date") or "", r.get("id") or 0), reverse=True)
 
+    seasons = [r for r in classified if not r.get("anomaly_reasons") or not any(x.startswith("future_") for x in (r.get("anomaly_reasons") or []))]
     valid_seasons = [r for r in seasons if r.get("is_valid_historical")]
-    anomalies = [r for r in seasons if not r.get("is_valid_historical")]
+    anomalies = [r for r in classified if not r.get("is_valid_historical")]
     league_summary_valid = build_league_summary(valid_seasons)
     summary = build_api_history_summary(seasons, valid_seasons, league_summary_valid, anomalies, source_mode, fetch_error=fetch_error)
 
