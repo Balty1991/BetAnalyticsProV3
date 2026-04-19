@@ -221,4 +221,132 @@ function renderApi(){
   const rows=apiRows(), sum=obj(W.API_HISTORY_SUMMARY), validSum=obj(sum.valid), rawSum=obj(sum.raw), ev=obj(W.API_EVENTS_HISTORY_SUMMARY), leagueMeta=arr(W.API_HISTORY_LEAGUES);
   if(!rows.length&&!Object.keys(sum).length&&!Object.keys(ev).length){root.innerHTML='<div class="empty-state">Nu există date API history.</div>'; return;}
   const leagues=[...new Set(rows.map(r=>r.league).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ro'));
-  if
+  if(W.API_HISTORY_LEAGUE_FILTER!=='all'&&!leagues.includes(W.API_HISTORY_LEAGUE_FILTER)) W.API_HISTORY_LEAGUE_FILTER='all';
+  const years=[...new Set(rows.filter(r=>W.API_HISTORY_LEAGUE_FILTER==='all'||r.league===W.API_HISTORY_LEAGUE_FILTER).map(r=>r.year).filter(Boolean))].sort((a,b)=>b-a);
+  if(W.API_HISTORY_YEAR_FILTER!=='all'&&!years.map(String).includes(String(W.API_HISTORY_YEAR_FILTER))) W.API_HISTORY_YEAR_FILTER='all';
+  const filtered=rows.filter(r=>(W.API_HISTORY_LEAGUE_FILTER==='all'||r.league===W.API_HISTORY_LEAGUE_FILTER)&&(W.API_HISTORY_YEAR_FILTER==='all'||String(r.year)===String(W.API_HISTORY_YEAR_FILTER)));
+  const view=W.API_HISTORY_VIEW==='indexed'?filtered.filter(r=>r.indexed):W.API_HISTORY_VIEW==='gaps'?filtered.filter(r=>r.valid&&!r.indexed):filtered;
+  const valid=filtered.filter(r=>r.valid), indexed=filtered.filter(r=>r.indexed), gaps=filtered.filter(r=>r.valid&&!r.indexed);
+  const totEvents=indexed.reduce((a,r)=>a+r.events,0), cov=valid.length?indexed.length/valid.length*100:0;
+  const failures=arr(ev.failed_seasons_preview||ev.fetch_failures);
+  const yrMin=validSum.coverage_start_year||Math.min(...years,0)||0;
+  const yrMax=validSum.coverage_end_year||Math.max(...years,0)||0;
+  top.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+      ${card('Sezoane brute',fmt(rawSum.seasons_total||rows.length),rawSum.coverage_start_year&&rawSum.coverage_end_year?`${fmt(rawSum.coverage_start_year)} → ${fmt(rawSum.coverage_end_year)}`:'')}
+      ${card('Sezoane valide',fmt(valid.length||validSum.seasons_total||0),`${fmt(validSum.leagues_total||leagues.length)} ligi`)}
+      ${card('Sezoane indexate',fmt(indexed.length||ev.seasons_indexed||0),`${fmt(gaps.length)} gap-uri în filtrul curent`)}
+      ${card('Coverage',valid.length?pct(cov,2):'—',yrMin&&yrMax?`${fmt(yrMin)} → ${fmt(yrMax)}`:'')}
+      ${card('Meciuri numărate',fmt(totEvents||ev.total_events_counted||0),`lookback index: ${fmt(ev.season_lookback_years||0)} ani`)}
+      ${card('Ultimul sync',timeFmt(ev.updated_at||sum.updated_at),freshness(ev.updated_at||sum.updated_at))}
+    </div>
+    <div style="margin-top:10px;display:grid;gap:8px">
+      ${row(chip(W.API_HISTORY_VIEW==='all','Toate','setApiHistoryView','all')+chip(W.API_HISTORY_VIEW==='indexed','Indexate','setApiHistoryView','indexed')+chip(W.API_HISTORY_VIEW==='gaps','Gap-uri','setApiHistoryView','gaps'))}
+      ${row(chip(W.API_HISTORY_LEAGUE_FILTER==='all','Toate ligile','setApiHistoryLeague','all')+leagues.map(l=>chip(W.API_HISTORY_LEAGUE_FILTER===l,esc(l),'setApiHistoryLeague',l)).join(''))}
+      ${row(chip(W.API_HISTORY_YEAR_FILTER==='all','Toți anii','setApiHistoryYear','all')+years.map(y=>chip(String(W.API_HISTORY_YEAR_FILTER)===String(y),y,'setApiHistoryYear',y)).join(''))}
+    </div>
+    <div style="margin-top:10px">${infoBox('Ce înseamnă această secțiune',`Aici verifici dacă arhiva brută BSD este chiar integrată, nu doar dacă există un card în meniu. Semne bune: număr mare de sezoane valide, coverage mare între valide și indexate, meciuri numărate și timestamp recent.`, cov>=80?'green':cov>=50?'blue':'amber')}</div>
+  `;
+
+  const leagueTable=leagueMeta.slice().sort((a,b)=>(num(b.seasons_count)-num(a.seasons_count))||(num(b.last_year)-num(a.last_year))).slice(0,12).map(r=>`<tr><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:700">${esc(r.league)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${fmt(r.seasons_count)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${fmt(r.first_year)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${fmt(r.last_year)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${esc(r.latest_season_name||'—')}</td></tr>`).join('')||'<tr><td colspan="5" style="padding:12px">Nu există meta pe ligi.</td></tr>';
+  const seasonTable=view.slice(0,80).map(r=>`<tr><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:700">${esc(r.league)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${esc(r.season)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${r.year?fmt(r.year):'—'}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${r.indexed?'da':'nu'}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${fmt(r.events)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${fmt(r.sample)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${dateFmt(r.start)} → ${dateFmt(r.end)}</td></tr>`).join('')||'<tr><td colspan="7" style="padding:12px">Nu există rânduri pentru filtrul ales.</td></tr>';
+  const gapCards=(gaps.slice(0,8).map(r=>infoBox(`${esc(r.league)} • ${esc(r.season||r.year||'sezon')}`,`Valid: <b>${r.valid?'da':'nu'}</b> • Indexat: <b>${r.indexed?'da':'nu'}</b>${r.anoms&&r.anoms.length?`<br>Motive: ${esc(r.anoms.join(', '))}`:''}`,'amber')).join(''))||infoBox('Nu există gap-uri în filtrul curent','Pentru filtrul activ, toate sezoanele valide par indexate.','green');
+  const failCards=(failures.slice(0,6).map(f=>infoBox(esc(f.league||f.season_name||f.season_id||'Season'),esc(f.error||'eroare necunoscută'),'amber')).join(''))||'';
+
+  root.innerHTML=`
+    ${section('Coverage pe ligi','Top ligi după numărul de sezoane istorice disponibile.',tableWrap(`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:620px"><thead><tr style="text-align:left;color:var(--muted)"><th style="${th}">Ligă</th><th style="${th}">Sezoane</th><th style="${th}">Primul an</th><th style="${th}">Ultimul an</th><th style="${th}">Ultimul sezon</th></tr></thead><tbody>${leagueTable}</tbody></table>`))}
+    ${section('Sezoane filtrate','Afișez maximum 80 rânduri pentru filtrul activ. Pe mobil tabelul se glisează orizontal.',tableWrap(`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:760px"><thead><tr style="text-align:left;color:var(--muted)"><th style="${th}">Ligă</th><th style="${th}">Sezon</th><th style="${th}">An</th><th style="${th}">Indexat</th><th style="${th}">Meciuri</th><th style="${th}">Sample</th><th style="${th}">Interval</th></tr></thead><tbody>${seasonTable}</tbody></table>`)+`<div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5">Afișez primele ${fmt(Math.min(view.length,80))} din ${fmt(view.length)} sezoane filtrate.</div>`)}
+    ${section('Gap-uri și probleme vizibile','Exact aici vezi unde încă nu ai demonstrat integrarea completă. Dacă există sezoane valide fără indexare, AI-ul nu învață din ele.',`<div style="display:grid;gap:8px">${gapCards}${failCards?`<div style="margin-top:4px"></div>${failCards}`:''}</div>`)}
+  `;
+}
+
+function renderTraining(){
+  ensure();
+  const top=$('tr-top'), root=$('tr-root');
+  if(!top||!root) return;
+  const rows=arr(W.TRAINING_MATCHES), base=arr(W.TRAINING_MARKET_BASELINES), sum=obj(W.TRAINING_DATASET_SUMMARY), ins=obj(W.TRAINING_INSIGHTS_SUMMARY), fails=arr(W.TRAINING_DATASET_FAILURES), feat=obj(W.TRAINING_FEATURE_SUMMARY), scoreSum=obj(W.TRAINING_SCORING_SUMMARY), model=obj(W.TRAINING_MODEL_SUMMARY), memory=obj(W.AI_MEMORY), memSum=obj(memory.summary), meta=obj(W.META);
+  if(!rows.length&&!Object.keys(sum).length&&!Object.keys(model).length){root.innerHTML='<div class="empty-state">Nu există date pentru AI Training Lab.</div>'; return;}
+  const miss=rows.filter(r=>!(r.date||r.event_date||r.eventDate)).length;
+  const finals=['finished','ft','full_time','fulltime','full-time','completed','complete','closed','ended','final','aet','after_extra_time','after_extra','penalties','penalty_shootout'];
+  const nonFinal=rows.filter(r=>r.status&&!finals.includes(String(r.status).toLowerCase())).length;
+  const ids={}, exact={}; let h=0,d=0,a=0,b=0,o15=0,o25=0,u35=0;
+  rows.forEach(r=>{ if(r.event_id!=null) ids[r.event_id]=(ids[r.event_id]||0)+1; const ek=[r.event_id,r.date,r.league,r.home_team,r.away_team,r.home_score,r.away_score].join('|'); exact[ek]=(exact[ek]||0)+1; h+=num(r.home_win); d+=num(r.draw); a+=num(r.away_win); b+=num(r.btts_yes); o15+=num(r.over_15); o25+=num(r.over_25); u35+=num(r.under_35); });
+  const dup=Object.values(ids).reduce((s,v)=>s+(v>1?v-1:0),0);
+  const exDup=Object.values(exact).reduce((s,v)=>s+(v>1?v-1:0),0);
+  const low=base.filter(r=>num(r.matches)<120).length;
+  const readyMarkets=arr(model.markets).filter(x=>x&&x.ready).length||arr(sum.markets_ready).length;
+  const readiness=Math.max(0,100-(miss?35:0)-(nonFinal?20:0)-(dup?15:0)-(exDup?8:0)-(low?Math.min(10,low):0));
+  const pipeline=`Dataset ${timeFmt(sum.updated_at)} • Features ${timeFmt(feat.updated_at)} • Model ${timeFmt(model.updated_at)} • AI Memory ${timeFmt(memory.updated_at||meta.started_at)}`;
+  top.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+      ${card('Rows dataset',fmt(rows.length||sum.rows_total||0),`${fmt(sum.seasons_loaded||0)} sezoane încărcate`)}
+      ${card('Rows ready min5',fmt(feat.eligible_min_history_5||model.rows_eligible_min5||0),feat.rows_with_features_min5_pct?`${pct(feat.rows_with_features_min5_pct,2)} acoperire`:'')}
+      ${card('Ligi scoring',fmt(scoreSum.leagues_total_eligible||0),`${fmt(scoreSum.leagues_total_raw||0)} brute`)}
+      ${card('Piețe model ready',fmt(readyMarkets),`${fmt(arr(model.markets).length)} piețe evaluate`)}
+      ${card('AI Memory settled',fmt(memSum.settled_bets||0),`ROI ${pct(memSum.settled_roi||0,2)} • WR ${pct(memSum.settled_winrate||0,2)}`)}
+      ${card('Adaptive picks',fmt(memSum.pending_scored||arr(memory.adaptive_picks).length),readiness>=85?'pipeline bun pentru învățare':readiness>=65?'pipeline mediu':'pipeline încă murdar')}
+    </div>
+    <div style="margin-top:10px">${infoBox('Pipeline end-to-end',`Ca să poți spune că AI Memory învață serios, nu ajunge să existe doar ecranul. Trebuie să fie populate succesiv datasetul, features, scoring, modelul și memoria adaptivă. <br><b>${pipeline}</b>`, readiness>=85?'green':readiness>=65?'blue':'amber')}</div>
+  `;
+  const rate=(x,n)=>n?pct(x/n*100,2):'—';
+  const marketTable=arr(model.markets).map(r=>`<tr><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:700">${esc(r.market)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${fmt(r.rows)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${pct(r.avg_prob,2)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${pct(r.actual_rate,2)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${num(r.brier).toFixed(4)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${pct(r.hit_rate_50,2)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${r.ready?'da':'nu'}</td></tr>`).join('')||'<tr><td colspan="7" style="padding:12px">Nu există sumar de model.</td></tr>';
+  const baselineTable=base.slice().sort((x,y)=>num(y.matches)-num(x.matches)).slice(0,12).map(r=>`<tr><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);font-weight:700">${esc(r.league)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${fmt(r.matches)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${num(r.avg_goals).toFixed(3)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${pct(r.over_15_rate,2)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${pct(r.over_25_rate,2)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${pct(r.under_35_rate,2)}</td><td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${pct(r.btts_yes_rate,2)}</td></tr>`).join('')||'<tr><td colspan="7" style="padding:12px">Nu există baseline-uri.</td></tr>';
+  const topInsights=arr(ins.top_insights).slice(0,6).map(r=>mini(r.market||'Piață',`${esc(r.league||'—')} • ${pct(r.strength,2)}`,`${fmt(r.matches||0)} meciuri • ${esc(r.reason||'fără motiv')}`)).join('')||mini('Insights','Fără insights','workflow-ul trebuie să populeze training_insights_summary.json');
+  const posPatterns=arr(memory.top_patterns).slice(0,5).map(r=>infoBox(esc(r.label||'pattern'),`WR ${pct(r.winrate||0,2)} • ROI ${pct(r.roi||0,2)} • ${fmt(r.raw_bets||0)} beturi`, 'green')).join('')||'';
+  const negPatterns=arr(memory.avoid_patterns).slice(0,5).map(r=>infoBox(esc(r.label||'pattern'),`WR ${pct(r.winrate||0,2)} • ROI ${pct(r.roi||0,2)} • ${fmt(r.raw_bets||0)} beturi`, 'red')).join('')||'';
+  const adaptivePreview=arr(memory.adaptive_picks).slice(0,6).map(r=>`<div class="list-item" style="margin-top:8px"><div style="display:flex;justify-content:space-between;gap:12px"><div><div style="font-weight:700">${esc(r.home||'')} vs ${esc(r.away||'')}</div><div style="font-size:12px;color:var(--muted)">${esc(r.league||'')} • ${esc(r.market||'')} @ ${num(r.odds).toFixed(2)}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:800;color:var(--acc)">Adapt ${num(r.adaptive_score).toFixed(1)}</div><div style="font-size:11px;color:${num(r.memory_bonus)>=0?'var(--grn)':'var(--red)'};margin-top:4px">Mem ${num(r.memory_bonus)>=0?'+':''}${num(r.memory_bonus).toFixed(1)}</div></div></div><div style="font-size:11px;color:var(--muted);margin-top:6px">Prob adj ${pct(r.adjusted_prob||0,2)} • Edge ${pct(r.edge_pct||0,2)} • ${dateFmt(r.event_date)}</div></div>`).join('')||'<div class="empty-state">Încă nu există adaptive picks în memoria curentă.</div>';
+  root.innerHTML=`
+    ${section('Calitatea datasetului','Aici verifici dacă pipeline-ul de training este suficient de curat pentru a alimenta modele și memorie, nu doar dacă există fișiere.',`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">${card('Rows fără dată',fmt(miss),miss?'split temporal blocat':'ok')}${card('Rows non-final',fmt(nonFinal),nonFinal?'live/cancel în dataset':'ok')}${card('Duplicate event_id',fmt(dup),dup?'necesită dedupe':'ok')}${card('Duplicate exacte',fmt(exDup),exDup?'verifică pipeline':'ok')}${card('1X2',`${rate(h,rows.length)} / ${rate(d,rows.length)} / ${rate(a,rows.length)}`,'1 / X / 2')}${card('BTTS / O2.5 / U3.5',`${rate(b,rows.length)} / ${rate(o25,rows.length)} / ${rate(u35,rows.length)}`)}${card('Readiness',fmt(readiness),readiness>=85?'gata pentru learning':readiness>=65?'util, dar încă murdar':'mai trebuie curățat')}</div>`)}
+    ${section('Model summary','Aici se vede dacă există evaluare reală pe piețe, nu doar heuristică.',tableWrap(`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:760px"><thead><tr style="text-align:left;color:var(--muted)"><th style="${th}">Piață</th><th style="${th}">Rows</th><th style="${th}">Prob. medie</th><th style="${th}">Rată reală</th><th style="${th}">Brier</th><th style="${th}">Hit rate 50</th><th style="${th}">Ready</th></tr></thead><tbody>${marketTable}</tbody></table>`)+`<div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5">Versiune model: <b>${esc(model.version||'—')}</b>. Feature basis: ${esc(arr(model.feature_basis).slice(0,8).join(', '))}${arr(model.feature_basis).length>8?'…':''}</div>`)}
+    ${section('Baseline-uri pe ligi','Primele ligi după volum în warehouse-ul de training.',tableWrap(`<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:760px"><thead><tr style="text-align:left;color:var(--muted)"><th style="${th}">Ligă</th><th style="${th}">Meciuri</th><th style="${th}">Goluri medii</th><th style="${th}">O1.5</th><th style="${th}">O2.5</th><th style="${th}">U3.5</th><th style="${th}">BTTS</th></tr></thead><tbody>${baselineTable}</tbody></table>`))}
+    ${section('Top insights din training','Pattern-uri care ies din scoring și pot susține sau penaliza viitoarele recomandări.',`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">${topInsights}</div>`)}
+    ${section('AI Memory – pattern-uri utile vs. pattern-uri de evitat','Aici începe partea de memorie adaptivă: ce trebuie împins și ce trebuie blocat.',`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"><div>${mini('Memory version',esc(memory.version||'—'))}${mini('Patterns pozitive',fmt(memSum.positive_patterns||0))}${mini('Patterns negative',fmt(memSum.negative_patterns||0))}</div><div>${mini('Settled',fmt(memSum.settled_bets||0),`wins ${fmt(memSum.settled_wins||0)} / losses ${fmt(memSum.settled_losses||0)}`)}${mini('Winrate',pct(memSum.settled_winrate||0,2))}${mini('ROI',pct(memSum.settled_roi||0,2))}</div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:12px">${posPatterns||infoBox('Fără pattern-uri pozitive','Nu există încă destule exemple.', 'amber')}${negPatterns||infoBox('Fără pattern-uri negative','Nu există încă destule exemple pentru blocaje.', 'blue')}</div>`)}
+    ${section('Adaptive picks curente','Selecțiile care primesc rescoring din memorie și pot fi folosite de SmartBet Engine.',adaptivePreview)}
+    ${fails.length?section('Eșecuri în dataset','Preview din sezoanele care au picat la build.',`<div style="display:grid;gap:8px">${fails.slice(0,6).map(f=>infoBox(esc(f.league||f.season_name||f.season_id||'Season'),esc(f.error||'eroare necunoscută'),'amber')).join('')}</div>`):''}
+  `;
+}
+
+function rerender(){
+  try{
+    ensure();
+    decorateMoreCards();
+    if($('tab-istoricfull')?.classList.contains('active')) renderFull();
+    if($('tab-apihistory')?.classList.contains('active')) renderApi();
+    if($('tab-traininglab')?.classList.contains('active')) renderTraining();
+  }catch(e){console.error(e);}
+}
+
+function boot(){
+  ensure();
+  if(typeof W.switchTab==='function'&&!W.__fhFixTab){
+    const old=W.switchTab;
+    W.switchTab=function(name){
+      const r=old.apply(this,arguments);
+      if(name==='istoricfull') setTimeout(renderFull,0);
+      if(name==='apihistory') setTimeout(renderApi,0);
+      if(name==='traininglab') setTimeout(renderTraining,0);
+      setTimeout(decorateMoreCards,0);
+      return r;
+    };
+    W.__fhFixTab=1;
+  }
+  if(typeof W.doRefresh==='function'&&!W.__fhFixRefresh){
+    const old=W.doRefresh;
+    W.doRefresh=async function(){
+      const r=await old.apply(this,arguments);
+      await load();
+      rerender();
+      return r;
+    };
+    W.__fhFixRefresh=1;
+  }
+  load().then(()=>{decorateMoreCards(); rerender();});
+}
+
+W.setFullHistoryRange=v=>{W.FULL_HISTORY_RANGE=v||'total'; renderFull();};
+W.setApiHistoryLeague=v=>{W.API_HISTORY_LEAGUE_FILTER=v||'all'; W.API_HISTORY_YEAR_FILTER='all'; renderApi();};
+W.setApiHistoryYear=v=>{W.API_HISTORY_YEAR_FILTER=v||'all'; renderApi();};
+W.setApiHistoryView=v=>{W.API_HISTORY_VIEW=v||'all'; renderApi();};
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
