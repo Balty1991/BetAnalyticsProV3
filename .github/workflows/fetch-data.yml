@@ -69,6 +69,11 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python build_training_features.py
 
+      - name: Build training model pack
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_model_pack.py
+
       - name: Build training scoring baselines
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
@@ -91,7 +96,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data/ index.html build_training_features.py .github/workflows/fetch-data.yml
+          git add data/ index.html build_training_features.py build_training_model_pack.py .github/workflows/fetch-data.yml
 
           if git diff --staged --quiet; then
             echo "No data changes detected. Skipping commit."
