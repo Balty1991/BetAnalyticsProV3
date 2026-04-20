@@ -201,6 +201,32 @@ def update_recommendation_journal(existing_rows, current_rows, finished_events, 
         row["away_score"] = event.get("away_score")
         row["settled_at"] = settled_at_iso
 
+    # Cleanup: intrări pending de >7 zile fără scor → marcate "void"
+    # Acestea nu se mai pot settle (API nu le mai returnează) și
+    # contaminează datele de învățare AI Memory cu false pending
+    now_utc = datetime.now(timezone.utc)
+    stale_void_count = 0
+    for row in by_id.values():
+        if row.get("status") not in (None, "pending"):
+            continue
+        event_date_str = row.get("event_date") or row.get("date") or ""
+        if not event_date_str:
+            continue
+        try:
+            event_dt = datetime.fromisoformat(str(event_date_str).replace("Z", "+00:00"))
+            if event_dt.tzinfo is None:
+                event_dt = event_dt.replace(tzinfo=timezone.utc)
+            hours_since = (now_utc - event_dt.astimezone(timezone.utc)).total_seconds() / 3600
+            if hours_since > 168:  # 7 zile = 168 ore
+                row["status"] = "void"
+                row["settled_at"] = settled_at_iso
+                row["void_reason"] = "stale_no_score"
+                stale_void_count += 1
+        except Exception:
+            pass
+    if stale_void_count:
+        print(f"  Cleanup: {stale_void_count} intrări marcate void (pending >7 zile fără scor)")
+
     out = list(by_id.values())
     out.sort(
         key=lambda x: (
