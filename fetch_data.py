@@ -42,9 +42,9 @@ WEEKDAY_RESTRICTIONS = {
 }
 
 MARKETS = [
-    {"key": "homeWin", "label": "1", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
-    {"key": "draw", "label": "X", "prob": lambda r: pct(r.get("prob_draw")), "odds": lambda e: e.get("odds_draw")},
-    {"key": "awayWin", "label": "2", "prob": lambda r: pct(r.get("prob_away_win")), "odds": lambda e: e.get("odds_away")},
+    {"key": "homeWin", "label": "1 (Home Win)", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
+    {"key": "draw", "label": "X (Draw)", "prob": lambda r: pct(r.get("prob_draw")), "odds": lambda e: e.get("odds_draw")},
+    {"key": "awayWin", "label": "2 (Away Win)", "prob": lambda r: pct(r.get("prob_away_win")), "odds": lambda e: e.get("odds_away")},
     {"key": "over15", "label": "Over 1.5G", "prob": lambda r: pct(r.get("prob_over_15")), "odds": lambda e: e.get("odds_over_15")},
     {"key": "under15", "label": "Under 1.5G", "prob": lambda r: 100 - pct(r.get("prob_over_15")), "odds": lambda e: e.get("odds_under_15")},
     {"key": "over25", "label": "Over 2.5G", "prob": lambda r: pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_over_25")},
@@ -650,7 +650,7 @@ def calc_smart_score(adj_prob, value, confidence, edge_pct, fit_score, source_ap
         score -= 8.0
     if edge < -2.0:
         score -= 12.0
-    return round(score, 2)
+    return round(min(100.0, score), 2)
 
 
 def verdict_from_metrics(adj_prob, value, confidence, edge_pct):
