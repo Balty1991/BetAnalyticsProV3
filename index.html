@@ -10367,7 +10367,11 @@ function getSmartBetAnalysis(){
     var patternInfo = getSmartBetPatternMatchInfo(row, patternMaps);
     var bestPositive = patternInfo.positive[0] || null;
     var worstNegative = patternInfo.avoid[0] || null;
-    var blockedByMemory = !!worstNegative;
+    var directAdaptive = !!adaptive;
+    var patternOnly = !directAdaptive && !!bestPositive;
+
+    // Dacă e confirmat direct de AI Memory, nu mai aplica blocajul de pattern negativ
+    var blockedByMemory = !directAdaptive && !!worstNegative;
 
     if(blockedByMemory){
       blocked.push({
@@ -10378,15 +10382,13 @@ function getSmartBetAnalysis(){
       return;
     }
 
-    var directAdaptive = !!adaptive;
-    var patternOnly = !directAdaptive && !!bestPositive;
     if(!directAdaptive && !patternOnly) return;
 
     var probAdj = Number(row.adjusted_prob || 0);
     var kellyPct = Number(row.kelly_quarter_pct || 0);
     var edgePct = Number(row.edge_pct || 0);
     if(directAdaptive){
-      if(probAdj < 74 || edgePct < 4) return;
+      if(probAdj < 68 || edgePct < 3) return;
     } else {
       if(probAdj < 78 || kellyPct <= 0.5 || edgePct < 5.5) return;
       if(bestPositive && Number(bestPositive.raw_bets || 0) < 6) return;
@@ -11155,6 +11157,5 @@ window.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ v
 </script>
   <script src="./assets/full-history.js?v=20260418"></script>
   <script src="./assets/full-history-hotfix.js?v=20260420hotfix2"></script>
-  <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
 </body>
 </html>
