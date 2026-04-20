@@ -4460,7 +4460,23 @@ function renderBacktest(){
     if(updated) updated.textContent = latestHistoryUpdate ? ('Jurnal real actualizat: ' + fmtDateTime(latestHistoryUpdate.logged_at || latestHistoryUpdate.prediction_created_at)) : 'Jurnal real: —';
     box.innerHTML = '';
 
+    function makeMeta(detailParts){
+      return detailParts.filter(Boolean).join(' • ');
+    }
 
+    function buildCard(card){
+      var valueText = String(card.value == null ? '—' : card.value);
+      var valueSize = valueText.length > 22 ? '12px' : valueText.length > 16 ? '13px' : valueText.length > 12 ? '15px' : '18px';
+      return '<div style="min-height:96px;padding:9px;border:1px solid var(--brd2);border-radius:14px;background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 24px rgba(0,0,0,.18)">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">'+
+          '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">'+card.label+'</div>'+
+          '<div style="width:42px;height:4px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;flex-shrink:0"><div style="height:100%;width:'+Math.max(8, Math.min(100, Number(card.pct || 0)))+'%;background:'+card.color+';border-radius:999px"></div></div>'+
+        '</div>'+
+        '<div style="font-size:'+valueSize+';font-weight:800;line-height:1.15;color:'+card.color+';'+(card.mono ? 'font-family:var(--mono);' : '')+'word-break:break-word">'+valueText+'</div>'+
+        '<div style="margin-top:6px;font-size:10px;line-height:1.35;color:var(--txt)">'+(card.detail || '—')+'</div>'+
+        '<div style="margin-top:6px;font-size:9px;line-height:1.35;color:var(--muted)">'+(card.legend || '')+'</div>'+
+      '</div>';
+    }
 
     var cardsReal = [
       {
@@ -6325,61 +6341,4 @@ function generateCustomTicket(){
       };
       var fallbackCombo = findBestCustomCombo(fallbackList, opts, fallbackProfile, Math.max(1.20, currentTargetOdds * 0.82), 2);
       if(fallbackCombo && fallbackCombo.picks.length){
-        finalizeTicket('custom_combo', '🎛️ Bilet personalizat (fallback AI)', fallbackCombo.picks, fallbackCombo.totalOdds);
-        setCustomTicketMeta(opts.stake, opts.risk);
-        renderBilete();
-        toast('Generatorul a relaxat automat filtrele', 'warn');
-        return;
-      }
-    }
-  }
-
-  setTicketError('Nu există combinație suficient de bună pentru setările alese. Redu cota dorită sau lasă modul pe Optimizează AI.');
-}
-function generateOver15Ticket(){
-  var baseProfile = {
-    allowedTypes: ['over15'],
-    minAdjProb: 76,
-    minValue: 0.010,
-    minConf: 48,
-    minOdd: 1.12,
-    maxOdd: 1.40,
-    minPicks: 5,
-    maxPicks: 8,
-    targetMinOdds: 2.80,
-    targetMaxOdds: 7.80,
-    hardMaxOdds: 10.50,
-    maxSameLeague: 2,
-    maxSameMarket: 99
-  };
-
-  for(var relax = 0; relax <= 2; relax++){
-    var pack = collectCandidates(['over15'], baseProfile, relax);
-    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
-    if(chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds){
-      finalizeTicket('over15', '🔥 Bilet 1.5G EV+', chosen.picks, chosen.totalOdds);
-      return;
-    }
-  }
-
-  finalizeTicket('over15', '🔥 Bilet 1.5G EV+', [], 1);
-}
-
-function generateOver35Ticket(){
-  setTicketError('Piața Over 3.5G a fost scoasă complet din aplicație.');
-}
-
-function generateMixTicket(){
-  var baseProfile = {
-    allowedTypes: ['over15','over25','under25','under35','btts'],
-    minAdjProb: 70,
-    minValue: 0.018,
-    minConf: 54,
-    minOdd: 1.20,
-    maxOdd: 1.90,
-    minPicks: 3,
-    maxPicks: 5,
-    targetMinOdds: 4.20,
-    targetMaxOdds: 6.00,
-    hardMaxOdds: 6.80,
-    maxSameLeagu
+        finalizeTicket('custom_combo', '🎛️ Bilet personalizat (fallback AI
