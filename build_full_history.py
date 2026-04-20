@@ -17,6 +17,7 @@ from fetch_data import (
     MARKETS,
     STRATEGIES,
 )
+from build_ai_memory_enhanced import enhance_ai_memory
 
 FULL_HISTORY_LOOKBACK_DAYS = int(os.environ.get("FULL_HISTORY_LOOKBACK_DAYS", str(365 * 2)) or (365 * 2))
 FULL_HISTORY_MAX_ROWS = int(os.environ.get("FULL_HISTORY_MAX_ROWS", "60000") or 60000)
@@ -348,6 +349,7 @@ def main():
     save_json(recommendation_journal, "recommendation_journal.json")
     save_json(meta, "full_history_meta.json")
     index_changed = ensure_full_history_script_tag("index.html")
+    enhance_ai_memory()
     print(
         f"Full history built: predictions={len(predictions)} history_rows={len(history_rows)} journal_rows={len(recommendation_journal)} index_changed={index_changed} status={meta.get('status')} lookback={meta.get('lookback_days')}"
     )
