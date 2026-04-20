@@ -2760,6 +2760,20 @@ function renderModernDashboard(){
     ? (availableToday + ' meciuri disponibile ' + (availableToday && eligibleLocal.some(function(m){ return inferMarketTypeFromLabel(((m.bestBet || {}).label) || '') === bestHistoryMarket.market && isSameLocalDay(m.event_date || m.eventDate); }) ? 'azi' : 'în pool-ul curent') + ' în această piață • ROI ' + signed(bestHistoryMarket.roi || 0, '%') + ' • win ' + Number(bestHistoryMarket.winrate || 0).toFixed(1) + '% • ' + Number(bestHistoryMarket.wins || 0) + '/' + Number(bestHistoryMarket.bets || 0) + ' închise.')
     : 'Pe măsură ce se închid recomandările, dashboard-ul îți va sugera automat piețele unde performezi mai bine.';
 
+  // Piața zilei - weekday-aware recommendation
+  var _todayWd = (new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
+  var _wdNames2 = ['Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă','Duminică'];
+  var _marketGood = {
+    0: ['Under 3.5G'], 1: ['Under 3.5G','BTTS'], 2: ['Over 2.5G','BTTS','Over 1.5G'],
+    3: ['BTTS'], 4: ['Over 2.5G','BTTS'], 5: ['Under 3.5G','BTTS','Over 1.5G'], 6: ['BTTS']
+  };
+  var _marketBad = {
+    0: ['Over 1.5G'], 1: [], 2: ['Under 3.5G'], 3: ['Under 3.5G','Over 1.5G'],
+    4: ['Under 3.5G','Over 1.5G'], 5: [], 6: ['Under 3.5G']
+  };
+  var _goodToday = (_marketGood[_todayWd] || []).join(' • ') || '—';
+  var _badToday = (_marketBad[_todayWd] || []).join(' • ') || '—';
+
   var topOppHtml = topOpps.length ? topOpps.map(function(m, idx){
     var bestBet = m.bestBet || {};
     var score = Math.round(Number(m.smartScore || oppSortScore(m) || 0));
@@ -2837,6 +2851,8 @@ function renderModernDashboard(){
         '<span class="dashboard-v16-reco-pill">ML sync ' + rawMl + '</span>'+
         '<span class="dashboard-v16-reco-pill">Cu cote ' + rawOdds + '</span>'+
         '<span class="dashboard-v16-reco-pill">Pool eligibil ' + analyzedCount + '</span>'+
+        (_goodToday !== '—' ? '<span class="dashboard-v16-reco-pill" style="background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.25);color:var(--grn)">✓ ' + _goodToday + '</span>' : '')+
+        (_badToday !== '—' ? '<span class="dashboard-v16-reco-pill" style="background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.22);color:var(--red)">✗ ' + _badToday + '</span>' : '')+
       '</div>'+
     '</div>'+
   '</div>';
@@ -8938,6 +8954,7 @@ function renderAll(){
   var statusMetrics = getStatusDisplayMetrics();
   var rawMl = statusMetrics.ml;
   var saCount = (SIGNAL_AUDIT && SIGNAL_AUDIT.count) ? String(SIGNAL_AUDIT.count) : '0';
+  var saCountLabel = saCount + (saCount === '1' ? ' semnal top' : ' semnale top');
   var rawOdds = statusMetrics.odds;
 
   if($('st-total')) $('st-total').textContent = rawMl;
@@ -8948,7 +8965,7 @@ function renderAll(){
   if($('hq-ml')) $('hq-ml').textContent = rawMl;
   if($('hq-odds')) $('hq-odds').textContent = rawOdds;
   if($('hq-safe')) $('hq-safe').textContent = safe;
-  $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCount+' semnale top — ora '+timeStr;
+  $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr;
 
   buildLeagueFilter();
   renderBacktest();
@@ -9537,6 +9554,24 @@ function getPresetTicketCards(){
 function renderBilete(){
   var container = $('bilete-container');
   if(!container) return;
+
+  // Weekday restrictions banner
+  var _wdNow = new Date().getDay(); // 0=Sun,1=Mon...
+  var _wdMon = (_wdNow === 0 ? 6 : _wdNow - 1); // convert to 0=Mon...6=Sun
+  var _wdRestrictions = {'under35':[2,3,4,6],'over15':[0,3,4]};
+  var _wdNames = ['Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă','Duminică'];
+  var _wdBadMarkets = Object.keys(_wdRestrictions).filter(function(m){ return _wdRestrictions[m].indexOf(_wdMon) >= 0; });
+  if(_wdBadMarkets.length > 0){
+    var _wdBanner = container.previousElementSibling && container.previousElementSibling.classList && container.previousElementSibling.classList.contains('wd-banner');
+    if(!_wdBanner){
+      var _banner = document.createElement('div');
+      _banner.className = 'wd-banner';
+      _banner.style.cssText = 'margin-bottom:10px;padding:10px 14px;border-radius:12px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);font-size:12px;color:var(--yel);display:flex;align-items:center;gap:8px;';
+      _banner.innerHTML = '⚠️ <strong>' + _wdNames[_wdMon] + '</strong>: engine-ul evită <strong>' + _wdBadMarkets.join(', ') + '</strong> azi (ROI negativ istoric în această zi)';
+      container.parentNode && container.parentNode.insertBefore(_banner, container);
+    }
+  }
+
   if(!BILETE || !BILETE.picks || BILETE.picks.length === 0){
     var msg = (BILETE && BILETE.error) ? BILETE.error : 'Alege un generator și creează biletul dorit.';
     container.innerHTML = '<div class="ticket-empty-cta"><div class="ticket-empty-cta-title">Niciun bilet generat încă</div><div class="ticket-empty-cta-sub">'+msg+'</div></div>';
