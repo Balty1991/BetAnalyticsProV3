@@ -9,8 +9,19 @@ async function loadSkipped(){
   const paths=['./data/api_events_history_skipped_no_data.json','data/api_events_history_skipped_no_data.json','/BetAnalyticsProV3/data/api_events_history_skipped_no_data.json'];
   for(const p of paths){
     try{
-      const r=await fetch(p+'?v=20260420hotfix1',{cache:'no-store'});
+      const r=await fetch(p+'?v=20260420hotfix2',{cache:'no-store'});
       if(r.ok){ skipped=arr(await r.json()); return; }
+    }catch(e){}
+  }
+  const summaryPaths=['./data/api_events_history_summary.json','data/api_events_history_summary.json','/BetAnalyticsProV3/data/api_events_history_summary.json'];
+  for(const p of summaryPaths){
+    try{
+      const r=await fetch(p+'?v=20260420hotfix2',{cache:'no-store'});
+      if(r.ok){
+        const json=await r.json();
+        skipped=arr(json && json.skipped_no_data_preview);
+        return;
+      }
     }catch(e){}
   }
 }
