@@ -33,6 +33,15 @@ RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 
+# Ligi cu ROI negativ semnificativ în backtest (excluse din semnale)
+# Champions League: -54.5%, MLS: -35.5%, Copa Libertadores: -35.5%, Superliga: -30.25%
+BLACKLISTED_LEAGUES = {
+    "Champions League",
+    "MLS",
+    "Copa Libertadores",
+    "Superliga",
+}
+
 MARKETS = [
     {"key": "homeWin", "label": "1", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
     {"key": "draw", "label": "X", "prob": lambda r: pct(r.get("prob_draw")), "odds": lambda e: e.get("odds_draw")},
@@ -685,6 +694,8 @@ def qualifies_for_strategy(candidate, strategy_cfg):
     if odds_in_ranges(candidate.get("odds"), strategy_cfg.get("exclude_odds_ranges") or []):
         return False
     if candidate.get("league_tier") in (strategy_cfg.get("reject_league_tiers") or set()):
+        return False
+    if candidate.get("league") in BLACKLISTED_LEAGUES:
         return False
     edge = candidate["edge_pct"] if candidate["edge_pct"] is not None else -999
     if edge < strategy_cfg["min_edge"]:
