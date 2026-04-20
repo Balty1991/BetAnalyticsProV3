@@ -41,7 +41,6 @@ function isSkippedText(text){
 function runApiHistoryCleanup(){
   const tab=$('tab-apihistory');
   if(!tab) return;
-
   tab.querySelectorAll('table tbody').forEach(tbody=>{
     [...tbody.querySelectorAll('tr')].forEach(tr=>{
       const tds=tr.querySelectorAll('td');
@@ -51,7 +50,6 @@ function runApiHistoryCleanup(){
       if(events<=0 || sample<=0) tr.remove();
     });
   });
-
   if(skipped.length){
     [...tab.querySelectorAll('div')].forEach(el=>{
       const style=String(el.getAttribute('style')||'');
@@ -59,6 +57,88 @@ function runApiHistoryCleanup(){
       if(isSkippedText(el.textContent||'')) el.remove();
     });
   }
+}
+
+function patchSmartBetAnalysis(){
+  if(W.__smartbetRoiPatchApplied) return;
+  if(typeof W.getSmartBetAnalysis!=='function') return;
+  const oldGet = W.getSmartBetAnalysis;
+
+  W.getSmartBetAnalysis = function(){
+    const analysis = oldGet();
+    if(!analysis || !arr(analysis.pool).length) return analysis;
+    const adaptiveMap = typeof W.getSmartBetAdaptiveMap==='function' ? W.getSmartBetAdaptiveMap() : {};
+    const originalBlocked = arr(analysis.blocked).slice();
+    const pool = [];
+    let hardBlocked = 0;
+
+    arr(analysis.pool).forEach(function(r){
+      const key1 = String(r.event_id || '') + '|' + String(r.marketKey || '');
+      const key2 = [String(r.home || '').toLowerCase(), String(r.away || '').toLowerCase(), String(r.marketKey || '')].join('|');
+      const adaptive = adaptiveMap[key1] || adaptiveMap[key2] || {};
+      const journalMem = adaptive.journal_memory_bonus != null ? n(adaptive.journal_memory_bonus) : 0;
+      const learningState = adaptive.learning_state || (journalMem >= 2.5 ? 'accelerating' : (journalMem <= -2.5 ? 'cautious' : 'stable'));
+      const patternRoi = n(r.bestPositivePattern && r.bestPositivePattern.roi || 0);
+      const patternSample = n(r.bestPositivePattern && r.bestPositivePattern.raw_bets || 0);
+      const valuePct = n(r.value || 0) * 100;
+      const roiPriority = n(r.smartScore || 0)
+        + Math.max(0, journalMem) * 1.6
+        + Math.max(0, patternRoi) * 0.14
+        + Math.max(0, n(r.edge || 0)) * 0.45
+        + Math.max(0, valuePct) * 0.28
+        - Math.max(0, -journalMem) * 2.1
+        - (learningState === 'cautious' ? 8 : 0)
+        - ((patternRoi < -10 && patternSample >= 5) ? 6 : 0);
+
+      const shouldBlock =
+        (learningState === 'cautious' && journalMem <= -2.5 && n(r.edge || 0) < 6) ||
+        (!r.directAdaptive && patternRoi < -10 && patternSample >= 5) ||
+        (n(r.memoryBonus || 0) <= -6 && n(r.edge || 0) < 7);
+
+      if(shouldBlock){
+        hardBlocked += 1;
+        originalBlocked.push({ row:r, reason:{ label:'ROI-first prune', memory_score:journalMem, roi:patternRoi, raw_bets:patternSample }, marketKey:r.marketKey });
+        return;
+      }
+
+      pool.push(Object.assign({}, r, {
+        roiPriority: +roiPriority.toFixed(2),
+        journalMemoryBonus: journalMem,
+        learningState: learningState,
+      }));
+    });
+
+    pool.sort((a,b)=>{
+      if(n(b.roiPriority||0) !== n(a.roiPriority||0)) return n(b.roiPriority||0) - n(a.roiPriority||0);
+      if(n(b.smartScore||0) !== n(a.smartScore||0)) return n(b.smartScore||0) - n(a.smartScore||0);
+      return n(b.edge||0) - n(a.edge||0);
+    });
+
+    const diversified = [];
+    const perMarket = {};
+    let diversificationPruned = 0;
+    pool.forEach(function(r){
+      const mk = String(r.marketKey || 'na');
+      const cap = mk === 'btts' || mk === 'over25' ? 2 : 3;
+      if(perMarket[mk] >= cap && pool.length > 5){
+        diversificationPruned += 1;
+        return;
+      }
+      diversified.push(r);
+      perMarket[mk] = (perMarket[mk] || 0) + 1;
+    });
+
+    analysis.pool = diversified;
+    analysis.blocked = originalBlocked;
+    analysis.roiFocus = {
+      hardBlocked: hardBlocked,
+      diversificationPruned: diversificationPruned,
+      kept: diversified.length,
+    };
+    return analysis;
+  };
+
+  W.__smartbetRoiPatchApplied = 1;
 }
 
 function patchSmartBet(){
@@ -75,6 +155,7 @@ function patchSmartBet(){
     var analysis = W.getSmartBetAnalysis();
     var pool = analysis.pool || [];
     var blocked = analysis.blocked || [];
+    var roiFocus = analysis.roiFocus || {};
     var adaptiveMap = typeof W.getSmartBetAdaptiveMap==='function' ? W.getSmartBetAdaptiveMap() : {};
     var aiSummary = (W.AI_MEMORY && W.AI_MEMORY.summary) || {};
     var journalLearning = (W.AI_MEMORY && W.AI_MEMORY.journal_learning) || {};
@@ -85,7 +166,7 @@ function patchSmartBet(){
       var ts = (W.AI_MEMORY && W.AI_MEMORY.updated_at) || (W.SIGNAL_AUDIT && W.SIGNAL_AUDIT.updated_at) || (W.APP_META && W.APP_META.updated_at) || '';
       updated.textContent = ts ? ('SmartBet actualizat: ' + (typeof W.fmtDateTime==='function' ? W.fmtDateTime(ts) : ts)) : 'SmartBet: —';
     }
-    if(meta) meta.textContent = pool.length + ' validate • ' + blocked.length + ' blocate • ' + (journalLearning.rows_settled || aiSummary.journal_rows_settled || 0) + ' rows jurnal';
+    if(meta) meta.textContent = pool.length + ' validate • ' + blocked.length + ' blocate • ' + (journalLearning.rows_settled || aiSummary.journal_rows_settled || 0) + ' rows jurnal • prune ROI ' + (n(roiFocus.hardBlocked||0) + n(roiFocus.diversificationPruned||0));
 
     var avgScore = pool.length ? (pool.reduce((acc,row)=>acc + n(row.smartScore || 0),0) / pool.length) : 0;
     var avgEdge = pool.length ? (pool.reduce((acc,row)=>acc + n(row.edge || 0),0) / pool.length) : 0;
@@ -94,7 +175,7 @@ function patchSmartBet(){
 
     var cards = [
       {label:'Validate', value:String(pool.length), sub:'trecute prin audit + memorie', color:'var(--acc)'},
-      {label:'Blocate', value:String(blocked.length), sub:'respinse de pattern negativ', color:'var(--red)'},
+      {label:'Blocate', value:String(blocked.length), sub:'respinse de pattern negativ / ROI', color:'var(--red)'},
       {label:'Smart score', value:pool.length ? avgScore.toFixed(1) : '—', sub:'media scorului final', color:'var(--pur)'},
       {label:'Prob. medie', value:pool.length ? fmtPctSafe(avgProb) : '—', sub:'probabilitate ajustată medie', color:'var(--grn)'},
       {label:'Rows jurnal', value:String(journalLearning.rows_settled || aiSummary.journal_rows_settled || 0), sub:'istoric real folosit la learning', color:'var(--cyan)'},
@@ -116,10 +197,10 @@ function patchSmartBet(){
       var key2 = [String(r.home || '').toLowerCase(), String(r.away || '').toLowerCase(), (r.marketKey || '')].join('|');
       var adaptive = adaptiveMap[key1] || adaptiveMap[key2] || {};
       var baseMem = adaptive.base_memory_bonus != null ? n(adaptive.base_memory_bonus) : n(r.memoryBonus || 0);
-      var journalMem = adaptive.journal_memory_bonus != null ? n(adaptive.journal_memory_bonus) : 0;
+      var journalMem = adaptive.journal_memory_bonus != null ? n(adaptive.journal_memory_bonus) : n(r.journalMemoryBonus || 0);
       var totalMem = adaptive.memory_bonus != null ? n(adaptive.memory_bonus) : n(r.memoryBonus || 0);
       var adaptiveScore = adaptive.adaptive_score != null ? n(adaptive.adaptive_score) : n(r.adaptiveScore || 0);
-      var learningState = adaptive.learning_state || (journalMem >= 2.5 ? 'accelerating' : (journalMem <= -2.5 ? 'cautious' : 'stable'));
+      var learningState = adaptive.learning_state || r.learningState || (journalMem >= 2.5 ? 'accelerating' : (journalMem <= -2.5 ? 'cautious' : 'stable'));
       var learningColor = learningState === 'accelerating' ? 'var(--grn)' : (learningState === 'cautious' ? 'var(--red)' : 'var(--acc)');
       var valuePct = n(r.value || 0) * 100;
       var reasons = arr(adaptive.reasons || r.aiReasons || []).slice(0,4);
@@ -137,6 +218,7 @@ function patchSmartBet(){
         '</div>'+
         '<div class="audit-row-tags">'+
           '<span class="audit-badge" style="color:var(--pur)">Smart '+n(r.smartScore || 0).toFixed(0)+'</span>'+
+          '<span class="audit-badge" style="color:'+(n(r.roiPriority || 0) >= 0 ? 'var(--grn)' : 'var(--red)')+'">ROI '+n(r.roiPriority || 0).toFixed(1)+'</span>'+
           '<span class="audit-badge" style="color:'+(totalMem >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(totalMem >= 0 ? '+' : '')+totalMem.toFixed(1)+'</span>'+
           '<span class="audit-badge" style="color:'+(journalMem >= 0 ? 'var(--grn)' : 'var(--red)')+'">Journal '+(journalMem >= 0 ? '+' : '')+journalMem.toFixed(1)+'</span>'+
           '<span class="audit-badge" style="color:'+learningColor+'">'+esc(learningState)+'</span>'+
@@ -163,6 +245,7 @@ function patchSmartBet(){
 
 function run(){
   runApiHistoryCleanup();
+  patchSmartBetAnalysis();
   patchSmartBet();
 }
 
