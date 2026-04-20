@@ -1910,6 +1910,401 @@ input, select, textarea {
   box-shadow: 0 0 0 3px rgba(0,212,168,0.1);
 }
 
+/* ═══════════════════════════════════════════════════════
+   REDESIGN v2 — PART 2 · Modern Components
+   ═══════════════════════════════════════════════════════ */
+
+/* ── DASHBOARD HERO ──────────────────────────────────── */
+.modern-monitor-hero {
+  background: linear-gradient(135deg,
+    rgba(0,212,168,.10) 0%,
+    rgba(6,182,212,.07) 40%,
+    rgba(139,92,246,.08) 100%) !important;
+  border: 1px solid rgba(0,212,168,.22) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(0,212,168,.08) !important;
+  border-radius: 22px !important;
+}
+.modern-monitor-hero::after {
+  background: radial-gradient(circle, rgba(0,212,168,.22), transparent 65%) !important;
+  animation: monitorPulse 5s ease-in-out infinite !important;
+}
+.modern-kicker {
+  color: var(--acc) !important;
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: 0.14em !important;
+}
+.modern-title {
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: -0.03em !important;
+  background: linear-gradient(135deg, #e4f0ff 0%, #b2e8e0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.modern-meta-pill {
+  background: rgba(0,212,168,.07) !important;
+  border: 1px solid rgba(0,212,168,.18) !important;
+  font-family: var(--mono) !important;
+}
+.modern-live-badge {
+  background: rgba(5,9,15,.55) !important;
+  border: 1px solid rgba(0,212,168,.2) !important;
+  font-family: 'Outfit', sans-serif !important;
+}
+.modern-live-dot {
+  background: var(--acc) !important;
+  box-shadow: 0 0 0 0 rgba(0,212,168,.6) !important;
+  animation: tealPulseDot 1.8s ease infinite !important;
+}
+@keyframes tealPulseDot {
+  0%   { box-shadow: 0 0 0 0 rgba(0,212,168,.6); }
+  70%  { box-shadow: 0 0 0 10px rgba(0,212,168,0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,212,168,0); }
+}
+
+/* ── KPI CARDS ───────────────────────────────────────── */
+.modern-kpi {
+  background: rgba(11,18,34,.9) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04) !important;
+  transition: all 0.22s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+.modern-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,168,.2), transparent);
+}
+.modern-kpi.clickable:hover {
+  border-color: rgba(0,212,168,.22) !important;
+  box-shadow: 0 10px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(0,212,168,.1) !important;
+  transform: translateY(-2px) !important;
+}
+.modern-kpi-label {
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: 0.1em !important;
+}
+.modern-kpi-value {
+  font-family: var(--mono) !important;
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+.modern-kpi-sub {
+  font-family: 'Outfit', sans-serif !important;
+}
+
+/* ── MONITOR CARDS (Flow) ────────────────────────────── */
+.monitor-card {
+  background: rgba(11,18,34,.88) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 6px 22px rgba(0,0,0,.28) !important;
+  transition: all 0.22s ease;
+}
+.monitor-card:hover {
+  border-color: rgba(0,212,168,.15) !important;
+  transform: translateY(-1px);
+}
+.monitor-kicker { font-family: 'Outfit', sans-serif !important; letter-spacing: 0.1em !important; }
+.monitor-value  { font-family: var(--mono) !important; letter-spacing: -0.02em !important; }
+.monitor-label  { font-family: 'Outfit', sans-serif !important; }
+.monitor-meta   { font-family: 'Outfit', sans-serif !important; }
+
+/* ── MATCH CARD v16 ──────────────────────────────────── */
+.match-card-v16 {
+  background: rgba(11,18,34,.92) !important;
+  border: 1px solid rgba(0,212,168,.12) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 10px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03) !important;
+  transition: all 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+}
+.match-card-v16:hover {
+  border-color: rgba(0,212,168,.25) !important;
+  box-shadow: 0 16px 44px rgba(0,0,0,.5), 0 0 0 1px rgba(0,212,168,.12) !important;
+  transform: translateY(-3px) !important;
+}
+.match-card-v16 .m16-top,
+.match-card-v16 .m16-reco,
+.match-card-v16 .m16-signals,
+.match-card-v16 .m16-actions,
+.match-card-v16 .m16-extra {
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid rgba(255,255,255,.055) !important;
+  border-radius: 16px !important;
+}
+.match-card-v16 .m16-kickoff-pill {
+  background: rgba(0,212,168,.1) !important;
+  border: 1px solid rgba(0,212,168,.25) !important;
+  color: var(--acc) !important;
+}
+.match-card-v16 .m16-team-logo {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(0,212,168,.12) !important;
+  border-radius: 14px !important;
+}
+.match-card-v16 .m16-team-name {
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em !important;
+}
+.match-card-v16 .m16-team-prob {
+  font-family: var(--mono) !important;
+  color: var(--acc) !important;
+}
+.match-card-v16 .m16-vs {
+  font-family: 'Outfit', sans-serif !important;
+  color: var(--muted) !important;
+}
+/* Probability bar — teal/amber/blue */
+.match-card-v16 .m16-ml-bar {
+  background: rgba(255,255,255,.04) !important;
+  border-color: rgba(0,212,168,.1) !important;
+  height: 14px !important;
+  border-radius: 999px !important;
+}
+.match-card-v16 .m16-ml-home {
+  background: linear-gradient(90deg, #00d4a8, rgba(0,212,168,.5)) !important;
+}
+.match-card-v16 .m16-ml-draw {
+  background: linear-gradient(90deg, #fbbf24, rgba(251,191,36,.5)) !important;
+}
+.match-card-v16 .m16-ml-away {
+  background: linear-gradient(90deg, #8b5cf6, rgba(139,92,246,.5)) !important;
+}
+/* Recommendation box inside v16 */
+.match-card-v16 .m16-reco-main {
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: -0.02em !important;
+}
+.match-card-v16 .m16-reco-main .odd { color: var(--acc) !important; }
+.match-card-v16 .m16-reco-title {
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* ── HISTORY CARDS ───────────────────────────────────── */
+#history21-root .history-summary-card,
+#smartbet-history-root .history-summary-card {
+  background: rgba(11,18,34,.88) !important;
+  border-color: rgba(255,255,255,.07) !important;
+  border-radius: 18px !important;
+  transition: all 0.2s ease !important;
+}
+#history21-root .history-summary-card:hover,
+#smartbet-history-root .history-summary-card:hover {
+  border-color: rgba(0,212,168,.2) !important;
+  transform: translateY(-2px) !important;
+}
+#history21-root .history-summary-card.active,
+#smartbet-history-root .history-summary-card.active {
+  border-color: rgba(0,212,168,.38) !important;
+  background: linear-gradient(135deg, rgba(0,212,168,.1), rgba(6,182,212,.05)) !important;
+  box-shadow: 0 0 0 1px rgba(0,212,168,.12), 0 8px 24px rgba(0,0,0,.25) !important;
+}
+#history21-root .history-summary-label,
+#smartbet-history-root .history-summary-label {
+  font-family: 'Outfit', sans-serif !important;
+}
+#history21-root .history-summary-roi,
+#smartbet-history-root .history-summary-roi {
+  font-family: var(--mono) !important;
+}
+#history21-root .history-metric,
+#smartbet-history-root .history-metric {
+  background: rgba(255,255,255,.03) !important;
+  border-color: rgba(255,255,255,.06) !important;
+  border-radius: 12px !important;
+}
+#history21-root .history-metric .k,
+#smartbet-history-root .history-metric .k {
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: 0.06em !important;
+}
+#history21-root .history-metric .v,
+#smartbet-history-root .history-metric .v {
+  font-family: var(--mono) !important;
+}
+#history21-root .history-status-pill,
+#smartbet-history-root .history-status-pill {
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 800 !important;
+}
+#history21-root .history-detail-card,
+#smartbet-history-root .history-detail-card {
+  background: rgba(11,18,34,.9) !important;
+  border-color: rgba(255,255,255,.07) !important;
+  border-radius: 20px !important;
+}
+
+/* ── FEATURE LAUNCH BUTTONS ──────────────────────────── */
+.feature-launch-btn {
+  background: rgba(11,18,34,.9) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 18px !important;
+  transition: all 0.22s ease !important;
+}
+.feature-launch-btn:hover {
+  border-color: rgba(0,212,168,.22) !important;
+  background: rgba(0,212,168,.04) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3) !important;
+}
+
+/* ── MOBILE GRID TABS ────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Re-style tabs when they might be showing on mobile (fallback) */
+  .tab {
+    border-radius: 14px !important;
+    font-size: 11px !important;
+    padding: 10px 6px !important;
+    border-bottom: none !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+  }
+  .tab.active {
+    background: rgba(0,212,168,.12) !important;
+    color: var(--acc) !important;
+    border: 1px solid rgba(0,212,168,.25) !important;
+    box-shadow: 0 0 14px rgba(0,212,168,.12) !important;
+    text-shadow: none !important;
+    border-bottom: none !important;
+  }
+  /* Dashboard hero on mobile */
+  .modern-title {
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+/* ── PROGRESS / FLOW BARS ────────────────────────────── */
+.monitor-flow-fill {
+  background: linear-gradient(90deg, var(--acc), rgba(0,212,168,.5)) !important;
+}
+.monitor-flow-fill::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 50%, transparent 100%) !important;
+}
+
+/* ── SIGNAL CHIPS ────────────────────────────────────── */
+.m16-signal-chip {
+  background: rgba(0,212,168,.07) !important;
+  border: 1px solid rgba(0,212,168,.18) !important;
+  color: var(--acc) !important;
+}
+
+/* ── COMPACT CONTEXT PANEL ───────────────────────────── */
+.compact-context-panel {
+  background: rgba(11,18,34,.88) !important;
+  border: 1px solid rgba(255,255,255,.065) !important;
+  border-radius: 18px !important;
+}
+
+/* ── ONBOARDING ──────────────────────────────────────── */
+.onboarding-overlay {
+  background: rgba(2,5,12,.88) !important;
+}
+.onboarding-card {
+  background: rgba(11,18,34,.98) !important;
+  border: 1px solid rgba(0,212,168,.15) !important;
+  border-radius: 24px !important;
+}
+
+/* ── SHIMMER LOADING EFFECT ──────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.loading-shimmer {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,.03) 0%,
+    rgba(0,212,168,.07) 50%,
+    rgba(255,255,255,.03) 100%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* ── SECTION DIVIDERS ────────────────────────────────── */
+.sec-hdr::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0,212,168,.12), transparent);
+  margin-left: 10px;
+}
+
+/* ── HEATMAP ─────────────────────────────────────────── */
+.heat-cell {
+  border-radius: 10px !important;
+  font-family: var(--mono) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.heat-cell:hover {
+  transform: scale(1.04) !important;
+  box-shadow: 0 0 14px rgba(0,212,168,.2) !important;
+  z-index: 2 !important;
+}
+
+/* ── VIEW MODE SWITCH ────────────────────────────────── */
+.view-mode-switch {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 999px !important;
+}
+.view-mode-btn.active {
+  background: rgba(0,212,168,.12) !important;
+  color: var(--acc) !important;
+  box-shadow: 0 0 10px rgba(0,212,168,.1) !important;
+}
+
+/* ── FOOTER / GENERATOR STATUS ───────────────────────── */
+.generator-status {
+  font-family: 'Outfit', sans-serif !important;
+  color: var(--muted) !important;
+  border-top-color: rgba(255,255,255,.05) !important;
+}
+
+/* ── MATCH WHY SECTION ───────────────────────────────── */
+.match-why {
+  background: rgba(0,212,168,.04) !important;
+  border: 1px solid rgba(0,212,168,.12) !important;
+  border-radius: 14px !important;
+  font-family: 'Outfit', sans-serif !important;
+}
+.match-why strong { color: var(--acc) !important; }
+
+/* ── INLINE MATCH CHIPS ──────────────────────────────── */
+.match-inline-chip {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  font-family: 'Outfit', sans-serif !important;
+  border-radius: 999px !important;
+  transition: all 0.15s ease;
+}
+.match-inline-chip:hover {
+  border-color: rgba(0,212,168,.22) !important;
+  color: var(--acc) !important;
+}
+
+/* ── COTA 2 ──────────────────────────────────────────── */
+.cota2-chip {
+  background: rgba(0,212,168,.07) !important;
+  border-color: rgba(0,212,168,.2) !important;
+  color: var(--acc) !important;
+}
+.cota2-alt-card {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(255,255,255,.06) !important;
+  border-radius: 16px !important;
+  transition: all 0.2s ease;
+}
+.cota2-alt-card:hover {
+  border-color: rgba(0,212,168,.18) !important;
+}
+
 
 </style>
 </head>
