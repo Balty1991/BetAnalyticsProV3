@@ -113,9 +113,11 @@ def source_label(row):
 
 
 def won_flag(row):
+    status = str(row.get('status') or '').lower()
+    if status == 'void':
+        return None  # exclus din calcule
     if row.get('won') is not None:
         return bool(row.get('won'))
-    status = str(row.get('status') or '').lower()
     if status in {'win', 'won'}:
         return True
     if status in {'lose', 'lost'}:
@@ -130,6 +132,9 @@ def journal_rows():
     for row in rows or []:
         market_key = str(row.get('market_key') or row.get('market') or '').lower().strip()
         if market_key not in VALID_MARKETS:
+            continue
+        # Sări peste intrările void (pending >7 zile fără scor)
+        if str(row.get('status') or '').lower() == 'void':
             continue
         won = won_flag(row)
         if won is None:
