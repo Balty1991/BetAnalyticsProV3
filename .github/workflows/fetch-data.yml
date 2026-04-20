@@ -2,7 +2,7 @@ name: Fetch BetAnalytics Data
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -91,6 +91,11 @@ jobs:
           FULL_HISTORY_MAX_ROWS: '60000'
           FULL_HISTORY_PREDICTION_MAX_AGE_HOURS: '17544'
         run: python build_full_history.py
+
+      - name: Build AI Memory enhanced
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_ai_memory_enhanced.py
 
       - name: Commit and push changes when data changed
         run: |
