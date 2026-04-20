@@ -2,7 +2,7 @@ name: Fetch BetAnalytics Data
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: fetch-betanalytics-data
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   fetch-data:
@@ -101,7 +101,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data/ index.html build_training_features.py build_training_model_pack.py .github/workflows/fetch-data.yml
+          git add data/ index.html build_training_features.py build_training_model_pack.py .github/workflows/fetch-data.yml .gitignore
 
           if git diff --staged --quiet; then
             echo "No data changes detected. Skipping commit."
