@@ -57,7 +57,6 @@ STRATEGIES = {
         "min_value": 0.0,
         "odd_min": 1.15,
         "odd_max": 1.65,
-        "exclude_odds_ranges": [(1.26, 1.45)],  # ROI -3.66% pe 59 pariuri
     },
     "best_single": {
         "label": "Evenimentul zilei",
@@ -68,7 +67,6 @@ STRATEGIES = {
         "min_value": 0.0,
         "odd_min": 1.20,
         "odd_max": 1.95,
-        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "profit_single": {
         "label": "Profit Focus Single",
@@ -80,7 +78,6 @@ STRATEGIES = {
         "min_value": 0.005,
         "odd_min": 1.18,
         "odd_max": 1.85,
-        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "conservative": {
         "label": "Bilet conservator",
@@ -91,7 +88,6 @@ STRATEGIES = {
         "min_value": -0.01,
         "odd_min": 1.12,
         "odd_max": 1.65,
-        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "smart_ev": {
         "label": "Smart EV",
@@ -102,7 +98,6 @@ STRATEGIES = {
         "min_value": 0.01,
         "odd_min": 1.20,
         "odd_max": 2.20,
-        "exclude_odds_ranges": [(1.26, 1.45)],
         "reject_league_tiers": {"avoid"},
     },
     "controlled_combo": {
@@ -114,7 +109,6 @@ STRATEGIES = {
         "min_value": 0.0,
         "odd_min": 1.18,
         "odd_max": 1.80,
-        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "over15": {
         "label": "Bilet Over 1.5 EV+",
@@ -125,7 +119,6 @@ STRATEGIES = {
         "min_value": -0.02,
         "odd_min": 1.15,
         "odd_max": 1.60,
-        "exclude_odds_ranges": [(1.26, 1.45)],
     },
 }
 
