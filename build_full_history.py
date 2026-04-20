@@ -21,8 +21,8 @@ from fetch_data import (
 FULL_HISTORY_LOOKBACK_DAYS = int(os.environ.get("FULL_HISTORY_LOOKBACK_DAYS", str(365 * 2)) or (365 * 2))
 FULL_HISTORY_MAX_ROWS = int(os.environ.get("FULL_HISTORY_MAX_ROWS", "60000") or 60000)
 FULL_HISTORY_PREDICTION_MAX_AGE_HOURS = int(os.environ.get("FULL_HISTORY_PREDICTION_MAX_AGE_HOURS", str((365 * 2 * 24) + 24)) or ((365 * 2 * 24) + 24))
-FULL_HISTORY_SCRIPT_TAG = '<script src="./assets/full-history.js?v=20260418"></script>'
-FULL_HISTORY_SCRIPT_MARKER = 'assets/full-history.js?v=20260418'
+FULL_HISTORY_SCRIPT_TAG = '<script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>'
+FULL_HISTORY_SCRIPT_MARKER = 'assets/full-history-hotfix.js?v=20260420hotfix1'
 
 
 def build_enriched_history_rows(predictions):
