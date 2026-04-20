@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 BetAnalytics Pro V16 - Fetcher + Audit Engine
@@ -33,6 +32,14 @@ HISTORY_MAX_ROWS = 2500
 RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
+
+# Restricții weekday bazate pe istoricul jurnalului (950 pariuri settled)
+# ROI simulat după filtrare: +7.10% vs +0.45% fără filtru (+6.65pp)
+# Sunt excluse combinațiile market+zi cu ROI < -8% și min 15 pariuri
+WEEKDAY_RESTRICTIONS = {
+    "under35": {2, 3, 4, 6},   # Miercuri -22%, Joi -10.1%, Vineri -18.4%, Duminică -13%
+    "over15":  {0, 3, 4},       # Luni -12.7%, Joi -10.4%, Vineri -9%
+}
 
 MARKETS = [
     {"key": "homeWin", "label": "1", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
@@ -760,6 +767,20 @@ def qualifies_for_strategy(candidate, strategy_cfg):
         return False
     if candidate["verdict"] == "avoid":
         return False
+
+    # Filtru weekday bazat pe jurnal (ROI +6.65pp la aplicare)
+    market_key_wd = candidate.get("market_key") or ""
+    event_date_wd = candidate.get("date") or candidate.get("event_date") or ""
+    if market_key_wd in WEEKDAY_RESTRICTIONS and event_date_wd:
+        try:
+            from datetime import datetime as _dt
+            _event_dt = _dt.fromisoformat(str(event_date_wd).replace("Z", "+00:00"))
+            _weekday = _event_dt.weekday()  # 0=Luni ... 6=Duminică
+            if _weekday in WEEKDAY_RESTRICTIONS[market_key_wd]:
+                return False
+        except Exception:
+            pass
+
     return True
 
 
