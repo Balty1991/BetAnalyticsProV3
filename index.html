@@ -3244,6 +3244,19 @@ function ageBucketLabel(hours){
   if(h < 24) return h.toFixed(1)+'h';
   return (h/24).toFixed(1)+' zile';
 }
+function ageBadgeHtml(createdAt){
+  if(!createdAt) return '';
+  var h = hoursSince(createdAt);
+  if(!isFinite(h) || h <= 0) return '';
+  var label = ageBucketLabel(h);
+  if(h >= 168){ // >7 zile — predicție foarte veche
+    return '<span class="card-reco-badge" style="color:var(--red);border-color:rgba(239,68,68,.3)" title="Predicție veche — datele pot fi depășite">⚠️ '+label+'</span>';
+  }
+  if(h >= 72){ // >3 zile — avertisment
+    return '<span class="card-reco-badge" style="color:var(--yel);border-color:rgba(245,158,11,.3)" title="Predicție mai veche de 3 zile">⏱ '+label+'</span>';
+  }
+  return '<span class="card-reco-badge" style="color:var(--muted)">'+label+'</span>';
+}
 function toast(msg,type){
   var w=$('toast-wrap');
   var t=document.createElement('div');
@@ -4139,14 +4152,18 @@ function oddsInRanges(odds, ranges){
   return (ranges || []).some(function(range){ return o >= range[0] && o <= range[1]; });
 }
 function calcSmartScore(adjProb, value, confidence, edgePct){
+  // Sincronizat cu fetch_data.py:calc_smart_score — aceeași scală, penalizări identice
   var c = normalizeConfidence(confidence);
   var edge = Number(edgePct || 0);
-  var probScore = Math.min(52, (safePct(adjProb)/100)*52);
-  var valueBase = Math.max(Number(value || 0), -0.05);
-  var valueScore = Math.max(-5, Math.min(14, valueBase * 90));
-  var edgeScore = Math.min(18, Math.max(0, edge) * 1.8);
-  var confScore = Math.min(8, (c/100)*8);
-  return Math.round(probScore + valueScore + edgeScore + confScore);
+  var val  = Number(value  || 0);
+  var probScore  = Math.min(58, (safePct(adjProb)/100)*58);
+  var valueScore = Math.min(14, Math.max(0, val)  * 120);
+  var edgeScore  = Math.min(18, Math.max(0, edge) * 2.0);
+  var confScore  = Math.min(8,  (c/100)*8);
+  var penalty = 0;
+  if(val  < -0.03) penalty += 8;
+  if(edge < -2.0)  penalty += 12;
+  return Math.min(100, Math.round(probScore + valueScore + edgeScore + confScore - penalty));
 }
 function getXGClass(val) {
   if (val >= 2.5) return { label: 'ELITE', color: '#ff4d4d', bg: 'rgba(255,77,77,0.15)' };
@@ -6168,7 +6185,7 @@ function renderMatches(){
     var poissonBadge = b ? poissonBadgeHtmlForBet(b) : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
-    var ageBadge = m.createdAt ? ('<span class="card-reco-badge">Vârstă '+ageBucketLabel(hoursSince(m.createdAt))+'</span>') : '';
+    var ageBadge = m.createdAt ? ageBadgeHtml(m.createdAt) : '';
     var hybridBlock = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
     var hybridInline = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityInline({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
@@ -6445,22 +6462,38 @@ function buildMarketCandidate(m, type){
   if(!b) return null;
   if(isHardContradiction(m, type)) return null;
   if(b.value <= 0) return null;
-  if(Number(b.odds || 0) > 1.65) return null;
+  // Dead zone over25 @ 1.26-1.45 fără EV suficient
   if(type === 'over25' && oddsInRanges(b.odds, [[1.26,1.45]]) && (b.value || 0) < 0.03) return null;
+  // Liga marcată Tier3-avoid: nu generăm selecții pentru ea (exceptând under35)
   if(m.leagueTier === 'avoid' && type !== 'under35') return null;
-
   var fit = marketFitAnalysis(m, type);
   var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
   if(type === 'over15' && (Number(b.adjProb || 0) < 76 || Number(m.probOver15 || 0) < 78 || Number(m.xgTotal || 0) < 2.20 || Number(b.odds || 0) < 1.25 || edgePct < 4 || Number(b.value || 0) < 0.04)) return null;
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
+
+  // WEEKDAY_RESTRICTIONS — sincronizat cu fetch_data.py (0=Dum, 1=Lun, 2=Mar, 3=Mie, 4=Joi, 5=Vin, 6=Sâm)
+  // under35: Mie(3), Joi(4), Vin(5), Dum(0) → ROI negativ -10% to -22%
+  // over15:  Lun(1), Joi(4), Vin(5)          → ROI negativ -9% to -12.7%
+  var WD_RESTRICT = { 'under35': [0,3,4,5], 'over15': [1,4,5] };
+  if(WD_RESTRICT[type]){
+    var kickoffDate = m.kickoff || m.date || m.event_date || '';
+    if(kickoffDate){
+      try{
+        var jsDay = new Date(kickoffDate).getDay();
+        if(WD_RESTRICT[type].indexOf(jsDay) !== -1) return null;
+      }catch(e){}
+    }
+  }
+
   var confBoost = Math.min(6, (m.confidence || 0) * 0.06);
 
   var baseScore = 0;
   baseScore += (b.adjProb * 0.40);
   baseScore += (Math.max(0, edgePct) * 1.35);
   baseScore += (Math.max(0, b.value) * 100 * 0.18);
-  baseScore += (fit && fit.score) || 0;
+  // fit.score HTML are maxim ~35-48, Python are ~19-22 — scalăm la 0.55 pentru aliniere
+  baseScore += Math.min(22, ((fit && fit.score) || 0) * 0.55);
   baseScore += confBoost;
   if(b.sourceApi) baseScore += 4;
   if(b.sourceHeuristic) baseScore += 2;
@@ -6661,7 +6694,7 @@ function generateConservativeTicket(){
 
 function generateTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts'],
     minAdjProb: 68,
     minValue: 0.015,
     minConf: 52,
@@ -7071,7 +7104,7 @@ function validateCustomRequest(opts){
 
 function generateControlledComboTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts'],
     minAdjProb: 74,
     minValue: 0.010,
     minConf: 50,
@@ -7322,7 +7355,7 @@ function generateOver35Ticket(){
 
 function generateMixTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts'],
     minAdjProb: 70,
     minValue: 0.018,
     minConf: 54,
@@ -7552,7 +7585,7 @@ function generateProfitFocusTicket(){
 
 function generateBigWinTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts'],
     minAdjProb: 70,
     minValue: 0.010,
     minConf: 48,
@@ -7599,7 +7632,7 @@ function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
 
 function buildSmartTicketPreview(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts'],
     minAdjProb: 68,
     minValue: 0.015,
     minConf: 52,
@@ -9912,14 +9945,19 @@ function renderAll(){
 }
 
 window.addEventListener('DOMContentLoaded', function(){
-  BANKROLL_SETTINGS = Object.assign({initial:1000,cons:2,balanced:4,goals:3}, BANKROLL_SETTINGS || {});
-  if(BANKROLL_SETTINGS.cons == null && BANKROLL_SETTINGS.safe != null) BANKROLL_SETTINGS.cons = BANKROLL_SETTINGS.safe;
-  if(BANKROLL_SETTINGS.balanced == null && BANKROLL_SETTINGS.medium != null) BANKROLL_SETTINGS.balanced = BANKROLL_SETTINGS.medium;
-  if(BANKROLL_SETTINGS.goals == null && BANKROLL_SETTINGS.risk != null) BANKROLL_SETTINGS.goals = BANKROLL_SETTINGS.risk;
-  if($('bankroll-input')) $('bankroll-input').value = BANKROLL_SETTINGS.initial || 1000;
-  if($('bk-cons-pct')) $('bk-cons-pct').value = BANKROLL_SETTINGS.cons || 2;
-  if($('bk-balanced-pct')) $('bk-balanced-pct').value = BANKROLL_SETTINGS.balanced || 4;
-  if($('bk-goals-pct')) $('bk-goals-pct').value = BANKROLL_SETTINGS.goals || 3;
+  // Normalizare chei BANKROLL_SETTINGS — migrare de la versiunile vechi (cons/balanced/goals/safe/medium/risk → single/double/triple/contrarian)
+  BANKROLL_SETTINGS = Object.assign({initial:1000, single:4, double:2.5, triple:1.5, contrarian:0.8}, BANKROLL_SETTINGS || {});
+  if(BANKROLL_SETTINGS.single == null && BANKROLL_SETTINGS.cons     != null) BANKROLL_SETTINGS.single     = BANKROLL_SETTINGS.cons;
+  if(BANKROLL_SETTINGS.single == null && BANKROLL_SETTINGS.safe     != null) BANKROLL_SETTINGS.single     = BANKROLL_SETTINGS.safe;
+  if(BANKROLL_SETTINGS.double == null && BANKROLL_SETTINGS.balanced != null) BANKROLL_SETTINGS.double     = BANKROLL_SETTINGS.balanced;
+  if(BANKROLL_SETTINGS.double == null && BANKROLL_SETTINGS.medium   != null) BANKROLL_SETTINGS.double     = BANKROLL_SETTINGS.medium;
+  if(BANKROLL_SETTINGS.triple == null && BANKROLL_SETTINGS.goals    != null) BANKROLL_SETTINGS.triple     = BANKROLL_SETTINGS.goals;
+  if(BANKROLL_SETTINGS.contrarian == null && BANKROLL_SETTINGS.risk != null) BANKROLL_SETTINGS.contrarian = BANKROLL_SETTINGS.risk;
+  if($('bankroll-input'))  $('bankroll-input').value  = BANKROLL_SETTINGS.initial     || 1000;
+  if($('bk-single-pct'))  $('bk-single-pct').value   = BANKROLL_SETTINGS.single      || 4;
+  if($('bk-double-pct'))  $('bk-double-pct').value   = BANKROLL_SETTINGS.double      || 2.5;
+  if($('bk-triple-pct'))  $('bk-triple-pct').value   = BANKROLL_SETTINGS.triple      || 1.5;
+  if($('bk-contrarian-pct')) $('bk-contrarian-pct').value = BANKROLL_SETTINGS.contrarian || 0.8;
   renderJournal();
   // Try to restore token from localStorage
   var st=localStorage.getItem('bsd_token');
@@ -9933,11 +9971,7 @@ window.addEventListener('DOMContentLoaded', function(){
 });
 /* ===== Math Portfolio Override ===== */
 function getActualBankrollValue(){
-  var settings = Object.assign({initial:1000,single:4,double:2.5,triple:1.5,contrarian:0.8}, BANKROLL_SETTINGS || {});
-  if(settings.single == null && settings.cons != null) settings.single = settings.cons;
-  if(settings.double == null && settings.balanced != null) settings.double = settings.balanced;
-  if(settings.triple == null && settings.goals != null) settings.triple = settings.goals;
-  if(settings.contrarian == null && settings.risk != null) settings.contrarian = settings.risk;
+  var settings = Object.assign({initial:1000, single:4, double:2.5, triple:1.5, contrarian:0.8}, BANKROLL_SETTINGS || {});
   var initial = Number(settings.initial || 1000);
   var profit = (TRACKING || []).reduce(function(acc, t){ return acc + Number(t.profit || 0); }, 0);
   return Math.max(0, initial + profit);
@@ -10106,7 +10140,8 @@ function buildPortfolioMarketCandidates(match){
     if(prob <= 0 || value <= 0) return;
     var fit = marketFitAnalysis(match, type) || {score:0, reasons:[]};
     var edge = Number(bet.edgePct || 0);
-    var edgeToPrice = +(prob - impliedProbFromOdds(odds)).toFixed(2);
+    // edgeToPrice = edge no-vig (adjProb - noVigMarketProb), deja calculat corect în edgePct
+    var edgeToPrice = edge;
     var score = 0;
     score += prob * 0.42;
     score += Math.max(0, edge) * 1.45;
@@ -10327,7 +10362,7 @@ function getAuditMathPool(){
       prob: prob,
       value: value,
       edge: edge,
-      edgeToPrice: +(prob - impliedProbFromOdds(odds)).toFixed(2),
+      edgeToPrice: edge, // no-vig: edge_pct = adjProb - noVigMarketProb (deja corect)
       score: score,
       ticketScore: score
     });
@@ -10391,7 +10426,7 @@ function getAiMemoryMathPool(){
       prob: prob,
       value: value,
       edge: edge,
-      edgeToPrice: +(prob - impliedProbFromOdds(odds)).toFixed(2),
+      edgeToPrice: edge, // no-vig: edge_pct = adjProb - noVigMarketProb (deja corect)
       score: score,
       ticketScore: score
     });
@@ -11338,13 +11373,25 @@ function getSmartBetAnalysis(){
       return;
     }
 
-    if(!directAdaptive && !patternOnly) return;
+    // Fallback: dacă pool-ul de adaptive_picks e mic (<5), acceptăm și selecții
+    // cu scor înalt din audit care nu au confirmare directă AI Memory
+    var adaptivePoolSize = ((AI_MEMORY && AI_MEMORY.adaptive_picks) || []).length;
+    var highQualityFallback = adaptivePoolSize < 5 &&
+      !directAdaptive && !patternOnly &&
+      Number(row.adjusted_prob || 0) >= 80 &&
+      Number(row.kelly_quarter_pct || 0) >= 3 &&
+      Number(row.edge_pct || 0) >= 8 &&
+      Number(row.score || 0) >= 85;
+
+    if(!directAdaptive && !patternOnly && !highQualityFallback) return;
 
     var probAdj = Number(row.adjusted_prob || 0);
     var kellyPct = Number(row.kelly_quarter_pct || 0);
     var edgePct = Number(row.edge_pct || 0);
     if(directAdaptive){
       if(probAdj < 68 || edgePct < 3) return;
+    } else if(highQualityFallback){
+      if(probAdj < 80 || kellyPct < 3 || edgePct < 8) return;
     } else {
       if(probAdj < 78 || kellyPct <= 0.5 || edgePct < 5.5) return;
       if(bestPositive && Number(bestPositive.raw_bets || 0) < 6) return;
@@ -11389,7 +11436,7 @@ function getSmartBetAnalysis(){
       prob: Number(row.adjusted_prob || 0),
       value: Number(row.value || 0),
       edge: Number(row.edge_pct || 0),
-      edgeToPrice: +(Number(row.adjusted_prob || 0) - impliedProbFromOdds(Number(row.book_odds || 0))).toFixed(2),
+      edgeToPrice: Number(row.edge_pct || 0), // no-vig: adjProb - noVigMarketProb (precomputat corect)
       smartScore: smartScore,
       score: smartScore,
       ticketScore: smartScore,
