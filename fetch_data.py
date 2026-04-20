@@ -33,15 +33,6 @@ RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 
-# Ligi cu ROI negativ semnificativ în backtest (excluse din semnale)
-# Champions League: -54.5%, MLS: -35.5%, Copa Libertadores: -35.5%, Superliga: -30.25%
-BLACKLISTED_LEAGUES = {
-    "Champions League",
-    "MLS",
-    "Copa Libertadores",
-    "Superliga",
-}
-
 MARKETS = [
     {"key": "homeWin", "label": "1", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
     {"key": "draw", "label": "X", "prob": lambda r: pct(r.get("prob_draw")), "odds": lambda e: e.get("odds_draw")},
@@ -62,40 +53,45 @@ STRATEGIES = {
         "allowed": {m["key"] for m in MARKETS},
         "min_adj": 66.0,
         "min_conf": 45.0,
-        "min_edge": 0.0,
+        "min_edge": 8.0,           # backtested: 8pp+ = ROI +2.85% (71 bets), sub 8pp = negativ
         "min_value": 0.0,
         "odd_min": 1.15,
         "odd_max": 1.65,
+        "exclude_odds_ranges": [(1.26, 1.45)],  # ROI -3.66% pe 59 pariuri
     },
     "best_single": {
         "label": "Evenimentul zilei",
-        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts"},
+        "allowed": {"homeWin", "over15", "over25", "under35", "btts"},  # awayWin/under25 scoase
         "min_adj": 72.0,
         "min_conf": 50.0,
-        "min_edge": 1.5,
+        "min_edge": 8.0,           # aliniat cu zona profitabilă 8pp+
         "min_value": 0.0,
         "odd_min": 1.20,
         "odd_max": 1.95,
+        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "profit_single": {
         "label": "Profit Focus Single",
-        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts"},
+        "allowed": {"homeWin", "over15", "over25", "under35", "btts"},  # awayWin/under25 scoase
         "min_adj": 70.0,
         "min_conf": 48.0,
-        "min_edge": 1.0,
+        "max_conf": 65.0,          # exclude conf 66-75: ROI -37.75% pe 4 pariuri
+        "min_edge": 8.0,
         "min_value": 0.005,
         "odd_min": 1.18,
         "odd_max": 1.85,
+        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "conservative": {
         "label": "Bilet conservator",
-        "allowed": {"over15", "under25", "under35"},
+        "allowed": {"over15", "under35"},  # under25 scos: ROI -25.5% pe 4 pariuri
         "min_adj": 74.0,
         "min_conf": 50.0,
-        "min_edge": 0.0,
+        "min_edge": 5.0,           # ridicat față de 0 — sub 5pp nu mai merită
         "min_value": -0.01,
         "odd_min": 1.12,
         "odd_max": 1.65,
+        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "smart_ev": {
         "label": "Smart EV",
@@ -111,23 +107,25 @@ STRATEGIES = {
     },
     "controlled_combo": {
         "label": "Combo Controlat",
-        "allowed": {"over15", "over25", "under25", "under35", "btts", "homeWin", "awayWin"},
+        "allowed": {"over15", "over25", "under35", "btts", "homeWin"},  # awayWin/under25 scoase
         "min_adj": 71.0,
         "min_conf": 48.0,
-        "min_edge": 0.5,
+        "min_edge": 5.0,
         "min_value": 0.0,
         "odd_min": 1.18,
         "odd_max": 1.80,
+        "exclude_odds_ranges": [(1.26, 1.45)],
     },
     "over15": {
         "label": "Bilet Over 1.5 EV+",
         "allowed": {"over15"},
         "min_adj": 76.0,
         "min_conf": 50.0,
-        "min_edge": 0.0,
+        "min_edge": 5.0,           # Over 1.5G ROI -6.57% general — necesită edge ridicat
         "min_value": -0.02,
         "odd_min": 1.15,
         "odd_max": 1.60,
+        "exclude_odds_ranges": [(1.26, 1.45)],
     },
 }
 
@@ -324,6 +322,56 @@ def get_league_tier_info(league_name):
     if bets >= 5 and roi <= -5:
         return {"tier": "avoid", "multiplier": 0.96}
     return {"tier": "neutral", "multiplier": 1.0}
+
+
+def get_league_calibration(league_name):
+    """
+    Returnează ajustări dinamice ale pragurilor de selecție per ligă,
+    bazate pe istoricul real din backtest.json (actualizat la fiecare rulare).
+
+    Cu cât ROI-ul e mai negativ, cu atât pragurile devin mai stricte.
+    Cu cât ROI-ul e pozitiv, pragurile se relaxează ușor.
+    Sample-ul mic (< 8 pariuri) reduce intensitatea ajustărilor.
+
+    Returns dict cu:
+      - adj_delta: modificare la min_adj_prob
+      - edge_delta: modificare la min_edge
+      - conf_delta: modificare la min_conf
+      - tier: "high" / "neutral" / "tighten" / "strict" / "very_strict"
+    """
+    row = get_bootstrap_row(BOOTSTRAP_LEAGUE_ROWS, league_name)
+    bets = int(row.get("bets") or 0)
+    roi = float(row.get("roi") or 0)
+    winrate = float(row.get("winrate") or 0)
+
+    if bets < 3:
+        # Date insuficiente - fara ajustare
+        return {"adj_delta": 0.0, "edge_delta": 0.0, "conf_delta": 0.0, "tier": "neutral"}
+
+    # Sample factor: ajustare mai prudenta pentru sample mic
+    sample_factor = min(1.0, bets / 8.0)
+
+    if roi >= 20.0 and winrate >= 80.0:
+        d_adj, d_edge, d_conf, tier = -2.0, -1.5, -2.0, "high"
+    elif roi >= 5.0:
+        d_adj, d_edge, d_conf, tier = 0.0, 0.0, 0.0, "neutral"
+    elif roi >= 0.0:
+        d_adj, d_edge, d_conf, tier = 1.0, 1.5, 0.0, "slight_tighten"
+    elif roi >= -15.0:
+        d_adj, d_edge, d_conf, tier = 3.0, 4.0, 2.0, "tighten"
+    elif roi >= -30.0:
+        d_adj, d_edge, d_conf, tier = 5.0, 7.0, 3.0, "strict"
+    else:
+        d_adj, d_edge, d_conf, tier = 7.0, 10.0, 5.0, "very_strict"
+
+    return {
+        "adj_delta":  round(d_adj  * sample_factor, 2),
+        "edge_delta": round(d_edge * sample_factor, 2),
+        "conf_delta": round(d_conf * sample_factor, 2),
+        "tier": tier,
+        "bets": bets,
+        "roi": roi,
+    }
 
 
 
@@ -631,6 +679,7 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
     league_name = (event.get("league") or {}).get("name") or "Unknown"
     tier_info = get_league_tier_info(league_name)
+    calib_info = get_league_calibration(league_name)
     value = calc_value(prob, odds)
     adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     market_prob = market_prob_from_row_event(row, event, market_key)
@@ -667,6 +716,8 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         "won": bool(outcome),
         "league": league_name,
         "league_tier": tier_info.get("tier"),
+        "league_calib_tier": calib_info.get("tier", "neutral"),
+        "league_roi_backtest": calib_info.get("roi", None),
         "adjustment_factor": round(dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds), 4),
         "event_id": event.get("id"),
         "prediction_id": row.get("id"),
@@ -683,9 +734,24 @@ def qualifies_for_strategy(candidate, strategy_cfg):
         return False
     if hard_contradiction({"most_likely_score": candidate.get("most_likely_score")}, candidate["market_key"]):
         return False
-    if candidate["adj_prob"] < strategy_cfg["min_adj"]:
+
+    # Calibrare dinamică per ligă bazată pe istoricul backtest
+    league_name = candidate.get("league") or ""
+    calib = get_league_calibration(league_name)
+    adj_delta  = calib.get("adj_delta",  0.0)
+    edge_delta = calib.get("edge_delta", 0.0)
+    conf_delta = calib.get("conf_delta", 0.0)
+
+    eff_min_adj  = strategy_cfg["min_adj"]  + adj_delta
+    eff_min_edge = strategy_cfg["min_edge"] + edge_delta
+    eff_min_conf = strategy_cfg["min_conf"] + conf_delta
+
+    if candidate["adj_prob"] < eff_min_adj:
         return False
-    if candidate["confidence"] < strategy_cfg["min_conf"]:
+    if candidate["confidence"] < eff_min_conf:
+        return False
+    max_conf = strategy_cfg.get("max_conf")
+    if max_conf is not None and candidate["confidence"] > max_conf:
         return False
     if candidate["value"] < strategy_cfg["min_value"]:
         return False
@@ -695,10 +761,8 @@ def qualifies_for_strategy(candidate, strategy_cfg):
         return False
     if candidate.get("league_tier") in (strategy_cfg.get("reject_league_tiers") or set()):
         return False
-    if candidate.get("league") in BLACKLISTED_LEAGUES:
-        return False
     edge = candidate["edge_pct"] if candidate["edge_pct"] is not None else -999
-    if edge < strategy_cfg["min_edge"]:
+    if edge < eff_min_edge:
         return False
     if candidate["verdict"] == "avoid":
         return False
@@ -905,6 +969,7 @@ def build_signal_audit(predictions, recommendation_log=None):
             value = calc_value(prob, odds)
             league_name = (event.get("league") or {}).get("name") or "Unknown"
             tier_info = get_league_tier_info(league_name)
+            calib_info = get_league_calibration(league_name)
             adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
             market_prob = market_prob_from_row_event(row, event, market_key)
             edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
@@ -935,6 +1000,8 @@ def build_signal_audit(predictions, recommendation_log=None):
                 "source_heuristic": bool(source_heuristic),
                 "league": league_name,
         "league_tier": tier_info.get("tier"),
+        "league_calib_tier": calib_info.get("tier", "neutral"),
+        "league_roi_backtest": calib_info.get("roi", None),
         "adjustment_factor": round(dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds), 4),
                 "event_id": event.get("id"),
                 "prediction_id": row.get("id"),
@@ -949,6 +1016,26 @@ def build_signal_audit(predictions, recommendation_log=None):
             continue
 
         pick = max(candidates, key=rank_candidate)
+
+        # Încearcă să obțină cea mai bună cotă de pe piață (22+ bookmakers)
+        event_id_sa = pick.get("event_id")
+        best_odds_result = fetch_best_market_odds(event_id_sa, pick.get("market_key")) if event_id_sa else None
+        if best_odds_result and best_odds_result[0] > (pick.get("odds") or 0):
+            best_odds_val, best_bk = best_odds_result
+            pick = dict(pick)
+            pick["odds_original"] = pick["odds"]
+            pick["odds"] = round(best_odds_val, 3)
+            pick["best_odds_bookmaker"] = best_bk
+            adj = pick.get("adj_prob") or 0
+            market_prob = pick.get("market_prob")
+            pick["edge_pct"] = round(adj - market_prob, 2) if market_prob is not None else pick.get("edge_pct")
+            pick["value"] = round(calc_value(adj / 100.0, best_odds_val), 4)
+            pick["score"] = calc_smart_score(
+                adj, pick["value"], pick.get("confidence") or 0,
+                pick.get("edge_pct"), pick.get("fit_score") or 0,
+                pick.get("source_api") or False, pick.get("source_heuristic") or False,
+            )
+
         created_at = parse_dt(pick.get("created_at"))
         age_hours = round((now_utc - created_at.astimezone(timezone.utc)).total_seconds() / 3600.0, 2) if created_at else None
         fair_odds = round(1.0 / max(0.0001, pick.get("adj_prob", 0) / 100.0), 3) if pick.get("adj_prob") else None
@@ -1232,6 +1319,55 @@ def fetch_url(url):
     raise RuntimeError(f"Fetch esuat definitiv pentru {url}: {last_error}")
 
 
+def fetch_best_market_odds(event_id, market_key):
+    """
+    Încearcă să obțină cea mai bună cotă din 22+ bookmakers pentru un meci și piață.
+    Fallback silențios la cotele existente dacă endpoint-ul nu e disponibil.
+    """
+    MARKET_ODDS_FIELD = {
+        "homeWin":  ("odds_home",     "home_win"),
+        "draw":     ("odds_draw",     "draw"),
+        "awayWin":  ("odds_away",     "away_win"),
+        "over15":   ("odds_over_15",  "over_15"),
+        "under15":  ("odds_under_15", "under_15"),
+        "over25":   ("odds_over_25",  "over_25"),
+        "under25":  ("odds_under_25", "under_25"),
+        "under35":  ("odds_under_35", "under_35"),
+        "btts":     ("odds_btts_yes", "btts_yes"),
+    }
+    if market_key not in MARKET_ODDS_FIELD:
+        return None
+    odds_field, api_field = MARKET_ODDS_FIELD[market_key]
+    try:
+        url = f"{API_BASE}/api/events/{event_id}/odds/"
+        r = requests.get(url, headers=HEADERS, timeout=15)
+        if r.status_code in (404, 405, 400):
+            return None
+        r.raise_for_status()
+        data = r.json()
+        bookmakers = data if isinstance(data, list) else data.get("results", data.get("bookmakers", []))
+        if not bookmakers:
+            return None
+        best_odds = 0.0
+        best_bk = None
+        for bk in bookmakers:
+            bk_name = bk.get("bookmaker") or bk.get("name") or "unknown"
+            val = bk.get(odds_field) or bk.get(api_field) or bk.get(f"odds_{api_field}")
+            try:
+                val = float(val)
+            except Exception:
+                continue
+            if val > best_odds:
+                best_odds = val
+                best_bk = bk_name
+        if best_odds > 1.01 and best_bk:
+            return best_odds, best_bk
+        return None
+    except Exception:
+        return None
+
+
+
 def fetch_status_metrics():
     url = f"{API_BASE}/status/"
     try:
@@ -1419,6 +1555,7 @@ def build_ui_live_candidate(row, market_key):
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
     league_name = (event.get("league") or {}).get("name") or "Unknown"
     tier_info = get_league_tier_info(league_name)
+    calib_info = get_league_calibration(league_name)
     value = calc_value(prob, odds)
     if value <= 0:
         return None
@@ -1471,6 +1608,8 @@ def build_ui_live_candidate(row, market_key):
         "source_heuristic": bool(source_heuristic),
         "league": league_name,
         "league_tier": tier_info.get("tier"),
+        "league_calib_tier": calib_info.get("tier", "neutral"),
+        "league_roi_backtest": calib_info.get("roi", None),
         "adjustment_factor": round(dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds), 4),
         "event_id": event.get("id"),
         "prediction_id": row.get("id"),
