@@ -5301,7 +5301,9 @@ function renderMatches(){
     var infoLine = 'Scor probabil ' + (m.mostLikelyScore || '—') + ' • xG ' + Number(m.xgTotal || 0).toFixed(2) + ' • ' + (shortWhy || 'context statistic activ');
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 '+verdictClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
       '<div class="m16-top">'+
-        '<div class="m16-league">'+(leagueLogo || '')+'<span>'+(m.league || '—')+'</span></div>'+
+        '<div class="m16-league">'+(leagueLogo || '')+'<span>'+(m.league || '—')+'</span>'+
+        (m.bestBet && m.bestBet.league_calib_tier && m.bestBet.league_calib_tier !== 'neutral' ? '<span style="font-size:9px;padding:2px 6px;border-radius:999px;margin-left:6px;font-weight:800;background:'+(m.bestBet.league_calib_tier==='high'?'rgba(34,197,94,.15)':m.bestBet.league_calib_tier==='very_strict'?'rgba(239,68,68,.15)':'rgba(245,158,11,.15)')+';color:'+(m.bestBet.league_calib_tier==='high'?'var(--grn)':m.bestBet.league_calib_tier==='very_strict'?'var(--red)':'var(--yel)')+'">'+(m.bestBet.league_calib_tier==='high'?'↑ relaxat':m.bestBet.league_calib_tier==='very_strict'?'↓↓ strict':m.bestBet.league_calib_tier==='strict'?'↓ strict':'~ tighten')+'</span>' : '')+
+        '</div>'+
         '<div class="m16-kickoff"><span>🕒 '+kickoffLabel+'</span><span class="m16-kickoff-pill">'+countdown+'</span></div>'+
       '</div>'+
       '<div class="m16-top" style="padding:0;background:none;border:none;box-shadow:none">'+
@@ -8935,6 +8937,7 @@ function renderAll(){
   }
   var statusMetrics = getStatusDisplayMetrics();
   var rawMl = statusMetrics.ml;
+  var saCount = (SIGNAL_AUDIT && SIGNAL_AUDIT.count) ? String(SIGNAL_AUDIT.count) : '0';
   var rawOdds = statusMetrics.odds;
 
   if($('st-total')) $('st-total').textContent = rawMl;
@@ -8945,7 +8948,7 @@ function renderAll(){
   if($('hq-ml')) $('hq-ml').textContent = rawMl;
   if($('hq-odds')) $('hq-odds').textContent = rawOdds;
   if($('hq-safe')) $('hq-safe').textContent = safe;
-  $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — ora '+timeStr;
+  $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCount+' semnale top — ora '+timeStr;
 
   buildLeagueFilter();
   renderBacktest();
@@ -10340,7 +10343,9 @@ function getSmartBetPatternMatchInfo(row, patternMaps){
   var avoid = [];
   ['market_league','market','market_source'].forEach(function(kind){
     if(patternMaps.top[kind] && patternMaps.top[kind][keys[kind]]) positive.push(patternMaps.top[kind][keys[kind]]);
-    if(patternMaps.avoid[kind] && patternMaps.avoid[kind][keys[kind]]) avoid.push(patternMaps.avoid[kind][keys[kind]]);
+    // Avoid pattern requires >= 8 bets to block (pattern negativ cu sample mic e nesigur)
+    var avoidCandidate = patternMaps.avoid[kind] && patternMaps.avoid[kind][keys[kind]];
+    if(avoidCandidate && Number(avoidCandidate.raw_bets || 0) >= 8) avoid.push(avoidCandidate);
   });
   positive.sort(function(a,b){ return Number(b.memory_score || 0) - Number(a.memory_score || 0); });
   avoid.sort(function(a,b){ return Number(a.memory_score || 0) - Number(b.memory_score || 0); });
@@ -10396,6 +10401,8 @@ function getSmartBetAnalysis(){
 
     var memoryBonus = directAdaptive ? Number(adaptive.memory_bonus || 0) : Number(bestPositive && bestPositive.memory_score || 0);
     var adaptiveScore = directAdaptive ? Number(adaptive.adaptive_score || 0) : Math.max(60, Math.min(88, probAdj + Number(bestPositive && bestPositive.memory_score || 0) * 1.2));
+    // Bonus de piață bazat pe istoricul jurnalului: BTTS +15.4% ROI, Over1.5G +1.3%
+    var marketBonusSmartBet = marketKey === 'btts' ? 6 : (marketKey === 'over15' ? 2 : (marketKey === 'under35' ? 0 : (marketKey === 'over25' ? -3 : 0)));
     var smartScore = (
       Number(row.score || 0) * 0.48 +
       Math.min(100, adaptiveScore) * 0.26 +
@@ -10404,7 +10411,8 @@ function getSmartBetAnalysis(){
       Math.max(0, Number(row.kelly_quarter_pct || 0)) * 0.70 +
       Math.max(0, memoryBonus) * 0.80 +
       Math.max(0, Number(row.poisson_delta || 0)) * 0.18 +
-      Math.max(0, Number(bestPositive && bestPositive.roi || 0)) * 0.05
+      Math.max(0, Number(bestPositive && bestPositive.roi || 0)) * 0.05 +
+      marketBonusSmartBet
     );
     if(patternOnly) smartScore -= 10;
     smartScore = clampMathScore(smartScore);
@@ -11157,6 +11165,5 @@ window.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ v
 </script>
   <script src="./assets/full-history.js?v=20260418"></script>
   <script src="./assets/full-history-hotfix.js?v=20260420hotfix2"></script>
-  <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
 </body>
 </html>
