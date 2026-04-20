@@ -284,7 +284,7 @@ def enhance_ai_memory():
     patterns, flat = build_patterns(journal, now_utc)
 
     positive = sorted([r for r in flat if to_int(r.get('raw_bets')) >= 5 and to_float(r.get('memory_score')) > 0], key=lambda r: (to_float(r.get('memory_score')), to_float(r.get('roi')), to_int(r.get('raw_bets'))), reverse=True)
-    negative = sorted([r for r in flat if to_int(r.get('raw_bets')) >= 5 and to_float(r.get('memory_score')) < 0], key=lambda r: (to_float(r.get('memory_score')), -to_int(r.get('raw_bets'))))
+    negative = sorted([r for r in flat if to_int(r.get('raw_bets')) >= 8 and to_float(r.get('memory_score')) < 0], key=lambda r: (to_float(r.get('memory_score')), -to_int(r.get('raw_bets'))))
     top_patterns = merge_patterns(base.get('top_patterns') or [], select_diverse(positive, limit=12, max_per_market=3), positive=True)
     avoid_patterns = merge_patterns(base.get('avoid_patterns') or [], select_diverse(negative, limit=12, max_per_market=3), positive=False)
 
