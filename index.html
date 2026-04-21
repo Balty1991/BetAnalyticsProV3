@@ -3848,9 +3848,18 @@ function leagueLogoUrl(apiId){
   if(!apiId) return '';
   return API_TOKEN ? ('https://sports.bzzoiro.com/img/league/'+apiId+'/?token='+API_TOKEN) : ('https://sports.bzzoiro.com/img/league/'+apiId+'/');
 }
+function teamInitials(name){
+  if(!name) return '?';
+  var parts = String(name).trim().split(/\s+/);
+  if(parts.length === 1) return parts[0].substring(0,2).toUpperCase();
+  return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+}
 function logoImgHtml(url, alt, size){
-  if(!url) return '<span style="width:'+size+'px;height:'+size+'px;display:inline-block"></span>';
-  return '<img src="'+url+'" alt="'+alt+'" width="'+size+'" height="'+size+'" class="mc-team-logo" onerror="this.style.display=\'none\'" loading="lazy"/>';
+  var fs = Math.max(8, Math.round(size * 0.38));
+  var initials = teamInitials(alt);
+  var fallback = '<span style="width:'+size+'px;height:'+size+'px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);font-size:'+fs+'px;font-weight:800;color:var(--muted);font-family:var(--mono);flex-shrink:0">'+initials+'</span>';
+  if(!url) return fallback;
+  return '<img src="'+url+'" alt="'+alt+'" width="'+size+'" height="'+size+'" class="mc-team-logo" style="flex-shrink:0" onerror="this.outerHTML=\''+fallback.replace(/'/g,"\\'")+'\'" loading="lazy"/>';
 }
 
 // ============================================================
@@ -6177,8 +6186,8 @@ function renderMatches(){
     var b = m.bestBet || null;
     var state = getAnalysisStateMeta(m.analysisState);
     var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
-    var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 20);
-    var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 20);
+    var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 38);
+    var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 38);
     var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
     var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
     var recLabel = b ? b.label : 'Fără recomandare activă';
