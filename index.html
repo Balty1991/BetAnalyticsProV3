@@ -4096,6 +4096,23 @@ function buildHybridProbForMarket(raw, marketKey){
     if(delta > 5) direction = 'value';
     else if(delta < -5) direction = 'risk';
   }
+  // Injury adjustment (pre-calibration: corecteaza pentru un factor pe care modelul nu-l vede)
+  var injury = {adjustment:0, applied:false, home:0, away:0, summary:''};
+  try { injury = calcInjuryAdjustment(raw, marketKey) || injury; } catch(e){}
+  var preCalibrationProb = effectiveProb;
+  if(injury && injury.applied && injury.adjustment){
+    effectiveProb = +Math.max(1, Math.min(99, effectiveProb + Number(injury.adjustment))).toFixed(2);
+  }
+  // Calibration (post-injury: invatat pe probabilitatile finale cu care s-a pariat in trecut)
+  var calibratedProb = null;
+  try { calibratedProb = calibrateProb(effectiveProb, marketKey); } catch(e){}
+  var calibrationDelta = null;
+  if(calibratedProb != null && isFinite(calibratedProb)){
+    calibrationDelta = +(calibratedProb - effectiveProb).toFixed(2);
+    if(Math.abs(calibrationDelta) > 0.1){
+      effectiveProb = +Math.max(1, Math.min(99, calibratedProb)).toFixed(2);
+    }
+  }
   raw.__hybridProbCache[marketKey] = {
     apiProb: +apiProb.toFixed(2),
     poissonProb: poissonProb != null ? +Number(poissonProb).toFixed(2) : null,
@@ -4105,7 +4122,14 @@ function buildHybridProbForMarket(raw, marketKey){
     direction: direction,
     totalLambda: poisson ? poisson.totalLambda : null,
     homeLambda: poisson ? poisson.homeLambda : null,
-    awayLambda: poisson ? poisson.awayLambda : null
+    awayLambda: poisson ? poisson.awayLambda : null,
+    preCalibrationProb: +preCalibrationProb.toFixed(2),
+    injuryAdjustment: injury.adjustment || 0,
+    injuryApplied: !!injury.applied,
+    injurySummary: injury.summary || '',
+    injuryHome: injury.home || 0,
+    injuryAway: injury.away || 0,
+    calibrationDelta: calibrationDelta
   };
   return raw.__hybridProbCache[marketKey];
 }
@@ -4610,6 +4634,409 @@ function learningStatsMultiplier(stats){
 // ============================================================
 // Orchestrator — ruleaza la fiecare refresh pe RECOMMENDATION_JOURNAL
 // ============================================================
+// ============================================================
+// INJURY ADJUSTMENT — ajusteaza probabilitati in functie de absentele
+// din raw.event.unavailable_players (injured, doubtful, suspended).
+// ============================================================
+function calcInjuryAdjustment(raw, marketKey){
+  var up = raw && raw.event && raw.event.unavailable_players;
+  if(!up || typeof up !== 'object'){
+    return {adjustment:0, home:0, away:0, summary:'', applied:false};
+  }
+  function weight(list){
+    if(!Array.isArray(list)) return 0;
+    var w = 0;
+    list.forEach(function(p){
+      if(!p) return;
+      var s = String(p.status || '').toLowerCase();
+      if(s === 'injured') w += 1.0;
+      else if(s === 'suspended') w += 1.0;
+      else if(s === 'doubtful') w += 0.5;
+      else if(s === 'unavailable') w += 0.8;
+    });
+    return w;
+  }
+  var h = weight(up.home);
+  var a = weight(up.away);
+  var total = h + a;
+  if(total < 1.0){
+    return {adjustment:0, home:h, away:a, summary:'', applied:false};
+  }
+  // Pragul de 1.0 — pana la 1 absent cumulat, nu ajustam (rotatie normala)
+  var baseAbs = Math.min(4.5, (total - 1.0) * 0.55);
+  var adjustment = 0;
+  switch(marketKey){
+    case 'over15':  adjustment = -baseAbs * 0.65; break;
+    case 'over25':  adjustment = -baseAbs * 0.90; break;
+    case 'over35':  adjustment = -baseAbs * 1.00; break;
+    case 'under15': adjustment =  baseAbs * 0.65; break;
+    case 'under25': adjustment =  baseAbs * 0.90; break;
+    case 'under35': adjustment =  baseAbs * 0.65; break;
+    case 'btts':    adjustment = -baseAbs * 0.70; break;
+    case 'homeWin': adjustment = -h * 1.10 + a * 0.55; break;
+    case 'awayWin': adjustment = -a * 1.10 + h * 0.55; break;
+    case 'draw':    adjustment =  Math.abs(h - a) * 0.25 - Math.max(0, total - 2) * 0.35; break;
+    default: adjustment = 0;
+  }
+  adjustment = Math.max(-6, Math.min(6, adjustment));
+  adjustment = Math.round(adjustment * 10) / 10;
+  var summary = '';
+  if(Math.abs(adjustment) >= 0.3){
+    var parts = [];
+    if(h > 0) parts.push(h.toFixed(1).replace(/\.0$/,'') + ' acasa');
+    if(a > 0) parts.push(a.toFixed(1).replace(/\.0$/,'') + ' deplasare');
+    summary = 'Absente ' + parts.join(' / ') + ': ' + (adjustment >= 0 ? '+' : '') + adjustment.toFixed(1) + 'pp';
+  }
+  return {
+    adjustment: adjustment,
+    home: Math.round(h * 10) / 10,
+    away: Math.round(a * 10) / 10,
+    summary: summary,
+    applied: Math.abs(adjustment) >= 0.3
+  };
+}
+
+// ============================================================
+// PROBABILITY CALIBRATION — invata din jurnal un mapping
+// monoton intre probabilitate prezisa si rata reala de hit.
+// Smoothed Bayesian + interpolare liniara intre buckets.
+// ============================================================
+var CALIBRATION_MAP = null;
+
+function buildCalibrationMap(){
+  var journal = (window.RECOMMENDATION_JOURNAL || RECOMMENDATION_JOURNAL || []);
+  if(!Array.isArray(journal) || journal.length < 20){
+    CALIBRATION_MAP = null;
+    return null;
+  }
+  var BUCKET = 5; // 40-45, 45-50, ..., 95-100
+  var tmp = {};
+  journal.forEach(function(r){
+    if(!r || (r.won !== true && r.won !== false)) return;
+    var mk = String(r.market_key || ''); if(!mk) return;
+    var prob = Number(r.adjusted_prob != null ? r.adjusted_prob : r.model_prob || 0);
+    if(!isFinite(prob) || prob < 35 || prob > 99) return;
+    var bkt = Math.floor(prob / BUCKET) * BUCKET;
+    var key = mk + '|' + bkt;
+    if(!tmp[key]) tmp[key] = {market:mk, bucket:bkt, mid:bkt + BUCKET/2, wins:0, bets:0};
+    tmp[key].bets += 1;
+    if(r.won === true) tmp[key].wins += 1;
+  });
+  var byMarket = {};
+  Object.keys(tmp).forEach(function(k){
+    var row = tmp[k];
+    // Bayesian smoothing: prior 3W + 3L
+    row.smoothed = 100 * (row.wins + 3) / (row.bets + 6);
+    row.raw_rate = 100 * row.wins / Math.max(1, row.bets);
+    if(!byMarket[row.market]) byMarket[row.market] = [];
+    byMarket[row.market].push(row);
+  });
+  // Aplicam Pool Adjacent Violators (versiune simplificata) + blend cu identitate la sample mic
+  var MIN_BETS = 10;
+  var calibrated = {};
+  Object.keys(byMarket).forEach(function(mk){
+    var rows = byMarket[mk].slice().sort(function(a,b){ return a.mid - b.mid; });
+    // Pass 1: calcul "final" initial — buckets sub MIN_BETS folosesc identitate (nu distorsioneaza PAV)
+    rows.forEach(function(r){
+      if(r.bets < MIN_BETS){
+        // sub pragul minim: pondere 15% smoothed / 85% identitate (prea sensibil altfel la outlier)
+        r.final = 0.15 * r.smoothed + 0.85 * r.mid;
+        r.low_confidence = true;
+      } else {
+        r.final = r.smoothed;
+        r.low_confidence = false;
+      }
+    });
+    // Pass 2: PAV forward — asigura monotonicitate non-decrescanta
+    var groups = rows.map(function(r){ return {rows:[r], total:r.final, w:1}; });
+    var changed = true;
+    while(changed){
+      changed = false;
+      for(var i = 0; i < groups.length - 1; i++){
+        var meanA = groups[i].total / groups[i].w;
+        var meanB = groups[i+1].total / groups[i+1].w;
+        if(meanA > meanB){
+          // merge i+1 into i
+          groups[i].rows = groups[i].rows.concat(groups[i+1].rows);
+          groups[i].total += groups[i+1].total;
+          groups[i].w += groups[i+1].w;
+          groups.splice(i+1, 1);
+          changed = true;
+          break;
+        }
+      }
+    }
+    // Scrie valorile merged inapoi in rows
+    groups.forEach(function(g){
+      var mean = g.total / g.w;
+      g.rows.forEach(function(r){ r.final = mean; });
+    });
+    calibrated[mk] = rows;
+  });
+  CALIBRATION_MAP = calibrated;
+  try {
+    var marketsTxt = Object.keys(calibrated).map(function(k){ return k + '(' + calibrated[k].length + 'b)'; }).join(', ');
+    console.log('[Calibration] built for', Object.keys(calibrated).length, 'markets:', marketsTxt);
+  } catch(e){}
+  return CALIBRATION_MAP;
+}
+
+function calibrateProb(probRaw, marketKey){
+  var p = Number(probRaw);
+  if(!isFinite(p) || p <= 0) return null;
+  if(!CALIBRATION_MAP || !CALIBRATION_MAP[marketKey]) return null;
+  var rows = CALIBRATION_MAP[marketKey];
+  if(!rows || rows.length < 2) return null;
+  // Interpolare liniara intre midpoints
+  if(p <= rows[0].mid) return rows[0].final;
+  if(p >= rows[rows.length - 1].mid) return rows[rows.length - 1].final;
+  for(var i = 0; i < rows.length - 1; i++){
+    if(p >= rows[i].mid && p <= rows[i+1].mid){
+      var span = rows[i+1].mid - rows[i].mid;
+      if(span <= 0) return rows[i].final;
+      var t = (p - rows[i].mid) / span;
+      return rows[i].final + t * (rows[i+1].final - rows[i].final);
+    }
+  }
+  return null;
+}
+
+// ============================================================
+// WALK-FORWARD VALIDATION — simuleaza ce s-ar fi intamplat daca
+// motorul de invatare ar fi fost activ de la prima intrare in jurnal.
+// Foloseste doar datele anterioare fiecarui pariu ca sa ia decizia.
+// ============================================================
+var WALK_FORWARD_CACHE = null;
+
+function computeWalkForwardValidation(){
+  var journal = (window.RECOMMENDATION_JOURNAL || RECOMMENDATION_JOURNAL || [])
+    .filter(function(r){ return r && (r.won === true || r.won === false) && r.market_key; })
+    .slice()
+    .sort(function(a,b){
+      var ta = new Date(a.settled_at || a.event_date || a.first_logged_at || 0).getTime();
+      var tb = new Date(b.settled_at || b.event_date || b.first_logged_at || 0).getTime();
+      if(!isFinite(ta)) ta = 0; if(!isFinite(tb)) tb = 0;
+      return ta - tb;
+    });
+  if(journal.length < 30){
+    WALK_FORWARD_CACHE = null;
+    return null;
+  }
+  var buckets = learningBuckets();
+  var prior = {market_league:{}, market_edge:{}, market_weekday:{}};
+  function ensure(tbl, key){ if(!tbl[key]) tbl[key] = {bets:0, wins:0, profit:0}; return tbl[key]; }
+  // Toxic conditions: aligned with live engine but with stricter minimum sample (12 vs 8)
+  // and deeper ROI floor (-20% vs -15%) to reduce false positives on noisy small buckets
+  function isToxic(s){ return s && s.bets >= 12 && (s.profit / s.bets) <= -0.20; }
+
+  var actualProfit = 0, simulatedProfit = 0;
+  var savedLosses = 0, savedUnits = 0, missedWins = 0, missedUnits = 0;
+  var blockedSamples = [];
+  var correctBlocks = 0, wrongBlocks = 0;
+
+  // Pentru ROI rolling (ultimele 90 zile vs total) — sliding window incremental ar fi mai complex, sarim
+  var rollingDelta = [];
+
+  journal.forEach(function(r, idx){
+    var mk = String(r.market_key || '');
+    var league = String(r.league || '—');
+    var odds = Number(r.odds || 0);
+    var edge = Number(r.edge_pct || 0);
+    var wdIdx = learningRowWeekdayIdx(r);
+    var wdName = (wdIdx >= 0 && wdIdx <= 6) ? buckets.weekdayNames[wdIdx] : null;
+    var eB = learningAssignBucket(edge, buckets.edgeBuckets);
+    var profit = (r.won === true) ? Math.max(0, odds - 1) : -1;
+
+    // Decizie bazata DOAR pe pariurile anterioare
+    var wouldBlock = false, reason = '', reasonKind = '';
+    var sL = prior.market_league[mk+'|'+league];
+    var sE = eB ? prior.market_edge[mk+'|'+eB] : null;
+    var sW = wdName ? prior.market_weekday[mk+'|'+wdName] : null;
+    if(isToxic(sL)){ wouldBlock = true; reason = league; reasonKind = 'liga'; }
+    else if(isToxic(sE)){ wouldBlock = true; reason = 'edge ' + eB; reasonKind = 'edge'; }
+    else if(isToxic(sW)){ wouldBlock = true; reason = wdName; reasonKind = 'zi'; }
+
+    actualProfit += profit;
+    if(wouldBlock){
+      if(r.won === true){
+        missedWins += 1;
+        missedUnits += Math.max(0, odds - 1);
+        wrongBlocks += 1;
+      } else {
+        savedLosses += 1;
+        savedUnits += 1;
+        correctBlocks += 1;
+      }
+      if(blockedSamples.length < 30){
+        blockedSamples.push({
+          row: r, reason: reason, reasonKind: reasonKind, profit: profit, won: r.won === true,
+          settled_at: r.settled_at || r.event_date || ''
+        });
+      }
+    } else {
+      simulatedProfit += profit;
+    }
+
+    if(idx > 0 && idx % 25 === 0){
+      rollingDelta.push({
+        idx: idx, actual_roi: actualProfit / (idx+1),
+        sim_roi: simulatedProfit / Math.max(1, (idx+1) - (correctBlocks + wrongBlocks))
+      });
+    }
+
+    // Update priors cu pariul curent pentru iteratiile urmatoare
+    function upd(tbl, key){
+      var s = ensure(tbl, key);
+      s.bets += 1;
+      if(r.won === true) s.wins += 1;
+      s.profit += profit;
+    }
+    upd(prior.market_league, mk+'|'+league);
+    if(eB) upd(prior.market_edge, mk+'|'+eB);
+    if(wdName) upd(prior.market_weekday, mk+'|'+wdName);
+  });
+
+  var totalBets = journal.length;
+  var simulatedBets = totalBets - (correctBlocks + wrongBlocks);
+  var actualROI = actualProfit / totalBets;
+  var simROI = simulatedBets > 0 ? simulatedProfit / simulatedBets : 0;
+  var engineNetUnits = savedUnits - missedUnits;
+  var totalBlocks = correctBlocks + wrongBlocks;
+  var blockAccuracy = totalBlocks > 0 ? correctBlocks / totalBlocks : 0;
+
+  WALK_FORWARD_CACHE = {
+    total_bets: totalBets,
+    actual_profit: actualProfit,
+    actual_roi: actualROI,
+    simulated_bets: simulatedBets,
+    simulated_profit: simulatedProfit,
+    simulated_roi: simROI,
+    delta_roi_pp: (simROI - actualROI) * 100,
+    engine_net_units: engineNetUnits,
+    total_blocks: totalBlocks,
+    correct_blocks: correctBlocks,
+    wrong_blocks: wrongBlocks,
+    block_accuracy: blockAccuracy,
+    saved_losses: savedLosses,
+    saved_units: savedUnits,
+    missed_wins: missedWins,
+    missed_units: missedUnits,
+    blocked_samples: blockedSamples.reverse(), // cele mai recente primele
+    rolling_delta: rollingDelta,
+    journal_sorted_count: journal.length
+  };
+  try { console.log('[WalkForward] total=' + totalBets + ' blocks=' + totalBlocks + ' correct=' + correctBlocks + ' wrong=' + wrongBlocks + ' net=' + engineNetUnits.toFixed(2) + 'u deltaROI=' + ((simROI - actualROI) * 100).toFixed(2) + 'pp'); } catch(e){}
+  return WALK_FORWARD_CACHE;
+}
+
+function renderWalkForwardValidation(){
+  var root = document.getElementById('walk-forward-root');
+  if(!root) return;
+  var wf = WALK_FORWARD_CACHE || computeWalkForwardValidation();
+  if(!wf){
+    root.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Validarea walk-forward are nevoie de minimum 30 de pariuri settled in jurnal.</div>';
+    return;
+  }
+  var pct = function(n, d){ d = d == null ? 1 : d; return (Number(n||0)*100).toFixed(d) + '%'; };
+  var signedPct = function(n, d){ d = d == null ? 1 : d; var v = Number(n||0)*100; return (v>=0?'+':'') + v.toFixed(d) + '%'; };
+  var signedPP = function(n, d){ d = d == null ? 2 : d; var v = Number(n||0); return (v>=0?'+':'') + v.toFixed(d) + 'pp'; };
+  var signedU = function(n, d){ d = d == null ? 2 : d; var v = Number(n||0); return (v>=0?'+':'') + v.toFixed(d) + 'u'; };
+  var esc = (typeof learningEsc === 'function') ? learningEsc : function(s){ return String(s||''); };
+
+  var verdict, verdictColor, verdictIcon;
+  if(wf.delta_roi_pp >= 2){ verdict = 'Motorul adauga valoare semnificativ'; verdictColor = 'var(--grn)'; verdictIcon = '✅'; }
+  else if(wf.delta_roi_pp >= 0.5){ verdict = 'Motorul adauga valoare'; verdictColor = 'var(--grn)'; verdictIcon = '👍'; }
+  else if(wf.delta_roi_pp >= -0.5){ verdict = 'Motorul este neutru'; verdictColor = 'var(--yel)'; verdictIcon = '➖'; }
+  else { verdict = 'Motorul scade valoarea'; verdictColor = 'var(--red)'; verdictIcon = '⚠️'; }
+
+  var cardsHtml =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">' +
+      '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI Actual</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.actual_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.actual_roi, 2) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + wf.total_bets + ' pariuri jucate</div>' +
+      '</div>' +
+      '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI Simulat</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.simulated_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.simulated_roi, 2) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + wf.simulated_bets + ' ramase dupa filtrare</div>' +
+      '</div>' +
+      '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.12),rgba(16,185,129,.03)':'rgba(239,68,68,.10),rgba(239,68,68,.02)') + ');border:1px solid ' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.25)':'rgba(239,68,68,.22)') + '">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Delta ROI</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + verdictColor + '">' + signedPP(wf.delta_roi_pp, 2) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">impactul motorului</div>' +
+      '</div>' +
+      '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Net unitati</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.engine_net_units>=0?'var(--grn)':'var(--red)') + '">' + signedU(wf.engine_net_units, 1) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">salvate vs ratate</div>' +
+      '</div>' +
+    '</div>';
+
+  var breakdownHtml =
+    '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">' +
+      '<div style="padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(0,0,0,0));border:1px solid rgba(16,185,129,.22)">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--grn);margin-bottom:6px">✅ Blocari corecte</div>' +
+        '<div style="font-size:18px;font-weight:900;color:var(--txt)">' + wf.correct_blocks + ' pariuri</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:4px">Pierderi evitate: ' + wf.saved_units.toFixed(1) + ' u</div>' +
+      '</div>' +
+      '<div style="padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(0,0,0,0));border:1px solid rgba(239,68,68,.22)">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--red);margin-bottom:6px">❌ Blocari gresite</div>' +
+        '<div style="font-size:18px;font-weight:900;color:var(--txt)">' + wf.wrong_blocks + ' pariuri</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:4px">Castiguri ratate: ' + wf.missed_units.toFixed(1) + ' u</div>' +
+      '</div>' +
+      '<div style="padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--txt);margin-bottom:6px">🎯 Acuratete blocari</div>' +
+        '<div style="font-size:18px;font-weight:900;color:' + (wf.block_accuracy>=0.5?'var(--grn)':'var(--red)') + '">' + pct(wf.block_accuracy, 1) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:4px">Random ar fi ~' + (100 * (wf.total_bets - (wf.actual_profit + wf.total_bets)/2) / wf.total_bets).toFixed(0) + '% (rata pierderi)</div>' +
+      '</div>' +
+    '</div>';
+
+  var samplesHtml = '';
+  if(wf.blocked_samples && wf.blocked_samples.length){
+    samplesHtml = '<div style="margin-top:14px">' +
+      '<div style="font-size:12px;font-weight:800;color:var(--txt);margin-bottom:8px">🔍 Ultimele ' + Math.min(10, wf.blocked_samples.length) + ' pariuri pe care motorul le-ar fi blocat</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px">' +
+        wf.blocked_samples.slice(0, 10).map(function(b){
+          var r = b.row;
+          var borderColor = b.won ? 'rgba(239,68,68,.22)' : 'rgba(16,185,129,.22)';
+          var tagColor = b.won ? 'var(--red)' : 'var(--grn)';
+          var tagLabel = b.won ? '❌ Era win ratat' : '✓ Pierdere evitata';
+          var date = r.settled_at ? new Date(r.settled_at).toLocaleDateString('ro-RO') : '';
+          return '<div style="padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid ' + borderColor + ';display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">' +
+            '<div style="flex:1;min-width:160px">' +
+              '<div style="font-size:12px;font-weight:700;color:var(--txt)">' + esc(r.home || '?') + ' — ' + esc(r.away || '?') + '</div>' +
+              '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + esc(r.market) + ' @ ' + Number(r.odds||0).toFixed(2) + ' • ' + esc(r.league) + ' • ' + date + '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<div style="font-size:10px;color:' + tagColor + ';font-weight:800">' + tagLabel + '</div>' +
+              '<div style="font-size:9px;color:var(--muted);margin-top:2px">Motiv: ' + esc(b.reason) + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }
+
+  root.innerHTML =
+    '<div class="section" style="margin-top:12px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(0,0,0,0));border:1px solid rgba(59,130,246,.22)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
+        '<div>' +
+          '<div style="font-size:15px;font-weight:900;color:var(--txt)">🔬 Validare Walk-Forward</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5">Simulare cronologica: pentru fiecare pariu, folosim DOAR pariurile anterioare lui ca sa decidem daca l-am fi blocat. Testeaza motorul exact cum ar fi decis in timp real.</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:10px 12px;border-radius:12px;background:' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.06)':'rgba(239,68,68,.06)') + ';border:1px solid ' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.22)':'rgba(239,68,68,.22)') + ';margin-bottom:12px">' +
+        '<div style="font-size:13px;font-weight:800;color:' + verdictColor + '">' + verdictIcon + ' ' + verdict + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">' + wf.total_bets + ' pariuri analizate. Motorul ar fi blocat ' + wf.total_blocks + ' dintre ele (' + pct(wf.total_blocks/wf.total_bets, 1) + '). Net: ' + signedU(wf.engine_net_units, 1) + '.</div>' +
+      '</div>' +
+      cardsHtml +
+      breakdownHtml +
+      samplesHtml +
+    '</div>';
+}
+
+
 function buildLearningEngine(){
   var journal = (window.RECOMMENDATION_JOURNAL || RECOMMENDATION_JOURNAL || []);
   if(!Array.isArray(journal)) journal = [];
@@ -4752,6 +5179,9 @@ function buildLearningEngine(){
     half_life_days: LEARNING_ENGINE_HALF_LIFE
   };
   try { console.log('[LearningEngine] built from', stats.global.bets, 'settled bets (global ROI', (stats.global.roi_w*100).toFixed(2), '%, winrate', (stats.global.winrate_w*100).toFixed(1), '%)'); } catch(e){}
+  // Calibration + walk-forward se construiesc tot aici pentru a fi gata la primul render
+  try { buildCalibrationMap(); } catch(e){ console.warn('[Calibration] failed', e); }
+  try { computeWalkForwardValidation(); } catch(e){ console.warn('[WalkForward] failed', e); }
   return LEARNING_ENGINE;
 }
 
@@ -5011,7 +5441,12 @@ function renderLearningEngine(){
           '<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Sample</th>' +
           '<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Semnal</th>' +
         '</tr></thead><tbody>' + calibBody + '</tbody></table></div>' +
-    '</div>';
+    '</div>' +
+
+    '<div id="walk-forward-root"></div>';
+
+  // Render walk-forward validation panel separately (uses its own cache + DOM root)
+  try { renderWalkForwardValidation(); } catch(e){ console.warn('[WalkForward] render failed', e); }
 }
 
 
@@ -5064,7 +5499,14 @@ function analyzeMatch(raw){
       edgePct: edgePct,
       sourceApi: apiRecommendForRaw(raw, bt.key),
       sourceHeuristic: heuristicRecommendForRaw(raw, bt.key),
-      probabilityEngine: (probMeta && probMeta.poissonProb != null) ? 'hybrid' : 'api'
+      probabilityEngine: (probMeta && probMeta.poissonProb != null) ? 'hybrid' : 'api',
+      injuryAdjustment: probMeta ? Number(probMeta.injuryAdjustment || 0) : 0,
+      injuryApplied: !!(probMeta && probMeta.injuryApplied),
+      injurySummary: probMeta && probMeta.injurySummary ? String(probMeta.injurySummary) : '',
+      injuryHome: probMeta ? Number(probMeta.injuryHome || 0) : 0,
+      injuryAway: probMeta ? Number(probMeta.injuryAway || 0) : 0,
+      calibrationDelta: probMeta && probMeta.calibrationDelta != null ? Number(probMeta.calibrationDelta) : null,
+      preCalibrationProb: probMeta && probMeta.preCalibrationProb != null ? Number(probMeta.preCalibrationProb) : null
     };
 
     allBets.push(item);
@@ -5334,6 +5776,8 @@ function doRefresh(){
     try { buildLearningEngine(); } catch(e){ console.warn('[LearningEngine] build failed', e); }
     // Re-run pipeline so dynamic filters/boost din LEARNING_ENGINE afecteaza analyzeMatch + syncRecommendationEngine
     try {
+      // Invalideaza cache-ul hibrid (calibration + injury adjustments depind de motor)
+      preds.forEach(function(raw){ if(raw) raw.__hybridProbCache = null; });
       ALL_MATCHES = preds.map(analyzeMatch);
       syncRecommendationEngine();
     } catch(e){ console.warn('[LearningEngine] re-sync failed', e); }
