@@ -9583,6 +9583,7 @@ function renderCota2Section(){
 }
 
 
+var SECTION_STATE = {};
 function toggleSection(id){
   var map={todaybest:['todaybest-body','todaybest-toggle'],top5:['top5-body','top5-toggle'],topsafe:['topsafe-body','topsafe-toggle'],ml:['ml-body','ml-toggle'],mldc:['mldc-body','mldc-toggle'],ml15:['ml15-body','ml15-toggle'],ml25:['ml25-body','ml25-toggle'],ml35:['ml35-body','ml35-toggle']};
   Object.keys(map).forEach(function(key){
