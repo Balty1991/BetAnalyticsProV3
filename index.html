@@ -2079,8 +2079,8 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
       <span class="more-card-sub">Rezultate reale și trenduri pe ultimele 21 de zile.</span>
     </button>
 <button class="more-card-btn" onclick="switchTab('smartbet')">
-      <span class="more-card-title">🧬 Motor de Învățare SmartBet</span>
-      <span class="more-card-sub">Audit Kelly + AI Memory + Fuziune — un singur motor de selecție inteligentă.</span>
+      <span class="more-card-title">🎯 Motor de Predicții Unificat</span>
+      <span class="more-card-sub">Kelly + AI Memory + SmartBet — cel mai bun din 3 motoare, un singur scor.</span>
     </button>
     <button class="more-card-btn" onclick="openOnboarding(true);closeDesktopMore()">
       <span class="more-card-title">🧭 Onboarding wizard</span>
@@ -2344,13 +2344,67 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 
     <!-- Sub-navigare internă -->
     <div class="smartlearn-nav" id="smartlearn-nav">
-      <button class="smartlearn-tab active" id="slt-audit" onclick="switchSmartLearnSection('audit')">🎯 Audit Kelly</button>
-      <button class="smartlearn-tab" id="slt-aimemory" onclick="switchSmartLearnSection('aimemory')">🧠 AI Memory</button>
-      <button class="smartlearn-tab" id="slt-smartbet" onclick="switchSmartLearnSection('smartbet')">🔀 Fuziune SmartBet</button>
+      <button class="smartlearn-tab active" id="slt-predictii" onclick="switchSmartLearnSection('predictii')">🎯 Predicții</button>
+      <button class="smartlearn-tab" id="slt-arhiva" onclick="switchSmartLearnSection('arhiva')" style="opacity:0.6;font-size:11px">📚 Baza de Invatare</button>
+    </div>
+
+    <!-- ===== SECȚIUNEA PREDICȚII UNIFICATE (motor combinat) ===== -->
+    <div id="smartlearn-section-predictii">
+      <div class="section" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(16,185,129,.06));border:1px solid rgba(99,102,241,.22);border-radius:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+          <div>
+            <div style="font-size:16px;font-weight:900;color:var(--txt)">🧠 Motor Unificat de Predicții</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Kelly Discipline + AI Memory Patterns + SmartBet Fusion — un singur scor de acuratețe.</div>
+          </div>
+          <div id="unified-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+        </div>
+        <div id="unified-summary-grid" style="margin-top:12px"></div>
+      </div>
+
+      <div class="section" style="margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(16,185,129,.04),rgba(99,102,241,.04));border:1px solid rgba(255,255,255,.08);border-radius:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:800;color:var(--txt)">🏆 Predicții validate — Scor Unificat</div>
+          <div id="unified-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+        </div>
+        <div id="unified-picks-list"></div>
+      </div>
+
+      <div class="section memory-panel memory-mix" style="margin-top:14px">
+        <div style="padding:4px 0 10px">
+          <div class="memory-shell-title">🎫 Generator Bilet Unificat</div>
+          <div class="memory-shell-sub" style="margin-top:4px">Un singur generator — filtru maxim din toate cele 3 motoare.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn" style="background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.3);color:var(--grn);font-size:12px;padding:8px 14px" onclick="generateUnifiedTicket('safe')">🛡️ Generează Safe</button>
+          <button class="btn" style="background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font-size:12px;padding:8px 14px" onclick="generateUnifiedTicket('balanced')">⚖️ Generează Echilibrat</button>
+          <button class="btn" style="background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.3);color:var(--yel);font-size:12px;padding:8px 14px" onclick="generateUnifiedTicket('value')">🚀 Generează Value</button>
+        </div>
+        <div id="unified-ticket-output"></div>
+      </div>
+    </div>
+
+    <!-- ===== SECȚIUNEA BAZA DE INVATARE (arhivă combinată) ===== -->
+    <div id="smartlearn-section-arhiva" style="display:none">
+      <div class="help-panel" style="border-color:rgba(99,102,241,.22);background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(16,185,129,.04))">
+        <div class="help-head">
+          <div>
+            <div class="help-title">📚 Baza de Invatare a Motorului</div>
+            <div class="help-sub">Aceste date alimentează motorul de predicții în fundal. Nu trebuie să le verifici zilnic — motorul le folosește automat la fiecare refresh.</div>
+          </div>
+          <span class="sec-badge" style="color:#a5b4fc;border-color:rgba(99,102,241,.28);background:rgba(99,102,241,.10)">Auto-invatare</span>
+        </div>
+      </div>
+      <div id="archive-summary-cards" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px"></div>
+      <div id="archive-learning-impact" style="margin-top:12px"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="switchTab('istoricfull')">📋 Jurnal complet →</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="switchTab('apihistory')">🌐 Baza API →</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="switchTab('traininglab')">🤖 Model AI →</button>
+      </div>
     </div>
 
     <!-- ===== SECȚIUNEA AUDIT KELLY ===== -->
-    <div id="smartlearn-section-audit">
+    <div id="smartlearn-section-audit" style="display:none!important">
       <div class="help-panel">
         <div class="help-head">
           <div>
@@ -2419,7 +2473,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
     </div>
 
     <!-- ===== SECȚIUNEA AI MEMORY ===== -->
-    <div id="smartlearn-section-aimemory" style="display:none">
+    <div id="smartlearn-section-aimemory" style="display:none!important">
       <div id="ai-memory-shell">
         <div class="help-panel green">
           <div class="help-head">
@@ -2523,7 +2577,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
     </div>
 
     <!-- ===== SECȚIUNEA FUZIUNE SMARTBET ===== -->
-    <div id="smartlearn-section-smartbet" style="display:none">
+    <div id="smartlearn-section-smartbet" style="display:none!important">
       <div class="help-panel" style="border-color:rgba(168,85,247,.22);background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08))">
         <div class="help-head">
           <div>
@@ -3102,7 +3156,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 Daily</span><small class="sheet-btn-sub">Secțiune dedicată cotei 2 și învățare continuă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
-<button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 Motor de Învățare SmartBet</span><small class="sheet-btn-sub">Audit Kelly · AI Memory · Fuziune SmartBet</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🆕 🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🆕 🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">🆕 📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
@@ -3927,8 +3981,9 @@ function switchTab(name){
   if(name==='cota2') renderCota2Section();
   if(name==='bankroll') calcBankroll();
   if(name==='istoric21') renderHistory21();
-  if(name==='audit'){ switchTab('smartbet'); switchSmartLearnSection('audit'); return; }
-  if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('aimemory'); return; }
+  if(name==='smartbet'){ try{ switchSmartLearnSection(window._smartLearnSection||'predictii'); }catch(e){} }
+  if(name==='audit'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
+  if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
   if(name==='alerts') renderAlertsCenter();
   if(name==='simulator') renderScenarioSimulator();
   if(name==='charts') renderAdvancedCharts();
@@ -11639,10 +11694,12 @@ var _smartbetSwitchTab = window.switchTab;
 window.switchTab = function(name){
   _smartbetSwitchTab(name);
   if(name === 'smartbet'){
-    try { renderSmartBet(); } catch(err){ console.error('renderSmartBet failed:', err); }
-    var activeSection = (window._smartLearnSection || 'audit');
-    if(activeSection === 'audit'){ try{ renderSignalAudit(); renderAuditGenerators(); }catch(e){} }
+    var activeSection = (window._smartLearnSection || 'predictii');
+    if(activeSection === 'predictii'){ try{ renderUnifiedEngine(); }catch(e){} }
+    if(activeSection === 'arhiva'){ try{ renderArchivePanel(); }catch(e){} }
+    if(activeSection === 'audit'){ try{ renderSmartBet(); renderSignalAudit(); renderAuditGenerators(); }catch(e){} }
     if(activeSection === 'aimemory'){ try{ renderAIMemory(); }catch(e){} }
+    if(activeSection === 'smartbet'){ try{ renderSmartBet(); }catch(e){} }
   }
 };
 
@@ -11650,6 +11707,12 @@ var _smartbetRenderAll = window.renderAll;
 window.renderAll = function(){
   var out = _smartbetRenderAll();
   try { renderSmartBet(); } catch(err){ console.error('SmartBet renderAll failed:', err); }
+  try{
+    var smartTab = document.getElementById('tab-smartbet');
+    if(smartTab && smartTab.classList.contains('active') && (window._smartLearnSection||'predictii')==='predictii'){
+      renderUnifiedEngine();
+    }
+  }catch(e){}
   return out;
 };
 window.addEventListener('DOMContentLoaded', function(){
@@ -12347,17 +12410,273 @@ document.addEventListener('DOMContentLoaded', function() {
 window._smartLearnSection = 'audit';
 function switchSmartLearnSection(section){
   window._smartLearnSection = section;
-  ['audit','aimemory','smartbet'].forEach(function(s){
+  ['predictii','arhiva','audit','aimemory','smartbet'].forEach(function(s){
     var sec = document.getElementById('smartlearn-section-' + s);
     var btn = document.getElementById('slt-' + s);
-    if(sec) sec.style.display = (s === section) ? '' : 'none';
+    if(sec) sec.style.display = (s === section) ? '' : (s==='audit'||s==='aimemory'||s==='smartbet' ? 'none' : 'none');
     if(btn) btn.classList.toggle('active', s === section);
   });
-  if(section === 'audit'){ try{ renderSignalAudit(); renderAuditGenerators(); }catch(e){} }
-  if(section === 'aimemory'){ try{ renderAIMemory(); }catch(e){} }
-  if(section === 'smartbet'){ try{ renderSmartBet(); }catch(e){} }
+  if(section === 'predictii'){ try{ renderUnifiedEngine(); }catch(e){console.warn(e);} }
+  if(section === 'arhiva'){ try{ renderArchivePanel(); }catch(e){console.warn(e);} }
+  // backward compat — never shown but keep rendering for data
+  if(section === 'audit'){ switchSmartLearnSection('predictii'); return; }
+  if(section === 'aimemory'){ switchSmartLearnSection('predictii'); return; }
   window.scrollTo({top:0,behavior:'auto'});
 }
+
+/* ===== UNIFIED PREDICTION ENGINE ===== */
+function calcUnifiedScore(row){
+  var smart = Math.min(100, Math.max(0, Number(row.smartScore || 0)));
+  var adaptive = Math.min(100, Math.max(0, Number(row.adaptiveScore || row.prob || 0)));
+  var bonus = Math.max(0, Number(row.memoryBonus || 0)) * 4;
+  var kellyBoost = Number(row.kelly_qtr || row.kelly || 0) > 3 ? 4 : (Number(row.kelly_qtr || row.kelly || 0) > 1.5 ? 2 : 0);
+  return Math.min(100, Math.round(smart * 0.45 + adaptive * 0.40 + bonus + kellyBoost));
+}
+
+function unifiedScoreColor(score){
+  if(score >= 85) return 'var(--grn)';
+  if(score >= 70) return 'var(--acc)';
+  if(score >= 58) return 'var(--yel)';
+  return 'var(--red)';
+}
+
+function unifiedScoreLabel(score){
+  if(score >= 85) return '🟢 Maxim';
+  if(score >= 70) return '🔵 Ridicat';
+  if(score >= 58) return '🟡 Moderat';
+  return '🔴 Slab';
+}
+
+function renderUnifiedEngine(){
+  var summary = document.getElementById('unified-summary-grid');
+  var list = document.getElementById('unified-picks-list');
+  var updated = document.getElementById('unified-updated');
+  var meta = document.getElementById('unified-list-meta');
+  if(!summary || !list) return;
+
+  var analysis = getSmartBetAnalysis ? getSmartBetAnalysis() : {pool:[],blocked:[]};
+  var pool = (analysis.pool || []).map(function(row){
+    return Object.assign({}, row, {_unifiedScore: calcUnifiedScore(row)});
+  }).sort(function(a,b){ return b._unifiedScore - a._unifiedScore; });
+  var blocked = analysis.blocked || [];
+
+  if(updated){
+    var ts = (typeof AI_MEMORY !== 'undefined' && AI_MEMORY && AI_MEMORY.updated_at) ||
+             (typeof SIGNAL_AUDIT !== 'undefined' && SIGNAL_AUDIT && SIGNAL_AUDIT.updated_at) ||
+             (typeof APP_META !== 'undefined' && APP_META && APP_META.updated_at) || '';
+    updated.textContent = ts ? ('Actualizat: ' + (typeof fmtDateTime === 'function' ? fmtDateTime(ts) : ts)) : '—';
+  }
+  if(meta) meta.textContent = pool.length + ' predicții validate • ' + blocked.length + ' blocate';
+
+  var avgScore = pool.length ? Math.round(pool.reduce(function(a,r){ return a + r._unifiedScore; },0) / pool.length) : 0;
+  var avgProb = pool.length ? pool.reduce(function(a,r){ return a + Number(r.prob||0); },0) / pool.length : 0;
+  var avgEdge = pool.length ? pool.reduce(function(a,r){ return a + Number(r.edge||0); },0) / pool.length : 0;
+  var topCount = pool.filter(function(r){ return r._unifiedScore >= 85; }).length;
+
+  summary.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">' +
+    [
+      {label:'Predicții validate', value: String(pool.length), sub:'trecute prin 3 filtre', color:'var(--acc)'},
+      {label:'Scor Unificat mediu', value: pool.length ? avgScore : '—', sub:'0-100, combină toate sursele', color:'var(--pur)'},
+      {label:'Top acuratețe ≥85', value: String(topCount), sub:'cele mai sigure selecții', color:'var(--grn)'},
+      {label:'Probabilitate medie', value: pool.length ? (typeof fmtPct==='function' ? fmtPct(avgProb) : avgProb.toFixed(1)+'%') : '—', sub:'probabilitate ajustată medie', color:'var(--cyan)'},
+      {label:'Edge mediu', value: pool.length ? (typeof fmtSignedPct==='function' ? fmtSignedPct(avgEdge) : (avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%') : '—', sub:'avantaj model vs piață', color:'var(--yel)'},
+      {label:'Blocate', value: String(blocked.length), sub:'eliminate de pattern negativ', color:'var(--red)'}
+    ].map(function(c){
+      return '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+        '<div style="font-size:11px;color:var(--muted);font-weight:700">'+c.label+'</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:'+c.color+'">'+c.value+'</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35">'+c.sub+'</div>' +
+        '</div>';
+    }).join('') + '</div>';
+
+  if(!pool.length){
+    list.innerHTML = '<div class="empty-state">Nicio predicție nu trece simultan filtrul Kelly, AI Memory și SmartBet în acest refresh. Revino după actualizarea datelor.</div>';
+    return;
+  }
+
+  list.innerHTML = pool.map(function(r, idx){
+    var score = r._unifiedScore;
+    var scoreColor = unifiedScoreColor(score);
+    var scoreLabel = unifiedScoreLabel(score);
+    var kellyStr = r.kelly_qtr ? Number(r.kelly_qtr).toFixed(1)+'%' : (r.kelly ? Number(r.kelly).toFixed(1)+'%' : '—');
+    var probStr = r.prob ? (typeof fmtPct==='function' ? fmtPct(r.prob) : Number(r.prob).toFixed(1)+'%') : '—';
+    var edgeStr = r.edge != null ? ((Number(r.edge)>=0?'+':'')+Number(r.edge).toFixed(1)+'%') : '—';
+    var marketLabel = typeof smartBetMarketLabel==='function' ? smartBetMarketLabel(r.marketKey, r) : (r.marketKey || r.market || '—');
+    var odds = Number(r.displayOdds || r.odds || 0);
+    var patternCount = (r.patternKeys && r.patternKeys.length) || 0;
+    var memBonus = Number(r.memoryBonus || 0);
+    return '<div style="margin-bottom:10px;padding:12px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-left:3px solid '+scoreColor+'">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">' +
+            '<span style="font-size:11px;font-weight:900;color:var(--muted);opacity:.7">#'+(idx+1)+'</span>' +
+            '<span style="font-size:13px;font-weight:800;color:var(--txt)">'+(r.home||'—')+' vs '+(r.away||'—')+'</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">'+(r.league||'—')+' • '+(r.event_date?(typeof fmtDate==='function'?fmtDate(r.event_date)+' '+fmtTime(r.event_date):r.event_date):'—')+'</div>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+            '<span style="font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.07);color:var(--txt)">'+marketLabel+' @ '+odds.toFixed(2)+'</span>' +
+            '<span style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.05);color:var(--muted)">Kelly '+kellyStr+'</span>' +
+            '<span style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.05);color:var(--muted)">Prob '+probStr+'</span>' +
+            '<span style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.05);color:var(--muted)">Edge '+edgeStr+'</span>' +
+            (patternCount>0?'<span style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(16,185,129,.1);color:var(--grn)">'+patternCount+' pattern'+(patternCount>1?'s':'')+' confirmat'+(patternCount>1?'e':'')+'</span>':'') +
+            (memBonus>0?'<span style="font-size:11px;padding:3px 8px;border-radius:8px;background:rgba(99,102,241,.1);color:#a5b4fc">bonus +'+memBonus.toFixed(1)+'</span>':'') +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:center;min-width:58px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">' +
+          '<div style="font-size:24px;font-weight:900;color:'+scoreColor+';line-height:1">'+score+'</div>' +
+          '<div style="font-size:9px;color:var(--muted);margin-top:4px;font-weight:700">SCOR</div>' +
+          '<div style="font-size:9px;margin-top:2px;color:'+scoreColor+'">'+scoreLabel.split(' ')[0]+'</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+var UNIFIED_TICKETS = {safe:null, balanced:null, value:null};
+function generateUnifiedTicket(type){
+  // use existing SmartBet ticket builder under the hood
+  if(typeof buildSmartBetTicket === 'function'){
+    UNIFIED_TICKETS[type] = buildSmartBetTicket(type, false);
+    if(!UNIFIED_TICKETS[type] || !(UNIFIED_TICKETS[type].picks||[]).length){
+      UNIFIED_TICKETS[type] = buildSmartBetTicket(type, true); // relaxed
+    }
+  }
+  renderUnifiedTicket(type);
+}
+
+function renderUnifiedTicket(type){
+  var out = document.getElementById('unified-ticket-output');
+  if(!out) return;
+  var ticket = UNIFIED_TICKETS[type];
+  if(!ticket){
+    // try to show last available
+    ticket = UNIFIED_TICKETS.safe || UNIFIED_TICKETS.balanced || UNIFIED_TICKETS.value;
+  }
+  if(!ticket || !(ticket.picks||[]).length){
+    out.innerHTML = '<div class="empty-state" style="font-size:12px">Apasă pe un buton pentru a genera biletul.</div>';
+    return;
+  }
+  var picks = ticket.picks || [];
+  var totalOdds = picks.reduce(function(a,p){ return a * Number(p.displayOdds||p.odds||1); }, 1);
+  var labelColor = type==='safe' ? 'var(--grn)' : (type==='balanced' ? '#a5b4fc' : 'var(--yel)');
+  out.innerHTML = '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+    '<div style="font-size:13px;font-weight:800;color:'+labelColor+';margin-bottom:10px">'+ticket.label+'</div>' +
+    picks.map(function(p){
+      var marketLabel = typeof smartBetMarketLabel==='function' ? smartBetMarketLabel(p.marketKey,p) : (p.marketKey||p.market||'—');
+      return '<div style="margin-bottom:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--txt)">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+marketLabel+' @ '+Number(p.displayOdds||p.odds||0).toFixed(2)+'</div>' +
+        '</div>';
+    }).join('') +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)">' +
+      '<span style="font-size:11px;color:var(--muted)">'+picks.length+' selecții</span>' +
+      '<span style="font-size:14px;font-weight:900;color:'+labelColor+'">@ '+totalOdds.toFixed(2)+'</span>' +
+    '</div>' +
+  '</div>';
+}
+
+/* ===== ARCHIVE PANEL (combined 3 historic sources) ===== */
+function renderArchivePanel(){
+  var cards = document.getElementById('archive-summary-cards');
+  var impact = document.getElementById('archive-learning-impact');
+  if(!cards) return;
+
+  var mem = (typeof AI_MEMORY!=='undefined' && AI_MEMORY) ? AI_MEMORY : {};
+  var memSum = mem.summary || {};
+  var fullMeta = (typeof W!=='undefined' && W.FULL_HISTORY_META) ? W.FULL_HISTORY_META :
+                 (window.FULL_HISTORY_META || {});
+  var apiSum = (typeof W!=='undefined' && W.API_HISTORY_SUMMARY) ? W.API_HISTORY_SUMMARY :
+               (window.API_HISTORY_SUMMARY || {});
+  var apiValid = apiSum.valid || {};
+  var trainSum = (typeof W!=='undefined' && W.TRAINING_DATASET_SUMMARY) ? W.TRAINING_DATASET_SUMMARY :
+                 (window.TRAINING_DATASET_SUMMARY || {});
+  var trainModel = (typeof W!=='undefined' && W.TRAINING_MODEL_SUMMARY) ? W.TRAINING_MODEL_SUMMARY :
+                   (window.TRAINING_MODEL_SUMMARY || {});
+  var recJournal = (typeof W!=='undefined' && W.RECOMMENDATION_JOURNAL) ? W.RECOMMENDATION_JOURNAL :
+                   (window.RECOMMENDATION_JOURNAL || []);
+  var baselines = (typeof TRAINING_MARKET_BASELINES!=='undefined' && TRAINING_MARKET_BASELINES) ?
+                  TRAINING_MARKET_BASELINES : (window.TRAINING_MARKET_BASELINES || []);
+
+  function fmtN(v){ var n=Number(v); return Number.isFinite(n) ? n.toLocaleString('ro-RO') : '—'; }
+
+  var cardData = [
+    {
+      emoji:'📋', title:'Jurnal Aplicație',
+      value: fmtN(fullMeta.journal_rows || recJournal.length) + ' înregistrări',
+      sub: fmtN(fullMeta.history_rows||0) + ' cu rezultat • ' + fmtN(fullMeta.lookback_days||0) + ' zile',
+      role:'Istoricul biletelor generate — sursa principală pentru calculul ROI și pattern-urile de win/loss.',
+      color:'rgba(16,185,129,.15)', border:'rgba(16,185,129,.25)'
+    },
+    {
+      emoji:'🌐', title:'Baza Istorică API',
+      value: fmtN(apiValid.leagues_total||0) + ' ligi • ' + fmtN(apiValid.seasons_total||0) + ' sezoane',
+      sub: fmtN((apiSum.events_summary||{}).total_events_counted||(apiSum.valid||{}).total_events||0) + ' meciuri indexate',
+      role:'Datele brute din BSD API — calibrează probabilitățile și ajustează cotele fair pe fiecare piață.',
+      color:'rgba(99,102,241,.12)', border:'rgba(99,102,241,.25)'
+    },
+    {
+      emoji:'🤖', title:'Model AI + Patterns',
+      value: fmtN(trainSum.rows_total||0) + ' rows antrenament',
+      sub: fmtN((trainModel.rows_eligible_min5||trainSum.rows_ready)||0) + ' ready • ' + fmtN(baselines.filter(function(b){return b&&b.win_rate>0;}).length) + ' piețe calibrate',
+      role:'Modelul statistic și pattern-urile învățate — ajustează scorul fiecărui pick cu bonus/penalizare din memorie.',
+      color:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.22)'
+    }
+  ];
+
+  cards.innerHTML = cardData.map(function(c){
+    return '<div style="padding:14px;border-radius:16px;background:'+c.color+';border:1px solid '+c.border+'">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<span style="font-size:20px">'+c.emoji+'</span>' +
+        '<div style="font-size:13px;font-weight:800;color:var(--txt)">'+c.title+'</div>' +
+      '</div>' +
+      '<div style="font-size:16px;font-weight:900;color:var(--txt);margin-bottom:4px">'+c.value+'</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+c.sub+'</div>' +
+      '<div style="font-size:11px;line-height:1.55;color:var(--muted);padding-top:8px;border-top:1px solid rgba(255,255,255,.07)"><b style="color:var(--txt)">Rol în motor:</b> '+c.role+'</div>' +
+    '</div>';
+  }).join('');
+
+  if(impact){
+    var adaptivePicks = (mem.adaptive_picks||[]).length;
+    var posPatterns = (mem.positive_patterns||[]).length;
+    var negPatterns = (mem.negative_patterns||[]).length;
+    var settledROI = Number(memSum.settled_roi||0);
+    impact.innerHTML = '<div style="padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">⚡ Impact direct al arhivei asupra motorului</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">' +
+        ['Picks adaptive: '+adaptivePicks, 'Patterns pozitive: '+posPatterns, 'Patterns negative: '+negPatterns,
+         'ROI validat: '+(settledROI>=0?'+':'')+settledROI.toFixed(2)+'%',
+         'Piețe calibrate: '+baselines.filter(function(b){return b&&b.win_rate>0;}).length,
+         'Settled bets: '+fmtN(memSum.settled_bets||0)
+        ].map(function(txt){
+          return '<div style="padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:700;color:var(--txt)">'+txt+'</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }
+}
+
+// Expose on window so full-history.js can call after data loads
+window.renderArchivePanel = renderArchivePanel;
+window.renderUnifiedEngine = renderUnifiedEngine;
+
+// Auto-render unified engine on initial app load (after data is ready)
+document.addEventListener('DOMContentLoaded', function(){
+  var checkInterval = setInterval(function(){
+    if(typeof getSmartBetAnalysis === 'function' && typeof AI_MEMORY !== 'undefined'){
+      clearInterval(checkInterval);
+      // render if smartbet tab is the initial active tab, or just prime on first data load
+      try{
+        var activeSect = window._smartLearnSection || 'predictii';
+        var smartTab = document.getElementById('tab-smartbet');
+        if(smartTab && smartTab.classList.contains('active')){
+          renderUnifiedEngine();
+        }
+      }catch(e){}
+    }
+  }, 800);
+  // clear after 30s regardless
+  setTimeout(function(){ clearInterval(checkInterval); }, 30000);
+});
 </script>
 
 
