@@ -10522,6 +10522,14 @@ function renderAdvancedCharts(){
   ]) + '<div class="sankey-legend"><span class="sankey-pill">Toate → pool brut</span><span class="sankey-pill">Cu cote → disponibile pe piață</span><span class="sankey-pill">PRO → filtru intern strict</span><span class="sankey-pill">Value → EV mai bun</span></div>';
 }
 
+function safeRenderCall(label, fn){
+  try {
+    if(typeof fn === 'function') fn();
+  } catch(err){
+    console.warn('[RenderFail] ' + label, err);
+  }
+}
+
 function renderAll(){
   LAST_DAY_KEY = getCurrentDayKey();
   var total = ALL_MATCHES.length;
@@ -10551,30 +10559,30 @@ function renderAll(){
   if($('hq-safe')) $('hq-safe').textContent = safe;
   $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr;
 
-  buildLeagueFilter();
-  renderBacktest();
-  renderDashboardVisuals();
-  renderMarketDistribution();
-  renderMarketPerformance();
-  renderFocusCenter();
-  renderTicketLaneBoard();
-  renderTodayBest();
-  renderTopPicks();
-  renderTopSafe();
-  renderSignalAudit();
-  renderAuditVisuals();
-  renderML();
-  renderMLDC();
-  renderML15();
-  renderML25();
-  renderML35();
-  renderMlApiCenter();
-  renderMatches();
-  renderBilete();
-  renderAdvancedCharts();
-  try { renderLearningEngine(); } catch(e){}
-  autoSyncTrackingStatuses();
-  renderTracking();
+  safeRenderCall('buildLeagueFilter', buildLeagueFilter);
+  safeRenderCall('renderBacktest', renderBacktest);
+  safeRenderCall('renderDashboardVisuals', renderDashboardVisuals);
+  safeRenderCall('renderMarketDistribution', renderMarketDistribution);
+  safeRenderCall('renderMarketPerformance', renderMarketPerformance);
+  safeRenderCall('renderFocusCenter', renderFocusCenter);
+  safeRenderCall('renderTicketLaneBoard', renderTicketLaneBoard);
+  safeRenderCall('renderTodayBest', renderTodayBest);
+  safeRenderCall('renderTopPicks', renderTopPicks);
+  safeRenderCall('renderTopSafe', renderTopSafe);
+  safeRenderCall('renderSignalAudit', renderSignalAudit);
+  safeRenderCall('renderAuditVisuals', renderAuditVisuals);
+  safeRenderCall('renderML', renderML);
+  safeRenderCall('renderMLDC', renderMLDC);
+  safeRenderCall('renderML15', renderML15);
+  safeRenderCall('renderML25', renderML25);
+  safeRenderCall('renderML35', renderML35);
+  safeRenderCall('renderMlApiCenter', renderMlApiCenter);
+  safeRenderCall('renderMatches', renderMatches);
+  safeRenderCall('renderBilete', renderBilete);
+  safeRenderCall('renderAdvancedCharts', renderAdvancedCharts);
+  safeRenderCall('renderLearningEngine', renderLearningEngine);
+  safeRenderCall('autoSyncTrackingStatuses', autoSyncTrackingStatuses);
+  safeRenderCall('renderTracking', renderTracking);
 }
 
 window.addEventListener('DOMContentLoaded', function(){
