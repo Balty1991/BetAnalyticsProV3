@@ -1003,10 +1003,6 @@ body.more-open{overflow:hidden}
 .addon-stat .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .addon-stat .v{margin-top:8px;font-size:24px;font-weight:900;color:var(--txt)}
 .addon-stat .s{margin-top:6px;font-size:11px;color:var(--muted);line-height:1.5}
-.alert-log-list,.alert-candidate-list{display:grid;gap:10px}
-.alert-row{padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
-.alert-row-title{font-size:12px;font-weight:800;color:var(--txt)}
-.alert-row-meta{font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px}
 .heatmap-table{width:100%;border-collapse:separate;border-spacing:8px}
 .heatmap-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:800;text-align:center;padding:0 4px}
 .heatmap-table td{padding:0}
@@ -3089,42 +3085,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   </div>
 
 
-  <div class="tab-content" id="tab-alerts">
-    <div class="addon-grid">
-      <div class="addon-card">
-        <div class="addon-head"><div><div class="addon-title">🔔 Alerte & notificări</div><div class="addon-sub">Notificări locale în browser când aplicația este deschisă, plus centru intern de alerte. Pentru push reale în fundal ar trebui și infrastructură dedicată.</div></div><div class="addon-chip" id="alerts-permission-chip">permisiune: —</div></div>
-        <div class="addon-form" style="margin-bottom:12px">
-          <div><label class="addon-label">Motor alerte</label><select id="alert-enabled" class="addon-select" onchange="saveAlertSettings()"><option value="off">Oprit</option><option value="on">Pornit</option></select></div>
-          <div><label class="addon-label">Browser notification</label><select id="alert-browser" class="addon-select" onchange="saveAlertSettings()"><option value="off">Doar în app</option><option value="on">În app + browser</option></select></div>
-          <div><label class="addon-label">Smart score minim</label><input id="alert-min-smart" class="addon-input" type="number" min="0" max="150" step="1" value="88" onchange="saveAlertSettings()"></div>
-          <div><label class="addon-label">Edge minim</label><input id="alert-min-edge" class="addon-input" type="number" min="0" max="50" step="0.5" value="5" onchange="saveAlertSettings()"></div>
-          <div><label class="addon-label">Kickoff max (ore)</label><input id="alert-max-kickoff" class="addon-input" type="number" min="1" max="72" step="1" value="6" onchange="saveAlertSettings()"></div>
-          <div><label class="addon-label">Pro only</label><select id="alert-pro-only" class="addon-select" onchange="saveAlertSettings()"><option value="on">Da</option><option value="off">Nu</option></select></div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="requestAlertPermission()">Permite notificări</button><button class="btn" onclick="testAlertNow()" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">Test notificare</button><button class="btn" onclick="evaluateAlertEngine(true)" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.22);color:var(--grn)">Rulează scanare</button></div>
-      </div>
-      <div class="addon-card"><div class="addon-head"><div><div class="addon-title">⚡ Canditați activi</div><div class="addon-sub">Meciurile care trec acum de regula de alertare.</div></div><div class="addon-chip" id="alerts-candidates-chip">0 active</div></div><div id="alerts-candidates" class="alert-candidate-list"></div></div>
-      <div class="addon-card"><div class="addon-head"><div><div class="addon-title">🧾 Jurnal alerte</div><div class="addon-sub">Ultimele alerte generate de motor.</div></div><button class="btn" onclick="clearAlertLog()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.22);color:var(--red)">Șterge</button></div><div id="alerts-log" class="alert-log-list"></div></div>
-    </div>
-  </div>
 
-  <div class="tab-content" id="tab-simulator">
-    <div class="addon-grid">
-      <div class="addon-card">
-        <div class="addon-head"><div><div class="addon-title">🧪 Simulator de scenarii (What-If)</div><div class="addon-sub">Vezi imediat cum se schimbă EV, fair odds, Kelly și break-even când modifici cota sau probabilitatea.</div></div><div class="addon-chip">manual sandbox</div></div>
-        <div class="addon-form" style="margin-bottom:12px">
-          <div><label class="addon-label">Cota curentă</label><input id="sim-current-odds" class="addon-input" type="number" min="1.01" step="0.01" value="1.65" oninput="renderScenarioSimulator()"></div>
-          <div><label class="addon-label">Prob. estimată %</label><input id="sim-current-prob" class="addon-input" type="number" min="1" max="99" step="0.1" value="62" oninput="renderScenarioSimulator()"></div>
-          <div><label class="addon-label">Miză</label><input id="sim-stake" class="addon-input" type="number" min="1" step="1" value="50" oninput="renderScenarioSimulator()"></div>
-          <div><label class="addon-label">Cota scenariu</label><input id="sim-next-odds" class="addon-input" type="number" min="1.01" step="0.01" value="1.80" oninput="renderScenarioSimulator()"></div>
-          <div><label class="addon-label">Prob. scenariu %</label><input id="sim-next-prob" class="addon-input" type="number" min="1" max="99" step="0.1" value="58" oninput="renderScenarioSimulator()"></div>
-          <div><label class="addon-label">Legs combo</label><input id="sim-legs" class="addon-input" type="number" min="1" max="10" step="1" value="1" oninput="renderScenarioSimulator()"></div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="applyScenarioPreset('value')">Preset value</button><button class="btn btn-green" onclick="applyScenarioPreset('drift')">Preset drift cote</button><button class="btn" onclick="applyScenarioPreset('risk')" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt)">Preset risc</button></div>
-      </div>
-      <div id="simulator-output"></div>
-    </div>
-  </div>
 
   <div class="tab-content" id="tab-charts">
     <div class="addon-grid">
@@ -3157,8 +3118,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('alerts');closeMobileMore()"><span class="sheet-btn-title">🆕 🔔 Alerte PRO</span><small class="sheet-btn-sub">Notificări locale și centru de alerte</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('simulator');closeMobileMore()"><span class="sheet-btn-title">🆕 🧪 Simulator</span><small class="sheet-btn-sub">What-If pe odds, EV și Kelly</small></button>
+  
   <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">🆕 📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
   <button class="mobile-sheet-btn" onclick="openOnboarding(true);closeMobileMore()"><span class="sheet-btn-title">🧭 Onboarding wizard</span><small class="sheet-btn-sub">Relansează ghidul complet pentru utilizatori noi</small></button>
 </div>
@@ -3219,9 +3179,6 @@ var API_TOKEN = ''; // setat din meta.json sau localStorage
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
-var ALERT_SETTINGS = JSON.parse(localStorage.getItem('bet_alert_settings_v16') || '{"enabled":false,"browser":false,"minSmart":88,"minEdge":5,"maxKickoffHours":6,"proOnly":true}');
-var ALERT_LOG = JSON.parse(localStorage.getItem('bet_alert_log_v16') || '[]');
-var ALERT_NOTIFIED_KEYS = JSON.parse(localStorage.getItem('bet_alert_notified_v16') || '[]');
 
 // ============================================================
 // UTILS
@@ -3816,8 +3773,7 @@ function renderModernDashboard(){
         '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">LIVE</span><div class="feature-launch-title">⚽ Vezi analize</div><div class="feature-launch-sub">Lista completă de meciuri, predicții și filtre active.</div></button>'+
         '<button class="feature-launch-btn" onclick="switchTab(\'istoric21\')"><span class="feature-launch-badge">DATA</span><div class="feature-launch-title">📚 Istoric</div><div class="feature-launch-sub">Verifică rapid ROI, win rate și trendurile reale.</div></button>'+
         '<button class="feature-launch-btn" onclick="switchTab(\'tracking\')"><span class="feature-launch-badge">AUTO</span><div class="feature-launch-title">📌 Tracking</div><div class="feature-launch-sub">Vezi biletele urmărite și starea lor actuală.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'alerts\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">🔔 Alerte PRO</div><div class="feature-launch-sub">Notificări locale și centru de alerte active.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'charts\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">📊 Grafice avansate</div><div class="feature-launch-sub">Heatmap, radar și flow pentru citire rapidă.</div></button>'+
+                '<button class="feature-launch-btn" onclick="switchTab(\'charts\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">📊 Grafice avansate</div><div class="feature-launch-sub">Heatmap, radar și flow pentru citire rapidă.</div></button>'+
         '<button class="feature-launch-btn" onclick="switchTab(\'bankroll\')"><span class="feature-launch-badge">BANK</span><div class="feature-launch-title">💰 Bankroll</div><div class="feature-launch-sub">Stake, progres și controlul capitalului într-un singur loc.</div></button>'+
         '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">⚡ Filtre PRO</div><div class="feature-launch-sub">Kickoff, league confidence și smart score minim.</div></button>'+
       '</div>'+
@@ -3984,8 +3940,6 @@ function switchTab(name){
   if(name==='smartbet'){ try{ switchSmartLearnSection(window._smartLearnSection||'predictii'); }catch(e){} }
   if(name==='audit'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
   if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
-  if(name==='alerts') renderAlertsCenter();
-  if(name==='simulator') renderScenarioSimulator();
   if(name==='charts') renderAdvancedCharts();
   renderTicketQuickPeek();
 }
@@ -9763,118 +9717,6 @@ function getHoursToKickoff(m){
   var diff = (new Date(raw).getTime() - Date.now()) / 36e5;
   return isFinite(diff) ? diff : null;
 }
-function getAlertPermissionStatus(){
-  return (typeof Notification === 'undefined') ? 'unsupported' : (Notification.permission || 'default');
-}
-function saveAlertSettings(){
-  ALERT_SETTINGS = {
-    enabled: $('alert-enabled') ? $('alert-enabled').value === 'on' : !!ALERT_SETTINGS.enabled,
-    browser: $('alert-browser') ? $('alert-browser').value === 'on' : !!ALERT_SETTINGS.browser,
-    minSmart: $('alert-min-smart') ? Number($('alert-min-smart').value || 88) : Number(ALERT_SETTINGS.minSmart || 88),
-    minEdge: $('alert-min-edge') ? Number($('alert-min-edge').value || 5) : Number(ALERT_SETTINGS.minEdge || 5),
-    maxKickoffHours: $('alert-max-kickoff') ? Number($('alert-max-kickoff').value || 6) : Number(ALERT_SETTINGS.maxKickoffHours || 6),
-    proOnly: $('alert-pro-only') ? $('alert-pro-only').value === 'on' : !!ALERT_SETTINGS.proOnly
-  };
-  localStorage.setItem('bet_alert_settings_v16', JSON.stringify(ALERT_SETTINGS));
-  renderAlertsCenter();
-  evaluateAlertEngine(true);
-}
-function requestAlertPermission(){
-  if(typeof Notification === 'undefined'){ toast('Browserul nu suportă Notification API aici', 'err'); return; }
-  Notification.requestPermission().then(function(){ renderAlertsCenter(); toast('Permisiunea pentru notificări a fost actualizată', 'ok'); });
-}
-function pushLocalNotification(title, body){
-  if(ALERT_SETTINGS.browser && typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-    try{ new Notification(title, { body: body, icon: 'icon-192.png' }); }catch(err){}
-  }
-}
-function getAlertEligibleMatches(){
-  return (ALL_MATCHES || []).filter(function(m){
-    var b = m.bestBet || null;
-    if(!m || !b || m.analysisState !== 'ELIGIBLE') return false;
-    if(ALERT_SETTINGS.proOnly && !isProActiveMatch(m)) return false;
-    if(Number(m.smartScore || 0) < Number(ALERT_SETTINGS.minSmart || 0)) return false;
-    if(Number(b.edgePct || 0) < Number(ALERT_SETTINGS.minEdge || 0)) return false;
-    var hrs = getHoursToKickoff(m);
-    if(hrs == null || hrs < 0 || hrs > Number(ALERT_SETTINGS.maxKickoffHours || 999)) return false;
-    return true;
-  }).sort(function(a,b){ return Number(b.smartScore || 0) - Number(a.smartScore || 0); });
-}
-function evaluateAlertEngine(force){
-  if(!ALERT_SETTINGS.enabled && !force) return;
-  var candidates = getAlertEligibleMatches();
-  candidates.forEach(function(m){
-    var key = getMatchCardKey(m);
-    if(ALERT_NOTIFIED_KEYS.indexOf(key) >= 0 && !force) return;
-    var b = m.bestBet || {};
-    ALERT_NOTIFIED_KEYS.push(key);
-    ALERT_LOG.unshift({ key:key, createdAt:new Date().toISOString(), home:m.home, away:m.away, league:m.league, label:b.label || '—', odds:Number(b.odds || 0), smart:Number(m.smartScore || 0), edge:Number(b.edgePct || 0), kickoff:getMatchKickoffLabel(m) });
-    ALERT_LOG = ALERT_LOG.slice(0,80);
-    localStorage.setItem('bet_alert_notified_v16', JSON.stringify(ALERT_NOTIFIED_KEYS));
-    localStorage.setItem('bet_alert_log_v16', JSON.stringify(ALERT_LOG));
-    pushLocalNotification('BetAnalytics alertă PRO', m.home + ' vs ' + m.away + ' • ' + (b.label || '—') + ' @ ' + Number(b.odds || 0).toFixed(2));
-  });
-  renderAlertsCenter();
-}
-function clearAlertLog(){ ALERT_LOG = []; ALERT_NOTIFIED_KEYS = []; localStorage.setItem('bet_alert_log_v16', '[]'); localStorage.setItem('bet_alert_notified_v16', '[]'); renderAlertsCenter(); }
-function testAlertNow(){ pushLocalNotification('Test alertă BetAnalytics', 'Notificările locale sunt funcționale.'); toast('Test alertă trimis', 'ok'); }
-function renderAlertsCenter(){
-  if($('alert-enabled')) $('alert-enabled').value = ALERT_SETTINGS.enabled ? 'on' : 'off';
-  if($('alert-browser')) $('alert-browser').value = ALERT_SETTINGS.browser ? 'on' : 'off';
-  if($('alert-min-smart')) $('alert-min-smart').value = ALERT_SETTINGS.minSmart;
-  if($('alert-min-edge')) $('alert-min-edge').value = ALERT_SETTINGS.minEdge;
-  if($('alert-max-kickoff')) $('alert-max-kickoff').value = ALERT_SETTINGS.maxKickoffHours;
-  if($('alert-pro-only')) $('alert-pro-only').value = ALERT_SETTINGS.proOnly ? 'on' : 'off';
-  if($('alerts-permission-chip')) $('alerts-permission-chip').textContent = 'permisiune: ' + getAlertPermissionStatus();
-  var candidates = getAlertEligibleMatches();
-  if($('alerts-candidates-chip')) $('alerts-candidates-chip').textContent = candidates.length + ' active';
-  if($('alerts-candidates')) $('alerts-candidates').innerHTML = candidates.length ? candidates.slice(0,12).map(function(m){ var b=m.bestBet||{}; return '<div class="alert-row"><div class="alert-row-title">'+m.home+' vs '+m.away+'</div><div class="alert-row-meta">'+(m.league||'—')+' • '+getMatchKickoffLabel(m)+' • '+(b.label||'—')+' @ '+Number(b.odds||0).toFixed(2)+' • Smart '+Math.round(Number(m.smartScore||0))+' • Edge '+(Number(b.edgePct||0)>=0?'+':'')+Number(b.edgePct||0).toFixed(1)+'pp</div></div>'; }).join('') : '<div class="empty-state">Niciun candidat activ pe regula curentă.</div>';
-  if($('alerts-log')) $('alerts-log').innerHTML = ALERT_LOG.length ? ALERT_LOG.slice(0,30).map(function(r){ return '<div class="alert-row"><div class="alert-row-title">'+r.home+' vs '+r.away+'</div><div class="alert-row-meta">'+(r.league||'—')+' • '+(r.kickoff||'—')+' • '+(r.label||'—')+' @ '+Number(r.odds||0).toFixed(2)+' • Smart '+Math.round(Number(r.smart||0))+' • Edge '+(Number(r.edge||0)>=0?'+':'')+Number(r.edge||0).toFixed(1)+'pp • '+fmtDateTime(r.createdAt)+'</div></div>'; }).join('') : '<div class="empty-state">Jurnalul de alerte este gol.</div>';
-}
-function applyScenarioPreset(kind){
-  if(kind === 'value'){ $('sim-current-odds').value = 1.55; $('sim-current-prob').value = 72; $('sim-next-odds').value = 1.72; $('sim-next-prob').value = 74; $('sim-legs').value = 1; }
-  if(kind === 'drift'){ $('sim-current-odds').value = 1.80; $('sim-current-prob').value = 63; $('sim-next-odds').value = 2.05; $('sim-next-prob').value = 60; $('sim-legs').value = 2; }
-  if(kind === 'risk'){ $('sim-current-odds').value = 2.30; $('sim-current-prob').value = 49; $('sim-next-odds').value = 1.95; $('sim-next-prob').value = 54; $('sim-legs').value = 3; }
-  renderScenarioSimulator();
-}
-function calcScenarioMetrics(odds, prob, stake, legs){
-  odds = Math.max(1.01, Number(odds || 1.01));
-  prob = Math.max(0.01, Math.min(99.99, Number(prob || 0))) / 100;
-  stake = Math.max(1, Number(stake || 1));
-  legs = Math.max(1, Number(legs || 1));
-  var comboOdds = Math.pow(odds, legs);
-  var comboProb = Math.pow(prob, legs);
-  var fairOdds = 1 / comboProb;
-  var ev = (comboProb * comboOdds) - 1;
-  var be = 1 / comboOdds;
-  var kelly = ((comboProb * (comboOdds - 1)) - (1 - comboProb)) / Math.max(0.0001, comboOdds - 1);
-  return { comboOdds:comboOdds, comboProb:comboProb, fairOdds:fairOdds, ev:ev, be:be, kelly:kelly, winProfit:(comboOdds - 1) * stake };
-}
-function renderScenarioSimulator(){
-  var out = $('simulator-output');
-  if(!out) return;
-  var stake = Number(($('sim-stake') && $('sim-stake').value) || 50);
-  var legs = Number(($('sim-legs') && $('sim-legs').value) || 1);
-  var cur = calcScenarioMetrics(($('sim-current-odds') && $('sim-current-odds').value), ($('sim-current-prob') && $('sim-current-prob').value), stake, legs);
-  var nxt = calcScenarioMetrics(($('sim-next-odds') && $('sim-next-odds').value), ($('sim-next-prob') && $('sim-next-prob').value), stake, legs);
-  var deltaEv = (nxt.ev - cur.ev) * 100;
-  function panel(title, m, accent){
-    return '<div class="whatif-panel"><div style="font-size:13px;font-weight:900;color:'+accent+';margin-bottom:10px">'+title+'</div>'+
-      '<div class="whatif-metric"><span>Odds compuse</span><strong>'+m.comboOdds.toFixed(2)+'</strong></div>'+
-      '<div class="whatif-metric"><span>Prob. compusă</span><strong>'+ (m.comboProb*100).toFixed(1)+'%</strong></div>'+
-      '<div class="whatif-metric"><span>Fair odds</span><strong>'+m.fairOdds.toFixed(2)+'</strong></div>'+
-      '<div class="whatif-metric"><span>EV</span><strong style="color:'+(m.ev>=0?'var(--grn)':'var(--red)')+'">'+(m.ev>=0?'+':'')+(m.ev*100).toFixed(1)+'%</strong></div>'+
-      '<div class="whatif-metric"><span>Break-even</span><strong>'+(m.be*100).toFixed(1)+'%</strong></div>'+
-      '<div class="whatif-metric"><span>Kelly</span><strong style="color:'+(m.kelly>=0?'var(--acc)':'var(--red)')+'">'+(m.kelly*100).toFixed(1)+'%</strong></div>'+
-      '<div class="whatif-metric"><span>Profit dacă intră</span><strong>'+m.winProfit.toFixed(2)+' RON</strong></div></div>';
-  }
-  out.innerHTML = '<div class="whatif-grid"><div class="addon-card">'+panel('Scenariu curent', cur, 'var(--acc)')+'</div><div class="addon-card">'+panel('Scenariu nou', nxt, 'var(--grn)')+'</div></div>'+
-    '<div class="addon-card"><div class="addon-head"><div><div class="addon-title">Δ impact</div><div class="addon-sub">Diferența dintre scenariul nou și cel curent.</div></div><div class="addon-chip">legs '+legs+'</div></div><div class="addon-stats">'+
-    '<div class="addon-stat"><div class="k">EV delta</div><div class="v" style="color:'+(deltaEv>=0?'var(--grn)':'var(--red)')+'">'+(deltaEv>=0?'+':'')+deltaEv.toFixed(1)+'pp</div><div class="s">schimbarea de valoare a pariului</div></div>'+
-    '<div class="addon-stat"><div class="k">Odds delta</div><div class="v">'+(nxt.comboOdds-cur.comboOdds>=0?'+':'')+(nxt.comboOdds-cur.comboOdds).toFixed(2)+'</div><div class="s">din noul scenariu</div></div>'+
-    '<div class="addon-stat"><div class="k">Prob delta</div><div class="v">'+((nxt.comboProb-cur.comboProb)>=0?'+':'')+((nxt.comboProb-cur.comboProb)*100).toFixed(1)+'pp</div><div class="s">impact pe probabilitatea compusă</div></div>'+
-    '</div></div>';
-}
 function getRecentRows(days){
   var cutoff = new Date(Date.now() - days * 86400000);
   var settled = typeof getHistory21SettledRows === 'function' ? getHistory21SettledRows(cutoff).filter(function(r){ return getAddonStamp(r) >= cutoff.getTime(); }) : [];
@@ -9988,10 +9830,7 @@ function renderAll(){
   renderMlApiCenter();
   renderMatches();
   renderBilete();
-  renderAlertsCenter();
-  renderScenarioSimulator();
   renderAdvancedCharts();
-  evaluateAlertEngine(false);
   autoSyncTrackingStatuses();
   renderTracking();
 }
@@ -12193,7 +12032,7 @@ function getOnboardingSteps(){
     {title:'Bine ai venit în BetAnalytics Pro', sub:'Wizard-ul te ajută să înțelegi rapid ce vezi în aplicație și să pornești direct util.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Ce rezolvi aici</div><div class="onboarding-list"><div class="onboarding-item">📊 vezi meciuri analizate și recomandări clare<small>Meciuri, score, edge, value și fair odds.</small></div><div class="onboarding-item">🎫 generezi bilete și le urmărești în jurnal<small>Single, combo, manual din card și tracking.</small></div><div class="onboarding-item">🧠 folosești glosarul rapid când termenii devin prea tehnici<small>Edge, value, fair odds, xG și confidence.</small></div></div></div>'; }},
     {title:'Cum citești un card de meci', sub:'Cardul nou este gândit să-ți dea verdictul fără să te îngroape în text.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Ordinea corectă de citire</div><div class="onboarding-list"><div class="onboarding-item">1. UITĂ-TE LA RECOMANDARE<small>Piața, cota și scorul general.</small></div><div class="onboarding-item">2. UITĂ-TE LA PROBABILITATE + EDGE<small>Acolo vezi dacă pariul are logică matematică.</small></div><div class="onboarding-item">3. UITĂ-TE LA VALUE ȘI CONTEXT<small>Trend, scor probabil, xG și motivul principal.</small></div></div></div>'; }},
     {title:'Cum generezi un bilet', sub:'Poți folosi generatoarele sau poți construi unul manual direct din cardurile de meci.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">2 fluxuri rapide</div><div class="onboarding-list"><div class="onboarding-item">🎯 Din tabul Bilete<small>Folosești generatoarele sau constructorul personalizat.</small></div><div class="onboarding-item">🧩 Dintr-un card de meci<small>Butonul „Adaugă în bilet” îl trimite instant în preview-ul activ.</small></div></div></div>'; }},
-    {title:'Setări rapide inițiale', sub:'Alege stilul de joc și preferințele de bază. Le aplic imediat în filtre.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Profil & preferințe</div><div class="onboarding-form"><div><label>Profil</label><select id="ob-profile"><option value="safe">Safe</option><option value="balanced" selected>Balanced</option><option value="aggressive">Aggressive</option></select></div><div><label>Piață preferată</label><select id="ob-market"><option value="">Fără preferință</option><option value="Over 1.5G">Over 1.5G</option><option value="Over 2.5G">Over 2.5G</option><option value="Under 3.5G">Under 3.5G</option><option value="BTTS">BTTS</option></select></div><div><label>Probabilitate minimă %</label><input id="ob-minprob" type="number" min="0" max="100" step="1" value="72"></div><div><label>Pornește alertele PRO</label><select id="ob-alerts"><option value="yes">Da</option><option value="no">Nu</option></select></div></div></div>'; }}
+    {title:'Setări rapide inițiale', sub:'Alege stilul de joc și preferințele de bază. Le aplic imediat în filtre.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Profil & preferințe</div><div class="onboarding-form"><div><label>Profil</label><select id="ob-profile"><option value="safe">Safe</option><option value="balanced" selected>Balanced</option><option value="aggressive">Aggressive</option></select></div><div><label>Piață preferată</label><select id="ob-market"><option value="">Fără preferință</option><option value="Over 1.5G">Over 1.5G</option><option value="Over 2.5G">Over 2.5G</option><option value="Under 3.5G">Under 3.5G</option><option value="BTTS">BTTS</option></select></div><div><label>Probabilitate minimă %</label><input id="ob-minprob" type="number" min="0" max="100" step="1" value="72"></div></div></div>'; }}
   ];
 }
 function renderOnboarding(){
@@ -12224,15 +12063,11 @@ function applyOnboardingPrefs(){
   var profile = $('ob-profile') ? $('ob-profile').value : 'balanced';
   var market = $('ob-market') ? $('ob-market').value : '';
   var minProb = $('ob-minprob') ? Number($('ob-minprob').value || 72) : 72;
-  var alerts = $('ob-alerts') ? $('ob-alerts').value === 'yes' : true;
   if($('match-market-filter')) $('match-market-filter').value = market;
   if($('match-min-prob')) $('match-min-prob').value = minProb;
   if(profile === 'safe'){ if($('match-min-edge')) $('match-min-edge').value = 4; if($('match-min-score')) $('match-min-score').value = 82; if($('match-pro-mode')) $('match-pro-mode').value = 'pro'; }
   if(profile === 'balanced'){ if($('match-min-edge')) $('match-min-edge').value = 2; if($('match-min-score')) $('match-min-score').value = 76; }
   if(profile === 'aggressive'){ if($('match-min-edge')) $('match-min-edge').value = 0; if($('match-min-score')) $('match-min-score').value = 68; }
-  ALERT_SETTINGS.enabled = alerts;
-  localStorage.setItem('bet_alert_settings_v16', JSON.stringify(ALERT_SETTINGS));
-  try{ saveAlertSettings(); }catch(err){}
   try{ renderMatches(); }catch(err){}
 }
 function finishOnboarding(){ applyOnboardingPrefs(); saveOnboardingState({completed:true, completedAt:new Date().toISOString()}); closeOnboarding(); toast('Onboarding finalizat', 'ok'); switchTab('dashboard'); }
