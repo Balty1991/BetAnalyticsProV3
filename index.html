@@ -5175,9 +5175,9 @@ function analyzeMatch(raw){
     winner: false,
     fav: !!raw.favorite_recommend
   };
-  var homeApiId = e.home_team_obj ? e.home_team_obj.api_id : null;
-  var awayApiId = e.away_team_obj ? e.away_team_obj.api_id : null;
-  var leagueApiId = e.league ? e.league.api_id : null;
+  var homeApiId = e.home_team_obj ? (e.home_team_obj.id || e.home_team_obj.api_id) : null;
+  var awayApiId = e.away_team_obj ? (e.away_team_obj.id || e.away_team_obj.api_id) : null;
+  var leagueApiId = e.league ? (e.league.id || e.league.api_id) : null;
 
   var leagueTierInfo = getLeagueTierInfo(e.league ? e.league.name : '');
   return {
