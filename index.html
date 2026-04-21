@@ -4103,15 +4103,16 @@ function buildHybridProbForMarket(raw, marketKey){
   if(injury && injury.applied && injury.adjustment){
     effectiveProb = +Math.max(1, Math.min(99, effectiveProb + Number(injury.adjustment))).toFixed(2);
   }
-  // Calibration (post-injury: invatat pe probabilitatile finale cu care s-a pariat in trecut)
+  // Calibration (DOAR informatie de diagnostic — nu modifica effectiveProb)
+  // Calibrarea bucket-based elimina diferentierea inter-meci si distruge ranking-ul EV.
+  // O mentinem pentru vizibilitate in tab-ul Motor Invatare + ca posibil ajustaj la scor,
+  // dar nu altereaza probabilitatea folosita in calcValue/calcSmartScore.
   var calibratedProb = null;
   try { calibratedProb = calibrateProb(effectiveProb, marketKey); } catch(e){}
   var calibrationDelta = null;
   if(calibratedProb != null && isFinite(calibratedProb)){
     calibrationDelta = +(calibratedProb - effectiveProb).toFixed(2);
-    if(Math.abs(calibrationDelta) > 0.1){
-      effectiveProb = +Math.max(1, Math.min(99, calibratedProb)).toFixed(2);
-    }
+    // NU aplicam calibratedProb pe effectiveProb — pastram doar delta ca informatie
   }
   raw.__hybridProbCache[marketKey] = {
     apiProb: +apiProb.toFixed(2),
