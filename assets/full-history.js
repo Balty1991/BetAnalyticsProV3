@@ -79,6 +79,7 @@ function cardKeyTitle(title){
   if(title.includes('istoric api')) return 'apihistory';
   if(title.includes('ai training')) return 'traininglab';
   if(title.includes('istoric total')) return 'istoricfull';
+  if(title.includes('motor de predicții') || title.includes('predicții unificat')) return 'smartbet';
   return null;
 }
 
@@ -119,28 +120,8 @@ function ensure(){
   make('tab-istoricfull','Istoric total','fh');
   make('tab-apihistory','Istoric API total','apih');
   make('tab-traininglab','AI Training Lab','tr');
-  const grid=document.querySelector('.desktop-more-panel .more-grid');
-  [['istoricfull','Istoric total','Arhiva completă'],['apihistory','Istoric API total','Catalog sezoane și coverage'],['traininglab','AI Training Lab','Dataset, model și audit']].forEach(([k,t,s])=>{
-    if(grid&&!grid.querySelector(`[data-more-card="${k}"]`)){
-      const b=document.createElement('button');
-      b.className='more-card-btn';
-      b.dataset.moreCard=k;
-      b.setAttribute('onclick',`switchTab('${k}')`);
-      b.innerHTML=`<span class="more-card-title">${t}</span><span class="more-card-sub">${s}</span>`;
-      grid.appendChild(b);
-    }
-  });
-  const sheet=$('mobile-sheet');
-  [['istoricfull','Istoric total','Arhiva completă'],['apihistory','Istoric API total','Coverage, sezoane și gap-uri'],['traininglab','AI Training Lab','Dataset, model și memorie']].forEach(([k,t,s])=>{
-    if(sheet&&!sheet.querySelector(`[data-sheet-btn="${k}"]`)){
-      const b=document.createElement('button');
-      b.className='mobile-sheet-btn';
-      b.dataset.sheetBtn=k;
-      b.setAttribute('onclick',`switchTab('${k}');closeMobileMore()`);
-      b.innerHTML=`<span class="sheet-btn-title">${t}</span><small class="sheet-btn-sub">${s}</small>`;
-      sheet.appendChild(b);
-    }
-  });
+  // tabs exist (accessible via switchTab from the archive panel) but are NOT added to menus
+  // they are accessed only from the "Baza de Invatare" section inside the unified engine
   decorateMoreCards();
 }
 
@@ -326,6 +307,8 @@ function boot(){
       if(name==='apihistory') setTimeout(renderApi,0);
       if(name==='traininglab') setTimeout(renderTraining,0);
       setTimeout(decorateMoreCards,0);
+      // refresh archive panel if currently visible
+      if(name==='smartbet') setTimeout(()=>{ if(typeof W.renderArchivePanel==='function') W.renderArchivePanel(); },100);
       return r;
     };
     W.__fhFixTab=1;
@@ -340,7 +323,13 @@ function boot(){
     };
     W.__fhFixRefresh=1;
   }
-  load().then(()=>{decorateMoreCards(); rerender();});
+  load().then(()=>{
+    decorateMoreCards();
+    rerender();
+    // expose data references so renderArchivePanel (defined in index.html) can read them
+    W.RECOMMENDATION_JOURNAL = W.RECOMMENDATION_JOURNAL || [];
+    if(typeof W.renderArchivePanel === 'function') setTimeout(W.renderArchivePanel, 200);
+  });
 }
 
 W.setFullHistoryRange=v=>{W.FULL_HISTORY_RANGE=v||'total'; renderFull();};
