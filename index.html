@@ -2341,6 +2341,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
     <!-- Sub-navigare internă -->
     <div class="smartlearn-nav" id="smartlearn-nav">
       <button class="smartlearn-tab active" id="slt-predictii" onclick="switchSmartLearnSection('predictii')">🎯 Predicții</button>
+      <button class="smartlearn-tab" id="slt-invatare" onclick="switchSmartLearnSection('invatare')">🧬 Motor Învățare</button>
       <button class="smartlearn-tab" id="slt-arhiva" onclick="switchSmartLearnSection('arhiva')" style="opacity:0.6;font-size:11px">📚 Baza de Invatare</button>
     </div>
 
@@ -2377,6 +2378,11 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
         </div>
         <div id="unified-ticket-output"></div>
       </div>
+    </div>
+
+    <!-- ===== SECȚIUNEA MOTOR ÎNVĂȚARE ===== -->
+    <div id="smartlearn-section-invatare" style="display:none">
+      <div id="learning-engine-root"></div>
     </div>
 
     <!-- ===== SECȚIUNEA BAZA DE INVATARE (arhivă combinată) ===== -->
@@ -3158,6 +3164,8 @@ var ALL_PLAYERS = [];
 var BACKTEST_SUMMARY = {};
 var HISTORY_ENGINE = [];
 var RECOMMENDATION_LOG = [];
+var RECOMMENDATION_JOURNAL = [];
+var LEARNING_ENGINE = null;
 var SIGNAL_AUDIT = {};
 var AI_MEMORY = {};
 var TRAINING_MARKET_BASELINES = [];
@@ -4414,6 +4422,599 @@ function getTrainingBoostMeta(m, type, bet){
   };
 }
 
+
+// ============================================================
+// LEARNING ENGINE — continuous pattern discovery from journal
+// Analizeaza toate pariurile settled din RECOMMENDATION_JOURNAL
+// si deriveaza multiplicatori/filtre adaptive pentru smartScore.
+// ============================================================
+var LEARNING_ENGINE_VERSION = 'v1.0';
+var LEARNING_ENGINE_HALF_LIFE = 90; // zile, decay exponential
+
+function learningBuckets(){
+  return {
+    oddsBuckets: [
+      {min:1.00, max:1.25, label:'1.00-1.25'},
+      {min:1.25, max:1.40, label:'1.25-1.40'},
+      {min:1.40, max:1.60, label:'1.40-1.60'},
+      {min:1.60, max:1.85, label:'1.60-1.85'},
+      {min:1.85, max:2.20, label:'1.85-2.20'},
+      {min:2.20, max:999,  label:'2.20+'}
+    ],
+    edgeBuckets: [
+      {min:-999, max:3,   label:'<3%'},
+      {min:3,    max:5,   label:'3-5%'},
+      {min:5,    max:8,   label:'5-8%'},
+      {min:8,    max:12,  label:'8-12%'},
+      {min:12,   max:999, label:'12%+'}
+    ],
+    scoreBuckets: [
+      {min:0,  max:65, label:'<65'},
+      {min:65, max:75, label:'65-75'},
+      {min:75, max:85, label:'75-85'},
+      {min:85, max:95, label:'85-95'},
+      {min:95, max:999,label:'95+'}
+    ],
+    probBuckets: [
+      {min:0,  max:55, label:'<55'},
+      {min:55, max:65, label:'55-65'},
+      {min:65, max:75, label:'65-75'},
+      {min:75, max:85, label:'75-85'},
+      {min:85, max:999,label:'85+'}
+    ],
+    weekdayNames: ['Duminica','Luni','Marti','Miercuri','Joi','Vineri','Sambata']
+  };
+}
+
+function learningAssignBucket(value, buckets){
+  var v = Number(value);
+  if(!isFinite(v)) return null;
+  for(var i=0;i<buckets.length;i++){
+    if(v >= buckets[i].min && v < buckets[i].max) return buckets[i].label;
+  }
+  return null;
+}
+
+function learningRowOutcome(row){
+  if(!row) return null;
+  if(row.won === true) return 1;
+  if(row.won === false) return 0;
+  var st = String(row.status || '').toLowerCase();
+  if(st === 'win') return 1;
+  if(st === 'lose' || st === 'loss') return 0;
+  return null;
+}
+
+function learningRowProfit(row){
+  var outcome = learningRowOutcome(row);
+  if(outcome === null) return 0;
+  var odds = Number(row && row.odds || 0);
+  if(!isFinite(odds) || odds < 1.01) return outcome === 1 ? 0 : -1;
+  return outcome === 1 ? (odds - 1) : -1;
+}
+
+function learningRowWeekdayIdx(row){
+  var dt = row && (row.event_date || row.settled_at || row.first_logged_at);
+  if(!dt) return -1;
+  try {
+    var d = new Date(dt);
+    var di = d.getDay();
+    return (di >= 0 && di <= 6) ? di : -1;
+  } catch(e){ return -1; }
+}
+
+function learningRowAgeDays(row, nowMs){
+  var dt = row && (row.settled_at || row.event_date || row.first_logged_at);
+  if(!dt) return 999;
+  try {
+    var t = new Date(dt).getTime();
+    if(!isFinite(t)) return 999;
+    return Math.max(0, (nowMs - t) / 86400000);
+  } catch(e){ return 999; }
+}
+
+function learningDecayWeight(ageDays){
+  return Math.pow(0.5, ageDays / LEARNING_ENGINE_HALF_LIFE);
+}
+
+function learningWilsonLCB(wins, n, z){
+  z = z || 1.28; // 80% CI - mai permisiv pentru sample-uri medii
+  if(n <= 0) return 0;
+  var p = wins / n;
+  var a = p + z*z/(2*n);
+  var b = z * Math.sqrt(p*(1-p)/n + z*z/(4*n*n));
+  return (a - b) / (1 + z*z/n);
+}
+
+function learningStatsAcc(){
+  return {
+    bets:0, wins:0, losses:0, profit:0, edge_sum:0, odds_sum:0,
+    bets_w:0, wins_w:0, profit_w:0,
+    bets_30:0, wins_30:0, profit_30:0,
+    bets_90:0, wins_90:0, profit_90:0
+  };
+}
+
+function learningAddRow(stats, row, weight, ageDays){
+  var outcome = learningRowOutcome(row);
+  if(outcome === null) return;
+  var profit = learningRowProfit(row);
+  var odds = Number(row.odds || 0);
+  var edge = Number(row.edge_pct || 0);
+  stats.bets += 1;
+  stats.profit += profit;
+  stats.edge_sum += edge;
+  stats.odds_sum += odds;
+  if(outcome === 1) stats.wins += 1; else stats.losses += 1;
+  stats.bets_w += weight;
+  stats.profit_w += weight * profit;
+  if(outcome === 1) stats.wins_w += weight;
+  if(ageDays <= 30){
+    stats.bets_30 += 1; stats.profit_30 += profit;
+    if(outcome === 1) stats.wins_30 += 1;
+  }
+  if(ageDays <= 90){
+    stats.bets_90 += 1; stats.profit_90 += profit;
+    if(outcome === 1) stats.wins_90 += 1;
+  }
+}
+
+function learningFinalize(stats){
+  if(!stats || stats.bets <= 0){
+    if(stats){
+      stats.roi=0; stats.winrate=0; stats.avg_odds=0; stats.avg_edge=0;
+      stats.roi_w=0; stats.winrate_w=0;
+      stats.roi_30=0; stats.winrate_30=0;
+      stats.roi_90=0; stats.winrate_90=0;
+      stats.wilson_lcb=0;
+    }
+    return stats;
+  }
+  stats.roi = stats.profit / stats.bets;
+  stats.winrate = stats.wins / stats.bets;
+  stats.avg_odds = stats.odds_sum / stats.bets;
+  stats.avg_edge = stats.edge_sum / stats.bets;
+  stats.roi_w = stats.bets_w > 0 ? stats.profit_w / stats.bets_w : 0;
+  stats.winrate_w = stats.bets_w > 0 ? stats.wins_w / stats.bets_w : 0;
+  stats.roi_30 = stats.bets_30 > 0 ? stats.profit_30 / stats.bets_30 : 0;
+  stats.winrate_30 = stats.bets_30 > 0 ? stats.wins_30 / stats.bets_30 : 0;
+  stats.roi_90 = stats.bets_90 > 0 ? stats.profit_90 / stats.bets_90 : 0;
+  stats.winrate_90 = stats.bets_90 > 0 ? stats.wins_90 / stats.bets_90 : 0;
+  stats.wilson_lcb = learningWilsonLCB(stats.wins, stats.bets);
+  return stats;
+}
+
+function learningStatsMultiplier(stats){
+  var MIN_CONF_SAMPLE = 8;
+  if(!stats || stats.bets < 2){
+    return {multiplier:1.0, confidence:'insufficient', toxic:false, boost:0, roi:0, bets:0, raw_bets:(stats&&stats.bets)||0};
+  }
+  var roi = stats.roi_w;
+  var sampleFactor = Math.min(1.0, stats.bets_w / MIN_CONF_SAMPLE);
+  // Toxic: >=8 pariuri settled, ROI decay-weighted <= -15%
+  var toxic = (stats.bets >= MIN_CONF_SAMPLE) && (roi <= -0.15);
+  // Multiplicator: 1 + ROI * 1.5 * sampleFactor, clamp [0.60, 1.40]
+  var multi = 1.0 + (roi * 1.5 * sampleFactor);
+  multi = Math.max(0.60, Math.min(1.40, multi));
+  // Boost aditiv pentru baseScore
+  var boost = roi * 30 * sampleFactor;
+  boost = Math.max(-10, Math.min(12, boost));
+  boost = Math.round(boost * 10) / 10;
+  var conf = stats.bets >= 20 ? 'high' : (stats.bets >= MIN_CONF_SAMPLE ? 'medium' : 'low');
+  return {
+    multiplier: multi, confidence: conf, toxic: toxic, boost: boost,
+    roi: roi, winrate: stats.winrate_w, bets: stats.bets_w, raw_bets: stats.bets
+  };
+}
+
+// ============================================================
+// Orchestrator — ruleaza la fiecare refresh pe RECOMMENDATION_JOURNAL
+// ============================================================
+function buildLearningEngine(){
+  var journal = (window.RECOMMENDATION_JOURNAL || RECOMMENDATION_JOURNAL || []);
+  if(!Array.isArray(journal)) journal = [];
+  var now = Date.now();
+  var buckets = learningBuckets();
+
+  var stats = {
+    global: learningStatsAcc(),
+    by_market: {}, by_market_league: {}, by_market_odds: {},
+    by_market_edge: {}, by_market_weekday: {}, by_market_score: {},
+    by_market_source: {}, by_market_prob: {}, by_league: {}
+  };
+
+  journal.forEach(function(row){
+    if(learningRowOutcome(row) === null) return;
+    var market = String(row.market_key || '').trim();
+    if(!market) return;
+    var league = String(row.league || '').trim() || '—';
+    var odds = Number(row.odds || 0);
+    var edge = Number(row.edge_pct || 0);
+    var score = Number(row.score || 0);
+    var prob = Number(row.adjusted_prob || 0);
+    var ageDays = learningRowAgeDays(row, now);
+    var weight = learningDecayWeight(ageDays);
+    var wIdx = learningRowWeekdayIdx(row);
+    var wName = (wIdx >= 0 && wIdx < 7) ? buckets.weekdayNames[wIdx] : null;
+    var oB = learningAssignBucket(odds, buckets.oddsBuckets);
+    var eB = learningAssignBucket(edge, buckets.edgeBuckets);
+    var sB = learningAssignBucket(score, buckets.scoreBuckets);
+    var pB = learningAssignBucket(prob, buckets.probBuckets);
+    var src = row.source_api ? 'api' : (row.source_heuristic ? 'heuristic' : 'mixed');
+
+    learningAddRow(stats.global, row, weight, ageDays);
+    function ensure(table, key){ if(!table[key]) table[key] = learningStatsAcc(); return table[key]; }
+    learningAddRow(ensure(stats.by_market, market), row, weight, ageDays);
+    learningAddRow(ensure(stats.by_market_league, market+'|'+league), row, weight, ageDays);
+    learningAddRow(ensure(stats.by_league, league), row, weight, ageDays);
+    learningAddRow(ensure(stats.by_market_source, market+'|'+src), row, weight, ageDays);
+    if(oB) learningAddRow(ensure(stats.by_market_odds, market+'|'+oB), row, weight, ageDays);
+    if(eB) learningAddRow(ensure(stats.by_market_edge, market+'|'+eB), row, weight, ageDays);
+    if(wName) learningAddRow(ensure(stats.by_market_weekday, market+'|'+wName), row, weight, ageDays);
+    if(sB) learningAddRow(ensure(stats.by_market_score, market+'|'+sB), row, weight, ageDays);
+    if(pB) learningAddRow(ensure(stats.by_market_prob, market+'|'+pB), row, weight, ageDays);
+  });
+
+  // Finalize
+  learningFinalize(stats.global);
+  ['by_market','by_market_league','by_market_odds','by_market_edge','by_market_weekday','by_market_score','by_market_source','by_market_prob','by_league'].forEach(function(k){
+    Object.keys(stats[k]).forEach(function(kk){ learningFinalize(stats[k][kk]); });
+  });
+
+  // Multiplicatori
+  var multipliers = { market:{}, market_league:{}, market_odds:{}, market_edge:{}, market_weekday:{}, market_score:{}, market_source:{} };
+  [['by_market','market'],['by_market_league','market_league'],['by_market_odds','market_odds'],
+   ['by_market_edge','market_edge'],['by_market_weekday','market_weekday'],['by_market_score','market_score'],
+   ['by_market_source','market_source']].forEach(function(pair){
+    var s = stats[pair[0]], d = multipliers[pair[1]];
+    Object.keys(s).forEach(function(k){ d[k] = learningStatsMultiplier(s[k]); });
+  });
+
+  // Filtre dinamice: edge buckets profitabili / toxici per piata
+  var dynamicFilters = {};
+  Object.keys(stats.by_market_edge).forEach(function(k){
+    var parts = k.split('|');
+    var market = parts[0], bucket = parts[1];
+    if(!dynamicFilters[market]) dynamicFilters[market] = { edge_profitable:[], edge_toxic:[] };
+    var s = stats.by_market_edge[k];
+    if(s.bets >= 6 && s.roi_w > 0.02) dynamicFilters[market].edge_profitable.push(bucket);
+    if(s.bets >= 8 && s.roi_w < -0.08) dynamicFilters[market].edge_toxic.push(bucket);
+  });
+  // Weekday toxice per piata
+  var toxicWeekdays = {};
+  Object.keys(stats.by_market_weekday).forEach(function(k){
+    var parts = k.split('|');
+    var market = parts[0], wd = parts[1];
+    var s = stats.by_market_weekday[k];
+    if(s.bets >= 8 && s.roi_w <= -0.15){
+      if(!toxicWeekdays[market]) toxicWeekdays[market] = [];
+      toxicWeekdays[market].push(wd);
+    }
+  });
+
+  // Top pattern-uri pozitive & toxice
+  var topBoost = [], topToxic = [];
+  ['market','market_league','market_odds','market_edge','market_weekday','market_score'].forEach(function(kind){
+    Object.keys(multipliers[kind]).forEach(function(k){
+      var m = multipliers[kind][k];
+      if(!m || m.raw_bets < 5) return;
+      var rec = {kind:kind, key:k, multiplier:m.multiplier, roi:m.roi, winrate:m.winrate, bets:m.bets, raw_bets:m.raw_bets, boost:m.boost, toxic:m.toxic, confidence:m.confidence};
+      if(m.multiplier >= 1.05 && m.roi >= 0.03) topBoost.push(rec);
+      if(m.toxic) topToxic.push(rec);
+    });
+  });
+  topBoost.sort(function(a,b){ return (b.multiplier * Math.sqrt(b.raw_bets)) - (a.multiplier * Math.sqrt(a.raw_bets)); });
+  topToxic.sort(function(a,b){ return a.roi - b.roi; });
+
+  // Calibrare: predicted vs actual per prob bucket
+  var calibration = [];
+  var calibMap = {};
+  Object.keys(stats.by_market_prob).forEach(function(k){
+    var s = stats.by_market_prob[k];
+    if(s.bets < 5) return;
+    var parts = k.split('|');
+    var market = parts[0], bucket = parts[1];
+    if(!calibMap[bucket]) calibMap[bucket] = { bucket:bucket, bets:0, wins:0, predicted_sum:0, markets:{} };
+    calibMap[bucket].bets += s.bets;
+    calibMap[bucket].wins += s.wins;
+    // predicted probability ~ middle of bucket
+    var mid = buckets.probBuckets.filter(function(b){ return b.label === bucket; })[0];
+    if(mid){
+      var midVal = (mid.min + Math.min(99, mid.max)) / 2;
+      calibMap[bucket].predicted_sum += midVal * s.bets;
+    }
+    calibMap[bucket].markets[market] = s;
+  });
+  Object.keys(calibMap).forEach(function(k){
+    var c = calibMap[k];
+    if(c.bets > 0){
+      c.actual_rate = 100 * c.wins / c.bets;
+      c.predicted_rate = c.predicted_sum / c.bets;
+      c.bias = c.actual_rate - c.predicted_rate;
+      calibration.push(c);
+    }
+  });
+  calibration.sort(function(a,b){ return a.predicted_rate - b.predicted_rate; });
+
+  LEARNING_ENGINE = {
+    version: LEARNING_ENGINE_VERSION,
+    updated_at: new Date().toISOString(),
+    journal_rows: journal.length,
+    settled_rows: stats.global.bets,
+    stats: stats,
+    multipliers: multipliers,
+    dynamic_filters: dynamicFilters,
+    toxic_weekdays: toxicWeekdays,
+    top_boost_patterns: topBoost.slice(0, 20),
+    top_toxic_patterns: topToxic.slice(0, 12),
+    calibration: calibration,
+    buckets: buckets,
+    half_life_days: LEARNING_ENGINE_HALF_LIFE
+  };
+  try { console.log('[LearningEngine] built from', stats.global.bets, 'settled bets (global ROI', (stats.global.roi_w*100).toFixed(2), '%, winrate', (stats.global.winrate_w*100).toFixed(1), '%)'); } catch(e){}
+  return LEARNING_ENGINE;
+}
+
+// Aplica motor pe o selectie: returneaza boost/multiplicator + reasons
+function learningApplyToCandidate(ctx){
+  // ctx: {marketKey, leagueName, odds, edgePct, score, probAdj, weekdayIdx}
+  if(!LEARNING_ENGINE || !LEARNING_ENGINE.multipliers){
+    return {boost:0, multiplier:1.0, toxic:false, reasons:[]};
+  }
+  var buckets = LEARNING_ENGINE.buckets;
+  var M = LEARNING_ENGINE.multipliers;
+  var reasons = [];
+  var totalBoost = 0;
+  var combinedMulti = 1.0;
+  var toxic = false;
+
+  function apply(kind, key, label){
+    var m = M[kind] && M[kind][key];
+    if(!m || m.raw_bets < 4) return;
+    if(m.toxic){
+      toxic = true;
+      reasons.push('🚫 Toxic ' + label + ' (ROI ' + (m.roi*100).toFixed(1) + '% / ' + m.raw_bets + ' pariuri)');
+      return;
+    }
+    if(Math.abs(m.boost) >= 1.0){
+      totalBoost += m.boost;
+      // Combinam multiplicatorii cu moderare (radacina patrata) ca sa nu se acumuleze explosiv
+      combinedMulti *= (1 + (m.multiplier - 1) * 0.55);
+      var sign = m.boost >= 0 ? '+' : '';
+      reasons.push((m.boost >= 0 ? '📈 ' : '📉 ') + label + ' ' + sign + m.boost.toFixed(1) + ' (ROI ' + (m.roi*100).toFixed(1) + '%, ' + m.raw_bets + ' pariuri)');
+    }
+  }
+
+  var mk = ctx.marketKey, lg = ctx.leagueName || '—';
+  apply('market', mk, 'Piata ' + mk);
+  apply('market_league', mk+'|'+lg, lg);
+  if(Number(ctx.odds) > 0){
+    var ob = learningAssignBucket(ctx.odds, buckets.oddsBuckets);
+    if(ob) apply('market_odds', mk+'|'+ob, 'cote ' + ob);
+  }
+  if(ctx.edgePct != null){
+    var eb = learningAssignBucket(ctx.edgePct, buckets.edgeBuckets);
+    if(eb) apply('market_edge', mk+'|'+eb, 'edge ' + eb);
+  }
+  if(ctx.weekdayIdx != null && ctx.weekdayIdx >= 0 && ctx.weekdayIdx < 7){
+    apply('market_weekday', mk+'|'+buckets.weekdayNames[ctx.weekdayIdx], buckets.weekdayNames[ctx.weekdayIdx]);
+  }
+  if(Number(ctx.score) > 0){
+    var sb = learningAssignBucket(ctx.score, buckets.scoreBuckets);
+    if(sb) apply('market_score', mk+'|'+sb, 'scor ' + sb);
+  }
+
+  combinedMulti = Math.max(0.55, Math.min(1.55, combinedMulti));
+  totalBoost = Math.max(-15, Math.min(18, totalBoost));
+  return {
+    boost: Math.round(totalBoost * 10) / 10,
+    multiplier: combinedMulti,
+    toxic: toxic,
+    reasons: reasons.slice(0, 5)
+  };
+}
+
+// Check daca o piata/edge este blocat dinamic (toxic bucket cu sample adecvat)
+function learningDisqualifiesEdge(marketKey, edgePct){
+  if(!LEARNING_ENGINE || !LEARNING_ENGINE.dynamic_filters) return false;
+  if(edgePct == null) return false;
+  var df = LEARNING_ENGINE.dynamic_filters[marketKey];
+  if(!df || !df.edge_toxic || !df.edge_toxic.length) return false;
+  var eb = learningAssignBucket(edgePct, LEARNING_ENGINE.buckets.edgeBuckets);
+  if(!eb) return false;
+  return df.edge_toxic.indexOf(eb) >= 0;
+}
+function learningDisqualifiesWeekday(marketKey, weekdayIdx){
+  if(!LEARNING_ENGINE || !LEARNING_ENGINE.toxic_weekdays) return false;
+  if(weekdayIdx == null || weekdayIdx < 0) return false;
+  var list = LEARNING_ENGINE.toxic_weekdays[marketKey];
+  if(!list || !list.length) return false;
+  var wd = LEARNING_ENGINE.buckets.weekdayNames[weekdayIdx];
+  return list.indexOf(wd) >= 0;
+}
+
+// ============================================================
+// LEARNING ENGINE — UI render
+// ============================================================
+function learningFmtPct(n, dec){
+  var v = Number(n || 0) * 100;
+  return (v >= 0 ? '+' : '') + v.toFixed(dec != null ? dec : 1) + '%';
+}
+function learningFmtPctAbs(n, dec){
+  return Number(n || 0).toFixed(dec != null ? dec : 1) + '%';
+}
+function learningEsc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+
+function renderLearningEngine(){
+  var root = document.getElementById('learning-engine-root');
+  if(!root) return;
+  var L = LEARNING_ENGINE;
+  if(!L || !L.stats || L.settled_rows === 0){
+    root.innerHTML = '<div class="help-panel" style="text-align:center;padding:32px"><div style="font-size:14px;font-weight:800;color:var(--txt);margin-bottom:8px">🧬 Motorul de invatare asteapta date</div><div style="font-size:12px;color:var(--muted);line-height:1.55">Motorul are nevoie de <code>recommendation_journal.json</code> cu pariuri deja incheiate.<br>Verifica fluxul <code>fetch_data.py</code> si workflow-ul GitHub Actions.</div></div>';
+    return;
+  }
+  var g = L.stats.global;
+  var roi_color = g.roi_w >= 0 ? 'var(--grn)' : 'var(--red)';
+
+  var summary = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px">' +
+    '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.22)">' +
+      '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Pariuri invatate</div>' +
+      '<div style="font-size:26px;font-weight:900;margin-top:6px">' + g.bets.toLocaleString('ro-RO') + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">' + g.wins + ' W / ' + g.losses + ' L</div>' +
+    '</div>' +
+    '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(99,102,241,.10),rgba(99,102,241,.04));border:1px solid rgba(99,102,241,.22)">' +
+      '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI weighted</div>' +
+      '<div style="font-size:26px;font-weight:900;margin-top:6px;color:' + roi_color + '">' + learningFmtPct(g.roi_w, 2) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">decay 90 zile • absolut ' + learningFmtPct(g.roi, 2) + '</div>' +
+    '</div>' +
+    '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(245,158,11,.04));border:1px solid rgba(245,158,11,.22)">' +
+      '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Winrate global</div>' +
+      '<div style="font-size:26px;font-weight:900;margin-top:6px">' + learningFmtPctAbs(g.winrate_w * 100, 1) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">30z ' + learningFmtPctAbs(g.winrate_30*100,1) + ' • 90z ' + learningFmtPctAbs(g.winrate_90*100,1) + '</div>' +
+    '</div>' +
+    '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(168,85,247,.10),rgba(168,85,247,.04));border:1px solid rgba(168,85,247,.22)">' +
+      '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Tipare active</div>' +
+      '<div style="font-size:26px;font-weight:900;margin-top:6px">' + L.top_boost_patterns.length + ' / ' + L.top_toxic_patterns.length + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px"><span style="color:var(--grn)">boost</span> / <span style="color:var(--red)">blocate</span></div>' +
+    '</div>' +
+  '</div>';
+
+  // Per-market breakdown
+  var marketOrder = ['over15','over25','under35','btts','over35','under25','homeWin','awayWin','draw'];
+  var marketRows = marketOrder
+    .filter(function(mk){ return L.stats.by_market[mk]; })
+    .map(function(mk){ return [mk, L.stats.by_market[mk]]; })
+    .concat(Object.keys(L.stats.by_market).filter(function(k){ return marketOrder.indexOf(k) < 0; }).map(function(k){ return [k, L.stats.by_market[k]]; }));
+
+  var marketTable = '<div style="overflow-x:auto;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)">' +
+    '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+    '<thead><tr style="background:rgba(255,255,255,.04)">' +
+      '<th style="padding:9px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Piata</th>' +
+      '<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pariuri</th>' +
+      '<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Winrate</th>' +
+      '<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">ROI</th>' +
+      '<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Multi</th>' +
+      '<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">30z</th>' +
+    '</tr></thead><tbody>' +
+    marketRows.map(function(pair){
+      var mk = pair[0], s = pair[1];
+      var mul = learningStatsMultiplier(s);
+      var roiCol = s.roi_w >= 0 ? 'var(--grn)' : 'var(--red)';
+      var roi30Col = s.roi_30 >= 0 ? 'var(--grn)' : (s.bets_30 === 0 ? 'var(--muted)' : 'var(--red)');
+      var mulCol = mul.multiplier > 1.02 ? 'var(--grn)' : (mul.multiplier < 0.98 ? 'var(--red)' : 'var(--txt)');
+      var toxicTag = mul.toxic ? ' <span style="padding:1px 5px;border-radius:4px;background:rgba(239,68,68,.18);color:var(--red);font-size:9px;font-weight:800">TOXIC</span>' : '';
+      return '<tr>' +
+        '<td style="padding:9px 10px;font-weight:700;color:var(--txt)">' + learningEsc(mk) + toxicTag + '</td>' +
+        '<td style="padding:9px 10px;text-align:right;font-family:var(--mono)">' + s.bets + '<span style="font-size:10px;color:var(--muted)"> (' + s.wins + 'W)</span></td>' +
+        '<td style="padding:9px 10px;text-align:right;font-family:var(--mono)">' + learningFmtPctAbs(s.winrate_w*100,1) + '</td>' +
+        '<td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:' + roiCol + ';font-weight:800">' + learningFmtPct(s.roi_w,2) + '</td>' +
+        '<td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:' + mulCol + ';font-weight:800">x' + mul.multiplier.toFixed(2) + '</td>' +
+        '<td style="padding:9px 10px;text-align:right;font-family:var(--mono);color:' + roi30Col + '">' + (s.bets_30 === 0 ? '—' : learningFmtPct(s.roi_30,1)) + '</td>' +
+      '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+
+  // Top boost
+  var boostCards = L.top_boost_patterns.slice(0, 10).map(function(p){
+    var label = p.key.split('|').slice(1).join(' • ');
+    var marketShort = p.key.split('|')[0];
+    return '<div style="padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(16,185,129,.02));border:1px solid rgba(16,185,129,.22)">' +
+      '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:4px">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--txt)">' + learningEsc(marketShort) + (label ? ' <span style="color:var(--muted);font-weight:600">• ' + learningEsc(label) + '</span>' : '') + '</div>' +
+        '<div style="font-size:13px;font-weight:900;color:var(--grn);font-family:var(--mono)">x' + p.multiplier.toFixed(2) + '</div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">' +
+        '<span>ROI <b style="color:var(--grn)">' + learningFmtPct(p.roi,1) + '</b></span>' +
+        '<span>WR ' + learningFmtPctAbs(p.winrate*100,0) + '</span>' +
+        '<span>' + p.raw_bets + ' pariuri</span>' +
+        '<span style="text-transform:uppercase">' + p.kind.replace('market_','') + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Top toxic
+  var toxicCards = L.top_toxic_patterns.slice(0, 8).map(function(p){
+    var label = p.key.split('|').slice(1).join(' • ');
+    var marketShort = p.key.split('|')[0];
+    return '<div style="padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(239,68,68,.10),rgba(239,68,68,.02));border:1px solid rgba(239,68,68,.22)">' +
+      '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:4px">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--txt)">🚫 ' + learningEsc(marketShort) + (label ? ' <span style="color:var(--muted);font-weight:600">• ' + learningEsc(label) + '</span>' : '') + '</div>' +
+        '<div style="font-size:13px;font-weight:900;color:var(--red);font-family:var(--mono)">x' + p.multiplier.toFixed(2) + '</div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap">' +
+        '<span>ROI <b style="color:var(--red)">' + learningFmtPct(p.roi,1) + '</b></span>' +
+        '<span>WR ' + learningFmtPctAbs(p.winrate*100,0) + '</span>' +
+        '<span>' + p.raw_bets + ' pariuri</span>' +
+        '<span style="text-transform:uppercase">' + p.kind.replace('market_','') + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('') || '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Niciun tipar toxic detectat. 👌</div>';
+
+  // Calibration
+  var calibBody = (L.calibration || []).map(function(c){
+    var biasCol = Math.abs(c.bias) < 5 ? 'var(--grn)' : (Math.abs(c.bias) < 10 ? 'var(--yel)' : 'var(--red)');
+    var signal = c.bias >= 0 ? '📈 Sub-estimat' : '📉 Supra-estimat';
+    return '<tr>' +
+      '<td style="padding:8px 10px;font-weight:700">' + learningEsc(c.bucket) + '</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-family:var(--mono)">' + c.predicted_rate.toFixed(1) + '%</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-family:var(--mono);font-weight:700">' + c.actual_rate.toFixed(1) + '%</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-family:var(--mono);color:' + biasCol + ';font-weight:800">' + (c.bias >= 0 ? '+' : '') + c.bias.toFixed(1) + 'pp</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-family:var(--mono);color:var(--muted);font-size:11px">' + c.bets + ' pariuri</td>' +
+      '<td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--muted)">' + (c.bets >= 10 ? signal : '—') + '</td>' +
+    '</tr>';
+  }).join('') || '<tr><td colspan="6" style="padding:14px;text-align:center;color:var(--muted)">Date insuficiente.</td></tr>';
+
+  // Render
+  root.innerHTML =
+    '<div class="section" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(168,85,247,.06),rgba(16,185,129,.04));border:1px solid rgba(168,85,247,.22);border-radius:16px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
+        '<div>' +
+          '<div style="font-size:16px;font-weight:900;color:var(--txt)">🧬 Motor de Invatare Continua</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5">Recalculat la fiecare refresh din jurnalul de pariuri. Decay exponential pe ' + L.half_life_days + ' zile. Multiplicatori aplicati automat pe SmartScore si filtrele din Meciuri.</div>' +
+        '</div>' +
+        '<div style="font-size:10px;color:var(--muted);font-family:var(--mono)">v' + L.version + '</div>' +
+      '</div>' +
+      summary +
+    '</div>' +
+
+    '<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08)">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">📊 Performanta pe piata</div>' +
+      marketTable +
+    '</div>' +
+
+    '<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(16,185,129,.18);background:linear-gradient(135deg,rgba(16,185,129,.03),rgba(0,0,0,0))">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">🚀 Top tipare cu boost activ</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">' +
+        (boostCards || '<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Niciun tipar pozitiv cu confidence suficient. Se vor forma pe masura ce cresc pariurile settled.</div>') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(239,68,68,.18);background:linear-gradient(135deg,rgba(239,68,68,.03),rgba(0,0,0,0))">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">🚫 Tipare toxice (auto-blocate)</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">' + toxicCards + '</div>' +
+    '</div>' +
+
+    '<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08)">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:6px">🎯 Calibrare probabilitate prezisa vs realitate</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.55">Daca actual &gt; predicted (bias pozitiv), piata este sub-estimata si poti creste incredere. Invers, supra-estimata.</div>' +
+      '<div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,.08)">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+        '<thead><tr style="background:rgba(255,255,255,.04)">' +
+          '<th style="padding:8px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Interval prob</th>' +
+          '<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Prezis</th>' +
+          '<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Real</th>' +
+          '<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Bias</th>' +
+          '<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Sample</th>' +
+          '<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Semnal</th>' +
+        '</tr></thead><tbody>' + calibBody + '</tbody></table></div>' +
+    '</div>';
+}
+
+
 function analyzeMatch(raw){
   var e = raw.event || {};
   var conf = normalizeConfidence(raw.confidence != null ? raw.confidence : raw.favorite_prob);
@@ -4695,7 +5296,8 @@ function doRefresh(){
     getJson('/data/signal_audit.json', {}),
     getJson('/data/ai_memory.json', {}),
     getJson('/data/training_market_baselines.json', []),
-    getJson('/data/training_scoring_summary.json', {})
+    getJson('/data/training_scoring_summary.json', {}),
+    getJson('/data/recommendation_journal.json', [])
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -4709,6 +5311,7 @@ function doRefresh(){
     var aiMemoryData = results[9];
     var trainingBaselinesData = results[10];
     var trainingSummaryData = results[11];
+    var recommendationJournalData = results[12];
 
     var preds = predData.results || predData || [];
     APP_META = meta || {};
@@ -4726,6 +5329,14 @@ function doRefresh(){
     RECOMMENDATION_LOG = Array.isArray(recommendationLogData) ? recommendationLogData : (recommendationLogData.results || recommendationLogData || []);
     SIGNAL_AUDIT = signalAuditData || {};
     AI_MEMORY = aiMemoryData || {};
+    RECOMMENDATION_JOURNAL = Array.isArray(recommendationJournalData) ? recommendationJournalData : (recommendationJournalData && recommendationJournalData.results) || [];
+    try { window.RECOMMENDATION_JOURNAL = RECOMMENDATION_JOURNAL; } catch(e){}
+    try { buildLearningEngine(); } catch(e){ console.warn('[LearningEngine] build failed', e); }
+    // Re-run pipeline so dynamic filters/boost din LEARNING_ENGINE afecteaza analyzeMatch + syncRecommendationEngine
+    try {
+      ALL_MATCHES = preds.map(analyzeMatch);
+      syncRecommendationEngine();
+    } catch(e){ console.warn('[LearningEngine] re-sync failed', e); }
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -6492,16 +7103,19 @@ function buildMarketCandidate(m, type){
   // WEEKDAY_RESTRICTIONS — sincronizat cu fetch_data.py (0=Dum, 1=Lun, 2=Mar, 3=Mie, 4=Joi, 5=Vin, 6=Sâm)
   // under35: Mie(3), Joi(4), Vin(5), Dum(0) → ROI negativ -10% to -22%
   // over15:  Lun(1), Joi(4), Vin(5)          → ROI negativ -9% to -12.7%
+  // NOTA: aceste restrictii sunt fallback-ul initial; motorul de invatare poate adauga/scoate zile toxice dinamic.
   var WD_RESTRICT = { 'under35': [0,3,4,5], 'over15': [1,4,5] };
-  if(WD_RESTRICT[type]){
-    var kickoffDate = m.kickoff || m.date || m.event_date || '';
-    if(kickoffDate){
-      try{
-        var jsDay = new Date(kickoffDate).getDay();
-        if(WD_RESTRICT[type].indexOf(jsDay) !== -1) return null;
-      }catch(e){}
-    }
+  var kickoffDate = m.kickoff || m.date || m.event_date || '';
+  var kickoffDay = -1;
+  if(kickoffDate){
+    try{ var __jd = new Date(kickoffDate).getDay(); if(__jd >= 0 && __jd <= 6) kickoffDay = __jd; }catch(e){}
   }
+  if(WD_RESTRICT[type] && kickoffDay >= 0 && WD_RESTRICT[type].indexOf(kickoffDay) !== -1) return null;
+  // LEARNING: filtre dinamice — blocare edge toxic sau weekday toxic aparut din jurnal
+  try {
+    if(typeof learningDisqualifiesEdge === 'function' && learningDisqualifiesEdge(type, edgePct)) return null;
+    if(typeof learningDisqualifiesWeekday === 'function' && kickoffDay >= 0 && learningDisqualifiesWeekday(type, kickoffDay)) return null;
+  } catch(e){}
 
   var confBoost = Math.min(6, (m.confidence || 0) * 0.06);
 
@@ -6528,6 +7142,39 @@ function buildMarketCandidate(m, type){
     }
   }
 
+  // LEARNING: aplica boost-ul/multiplicatorul din jurnal
+  var learningMeta = { boost:0, multiplier:1.0, toxic:false, reasons:[] };
+  try {
+    if(typeof learningApplyToCandidate === 'function'){
+      learningMeta = learningApplyToCandidate({
+        marketKey: type,
+        leagueName: String(m.league || '—'),
+        odds: b.odds,
+        edgePct: edgePct,
+        score: b.score,
+        probAdj: b.adjProb,
+        weekdayIdx: kickoffDay
+      }) || learningMeta;
+    }
+  } catch(e){}
+  if(learningMeta.toxic){
+    // Pattern toxic confirmat din jurnal (>=8 pariuri settled, ROI <= -15%)
+    return null;
+  }
+  if(learningMeta.boost){
+    baseScore += Number(learningMeta.boost);
+    var learnLabel = (learningMeta.boost >= 0 ? 'Motor invatare +' : 'Motor invatare ') + Number(learningMeta.boost).toFixed(1);
+    if(Math.abs(learningMeta.boost) >= 3) reasons.unshift(learnLabel);
+    else reasons.push(learnLabel);
+    if(learningMeta.reasons && learningMeta.reasons.length){
+      learningMeta.reasons.slice(0,2).forEach(function(r){ if(reasons.indexOf(r) < 0) reasons.push(r); });
+    }
+  }
+  // Ajustare finala: multiplicator compozit
+  if(learningMeta.multiplier && Math.abs(learningMeta.multiplier - 1.0) > 0.03){
+    baseScore = baseScore * (0.85 + learningMeta.multiplier * 0.15); // blend 85% aditiv + 15% multiplicativ
+  }
+
   var risk = 'MEDIU';
   if(b.adjProb >= 76 && edgePct >= 2 && (m.confidence || 0) >= 56) risk = 'LOW';
   else if(b.adjProb < 58 || b.odds > 2.10 || edgePct < 1) risk = 'HIGH';
@@ -6540,7 +7187,10 @@ function buildMarketCandidate(m, type){
       trainingGlobalRate: trainingMeta && trainingMeta.globalRate != null ? Number(trainingMeta.globalRate) : null,
       trainingDeltaVsGlobal: trainingMeta && trainingMeta.deltaVsGlobal != null ? Number(trainingMeta.deltaVsGlobal) : null,
       trainingMatches: Number(trainingMeta && trainingMeta.matches || 0),
-      trainingReason: trainingMeta && trainingMeta.reason ? trainingMeta.reason : ''
+      trainingReason: trainingMeta && trainingMeta.reason ? trainingMeta.reason : '',
+      learningBoost: Number(learningMeta.boost || 0),
+      learningMultiplier: Number(learningMeta.multiplier || 1.0),
+      learningReasons: (learningMeta.reasons || []).slice(0, 3)
     }),
     ticketScore: Math.round(baseScore),
     ticketRisk: risk,
@@ -9843,6 +10493,7 @@ function renderAll(){
   renderMatches();
   renderBilete();
   renderAdvancedCharts();
+  try { renderLearningEngine(); } catch(e){}
   autoSyncTrackingStatuses();
   renderTracking();
 }
@@ -11316,6 +11967,28 @@ function getSmartBetAnalysis(){
       Math.max(60, Math.min(88, probAdj + Number(bestPositive && bestPositive.memory_score || 0) * 1.2)));
     // Bonus de piață bazat pe istoricul jurnalului: BTTS +15.4% ROI, Over1.5G +1.3%
     var marketBonusSmartBet = marketKey === 'btts' ? 6 : (marketKey === 'over15' ? 2 : (marketKey === 'under35' ? 0 : (marketKey === 'over25' ? -3 : 0)));
+    // LEARNING: boost dinamic din jurnal (multi-dimensional: market × league × odds × edge × weekday × score)
+    var __learn = { boost:0, multiplier:1.0, toxic:false, reasons:[] };
+    try {
+      if(typeof learningApplyToCandidate === 'function'){
+        var __wdIdx = -1;
+        try { var __d = new Date(row.event_date || row.date || ''); var __di = __d.getDay(); if(__di >= 0 && __di <= 6) __wdIdx = __di; } catch(e){}
+        __learn = learningApplyToCandidate({
+          marketKey: marketKey,
+          leagueName: String(row.league || '—'),
+          odds: Number(row.book_odds || 0),
+          edgePct: edgePct,
+          score: Number(row.score || 0),
+          probAdj: probAdj,
+          weekdayIdx: __wdIdx
+        }) || __learn;
+      }
+    } catch(e){}
+    // Pattern toxic auto-blocat (>=8 pariuri, ROI <= -15%)
+    if(__learn.toxic){
+      blocked.push({ row: row, reason: { label: 'Toxic (motor invatare)', raw_bets: 0 }, marketKey: marketKey });
+      return;
+    }
     var smartScore = (
       Number(row.score || 0) * 0.48 +
       Math.min(100, adaptiveScore) * 0.26 +
@@ -11325,8 +11998,13 @@ function getSmartBetAnalysis(){
       Math.max(0, memoryBonus) * 0.80 +
       Math.max(0, Number(row.poisson_delta || 0)) * 0.18 +
       Math.max(0, Number(bestPositive && bestPositive.roi || 0)) * 0.05 +
-      marketBonusSmartBet
+      marketBonusSmartBet +
+      Number(__learn.boost || 0)
     );
+    // Multiplicator compozit (blend 80% aditiv + 20% multiplicativ)
+    if(__learn.multiplier && Math.abs(__learn.multiplier - 1.0) > 0.03){
+      smartScore = smartScore * (0.80 + __learn.multiplier * 0.20);
+    }
     if(patternOnly) smartScore -= 10;
     if(signalStrong) smartScore -= 5; // penalizare ușoară: fără confirmare AI Memory
     smartScore = clampMathScore(smartScore);
@@ -11335,12 +12013,16 @@ function getSmartBetAnalysis(){
     if(directAdaptive) confirmLabels.push('AI direct');
     if(bestPositive) confirmLabels.push(bestPositive.label);
     if(signalStrong) confirmLabels.push('Semnal audit');
+    if(__learn.boost && Math.abs(__learn.boost) >= 1) confirmLabels.push('Motor ' + (__learn.boost >= 0 ? '+' : '') + __learn.boost.toFixed(1));
     var reasons = [];
     reasons.push('Kelly 1/4 ' + fmtPct(Number(row.kelly_quarter_pct || 0)));
     reasons.push('Edge ' + fmtSignedPct(Number(row.edge_pct || 0)));
     if(bestPositive) reasons.push('Pattern ' + bestPositive.label);
     if(directAdaptive && adaptive.reasons && adaptive.reasons.length){
       adaptive.reasons.slice(0,2).forEach(function(r){ reasons.push(r.label + ' ' + (Number(r.impact || 0) >= 0 ? '+' : '') + Number(r.impact || 0).toFixed(1)); });
+    }
+    if(__learn.reasons && __learn.reasons.length){
+      __learn.reasons.slice(0,2).forEach(function(r){ if(reasons.indexOf(r) < 0) reasons.push(r); });
     }
 
     pool.push(Object.assign({}, row, {
@@ -11367,7 +12049,10 @@ function getSmartBetAnalysis(){
       confirmationLabel: confirmLabels.join(' • ') || 'Pattern confirmat',
       reasonsSmart: reasons.slice(0,5),
       aiReasons: adaptive && adaptive.reasons ? adaptive.reasons.slice(0,3) : [],
-      mostLikelyScore: directAdaptive ? adaptive.most_likely_score : null
+      mostLikelyScore: directAdaptive ? adaptive.most_likely_score : null,
+      learningBoost: Number(__learn.boost || 0),
+      learningMultiplier: Number(__learn.multiplier || 1.0),
+      learningReasons: (__learn.reasons || []).slice(0, 3)
     }));
     if(directAdaptive) adaptiveConfirmed += 1;
     if(patternOnly || bestPositive) patternConfirmed += 1;
@@ -12272,13 +12957,14 @@ document.addEventListener('DOMContentLoaded', function() {
 window._smartLearnSection = 'audit';
 function switchSmartLearnSection(section){
   window._smartLearnSection = section;
-  ['predictii','arhiva','audit','aimemory','smartbet'].forEach(function(s){
+  ['predictii','invatare','arhiva','audit','aimemory','smartbet'].forEach(function(s){
     var sec = document.getElementById('smartlearn-section-' + s);
     var btn = document.getElementById('slt-' + s);
     if(sec) sec.style.display = (s === section) ? '' : (s==='audit'||s==='aimemory'||s==='smartbet' ? 'none' : 'none');
     if(btn) btn.classList.toggle('active', s === section);
   });
   if(section === 'predictii'){ try{ renderUnifiedEngine(); }catch(e){console.warn(e);} }
+  if(section === 'invatare'){ try{ renderLearningEngine(); }catch(e){console.warn(e);} }
   if(section === 'arhiva'){ try{ renderArchivePanel(); }catch(e){console.warn(e);} }
   // backward compat — never shown but keep rendering for data
   if(section === 'audit'){ switchSmartLearnSection('predictii'); return; }
