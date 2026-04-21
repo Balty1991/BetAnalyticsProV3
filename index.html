@@ -4942,6 +4942,294 @@ function computeWalkForwardValidation(){
   return WALK_FORWARD_CACHE;
 }
 
+// ============================================================
+// EXTENDED ANALYTICS — time-to-kickoff, probability source, A/B filter
+// Apelate din buildLearningEngine, afișate în renderLearningEngine.
+// ============================================================
+
+function buildTimeToKickoffAnalysis(journal){
+  // Buckets: <24h (same-day), 24-48h, 48-72h, 72h+
+  var buckets = {
+    '<24h':  {bets:0, wins:0, profit:0, by_market:{}},
+    '24-48h':{bets:0, wins:0, profit:0, by_market:{}},
+    '48-72h':{bets:0, wins:0, profit:0, by_market:{}},
+    '72h+':  {bets:0, wins:0, profit:0, by_market:{}}
+  };
+  var order = ['<24h','24-48h','48-72h','72h+'];
+  function bucketFor(hrs){
+    if(hrs < 24) return '<24h';
+    if(hrs < 48) return '24-48h';
+    if(hrs < 72) return '48-72h';
+    return '72h+';
+  }
+  (journal || []).forEach(function(r){
+    if(!r || (r.won !== true && r.won !== false)) return;
+    var ed = r.event_date, fl = r.first_logged_at;
+    if(!ed || !fl) return;
+    try {
+      var edMs = new Date(ed).getTime(), flMs = new Date(fl).getTime();
+      if(!isFinite(edMs) || !isFinite(flMs)) return;
+      var hrs = (edMs - flMs) / 3600000;
+      if(hrs < 0 || hrs > 1000) return;
+      var bk = bucketFor(hrs);
+      var mk = String(r.market_key || '');
+      var odds = Number(r.odds || 0);
+      var profit = r.won === true ? Math.max(0, odds - 1) : -1;
+      buckets[bk].bets += 1;
+      buckets[bk].profit += profit;
+      if(r.won === true) buckets[bk].wins += 1;
+      if(mk){
+        if(!buckets[bk].by_market[mk]) buckets[bk].by_market[mk] = {bets:0, wins:0, profit:0};
+        buckets[bk].by_market[mk].bets += 1;
+        buckets[bk].by_market[mk].profit += profit;
+        if(r.won === true) buckets[bk].by_market[mk].wins += 1;
+      }
+    } catch(e){}
+  });
+  // Finalize
+  order.forEach(function(k){
+    var b = buckets[k];
+    b.roi = b.bets > 0 ? b.profit / b.bets : 0;
+    b.winrate = b.bets > 0 ? b.wins / b.bets : 0;
+    Object.keys(b.by_market).forEach(function(mk){
+      var m = b.by_market[mk];
+      m.roi = m.bets > 0 ? m.profit / m.bets : 0;
+      m.winrate = m.bets > 0 ? m.wins / m.bets : 0;
+    });
+  });
+  return { buckets: buckets, order: order };
+}
+
+function buildProbabilitySourceAnalysis(journal){
+  // Categoriile: model-only (api_prob == adjusted_prob), hybrid (poisson ∆ > 5pp de API),
+  // adjusted-only (adjusted ∆ > 2pp față de model, dar poisson ≈ api), fallback
+  var groups = {
+    'API dominant':    {bets:0, wins:0, profit:0, label:'API dominant', desc:'Poisson delta < 5pp'},
+    'Poisson hybrid':  {bets:0, wins:0, profit:0, label:'Poisson hybrid', desc:'Poisson ajustează API cu >5pp'},
+    'Adjusted strong': {bets:0, wins:0, profit:0, label:'Adjusted strong', desc:'AI adjustment >5pp față de model'}
+  };
+  (journal || []).forEach(function(r){
+    if(!r || (r.won !== true && r.won !== false)) return;
+    var api = Number(r.api_prob || 0);
+    var poisson = Number(r.poisson_prob || 0);
+    var model = Number(r.model_prob || 0);
+    var adjusted = Number(r.adjusted_prob || 0);
+    var odds = Number(r.odds || 0);
+    var profit = r.won === true ? Math.max(0, odds - 1) : -1;
+
+    var poissonDelta = poisson && api ? Math.abs(poisson - api) : 0;
+    var adjDelta = adjusted && model ? Math.abs(adjusted - model) : 0;
+
+    var g;
+    if(poissonDelta > 5) g = 'Poisson hybrid';
+    else if(adjDelta > 5) g = 'Adjusted strong';
+    else g = 'API dominant';
+
+    groups[g].bets += 1;
+    groups[g].profit += profit;
+    if(r.won === true) groups[g].wins += 1;
+  });
+  Object.keys(groups).forEach(function(k){
+    var g = groups[k];
+    g.roi = g.bets > 0 ? g.profit / g.bets : 0;
+    g.winrate = g.bets > 0 ? g.wins / g.bets : 0;
+  });
+  return groups;
+}
+
+function buildFilterABAnalysis(journal){
+  // Compara: pool brut (toate value>0) vs pool dupa filter "SmartBet-like"
+  // Filter: adjusted_prob >= 70 AND edge_pct >= 3 AND score >= 75
+  var raw = {bets:0, wins:0, profit:0};
+  var filtered = {bets:0, wins:0, profit:0};
+  var lost_wins = 0, lost_wins_units = 0;
+  var avoided_losses = 0, avoided_losses_units = 0;
+  var sample_lost = [];
+
+  (journal || []).forEach(function(r){
+    if(!r || (r.won !== true && r.won !== false)) return;
+    var val = Number(r.value || 0);
+    if(val <= 0) return;
+    var odds = Number(r.odds || 0);
+    var profit = r.won === true ? Math.max(0, odds - 1) : -1;
+    raw.bets += 1; raw.profit += profit;
+    if(r.won === true) raw.wins += 1;
+
+    var prob = Number(r.adjusted_prob || 0);
+    var edge = Number(r.edge_pct || 0);
+    var score = Number(r.score || 0);
+    var passes = prob >= 70 && edge >= 3 && score >= 75;
+
+    if(passes){
+      filtered.bets += 1; filtered.profit += profit;
+      if(r.won === true) filtered.wins += 1;
+    } else {
+      if(r.won === true){
+        lost_wins += 1; lost_wins_units += profit;
+        if(sample_lost.length < 10) sample_lost.push({row:r, profit:profit, kind:'lost_win'});
+      } else {
+        avoided_losses += 1; avoided_losses_units += 1;
+      }
+    }
+  });
+
+  raw.roi = raw.bets > 0 ? raw.profit / raw.bets : 0;
+  raw.winrate = raw.bets > 0 ? raw.wins / raw.bets : 0;
+  filtered.roi = filtered.bets > 0 ? filtered.profit / filtered.bets : 0;
+  filtered.winrate = filtered.bets > 0 ? filtered.wins / filtered.bets : 0;
+
+  return {
+    raw: raw,
+    filtered: filtered,
+    delta_roi_pp: (filtered.roi - raw.roi) * 100,
+    delta_net_units: filtered.profit - raw.profit,
+    lost_wins: lost_wins,
+    lost_wins_units: lost_wins_units,
+    avoided_losses: avoided_losses,
+    avoided_losses_units: avoided_losses_units,
+    net_filter_value: avoided_losses_units - lost_wins_units,
+    sample_lost: sample_lost.slice(0, 8)
+  };
+}
+
+// ============================================================
+// UI RENDERING — extended analytics block
+// ============================================================
+
+function renderExtendedAnalytics(){
+  var root = document.getElementById('extended-analytics-root');
+  if(!root) return;
+  var journal = (window.RECOMMENDATION_JOURNAL || RECOMMENDATION_JOURNAL || []);
+  if(!Array.isArray(journal) || journal.length < 20){
+    root.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Analitica extinsă are nevoie de minim 20 de pariuri settled.</div>';
+    return;
+  }
+
+  var ttk = buildTimeToKickoffAnalysis(journal);
+  var probSrc = buildProbabilitySourceAnalysis(journal);
+  var ab = buildFilterABAnalysis(journal);
+
+  var signedPct = function(n, d){ d = d == null ? 2 : d; var v = Number(n||0)*100; return (v>=0?'+':'') + v.toFixed(d) + '%'; };
+  var absPct = function(n, d){ d = d == null ? 1 : d; return Number(n||0).toFixed(d) + '%'; };
+  var signedU = function(n, d){ d = d == null ? 2 : d; var v = Number(n||0); return (v>=0?'+':'') + v.toFixed(d) + 'u'; };
+  var esc = (typeof learningEsc === 'function') ? learningEsc : function(s){ return String(s||''); };
+  var col = function(v){ return v >= 0 ? 'var(--grn)' : 'var(--red)'; };
+
+  // === 1. TIME TO KICKOFF ===
+  var ttkCards = ttk.order.map(function(k){
+    var b = ttk.buckets[k];
+    if(b.bets === 0) return '';
+    var c = col(b.roi);
+    return '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">'+
+      '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">'+k+' inainte</div>'+
+      '<div style="font-size:22px;font-weight:900;margin-top:6px;color:'+c+'">'+signedPct(b.roi)+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+b.bets+' pariuri • WR '+absPct(b.winrate*100)+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:2px">Profit net: '+signedU(b.profit, 1)+'</div>'+
+    '</div>';
+  }).filter(Boolean).join('');
+
+  // Best/worst TTK bucket (min 15 bets)
+  var ttkRanked = ttk.order.map(function(k){ return {k:k, b:ttk.buckets[k]}; }).filter(function(x){ return x.b.bets >= 15; });
+  ttkRanked.sort(function(a,b){ return b.b.roi - a.b.roi; });
+  var ttkInsight = '';
+  if(ttkRanked.length >= 2){
+    var best = ttkRanked[0], worst = ttkRanked[ttkRanked.length - 1];
+    var diff = (best.b.roi - worst.b.roi) * 100;
+    if(diff >= 3){
+      ttkInsight = '<div style="margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.22);font-size:11px;line-height:1.55">' +
+        '💡 <b>'+best.k+'</b> bate <b>'+worst.k+'</b> cu <b style="color:var(--grn)">'+diff.toFixed(1)+'pp</b> ROI. Dacă adaugi pariuri mai devreme/târziu față de meci, reflectă în strategie.' +
+      '</div>';
+    } else {
+      ttkInsight = '<div style="margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--muted);line-height:1.55">' +
+        'Diferența ROI între bucket-uri e mică (<3pp). Timpul până la start nu influențează semnificativ performanța.' +
+      '</div>';
+    }
+  }
+
+  // === 2. PROBABILITY SOURCE ===
+  var probCards = Object.keys(probSrc).map(function(k){
+    var g = probSrc[k];
+    if(g.bets === 0) return '';
+    var c = col(g.roi);
+    return '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--txt)">'+esc(g.label)+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+esc(g.desc)+'</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px">'+
+        '<div style="font-size:22px;font-weight:900;color:'+c+'">'+signedPct(g.roi)+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);font-family:var(--mono)">'+g.bets+' • '+absPct(g.winrate*100)+' WR</div>'+
+      '</div>'+
+    '</div>';
+  }).filter(Boolean).join('');
+
+  // === 3. A/B FILTER ===
+  var abColor = ab.delta_roi_pp >= 0 ? 'var(--grn)' : 'var(--red)';
+  var abVerdict, abIcon;
+  if(ab.delta_roi_pp >= 1) { abVerdict = 'Filtrul strict adaugă valoare'; abIcon = '✅'; }
+  else if(ab.delta_roi_pp >= -0.5) { abVerdict = 'Filtrul strict e neutru'; abIcon = '➖'; }
+  else { abVerdict = 'Filtrul strict REDUCE valoarea'; abIcon = '⚠️'; }
+
+  var abSamples = (ab.sample_lost || []).map(function(s){
+    var r = s.row;
+    return '<div style="padding:8px 11px;border-radius:10px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.22);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">' +
+      '<div style="flex:1;min-width:160px">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--txt)">'+esc(r.home || '?')+' — '+esc(r.away || '?')+'</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+esc(r.market)+' @ '+Number(r.odds||0).toFixed(2)+' • prob '+Number(r.adjusted_prob||0).toFixed(1)+'% • edge '+(Number(r.edge_pct||0)>=0?'+':'')+Number(r.edge_pct||0).toFixed(1)+'%</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--grn);font-weight:800">+'+s.profit.toFixed(2)+'u win ratat</div>' +
+    '</div>';
+  }).join('');
+
+  // === RENDER ===
+  root.innerHTML =
+    '<div class="section" style="margin-top:12px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(245,158,11,.05),rgba(0,0,0,0));border:1px solid rgba(245,158,11,.22)">'+
+      '<div style="font-size:15px;font-weight:900;color:var(--txt);margin-bottom:6px">⏱️ ROI pe Timpul Până la Start</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">Performanța pariurilor în funcție de cât timp înainte de start au fost înregistrate. Util pentru a ști dacă trebuie să miști strategia mai aproape/mai departe de kickoff.</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">'+(ttkCards || '<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Date insuficiente.</div>')+'</div>'+
+      ttkInsight+
+    '</div>'+
+
+    '<div class="section" style="margin-top:12px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,.05),rgba(0,0,0,0));border:1px solid rgba(99,102,241,.22)">'+
+      '<div style="font-size:15px;font-weight:900;color:var(--txt);margin-bottom:6px">🧠 ROI pe Sursa Probabilității</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">Cum performează pariurile în funcție de ce motor domină calculul probabilității. Dacă "Poisson hybrid" are ROI semnificativ mai bun, merită să dai mai multă greutate Poisson-ului în engine.</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">'+(probCards || '<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Date insuficiente.</div>')+'</div>'+
+    '</div>'+
+
+    '<div class="section" style="margin-top:12px;padding:14px;border-radius:16px;background:linear-gradient(135deg,'+(ab.delta_roi_pp>=0?'rgba(16,185,129,.05)':'rgba(239,68,68,.05)')+',rgba(0,0,0,0));border:1px solid '+(ab.delta_roi_pp>=0?'rgba(16,185,129,.22)':'rgba(239,68,68,.22)')+'">'+
+      '<div style="font-size:15px;font-weight:900;color:var(--txt);margin-bottom:6px">🎯 A/B Test — Filtru SmartBet ON vs Pool Brut</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">"Pool brut" = toate pariurile cu value &gt; 0 din jurnal. "Filtru ON" = pariurile care trec pragul strict (prob≥70%, edge≥3pp, scor≥75). Dacă delta e negativ, filtrul elimină prea multe pariuri bune.</div>'+
+      '<div style="padding:10px 12px;border-radius:12px;background:'+(ab.delta_roi_pp>=0?'rgba(16,185,129,.08)':'rgba(239,68,68,.08)')+';border:1px solid '+(ab.delta_roi_pp>=0?'rgba(16,185,129,.22)':'rgba(239,68,68,.22)')+';margin-bottom:12px">'+
+        '<div style="font-size:13px;font-weight:800;color:'+abColor+'">'+abIcon+' '+abVerdict+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:4px">Delta ROI: <b style="color:'+abColor+'">'+(ab.delta_roi_pp>=0?'+':'')+ab.delta_roi_pp.toFixed(2)+'pp</b> • Net diferență: <b style="color:'+abColor+'">'+signedU(ab.delta_net_units, 1)+'</b></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">'+
+        '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">'+
+          '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">🌐 Pool Brut</div>'+
+          '<div style="font-size:22px;font-weight:900;margin-top:6px;color:'+col(ab.raw.roi)+'">'+signedPct(ab.raw.roi)+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+ab.raw.bets+' pariuri • WR '+absPct(ab.raw.winrate*100)+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:2px">Profit: '+signedU(ab.raw.profit, 1)+'</div>'+
+        '</div>'+
+        '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">'+
+          '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">🔍 Filtru SmartBet ON</div>'+
+          '<div style="font-size:22px;font-weight:900;margin-top:6px;color:'+col(ab.filtered.roi)+'">'+signedPct(ab.filtered.roi)+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+ab.filtered.bets+' pariuri • WR '+absPct(ab.filtered.winrate*100)+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:2px">Profit: '+signedU(ab.filtered.profit, 1)+'</div>'+
+        '</div>'+
+        '<div style="padding:12px;border-radius:14px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.18)">'+
+          '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">❌ Pariuri bune pierdute</div>'+
+          '<div style="font-size:22px;font-weight:900;margin-top:6px;color:var(--red)">'+ab.lost_wins+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+signedU(ab.lost_wins_units, 1)+' win ratat</div>'+
+        '</div>'+
+        '<div style="padding:12px;border-radius:14px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.18)">'+
+          '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">✓ Pierderi evitate</div>'+
+          '<div style="font-size:22px;font-weight:900;margin-top:6px;color:var(--grn)">'+ab.avoided_losses+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">+'+ab.avoided_losses_units.toFixed(1)+'u economisit</div>'+
+        '</div>'+
+      '</div>'+
+      (abSamples ? ('<div style="margin-top:14px"><div style="font-size:11px;font-weight:800;color:var(--txt);margin-bottom:8px">Exemple win-uri pe care filtrul le-ar fi eliminat:</div><div style="display:flex;flex-direction:column;gap:6px">'+abSamples+'</div></div>') : '')+
+    '</div>';
+}
+
+
 function renderWalkForwardValidation(){
   var root = document.getElementById('walk-forward-root');
   if(!root) return;
@@ -5456,10 +5744,13 @@ function renderLearningEngine(){
         '</tr></thead><tbody>' + calibBody + '</tbody></table></div>' +
     '</div>' +
 
-    '<div id="walk-forward-root"></div>';
+    '<div id="walk-forward-root"></div>' +
+    '<div id="extended-analytics-root"></div>';
 
   // Render walk-forward validation panel separately (uses its own cache + DOM root)
   try { renderWalkForwardValidation(); } catch(e){ console.warn('[WalkForward] render failed', e); }
+  // Render extended analytics (time-to-kickoff, prob source, A/B filter)
+  try { renderExtendedAnalytics(); } catch(e){ console.warn('[ExtendedAnalytics] render failed', e); }
 }
 
 
