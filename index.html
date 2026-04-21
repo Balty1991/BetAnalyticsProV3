@@ -3969,10 +3969,14 @@ var BET_TYPES = [
   {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
   {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35', probGetter:function(raw){ return 100 - safePct(raw.prob_over_35); }},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
+  // Double Chance markets: odds calculated from 1X2 (margin is minimal on DC)
+  {key:'dc1x',     label:'Șansă Dublă 1X', probGetter:function(raw){ return safePct(raw.prob_home_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var h=Number(e.odds_home||0), d=Number(e.odds_draw||0); if(h<1.01||d<1.01) return 0; return +(1/(1/h + 1/d)).toFixed(2); }},
+  {key:'dcx2',     label:'Șansă Dublă X2', probGetter:function(raw){ return safePct(raw.prob_away_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var d=Number(e.odds_draw||0), a=Number(e.odds_away||0); if(d<1.01||a<1.01) return 0; return +(1/(1/d + 1/a)).toFixed(2); }},
+  {key:'dc12',     label:'Șansă Dublă 12', probGetter:function(raw){ return safePct(raw.prob_home_win) + safePct(raw.prob_away_win); }, oddsField:'odds_dc_12'},
 ];
 
 function getSupportedMarketTypes(){
-  return ['over15','over25','under35','btts'];
+  return ['over15','over25','under35','btts','dc1x','dcx2','dc12'];
 }
 
 function isSaneOddsForType(type, odds){
@@ -3983,6 +3987,7 @@ function isSaneOddsForType(type, odds){
   if(type === 'over25' || type === 'under25' || type === 'btts') return o <= 4.50;
   if(type === 'under35') return o <= 2.60;
   if(type === 'homeWin' || type === 'awayWin' || type === 'draw') return o <= 12.00;
+  if(type === 'dc1x' || type === 'dcx2' || type === 'dc12') return o >= 1.05 && o <= 2.50;
   return o <= 20.00;
 }
 
@@ -4610,14 +4615,14 @@ function learningFinalize(stats){
 }
 
 function learningStatsMultiplier(stats){
-  var MIN_CONF_SAMPLE = 8;
+  var MIN_CONF_SAMPLE = 12;
   if(!stats || stats.bets < 2){
     return {multiplier:1.0, confidence:'insufficient', toxic:false, boost:0, roi:0, bets:0, raw_bets:(stats&&stats.bets)||0};
   }
   var roi = stats.roi_w;
   var sampleFactor = Math.min(1.0, stats.bets_w / MIN_CONF_SAMPLE);
-  // Toxic: >=8 pariuri settled, ROI decay-weighted <= -15%
-  var toxic = (stats.bets >= MIN_CONF_SAMPLE) && (roi <= -0.15);
+  // Toxic: >=12 pariuri settled, ROI decay-weighted <= -20% (aliniat cu walk-forward pentru mai putine fals-pozitive)
+  var toxic = (stats.bets >= MIN_CONF_SAMPLE) && (roi <= -0.20);
   // Multiplicator: 1 + ROI * 1.5 * sampleFactor, clamp [0.60, 1.40]
   var multi = 1.0 + (roi * 1.5 * sampleFactor);
   multi = Math.max(0.60, Math.min(1.40, multi));
@@ -5114,7 +5119,7 @@ function buildLearningEngine(){
     var parts = k.split('|');
     var market = parts[0], wd = parts[1];
     var s = stats.by_market_weekday[k];
-    if(s.bets >= 8 && s.roi_w <= -0.15){
+    if(s.bets >= 12 && s.roi_w <= -0.20){
       if(!toxicWeekdays[market]) toxicWeekdays[market] = [];
       toxicWeekdays[market].push(wd);
     }
@@ -5468,7 +5473,7 @@ function analyzeMatch(raw){
     var probMeta = buildHybridProbForMarket(raw, bt.key);
     var fallbackProb = bt.probGetter ? safePct(bt.probGetter(raw)) : safePct(raw[bt.probField]);
     var prob = probMeta && probMeta.effectiveProb != null ? safePct(probMeta.effectiveProb) : fallbackProb;
-    var odds = Number(e[bt.oddsField] || 0);
+    var odds = bt.oddsGetter ? Number(bt.oddsGetter(e) || 0) : Number(e[bt.oddsField] || 0);
     if(!prob || !odds || !isSaneOddsForType(bt.key, odds)) return;
 
     var value = calcValue(prob, odds);
@@ -7527,6 +7532,13 @@ function isHardContradiction(m, type){
   if(type === 'homeWin' && ls.home <= ls.away) return true;
   if(type === 'draw' && ls.home !== ls.away) return true;
   if(type === 'awayWin' && ls.away <= ls.home) return true;
+  // Double Chance: contradicted only when likely_score is the OPPOSITE outcome
+  // 1X (home or draw) contradicted by away win
+  if(type === 'dc1x' && ls.away > ls.home) return true;
+  // X2 (draw or away) contradicted by home win
+  if(type === 'dcx2' && ls.home > ls.away) return true;
+  // 12 (home or away) contradicted by draw
+  if(type === 'dc12' && ls.home === ls.away) return true;
   return false;
 }
 
@@ -7542,21 +7554,23 @@ function buildMarketCandidate(m, type){
   var fit = marketFitAnalysis(m, type);
   var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
-  if(type === 'over15' && (Number(b.adjProb || 0) < 76 || Number(m.probOver15 || 0) < 78 || Number(m.xgTotal || 0) < 2.20 || Number(b.odds || 0) < 1.25 || edgePct < 4 || Number(b.value || 0) < 0.04)) return null;
+  // Over 1.5 — praguri relaxate (xG 2.00, prob 72, value 0.02, edge 2) pentru a include mai multe evenimente
+  if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < 2 || Number(b.value || 0) < 0.02)) return null;
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
+  // DC 1X / X2 — safe bet, prob >=75%, value >=0.02, odds >=1.15 (sub 1.15 devine irelevant)
+  if(type === 'dc1x' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
+  if(type === 'dcx2' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
+  // DC 12 (no draw) — cerem prob >=70, fiind mai riscant statistic
+  if(type === 'dc12' && (Number(b.adjProb || 0) < 70 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
 
-  // WEEKDAY_RESTRICTIONS — sincronizat cu fetch_data.py (0=Dum, 1=Lun, 2=Mar, 3=Mie, 4=Joi, 5=Vin, 6=Sâm)
-  // under35: Mie(3), Joi(4), Vin(5), Dum(0) → ROI negativ -10% to -22%
-  // over15:  Lun(1), Joi(4), Vin(5)          → ROI negativ -9% to -12.7%
-  // NOTA: aceste restrictii sunt fallback-ul initial; motorul de invatare poate adauga/scoate zile toxice dinamic.
-  var WD_RESTRICT = { 'under35': [0,3,4,5], 'over15': [1,4,5] };
+  // WEEKDAY: restrictiile hardcodate au fost eliminate (nu trebuie sa excludem un eveniment doar pe baza zilei).
+  // Motorul de invatare continuu identifica pattern-uri toxice pe zile DACA apar din jurnal — doar acolo blocam.
   var kickoffDate = m.kickoff || m.date || m.event_date || '';
   var kickoffDay = -1;
   if(kickoffDate){
     try{ var __jd = new Date(kickoffDate).getDay(); if(__jd >= 0 && __jd <= 6) kickoffDay = __jd; }catch(e){}
   }
-  if(WD_RESTRICT[type] && kickoffDay >= 0 && WD_RESTRICT[type].indexOf(kickoffDay) !== -1) return null;
-  // LEARNING: filtre dinamice — blocare edge toxic sau weekday toxic aparut din jurnal
+  // LEARNING: filtre dinamice — blocare edge toxic sau weekday toxic aparut din jurnal (min 12 pariuri, ROI <= -20%)
   try {
     if(typeof learningDisqualifiesEdge === 'function' && learningDisqualifiesEdge(type, edgePct)) return null;
     if(typeof learningDisqualifiesWeekday === 'function' && kickoffDay >= 0 && learningDisqualifiesWeekday(type, kickoffDay)) return null;
