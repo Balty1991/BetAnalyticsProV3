@@ -4073,6 +4073,9 @@ function getApiProbForMarket(raw, marketKey){
   if(marketKey === 'under25') return 100 - safePct(raw.prob_over_25);
   if(marketKey === 'under35') return 100 - safePct(raw.prob_over_35);
   if(marketKey === 'btts') return safePct(raw.prob_btts_yes);
+  if(marketKey === 'dc1x') return safePct(raw.prob_home_win) + safePct(raw.prob_draw);
+  if(marketKey === 'dcx2') return safePct(raw.prob_away_win) + safePct(raw.prob_draw);
+  if(marketKey === 'dc12') return safePct(raw.prob_home_win) + safePct(raw.prob_away_win);
   return 0;
 }
 function getPoissonProbForMarket(metrics, marketKey){
@@ -7244,6 +7247,38 @@ function renderMatches(){
     return true;
   });
 
+  // Swap bestBet cu candidatul matchat de filtru, daca filtrul cere un tip specific
+  // (altfel cardul arata bestBet original, chiar daca user a cerut Over 1.5)
+  var filterTypeMap = {
+    'o15':['over15'], 'o25':['over25'], 'u35':['under35'], 'btts':['btts'],
+    'dc':['dc1x','dcx2','dc12']
+  };
+  var wantedTypes = filterTypeMap[CURRENT_FILTER];
+  // Also handle market dropdown
+  var marketLabelMap = {
+    'Over 1.5G':'over15','Over 2.5G':'over25','Under 3.5G':'under35','BTTS':'btts',
+    'Șansă Dublă 1X':'dc1x','Șansă Dublă X2':'dcx2','Șansă Dublă 12':'dc12'
+  };
+  if(marketF && marketLabelMap[marketF]) wantedTypes = [marketLabelMap[marketF]];
+
+  if(wantedTypes && wantedTypes.length){
+    filtered = filtered.map(function(m){
+      if(!m.bestBet) return m;
+      if(wantedTypes.indexOf(m.bestBet.type) >= 0) return m; // already matches
+      if(!Array.isArray(m.eligibleCandidates)) return m;
+      var matching = m.eligibleCandidates.find(function(c){ return c.bestBet && wantedTypes.indexOf(c.bestBet.type) >= 0; });
+      if(!matching) return m;
+      // Clone match with swapped bestBet — don't mutate original
+      var clone = Object.assign({}, m, {
+        bestBet: Object.assign({}, matching.bestBet),
+        smartScore: matching.ticketScore || matching.bestBet.score || m.smartScore,
+        why: matching.why || m.why,
+        verdict: matching.bestBet.verdict || m.verdict
+      });
+      return clone;
+    });
+  }
+
   filtered.sort(function(a,b){
     var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
     var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
@@ -7389,7 +7424,7 @@ function renderMatches(){
       '<div class="m16-reco">'+
         '<div class="m16-reco-title">🎯 Recomandare '+(b && b.type === 'ml' ? 'ML' : 'principală')+'</div>'+
         '<div class="m16-reco-main">'+recLabel+(recOdd ? ' <span class="odd">@ '+recOdd+'</span>' : '')+'</div>'+
-        '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+'</div>'+
+        '<div class="m16-reco-meta">Șansă: <strong style="color:var(--grn)">'+(b && b.adjProb != null ? fmtPct(Number(b.adjProb || 0)) : '—')+'</strong> | Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+'</div>'+
       '</div>'+
       '<div class="m16-signals">'+
         '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
@@ -7557,6 +7592,33 @@ function marketFitAnalysis(m, type){
     if(m.probDraw >= 27){ score -= 12; reasons.push('risc de egal mare'); }
     if(ls && ls.away > ls.home){ score += 10; reasons.push('scor probabil pentru oaspeți'); }
     if(ls && ls.away <= ls.home){ score -= 12; }
+  }
+
+  if(type === 'dc1x'){
+    // 1X = home win OR draw (avoid away win)
+    if(m.probHome + m.probDraw >= 75){ score += 12; reasons.push('1X probabil'); }
+    if(xgHome - xgAway >= 0.20){ score += 8; reasons.push('avantaj xG gazde'); }
+    if(m.probAway >= 35){ score -= 12; reasons.push('risc deplasare'); }
+    if(ls && ls.home >= ls.away){ score += 10; reasons.push('scor probabil favorabil 1X'); }
+    if(ls && ls.away > ls.home){ score -= 14; }
+  }
+
+  if(type === 'dcx2'){
+    // X2 = draw OR away win (avoid home win)
+    if(m.probAway + m.probDraw >= 75){ score += 12; reasons.push('X2 probabil'); }
+    if(xgAway - xgHome >= 0.20){ score += 8; reasons.push('avantaj xG oaspeți'); }
+    if(m.probHome >= 35){ score -= 12; reasons.push('risc gazdele'); }
+    if(ls && ls.away >= ls.home){ score += 10; reasons.push('scor probabil favorabil X2'); }
+    if(ls && ls.home > ls.away){ score -= 14; }
+  }
+
+  if(type === 'dc12'){
+    // 12 = home win OR away win (avoid draw)
+    if(m.probHome + m.probAway >= 70){ score += 12; reasons.push('12 probabil'); }
+    if(xgGap >= 0.30){ score += 8; reasons.push('dezechilibru xG (elimină egal)'); }
+    if(m.probDraw >= 30){ score -= 14; reasons.push('risc egal mare'); }
+    if(ls && ls.home !== ls.away){ score += 10; reasons.push('scor probabil ≠ egal'); }
+    if(ls && ls.home === ls.away){ score -= 16; }
   }
 
   return { score: score, reasons: uniqueReasons(reasons) };
