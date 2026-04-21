@@ -2690,6 +2690,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
           <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
           <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
           <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
+          <button class="filter-btn" onclick="setFilter('dc',this)">🛡️ Șansă Dublă</button>
           <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
         </div>
         <div class="matches-chip-meta">
@@ -2729,6 +2730,9 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
             <option value="Over 2.5G">Over 2.5G</option>
             <option value="Under 3.5G">Under 3.5G</option>
             <option value="BTTS">BTTS</option>
+            <option value="Șansă Dublă 1X">Șansă Dublă 1X</option>
+            <option value="Șansă Dublă X2">Șansă Dublă X2</option>
+            <option value="Șansă Dublă 12">Șansă Dublă 12</option>
           </select>
         </div>
         <div class="filter-field">
@@ -7198,11 +7202,19 @@ function renderMatches(){
       if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
       if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
       if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)) return false;
-      if(CURRENT_FILTER === 'o15' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over15')) return false;
+      // Filtre pe piață: verificam in TOATE candidatii eligibili, nu doar bestBet
+      // (altfel un meci cu Over 1.5 valid dar BTTS si mai bun nu mai apare la "Over 1.5")
+      function hasEligibleType(match, t){
+        if(match.analysisState !== 'ELIGIBLE') return false;
+        if(match.bestBet && match.bestBet.type === t) return true;
+        return Array.isArray(match.eligibleCandidates) && match.eligibleCandidates.some(function(c){ return c.bestBet && c.bestBet.type === t; });
+      }
+      if(CURRENT_FILTER === 'o15' && !hasEligibleType(m, 'over15')) return false;
       if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
-      if(CURRENT_FILTER === 'btts' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'btts')) return false;
-      if(CURRENT_FILTER === 'o25' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'over25')) return false;
-      if(CURRENT_FILTER === 'u35' && !(m.analysisState === 'ELIGIBLE' && b && b.type === 'under35')) return false;
+      if(CURRENT_FILTER === 'btts' && !hasEligibleType(m, 'btts')) return false;
+      if(CURRENT_FILTER === 'o25' && !hasEligibleType(m, 'over25')) return false;
+      if(CURRENT_FILTER === 'u35' && !hasEligibleType(m, 'under35')) return false;
+      if(CURRENT_FILTER === 'dc' && !(hasEligibleType(m, 'dc1x') || hasEligibleType(m, 'dcx2') || hasEligibleType(m, 'dc12'))) return false;
       if(!b) return false;
     }
 
@@ -7213,7 +7225,13 @@ function renderMatches(){
       if(days < 0 || days > Number(dateF)) return false;
     }
 
-    if(marketF && b.label !== marketF) return false;
+    if(marketF){
+      var matchesMarket = (b && b.label === marketF);
+      if(!matchesMarket && Array.isArray(m.eligibleCandidates)){
+        matchesMarket = m.eligibleCandidates.some(function(c){ return c.bestBet && c.bestBet.label === marketF; });
+      }
+      if(!matchesMarket) return false;
+    }
     if(proMode === 'pro' && !(m.leagueTier !== 'avoid' && (b.adjProb || 0) >= 72 && (b.edgePct || -999) >= 1.5 && (b.value || 0) >= 0.01)) return false;
     if((b.adjProb || 0) < minProb) return false;
     if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
@@ -7264,6 +7282,28 @@ function renderMatches(){
     var ageBadge = m.createdAt ? ageBadgeHtml(m.createdAt) : '';
     var hybridBlock = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
     var hybridInline = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityInline({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
+    // Alternate eligible markets (other than bestBet) — mini-pill showing all viable picks + probabilities
+    var altMarketsHtml = '';
+    if(Array.isArray(m.eligibleCandidates) && m.eligibleCandidates.length > 1 && b){
+      var altPills = m.eligibleCandidates
+        .filter(function(c){ return c.bestBet && c.bestBet.type !== b.type; })
+        .slice(0, 4)
+        .map(function(c){
+          var cb = c.bestBet;
+          var valClass = (cb.value || 0) >= 0.05 ? 'var(--grn)' : ((cb.value || 0) >= 0 ? 'var(--yel)' : 'var(--red)');
+          return '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:11px;white-space:nowrap">'+
+            '<span style="font-weight:800;color:var(--txt)">'+(cb.label || '—')+'</span>'+
+            '<span style="color:var(--muted);font-family:var(--mono)">@ '+Number(cb.odds || 0).toFixed(2)+'</span>'+
+            '<span style="color:'+valClass+';font-family:var(--mono);font-weight:700">'+fmtPct(Number(cb.adjProb || 0))+'</span>'+
+          '</span>';
+        }).join('');
+      if(altPills){
+        altMarketsHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'+
+          '<div style="font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;font-weight:700">Alte piețe eligibile</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px">'+altPills+'</div>'+
+        '</div>';
+      }
+    }
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
     var simpleMetrics = '<div class="match-inline-row">'+
       '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
@@ -7285,6 +7325,7 @@ function renderMatches(){
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
         hybridBlock+
+        altMarketsHtml+
       '</div>'+
       compactWhy+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '');
@@ -7298,6 +7339,7 @@ function renderMatches(){
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         simpleSummary+
         simpleMetrics+
+        altMarketsHtml+
       '</div>'+
       (compactWhy ? compactWhy : '');
     var detailBlock = MATCH_CARD_MODE === 'expert' ? expertDetails : simpleDetails;
