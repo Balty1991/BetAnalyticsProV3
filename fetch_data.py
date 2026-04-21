@@ -724,6 +724,9 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         "prediction_id": row.get("id"),
         "date": event.get("event_date"),
         "created_at": row.get("created_at"),
+        "home_api_id": (event.get("home_team_obj") or {}).get("api_id"),
+        "away_api_id": (event.get("away_team_obj") or {}).get("api_id"),
+        "league_api_id": (event.get("league") or {}).get("api_id"),
         "most_likely_score": row.get("most_likely_score"),
     }
 
@@ -1630,6 +1633,9 @@ def build_ui_live_candidate(row, market_key):
         "prediction_id": row.get("id"),
         "date": event.get("event_date"),
         "created_at": row.get("created_at"),
+        "home_api_id": (event.get("home_team_obj") or {}).get("api_id"),
+        "away_api_id": (event.get("away_team_obj") or {}).get("api_id"),
+        "league_api_id": (event.get("league") or {}).get("api_id"),
         "most_likely_score": row.get("most_likely_score"),
     }
 
@@ -1674,6 +1680,9 @@ def build_current_recommendation_rows(predictions, logged_at_iso):
             "prediction_id": pick.get("prediction_id"),
             "home": event.get("home_team"),
             "away": event.get("away_team"),
+            "home_api_id": pick.get("home_api_id") or (event.get("home_team_obj") or {}).get("api_id"),
+            "away_api_id": pick.get("away_api_id") or (event.get("away_team_obj") or {}).get("api_id"),
+            "league_api_id": pick.get("league_api_id") or (event.get("league") or {}).get("api_id"),
             "league": pick.get("league"),
             "event_date": pick.get("date"),
             "market": pick.get("market"),
