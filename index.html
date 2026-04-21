@@ -6210,7 +6210,8 @@ function renderMatches(){
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
     var simpleSummary = b ? ('<div class="match-inline-summary">Șansă <strong>'+fmtPct(Number(b.adjProb || 0))+'</strong> • Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(recOdd ? ' • Cotă <strong>@ '+recOdd+'</strong>' : '')+'</div>') : '';
-    var expertDetails = analysisMetricCards + '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
+    var expertDetails = analysisMetricCards +
+      '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
         '<div class="ticket-mini"><div class="v">'+Number(m.xgHome || 0).toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
         '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
         '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
@@ -6226,7 +6227,9 @@ function renderMatches(){
       '</div>'+
       compactWhy+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '');
-    var simpleDetails = analysisMetricCards + '<div class="card-reco-main">'+
+
+    // SIMPLU: fara grila metrica tehnica, fara badges — doar esentialul
+    var simpleDetails = '<div class="card-reco-main">'+
         '<div class="card-reco-head">'+
           '<div class="card-reco-title">Pronostic recomandat</div>'+
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
@@ -6234,9 +6237,8 @@ function renderMatches(){
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         simpleSummary+
         simpleMetrics+
-        hybridInline+
       '</div>'+
-      compactWhy;
+      (compactWhy ? compactWhy : '');
     var detailBlock = MATCH_CARD_MODE === 'expert' ? expertDetails : simpleDetails;
     var key = getMatchCardKey(m);
     var homeProb = Math.max(0, Number(m.probHome || 0));
