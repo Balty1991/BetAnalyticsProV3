@@ -5095,6 +5095,40 @@ function computeWalkForwardValidation(){
   var totalBlocks = correctBlocks + wrongBlocks;
   var blockAccuracy = totalBlocks > 0 ? correctBlocks / totalBlocks : 0;
 
+  // V17: simulare sizing-aware — testeaza impactul computeStakeMultiplier(row)
+  // Ruleaza pe aceeasi secventa, dar in loc de "block da/nu", fiecare pariu primeste
+  // un multiplicator de miza 0.25-1.30 si calculam ROI ponderat + profit ponderat.
+  var sizingProfit = 0, sizingStakeSum = 0, sizingBetsFull = 0, sizingBetsReduced = 0;
+  var sizingFlatProfit = 0; // pentru comparatie: acelasi pool, miza fixa
+  if(typeof computeStakeMultiplier === 'function'){
+    journal.forEach(function(r){
+      var odds = Number(r.odds || 0);
+      var profit = (r.won === true) ? Math.max(0, odds - 1) : -1;
+      var mult = computeStakeMultiplier({
+        edge_pct: Number(r.edge_pct || 0),
+        odds: odds,
+        poisson_delta: Number(r.poisson_delta || 0),
+        adjusted_prob: Number(r.adjusted_prob || 0),
+        model_prob: Number(r.model_prob || r.api_prob || 0),
+        from_open_pct: Number(r.from_open_pct || 0),
+        learningToxic: false
+      });
+      sizingProfit += profit * mult;
+      sizingStakeSum += mult;
+      sizingFlatProfit += profit;
+      if(mult >= 1.0) sizingBetsFull += 1;
+      else sizingBetsReduced += 1;
+    });
+  }
+  var sizingROI = sizingStakeSum > 0 ? (sizingProfit / sizingStakeSum) : 0;
+  var sizingFlatROI = journal.length > 0 ? (sizingFlatProfit / journal.length) : 0;
+  var sizingDeltaPP = (sizingROI - sizingFlatROI) * 100;
+  // Net units aditional prin sizing: fata de miza fixa 1u, cat am produs in plus?
+  var sizingFlatTotalUnits = journal.length; // stake 1u per pariu = total stake
+  var sizingFlatProfitPerUnit = sizingFlatProfit; // profit absolut la miza fixa 1u
+  var sizingFinalProfit = sizingProfit; // profit absolut cu stake variabil
+  var sizingNetUnits = sizingFinalProfit - (sizingFlatProfitPerUnit * (sizingStakeSum / sizingFlatTotalUnits));
+
   WALK_FORWARD_CACHE = {
     total_bets: totalBets,
     actual_profit: actualProfit,
@@ -5114,9 +5148,18 @@ function computeWalkForwardValidation(){
     missed_units: missedUnits,
     blocked_samples: blockedSamples.reverse(), // cele mai recente primele
     rolling_delta: rollingDelta,
-    journal_sorted_count: journal.length
+    journal_sorted_count: journal.length,
+    // V17: sizing simulation
+    sizing_roi: sizingROI,
+    sizing_flat_roi: sizingFlatROI,
+    sizing_delta_pp: sizingDeltaPP,
+    sizing_stake_sum: sizingStakeSum,
+    sizing_profit: sizingProfit,
+    sizing_bets_full: sizingBetsFull,
+    sizing_bets_reduced: sizingBetsReduced,
+    sizing_net_units: sizingNetUnits
   };
-  try { console.log('[WalkForward] total=' + totalBets + ' blocks=' + totalBlocks + ' correct=' + correctBlocks + ' wrong=' + wrongBlocks + ' net=' + engineNetUnits.toFixed(2) + 'u deltaROI=' + ((simROI - actualROI) * 100).toFixed(2) + 'pp'); } catch(e){}
+  try { console.log('[WalkForward] total=' + totalBets + ' blocks=' + totalBlocks + ' correct=' + correctBlocks + ' wrong=' + wrongBlocks + ' net=' + engineNetUnits.toFixed(2) + 'u deltaROI=' + ((simROI - actualROI) * 100).toFixed(2) + 'pp | sizing_delta=' + sizingDeltaPP.toFixed(2) + 'pp sizing_net=' + sizingNetUnits.toFixed(2) + 'u'); } catch(e){}
   return WALK_FORWARD_CACHE;
 }
 
@@ -5589,38 +5632,96 @@ function renderWalkForwardValidation(){
   var esc = (typeof learningEsc === 'function') ? learningEsc : function(s){ return String(s||''); };
 
   var policy = getSmartBetEnginePolicy();
-  var verdictColor = policy.state === 'positive' ? 'var(--grn)' : (policy.state === 'harmful' ? 'var(--red)' : 'var(--yel)');
-  var verdictIcon = policy.state === 'positive' ? '✅' : (policy.state === 'harmful' ? '⛔' : '➖');
-  var verdict = policy.state === 'positive'
-    ? ('Motorul adaugă valoare • mod ' + policy.label)
-    : (policy.state === 'harmful' ? ('Motorul dăunează • recomandat ' + policy.label) : ('Motorul este neutru • recomandat ' + policy.label));
+
+  // V17: verdict holistic — blocare + sizing impact combinate
+  var sizingDelta = Number(wf.sizing_delta_pp || 0);
+  var blockDelta = Number(wf.delta_roi_pp || 0);
+  var combinedDelta = sizingDelta + blockDelta;
+  // Verdict prioritizeaza sizing care e mecanismul principal V17
+  var verdictState, verdictColor, verdictIcon, verdictTitle, verdictReason;
+  if(sizingDelta >= 0.4 && combinedDelta >= 0){
+    verdictState = 'positive'; verdictColor = 'var(--grn)'; verdictIcon = '✅';
+    verdictTitle = 'Motorul adauga valoare • sizing +' + sizingDelta.toFixed(2) + 'pp';
+    verdictReason = 'Stake sizing-ul V17 amplifica pariurile cu edge mare si reduce expunerea pe cele slabe.';
+  } else if(combinedDelta < -0.5){
+    verdictState = 'harmful'; verdictColor = 'var(--red)'; verdictIcon = '⛔';
+    verdictTitle = 'Motorul dauneaza • Δ combinat ' + signedPP(combinedDelta, 2);
+    verdictReason = policy.reason;
+  } else {
+    verdictState = 'neutral'; verdictColor = 'var(--yel)'; verdictIcon = '➖';
+    verdictTitle = 'Motor neutru • mod recomandat: ' + policy.label;
+    verdictReason = sizingDelta > 0
+      ? ('Sizing-ul adauga +' + sizingDelta.toFixed(2) + 'pp; blocarea nu mai face mult pe sample-ul curent.')
+      : 'Datele nu sunt inca decisive. Continua sa generezi recomandari pentru calibrare.';
+  }
 
   var cardsHtml =
-    '<div style="margin-bottom:12px;padding:10px 12px;border-radius:12px;background:'+(policy.state==='positive'?'rgba(16,185,129,.08)':policy.state==='harmful'?'rgba(239,68,68,.08)':'rgba(245,158,11,.08)')+';border:1px solid '+(policy.state==='positive'?'rgba(16,185,129,.22)':policy.state==='harmful'?'rgba(239,68,68,.22)':'rgba(245,158,11,.22)')+'"><div style="font-size:13px;font-weight:800;color:'+verdictColor+'">'+verdictIcon+' '+verdict+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+policy.reason+'</div></div>'+
+    '<div style="margin-bottom:12px;padding:10px 12px;border-radius:12px;background:'+(verdictState==='positive'?'rgba(16,185,129,.08)':verdictState==='harmful'?'rgba(239,68,68,.08)':'rgba(245,158,11,.08)')+';border:1px solid '+(verdictState==='positive'?'rgba(16,185,129,.22)':verdictState==='harmful'?'rgba(239,68,68,.22)':'rgba(245,158,11,.22)')+'"><div style="font-size:13px;font-weight:800;color:'+verdictColor+'">'+verdictIcon+' '+verdictTitle+'</div><div style="font-size:11px;color:var(--muted);margin-top:4px">'+verdictReason+'</div></div>' +
+    // V17: Sizing impact cards (principalul mecanism)
+    '<div style="margin-bottom:6px;font-size:11px;font-weight:800;color:var(--txt);letter-spacing:.05em">📏 IMPACT STAKE SIZING (V17)</div>' +
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">' +
       '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
-        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI Actual</div>' +
-        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.actual_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.actual_roi, 2) + '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + wf.total_bets + ' pariuri jucate</div>' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI flat (1u/pariu)</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.sizing_flat_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.sizing_flat_roi, 2) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">baseline fara sizing</div>' +
       '</div>' +
       '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
-        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI Simulat</div>' +
-        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.simulated_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.simulated_roi, 2) + '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + wf.simulated_bets + ' ramase dupa filtrare</div>' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI cu sizing</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.sizing_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.sizing_roi, 2) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + Number(wf.sizing_stake_sum||0).toFixed(0) + 'u stake total</div>' +
       '</div>' +
-      '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.12),rgba(16,185,129,.03)':'rgba(239,68,68,.10),rgba(239,68,68,.02)') + ');border:1px solid ' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.25)':'rgba(239,68,68,.22)') + '">' +
-        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Delta ROI</div>' +
-        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + verdictColor + '">' + signedPP(wf.delta_roi_pp, 2) + '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:3px">impactul motorului</div>' +
+      '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,' + (sizingDelta>=0?'rgba(16,185,129,.14),rgba(16,185,129,.03)':'rgba(239,68,68,.12),rgba(239,68,68,.02)') + ');border:1px solid ' + (sizingDelta>=0?'rgba(16,185,129,.28)':'rgba(239,68,68,.24)') + '">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Delta Sizing</div>' +
+        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (sizingDelta>=0?'var(--grn)':'var(--red)') + '">' + signedPP(sizingDelta, 2) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">impactul stake variabil</div>' +
       '</div>' +
       '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
-        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Net unitati</div>' +
-        '<div style="font-size:22px;font-weight:900;margin-top:6px;color:' + (wf.engine_net_units>=0?'var(--grn)':'var(--red)') + '">' + signedU(wf.engine_net_units, 1) + '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:3px">salvate vs ratate</div>' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Distributie stake</div>' +
+        '<div style="font-size:16px;font-weight:900;margin-top:6px;color:var(--txt);line-height:1.3">' + Number(wf.sizing_bets_full||0) + ' full<br><span style="color:var(--muted);font-size:12px;font-weight:700">' + Number(wf.sizing_bets_reduced||0) + ' reduse</span></div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">full ≥ 1.0x stake</div>' +
       '</div>' +
-    '</div>';
+    '</div>' +
+    // Blocare impact (secundar, compact cand e zero)
+    '<div style="margin:14px 0 6px 0;font-size:11px;font-weight:800;color:var(--txt);letter-spacing:.05em">🚫 IMPACT BLOCARE</div>';
 
-  var breakdownHtml =
+  // Compact vs full blocking view depending on number of blocks
+  var blockingHtml;
+  if(Number(wf.total_blocks || 0) <= 3){
+    // Compact: blocking is essentially inactive
+    blockingHtml = '<div style="padding:12px;border-radius:14px;background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.18)">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--grn)">✓ Motorul nu mai blocheaza pariuri. ' +
+      (Number(wf.total_blocks || 0) === 0 ? 'Zero blocari pe intreg jurnalul.' : Number(wf.total_blocks) + ' blocari marginale.') +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">Pragurile V17 (20 bets, ROI ≤ -25%) sunt stricte tocmai ca sa nu blocam winners.</div>' +
+    '</div>';
+  } else {
+    // Full blocking breakdown
+    blockingHtml =
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">' +
+        '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+          '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI Actual</div>' +
+          '<div style="font-size:20px;font-weight:900;margin-top:6px;color:' + (wf.actual_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.actual_roi, 2) + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + wf.total_bets + ' pariuri' +
+        '</div></div>' +
+        '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+          '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">ROI dupa blocare</div>' +
+          '<div style="font-size:20px;font-weight:900;margin-top:6px;color:' + (wf.simulated_roi>=0?'var(--grn)':'var(--red)') + '">' + signedPct(wf.simulated_roi, 2) + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + wf.simulated_bets + ' pastrate</div>' +
+        '</div>' +
+        '<div style="padding:12px;border-radius:14px;background:linear-gradient(135deg,' + (blockDelta>=0?'rgba(16,185,129,.10),rgba(16,185,129,.02)':'rgba(239,68,68,.08),rgba(239,68,68,.02)') + ');border:1px solid ' + (blockDelta>=0?'rgba(16,185,129,.22)':'rgba(239,68,68,.20)') + '">' +
+          '<div style="font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em">Delta blocare</div>' +
+          '<div style="font-size:20px;font-weight:900;margin-top:6px;color:' + (blockDelta>=0?'var(--grn)':'var(--red)') + '">' + signedPP(blockDelta, 2) + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">' + wf.correct_blocks + ' corecte / ' + wf.wrong_blocks + ' gresite</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  cardsHtml += blockingHtml;
+
+  // Breakdown (blocari corecte/gresite/acuratete) — afisat DOAR cand sunt suficiente blocari
+  var breakdownHtml = '';
+  if(Number(wf.total_blocks || 0) >= 5){
+    breakdownHtml =
     '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">' +
       '<div style="padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(0,0,0,0));border:1px solid rgba(16,185,129,.22)">' +
         '<div style="font-size:11px;font-weight:800;color:var(--grn);margin-bottom:6px">✅ Blocari corecte</div>' +
@@ -5638,9 +5739,10 @@ function renderWalkForwardValidation(){
         '<div style="font-size:10px;color:var(--muted);margin-top:4px">Random ar fi ~' + (100 * (wf.total_bets - (wf.actual_profit + wf.total_bets)/2) / wf.total_bets).toFixed(0) + '% (rata pierderi)</div>' +
       '</div>' +
     '</div>';
+  }
 
   var samplesHtml = '';
-  if(wf.blocked_samples && wf.blocked_samples.length){
+  if(wf.blocked_samples && wf.blocked_samples.length && Number(wf.total_blocks || 0) >= 5){
     samplesHtml = '<div style="margin-top:14px">' +
       '<div style="font-size:12px;font-weight:800;color:var(--txt);margin-bottom:8px">🔍 Ultimele ' + Math.min(10, wf.blocked_samples.length) + ' pariuri pe care motorul le-ar fi blocat</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px">' +
@@ -5669,13 +5771,9 @@ function renderWalkForwardValidation(){
     '<div class="section" style="margin-top:12px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(0,0,0,0));border:1px solid rgba(59,130,246,.22)">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
         '<div>' +
-          '<div style="font-size:15px;font-weight:900;color:var(--txt)">🔬 Validare Walk-Forward</div>' +
-          '<div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5">Simulare cronologica: pentru fiecare pariu, folosim DOAR pariurile anterioare lui ca sa decidem daca l-am fi blocat. Testeaza motorul exact cum ar fi decis in timp real.</div>' +
+          '<div style="font-size:15px;font-weight:900;color:var(--txt)">🔬 Validare Walk-Forward V17</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5">Simulare cronologica pe doua axe: <b>stake sizing</b> (cat risti per pariu in functie de edge/odds/sursa) si <b>blocare toxic</b> (ce ai fi refuzat complet). Pentru fiecare pariu se folosesc DOAR pariurile anterioare lui.</div>' +
         '</div>' +
-      '</div>' +
-      '<div style="padding:10px 12px;border-radius:12px;background:' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.06)':'rgba(239,68,68,.06)') + ';border:1px solid ' + (wf.delta_roi_pp>=0?'rgba(16,185,129,.22)':'rgba(239,68,68,.22)') + ';margin-bottom:12px">' +
-        '<div style="font-size:13px;font-weight:800;color:' + verdictColor + '">' + verdictIcon + ' ' + verdict + '</div>' +
-        '<div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">' + wf.total_bets + ' pariuri analizate. Motorul ar fi blocat ' + wf.total_blocks + ' dintre ele (' + pct(wf.total_blocks/wf.total_bets, 1) + '). Net: ' + signedU(wf.engine_net_units, 1) + '.</div>' +
       '</div>' +
       cardsHtml +
       breakdownHtml +
