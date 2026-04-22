@@ -34,14 +34,7 @@ jobs:
       - name: Fetch predictions and events
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: |
-          set +e
-          python fetch_data.py
-          rc=$?
-          if [ $rc -ne 0 ]; then
-            echo "::warning::fetch_data.py failed upstream. Continuing with cached repository data."
-          fi
-          exit 0
+        run: python fetch_data.py
 
       - name: Verify cached data exists
         run: |
