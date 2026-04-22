@@ -380,6 +380,26 @@ body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-he
 .source-chip-api{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.32);color:var(--grn)}
 .source-chip-heur{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.32);color:var(--yel)}
 .source-chip-mixed{background:rgba(59,130,246,.14);border-color:rgba(59,130,246,.32);color:var(--acc)}
+.odds-inline-source{display:inline-flex;align-items:center;justify-content:center;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.10);font-size:9px;font-weight:900;letter-spacing:.05em;line-height:1;text-transform:uppercase;margin-left:6px}
+.odds-inline-source-best{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)}
+.odds-inline-source-cmp{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.28);color:var(--acc)}
+.odds-inline-source-std{background:rgba(148,163,184,.10);border-color:rgba(148,163,184,.20);color:var(--muted)}
+.odds-source-block{margin-top:10px;padding:10px 12px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
+.odds-source-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.odds-source-title{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.odds-source-summary{font-size:11px;color:var(--txt);font-weight:700}
+.odds-source-grid{display:flex;flex-wrap:wrap;gap:8px}
+.odds-source-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);min-height:34px}
+.odds-source-chip.active{box-shadow:0 0 0 1px rgba(255,255,255,.06) inset}
+.odds-source-chip.best{background:rgba(16,185,129,.10);border-color:rgba(16,185,129,.24)}
+.odds-source-chip.cmp{background:rgba(59,130,246,.10);border-color:rgba(59,130,246,.22)}
+.odds-source-chip.std{background:rgba(148,163,184,.08);border-color:rgba(148,163,184,.18)}
+.odds-source-chip-k{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+.odds-source-chip-v{font-size:13px;font-weight:900;font-family:var(--mono);color:var(--txt)}
+.odds-source-chip-note{font-size:10px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.odds-source-chip.best .odds-source-chip-k,.odds-source-chip.best.active .odds-source-chip-v{color:var(--grn)}
+.odds-source-chip.cmp .odds-source-chip-k,.odds-source-chip.cmp.active .odds-source-chip-v{color:var(--acc)}
+.odds-source-chip.std .odds-source-chip-k,.odds-source-chip.std.active .odds-source-chip-v{color:var(--muted)}
 .audit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .audit-card{background:linear-gradient(180deg,rgba(20,30,55,.94),rgba(14,22,40,.94));border:1px solid var(--brd2);border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .audit-card-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
@@ -3275,6 +3295,68 @@ function sourceChipHtmlForAuditRow(r){
   if(r && r.source_api) return '<span class="source-chip source-chip-api">ML/API</span>';
   if(r && r.source_heuristic) return '<span class="source-chip source-chip-heur">heuristic</span>';
   return '<span class="source-chip source-chip-heur">heuristic</span>';
+}
+function getOddsSourceMeta(b){
+  if(!b) return {active:'STD', activeOdds:0, hasAny:false, hasCompare:false, hasBest:false, hasCmp:false, hasStd:false, bestOdds:0, cmpOdds:0, stdOdds:0, bestBookmaker:'', bookmakersCount:0, gapPct:0};
+  var stdOdds = Number(b.baseOdds || 0);
+  var bestOdds = Number(b.odds || 0);
+  var cmpOdds = Number(b.avgMarketOdds || 0);
+  var bookmakersCount = Math.max(0, Math.round(Number(b.bookmakersCount || 0)));
+  var gapPct = Number(b.marketGapPct || 0);
+  var hasStd = stdOdds > 1.01;
+  var hasBest = bestOdds > 1.01;
+  var hasCmp = cmpOdds > 1.01;
+  var active = 'STD';
+  if(b.usesBestOdds && hasBest) active = 'BEST';
+  else if(!hasStd && hasCmp) active = 'CMP';
+  else if(!hasStd && hasBest) active = 'BEST';
+  var activeOdds = active === 'BEST' ? bestOdds : (active === 'CMP' ? cmpOdds : stdOdds);
+  var hasCompare = !!(bookmakersCount > 0 || hasCmp || (hasStd && hasBest && Math.abs(bestOdds - stdOdds) >= 0.009));
+  return {
+    active:active,
+    activeOdds:activeOdds > 1.01 ? +activeOdds.toFixed(2) : 0,
+    hasAny:!!(hasStd || hasBest || hasCmp),
+    hasCompare:hasCompare,
+    hasBest:hasBest,
+    hasCmp:hasCmp,
+    hasStd:hasStd,
+    bestOdds:hasBest ? +bestOdds.toFixed(2) : 0,
+    cmpOdds:hasCmp ? +cmpOdds.toFixed(2) : 0,
+    stdOdds:hasStd ? +stdOdds.toFixed(2) : 0,
+    bestBookmaker:String(b.bestBookmaker || ''),
+    bookmakersCount:bookmakersCount,
+    gapPct:isFinite(gapPct) ? +gapPct.toFixed(2) : 0
+  };
+}
+function inlineOddsSourceTagHtml(meta){
+  if(!meta || !meta.hasAny) return '';
+  var cls = meta.active === 'BEST' ? 'best' : (meta.active === 'CMP' ? 'cmp' : 'std');
+  return '<span class="odds-inline-source odds-inline-source-' + cls + '">' + meta.active + '</span>';
+}
+function oddsSourceBadgeHtml(meta){
+  if(!meta || !meta.hasAny) return '';
+  var tone = meta.active === 'BEST' ? 'var(--grn)' : (meta.active === 'CMP' ? 'var(--acc)' : 'var(--muted)');
+  var label = meta.active === 'BEST' ? 'cea mai bună cotă' : (meta.active === 'CMP' ? 'medie comparată' : 'cotă standard');
+  return '<span class="card-reco-badge" style="border-color:rgba(255,255,255,.10);color:' + tone + '">Sursă cotă ' + meta.active + ' • ' + label + '</span>';
+}
+function oddsSourceChipHtml(code, value, active, note){
+  var v = Number(value || 0);
+  if(!(v > 1.01)) return '';
+  var cls = code === 'BEST' ? 'best' : (code === 'CMP' ? 'cmp' : 'std');
+  return '<span class="odds-source-chip ' + cls + (active ? ' active' : '') + '"><span class="odds-source-chip-k">' + code + '</span><span class="odds-source-chip-v">' + v.toFixed(2) + '</span>' + (note ? '<span class="odds-source-chip-note" title="' + htmlEsc(note) + '">' + htmlEsc(note) + '</span>' : '') + '</span>';
+}
+function renderOddsSourceCompareHtml(meta){
+  if(!meta || !meta.hasAny) return '';
+  var chips = [];
+  chips.push(oddsSourceChipHtml('BEST', meta.bestOdds, meta.active === 'BEST', meta.bestBookmaker ? ('@ ' + meta.bestBookmaker) : 'top'));
+  chips.push(oddsSourceChipHtml('CMP', meta.cmpOdds, meta.active === 'CMP', meta.bookmakersCount > 0 ? (meta.bookmakersCount + ' case') : 'medie'));
+  chips.push(oddsSourceChipHtml('STD', meta.stdOdds, meta.active === 'STD', 'API/base'));
+  chips = chips.filter(Boolean);
+  if(!chips.length) return '';
+  var summary = 'Sursă activă: ' + meta.active + (meta.activeOdds > 1.01 ? (' @ ' + meta.activeOdds.toFixed(2)) : '');
+  if(meta.active === 'BEST' && meta.gapPct > 0.01) summary += ' • +' + meta.gapPct.toFixed(1) + '% vs STD';
+  else if(meta.hasCompare && meta.bookmakersCount > 0) summary += ' • comparație din ' + meta.bookmakersCount + ' case';
+  return '<div class="odds-source-block"><div class="odds-source-head"><div class="odds-source-title">Sursă cotă</div><div class="odds-source-summary">' + summary + '</div></div><div class="odds-source-grid">' + chips.join('') + '</div></div>';
 }
 function ageBucketLabel(hours){
   var h = Number(hours || 0);
@@ -8084,6 +8166,10 @@ function renderMatches(){
     var poissonBadge = b ? poissonBadgeHtmlForBet(b) : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
     var sourceBadge = b ? sourceChipHtmlForBet(b) : '';
+    var oddsSourceMeta = b ? getOddsSourceMeta(b) : null;
+    var oddsSourceBadge = oddsSourceMeta ? oddsSourceBadgeHtml(oddsSourceMeta) : '';
+    var oddsCompareBlock = oddsSourceMeta ? renderOddsSourceCompareHtml(oddsSourceMeta) : '';
+    var oddsInlineTag = oddsSourceMeta ? inlineOddsSourceTagHtml(oddsSourceMeta) : '';
     var ageBadge = m.createdAt ? ageBadgeHtml(m.createdAt) : '';
     var hybridBlock = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
     var hybridInline = b && b.probabilityEngine === 'hybrid' ? renderHybridProbabilityInline({ apiProb:b.apiProb, poissonProb:b.poissonProb, hybridProb:b.prob, delta:b.poissonDelta }) : '';
@@ -8113,8 +8199,18 @@ function renderMatches(){
     var motorBadge = motorMeta && motorMeta.state === 'validated'
       ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
       : '';
-    var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
-    var m16ProbabilityHtml = b ? ('<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(59,130,246,.12));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:28px;font-weight:900;line-height:1;margin-top:6px;color:var(--txt)">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right">'+(motorBadge || '')+'<div style="font-size:10px;color:var(--muted);margin-top:'+(motorBadge ? '8' : '0')+'px">Cotă</div><div style="font-size:20px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
+    var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă'+oddsInlineTag+'</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
+    var m16ProbabilityHtml = b ? ('<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(59,130,246,.12));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:28px;font-weight:900;line-height:1;margin-top:6px;color:var(--txt)">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right">'+(motorBadge || '')+'<div style="font-size:10px;color:var(--muted);margin-top:'+(motorBadge ? '8' : '0')+'px">Cotă'+oddsInlineTag+'</div><div style="font-size:20px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
+    var fairOdds = b && Number(b.adjProb || 0) > 0 ? (100 / Number(b.adjProb || 0)).toFixed(2) : '—';
+    var analysisMetricCards = b ? ('<div class="analysis-metric-grid">'+
+      '<div class="analysis-metric prob"><div class="analysis-metric-k">Probabilitate</div><div class="analysis-metric-v">'+fmtPct(Number(b.adjProb || 0))+'</div><div class="analysis-metric-sub">estimarea finală folosită</div></div>'+
+      '<div class="analysis-metric edge"><div class="analysis-metric-k">Edge</div><div class="analysis-metric-v">'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</div><div class="analysis-metric-sub">diferență față de piață</div></div>'+
+      '<div class="analysis-metric value"><div class="analysis-metric-k">Value</div><div class="analysis-metric-v">'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</div><div class="analysis-metric-sub">valoare estimată</div></div>'+
+      '<div class="analysis-metric warn"><div class="analysis-metric-k">Fair odds</div><div class="analysis-metric-v">'+fairOdds+'</div><div class="analysis-metric-sub">cota teoretică</div></div>'+
+      '<div class="analysis-metric"><div class="analysis-metric-k">Confidence</div><div class="analysis-metric-v">'+Number(m.confidence || 0).toFixed(0)+'%</div><div class="analysis-metric-sub">încredere model</div></div>'+
+      '<div class="analysis-metric"><div class="analysis-metric-k">xG total</div><div class="analysis-metric-v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="analysis-metric-sub">context ofensiv estimat</div></div>'+
+      (bestMarketLine ? '<div class="analysis-metric value"><div class="analysis-metric-k">Best market</div><div class="analysis-metric-v">'+Number(b.odds || 0).toFixed(2)+'</div><div class="analysis-metric-sub">'+bestMarketLine+'</div></div>' : '')+
+    '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
     var simpleMetrics = '<div class="match-inline-row">'+
       '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
@@ -8135,8 +8231,9 @@ function renderMatches(){
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         predictionProbabilityHtml+
-        '<div class="card-reco-badges">'+compareBadge+motorBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
         hybridBlock+
+        oddsCompareBlock+
         altMarketsHtml+
       '</div>'+
       compactWhy+
@@ -8150,6 +8247,8 @@ function renderMatches(){
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         predictionProbabilityHtml+
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+sourceBadge+oddsSourceBadge+'</div>'+
+        oddsCompareBlock+
         simpleSummary+
         simpleMetrics+
         altMarketsHtml+
@@ -8204,7 +8303,7 @@ function renderMatches(){
         '<div class="m16-reco-title">🎯 Recomandare '+(b && b.type === 'ml' ? 'ML' : 'principală')+'</div>'+
         '<div class="m16-reco-main">'+recLabel+'</div>'+
         m16ProbabilityHtml+
-        '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+(bestMarketLine ? (' | ' + bestMarketLine) : '')+'</div>'+
+        '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+' | Sursă cotă: '+(oddsSourceMeta ? oddsSourceMeta.active : '—')+(bestMarketLine ? (' | ' + bestMarketLine) : '')+'</div>'+
       '</div>'+
       '<div class="m16-signals">'+
         '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
