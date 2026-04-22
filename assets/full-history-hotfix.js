@@ -243,15 +243,116 @@ function patchSmartBet(){
   W.__smartbetLearningPatchApplied = 1;
 }
 
+function patchHistory21Sections(){
+  if(W.__history21SectionsPatchApplied) return;
+  const oldInfer = typeof W.inferMarketTypeFromLabel==='function' ? W.inferMarketTypeFromLabel : null;
+  const oldEvaluate = typeof W.evaluateMarketOutcome==='function' ? W.evaluateMarketOutcome : null;
+
+  W.inferMarketTypeFromLabel = function(label){
+    const raw = String(label || '').toLowerCase();
+    const txt = (raw.normalize ? raw.normalize('NFD').replace(/[̀-ͯ]/g,'') : raw).replace(/\s+/g,' ').trim();
+    if(txt.indexOf('sansa dubla') >= 0 || txt.indexOf('double chance') >= 0){
+      if(txt.indexOf('1x') >= 0) return 'dc1x';
+      if(txt.indexOf('x2') >= 0) return 'dcx2';
+      if(/(^|\s)12($|\s)/.test(txt)) return 'dc12';
+      return 'dc';
+    }
+    if(txt === 'dc1x' || txt === '1x') return 'dc1x';
+    if(txt === 'dcx2' || txt === 'x2') return 'dcx2';
+    if(txt === 'dc12' || txt === '12') return 'dc12';
+    return oldInfer ? oldInfer(label) : null;
+  };
+
+  W.evaluateMarketOutcome = function(marketType, homeScore, awayScore){
+    if(homeScore == null || awayScore == null) return 'pending';
+    const mk = String(marketType || '').toLowerCase();
+    if(mk === 'dc1x' || mk === '1x') return Number(homeScore) >= Number(awayScore) ? 'win' : 'loss';
+    if(mk === 'dcx2' || mk === 'x2') return Number(awayScore) >= Number(homeScore) ? 'win' : 'loss';
+    if(mk === 'dc12' || mk === '12') return Number(homeScore) !== Number(awayScore) ? 'win' : 'loss';
+    return oldEvaluate ? oldEvaluate.apply(this, arguments) : 'pending';
+  };
+
+  function getHistory21MarketKey(row){
+    const direct = String(row && (row.market_key || row.marketKey) || '').toLowerCase().trim();
+    if(direct) return direct;
+    return typeof W.inferMarketTypeFromLabel==='function' ? W.inferMarketTypeFromLabel(row && (row.market || row.label || '')) : null;
+  }
+
+  W.getHistory21MotorState = function(row){
+    if(!row || typeof W.getSmartBetStatusForMatch!=='function') return { state:'neutral', row:null, reason:null, score:null };
+    const marketKey = getHistory21MarketKey(row) || '';
+    const match = {
+      eventId: row.event_id != null ? row.event_id : (row.eventId != null ? row.eventId : null),
+      event_date: row.event_date || row.date || row.logged_at || row.prediction_created_at || '',
+      date: row.event_date || row.date || row.logged_at || row.prediction_created_at || '',
+      home: row.home || '',
+      away: row.away || ''
+    };
+    const bet = {
+      type: marketKey,
+      label: row.market || row.label || '',
+      marketKey: marketKey,
+      market_key: marketKey,
+      market: row.market || row.label || ''
+    };
+    return W.getSmartBetStatusForMatch(match, bet);
+  };
+
+  W.getHistory21CategoryDefs = function(rows){
+    const defs = [
+      {key:'all', label:'Toate'},
+      {key:'motor_validated', label:'Validate Motor'},
+      {key:'safe', label:'Top analizate'},
+      {key:'over15', label:'Over 1.5G'},
+      {key:'over25', label:'Over 2.5G'},
+      {key:'btts', label:'BTTS'},
+      {key:'under35', label:'Under 3.5G'},
+      {key:'dc', label:'Șansă Dublă'},
+      {key:'value', label:'Value'}
+    ];
+    const known = {};
+    defs.forEach(def=>{ known[def.key] = true; });
+    const extra = {};
+    arr(rows).forEach(function(row){
+      const mk = getHistory21MarketKey(row);
+      const label = row && (row.market || row.label || mk || '');
+      if(!mk || known[mk] || extra[mk]) return;
+      extra[mk] = { key:mk, label:label };
+    });
+    Object.keys(extra).forEach(key=>defs.push(extra[key]));
+    return defs;
+  };
+
+  W.historyRowMatchesCategory = function(row, categoryKey){
+    const mk = String(getHistory21MarketKey(row) || '').toLowerCase();
+    if(categoryKey === 'all') return true;
+    if(categoryKey === 'motor_validated') return W.getHistory21MotorState(row).state === 'validated';
+    if(categoryKey === 'safe') return String(row && row.verdict || '').toLowerCase() === 'safe' || n(row && row.score || 0) >= 80;
+    if(categoryKey === 'value') return n(row && row.value || 0) >= 0.05;
+    if(categoryKey === 'dc') return ['dc','dc1x','dcx2','dc12','1x','x2','12','doublechance'].indexOf(mk) >= 0;
+    return mk === categoryKey;
+  };
+
+  W.__history21SectionsPatchApplied = 1;
+}
+
+function refreshHistory21View(){
+  if(typeof W.renderHistory21!=='function') return;
+  try{ W.renderHistory21(); }catch(err){ console.error('History21 patch refresh failed:', err); }
+}
+
 function run(){
   runApiHistoryCleanup();
   patchSmartBetAnalysis();
   patchSmartBet();
+  patchHistory21Sections();
 }
 
 function boot(){
   loadSkipped().finally(()=>{
     run();
+    setTimeout(refreshHistory21View, 60);
+    setTimeout(refreshHistory21View, 320);
     if(typeof W.switchTab==='function'&&!W.__fhHotfixSwitch){
       const old=W.switchTab;
       W.switchTab=function(name){
@@ -259,6 +360,9 @@ function boot(){
         setTimeout(run,0);
         setTimeout(run,300);
         setTimeout(run,900);
+        setTimeout(refreshHistory21View,80);
+        setTimeout(refreshHistory21View,360);
+        setTimeout(refreshHistory21View,980);
         return out;
       };
       W.__fhHotfixSwitch=1;
@@ -270,6 +374,9 @@ function boot(){
         setTimeout(run,0);
         setTimeout(run,400);
         setTimeout(run,1000);
+        setTimeout(refreshHistory21View,120);
+        setTimeout(refreshHistory21View,520);
+        setTimeout(refreshHistory21View,1120);
         return out;
       };
       W.__fhHotfixRefresh=1;
