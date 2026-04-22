@@ -32,6 +32,7 @@ HISTORY_MAX_ROWS = 2500
 RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
+EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
 
 # Restricții weekday bazate pe istoricul jurnalului (950 pariuri settled)
 # ROI simulat după filtrare: +7.10% vs +0.45% fără filtru (+6.65pp)
@@ -1337,52 +1338,150 @@ def fetch_url(url):
     raise RuntimeError(f"Fetch esuat definitiv pentru {url}: {last_error}")
 
 
-def fetch_best_market_odds(event_id, market_key):
-    """
-    Încearcă să obțină cea mai bună cotă din 22+ bookmakers pentru un meci și piață.
-    Fallback silențios la cotele existente dacă endpoint-ul nu e disponibil.
-    """
-    MARKET_ODDS_FIELD = {
-        "homeWin":  ("odds_home",     "home_win"),
-        "draw":     ("odds_draw",     "draw"),
-        "awayWin":  ("odds_away",     "away_win"),
-        "over15":   ("odds_over_15",  "over_15"),
-        "under15":  ("odds_under_15", "under_15"),
-        "over25":   ("odds_over_25",  "over_25"),
-        "under25":  ("odds_under_25", "under_25"),
-        "under35":  ("odds_under_35", "under_35"),
-        "btts":     ("odds_btts_yes", "btts_yes"),
-    }
-    if market_key not in MARKET_ODDS_FIELD:
-        return None
-    odds_field, api_field = MARKET_ODDS_FIELD[market_key]
+MARKET_ODDS_FIELD = {
+    "homeWin":  ("odds_home", "home_win"),
+    "draw":     ("odds_draw", "draw"),
+    "awayWin":  ("odds_away", "away_win"),
+    "over15":   ("odds_over_15", "over_15"),
+    "under15":  ("odds_under_15", "under_15"),
+    "over25":   ("odds_over_25", "over_25"),
+    "under25":  ("odds_under_25", "under_25"),
+    "under35":  ("odds_under_35", "under_35"),
+    "btts":     ("odds_btts_yes", "btts_yes"),
+    "dc12":     ("odds_dc_12", "dc_12"),
+}
+
+
+def _safe_float(value):
     try:
-        url = f"{API_BASE}/api/events/{event_id}/odds/"
-        r = requests.get(url, headers=HEADERS, timeout=15)
-        if r.status_code in (404, 405, 400):
-            return None
+        out = float(value)
+    except Exception:
+        return None
+    if not math.isfinite(out):
+        return None
+    return out
+
+
+def fetch_event_odds_compare_snapshot(event_id):
+    """
+    Returnează pentru un eveniment harta cu best odds / best bookmaker / average odds
+    pe toate piețele suportate. Cache-uit per event pentru a evita request-uri repetate.
+    """
+    try:
+        event_id_int = int(event_id)
+    except Exception:
+        return {}
+    if event_id_int in EVENT_ODDS_COMPARE_CACHE:
+        return EVENT_ODDS_COMPARE_CACHE[event_id_int]
+    snapshot = {}
+    try:
+        url = f"{API_BASE}/api/events/{event_id_int}/odds/"
+        r = requests.get(url, headers=HEADERS, timeout=20)
+        if r.status_code in (400, 404, 405):
+            EVENT_ODDS_COMPARE_CACHE[event_id_int] = {}
+            return {}
         r.raise_for_status()
         data = r.json()
         bookmakers = data if isinstance(data, list) else data.get("results", data.get("bookmakers", []))
-        if not bookmakers:
-            return None
-        best_odds = 0.0
-        best_bk = None
-        for bk in bookmakers:
-            bk_name = bk.get("bookmaker") or bk.get("name") or "unknown"
-            val = bk.get(odds_field) or bk.get(api_field) or bk.get(f"odds_{api_field}")
-            try:
-                val = float(val)
-            except Exception:
-                continue
-            if val > best_odds:
-                best_odds = val
-                best_bk = bk_name
-        if best_odds > 1.01 and best_bk:
-            return best_odds, best_bk
-        return None
+        if not isinstance(bookmakers, list):
+            bookmakers = []
+        for market_key, field_pair in MARKET_ODDS_FIELD.items():
+            odds_field, api_field = field_pair
+            values = []
+            best_odds = 0.0
+            best_bk = None
+            for bk in bookmakers:
+                if not isinstance(bk, dict):
+                    continue
+                bk_name = bk.get("bookmaker") or bk.get("name") or bk.get("title") or "unknown"
+                raw_val = bk.get(odds_field)
+                if raw_val is None:
+                    raw_val = bk.get(api_field)
+                if raw_val is None:
+                    raw_val = bk.get(f"odds_{api_field}")
+                odd = _safe_float(raw_val)
+                if odd is None or odd < 1.01:
+                    continue
+                values.append(odd)
+                if odd > best_odds:
+                    best_odds = odd
+                    best_bk = bk_name
+            if values and best_odds > 1.01:
+                avg_odds = sum(values) / len(values)
+                snapshot[market_key] = {
+                    "best_odds": round(best_odds, 3),
+                    "best_bookmaker": best_bk,
+                    "bookmakers_count": len(values),
+                    "avg_odds": round(avg_odds, 3),
+                    "avg_implied_probability": round((100.0 / avg_odds), 2) if avg_odds > 1.01 else None,
+                    "best_implied_probability": round((100.0 / best_odds), 2) if best_odds > 1.01 else None,
+                }
+        EVENT_ODDS_COMPARE_CACHE[event_id_int] = snapshot
+        return snapshot
     except Exception:
-        return None
+        EVENT_ODDS_COMPARE_CACHE[event_id_int] = {}
+        return {}
+
+
+def fetch_best_market_odds(event_id, market_key):
+    snapshot = fetch_event_odds_compare_snapshot(event_id)
+    item = (snapshot or {}).get(market_key) or {}
+    best_odds = item.get("best_odds")
+    best_bk = item.get("best_bookmaker")
+    if best_odds and best_bk:
+        return best_odds, best_bk
+    return None
+
+
+def enrich_predictions_with_market_odds(predictions, events=None):
+    if not predictions:
+        return predictions, events or []
+    events = events or []
+    event_map = {}
+    for ev in events:
+        try:
+            event_map[int(ev.get("id"))] = ev
+        except Exception:
+            continue
+    unique_event_ids = []
+    seen = set()
+    for row in predictions:
+        ev = (row or {}).get("event") or {}
+        try:
+            event_id = int(ev.get("id"))
+        except Exception:
+            continue
+        if event_id in seen:
+            continue
+        seen.add(event_id)
+        unique_event_ids.append(event_id)
+    if not unique_event_ids:
+        return predictions, events
+    print(f"Enriching market compare odds for {len(unique_event_ids)} predicted events...")
+    enriched = 0
+    for event_id in unique_event_ids:
+        snapshot = fetch_event_odds_compare_snapshot(event_id)
+        if not snapshot:
+            continue
+        enriched += 1
+        ev = event_map.get(event_id)
+        if isinstance(ev, dict):
+            ev["market_best_odds"] = snapshot
+            ev["bookmakers_count"] = max([int((v or {}).get("bookmakers_count") or 0) for v in snapshot.values()] + [0])
+    for row in predictions:
+        ev = (row or {}).get("event") or {}
+        try:
+            event_id = int(ev.get("id"))
+        except Exception:
+            continue
+        snapshot = EVENT_ODDS_COMPARE_CACHE.get(event_id) or {}
+        if not snapshot:
+            continue
+        if isinstance(ev, dict):
+            ev["market_best_odds"] = snapshot
+            ev["bookmakers_count"] = max([int((v or {}).get("bookmakers_count") or 0) for v in snapshot.values()] + [0])
+    print(f"Market compare enrichment complete: {enriched}/{len(unique_event_ids)} events with multi-bookmaker odds.")
+    return predictions, events
 
 
 
@@ -2216,6 +2315,9 @@ def main():
     print(f"\n[2/6] Fetching upcoming events (next {LOOKAHEAD_DAYS} days)...")
     events = fetch_all_pages(f"/api/events/?tz={TZ}&date_from={today}&date_to={future}&status=notstarted")
     print(f"Total events: {len(events)}")
+
+    print("\n[2.5/6] Enriching predictions with best odds from market compare...")
+    predictions, events = enrich_predictions_with_market_odds(predictions, events)
 
     print("\n[3/6] Fetching BSD status metrics...")
     status_metrics = fetch_status_metrics()
