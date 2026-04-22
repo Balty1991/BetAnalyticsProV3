@@ -2703,13 +2703,13 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
         <div class="matches-chip-group">
           <button class="filter-btn" onclick="setFilter('all',this)">🌐 Toate</button>
           <button class="filter-btn active" onclick="setFilter('motor_validated',this)">🧠 Validate Motor</button>
-          <button class="filter-btn" onclick="setFilter('safe',this)">📊 Scorate</button>
+          <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
           <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
           <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
           <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
           <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
           <button class="filter-btn" onclick="setFilter('dc',this)">🛡️ Șansă Dublă</button>
-          <button class="filter-btn" onclick="setFilter('value',this)">💰 Value only</button>
+          <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
         </div>
         <div class="matches-chip-meta">
           <select class="sort-select" id="sort-select" onchange="renderMatches()">
@@ -6222,7 +6222,9 @@ function analyzeMatch(raw){
     var probMeta = buildHybridProbForMarket(raw, bt.key);
     var fallbackProb = bt.probGetter ? safePct(bt.probGetter(raw)) : safePct(raw[bt.probField]);
     var prob = probMeta && probMeta.effectiveProb != null ? safePct(probMeta.effectiveProb) : fallbackProb;
-    var odds = bt.oddsGetter ? Number(bt.oddsGetter(e) || 0) : Number(e[bt.oddsField] || 0);
+    var baseOdds = bt.oddsGetter ? Number(bt.oddsGetter(e) || 0) : Number(e[bt.oddsField] || 0);
+    var compareMeta = getMarketCompareInfo(raw, bt.key, baseOdds);
+    var odds = Number(compareMeta.bestOdds || baseOdds || 0);
     if(!prob || !odds || !isSaneOddsForType(bt.key, odds)) return;
 
     var value = calcValue(prob, odds);
@@ -6246,6 +6248,14 @@ function analyzeMatch(raw){
       poissonDirection: probMeta ? probMeta.direction : 'flat',
       totalLambda: probMeta ? probMeta.totalLambda : null,
       odds: odds,
+      baseOdds: baseOdds,
+      usesBestOdds: !!(compareMeta && compareMeta.hasCompare && Number(compareMeta.bestOdds || 0) > Number(baseOdds || 0)),
+      bestBookmaker: compareMeta ? compareMeta.bestBookmaker : '',
+      bookmakersCount: compareMeta ? compareMeta.bookmakersCount : 0,
+      avgMarketOdds: compareMeta ? compareMeta.avgOdds : 0,
+      marketGapPct: compareMeta ? compareMeta.gapPct : 0,
+      bestImpliedProb: compareMeta ? compareMeta.bestImpliedProb : null,
+      avgImpliedProb: compareMeta ? compareMeta.avgImpliedProb : null,
       value: +value.toFixed(4),
       adjProb: adjProb,
       score: score,
@@ -8063,6 +8073,9 @@ function renderMatches(){
     var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
     var recLabel = b ? b.label : 'Fără recomandare activă';
     var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
+    var marketGapText = b && Number(b.marketGapPct || 0) > 0 ? ('+' + Number(b.marketGapPct || 0).toFixed(1) + '%') : null;
+    var bestMarketLine = b && Number(b.bookmakersCount || 0) > 0 ? ('Best piață ' + Number(b.odds || 0).toFixed(2) + (b.bestBookmaker ? (' @ ' + htmlEsc(b.bestBookmaker)) : '') + (marketGapText ? (' • gap ' + marketGapText) : '') + ' • ' + Number(b.bookmakersCount || 0) + ' case') : '';
+    var compareBadge = bestMarketLine ? ('<span class="card-reco-badge" style="background:rgba(16,185,129,.10);border-color:rgba(16,185,129,.24);color:var(--grn)">📈 ' + bestMarketLine + '</span>') : '';
     var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
     var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
     var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
@@ -8102,15 +8115,12 @@ function renderMatches(){
       : '';
     var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var m16ProbabilityHtml = b ? ('<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(59,130,246,.12));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:28px;font-weight:900;line-height:1;margin-top:6px;color:var(--txt)">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right">'+(motorBadge || '')+'<div style="font-size:10px;color:var(--muted);margin-top:'+(motorBadge ? '8' : '0')+'px">Cotă</div><div style="font-size:20px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
-    var statusChipText = motorMeta && motorMeta.state === 'validated' ? 'VALIDAT MOTOR' : 'SUB OBSERVAȚIE';
-    var statusChipColor = motorMeta && motorMeta.state === 'validated' ? 'var(--grn)' : 'var(--yel)';
     var simpleMetrics = '<div class="match-inline-row">'+
-      '<span class="match-inline-chip" style="color:'+statusChipColor+'">'+statusChipText+'</span>'+
       '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
-    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(motorBadge ? ' • ' + motorBadge : '')+'</div>') : '';
+    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+'</div>') : '';
     var expertDetails = analysisMetricCards +
       predictionProbabilityHtml+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
@@ -8125,7 +8135,7 @@ function renderMatches(){
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         predictionProbabilityHtml+
-        '<div class="card-reco-badges">'+motorBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+compareBadge+motorBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
         hybridBlock+
         altMarketsHtml+
       '</div>'+
@@ -8164,6 +8174,7 @@ function renderMatches(){
       '<div class="analysis-metric warn"><div class="analysis-metric-k">Fair odds</div><div class="analysis-metric-v">'+fairOdds+'</div><div class="analysis-metric-sub">cota teoretică</div></div>'+
       '<div class="analysis-metric"><div class="analysis-metric-k">Confidence</div><div class="analysis-metric-v">'+Number(m.confidence || 0).toFixed(0)+'%</div><div class="analysis-metric-sub">încredere model</div></div>'+
       '<div class="analysis-metric"><div class="analysis-metric-k">xG total</div><div class="analysis-metric-v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="analysis-metric-sub">context ofensiv estimat</div></div>'+
+      (bestMarketLine ? '<div class="analysis-metric value"><div class="analysis-metric-k">Best market</div><div class="analysis-metric-v">'+Number(b.odds || 0).toFixed(2)+'</div><div class="analysis-metric-sub">'+bestMarketLine+'</div></div>' : '')+
     '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
     var kickoffLabel = getMatchKickoffLabel(m);
     var countdown = getMatchKickoffCountdown(m);
@@ -8193,10 +8204,10 @@ function renderMatches(){
         '<div class="m16-reco-title">🎯 Recomandare '+(b && b.type === 'ml' ? 'ML' : 'principală')+'</div>'+
         '<div class="m16-reco-main">'+recLabel+'</div>'+
         m16ProbabilityHtml+
-        '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+'</div>'+
+        '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+(bestMarketLine ? (' | ' + bestMarketLine) : '')+'</div>'+
       '</div>'+
       '<div class="m16-signals">'+
-        '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • <strong style="color:'+statusChipColor+'">'+statusChipText+'</strong></div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
+        '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
         '<div class="m16-signal-text">ℹ️ '+infoLine+'</div>'+
       '</div>'+
       '<div class="m16-actions">'+
@@ -11938,6 +11949,41 @@ function impliedProbFromOdds(odds){
   var o = Number(odds || 0);
   return o > 1.01 ? (100 / o) : 0;
 }
+function getMarketCompareMap(source){
+  if(!source || typeof source !== 'object') return {};
+  var direct = source.market_best_odds || source.marketBestOdds || source.market_compare || source.marketCompare || {};
+  if(direct && typeof direct === 'object' && !Array.isArray(direct)) return direct;
+  var event = source.event || source.rawEvent || null;
+  if(event && typeof event === 'object'){
+    var nested = event.market_best_odds || event.marketBestOdds || event.market_compare || event.marketCompare || {};
+    if(nested && typeof nested === 'object' && !Array.isArray(nested)) return nested;
+  }
+  return {};
+}
+function getMarketCompareInfo(source, marketKey, fallbackOdds){
+  var map = getMarketCompareMap(source);
+  var row = map && map[marketKey] ? map[marketKey] : null;
+  var baseOdds = Number(fallbackOdds || 0);
+  if(!row || typeof row !== 'object'){
+    return { hasCompare:false, baseOdds:baseOdds, bestOdds:baseOdds > 1.01 ? baseOdds : 0, bestBookmaker:'', bookmakersCount:0, avgOdds:0, bestImpliedProb:baseOdds > 1.01 ? +(100 / baseOdds).toFixed(2) : null, avgImpliedProb:null, gapPct:0 };
+  }
+  var bestOdds = Number(row.best_odds != null ? row.best_odds : (row.bestOdds != null ? row.bestOdds : 0));
+  if(!(bestOdds > 1.01)) bestOdds = baseOdds;
+  var avgOdds = Number(row.avg_odds != null ? row.avg_odds : (row.avgOdds != null ? row.avgOdds : 0));
+  var bookmakersCount = Number(row.bookmakers_count != null ? row.bookmakers_count : (row.bookmakersCount != null ? row.bookmakersCount : 0));
+  var gapPct = (bestOdds > 1.01 && baseOdds > 1.01) ? +(((bestOdds / baseOdds) - 1) * 100).toFixed(2) : 0;
+  return {
+    hasCompare:!!(bookmakersCount > 0 || (bestOdds > 1.01 && bestOdds !== baseOdds)),
+    baseOdds:baseOdds,
+    bestOdds:bestOdds > 1.01 ? +bestOdds.toFixed(2) : 0,
+    bestBookmaker:String(row.best_bookmaker || row.bestBookmaker || ''),
+    bookmakersCount:bookmakersCount > 0 ? Math.round(bookmakersCount) : 0,
+    avgOdds:avgOdds > 1.01 ? +avgOdds.toFixed(2) : 0,
+    bestImpliedProb:row.best_implied_probability != null ? Number(row.best_implied_probability) : (bestOdds > 1.01 ? +(100 / bestOdds).toFixed(2) : null),
+    avgImpliedProb:row.avg_implied_probability != null ? Number(row.avg_implied_probability) : (avgOdds > 1.01 ? +(100 / avgOdds).toFixed(2) : null),
+    gapPct:gapPct
+  };
+}
 function clampMathScore(value){
   var v = Number(value || 0);
   if(!isFinite(v)) v = 0;
@@ -13169,7 +13215,6 @@ window.generateDailyPortfolioTickets = function(){
 var SMARTBET_TICKETS = window.SMARTBET_TICKETS || {safe:null, hybrid:null, value:null};
 window.SMARTBET_TICKETS = SMARTBET_TICKETS;
 var SMARTBET_LAST_ANALYSIS = null;
-var MIN_VISIBLE_MOTOR_SCORE = 70;
 
 function normalizeSmartBetMarketKey(raw){
   var key = String(raw || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -13239,12 +13284,11 @@ function getSmartBetStatusForMatch(match, bet, lookup){
   for(var i=0;i<keys.length;i++){
     if(bag.validated[keys[i]]){
       var row = bag.validated[keys[i]];
-      var score = (typeof calcUnifiedScore === 'function') ? calcUnifiedScore(row) : Number(row.smartScore || row.score || 0);
       return {
-        state: score >= Number(MIN_VISIBLE_MOTOR_SCORE || 70) ? 'validated' : 'neutral',
+        state:'validated',
         row:row,
         reason:row.confirmationLabel || '',
-        score:score
+        score:(typeof calcUnifiedScore === 'function') ? calcUnifiedScore(row) : Number(row.smartScore || row.score || 0)
       };
     }
   }
@@ -13260,43 +13304,6 @@ function getSmartBetStatusForMatch(match, bet, lookup){
     }
   }
   return { state:'neutral', row:null, reason:'', score:null };
-}
-
-function getUnifiedValidatedMatchRows(){
-  var lookup = getSmartBetAnalysisLookup();
-  var rows = [];
-  (ALL_MATCHES || []).forEach(function(m){
-    if(!m || m.analysisState !== 'ELIGIBLE' || !m.bestBet) return;
-    if(typeof isMatchStillDisplayable === 'function' && !isMatchStillDisplayable(m)) return;
-    var status = getSmartBetStatusForMatch(m, m.bestBet, lookup);
-    if(status.state !== 'validated') return;
-    var src = status.row || {};
-    var marketKey = normalizeSmartBetMatchBetKey(m.bestBet);
-    var out = Object.assign({}, src, {
-      event_id: src.event_id != null ? src.event_id : (m.eventId != null ? m.eventId : null),
-      home: m.home || src.home || '',
-      away: m.away || src.away || '',
-      league: m.league || src.league || '',
-      event_date: m.event_date || m.date || src.event_date || src.date || '',
-      marketKey: marketKey,
-      market: (m.bestBet && m.bestBet.label) || src.market || '—',
-      displayMarket: (m.bestBet && m.bestBet.label) || src.displayMarket || src.market || '—',
-      displayOdds: Number((m.bestBet && m.bestBet.odds) || src.displayOdds || src.odds || 0),
-      odds: Number((m.bestBet && m.bestBet.odds) || src.displayOdds || src.odds || 0),
-      prob: Number((m.bestBet && m.bestBet.adjProb) || src.prob || src.adjusted_prob || 0),
-      edge: Number((m.bestBet && m.bestBet.edgePct) || src.edge || src.edge_pct || 0),
-      value: Number((m.bestBet && m.bestBet.value) || src.value || 0),
-      smartScore: Number(src.smartScore || src.score || m.smartScore || 0),
-      adaptiveScore: Number(src.adaptiveScore || src.prob || src.adjusted_prob || 0),
-      memoryBonus: Number(src.memoryBonus || 0),
-      confirmationLabel: status.reason || src.confirmationLabel || 'Validat Motor',
-      mostLikelyScore: m.mostLikelyScore || src.mostLikelyScore || null,
-      _unifiedScore: status.score != null ? Number(status.score) : ((typeof calcUnifiedScore === 'function') ? calcUnifiedScore(src) : Number(src.smartScore || src.score || 0))
-    });
-    rows.push(out);
-  });
-  rows.sort(function(a,b){ return Number(b._unifiedScore || 0) - Number(a._unifiedScore || 0); });
-  return rows;
 }
 function smartBetSupportedMarket(row){
   var key = normalizeSmartBetMarketKey(row && (row.market_key || row.market));
@@ -14480,7 +14487,11 @@ function renderUnifiedEngine(){
   var meta = document.getElementById('unified-list-meta');
   if(!summary || !list) return;
 
-  var pool = getUnifiedValidatedMatchRows();
+  var analysis = getSmartBetAnalysis ? getSmartBetAnalysis() : {pool:[],blocked:[]};
+  var pool = (analysis.pool || []).map(function(row){
+    return Object.assign({}, row, {_unifiedScore: calcUnifiedScore(row)});
+  }).sort(function(a,b){ return b._unifiedScore - a._unifiedScore; });
+  var blocked = analysis.blocked || [];
 
   if(updated){
     var ts = (typeof AI_MEMORY !== 'undefined' && AI_MEMORY && AI_MEMORY.updated_at) ||
@@ -14488,7 +14499,7 @@ function renderUnifiedEngine(){
              (typeof APP_META !== 'undefined' && APP_META && APP_META.updated_at) || '';
     updated.textContent = ts ? ('Actualizat: ' + (typeof fmtDateTime === 'function' ? fmtDateTime(ts) : ts)) : '—';
   }
-  if(meta) meta.textContent = pool.length + ' predicții validate (70+)';
+  if(meta) meta.textContent = pool.length + ' predicții validate';
 
   var avgScore = pool.length ? Math.round(pool.reduce(function(a,r){ return a + r._unifiedScore; },0) / pool.length) : 0;
   var avgProb = pool.length ? pool.reduce(function(a,r){ return a + Number(r.prob||0); },0) / pool.length : 0;
@@ -14497,8 +14508,8 @@ function renderUnifiedEngine(){
 
   summary.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">' +
     [
-      {label:'Validate de Motor', value: String(pool.length), sub:'aceleași meciuri, după filtrul final (70+)', color:'var(--acc)'},
-      {label:'Scor Unificat mediu', value: pool.length ? avgScore : '—', sub:'view premium peste Meciuri', color:'var(--pur)'},
+      {label:'Predicții validate', value: String(pool.length), sub:'trecute prin 3 filtre', color:'var(--acc)'},
+      {label:'Scor Unificat mediu', value: pool.length ? avgScore : '—', sub:'0-100, combină toate sursele', color:'var(--pur)'},
       {label:'Top acuratețe ≥85', value: String(topCount), sub:'cele mai sigure selecții', color:'var(--grn)'},
       {label:'Probabilitate medie', value: pool.length ? (typeof fmtPct==='function' ? fmtPct(avgProb) : avgProb.toFixed(1)+'%') : '—', sub:'probabilitate ajustată medie', color:'var(--cyan)'},
       {label:'Edge mediu', value: pool.length ? (typeof fmtSignedPct==='function' ? fmtSignedPct(avgEdge) : (avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%') : '—', sub:'avantaj model vs piață', color:'var(--yel)'},
@@ -14511,7 +14522,7 @@ function renderUnifiedEngine(){
     }).join('') + '</div>';
 
   if(!pool.length){
-    list.innerHTML = '<div class="empty-state">Nu există meciuri validate de Motor cu scor 70+ în acest refresh.</div>';
+    list.innerHTML = '<div class="empty-state">Nicio predicție nu trece simultan filtrul Kelly, AI Memory și SmartBet în acest refresh. Revino după actualizarea datelor.</div>';
     return;
   }
 
