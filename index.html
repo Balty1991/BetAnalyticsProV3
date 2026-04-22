@@ -4,7 +4,7 @@
 <!-- status refresh -->
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>BetAnalytics Pro v16 — Audit Engine</title>
+<title>BetAnalytics Pro v17 — Sizing Engine</title>
 <meta name="theme-color" content="#0a0e17"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" href="icon-192.png"/>
@@ -2041,7 +2041,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   <div class="header-inner">
     <div class="logo">
       <div class="logo-title">BetAnalytics Pro</div>
-      <div class="logo-sub">Value Bet Engine v16 — Audit Engine</div>
+      <div class="logo-sub">Value Bet Engine v17 — Sizing Engine</div>
     </div>
     <div class="status-bar">
       <div class="sb-dot live" id="sb-dot"></div>
@@ -4313,7 +4313,10 @@ function calcAdjustedProb(prob, confidence, leagueName, marketKey, odds){
   factor *= getMarketBacktestMultiplier(marketKey);
   factor *= getOddsBucketMultiplier(odds);
   factor = Math.max(0.86, Math.min(1.08, factor));
-  return +(p * factor).toFixed(2);
+  // V17 FIX: clip absolute deviation to ±5pp (Adjusted strong bucket was -2.60% ROI @ 87 bets)
+  var raw = p * factor;
+  var delta = Math.max(-5, Math.min(5, raw - p));
+  return +(p + delta).toFixed(2);
 }
 function oddsInRanges(odds, ranges){
   var o = Number(odds || 0);
@@ -4333,6 +4336,68 @@ function calcSmartScore(adjProb, value, confidence, edgePct){
   if(edge < -2.0)  penalty += 12;
   return Math.min(100, Math.round(probScore + valueScore + edgeScore + confScore - penalty));
 }
+
+// V17 FIX 4: Stake sizing scalar (inlocuieste blocking-ul cu sizing diferentiat).
+// Returneaza un multiplicator 0.25-1.30 aplicat peste Kelly 1/4 precomputat.
+// Fundament: datele jurnalului (996 bets settled) arata:
+//  - edge<5% = zero edge real (roi ~-1%), edge>=15% = sweet spot pozitiv
+//  - odds 1.45-1.85 = sweet spot (+6.6% ROI), restul aproape breakeven
+//  - sursa "Adjusted strong" = -2.60% ROI -> reducere severa
+//  - pattern toxic din learning = reducere severa
+function computeStakeMultiplier(row){
+  if(!row) return 1.0;
+  var edge = Number(row.edge_pct != null ? row.edge_pct : (row.edge || 0));
+  var odds = Number(row.odds != null ? row.odds : (row.book_odds || row.displayOdds || 0));
+  var modelProb = Number(row.model_prob || row.api_prob || 0);
+  var adjProb = Number(row.adjusted_prob != null ? row.adjusted_prob : (row.prob || 0));
+  var poissonDelta = Math.abs(Number(row.poisson_delta || 0));
+  var fromOpenPct = Number(row.from_open_pct || 0);
+
+  // Edge multiplier: edge<5% -> 0.45, edge=10% -> 0.9, edge>=15% -> 1.15, cap 1.25
+  var edgeMult = 1.0;
+  if(edge <= 0) edgeMult = 0.35;
+  else if(edge < 5) edgeMult = 0.45 + (edge / 5) * 0.15;
+  else if(edge < 10) edgeMult = 0.60 + ((edge - 5) / 5) * 0.30;
+  else if(edge < 15) edgeMult = 0.90 + ((edge - 10) / 5) * 0.20;
+  else edgeMult = Math.min(1.25, 1.10 + (edge - 15) * 0.01);
+
+  // Odds multiplier: sweet spot 1.45-1.85 = 1.10, 1.30-1.45 sau 1.85-2.10 = 0.95, restul = 0.75
+  var oddsMult = 0.80;
+  if(odds >= 1.45 && odds <= 1.85) oddsMult = 1.10;
+  else if((odds >= 1.30 && odds < 1.45) || (odds > 1.85 && odds <= 2.10)) oddsMult = 0.95;
+  else if(odds >= 1.20 && odds < 1.30) oddsMult = 0.80; // cotele sub 1.30 sug profit prin marja
+  else if(odds > 2.10 && odds <= 2.80) oddsMult = 0.80;
+  else if(odds < 1.20 || odds > 2.80) oddsMult = 0.55;
+
+  // Source multiplier: sursa cu cel mai bun ROI istoric (Poisson hybrid +0.93%) vs cea proasta (Adjusted strong -2.60%)
+  var sourceMult = 1.0;
+  if(poissonDelta >= 3 && poissonDelta < 5) sourceMult = 1.10; // Poisson hybrid zone
+  else if(poissonDelta >= 5) sourceMult = 0.55; // Adjusted strong zone -> penalizat greu
+  // daca model_prob si adjusted sunt aproape identice -> API dominant (breakeven)
+  else if(modelProb > 0 && Math.abs(adjProb - modelProb) < 2) sourceMult = 1.00;
+
+  // Toxic pattern: daca motorul de invatare il semnaleaza ca toxic, stake drastic redus
+  if(row.learningToxic === true) sourceMult *= 0.40;
+
+  // Line movement guard: daca linia s-a miscat >3% impotriva noastra, reducere
+  if(fromOpenPct < -3) sourceMult *= 0.75;
+  else if(fromOpenPct < -5) sourceMult *= 0.55;
+
+  // Edge bucket 15-20% este anomalie (ROI -8% in jurnal) - reducere moderata
+  if(edge >= 15 && edge < 20) edgeMult *= 0.75;
+
+  var total = edgeMult * oddsMult * sourceMult;
+  return Math.max(0.25, Math.min(1.30, total));
+}
+
+// Returneaza Kelly-ul ajustat pentru display si decizie, cu fallback daca row e incomplet.
+function computeAdjustedKelly(row){
+  var baseKelly = Number(row && row.kelly_quarter_pct || 0);
+  if(!baseKelly) return 0;
+  var mult = computeStakeMultiplier(row);
+  return +(baseKelly * mult).toFixed(2);
+}
+
 function getXGClass(val) {
   if (val >= 2.5) return { label: 'ELITE', color: '#ff4d4d', bg: 'rgba(255,77,77,0.15)' };
   if (val >= 2.0) return { label: 'STRONG', color: 'var(--grn)', bg: 'rgba(34,197,94,0.15)' };
@@ -4736,8 +4801,10 @@ function learningStatsMultiplier(stats){
   }
   var roi = stats.roi_w;
   var sampleFactor = Math.min(1.0, stats.bets_w / MIN_CONF_SAMPLE);
-  // Toxic: >=12 pariuri settled, ROI decay-weighted <= -20% (aliniat cu walk-forward pentru mai putine fals-pozitive)
-  var toxic = (stats.bets >= MIN_CONF_SAMPLE) && (roi <= -0.20);
+  // V17 FIX: Threshold mult mai strict. Walk-forward arata ca motorul blocheaza prea mult.
+  // Vechi: bets>=12, ROI<=-20% -> prea multe fals-pozitive (24% din blocate erau win-uri ratate)
+  // Nou: bets>=20, ROI<=-25% -> doar pattern-uri cu adevarat stabile si nocive
+  var toxic = (stats.bets >= 20) && (roi <= -0.25);
   // Multiplicator: 1 + ROI * 1.5 * sampleFactor, clamp [0.60, 1.40]
   var multi = 1.0 + (roi * 1.5 * sampleFactor);
   multi = Math.max(0.60, Math.min(1.40, multi));
@@ -5675,6 +5742,9 @@ function buildLearningEngine(){
   });
 
   // Filtre dinamice: edge buckets profitabili / toxici per piata
+  // V17 FIX: praguri mai stricte pentru toxic (walk-forward a arătat că blocăm winners).
+  // Vechi: edge_toxic @ bets>=8, ROI<-8% -> prea sensibil.
+  // Nou: edge_toxic @ bets>=15, ROI<-15% -> doar zone cu adevarat pierdere stabila.
   var dynamicFilters = {};
   Object.keys(stats.by_market_edge).forEach(function(k){
     var parts = k.split('|');
@@ -5682,15 +5752,18 @@ function buildLearningEngine(){
     if(!dynamicFilters[market]) dynamicFilters[market] = { edge_profitable:[], edge_toxic:[] };
     var s = stats.by_market_edge[k];
     if(s.bets >= 6 && s.roi_w > 0.02) dynamicFilters[market].edge_profitable.push(bucket);
-    if(s.bets >= 8 && s.roi_w < -0.08) dynamicFilters[market].edge_toxic.push(bucket);
+    if(s.bets >= 15 && s.roi_w < -0.15) dynamicFilters[market].edge_toxic.push(bucket);
   });
   // Weekday toxice per piata
+  // V17 FIX: weekday e noise pur (zero cauzalitate intre "Sambata" si rezultat).
+  // Walk-forward a aratat blocari de tip "Motiv: Duminica" pe winners.
+  // Prag urcat masiv: bets>=30, ROI<=-35% -> practic dezactivat, doar cazuri extreme raman.
   var toxicWeekdays = {};
   Object.keys(stats.by_market_weekday).forEach(function(k){
     var parts = k.split('|');
     var market = parts[0], wd = parts[1];
     var s = stats.by_market_weekday[k];
-    if(s.bets >= 12 && s.roi_w <= -0.20){
+    if(s.bets >= 30 && s.roi_w <= -0.35){
       if(!toxicWeekdays[market]) toxicWeekdays[market] = [];
       toxicWeekdays[market].push(wd);
     }
@@ -6698,7 +6771,9 @@ function renderSignalAudit(){
 
   var audit = SIGNAL_AUDIT || {};
   var rows = Array.isArray(audit.rows) ? audit.rows.slice() : [];
-  rows.sort(function(a,b){ return Number(b.kelly_quarter_pct || 0) - Number(a.kelly_quarter_pct || 0); });
+  // V17 FIX: sortare dupa Kelly ajustat (stake sizing), nu Kelly brut.
+  // Pariurile in sweet spot (odds 1.45-1.85, edge>=10, Poisson hybrid) urca automat in top.
+  rows.sort(function(a,b){ return computeAdjustedKelly(b) - computeAdjustedKelly(a); });
 
   if(updated) updated.textContent = audit.updated_at ? ('Audit actualizat: ' + fmtDateTime(audit.updated_at)) : 'Audit: —';
 
@@ -6753,7 +6828,7 @@ function renderSignalAudit(){
           '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Kelly 1/4 '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
+      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
       hybridBlock+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
@@ -6790,7 +6865,9 @@ function getAuditPool(){
 }
 
 function rankAuditCandidate(row, type){
-  var kelly = Number(row.kelly_quarter_pct || 0);
+  // V17 FIX: folosim Kelly ajustat de stake sizing, nu cel brut.
+  // Asta imping automat in sus pariurile cu edge solid + odds in sweet spot si in jos trap-urile.
+  var kelly = computeAdjustedKelly(row);
   var prob = Number(row.adjusted_prob || 0);
   var edge = Number(row.edge_pct || 0);
   var odds = Number(row.book_odds || 0);
@@ -8290,8 +8367,9 @@ function buildMarketCandidate(m, type){
     }
   } catch(e){}
   if(learningMeta.toxic){
-    // Pattern toxic confirmat din jurnal (>=8 pariuri settled, ROI <= -15%)
-    return null;
+    // V17 FIX: nu mai aruncam candidatul (walk-forward a aratat ca blocam winners).
+    // Il marcam ca toxic pentru stake sizing si penalizare scor.
+    baseScore -= 15;
   }
   if(learningMeta.boost){
     baseScore += Number(learningMeta.boost);
@@ -8306,6 +8384,19 @@ function buildMarketCandidate(m, type){
   if(learningMeta.multiplier && Math.abs(learningMeta.multiplier - 1.0) > 0.03){
     baseScore = baseScore * (0.85 + learningMeta.multiplier * 0.15); // blend 85% aditiv + 15% multiplicativ
   }
+
+  // V17 FIX: influenteaza ranking cu stake multiplier (sweet-spot picks urca, trap picks coboara)
+  var __stakeRow = {
+    edge_pct: edgePct,
+    odds: b.odds,
+    poisson_delta: b.poissonDelta,
+    adjusted_prob: b.adjProb,
+    model_prob: b.apiProb,
+    learningToxic: !!learningMeta.toxic
+  };
+  var __stakeMult = (typeof computeStakeMultiplier === 'function') ? computeStakeMultiplier(__stakeRow) : 1.0;
+  // Amestec 70% scor curent + 30% multiplicativ pe stake mult (care e 0.25-1.30)
+  baseScore = baseScore * (0.70 + __stakeMult * 0.30);
 
   var risk = 'MEDIU';
   if(b.adjProb >= 76 && edgePct >= 2 && (m.confidence || 0) >= 56) risk = 'LOW';
@@ -8322,7 +8413,9 @@ function buildMarketCandidate(m, type){
       trainingReason: trainingMeta && trainingMeta.reason ? trainingMeta.reason : '',
       learningBoost: Number(learningMeta.boost || 0),
       learningMultiplier: Number(learningMeta.multiplier || 1.0),
-      learningReasons: (learningMeta.reasons || []).slice(0, 3)
+      learningReasons: (learningMeta.reasons || []).slice(0, 3),
+      learningToxic: !!learningMeta.toxic,
+      stakeMultiplier: Number(__stakeMult.toFixed(2))
     }),
     ticketScore: Math.round(baseScore),
     ticketRisk: risk,
@@ -13127,10 +13220,12 @@ function getSmartBetAnalysis(){
         }) || __learn;
       }
     } catch(e){}
-    // Pattern toxic auto-blocat (>=8 pariuri, ROI <= -15%)
+    // V17 FIX: Pattern toxic nu mai blocheaza (hard-block a sters winners in walk-forward).
+    // In loc sa arunci pariul, primeste penalizare de scor (-18) + flag pentru stake sizing redus.
+    // Pariul ramane in pool dar foarte jos in ranking; daca totusi ajunge in tichet, stake-ul va fi mic.
+    var __toxicFlag = false;
     if(__learn.toxic){
-      blocked.push({ row: row, reason: { label: 'Toxic (motor invatare)', raw_bets: 0 }, marketKey: marketKey });
-      return;
+      __toxicFlag = true;
     }
     var smartScore = (
       Number(row.score || 0) * 0.48 +
@@ -13148,6 +13243,8 @@ function getSmartBetAnalysis(){
     if(__learn.multiplier && Math.abs(__learn.multiplier - 1.0) > 0.03){
       smartScore = smartScore * (0.80 + __learn.multiplier * 0.20);
     }
+    // V17 FIX: penalizare toxic (in loc de hard-block). Pariul ramane in pool dar cu scor -18.
+    if(__toxicFlag) smartScore -= 18;
     if(patternOnly) smartScore -= 10;
     if(signalStrong) smartScore -= 5; // penalizare ușoară: fără confirmare AI Memory
     smartScore = clampMathScore(smartScore);
@@ -13195,7 +13292,8 @@ function getSmartBetAnalysis(){
       mostLikelyScore: directAdaptive ? adaptive.most_likely_score : null,
       learningBoost: Number(__learn.boost || 0),
       learningMultiplier: Number(__learn.multiplier || 1.0),
-      learningReasons: (__learn.reasons || []).slice(0, 3)
+      learningReasons: (__learn.reasons || []).slice(0, 3),
+      learningToxic: __toxicFlag
     }));
     if(directAdaptive) adaptiveConfirmed += 1;
     if(patternOnly || bestPositive) patternConfirmed += 1;
