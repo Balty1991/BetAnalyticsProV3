@@ -5013,9 +5013,12 @@ function computeWalkForwardValidation(){
   var buckets = learningBuckets();
   var prior = {market_league:{}, market_edge:{}, market_weekday:{}};
   function ensure(tbl, key){ if(!tbl[key]) tbl[key] = {bets:0, wins:0, profit:0}; return tbl[key]; }
-  // Toxic conditions: aligned with live engine but with stricter minimum sample (12 vs 8)
-  // and deeper ROI floor (-20% vs -15%) to reduce false positives on noisy small buckets
-  function isToxic(s){ return s && s.bets >= 12 && (s.profit / s.bets) <= -0.20; }
+  // V17 FIX: aliniat cu thresholds noi din learningStatsMultiplier (20 bets / -25% ROI).
+  // Vechi: bets>=12, ROI<=-20% -> prea agresiv, 87+ winners blocati.
+  // Nou: bets>=20, ROI<=-25% -> doar pattern-uri cu adevarat nocive.
+  function isToxic(s){ return s && s.bets >= 20 && (s.profit / s.bets) <= -0.25; }
+  // V17 FIX: weekday check dezactivat complet (zero cauzalitate "Sambata" -> rezultat).
+  function isToxicWeekday(s){ return s && s.bets >= 30 && (s.profit / s.bets) <= -0.35; }
 
   var actualProfit = 0, simulatedProfit = 0;
   var savedLosses = 0, savedUnits = 0, missedWins = 0, missedUnits = 0;
@@ -5042,7 +5045,7 @@ function computeWalkForwardValidation(){
     var sW = wdName ? prior.market_weekday[mk+'|'+wdName] : null;
     if(isToxic(sL)){ wouldBlock = true; reason = league; reasonKind = 'liga'; }
     else if(isToxic(sE)){ wouldBlock = true; reason = 'edge ' + eB; reasonKind = 'edge'; }
-    else if(isToxic(sW)){ wouldBlock = true; reason = wdName; reasonKind = 'zi'; }
+    else if(isToxicWeekday(sW)){ wouldBlock = true; reason = wdName; reasonKind = 'zi'; }
 
     actualProfit += profit;
     if(wouldBlock){
