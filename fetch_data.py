@@ -1348,7 +1348,24 @@ MARKET_ODDS_FIELD = {
     "under25":  ("odds_under_25", "under_25"),
     "under35":  ("odds_under_35", "under_35"),
     "btts":     ("odds_btts_yes", "btts_yes"),
+    "dc1x":     ("odds_dc_1x", "dc_1x"),
+    "dcx2":     ("odds_dc_x2", "dc_x2"),
     "dc12":     ("odds_dc_12", "dc_12"),
+}
+
+MARKET_COMPARE_CONFIG = {
+    "homeWin":  {"market": "1x2",            "aliases": lambda ctx: [ctx.get("home_team"), "HOME", "1", "Home"]},
+    "draw":     {"market": "1x2",            "aliases": lambda ctx: ["Draw", "DRAW", "X"]},
+    "awayWin":  {"market": "1x2",            "aliases": lambda ctx: [ctx.get("away_team"), "AWAY", "2", "Away"]},
+    "over15":   {"market": "over_under_15",  "aliases": lambda ctx: ["Over 1.5", "over", "OVER"]},
+    "under15":  {"market": "over_under_15",  "aliases": lambda ctx: ["Under 1.5", "under", "UNDER"]},
+    "over25":   {"market": "over_under_25",  "aliases": lambda ctx: ["Over 2.5", "over", "OVER"]},
+    "under25":  {"market": "over_under_25",  "aliases": lambda ctx: ["Under 2.5", "under", "UNDER"]},
+    "under35":  {"market": "over_under_35",  "aliases": lambda ctx: ["Under 3.5", "under", "UNDER"]},
+    "btts":     {"market": "btts",           "aliases": lambda ctx: ["Yes", "yes", "BTTS Yes"]},
+    "dc1x":     {"market": "double_chance",  "aliases": lambda ctx: ["1X", "1/X", "Home or Draw"]},
+    "dcx2":     {"market": "double_chance",  "aliases": lambda ctx: ["X2", "X/2", "Draw or Away"]},
+    "dc12":     {"market": "double_chance",  "aliases": lambda ctx: ["12", "1/2", "Home or Away"]},
 }
 
 
@@ -1362,6 +1379,150 @@ def _safe_float(value):
     return out
 
 
+def _slug(value):
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").strip().lower())
+
+
+def _candidate_aliases(market_key, context):
+    config = MARKET_COMPARE_CONFIG.get(market_key) or {}
+    aliases_fn = config.get("aliases") or (lambda _ctx: [])
+    raw_aliases = aliases_fn(context or {}) or []
+    out = []
+    seen = set()
+    for item in raw_aliases:
+        if not item:
+            continue
+        label = str(item).strip()
+        if not label:
+            continue
+        for variant in {label, _slug(label)}:
+            if variant and variant not in seen:
+                seen.add(variant)
+                out.append(variant)
+    return out
+
+
+def _build_snapshot_entry(values, best_odds, best_bk, best_movement=None, best_ai_probability=None, best_updated_at=None):
+    avg_odds = sum(values) / len(values)
+    return {
+        "best_odds": round(best_odds, 3),
+        "best_bookmaker": best_bk,
+        "bookmakers_count": len(values),
+        "avg_odds": round(avg_odds, 3),
+        "avg_implied_probability": round((100.0 / avg_odds), 2) if avg_odds > 1.01 else None,
+        "best_implied_probability": round((100.0 / best_odds), 2) if best_odds > 1.01 else None,
+        "movement": best_movement,
+        "ai_probability": round(pct(best_ai_probability), 2) if best_ai_probability is not None else None,
+        "updated_at": best_updated_at,
+    }
+
+
+def _parse_compare_snapshot(data):
+    if not isinstance(data, dict):
+        return {}
+    markets = data.get("markets") or {}
+    context = {
+        "home_team": data.get("home_team"),
+        "away_team": data.get("away_team"),
+    }
+    snapshot = {}
+    bookmakers_count_global = int(data.get("bookmakers_count") or 0)
+    for market_key, cfg in MARKET_COMPARE_CONFIG.items():
+        market_name = cfg.get("market")
+        market_block = markets.get(market_name)
+        if not isinstance(market_block, dict):
+            continue
+        aliases = set(_candidate_aliases(market_key, context))
+        chosen = None
+        chosen_label = None
+        for outcome_label, payload in market_block.items():
+            if _slug(outcome_label) in aliases or str(outcome_label).strip() in aliases:
+                chosen = payload
+                chosen_label = outcome_label
+                break
+        if not isinstance(chosen, dict):
+            continue
+        best_odds = _safe_float(chosen.get("best_odds"))
+        if best_odds is None or best_odds < 1.01:
+            continue
+        bookmakers = chosen.get("bookmakers") or {}
+        values = []
+        for _bk_name, bk_payload in (bookmakers.items() if isinstance(bookmakers, dict) else []):
+            if not isinstance(bk_payload, dict):
+                continue
+            odd = _safe_float(bk_payload.get("decimal"))
+            if odd is None or odd < 1.01:
+                continue
+            values.append(odd)
+        if not values:
+            values = [best_odds]
+        entry = _build_snapshot_entry(
+            values=values,
+            best_odds=best_odds,
+            best_bk=chosen.get("best_bookmaker") or chosen_label or "unknown",
+            best_movement=None,
+            best_ai_probability=chosen.get("ai_probability"),
+            best_updated_at=None,
+        )
+        if bookmakers_count_global > 0:
+            entry["bookmakers_count"] = max(entry.get("bookmakers_count") or 0, bookmakers_count_global)
+        snapshot[market_key] = entry
+    return snapshot
+
+
+def _parse_raw_odds_snapshot(data):
+    if not isinstance(data, dict):
+        return {}
+    odds_rows = data.get("odds") or data.get("results") or []
+    context = data.get("event") or {}
+    grouped = {key: [] for key in MARKET_COMPARE_CONFIG.keys()}
+    for row in odds_rows if isinstance(odds_rows, list) else []:
+        if not isinstance(row, dict):
+            continue
+        market_name = str(row.get("market") or "").strip().lower()
+        outcome_name = str(row.get("outcome_name") or row.get("outcome") or "").strip()
+        outcome_slug = _slug(outcome_name)
+        odd = _safe_float(row.get("decimal_odds"))
+        if odd is None or odd < 1.01:
+            continue
+        for market_key, cfg in MARKET_COMPARE_CONFIG.items():
+            if market_name != cfg.get("market"):
+                continue
+            aliases = set(_candidate_aliases(market_key, context))
+            if outcome_name in aliases or outcome_slug in aliases:
+                grouped[market_key].append(row)
+                break
+    snapshot = {}
+    for market_key, rows in grouped.items():
+        if not rows:
+            continue
+        values = []
+        best_row = None
+        best_odds = 0.0
+        for row in rows:
+            odd = _safe_float(row.get("decimal_odds"))
+            if odd is None or odd < 1.01:
+                continue
+            values.append(odd)
+            if odd > best_odds:
+                best_odds = odd
+                best_row = row
+        if not best_row or best_odds < 1.01:
+            continue
+        ai_prob = best_row.get("ai_probability")
+        if ai_prob is not None:
+            ai_prob = pct(float(ai_prob) * 100.0 if float(ai_prob) <= 1 else float(ai_prob))
+        snapshot[market_key] = _build_snapshot_entry(
+            values=values,
+            best_odds=best_odds,
+            best_bk=best_row.get("bookmaker") or best_row.get("bookmaker_code") or "unknown",
+            best_movement=best_row.get("movement"),
+            best_ai_probability=ai_prob,
+            best_updated_at=best_row.get("updated_at"),
+        )
+    return snapshot
+
+
 def fetch_event_odds_compare_snapshot(event_id):
     """
     Returnează pentru un eveniment harta cu best odds / best bookmaker / average odds
@@ -1373,54 +1534,25 @@ def fetch_event_odds_compare_snapshot(event_id):
         return {}
     if event_id_int in EVENT_ODDS_COMPARE_CACHE:
         return EVENT_ODDS_COMPARE_CACHE[event_id_int]
-    snapshot = {}
-    try:
-        url = f"{API_BASE}/api/events/{event_id_int}/odds/"
-        r = requests.get(url, headers=HEADERS, timeout=20)
-        if r.status_code in (400, 404, 405):
-            EVENT_ODDS_COMPARE_CACHE[event_id_int] = {}
-            return {}
-        r.raise_for_status()
-        data = r.json()
-        bookmakers = data if isinstance(data, list) else data.get("results", data.get("bookmakers", []))
-        if not isinstance(bookmakers, list):
-            bookmakers = []
-        for market_key, field_pair in MARKET_ODDS_FIELD.items():
-            odds_field, api_field = field_pair
-            values = []
-            best_odds = 0.0
-            best_bk = None
-            for bk in bookmakers:
-                if not isinstance(bk, dict):
-                    continue
-                bk_name = bk.get("bookmaker") or bk.get("name") or bk.get("title") or "unknown"
-                raw_val = bk.get(odds_field)
-                if raw_val is None:
-                    raw_val = bk.get(api_field)
-                if raw_val is None:
-                    raw_val = bk.get(f"odds_{api_field}")
-                odd = _safe_float(raw_val)
-                if odd is None or odd < 1.01:
-                    continue
-                values.append(odd)
-                if odd > best_odds:
-                    best_odds = odd
-                    best_bk = bk_name
-            if values and best_odds > 1.01:
-                avg_odds = sum(values) / len(values)
-                snapshot[market_key] = {
-                    "best_odds": round(best_odds, 3),
-                    "best_bookmaker": best_bk,
-                    "bookmakers_count": len(values),
-                    "avg_odds": round(avg_odds, 3),
-                    "avg_implied_probability": round((100.0 / avg_odds), 2) if avg_odds > 1.01 else None,
-                    "best_implied_probability": round((100.0 / best_odds), 2) if best_odds > 1.01 else None,
-                }
-        EVENT_ODDS_COMPARE_CACHE[event_id_int] = snapshot
-        return snapshot
-    except Exception:
-        EVENT_ODDS_COMPARE_CACHE[event_id_int] = {}
-        return {}
+    endpoints = [
+        f"{API_BASE}/api/odds/compare/?event={event_id_int}",
+        f"{API_BASE}/api/odds/?event={event_id_int}",
+    ]
+    for url in endpoints:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=20)
+            if r.status_code in (400, 404, 405):
+                continue
+            r.raise_for_status()
+            data = r.json()
+            snapshot = _parse_compare_snapshot(data) if "/compare/" in url else _parse_raw_odds_snapshot(data)
+            if snapshot:
+                EVENT_ODDS_COMPARE_CACHE[event_id_int] = snapshot
+                return snapshot
+        except Exception:
+            continue
+    EVENT_ODDS_COMPARE_CACHE[event_id_int] = {}
+    return {}
 
 
 def fetch_best_market_odds(event_id, market_key):
@@ -1435,7 +1567,7 @@ def fetch_best_market_odds(event_id, market_key):
 
 def enrich_predictions_with_market_odds(predictions, events=None):
     if not predictions:
-        return predictions, events or []
+        return predictions, events or [], {"predicted_events": 0, "events_with_market_compare": 0, "markets_enriched": 0}
     events = events or []
     event_map = {}
     for ev in events:
@@ -1456,14 +1588,16 @@ def enrich_predictions_with_market_odds(predictions, events=None):
         seen.add(event_id)
         unique_event_ids.append(event_id)
     if not unique_event_ids:
-        return predictions, events
+        return predictions, events, {"predicted_events": 0, "events_with_market_compare": 0, "markets_enriched": 0}
     print(f"Enriching market compare odds for {len(unique_event_ids)} predicted events...")
-    enriched = 0
+    enriched_events = 0
+    enriched_markets = 0
     for event_id in unique_event_ids:
         snapshot = fetch_event_odds_compare_snapshot(event_id)
         if not snapshot:
             continue
-        enriched += 1
+        enriched_events += 1
+        enriched_markets += len(snapshot)
         ev = event_map.get(event_id)
         if isinstance(ev, dict):
             ev["market_best_odds"] = snapshot
@@ -1480,9 +1614,15 @@ def enrich_predictions_with_market_odds(predictions, events=None):
         if isinstance(ev, dict):
             ev["market_best_odds"] = snapshot
             ev["bookmakers_count"] = max([int((v or {}).get("bookmakers_count") or 0) for v in snapshot.values()] + [0])
-    print(f"Market compare enrichment complete: {enriched}/{len(unique_event_ids)} events with multi-bookmaker odds.")
-    return predictions, events
-
+    stats = {
+        "predicted_events": len(unique_event_ids),
+        "events_with_market_compare": enriched_events,
+        "markets_enriched": enriched_markets,
+    }
+    print(
+        f"Market compare enrichment complete: {enriched_events}/{len(unique_event_ids)} events with multi-bookmaker odds, {enriched_markets} market snapshots."
+    )
+    return predictions, events, stats
 
 
 def fetch_status_metrics():
@@ -2317,7 +2457,7 @@ def main():
     print(f"Total events: {len(events)}")
 
     print("\n[2.5/6] Enriching predictions with best odds from market compare...")
-    predictions, events = enrich_predictions_with_market_odds(predictions, events)
+    predictions, events, market_compare_stats = enrich_predictions_with_market_odds(predictions, events)
 
     print("\n[3/6] Fetching BSD status metrics...")
     status_metrics = fetch_status_metrics()
@@ -2405,6 +2545,7 @@ def main():
             "dynamic_adjustment": True,
             "line_movement_tracking": True,
         },
+        "market_compare": market_compare_stats,
         "data_health": data_health,
         "header_sync": header_sync,
         "bsd_status": status_metrics,
