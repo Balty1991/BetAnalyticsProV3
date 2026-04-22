@@ -3299,19 +3299,31 @@ function sourceChipHtmlForAuditRow(r){
 function getOddsSourceMeta(b){
   if(!b) return {active:'STD', activeOdds:0, hasAny:false, hasCompare:false, hasBest:false, hasCmp:false, hasStd:false, bestOdds:0, cmpOdds:0, stdOdds:0, bestBookmaker:'', bookmakersCount:0, gapPct:0};
   var stdOdds = Number(b.baseOdds || 0);
-  var bestOdds = Number(b.odds || 0);
+  var displayedOdds = Number(b.odds || 0);
+  var bestOdds = Number((b.bestOdds != null ? b.bestOdds : displayedOdds) || 0);
   var cmpOdds = Number(b.avgMarketOdds || 0);
   var bookmakersCount = Math.max(0, Math.round(Number(b.bookmakersCount || 0)));
   var gapPct = Number(b.marketGapPct || 0);
   var hasStd = stdOdds > 1.01;
   var hasBest = bestOdds > 1.01;
   var hasCmp = cmpOdds > 1.01;
+  var compareSignals = !!(bookmakersCount > 0 || hasCmp || !!String(b.bestBookmaker || '').trim() || !!b.hasMarketCompare || !!b.marketComparePresent || !!b.marketCompareRow);
   var active = 'STD';
-  if(b.usesBestOdds && hasBest) active = 'BEST';
-  else if(!hasStd && hasCmp) active = 'CMP';
-  else if(!hasStd && hasBest) active = 'BEST';
+  var explicit = String(b.oddsSource || b.marketOddsSource || '').toUpperCase().trim();
+  if((explicit === 'BEST' || explicit === 'CMP' || explicit === 'STD')){
+    active = explicit;
+  }else if(hasBest && compareSignals && Math.abs(displayedOdds - bestOdds) < 0.011){
+    active = 'BEST';
+  }else if(hasCmp && Math.abs(displayedOdds - cmpOdds) < 0.011){
+    active = 'CMP';
+  }else if(!hasStd && hasCmp){
+    active = 'CMP';
+  }else if(!hasStd && hasBest){
+    active = 'BEST';
+  }
   var activeOdds = active === 'BEST' ? bestOdds : (active === 'CMP' ? cmpOdds : stdOdds);
-  var hasCompare = !!(bookmakersCount > 0 || hasCmp || (hasStd && hasBest && Math.abs(bestOdds - stdOdds) >= 0.009));
+  if(!(activeOdds > 1.01)) activeOdds = displayedOdds > 1.01 ? displayedOdds : 0;
+  var hasCompare = !!(compareSignals || (hasStd && hasBest && Math.abs(bestOdds - stdOdds) >= 0.009));
   return {
     active:active,
     activeOdds:activeOdds > 1.01 ? +activeOdds.toFixed(2) : 0,
@@ -6331,7 +6343,11 @@ function analyzeMatch(raw){
       totalLambda: probMeta ? probMeta.totalLambda : null,
       odds: odds,
       baseOdds: baseOdds,
-      usesBestOdds: !!(compareMeta && compareMeta.hasCompare && Number(compareMeta.bestOdds || 0) > Number(baseOdds || 0)),
+      bestOdds: compareMeta ? compareMeta.bestOdds : odds,
+      oddsSource: compareMeta ? compareMeta.activeSource : 'STD',
+      hasMarketCompare: !!(compareMeta && compareMeta.hasCompare),
+      marketComparePresent: !!(compareMeta && compareMeta.rowPresent),
+      usesBestOdds: !!(compareMeta && compareMeta.hasCompare && Number(compareMeta.bestOdds || 0) >= Number(baseOdds || 0) && Number(compareMeta.bestOdds || 0) > 1.01),
       bestBookmaker: compareMeta ? compareMeta.bestBookmaker : '',
       bookmakersCount: compareMeta ? compareMeta.bookmakersCount : 0,
       avgMarketOdds: compareMeta ? compareMeta.avgOdds : 0,
@@ -12064,7 +12080,7 @@ function getMarketCompareInfo(source, marketKey, fallbackOdds){
   var row = map && map[marketKey] ? map[marketKey] : null;
   var baseOdds = Number(fallbackOdds || 0);
   if(!row || typeof row !== 'object'){
-    return { hasCompare:false, baseOdds:baseOdds, bestOdds:baseOdds > 1.01 ? baseOdds : 0, bestBookmaker:'', bookmakersCount:0, avgOdds:0, bestImpliedProb:baseOdds > 1.01 ? +(100 / baseOdds).toFixed(2) : null, avgImpliedProb:null, gapPct:0 };
+    return { hasCompare:false, baseOdds:baseOdds, bestOdds:baseOdds > 1.01 ? baseOdds : 0, bestBookmaker:'', bookmakersCount:0, avgOdds:0, bestImpliedProb:baseOdds > 1.01 ? +(100 / baseOdds).toFixed(2) : null, avgImpliedProb:null, gapPct:0, activeSource:'STD', rowPresent:false };
   }
   var bestOdds = Number(row.best_odds != null ? row.best_odds : (row.bestOdds != null ? row.bestOdds : 0));
   if(!(bestOdds > 1.01)) bestOdds = baseOdds;
@@ -12072,7 +12088,7 @@ function getMarketCompareInfo(source, marketKey, fallbackOdds){
   var bookmakersCount = Number(row.bookmakers_count != null ? row.bookmakers_count : (row.bookmakersCount != null ? row.bookmakersCount : 0));
   var gapPct = (bestOdds > 1.01 && baseOdds > 1.01) ? +(((bestOdds / baseOdds) - 1) * 100).toFixed(2) : 0;
   return {
-    hasCompare:!!(bookmakersCount > 0 || (bestOdds > 1.01 && bestOdds !== baseOdds)),
+    hasCompare:!!(bookmakersCount > 0 || avgOdds > 1.01 || (bestOdds > 1.01 && bestOdds !== baseOdds) || String(row.best_bookmaker || row.bestBookmaker || '').trim()),
     baseOdds:baseOdds,
     bestOdds:bestOdds > 1.01 ? +bestOdds.toFixed(2) : 0,
     bestBookmaker:String(row.best_bookmaker || row.bestBookmaker || ''),
@@ -12080,7 +12096,9 @@ function getMarketCompareInfo(source, marketKey, fallbackOdds){
     avgOdds:avgOdds > 1.01 ? +avgOdds.toFixed(2) : 0,
     bestImpliedProb:row.best_implied_probability != null ? Number(row.best_implied_probability) : (bestOdds > 1.01 ? +(100 / bestOdds).toFixed(2) : null),
     avgImpliedProb:row.avg_implied_probability != null ? Number(row.avg_implied_probability) : (avgOdds > 1.01 ? +(100 / avgOdds).toFixed(2) : null),
-    gapPct:gapPct
+    gapPct:gapPct,
+    activeSource:(bestOdds > 1.01 ? 'BEST' : (avgOdds > 1.01 && !(baseOdds > 1.01) ? 'CMP' : 'STD')),
+    rowPresent:true
   };
 }
 function clampMathScore(value){
