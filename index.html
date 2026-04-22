@@ -2703,13 +2703,13 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
         <div class="matches-chip-group">
           <button class="filter-btn" onclick="setFilter('all',this)">🌐 Toate</button>
           <button class="filter-btn active" onclick="setFilter('motor_validated',this)">🧠 Validate Motor</button>
-          <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
+          <button class="filter-btn" onclick="setFilter('safe',this)">📊 Scorate</button>
           <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
           <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
           <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
           <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
           <button class="filter-btn" onclick="setFilter('dc',this)">🛡️ Șansă Dublă</button>
-          <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
+          <button class="filter-btn" onclick="setFilter('value',this)">💰 Value only</button>
         </div>
         <div class="matches-chip-meta">
           <select class="sort-select" id="sort-select" onchange="renderMatches()">
@@ -8102,7 +8102,10 @@ function renderMatches(){
       : '';
     var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var m16ProbabilityHtml = b ? ('<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(59,130,246,.12));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:28px;font-weight:900;line-height:1;margin-top:6px;color:var(--txt)">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right">'+(motorBadge || '')+'<div style="font-size:10px;color:var(--muted);margin-top:'+(motorBadge ? '8' : '0')+'px">Cotă</div><div style="font-size:20px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
+    var statusChipText = motorMeta && motorMeta.state === 'validated' ? 'VALIDAT MOTOR' : 'SUB OBSERVAȚIE';
+    var statusChipColor = motorMeta && motorMeta.state === 'validated' ? 'var(--grn)' : 'var(--yel)';
     var simpleMetrics = '<div class="match-inline-row">'+
+      '<span class="match-inline-chip" style="color:'+statusChipColor+'">'+statusChipText+'</span>'+
       '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
@@ -8193,7 +8196,7 @@ function renderMatches(){
         '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+'</div>'+
       '</div>'+
       '<div class="m16-signals">'+
-        '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
+        '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • <strong style="color:'+statusChipColor+'">'+statusChipText+'</strong></div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
         '<div class="m16-signal-text">ℹ️ '+infoLine+'</div>'+
       '</div>'+
       '<div class="m16-actions">'+
@@ -13166,6 +13169,7 @@ window.generateDailyPortfolioTickets = function(){
 var SMARTBET_TICKETS = window.SMARTBET_TICKETS || {safe:null, hybrid:null, value:null};
 window.SMARTBET_TICKETS = SMARTBET_TICKETS;
 var SMARTBET_LAST_ANALYSIS = null;
+var MIN_VISIBLE_MOTOR_SCORE = 70;
 
 function normalizeSmartBetMarketKey(raw){
   var key = String(raw || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -13235,11 +13239,12 @@ function getSmartBetStatusForMatch(match, bet, lookup){
   for(var i=0;i<keys.length;i++){
     if(bag.validated[keys[i]]){
       var row = bag.validated[keys[i]];
+      var score = (typeof calcUnifiedScore === 'function') ? calcUnifiedScore(row) : Number(row.smartScore || row.score || 0);
       return {
-        state:'validated',
+        state: score >= Number(MIN_VISIBLE_MOTOR_SCORE || 70) ? 'validated' : 'neutral',
         row:row,
         reason:row.confirmationLabel || '',
-        score:(typeof calcUnifiedScore === 'function') ? calcUnifiedScore(row) : Number(row.smartScore || row.score || 0)
+        score:score
       };
     }
   }
@@ -13255,6 +13260,43 @@ function getSmartBetStatusForMatch(match, bet, lookup){
     }
   }
   return { state:'neutral', row:null, reason:'', score:null };
+}
+
+function getUnifiedValidatedMatchRows(){
+  var lookup = getSmartBetAnalysisLookup();
+  var rows = [];
+  (ALL_MATCHES || []).forEach(function(m){
+    if(!m || m.analysisState !== 'ELIGIBLE' || !m.bestBet) return;
+    if(typeof isMatchStillDisplayable === 'function' && !isMatchStillDisplayable(m)) return;
+    var status = getSmartBetStatusForMatch(m, m.bestBet, lookup);
+    if(status.state !== 'validated') return;
+    var src = status.row || {};
+    var marketKey = normalizeSmartBetMatchBetKey(m.bestBet);
+    var out = Object.assign({}, src, {
+      event_id: src.event_id != null ? src.event_id : (m.eventId != null ? m.eventId : null),
+      home: m.home || src.home || '',
+      away: m.away || src.away || '',
+      league: m.league || src.league || '',
+      event_date: m.event_date || m.date || src.event_date || src.date || '',
+      marketKey: marketKey,
+      market: (m.bestBet && m.bestBet.label) || src.market || '—',
+      displayMarket: (m.bestBet && m.bestBet.label) || src.displayMarket || src.market || '—',
+      displayOdds: Number((m.bestBet && m.bestBet.odds) || src.displayOdds || src.odds || 0),
+      odds: Number((m.bestBet && m.bestBet.odds) || src.displayOdds || src.odds || 0),
+      prob: Number((m.bestBet && m.bestBet.adjProb) || src.prob || src.adjusted_prob || 0),
+      edge: Number((m.bestBet && m.bestBet.edgePct) || src.edge || src.edge_pct || 0),
+      value: Number((m.bestBet && m.bestBet.value) || src.value || 0),
+      smartScore: Number(src.smartScore || src.score || m.smartScore || 0),
+      adaptiveScore: Number(src.adaptiveScore || src.prob || src.adjusted_prob || 0),
+      memoryBonus: Number(src.memoryBonus || 0),
+      confirmationLabel: status.reason || src.confirmationLabel || 'Validat Motor',
+      mostLikelyScore: m.mostLikelyScore || src.mostLikelyScore || null,
+      _unifiedScore: status.score != null ? Number(status.score) : ((typeof calcUnifiedScore === 'function') ? calcUnifiedScore(src) : Number(src.smartScore || src.score || 0))
+    });
+    rows.push(out);
+  });
+  rows.sort(function(a,b){ return Number(b._unifiedScore || 0) - Number(a._unifiedScore || 0); });
+  return rows;
 }
 function smartBetSupportedMarket(row){
   var key = normalizeSmartBetMarketKey(row && (row.market_key || row.market));
@@ -14438,11 +14480,7 @@ function renderUnifiedEngine(){
   var meta = document.getElementById('unified-list-meta');
   if(!summary || !list) return;
 
-  var analysis = getSmartBetAnalysis ? getSmartBetAnalysis() : {pool:[],blocked:[]};
-  var pool = (analysis.pool || []).map(function(row){
-    return Object.assign({}, row, {_unifiedScore: calcUnifiedScore(row)});
-  }).sort(function(a,b){ return b._unifiedScore - a._unifiedScore; });
-  var blocked = analysis.blocked || [];
+  var pool = getUnifiedValidatedMatchRows();
 
   if(updated){
     var ts = (typeof AI_MEMORY !== 'undefined' && AI_MEMORY && AI_MEMORY.updated_at) ||
@@ -14450,7 +14488,7 @@ function renderUnifiedEngine(){
              (typeof APP_META !== 'undefined' && APP_META && APP_META.updated_at) || '';
     updated.textContent = ts ? ('Actualizat: ' + (typeof fmtDateTime === 'function' ? fmtDateTime(ts) : ts)) : '—';
   }
-  if(meta) meta.textContent = pool.length + ' predicții validate';
+  if(meta) meta.textContent = pool.length + ' predicții validate (70+)';
 
   var avgScore = pool.length ? Math.round(pool.reduce(function(a,r){ return a + r._unifiedScore; },0) / pool.length) : 0;
   var avgProb = pool.length ? pool.reduce(function(a,r){ return a + Number(r.prob||0); },0) / pool.length : 0;
@@ -14459,8 +14497,8 @@ function renderUnifiedEngine(){
 
   summary.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">' +
     [
-      {label:'Predicții validate', value: String(pool.length), sub:'trecute prin 3 filtre', color:'var(--acc)'},
-      {label:'Scor Unificat mediu', value: pool.length ? avgScore : '—', sub:'0-100, combină toate sursele', color:'var(--pur)'},
+      {label:'Validate de Motor', value: String(pool.length), sub:'aceleași meciuri, după filtrul final (70+)', color:'var(--acc)'},
+      {label:'Scor Unificat mediu', value: pool.length ? avgScore : '—', sub:'view premium peste Meciuri', color:'var(--pur)'},
       {label:'Top acuratețe ≥85', value: String(topCount), sub:'cele mai sigure selecții', color:'var(--grn)'},
       {label:'Probabilitate medie', value: pool.length ? (typeof fmtPct==='function' ? fmtPct(avgProb) : avgProb.toFixed(1)+'%') : '—', sub:'probabilitate ajustată medie', color:'var(--cyan)'},
       {label:'Edge mediu', value: pool.length ? (typeof fmtSignedPct==='function' ? fmtSignedPct(avgEdge) : (avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%') : '—', sub:'avantaj model vs piață', color:'var(--yel)'},
@@ -14473,7 +14511,7 @@ function renderUnifiedEngine(){
     }).join('') + '</div>';
 
   if(!pool.length){
-    list.innerHTML = '<div class="empty-state">Nicio predicție nu trece simultan filtrul Kelly, AI Memory și SmartBet în acest refresh. Revino după actualizarea datelor.</div>';
+    list.innerHTML = '<div class="empty-state">Nu există meciuri validate de Motor cu scor 70+ în acest refresh.</div>';
     return;
   }
 
