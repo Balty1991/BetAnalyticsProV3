@@ -2701,7 +2701,8 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 
       <div class="filter-bar matches-filter-toolbar">
         <div class="matches-chip-group">
-          <button class="filter-btn active" onclick="setFilter('all',this)">🌐 Toate</button>
+          <button class="filter-btn" onclick="setFilter('all',this)">🌐 Toate</button>
+          <button class="filter-btn active" onclick="setFilter('motor_validated',this)">🧠 Validate Motor</button>
           <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
           <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
           <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
@@ -3197,7 +3198,7 @@ var AUDIT_TICKETS = {premium:null, double:null, triple:null, contrarian:null};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
-var CURRENT_FILTER = 'all';
+var CURRENT_FILTER = 'motor_validated';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
 var TICKET_JOURNAL = JSON.parse(localStorage.getItem('bet_ticket_journal') || '[]');
@@ -7781,10 +7782,9 @@ function hasSyncedOdds(match){
 
 function resetMatchFilters(){
   clearMatchFocus();
-  CURRENT_FILTER = 'all';
+  CURRENT_FILTER = 'motor_validated';
   document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-  var first = document.querySelector('.filter-btn');
-  if(first) first.classList.add('active');
+  activateMatchFilterButton('motor_validated');
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
@@ -7950,6 +7950,7 @@ function renderMatches(){
       if(!hasSyncedOdds(m)) return false;
     } else {
       if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
+      if(CURRENT_FILTER === 'motor_validated' && getSmartBetStatusForMatch(m, b, smartBetLookup).state !== 'validated') return false;
       if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
       if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
       if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)) return false;
@@ -8045,7 +8046,7 @@ function renderMatches(){
     return new Date(a.date) - new Date(b.date);
   });
 
-  $('filter-count').textContent = MATCH_FOCUS_KEY ? ('Meci selectat din Dashboard • ' + filtered.length + ' rezultat') : (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Lista ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Lista cu cote • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri')));
+  $('filter-count').textContent = MATCH_FOCUS_KEY ? ('Meci selectat din Dashboard • ' + filtered.length + ' rezultat') : (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Lista ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Lista cu cote • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'motor_validated' ? ('Validate Motor • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri'))));
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
     return;
@@ -8100,6 +8101,7 @@ function renderMatches(){
       ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
       : '';
     var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
+    var m16ProbabilityHtml = b ? ('<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(59,130,246,.12));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:28px;font-weight:900;line-height:1;margin-top:6px;color:var(--txt)">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right">'+(motorBadge || '')+'<div style="font-size:10px;color:var(--muted);margin-top:'+(motorBadge ? '8' : '0')+'px">Cotă</div><div style="font-size:20px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var simpleMetrics = '<div class="match-inline-row">'+
       '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
@@ -8186,8 +8188,9 @@ function renderMatches(){
       '</div>'+
       '<div class="m16-reco">'+
         '<div class="m16-reco-title">🎯 Recomandare '+(b && b.type === 'ml' ? 'ML' : 'principală')+'</div>'+
-        '<div class="m16-reco-main">'+recLabel+(recOdd ? ' <span class="odd">@ '+recOdd+'</span>' : '')+'</div>'+
-        '<div class="m16-reco-meta">Șansă: <strong style="color:var(--grn)">'+(b && b.adjProb != null ? fmtPct(Number(b.adjProb || 0)) : '—')+'</strong> | Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+'</div>'+
+        '<div class="m16-reco-main">'+recLabel+'</div>'+
+        m16ProbabilityHtml+
+        '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+'</div>'+
       '</div>'+
       '<div class="m16-signals">'+
         '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
