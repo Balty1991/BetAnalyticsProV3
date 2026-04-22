@@ -1523,6 +1523,43 @@ def _parse_raw_odds_snapshot(data):
     return snapshot
 
 
+def _fetch_raw_odds_snapshot(event_id_int):
+    base_url = f"{API_BASE}/api/odds/?event={event_id_int}"
+    all_rows = []
+    event_context = None
+    seen_urls = set()
+    next_url = base_url
+    while next_url and next_url not in seen_urls:
+        seen_urls.add(next_url)
+        r = requests.get(next_url, headers=HEADERS, timeout=20)
+        if r.status_code in (400, 404, 405):
+            break
+        r.raise_for_status()
+        data = r.json()
+        if isinstance(data, dict):
+            if event_context is None and isinstance(data.get("event"), dict):
+                event_context = data.get("event")
+            rows = data.get("odds") or data.get("results") or []
+            if isinstance(rows, list):
+                all_rows.extend(rows)
+            next_candidate = data.get("next")
+            if next_candidate:
+                next_url = next_candidate if str(next_candidate).startswith("http") else (API_BASE.rstrip("/") + "/" + str(next_candidate).lstrip("/"))
+            else:
+                page = int(data.get("page") or 1)
+                total_pages = int(data.get("total_pages") or 1)
+                if total_pages > page:
+                    sep = '&' if '?' in base_url else '?'
+                    next_url = f"{base_url}{sep}page={page+1}"
+                else:
+                    next_url = None
+        else:
+            break
+    if not all_rows:
+        return {}
+    return _parse_raw_odds_snapshot({"event": event_context or {}, "odds": all_rows})
+
+
 def fetch_event_odds_compare_snapshot(event_id):
     """
     Returnează pentru un eveniment harta cu best odds / best bookmaker / average odds
@@ -1536,7 +1573,6 @@ def fetch_event_odds_compare_snapshot(event_id):
         return EVENT_ODDS_COMPARE_CACHE[event_id_int]
     endpoints = [
         f"{API_BASE}/api/odds/compare/?event={event_id_int}",
-        f"{API_BASE}/api/odds/?event={event_id_int}",
     ]
     for url in endpoints:
         try:
@@ -1545,12 +1581,19 @@ def fetch_event_odds_compare_snapshot(event_id):
                 continue
             r.raise_for_status()
             data = r.json()
-            snapshot = _parse_compare_snapshot(data) if "/compare/" in url else _parse_raw_odds_snapshot(data)
+            snapshot = _parse_compare_snapshot(data)
             if snapshot:
                 EVENT_ODDS_COMPARE_CACHE[event_id_int] = snapshot
                 return snapshot
         except Exception:
             continue
+    try:
+        snapshot = _fetch_raw_odds_snapshot(event_id_int)
+        if snapshot:
+            EVENT_ODDS_COMPARE_CACHE[event_id_int] = snapshot
+            return snapshot
+    except Exception:
+        pass
     EVENT_ODDS_COMPARE_CACHE[event_id_int] = {}
     return {}
 
