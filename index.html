@@ -7934,6 +7934,7 @@ function renderMatches(){
     el.classList.toggle('active', el.getAttribute('data-mode') === MATCH_CARD_MODE);
   });
   var now = Date.now();
+  var smartBetLookup = getSmartBetAnalysisLookup();
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
@@ -8026,6 +8027,13 @@ function renderMatches(){
     });
   }
 
+  filtered = filtered.filter(function(m){
+    var motorMeta = getSmartBetStatusForMatch(m, m.bestBet || null, smartBetLookup);
+    if(motorMeta.state === 'blocked') return false;
+    m._motorMeta = motorMeta;
+    return true;
+  });
+
   filtered.sort(function(a,b){
     var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
     var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
@@ -8045,6 +8053,7 @@ function renderMatches(){
 
   function renderCard(m){
     var b = m.bestBet || null;
+    var motorMeta = m._motorMeta || getSmartBetStatusForMatch(m, b, smartBetLookup);
     var state = getAnalysisStateMeta(m.analysisState);
     var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
     var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 38);
@@ -8087,13 +8096,18 @@ function renderMatches(){
       }
     }
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
+    var motorBadge = motorMeta && motorMeta.state === 'validated'
+      ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
+      : '';
+    var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var simpleMetrics = '<div class="match-inline-row">'+
       '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
-    var simpleSummary = b ? ('<div class="match-inline-summary">Șansă <strong>'+fmtPct(Number(b.adjProb || 0))+'</strong> • Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(recOdd ? ' • Cotă <strong>@ '+recOdd+'</strong>' : '')+'</div>') : '';
+    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(motorBadge ? ' • ' + motorBadge : '')+'</div>') : '';
     var expertDetails = analysisMetricCards +
+      predictionProbabilityHtml+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
         '<div class="ticket-mini"><div class="v">'+Number(m.xgHome || 0).toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
         '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
@@ -8105,7 +8119,8 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
-        '<div class="card-reco-badges">'+probBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
+        predictionProbabilityHtml+
+        '<div class="card-reco-badges">'+motorBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
         hybridBlock+
         altMarketsHtml+
       '</div>'+
@@ -8119,6 +8134,7 @@ function renderMatches(){
           (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
+        predictionProbabilityHtml+
         simpleSummary+
         simpleMetrics+
         altMarketsHtml+
@@ -13165,6 +13181,78 @@ function normalizeSmartBetSource(row){
   if(row.source_heuristic) return 'heuristic';
   return 'unknown';
 }
+
+function normalizeSmartBetMatchBetKey(bet){
+  if(!bet) return '';
+  var rawType = String(bet.type || '').toLowerCase();
+  if(rawType === 'dc1x') return '1x';
+  if(rawType === 'dcx2') return 'x2';
+  if(rawType === 'dc12') return '12';
+  var rawLabel = String(bet.label || '').toLowerCase();
+  if(rawLabel.indexOf('1x') >= 0) return '1x';
+  if(rawLabel.indexOf('x2') >= 0) return 'x2';
+  if(rawLabel === '12' || rawLabel.indexOf(' 12') >= 0) return '12';
+  return normalizeSmartBetMarketKey(bet.marketKey || bet.market_key || bet.market || bet.label || bet.type || '');
+}
+function getSmartBetAnalysisLookup(){
+  var analysis = (typeof getSmartBetAnalysis === 'function') ? getSmartBetAnalysis() : {pool:[], blocked:[]};
+  var lookup = { validated:{}, blocked:{} };
+  function keysFromRow(row, explicitMarketKey){
+    if(!row) return [];
+    var marketKey = normalizeSmartBetMarketKey(explicitMarketKey || row.marketKey || row.market_key || row.market);
+    if(!marketKey) return [];
+    var keys = [];
+    var eventId = row.event_id != null ? row.event_id : (row.eventId != null ? row.eventId : null);
+    if(eventId != null && eventId !== '') keys.push(String(eventId) + '|' + marketKey);
+    var dateKey = String(row.event_date || row.date || '').slice(0,10);
+    keys.push([String(row.home || '').toLowerCase(), String(row.away || '').toLowerCase(), dateKey, marketKey].join('|'));
+    return keys;
+  }
+  (analysis.pool || []).forEach(function(row){
+    keysFromRow(row).forEach(function(k){ lookup.validated[k] = row; });
+  });
+  (analysis.blocked || []).forEach(function(entry){
+    if(!entry || !entry.row) return;
+    keysFromRow(entry.row, entry.marketKey).forEach(function(k){ lookup.blocked[k] = entry; });
+  });
+  return lookup;
+}
+function getSmartBetStatusForMatch(match, bet, lookup){
+  if(!match || !bet) return { state:'neutral', row:null, reason:null, score:null };
+  var marketKey = normalizeSmartBetMatchBetKey(bet);
+  if(['over15','over25','under35','btts','1x','x2','12','doublechance'].indexOf(marketKey) < 0){
+    return { state:'neutral', row:null, reason:null, score:null };
+  }
+  var keys = [];
+  var eventId = match.eventId != null ? match.eventId : (match.event_id != null ? match.event_id : null);
+  if(eventId != null && eventId !== '') keys.push(String(eventId) + '|' + marketKey);
+  var dateKey = String(match.event_date || match.date || '').slice(0,10);
+  keys.push([String(match.home || '').toLowerCase(), String(match.away || '').toLowerCase(), dateKey, marketKey].join('|'));
+  var bag = lookup || getSmartBetAnalysisLookup();
+  for(var i=0;i<keys.length;i++){
+    if(bag.validated[keys[i]]){
+      var row = bag.validated[keys[i]];
+      return {
+        state:'validated',
+        row:row,
+        reason:row.confirmationLabel || '',
+        score:(typeof calcUnifiedScore === 'function') ? calcUnifiedScore(row) : Number(row.smartScore || row.score || 0)
+      };
+    }
+  }
+  for(var j=0;j<keys.length;j++){
+    if(bag.blocked[keys[j]]){
+      var blocked = bag.blocked[keys[j]];
+      return {
+        state:'blocked',
+        row:blocked.row || null,
+        reason:(blocked.reason && (blocked.reason.label || blocked.reason.key)) || 'Pattern negativ',
+        score:null
+      };
+    }
+  }
+  return { state:'neutral', row:null, reason:'', score:null };
+}
 function smartBetSupportedMarket(row){
   var key = normalizeSmartBetMarketKey(row && (row.market_key || row.market));
   return ['over15','over25','under35','btts','1x','x2','12','doublechance'].indexOf(key) >= 0;
@@ -13880,7 +13968,7 @@ function renderSmartBet(){
     updated.textContent = ts ? ('SmartBet actualizat: ' + fmtDateTime(ts)) : 'SmartBet: —';
   }
   var policy = analysis.policy || getSmartBetEnginePolicy();
-  if(meta) meta.textContent = policy.label + ' • ' + pool.length + ' validate • ' + blocked.length + ' blocate';
+  if(meta) meta.textContent = policy.label + ' • ' + pool.length + ' validate';
 
   var avgScore = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.smartScore || 0); },0) / pool.length) : 0;
   var avgEdge = pool.length ? (pool.reduce(function(acc,row){ return acc + Number(row.edge || 0); },0) / pool.length) : 0;
@@ -13890,7 +13978,6 @@ function renderSmartBet(){
   var cards = [
     {label:'Mod activ', value:policy.label, sub:policy.reason, color:(policy.state==='positive'?'var(--grn)':policy.state==='harmful'?'var(--red)':'var(--yel)')},
     {label:'Validate', value:String(pool.length), sub:'trecute prin filtrul curent', color:'var(--acc)'},
-    {label:'Blocate', value:String(blocked.length), sub:(policy.mode === 'strict' ? 'tăiate agresiv de pattern negativ' : policy.mode === 'balanced' ? 'tăiate doar dacă pattern-ul este clar toxic' : 'blocarea negativă este oprită'), color:'var(--red)'},
     {label:'Smart score', value:pool.length ? avgScore.toFixed(1) : '—', sub:'media scorului final', color:'var(--pur)'},
     {label:'Prob. medie', value:pool.length ? fmtPct(avgProb) : '—', sub:'probabilitate ajustată medie', color:'var(--grn)'},
     {label:'Edge mediu', value:pool.length ? fmtSignedPct(avgEdge) : '—', sub:'avantaj model vs piață', color:'var(--yel)'},
@@ -14360,7 +14447,7 @@ function renderUnifiedEngine(){
              (typeof APP_META !== 'undefined' && APP_META && APP_META.updated_at) || '';
     updated.textContent = ts ? ('Actualizat: ' + (typeof fmtDateTime === 'function' ? fmtDateTime(ts) : ts)) : '—';
   }
-  if(meta) meta.textContent = pool.length + ' predicții validate • ' + blocked.length + ' blocate';
+  if(meta) meta.textContent = pool.length + ' predicții validate';
 
   var avgScore = pool.length ? Math.round(pool.reduce(function(a,r){ return a + r._unifiedScore; },0) / pool.length) : 0;
   var avgProb = pool.length ? pool.reduce(function(a,r){ return a + Number(r.prob||0); },0) / pool.length : 0;
@@ -14374,7 +14461,6 @@ function renderUnifiedEngine(){
       {label:'Top acuratețe ≥85', value: String(topCount), sub:'cele mai sigure selecții', color:'var(--grn)'},
       {label:'Probabilitate medie', value: pool.length ? (typeof fmtPct==='function' ? fmtPct(avgProb) : avgProb.toFixed(1)+'%') : '—', sub:'probabilitate ajustată medie', color:'var(--cyan)'},
       {label:'Edge mediu', value: pool.length ? (typeof fmtSignedPct==='function' ? fmtSignedPct(avgEdge) : (avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%') : '—', sub:'avantaj model vs piață', color:'var(--yel)'},
-      {label:'Blocate', value: String(blocked.length), sub:'eliminate de pattern negativ', color:'var(--red)'}
     ].map(function(c){
       return '<div style="padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
         '<div style="font-size:11px;color:var(--muted);font-weight:700">'+c.label+'</div>' +
