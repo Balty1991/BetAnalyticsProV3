@@ -1080,8 +1080,22 @@ function prefetchNonCriticalTabData(){
   scheduleIdleTask(function(){
     loadLazyDataset('historyEngine').catch(function(err){ console.warn('[Prefetch] historyEngine failed', err); });
   }, 3400);
+  scheduleIdleTask(function(){
+    ensureArchiveSummaryData().catch(function(err){ console.warn('[Prefetch] archiveSummary failed', err); });
+  }, 4200);
 }
 function switchTab(name){
+  if(name==='istoricfull' || name==='apihistory' || name==='traininglab'){
+    if(!LAZY_DATA_READY.fullHistoryAssets){
+      ensureFullHistoryAssets().then(function(){
+        switchTab(name);
+      }).catch(function(err){
+        console.warn('[LazyData] full history assets failed', err);
+        toast('Nu am putut încărca baza extinsă.', 'warn');
+      });
+      return;
+    }
+  }
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
   closeDesktopMore(true);
@@ -3522,10 +3536,11 @@ var LAZY_DATA_READY = {
   recommendationLog:false,
   historyEngine:false,
   recommendationJournal:false,
+  archiveSummary:false,
   fullHistoryAssets:false
 };
 var FULL_HISTORY_ASSETS_PROMISE = null;
-var DATASET_CACHE_VERSION = '20260423step6';
+var DATASET_CACHE_VERSION = '20260423step8';
 
 function getDatasetCacheKey(key){
   return 'bet_dataset_cache_' + DATASET_CACHE_VERSION + '_' + key;
@@ -3567,6 +3582,101 @@ function getJson(path, fallback){
     })
     .catch(function(){ return fallback; });
 }
+
+var ARCHIVE_SUMMARY_PROMISE = null;
+var ARCHIVE_SUMMARY_LOADING = false;
+var ARCHIVE_SUMMARY_STATE = { loaded:false };
+
+function archiveSummarySkeletonCard(label){
+  return '<div style="padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)">' +
+    '<div style="height:18px;width:58%;border-radius:8px;background:rgba(255,255,255,.08);margin-bottom:12px"></div>' +
+    '<div style="height:26px;width:72%;border-radius:10px;background:rgba(255,255,255,.10);margin-bottom:8px"></div>' +
+    '<div style="height:12px;width:78%;border-radius:8px;background:rgba(255,255,255,.06);margin-bottom:10px"></div>' +
+    '<div style="font-size:11px;color:var(--muted)">' + (label || 'Se încarcă...') + '</div>' +
+  '</div>';
+}
+
+function renderArchiveSummarySkeleton(){
+  var cards = document.getElementById('archive-summary-cards');
+  var impact = document.getElementById('archive-learning-impact');
+  if(cards){
+    cards.innerHTML = [
+      archiveSummarySkeletonCard('Jurnal aplicație'),
+      archiveSummarySkeletonCard('Baza istorică API'),
+      archiveSummarySkeletonCard('Model AI + patterns')
+    ].join('');
+  }
+  if(impact){
+    impact.innerHTML = '<div style="padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);font-size:12px;color:var(--muted)">Se încarcă rezumatul bazei de învățare...</div>';
+  }
+}
+
+function applyArchiveSummaryData(bundle){
+  ARCHIVE_SUMMARY_STATE = Object.assign({ loaded:true }, bundle || {});
+  LAZY_DATA_READY.archiveSummary = true;
+  writeDatasetCache('archiveSummary', ARCHIVE_SUMMARY_STATE);
+  try {
+    if(ARCHIVE_SUMMARY_STATE.aiMemory) AI_MEMORY = ARCHIVE_SUMMARY_STATE.aiMemory;
+    if(ARCHIVE_SUMMARY_STATE.baselines) TRAINING_MARKET_BASELINES = ARCHIVE_SUMMARY_STATE.baselines;
+  } catch(err){}
+}
+
+function ensureArchiveSummaryData(){
+  if(LAZY_DATA_READY.archiveSummary && ARCHIVE_SUMMARY_STATE && ARCHIVE_SUMMARY_STATE.loaded){
+    return Promise.resolve(true);
+  }
+  if(ARCHIVE_SUMMARY_PROMISE) return ARCHIVE_SUMMARY_PROMISE;
+
+  var cached = readDatasetCache('archiveSummary', 24 * 3600 * 1000);
+  if(cached && cached.loaded){
+    ARCHIVE_SUMMARY_STATE = cached;
+    LAZY_DATA_READY.archiveSummary = true;
+    try {
+      if(cached.aiMemory) AI_MEMORY = cached.aiMemory;
+      if(cached.baselines) TRAINING_MARKET_BASELINES = cached.baselines;
+    } catch(err){}
+  }
+
+  ARCHIVE_SUMMARY_LOADING = true;
+  if((window._smartLearnSection || '') === 'arhiva') renderArchivePanel();
+
+  var jobs = {
+    fullMeta: getJson('/data/full_history_meta.json', null),
+    apiSummary: getJson('/data/api_history_summary.json', null),
+    trainSum: getJson('/data/training_dataset_summary.json', null),
+    trainModel: getJson('/data/training_model_summary.json', null),
+    baselines: getJson('/data/training_market_baselines.json', []),
+    aiMemory: getJson('/data/ai_memory.json', null)
+  };
+
+  ARCHIVE_SUMMARY_PROMISE = Promise.all([
+    jobs.fullMeta,
+    jobs.apiSummary,
+    jobs.trainSum,
+    jobs.trainModel,
+    jobs.baselines,
+    jobs.aiMemory
+  ]).then(function(values){
+    applyArchiveSummaryData({
+      fullMeta: values[0] || {},
+      apiSummary: values[1] || {},
+      trainSum: values[2] || {},
+      trainModel: values[3] || {},
+      baselines: Array.isArray(values[4]) ? values[4] : [],
+      aiMemory: values[5] || {}
+    });
+    return true;
+  }).catch(function(err){
+    console.warn('[ArchiveSummary] load failed', err);
+    return false;
+  }).finally(function(){
+    ARCHIVE_SUMMARY_LOADING = false;
+    ARCHIVE_SUMMARY_PROMISE = null;
+  });
+
+  return ARCHIVE_SUMMARY_PROMISE;
+}
+
 
 function normalizeResultList(data){
   return Array.isArray(data) ? data : ((data && data.results) || []);
@@ -11683,25 +11793,27 @@ function switchSmartLearnSection(section){
   ['predictii','invatare','arhiva','audit','aimemory','smartbet'].forEach(function(s){
     var sec = document.getElementById('smartlearn-section-' + s);
     var btn = document.getElementById('slt-' + s);
-    if(sec) sec.style.display = (s === section) ? '' : (s==='audit'||s==='aimemory'||s==='smartbet' ? 'none' : 'none');
+    if(sec) sec.style.display = (s === section) ? '' : 'none';
     if(btn) btn.classList.toggle('active', s === section);
   });
-  if(section === 'predictii'){ try{ renderUnifiedEngine(); }catch(e){console.warn(e);} }
+  if(section === 'predictii'){
+    try{ renderUnifiedEngine(); }catch(e){console.warn(e);}
+  }
   if(section === 'invatare'){
-    try{ renderLearningEngine(); }catch(e){console.warn(e);} }
-  if(section === 'arhiva'){ try{ renderArchivePanel(); }catch(e){console.warn(e);} }
+    try{ renderLearningEngine(); }catch(e){console.warn(e);}
+  }
+  if(section === 'arhiva'){
+    try{ renderArchivePanel(); }catch(e){console.warn(e);}
+    ensureArchiveSummaryData().then(function(){
+      if(window._smartLearnSection !== 'arhiva') return;
+      try{ renderArchivePanel(); }catch(e){ console.warn(e); }
+    }).catch(function(err){
+      console.warn('[ArchiveSummary] refresh failed', err);
+    });
+  }
   // backward compat — never shown but keep rendering for data
   if(section === 'audit'){ switchSmartLearnSection('predictii'); return; }
   if(section === 'aimemory'){ switchSmartLearnSection('predictii'); return; }
-  if(section === 'invatare' || section === 'arhiva'){
-    ensureFullHistoryAssets().then(function(){
-      if(window._smartLearnSection !== section) return;
-      if(section === 'invatare'){ try{ renderLearningEngine(); }catch(e){ console.warn(e); } }
-      if(section === 'arhiva'){ try{ renderArchivePanel(); }catch(e){ console.warn(e); } }
-    }).catch(function(err){
-      console.warn('[LazyData] full history assets failed', err);
-    });
-  }
   window.scrollTo({top:0,behavior:'auto'});
 }
 
@@ -11862,28 +11974,34 @@ function renderArchivePanel(){
   var impact = document.getElementById('archive-learning-impact');
   if(!cards) return;
 
-  var mem = (typeof AI_MEMORY!=='undefined' && AI_MEMORY) ? AI_MEMORY : {};
+  var summary = ARCHIVE_SUMMARY_STATE || {};
+  var summaryLoaded = !!summary.loaded;
+  var mem = summary.aiMemory || ((typeof AI_MEMORY!=='undefined' && AI_MEMORY) ? AI_MEMORY : {});
   var memSum = mem.summary || {};
-  var fullMeta = (typeof W!=='undefined' && W.FULL_HISTORY_META) ? W.FULL_HISTORY_META :
-                 (window.FULL_HISTORY_META || {});
-  var apiSum = (typeof W!=='undefined' && W.API_HISTORY_SUMMARY) ? W.API_HISTORY_SUMMARY :
-               (window.API_HISTORY_SUMMARY || {});
+  var fullMeta = summary.fullMeta || ((typeof W!=='undefined' && W.FULL_HISTORY_META) ? W.FULL_HISTORY_META : (window.FULL_HISTORY_META || {}));
+  var apiSum = summary.apiSummary || ((typeof W!=='undefined' && W.API_HISTORY_SUMMARY) ? W.API_HISTORY_SUMMARY : (window.API_HISTORY_SUMMARY || {}));
   var apiValid = apiSum.valid || {};
-  var trainSum = (typeof W!=='undefined' && W.TRAINING_DATASET_SUMMARY) ? W.TRAINING_DATASET_SUMMARY :
-                 (window.TRAINING_DATASET_SUMMARY || {});
-  var trainModel = (typeof W!=='undefined' && W.TRAINING_MODEL_SUMMARY) ? W.TRAINING_MODEL_SUMMARY :
-                   (window.TRAINING_MODEL_SUMMARY || {});
-  var recJournal = (typeof W!=='undefined' && W.RECOMMENDATION_JOURNAL) ? W.RECOMMENDATION_JOURNAL :
-                   (window.RECOMMENDATION_JOURNAL || []);
-  var baselines = (typeof TRAINING_MARKET_BASELINES!=='undefined' && TRAINING_MARKET_BASELINES) ?
-                  TRAINING_MARKET_BASELINES : (window.TRAINING_MARKET_BASELINES || []);
+  var trainSum = summary.trainSum || ((typeof W!=='undefined' && W.TRAINING_DATASET_SUMMARY) ? W.TRAINING_DATASET_SUMMARY : (window.TRAINING_DATASET_SUMMARY || {}));
+  var trainModel = summary.trainModel || ((typeof W!=='undefined' && W.TRAINING_MODEL_SUMMARY) ? W.TRAINING_MODEL_SUMMARY : (window.TRAINING_MODEL_SUMMARY || {}));
+  var baselines = summary.baselines || ((typeof TRAINING_MARKET_BASELINES!=='undefined' && TRAINING_MARKET_BASELINES) ? TRAINING_MARKET_BASELINES : (window.TRAINING_MARKET_BASELINES || []));
+
+  if(!summaryLoaded && ARCHIVE_SUMMARY_LOADING){
+    renderArchiveSummarySkeleton();
+    return;
+  }
 
   function fmtN(v){ var n=Number(v); return Number.isFinite(n) ? n.toLocaleString('ro-RO') : '—'; }
+
+  var hasSummaryData = !!(summaryLoaded || Number(fullMeta.journal_rows || 0) || Number((apiValid||{}).leagues_total || 0) || Number((trainSum||{}).rows_total || 0) || (baselines || []).length || Number((memSum||{}).settled_bets || 0));
+  if(!hasSummaryData){
+    renderArchiveSummarySkeleton();
+    return;
+  }
 
   var cardData = [
     {
       emoji:'📋', title:'Jurnal Aplicație',
-      value: fmtN(fullMeta.journal_rows || recJournal.length) + ' înregistrări',
+      value: fmtN(fullMeta.journal_rows || 0) + ' înregistrări',
       sub: fmtN(fullMeta.history_rows||0) + ' cu rezultat • ' + fmtN(fullMeta.lookback_days||0) + ' zile',
       role:'Istoricul biletelor generate — sursa principală pentru calculul ROI și pattern-urile de win/loss.',
       color:'rgba(16,185,129,.15)', border:'rgba(16,185,129,.25)'
