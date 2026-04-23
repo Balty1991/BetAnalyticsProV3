@@ -2,10 +2,11 @@
   --bg:#0a0e17;--bg2:#111827;--panel:#161d2e;--brd:#1e2a3a;--brd2:#2a3a50;
   --txt:#e2e8f0;--muted:#64748b;--acc:#3b82f6;--grn:#22c55e;--yel:#f59e0b;
   --org:#f97316;--red:#ef4444;--pur:#a855f7;--cyan:#06b6d4;--val:#10b981;
-  --mono:'JetBrains Mono',monospace;
+  --font-sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 
 /* HEADER */
 .header{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--brd);padding:10px 16px}
@@ -1150,7 +1151,8 @@ body.more-open{overflow:hidden}
   --cyan: var(--c-teal2);
   --val:  #34d399;
   --org:  #fb923c;
-  --mono: 'IBM Plex Mono','JetBrains Mono',monospace;
+  --font-sans: system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --mono: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;
 
   /* Elevation shadows */
   --shadow-1: 0 2px 8px rgba(0,0,0,.35);
@@ -1175,7 +1177,7 @@ body.more-open{overflow:hidden}
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: var(--font-sans);
   background: var(--c-bg);
   color: var(--c-text);
   min-height: 100vh;
@@ -1203,7 +1205,7 @@ body::after {
 }
 
 /* ── 3. TYPOGRAPHY ────────────────────────────────────────── */
-h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; }
+h1,h2,h3,h4,h5,h6 { font-family: var(--font-sans); letter-spacing: -0.02em; }
 .font-mono, [class*="mono"], [style*="JetBrains"] { font-family: var(--mono) !important; }
 
 /* ── 4. SCROLLBAR ─────────────────────────────────────────── */
@@ -1236,7 +1238,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 }
 
 .logo-title {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-size: 18px !important; font-weight: 900 !important;
   background: linear-gradient(120deg, #00d4a8 0%, #22d3ee 45%, #a5f3fc 100%);
   -webkit-background-clip: text !important;
@@ -1261,7 +1263,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   background: rgba(0,212,168,.1) !important;
   border: 1px solid rgba(0,212,168,.3) !important;
   color: var(--c-teal) !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-weight: 700 !important;
   border-radius: var(--r-md) !important;
   box-shadow: var(--shadow-glow-teal) !important;
@@ -1286,7 +1288,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 }
 
 .tab {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-size: 13px !important; font-weight: 600 !important;
   padding: 14px 20px !important;
   border-radius: 0 !important;
@@ -1320,7 +1322,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   backdrop-filter: blur(20px) !important;
 }
 .desktop-more-title {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-weight: 800 !important; font-size: 16px !important;
 }
 .more-card-btn {
@@ -1336,11 +1338,11 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   transform: translateY(-2px) !important;
   box-shadow: var(--shadow-2), var(--shadow-glow-teal) !important;
 }
-.more-card-title { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+.more-card-title { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 
 /* ── 7. BUTTONS ───────────────────────────────────────────── */
 .btn {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-weight: 700 !important; letter-spacing: 0.01em !important;
   border-radius: var(--r-md) !important;
   transition: all var(--t-base) !important;
@@ -1444,12 +1446,12 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 }
 
 .modern-kicker {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-weight: 800 !important; letter-spacing: 0.14em !important;
   color: var(--c-teal) !important;
 }
 .modern-title {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-weight: 900 !important; letter-spacing: -0.04em !important;
   background: linear-gradient(135deg, #e8f4ff 0%, #b2ede4 100%) !important;
   -webkit-background-clip: text !important;
@@ -1466,7 +1468,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   background: rgba(4,8,16,.5) !important;
   border: 1px solid rgba(0,212,168,.2) !important;
   border-radius: 999px !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
 }
 .modern-live-dot {
   background: var(--c-teal) !important;
@@ -1484,7 +1486,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   padding: 16px !important;
 }
 .modern-kpi-label {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-size: 10px !important; letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
   color: var(--c-muted) !important;
@@ -1496,7 +1498,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   margin-top: 10px !important;
 }
 .modern-kpi-sub {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-size: 11px !important; color: var(--c-muted) !important;
   margin-top: 8px !important; line-height: 1.5 !important;
 }
@@ -1538,14 +1540,14 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   border-radius: var(--r-md) !important;
 }
 .match-card-v16 .m16-team-name {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-weight: 900 !important; letter-spacing: -0.025em !important;
 }
 .match-card-v16 .m16-team-prob {
   font-family: var(--mono) !important;
   color: var(--c-teal) !important; font-weight: 700 !important;
 }
-.match-card-v16 .m16-vs { font-family: 'Outfit', sans-serif !important; letter-spacing: 0.06em !important; }
+.match-card-v16 .m16-vs { font-family: var(--font-sans), sans-serif !important; letter-spacing: 0.06em !important; }
 .match-card-v16 .m16-ml-bar {
   height: 14px !important; border-radius: 999px !important;
   background: rgba(255,255,255,.04) !important;
@@ -1556,28 +1558,28 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 .match-card-v16 .m16-ml-draw { background: linear-gradient(90deg, #fbbf24, rgba(251,191,36,.4)) !important; }
 .match-card-v16 .m16-ml-away { background: linear-gradient(90deg, #8b5cf6, rgba(139,92,246,.4)) !important; }
 .match-card-v16 .m16-reco-main {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   font-weight: 900 !important; letter-spacing: -0.02em !important;
 }
 .match-card-v16 .m16-reco-main .odd { color: var(--c-teal) !important; }
 .match-card-v16 .m16-reco-title {
-  font-family: 'Outfit', sans-serif !important; letter-spacing: 0.1em !important;
+  font-family: var(--font-sans), sans-serif !important; letter-spacing: 0.1em !important;
 }
 
 /* Classic match card */
-.mc-teams-premium .mc-team { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+.mc-teams-premium .mc-team { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 .card-reco-main {
   background: linear-gradient(135deg, rgba(0,212,168,.07), rgba(8,145,178,.04)) !important;
   border: 1px solid rgba(0,212,168,.16) !important;
   border-radius: var(--r-md) !important;
 }
-.card-reco-pick { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+.card-reco-pick { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 .card-reco-odd  { color: var(--c-teal) !important; font-family: var(--mono) !important; }
 .match-why {
   background: rgba(0,212,168,.03) !important;
   border: 1px solid rgba(0,212,168,.1) !important;
   border-radius: var(--r-md) !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
 }
 .match-why strong { color: var(--c-teal) !important; }
 
@@ -1600,10 +1602,10 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   background: var(--c-surface) !important;
   border: 1px solid rgba(0,212,168,.1) !important;
 }
-.bilet-title { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+.bilet-title { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 .bilet-cota  { font-family: var(--mono) !important; color: var(--c-teal) !important; }
-.bilet-match-name { font-family: 'Outfit', sans-serif !important; font-weight: 700 !important; }
-.bilet-pick-type  { color: var(--c-teal) !important; font-family: 'Outfit', sans-serif !important; }
+.bilet-match-name { font-family: var(--font-sans), sans-serif !important; font-weight: 700 !important; }
+.bilet-pick-type  { color: var(--c-teal) !important; font-family: var(--font-sans), sans-serif !important; }
 .ticket-mini .v { font-family: var(--mono) !important; font-weight: 700 !important; }
 
 /* ── 13. STATS & TRACKING ─────────────────────────────────── */
@@ -1612,7 +1614,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   letter-spacing: -0.02em !important;
 }
 .stat-lbl, .track-lbl {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: var(--font-sans), sans-serif !important;
   letter-spacing: 0.07em !important;
   text-transform: uppercase !important;
 }
@@ -1629,7 +1631,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   box-shadow: 0 0 0 3px rgba(0,212,168,.12) !important;
 }
 .monitor-card { border-radius: var(--r-xl) !important; }
-.monitor-kicker { font-family: 'Outfit', sans-serif !important; letter-spacing: 0.1em !important; }
+.monitor-kicker { font-family: var(--font-sans), sans-serif !important; letter-spacing: 0.1em !important; }
 .monitor-value  { font-family: var(--mono) !important; letter-spacing: -0.025em !important; }
 
 /* ── 14. BADGES & PILLS ───────────────────────────────────── */
@@ -1685,7 +1687,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 
 /* ── 15. FILTERS ──────────────────────────────────────────── */
 .filter-btn {
-  font-family: 'Outfit', sans-serif !important; font-weight: 600 !important;
+  font-family: var(--font-sans), sans-serif !important; font-weight: 600 !important;
   border: 1px solid var(--c-border2) !important; border-radius: 999px !important;
   transition: all var(--t-fast) !important;
 }
@@ -1696,7 +1698,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 }
 .sort-select, .league-filter-select, .bk-input {
   background: rgba(255,255,255,.04) !important; border: 1px solid var(--c-border2) !important;
-  color: var(--c-text) !important; font-family: 'Outfit', sans-serif !important;
+  color: var(--c-text) !important; font-family: var(--font-sans), sans-serif !important;
   border-radius: var(--r-md) !important; transition: border-color var(--t-base) !important;
 }
 .sort-select:focus, .league-filter-select:focus {
@@ -1706,7 +1708,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 .form-input {
   background: rgba(255,255,255,.04) !important; border: 1px solid var(--c-border2) !important;
   color: var(--c-text) !important; border-radius: var(--r-md) !important;
-  font-family: 'Outfit', sans-serif !important; transition: all var(--t-base) !important;
+  font-family: var(--font-sans), sans-serif !important; transition: all var(--t-base) !important;
 }
 .form-input:focus { outline: none !important; border-color: var(--c-teal) !important; box-shadow: 0 0 0 3px rgba(0,212,168,.1) !important; }
 
@@ -1719,7 +1721,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 .collapse-toggle.open { background: rgba(0,212,168,.18) !important; }
 
 /* ── 17. SECTION HEADERS ──────────────────────────────────── */
-.sec-title { font-family: 'Outfit', sans-serif !important; font-weight: 700 !important; letter-spacing: -0.01em !important; }
+.sec-title { font-family: var(--font-sans), sans-serif !important; font-weight: 700 !important; letter-spacing: -0.01em !important; }
 .sec-hdr {
   padding-bottom: 8px !important;
   border-bottom: 1px solid rgba(0,212,168,.07) !important;
@@ -1735,7 +1737,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   background: linear-gradient(135deg, rgba(0,212,168,.08), rgba(139,92,246,.06)) !important;
   border: 1px solid rgba(0,212,168,.18) !important; border-radius: var(--r-md) !important;
 }
-.audit-pick-value { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+.audit-pick-value { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 .audit-row-rank { font-family: var(--mono) !important; }
 
 /* ── 19. MEMORY / AI PANELS ───────────────────────────────── */
@@ -1743,7 +1745,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 .memory-pattern-item { border-radius: var(--r-lg) !important; transition: all var(--t-base) !important; }
 .memory-pattern-item:hover { border-color: rgba(0,212,168,.15) !important; transform: translateX(3px) !important; }
 .memory-generator-card { border-radius: var(--r-xl) !important; }
-.memory-generator-title { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+.memory-generator-title { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 .memory-pattern-score.positive { background: rgba(34,197,94,.1) !important; border-color: rgba(34,197,94,.2) !important; color: var(--c-green) !important; }
 .memory-pattern-score.negative { background: rgba(244,63,94,.1) !important; border-color: rgba(244,63,94,.2) !important; color: var(--c-red) !important; }
 
@@ -1781,11 +1783,11 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   box-shadow: 0 0 0 1px rgba(0,212,168,.12), var(--shadow-2) !important;
 }
 #history21-root .history-summary-label,
-#smartbet-history-root .history-summary-label { font-family: 'Outfit', sans-serif !important; }
+#smartbet-history-root .history-summary-label { font-family: var(--font-sans), sans-serif !important; }
 #history21-root .history-summary-roi,
 #smartbet-history-root .history-summary-roi { font-family: var(--mono) !important; }
 #history21-root .history-status-pill,
-#smartbet-history-root .history-status-pill { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+#smartbet-history-root .history-status-pill { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 #history21-root .history-detail-card,
 #smartbet-history-root .history-detail-card {
   background: var(--c-surface) !important; border: 1px solid var(--c-border) !important;
@@ -1798,8 +1800,8 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
   border: 1px solid rgba(0,212,168,.1) !important; border-radius: var(--r-2xl) !important;
   box-shadow: var(--shadow-3), 0 0 40px rgba(0,212,168,.03) !important;
 }
-.focus-title { font-family: 'Outfit', sans-serif !important; font-weight: 900 !important; letter-spacing: -0.03em !important; }
-.focus-kicker { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; letter-spacing: 0.1em !important; }
+.focus-title { font-family: var(--font-sans), sans-serif !important; font-weight: 900 !important; letter-spacing: -0.03em !important; }
+.focus-kicker { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; letter-spacing: 0.1em !important; }
 .focus-card { background: rgba(255,255,255,.025) !important; border: 1px solid rgba(255,255,255,.06) !important; border-radius: var(--r-lg) !important; transition: all var(--t-base) !important; }
 .focus-card:hover { border-color: rgba(0,212,168,.15) !important; }
 .focus-card.recommended { border-color: rgba(34,197,94,.32) !important; box-shadow: 0 0 0 1px rgba(34,197,94,.1), var(--shadow-2) !important; }
@@ -1810,8 +1812,8 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 /* ── 23. GENERATOR / TILES ────────────────────────────────── */
 .generator-tile { border-radius: var(--r-lg) !important; transition: all var(--t-base) !important; }
 .generator-tile:hover { border-color: rgba(0,212,168,.22) !important; background: rgba(0,212,168,.04) !important; box-shadow: 0 0 20px rgba(0,212,168,.08) !important; }
-.generator-tile .title { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
-.generator-status { font-family: 'Outfit', sans-serif !important; }
+.generator-tile .title { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
+.generator-status { font-family: var(--font-sans), sans-serif !important; }
 
 /* ── 24. PROGRESS BARS ────────────────────────────────────── */
 .monitor-flow-fill {
@@ -1826,13 +1828,13 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 
 /* ── 25. TABLE ────────────────────────────────────────────── */
 .history-table th {
-  font-family: 'Outfit', sans-serif !important; font-weight: 700 !important;
+  font-family: var(--font-sans), sans-serif !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: 0.07em !important; font-size: 10px !important;
 }
-.history-table td { font-family: 'Outfit', sans-serif !important; }
+.history-table td { font-family: var(--font-sans), sans-serif !important; }
 
 /* ── 26. TOAST ────────────────────────────────────────────── */
-.toast { font-family: 'Outfit', sans-serif !important; font-weight: 600 !important; border-radius: var(--r-md) !important; }
+.toast { font-family: var(--font-sans), sans-serif !important; font-weight: 600 !important; border-radius: var(--r-md) !important; }
 .toast-ok   { background: rgba(34,197,94,.1) !important; border: 1px solid rgba(34,197,94,.35) !important; color: var(--c-green) !important; }
 .toast-err  { background: rgba(244,63,94,.1) !important; border: 1px solid rgba(244,63,94,.35) !important; color: var(--c-red) !important; }
 .toast-warn { background: rgba(251,191,36,.1) !important; border: 1px solid rgba(251,191,36,.35) !important; color: var(--c-amber) !important; }
@@ -1840,7 +1842,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 /* ── 27. LOADER ───────────────────────────────────────────── */
 .loader { background: rgba(4,8,16,.97) !important; }
 .loader-spin { border-color: var(--c-border2) !important; border-top-color: var(--c-teal) !important; }
-.loader-title { font-family: 'Outfit', sans-serif !important; font-weight: 800 !important; }
+.loader-title { font-family: var(--font-sans), sans-serif !important; font-weight: 800 !important; }
 .loader-sub   { font-family: var(--mono) !important; }
 
 /* ── 28. WELCOME BOX ──────────────────────────────────────── */
@@ -1852,14 +1854,14 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
 /* ── 29. MISC COMPONENTS ──────────────────────────────────── */
 .reason-pill {
   background: rgba(255,255,255,.04) !important; border: 1px solid rgba(255,255,255,.08) !important;
-  font-family: 'Outfit', sans-serif !important; font-weight: 600 !important; border-radius: 999px !important;
+  font-family: var(--font-sans), sans-serif !important; font-weight: 600 !important; border-radius: 999px !important;
   transition: all var(--t-fast) !important;
 }
 .reason-pill:hover { border-color: rgba(0,212,168,.2) !important; }
 .date-label { font-family: var(--mono) !important; background: rgba(255,255,255,.03) !important; border: 1px solid rgba(255,255,255,.06) !important; border-radius: 8px !important; }
 .view-mode-btn.active { background: rgba(0,212,168,.12) !important; color: var(--c-teal) !important; }
-.visual-card-title { font-family: 'Outfit', sans-serif !important; font-weight: 700 !important; }
-.match-inline-chip { font-family: 'Outfit', sans-serif !important; border-radius: 999px !important; transition: all var(--t-fast) !important; }
+.visual-card-title { font-family: var(--font-sans), sans-serif !important; font-weight: 700 !important; }
+.match-inline-chip { font-family: var(--font-sans), sans-serif !important; border-radius: 999px !important; transition: all var(--t-fast) !important; }
 .match-inline-chip:hover { border-color: rgba(0,212,168,.22) !important; color: var(--c-teal) !important; }
 .cota2-chip { background: rgba(0,212,168,.07) !important; border-color: rgba(0,212,168,.2) !important; color: var(--c-teal) !important; }
 .heat-cell { border-radius: var(--r-sm) !important; transition: transform var(--t-fast), box-shadow var(--t-fast) !important; font-family: var(--mono) !important; }
@@ -1928,7 +1930,7 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
     color: var(--c-muted) !important; cursor: pointer !important;
     border-radius: var(--r-lg) !important;
     transition: all var(--t-spring) !important;
-    position: relative !important; font-family: 'Outfit', sans-serif !important;
+    position: relative !important; font-family: var(--font-sans), sans-serif !important;
     -webkit-tap-highlight-color: transparent !important;
   }
   .mobile-nav-btn span {
@@ -1986,8 +1988,8 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; 
     background: rgba(0,212,168,.06) !important; border-color: rgba(0,212,168,.2) !important;
     transform: translateX(4px) !important;
   }
-  .sheet-btn-title { font-family: 'Outfit', sans-serif !important; font-weight: 700 !important; color: var(--c-text) !important; }
-  .sheet-btn-sub   { font-family: 'Outfit', sans-serif !important; font-size: 10px !important; color: var(--c-muted) !important; }
+  .sheet-btn-title { font-family: var(--font-sans), sans-serif !important; font-weight: 700 !important; color: var(--c-text) !important; }
+  .sheet-btn-sub   { font-family: var(--font-sans), sans-serif !important; font-size: 10px !important; color: var(--c-muted) !important; }
 
   /* Adjust main for bottom nav */
   .main { padding-bottom: calc(90px + env(safe-area-inset-bottom,0px)) !important; }
