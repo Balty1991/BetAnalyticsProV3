@@ -1075,9 +1075,11 @@ function prefetchNonCriticalTabData(){
   scheduleIdleTask(function(){
     loadLazyDataset('recommendationLog').then(function(){
       if(isTabActive('istoric21')) renderHistory21();
-      if(isTabActive('dashboard')) renderDashboardVisuals();
     }).catch(function(err){ console.warn('[Prefetch] recommendationLog failed', err); });
   }, 2200);
+  scheduleIdleTask(function(){
+    loadLazyDataset('historyEngine').catch(function(err){ console.warn('[Prefetch] historyEngine failed', err); });
+  }, 3400);
 }
 function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
@@ -3523,6 +3525,38 @@ var LAZY_DATA_READY = {
   fullHistoryAssets:false
 };
 var FULL_HISTORY_ASSETS_PROMISE = null;
+var DATASET_CACHE_VERSION = '20260423step6';
+
+function getDatasetCacheKey(key){
+  return 'bet_dataset_cache_' + DATASET_CACHE_VERSION + '_' + key;
+}
+function readDatasetCache(key, maxAgeMs){
+  try {
+    var raw = localStorage.getItem(getDatasetCacheKey(key));
+    if(!raw) return null;
+    var payload = JSON.parse(raw);
+    if(!payload || typeof payload !== 'object') return null;
+    if(maxAgeMs && payload.ts && (Date.now() - Number(payload.ts)) > maxAgeMs) return null;
+    return payload.data;
+  } catch(err){
+    return null;
+  }
+}
+function writeDatasetCache(key, data){
+  try {
+    localStorage.setItem(getDatasetCacheKey(key), JSON.stringify({ ts: Date.now(), data: data }));
+  } catch(err){}
+}
+function hydrateLazyBootstrapCache(){
+  if(!(RECOMMENDATION_LOG || []).length){
+    var cachedLog = readDatasetCache('recommendationLog', 12 * 3600 * 1000);
+    if(Array.isArray(cachedLog) && cachedLog.length) RECOMMENDATION_LOG = normalizeResultList(cachedLog);
+  }
+  if(!(HISTORY_ENGINE || []).length){
+    var cachedHistory = readDatasetCache('historyEngine', 24 * 3600 * 1000);
+    if(Array.isArray(cachedHistory) && cachedHistory.length) HISTORY_ENGINE = normalizeResultList(cachedHistory);
+  }
+}
 
 function getJson(path, fallback){
   var url = getBase() + path + '?t=' + Date.now();
@@ -3579,11 +3613,13 @@ function applyLazyDataset(key, data){
   }
   if(key === 'recommendationLog'){
     RECOMMENDATION_LOG = normalizeResultList(data);
+    writeDatasetCache('recommendationLog', RECOMMENDATION_LOG);
     try { autoSyncTrackingStatuses(); } catch(e){}
     return;
   }
   if(key === 'historyEngine'){
     HISTORY_ENGINE = normalizeResultList(data);
+    writeDatasetCache('historyEngine', HISTORY_ENGINE);
     return;
   }
   if(key === 'recommendationJournal'){
@@ -3737,6 +3773,7 @@ function doRefresh(){
     RECOMMENDATION_LOG = [];
     RECOMMENDATION_JOURNAL = [];
     try { window.RECOMMENDATION_JOURNAL = RECOMMENDATION_JOURNAL; } catch(e){}
+    hydrateLazyBootstrapCache();
 
     LAZY_DATA_READY.predictions = true;
     LAZY_DATA_READY.meta = true;
@@ -9889,7 +9926,7 @@ function renderHistory21(){
   var root = $('history21-root');
   if(!root) return;
   if((LAZY_DATA_PROMISES.recommendationLog || !LAZY_DATA_READY.recommendationLog) && !(RECOMMENDATION_LOG || []).length){
-    root.innerHTML = '<div class="empty-state">Se încarcă istoricul real pe 21 zile...</div>';
+    root.innerHTML = '<div class="history21-shell-placeholder"><div class="history21-shell-grid"><div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div><div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div><div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div></div><div class="history21-shell-detail"><div class="boot-skeleton-title skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div><div class="boot-skeleton-line short skeleton-shimmer"></div><div class="empty-state" style="margin-top:12px">Se încarcă istoricul real pe 21 zile...</div></div></div>';
     return;
   }
   var now = new Date();
