@@ -25,8 +25,8 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 .container,.main,.app-shell{max-width:1400px;margin:0 auto;width:100%}
 .section,.panel,.card,.tab-content{background:#161d2e;border:1px solid var(--brd);border-radius:16px}
 </style>
-<link rel="stylesheet" href="./assets/app.css?v=20260423step5"/>
-<script defer src="./assets/app.js?v=20260423step5"></script>
+<link rel="stylesheet" href="./assets/app.css?v=20260423step6"/>
+<script defer src="./assets/app.js?v=20260423step6"></script>
 </head>
 <body>
 
@@ -111,7 +111,21 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 
   <!-- ===== DASHBOARD ===== -->
   <div class="tab-content active" id="tab-dashboard">
-    <div id="dashboard-modern-shell"></div>
+    <div id="dashboard-modern-shell">
+      <div class="boot-skeleton-shell" aria-hidden="true">
+        <div class="boot-skeleton-hero">
+          <div class="boot-skeleton-kicker skeleton-shimmer"></div>
+          <div class="boot-skeleton-title skeleton-shimmer"></div>
+          <div class="boot-skeleton-line skeleton-shimmer"></div>
+          <div class="boot-skeleton-line short skeleton-shimmer"></div>
+          <div class="boot-skeleton-chip-row">
+            <span class="boot-skeleton-chip skeleton-shimmer"></span>
+            <span class="boot-skeleton-chip skeleton-shimmer"></span>
+            <span class="boot-skeleton-chip skeleton-shimmer"></span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Stats row -->
     <div class="stats-grid" id="dashboard-stats" style="margin-top:12px;margin-bottom:12px">
@@ -130,7 +144,12 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
         </div>
         <div class="visual-mini-meta">live snapshot</div>
       </div>
-      <div class="dashboard-monitor-grid" id="dashboard-monitor-grid"></div>
+      <div class="dashboard-monitor-grid" id="dashboard-monitor-grid">
+        <div class="boot-skeleton-card" aria-hidden="true"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
+        <div class="boot-skeleton-card" aria-hidden="true"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
+        <div class="boot-skeleton-card" aria-hidden="true"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
+        <div class="boot-skeleton-card" aria-hidden="true"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
+      </div>
     </div>
 
     
@@ -1114,7 +1133,20 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
       </div>
       <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px">Istoricul este compactat pe aceleași categorii folosite în aplicație. Pe fiecare card vezi clar <b>ROI</b>, <b>win rate</b>, <b>win / jucate</b> și contextul de bază pe aceeași perioadă de 21 de zile.</div>
     </div>
-    <div id="history21-root"></div>
+    <div id="history21-root">
+      <div class="history21-shell-placeholder" aria-hidden="true">
+        <div class="history21-shell-grid">
+          <div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
+          <div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
+          <div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
+        </div>
+        <div class="history21-shell-detail">
+          <div class="boot-skeleton-title skeleton-shimmer"></div>
+          <div class="boot-skeleton-line skeleton-shimmer"></div>
+          <div class="boot-skeleton-line short skeleton-shimmer"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
 
@@ -1181,6 +1213,5 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 
 
 
-  <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
 </body>
 </html>
