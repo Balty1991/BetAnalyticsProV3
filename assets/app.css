@@ -2029,3 +2029,25 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--font-sans); letter-spacing: -0.02em; }
 .smartlearn-tab{padding:9px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;font-family:var(--sans)}
 .smartlearn-tab:hover{border-color:rgba(168,85,247,.3);color:var(--txt)}
 .smartlearn-tab.active{background:linear-gradient(135deg,rgba(168,85,247,.18),rgba(59,130,246,.14));border-color:rgba(168,85,247,.4);color:var(--txt);box-shadow:0 4px 14px rgba(168,85,247,.15)}
+
+
+/* ===== Step 6: layout stability + instant placeholders ===== */
+#dashboard-modern-shell{min-height:236px;contain-intrinsic-size:236px auto}
+#dashboard-monitor-grid{min-height:168px;contain-intrinsic-size:168px auto}
+#history21-root{min-height:360px;contain-intrinsic-size:360px auto}
+.boot-skeleton-shell,.history21-shell-placeholder{display:grid;gap:12px}
+.boot-skeleton-hero,.boot-skeleton-card,.history21-shell-detail{padding:16px;border-radius:18px;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,rgba(17,25,42,.94),rgba(12,18,32,.96));box-shadow:0 10px 24px rgba(0,0,0,.14)}
+.boot-skeleton-card{min-height:120px}
+.boot-skeleton-kicker{width:84px;height:10px;border-radius:999px;background:rgba(255,255,255,.08)}
+.boot-skeleton-title{width:min(320px,72%);height:18px;border-radius:999px;background:rgba(255,255,255,.09)}
+.boot-skeleton-value{width:92px;height:28px;border-radius:12px;background:rgba(255,255,255,.10);margin-top:14px}
+.boot-skeleton-line{width:100%;height:11px;border-radius:999px;background:rgba(255,255,255,.08);margin-top:12px}
+.boot-skeleton-line.short{width:64%}
+.boot-skeleton-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.boot-skeleton-chip{width:92px;height:26px;border-radius:999px;background:rgba(255,255,255,.08)}
+.history21-shell-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px}
+.history21-shell-detail{min-height:150px}
+.skeleton-shimmer{position:relative;overflow:hidden}
+.skeleton-shimmer::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:skeletonShimmer 1.5s infinite}
+@keyframes skeletonShimmer{100%{transform:translateX(100%)}}
+@media(max-width:620px){#dashboard-modern-shell{min-height:252px}#history21-root{min-height:420px}}
