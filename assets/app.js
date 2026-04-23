@@ -957,6 +957,128 @@ function setMatchCardMode(mode, btn){
   });
   if(typeof renderMatches === 'function') renderMatches();
 }
+
+var TAB_RENDER_STATE = {};
+var NONCRITICAL_PREFETCH_STARTED = false;
+
+function scheduleIdleTask(fn, timeout){
+  if(typeof window.requestIdleCallback === 'function'){
+    return window.requestIdleCallback(function(){ try{ fn(); }catch(e){ console.warn(e); } }, { timeout: timeout || 1500 });
+  }
+  return setTimeout(function(){ try{ fn(); }catch(e){ console.warn(e); } }, Math.min(timeout || 1500, 1200));
+}
+function isTabActive(name){
+  var el = $('tab-' + name);
+  return !!(el && el.classList.contains('active'));
+}
+function markTabRendered(name){
+  TAB_RENDER_STATE[name] = Date.now();
+}
+function renderDashboardTab(opts){
+  opts = opts || {};
+  renderModernDashboard();
+  if(opts.deferSecondary){
+    scheduleIdleTask(function(){
+      if(!isTabActive('dashboard')) return;
+      renderBacktest();
+      renderDashboardVisuals();
+      renderMarketDistribution();
+      renderMarketPerformance();
+      renderFocusCenter();
+      renderTicketLaneBoard();
+      renderTodayBest();
+      renderTopPicks();
+      renderTopSafe();
+      renderSignalAudit();
+      renderAuditVisuals();
+      markTabRendered('dashboard');
+    }, 1800);
+    return;
+  }
+  renderBacktest();
+  renderDashboardVisuals();
+  renderMarketDistribution();
+  renderMarketPerformance();
+  renderFocusCenter();
+  renderTicketLaneBoard();
+  renderTodayBest();
+  renderTopPicks();
+  renderTopSafe();
+  renderSignalAudit();
+  renderAuditVisuals();
+  markTabRendered('dashboard');
+}
+function renderMatchesTab(){
+  renderML();
+  renderMLDC();
+  renderML15();
+  renderML25();
+  renderML35();
+  renderMlApiCenter();
+  renderMatches();
+  markTabRendered('meciuri');
+}
+function renderHistory21Tab(){
+  renderHistory21();
+  markTabRendered('istoric21');
+}
+function renderActiveTab(name, opts){
+  opts = opts || {};
+  if(name === 'dashboard'){
+    renderDashboardTab({ deferSecondary: !!opts.deferDashboardSecondary });
+    return;
+  }
+  if(name === 'meciuri'){
+    renderMatchesTab();
+    return;
+  }
+  if(name === 'bilete'){
+    renderBilete();
+    markTabRendered('bilete');
+    return;
+  }
+  if(name === 'tracking'){
+    try { autoSyncTrackingStatuses(); } catch(e){}
+    renderTracking();
+    markTabRendered('tracking');
+    return;
+  }
+  if(name === 'istoric21'){
+    renderHistory21Tab();
+    return;
+  }
+  if(name === 'charts'){
+    renderAdvancedCharts();
+    markTabRendered('charts');
+    return;
+  }
+  if(name === 'smartbet'){
+    try { renderSmartBet(); } catch(e){}
+    try { switchSmartLearnSection(window._smartLearnSection || 'predictii'); } catch(e){}
+    markTabRendered('smartbet');
+    return;
+  }
+  if(name === 'bankroll'){
+    calcBankroll();
+    markTabRendered('bankroll');
+    return;
+  }
+  if(name === 'cota2'){
+    renderCota2Section();
+    markTabRendered('cota2');
+    return;
+  }
+}
+function prefetchNonCriticalTabData(){
+  if(NONCRITICAL_PREFETCH_STARTED) return;
+  NONCRITICAL_PREFETCH_STARTED = true;
+  scheduleIdleTask(function(){
+    loadLazyDataset('recommendationLog').then(function(){
+      if(isTabActive('istoric21')) renderHistory21();
+      if(isTabActive('dashboard')) renderDashboardVisuals();
+    }).catch(function(err){ console.warn('[Prefetch] recommendationLog failed', err); });
+  }, 2200);
+}
 function switchTab(name){
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
   $('tab-'+name).classList.add('active');
@@ -965,15 +1087,9 @@ function switchTab(name){
   setDesktopTabActive(name);
   setMobileNavActive(name);
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  if(name==='dashboard') renderModernDashboard();
-  if(name==='tracking') renderTracking();
-  if(name==='cota2') renderCota2Section();
-  if(name==='bankroll') calcBankroll();
-  if(name==='istoric21') renderHistory21();
-  if(name==='smartbet'){ try{ switchSmartLearnSection(window._smartLearnSection||'predictii'); }catch(e){} }
   if(name==='audit'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
   if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
-  if(name==='charts') renderAdvancedCharts();
+  renderActiveTab(name, { deferDashboardSecondary: name === 'dashboard' });
   renderTicketQuickPeek();
   ensureTabData(name).then(function(){
     if(getCurrentActiveTabName() !== name) return;
@@ -3536,7 +3652,11 @@ function rerenderTabAfterLazyLoad(name){
     return;
   }
   if(name === 'dashboard'){
-    renderModernDashboard();
+    renderDashboardVisuals();
+    return;
+  }
+  if(name === 'istoric21'){
+    renderHistory21();
     return;
   }
 }
@@ -3546,6 +3666,7 @@ function ensureTabData(name){
   if(name === 'tracking') keys = ['events', 'recommendationLog'];
   else if(name === 'charts') keys = ['recommendationLog', 'historyEngine'];
   else if(name === 'smartbet') keys = ['recommendationLog', 'historyEngine', 'recommendationJournal'];
+  else if(name === 'istoric21') keys = ['recommendationLog'];
   if(!keys.length) return Promise.resolve(false);
   return Promise.all(keys.map(loadLazyDataset));
 }
@@ -8879,7 +9000,6 @@ function renderAdvancedCharts(){
 function renderAll(){
   LAST_DAY_KEY = getCurrentDayKey();
   var total = ALL_MATCHES.length;
-  var eligible = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE'; }).length;
   var safe = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.verdict === 'safe'; }).length;
   var value = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.bestBet && m.bestBet.value >= 0.05; }).length;
   var mlComplete = ALL_MATCHES.filter(function(m){ return m.createdAt && m.modelVersion && (m.probOver25 || m.probUnder25) && (m.xgTotal || m.xgHome || m.xgAway); }).length;
@@ -8906,29 +9026,9 @@ function renderAll(){
   $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr;
 
   buildLeagueFilter();
-  renderBacktest();
-  renderDashboardVisuals();
-  renderMarketDistribution();
-  renderMarketPerformance();
-  renderFocusCenter();
-  renderTicketLaneBoard();
-  renderTodayBest();
-  renderTopPicks();
-  renderTopSafe();
-  renderSignalAudit();
-  renderAuditVisuals();
-  renderML();
-  renderMLDC();
-  renderML15();
-  renderML25();
-  renderML35();
-  renderMlApiCenter();
-  renderMatches();
-  renderBilete();
-  renderAdvancedCharts();
-  try { renderLearningEngine(); } catch(e){}
-  autoSyncTrackingStatuses();
-  renderTracking();
+  renderTicketQuickPeek();
+  renderActiveTab(getCurrentActiveTabName(), { deferDashboardSecondary: getCurrentActiveTabName() === 'dashboard' });
+  prefetchNonCriticalTabData();
 }
 
 window.addEventListener('DOMContentLoaded', function(){
@@ -9766,6 +9866,10 @@ function getHistory21CardVisual(summaryRow){
 function renderHistory21(){
   var root = $('history21-root');
   if(!root) return;
+  if((LAZY_DATA_PROMISES.recommendationLog || !LAZY_DATA_READY.recommendationLog) && !(RECOMMENDATION_LOG || []).length){
+    root.innerHTML = '<div class="empty-state">Se încarcă istoricul real pe 21 zile...</div>';
+    return;
+  }
   var now = new Date();
   var cutoff = new Date(now.getTime() - (21 * 86400000));
   var settledRows = getHistory21SettledRows(cutoff);
@@ -10817,18 +10921,21 @@ window.switchTab = function(name){
 var _smartbetRenderAll = window.renderAll;
 window.renderAll = function(){
   var out = _smartbetRenderAll();
-  try { renderSmartBet(); } catch(err){ console.error('SmartBet renderAll failed:', err); }
-  try{
+  try {
     var smartTab = document.getElementById('tab-smartbet');
-    if(smartTab && smartTab.classList.contains('active') && (window._smartLearnSection||'predictii')==='predictii'){
-      renderUnifiedEngine();
+    if(smartTab && smartTab.classList.contains('active')){
+      renderSmartBet();
+      if((window._smartLearnSection||'predictii')==='predictii') renderUnifiedEngine();
     }
-  }catch(e){}
+  } catch(err){ console.error('SmartBet renderAll failed:', err); }
   return out;
 };
 window.addEventListener('DOMContentLoaded', function(){
   setTimeout(function(){
-    try { renderSmartBet(); } catch(err){ console.error('SmartBet initial render failed:', err); }
+    try {
+      var smartTab = document.getElementById('tab-smartbet');
+      if(smartTab && smartTab.classList.contains('active')) renderSmartBet();
+    } catch(err){ console.error('SmartBet initial render failed:', err); }
   }, 250);
 });
 
