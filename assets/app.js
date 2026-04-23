@@ -3546,6 +3546,32 @@ function rerunPredictionPipeline(rawPredictions){
   syncRecommendationEngine();
 }
 
+var PREDICTION_RESYNC_SCHEDULED = false;
+function schedulePredictionResync(reason){
+  if(PREDICTION_RESYNC_SCHEDULED) return;
+  PREDICTION_RESYNC_SCHEDULED = true;
+  var runner = function(){
+    PREDICTION_RESYNC_SCHEDULED = false;
+    try {
+      (window.__RAW_PREDICTIONS || []).forEach(function(raw){ if(raw) raw.__hybridProbCache = null; });
+      rerunPredictionPipeline(window.__RAW_PREDICTIONS || []);
+      if(typeof getCurrentActiveTabName === 'function' && getCurrentActiveTabName() === 'smartbet'){
+        try { renderSmartBet(); } catch(e){}
+        try {
+          if((window._smartLearnSection || 'predictii') === 'predictii') renderUnifiedEngine();
+        } catch(e){}
+      }
+    } catch(e){
+      console.warn('[LearningEngine] deferred re-sync failed' + (reason ? ' (' + reason + ')' : ''), e);
+    }
+  };
+  if(window.requestIdleCallback){
+    window.requestIdleCallback(runner, { timeout: 1200 });
+  } else {
+    setTimeout(runner, 250);
+  }
+}
+
 function applyLazyDataset(key, data){
   if(key === 'events'){
     ALL_EVENTS = normalizeResultList(data);
@@ -3564,10 +3590,7 @@ function applyLazyDataset(key, data){
     RECOMMENDATION_JOURNAL = normalizeResultList(data);
     try { window.RECOMMENDATION_JOURNAL = RECOMMENDATION_JOURNAL; } catch(e){}
     try { buildLearningEngine(); } catch(e){ console.warn('[LearningEngine] build failed', e); }
-    try {
-      (window.__RAW_PREDICTIONS || []).forEach(function(raw){ if(raw) raw.__hybridProbCache = null; });
-      rerunPredictionPipeline(window.__RAW_PREDICTIONS || []);
-    } catch(e){ console.warn('[LearningEngine] re-sync failed', e); }
+    schedulePredictionResync('recommendationJournal');
     return;
   }
 }
@@ -3625,8 +3648,7 @@ function ensureFullHistoryAssets(){
   showLoader('Se încarcă istoricul extins...');
   FULL_HISTORY_ASSETS_PROMISE = loadScriptSequentially([
     './assets/full-history.js?v=20260418',
-    './assets/full-history-hotfix.js?v=20260420hotfix2',
-    './assets/full-history-hotfix.js?v=20260420hotfix1'
+    './assets/full-history-hotfix.js?v=20260420hotfix2'
   ]).then(function(){
     LAZY_DATA_READY.fullHistoryAssets = true;
     return true;
@@ -10930,16 +10952,6 @@ window.renderAll = function(){
   } catch(err){ console.error('SmartBet renderAll failed:', err); }
   return out;
 };
-window.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    try {
-      var smartTab = document.getElementById('tab-smartbet');
-      if(smartTab && smartTab.classList.contains('active')) renderSmartBet();
-    } catch(err){ console.error('SmartBet initial render failed:', err); }
-  }, 250);
-});
-
-
 /* ===== SMARTBET UI COMPACT + HISTORY OVERRIDES ===== */
 var SMARTBET_VIEW = window.SMARTBET_VIEW || 'live';
 var SMARTBET_HISTORY_RANGE = window.SMARTBET_HISTORY_RANGE || '30d';
@@ -11441,8 +11453,7 @@ window.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ v
 /* ===== Inline script block 2 ===== */
 window.__FULL_HISTORY_LAZY_ASSETS__ = [
     './assets/full-history.js?v=20260418',
-    './assets/full-history-hotfix.js?v=20260420hotfix2',
-    './assets/full-history-hotfix.js?v=20260420hotfix1'
+    './assets/full-history-hotfix.js?v=20260420hotfix2'
   ];
 
 /* ===== Inline script block 3 ===== */
@@ -11598,6 +11609,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Re-run after data loads (observe DOM changes)
   if (window.MutationObserver) {
+    var observerTarget = document.getElementById('tab-dashboard') || document.getElementById('dashboard-grid') || document.body;
+    var observerRuns = 0;
+    var observerTimer = null;
     var observer = new MutationObserver(function(mutations) {
       var hasCards = mutations.some(function(m) {
         return Array.from(m.addedNodes).some(function(n) {
@@ -11606,17 +11620,20 @@ document.addEventListener('DOMContentLoaded', function() {
           );
         });
       });
-      if (hasCards) {
-        setTimeout(function() {
-          triggerCounters();
-          addSparklines();
-          animateBars();
-          applyNumberGlows();
-          applyGradientBorders();
-        }, 200);
-      }
+      if (!hasCards) return;
+      if (observerTimer) clearTimeout(observerTimer);
+      observerTimer = setTimeout(function() {
+        triggerCounters(observerTarget);
+        addSparklines();
+        animateBars();
+        applyNumberGlows();
+        applyGradientBorders();
+        observerRuns += 1;
+        if (observerRuns >= 2) observer.disconnect();
+      }, 180);
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(observerTarget, { childList: true, subtree: true });
+    setTimeout(function(){ try { observer.disconnect(); } catch(e){} }, 8000);
   }
 });
 
@@ -11886,21 +11903,15 @@ function renderArchivePanel(){
 window.renderArchivePanel = renderArchivePanel;
 window.renderUnifiedEngine = renderUnifiedEngine;
 
-// Auto-render unified engine on initial app load (after data is ready)
+// Auto-render unified engine only if SmartBet is the initial active tab
 document.addEventListener('DOMContentLoaded', function(){
+  var smartTab = document.getElementById('tab-smartbet');
+  if(!(smartTab && smartTab.classList.contains('active'))) return;
   var checkInterval = setInterval(function(){
     if(typeof getSmartBetAnalysis === 'function' && typeof AI_MEMORY !== 'undefined'){
       clearInterval(checkInterval);
-      // render if smartbet tab is the initial active tab, or just prime on first data load
-      try{
-        var activeSect = window._smartLearnSection || 'predictii';
-        var smartTab = document.getElementById('tab-smartbet');
-        if(smartTab && smartTab.classList.contains('active')){
-          renderUnifiedEngine();
-        }
-      }catch(e){}
+      try { renderUnifiedEngine(); } catch(e){}
     }
-  }, 800);
-  // clear after 30s regardless
-  setTimeout(function(){ clearInterval(checkInterval); }, 30000);
+  }, 500);
+  setTimeout(function(){ clearInterval(checkInterval); }, 8000);
 });
