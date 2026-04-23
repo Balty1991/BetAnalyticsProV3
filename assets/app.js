@@ -907,123 +907,6 @@ function getCurrentActiveTabName(){
   var active = document.querySelector('.tab-content.active');
   return active ? String(active.id || '').replace('tab-','') : 'dashboard';
 }
-
-var TAB_ARIA_LABELS = {
-  dashboard:'Dashboard',
-  meciuri:'Meciuri',
-  bilete:'Bilete',
-  tracking:'Tracking',
-  cota2:'Cota 2 Daily',
-  bankroll:'Bankroll',
-  istoric21:'Istoric 21',
-  smartbet:'Motor de Predicții Unificat',
-  charts:'Grafice'
-};
-var CONTROL_ARIA_LABELS = {
-  'ml-sort':'Sortare predicții ML',
-  'ml15-sort':'Sortare predicții over 1.5',
-  'ml35-sort':'Sortare predicții under 3.5',
-  'sort-select':'Sortare listă meciuri',
-  'league-filter':'Filtru ligă',
-  'match-date-filter':'Filtru dată meci',
-  'match-market-filter':'Filtru piață',
-  'match-pro-mode':'Filtru mod PRO',
-  'match-min-prob':'Probabilitate minimă meci',
-  'match-min-edge':'Edge minim meci',
-  'match-kickoff-filter':'Filtru oră start',
-  'match-tier-filter':'Filtru nivel meci',
-  'match-min-score':'Scor minim model',
-  'cust-stake':'Miză bilet personalizat',
-  'cust-target-odds':'Cotă țintă bilet personalizat',
-  'cust-picks':'Număr selecții bilet personalizat',
-  'cust-format':'Format bilet personalizat',
-  'cust-date-window':'Fereastră dată bilet personalizat',
-  'cust-risk':'Profil risc bilet personalizat',
-  'cust-mode':'Mod selecție bilet personalizat',
-  'cb-over15':'Include Over 1.5',
-  'cb-over25':'Include Over 2.5',
-  'cb-btts':'Include BTTS',
-  'cb-under35':'Include Under 3.5',
-  'cb-ai-only':'Include doar AI only',
-  'cb-fav-only':'Include doar favorite',
-  'cb-goals-only':'Include doar piețe de goluri',
-  'ex-date':'Data exportului',
-  'ex-picks':'Număr selecții export',
-  'ex-odds':'Cotă export',
-  'ex-stake':'Miză export',
-  'bankroll-input':'Bankroll inițial',
-  'bk-single-pct':'Procent Single Premium',
-  'bk-double-pct':'Procent Double Confirmed',
-  'bk-triple-pct':'Procent Triple Value',
-  'bk-contrarian-pct':'Procent Contrarian Shot',
-  'cota2-min-total':'Cotă totală minimă Cota 2 Daily',
-  'cota2-max-total':'Cotă totală maximă Cota 2 Daily',
-  'cota2-min-legs':'Selecții minime Cota 2 Daily',
-  'cota2-max-legs':'Selecții maxime Cota 2 Daily',
-  'cota2-strategy':'Strategie Cota 2 Daily',
-  'cota2-day-mode':'Orizont meciuri Cota 2 Daily',
-  'cota2-learning-proxy':'Învățare adaptivă Cota 2 Daily'
-};
-function updateTabAccessibility(activeName){
-  document.querySelectorAll('.tabs .tab[data-tab]').forEach(function(btn){
-    var name = btn.getAttribute('data-tab');
-    var isMore = name === 'more';
-    var active = isMore ? btn.classList.contains('active') && !document.getElementById('tab-more') : ('tab-' + name) === ('tab-' + activeName);
-    btn.setAttribute('aria-selected', active ? 'true' : 'false');
-    if(!isMore) btn.setAttribute('tabindex', active ? '0' : '-1');
-  });
-  document.querySelectorAll('.tab-content').forEach(function(panel){
-    var active = panel.id === 'tab-' + activeName;
-    panel.hidden = !active;
-    panel.setAttribute('aria-hidden', active ? 'false' : 'true');
-  });
-  document.querySelectorAll('.mobile-nav-btn[data-tab]').forEach(function(btn){
-    var name = btn.getAttribute('data-tab');
-    var active = name === activeName;
-    btn.setAttribute('aria-current', active ? 'page' : 'false');
-  });
-}
-function setupAccessibility(){
-  document.querySelectorAll('.tabs .tab[data-tab]').forEach(function(btn){
-    var name = btn.getAttribute('data-tab');
-    var label = TAB_ARIA_LABELS[name] || btn.textContent.trim();
-    btn.setAttribute('type','button');
-    if(name === 'more'){
-      btn.setAttribute('aria-label','Mai mult');
-      btn.setAttribute('aria-haspopup','dialog');
-      btn.setAttribute('aria-controls','desktop-more-panel');
-      return;
-    }
-    btn.setAttribute('role','tab');
-    btn.setAttribute('id','tab-btn-' + name);
-    btn.setAttribute('aria-controls','tab-' + name);
-    btn.setAttribute('aria-label', label);
-  });
-  document.querySelectorAll('.tab-content').forEach(function(panel){
-    var name = String(panel.id || '').replace('tab-','');
-    panel.setAttribute('role','tabpanel');
-    panel.setAttribute('tabindex','-1');
-    panel.setAttribute('aria-labelledby','tab-btn-' + name);
-  });
-  document.querySelectorAll('.mobile-nav-btn[data-tab]').forEach(function(btn){
-    var name = btn.getAttribute('data-tab');
-    btn.setAttribute('type','button');
-    btn.setAttribute('aria-label', TAB_ARIA_LABELS[name] || btn.textContent.trim());
-    if(name === 'more'){
-      btn.setAttribute('aria-haspopup','dialog');
-      btn.setAttribute('aria-controls','mobile-sheet');
-    }
-  });
-  var refreshBtn = document.getElementById('btn-refresh');
-  if(refreshBtn) refreshBtn.setAttribute('aria-label','Reîmprospătează datele');
-  Object.keys(CONTROL_ARIA_LABELS).forEach(function(id){
-    var el = $(id);
-    if(el && !el.getAttribute('aria-label')) el.setAttribute('aria-label', CONTROL_ARIA_LABELS[id]);
-  });
-  var main = document.getElementById('main-content');
-  if(main) main.setAttribute('tabindex','-1');
-  updateTabAccessibility(getCurrentActiveTabName());
-}
 function updateMorePanelOffset(){
   var tabs = document.querySelector('.tabs');
   if(!tabs) return;
@@ -1035,13 +918,10 @@ function toggleDesktopMore(){
   if(!panel) return;
   updateMorePanelOffset();
   panel.classList.toggle('show');
-  var isOpen = panel.classList.contains('show');
-  panel.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-  document.body.classList.toggle('more-open', isOpen);
-  var moreBtn = document.querySelector('.tab[data-tab="more"]');
-  if(moreBtn) moreBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  if(isOpen){
+  document.body.classList.toggle('more-open', panel.classList.contains('show'));
+  if(panel.classList.contains('show')){
     document.querySelectorAll('.tab').forEach(function(btn){ btn.classList.remove('active'); });
+    var moreBtn = document.querySelector('.tab[data-tab="more"]');
     if(moreBtn) moreBtn.classList.add('active');
   } else {
     setDesktopTabActive(getCurrentActiveTabName());
@@ -1049,9 +929,7 @@ function toggleDesktopMore(){
 }
 function closeDesktopMore(skipActive){
   var panel = $('desktop-more-panel');
-  if(panel){ panel.classList.remove('show'); panel.setAttribute('aria-hidden','true'); }
-  var moreBtn = document.querySelector('.tab[data-tab="more"]');
-  if(moreBtn) moreBtn.setAttribute('aria-expanded','false');
+  if(panel) panel.classList.remove('show');
   document.body.classList.remove('more-open');
   if(!skipActive) setDesktopTabActive(getCurrentActiveTabName());
 }
@@ -1064,17 +942,11 @@ function toggleMobileMore(){
   var sheet = $('mobile-sheet');
   if(!sheet) return;
   sheet.classList.toggle('show');
-  var isOpen = sheet.classList.contains('show');
-  sheet.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-  var moreBtn = document.querySelector('.mobile-nav-btn[data-tab="more"]');
-  if(moreBtn) moreBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  setMobileNavActive(isOpen ? 'more' : getCurrentActiveTabName());
+  setMobileNavActive(sheet.classList.contains('show') ? 'more' : getCurrentActiveTabName());
 }
 function closeMobileMore(){
   var sheet = $('mobile-sheet');
-  if(sheet){ sheet.classList.remove('show'); sheet.setAttribute('aria-hidden','true'); }
-  var moreBtn = document.querySelector('.mobile-nav-btn[data-tab="more"]');
-  if(moreBtn) moreBtn.setAttribute('aria-expanded','false');
+  if(sheet) sheet.classList.remove('show');
   setMobileNavActive(getCurrentActiveTabName());
 }
 function setMatchCardMode(mode, btn){
@@ -1216,7 +1088,6 @@ function switchTab(name){
   closeMobileMore();
   setDesktopTabActive(name);
   setMobileNavActive(name);
-  updateTabAccessibility(name);
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   if(name==='audit'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
   if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
@@ -9240,7 +9111,6 @@ window.addEventListener('DOMContentLoaded', function(){
   moveDashboardSectionsToMatches();
   arrangeDashboardLayout();
   setMobileNavActive('dashboard');
-  setupAccessibility();
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
   setInterval(doRefresh, 900000);
