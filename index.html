@@ -4166,6 +4166,12 @@ function switchTab(name){
   if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
   if(name==='charts') renderAdvancedCharts();
   renderTicketQuickPeek();
+  ensureTabData(name).then(function(){
+    if(getCurrentActiveTabName() !== name) return;
+    rerenderTabAfterLazyLoad(name);
+  }).catch(function(err){
+    console.warn('[LazyData] failed for tab', name, err);
+  });
 }
 
 // ============================================================
@@ -6575,77 +6581,221 @@ function getBase(){
   return document.location.pathname.replace(/\/[^\/]*$/, '');
 }
 
+var LAZY_DATA_PROMISES = {};
+var LAZY_DATA_READY = {
+  predictions:false,
+  meta:false,
+  leagues:false,
+  backtest:false,
+  signalAudit:false,
+  aiMemory:false,
+  trainingBaselines:false,
+  trainingSummary:false,
+  events:false,
+  recommendationLog:false,
+  historyEngine:false,
+  recommendationJournal:false,
+  fullHistoryAssets:false
+};
+var FULL_HISTORY_ASSETS_PROMISE = null;
+
+function getJson(path, fallback){
+  var url = getBase() + path + '?t=' + Date.now();
+  return fetch(url, { cache: 'no-store' })
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP ' + r.status + ' @ ' + path);
+      return r.json();
+    })
+    .catch(function(){ return fallback; });
+}
+
+function normalizeResultList(data){
+  return Array.isArray(data) ? data : ((data && data.results) || []);
+}
+
+function rerunPredictionPipeline(rawPredictions){
+  var preds = Array.isArray(rawPredictions) ? rawPredictions : [];
+  rebuildTrainingBaselineMap();
+  ALL_MATCHES = preds.map(analyzeMatch);
+  rebuildVisualMatchIndex();
+  syncRecommendationEngine();
+}
+
+function applyLazyDataset(key, data){
+  if(key === 'events'){
+    ALL_EVENTS = normalizeResultList(data);
+    return;
+  }
+  if(key === 'recommendationLog'){
+    RECOMMENDATION_LOG = normalizeResultList(data);
+    try { autoSyncTrackingStatuses(); } catch(e){}
+    return;
+  }
+  if(key === 'historyEngine'){
+    HISTORY_ENGINE = normalizeResultList(data);
+    return;
+  }
+  if(key === 'recommendationJournal'){
+    RECOMMENDATION_JOURNAL = normalizeResultList(data);
+    try { window.RECOMMENDATION_JOURNAL = RECOMMENDATION_JOURNAL; } catch(e){}
+    try { buildLearningEngine(); } catch(e){ console.warn('[LearningEngine] build failed', e); }
+    try {
+      (window.__RAW_PREDICTIONS || []).forEach(function(raw){ if(raw) raw.__hybridProbCache = null; });
+      rerunPredictionPipeline(window.__RAW_PREDICTIONS || []);
+    } catch(e){ console.warn('[LearningEngine] re-sync failed', e); }
+    return;
+  }
+}
+
+function loadLazyDataset(key){
+  if(LAZY_DATA_READY[key]) return Promise.resolve(true);
+  if(LAZY_DATA_PROMISES[key]) return LAZY_DATA_PROMISES[key];
+
+  var cfg = {
+    events:{ path:'/data/events.json', fallback:[] },
+    recommendationLog:{ path:'/data/recommendation_log.json', fallback:[] },
+    historyEngine:{ path:'/data/history_engine.json', fallback:[] },
+    recommendationJournal:{ path:'/data/recommendation_journal.json', fallback:[] }
+  }[key];
+
+  if(!cfg) return Promise.resolve(false);
+
+  LAZY_DATA_PROMISES[key] = getJson(cfg.path, cfg.fallback).then(function(data){
+    applyLazyDataset(key, data);
+    LAZY_DATA_READY[key] = true;
+    return true;
+  }).finally(function(){
+    delete LAZY_DATA_PROMISES[key];
+  });
+
+  return LAZY_DATA_PROMISES[key];
+}
+
+function loadScriptSequentially(srcs){
+  return srcs.reduce(function(chain, src){
+    return chain.then(function(){
+      return new Promise(function(resolve, reject){
+        var existing = document.querySelector('script[data-lazy-src="' + src + '"]');
+        if(existing){
+          if(existing.dataset.loaded === '1') return resolve();
+          existing.addEventListener('load', function(){ resolve(); }, { once:true });
+          existing.addEventListener('error', function(err){ reject(err); }, { once:true });
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = src;
+        s.async = false;
+        s.dataset.lazySrc = src;
+        s.onload = function(){ s.dataset.loaded = '1'; resolve(); };
+        s.onerror = reject;
+        document.body.appendChild(s);
+      });
+    });
+  }, Promise.resolve());
+}
+
+function ensureFullHistoryAssets(){
+  if(LAZY_DATA_READY.fullHistoryAssets) return Promise.resolve(true);
+  if(FULL_HISTORY_ASSETS_PROMISE) return FULL_HISTORY_ASSETS_PROMISE;
+  showLoader('Se încarcă istoricul extins...');
+  FULL_HISTORY_ASSETS_PROMISE = loadScriptSequentially([
+    './assets/full-history.js?v=20260418',
+    './assets/full-history-hotfix.js?v=20260420hotfix2',
+    './assets/full-history-hotfix.js?v=20260420hotfix1'
+  ]).then(function(){
+    LAZY_DATA_READY.fullHistoryAssets = true;
+    return true;
+  }).finally(function(){
+    hideLoader();
+  });
+  return FULL_HISTORY_ASSETS_PROMISE;
+}
+
+function rerenderTabAfterLazyLoad(name){
+  if(name === 'tracking'){
+    try { autoSyncTrackingStatuses(); } catch(e){}
+    renderTracking();
+    return;
+  }
+  if(name === 'charts'){
+    renderAdvancedCharts();
+    return;
+  }
+  if(name === 'smartbet'){
+    try { renderSmartBet(); } catch(e){}
+    try { switchSmartLearnSection(window._smartLearnSection || 'predictii'); } catch(e){}
+    return;
+  }
+  if(name === 'dashboard'){
+    renderModernDashboard();
+    return;
+  }
+}
+
+function ensureTabData(name){
+  var keys = [];
+  if(name === 'tracking') keys = ['events', 'recommendationLog'];
+  else if(name === 'charts') keys = ['recommendationLog', 'historyEngine'];
+  else if(name === 'smartbet') keys = ['recommendationLog', 'historyEngine', 'recommendationJournal'];
+  if(!keys.length) return Promise.resolve(false);
+  return Promise.all(keys.map(loadLazyDataset));
+}
+
 function doRefresh(){
   showLoader('Incarcare date actualizate...');
-  var base = getBase();
 
-  function getJson(path, fallback){
-    var url = base + path + '?t=' + Date.now();
-    return fetch(url, { cache: 'no-store' })
-      .then(function(r){
-        if(!r.ok) throw new Error('HTTP ' + r.status + ' @ ' + path);
-        return r.json();
-      })
-      .catch(function(){ return fallback; });
-  }
+  LAZY_DATA_PROMISES = {};
+  LAZY_DATA_READY.events = false;
+  LAZY_DATA_READY.recommendationLog = false;
+  LAZY_DATA_READY.historyEngine = false;
+  LAZY_DATA_READY.recommendationJournal = false;
 
   Promise.all([
     getJson('/data/predictions.json', []),
     getJson('/data/meta.json', {}),
     getJson('/data/leagues.json', []),
-    getJson('/data/events.json', []),
-    getJson('/data/teams.json', []),
     getJson('/data/backtest.json', {}),
-    getJson('/data/history_engine.json', []),
-    getJson('/data/recommendation_log.json', []),
     getJson('/data/signal_audit.json', {}),
     getJson('/data/ai_memory.json', {}),
     getJson('/data/training_market_baselines.json', []),
-    getJson('/data/training_scoring_summary.json', {}),
-    getJson('/data/recommendation_journal.json', [])
+    getJson('/data/training_scoring_summary.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
     var leaguesData = results[2];
-    var eventsData = results[3];
-    var teamsData = results[4];
-    var backtestData = results[5];
-    var historyData = results[6];
-    var recommendationLogData = results[7];
-    var signalAuditData = results[8];
-    var aiMemoryData = results[9];
-    var trainingBaselinesData = results[10];
-    var trainingSummaryData = results[11];
-    var recommendationJournalData = results[12];
+    var backtestData = results[3];
+    var signalAuditData = results[4];
+    var aiMemoryData = results[5];
+    var trainingBaselinesData = results[6];
+    var trainingSummaryData = results[7];
 
     var preds = predData.results || predData || [];
+    window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
     APP_META = meta || {};
     BACKTEST_SUMMARY = backtestData || {};
-    TRAINING_MARKET_BASELINES = Array.isArray(trainingBaselinesData) ? trainingBaselinesData : (trainingBaselinesData.results || trainingBaselinesData || []);
-    TRAINING_SCORING_SUMMARY = trainingSummaryData || {};
-    rebuildTrainingBaselineMap();
-    ALL_MATCHES = preds.map(analyzeMatch);
-    rebuildVisualMatchIndex();
-    syncRecommendationEngine();
-    ALL_LEAGUES = leaguesData.results || leaguesData || [];
-    ALL_EVENTS = eventsData.results || eventsData || [];
-    ALL_TEAMS = teamsData.results || teamsData || [];
-    ALL_PLAYERS = [];
-    HISTORY_ENGINE = Array.isArray(historyData) ? historyData : (historyData.results || historyData || []);
-    RECOMMENDATION_LOG = Array.isArray(recommendationLogData) ? recommendationLogData : (recommendationLogData.results || recommendationLogData || []);
     SIGNAL_AUDIT = signalAuditData || {};
     AI_MEMORY = aiMemoryData || {};
-    RECOMMENDATION_JOURNAL = Array.isArray(recommendationJournalData) ? recommendationJournalData : (recommendationJournalData && recommendationJournalData.results) || [];
+    TRAINING_MARKET_BASELINES = Array.isArray(trainingBaselinesData) ? trainingBaselinesData : (trainingBaselinesData.results || trainingBaselinesData || []);
+    TRAINING_SCORING_SUMMARY = trainingSummaryData || {};
+    ALL_LEAGUES = leaguesData.results || leaguesData || [];
+    ALL_EVENTS = [];
+    ALL_TEAMS = [];
+    ALL_PLAYERS = [];
+    HISTORY_ENGINE = [];
+    RECOMMENDATION_LOG = [];
+    RECOMMENDATION_JOURNAL = [];
     try { window.RECOMMENDATION_JOURNAL = RECOMMENDATION_JOURNAL; } catch(e){}
-    try { buildLearningEngine(); } catch(e){ console.warn('[LearningEngine] build failed', e); }
-    // Re-run pipeline so dynamic filters/boost din LEARNING_ENGINE afecteaza analyzeMatch + syncRecommendationEngine
-    try {
-      // Invalideaza cache-ul hibrid (calibration + injury adjustments depind de motor)
-      preds.forEach(function(raw){ if(raw) raw.__hybridProbCache = null; });
-      ALL_MATCHES = preds.map(analyzeMatch);
-      rebuildVisualMatchIndex();
-      syncRecommendationEngine();
-    } catch(e){ console.warn('[LearningEngine] re-sync failed', e); }
+
+    LAZY_DATA_READY.predictions = true;
+    LAZY_DATA_READY.meta = true;
+    LAZY_DATA_READY.leagues = true;
+    LAZY_DATA_READY.backtest = true;
+    LAZY_DATA_READY.signalAudit = true;
+    LAZY_DATA_READY.aiMemory = true;
+    LAZY_DATA_READY.trainingBaselines = true;
+    LAZY_DATA_READY.trainingSummary = true;
+
+    rerunPredictionPipeline(window.__RAW_PREDICTIONS || []);
     BILETE = null;
 
     var storedToken = localStorage.getItem('bsd_token');
@@ -14373,9 +14523,13 @@ function finishOnboarding(){ applyOnboardingPrefs(); saveOnboardingState({comple
 window.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ var state = getOnboardingState(); if(!state.completed) openOnboarding(false); }, 500); });
 
 </script>
-  <script src="./assets/full-history.js?v=20260418"></script>
-  <script src="./assets/full-history-hotfix.js?v=20260420hotfix2"></script>
-  <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
+  <script>
+  window.__FULL_HISTORY_LAZY_ASSETS__ = [
+    './assets/full-history.js?v=20260418',
+    './assets/full-history-hotfix.js?v=20260420hotfix2',
+    './assets/full-history-hotfix.js?v=20260420hotfix1'
+  ];
+  </script>
 
 <!-- ═══ DESIGN SYSTEM v3 — Animation Engine ═══ -->
 <script>
@@ -14566,11 +14720,21 @@ function switchSmartLearnSection(section){
     if(btn) btn.classList.toggle('active', s === section);
   });
   if(section === 'predictii'){ try{ renderUnifiedEngine(); }catch(e){console.warn(e);} }
-  if(section === 'invatare'){ try{ renderLearningEngine(); }catch(e){console.warn(e);} }
+  if(section === 'invatare'){
+    try{ renderLearningEngine(); }catch(e){console.warn(e);} }
   if(section === 'arhiva'){ try{ renderArchivePanel(); }catch(e){console.warn(e);} }
   // backward compat — never shown but keep rendering for data
   if(section === 'audit'){ switchSmartLearnSection('predictii'); return; }
   if(section === 'aimemory'){ switchSmartLearnSection('predictii'); return; }
+  if(section === 'invatare' || section === 'arhiva'){
+    ensureFullHistoryAssets().then(function(){
+      if(window._smartLearnSection !== section) return;
+      if(section === 'invatare'){ try{ renderLearningEngine(); }catch(e){ console.warn(e); } }
+      if(section === 'arhiva'){ try{ renderArchivePanel(); }catch(e){ console.warn(e); } }
+    }).catch(function(err){
+      console.warn('[LazyData] full history assets failed', err);
+    });
+  }
   window.scrollTo({top:0,behavior:'auto'});
 }
 
