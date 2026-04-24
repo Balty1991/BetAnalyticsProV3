@@ -35,6 +35,12 @@ var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings')
 var COTA2_SETTINGS = sanitizeCota2Settings(JSON.parse(localStorage.getItem('bet_cota2_settings') || '{}'));
 var COTA2_TICKET = JSON.parse(localStorage.getItem('bet_cota2_latest') || 'null');
 var API_TOKEN = ''; // setat din meta.json sau localStorage
+// ============================================================
+// MOTOR MULTI-FACTOR v1 — cache global pentru enrichment live
+// ============================================================
+var ENRICHED_EVENT_CACHE = {};   // eventId -> detail object
+var ENRICHMENT_PENDING   = {};   // eventId -> Promise
+var ENRICHMENT_BATCH_RUNNING = false;
 var DATA_BASE = '';
 var OPEN_TICKET_IDX = null;
 var LAST_DAY_KEY = '';
@@ -1068,6 +1074,11 @@ function renderActiveTab(name, opts){
     markTabRendered('cota2');
     return;
   }
+  if(name === 'ml5'){
+    renderML5Analysis();
+    markTabRendered('ml5');
+    return;
+  }
 }
 function prefetchNonCriticalTabData(){
   if(NONCRITICAL_PREFETCH_STARTED) return;
@@ -1378,6 +1389,497 @@ function calcSmartScore(adjProb, value, confidence, edgePct){
   if(edge < -2.0)  penalty += 12;
   return Math.min(100, Math.round(probScore + valueScore + edgeScore + confScore - penalty));
 }
+
+// ============================================================
+// MOTOR MULTI-FACTOR v1 — 5 STRATURI DE ANALIZĂ
+// ============================================================
+// Arhitectura:
+//   Layer 1  — ML BASE        (prob_home/draw/away, prob_over25, prob_btts, confidence)
+//   Layer 2  — FORMĂ & H2H   (home_form, away_form, head_to_head din /api/events/{id}/)
+//   Layer 3  — CONTEXT        (absențe îmbunătățite, tactici coach, arbitru)
+//   Layer 4  — CONSENSUS      (No-Vig Shin, market agreement score)
+//   Layer 5  — PROB FINALĂ    (multiplicativ dampened ±25%, SmartScoreML5, Kelly ¼ cap 5%)
+// ============================================================
+
+// --- FETCH LIVE DETAIL (Layer 2 & 3 data source) ---
+function fetchEventDetail(eventId){
+  if(!eventId) return Promise.resolve(null);
+  var eid = String(eventId);
+  if(ENRICHED_EVENT_CACHE[eid]) return Promise.resolve(ENRICHED_EVENT_CACHE[eid]);
+  if(ENRICHMENT_PENDING[eid])   return ENRICHMENT_PENDING[eid];
+
+  var token = API_TOKEN || localStorage.getItem('bsd_token') || '';
+  if(!token) return Promise.resolve(null);
+
+  var url = 'https://sports.bzzoiro.com/api/events/' + eid + '/';
+  ENRICHMENT_PENDING[eid] = fetch(url, {
+    headers:{ 'Authorization':'Token ' + token },
+    cache:'no-store'
+  })
+  .then(function(r){ return r.ok ? r.json() : null; })
+  .then(function(data){
+    if(data){ ENRICHED_EVENT_CACHE[eid] = data; }
+    delete ENRICHMENT_PENDING[eid];
+    return data || null;
+  })
+  .catch(function(){
+    delete ENRICHMENT_PENDING[eid];
+    return null;
+  });
+  return ENRICHMENT_PENDING[eid];
+}
+
+// --- LAYER 2: FORM FACTOR ---
+// Returnează multiplicator 0.80–1.20 pe baza formei recente (form_string + xG stats)
+function calcFormFactor(homeForm, awayForm, marketKey){
+  if(!homeForm || !awayForm) return 1.0;
+
+  // Form string score: W=3, D=1, L=0, din ultimele 5 meciuri → 0..1
+  function formScore(fs){
+    if(!fs) return 0.5;
+    var pts = String(fs).toUpperCase().split('').slice(-5).reduce(function(acc,c){
+      return acc + (c==='W'?3:c==='D'?1:0);
+    },0);
+    return Math.min(1.0, pts / 15);
+  }
+  var hScore = formScore(homeForm.form_string);
+  var aScore = formScore(awayForm.form_string);
+
+  // xG avansat dacă există
+  var hXG   = Number(homeForm.avg_xg             || 0);
+  var aXG   = Number(awayForm.avg_xg             || 0);
+  var hXGc  = Number(homeForm.avg_xg_conceded    || 0);
+  var aXGc  = Number(awayForm.avg_xg_conceded    || 0);
+  // Fallback la goluri dacă xG nu e disponibil
+  var hGoals = hXG > 0.05 ? hXG : (Number(homeForm.goals_scored_last_n||0)/Math.max(1,Number(homeForm.matches_played||5)));
+  var aGoals = aXG > 0.05 ? aXG : (Number(awayForm.goals_scored_last_n||0)/Math.max(1,Number(awayForm.matches_played||5)));
+  var hConc  = hXGc > 0.05 ? hXGc : (Number(homeForm.goals_conceded_last_n||0)/Math.max(1,Number(homeForm.matches_played||5)));
+  var aConc  = aXGc > 0.05 ? aXGc : (Number(awayForm.goals_conceded_last_n||0)/Math.max(1,Number(awayForm.matches_played||5)));
+
+  var mk = marketKey;
+  var factor = 1.0;
+
+  if(mk==='homeWin'){
+    // Home formă vs away formă + avantaj acasă (home_ppg)
+    var hPPG = Number(homeForm.home_ppg  || 0);
+    var aPPG = Number(awayForm.away_ppg  || 0);
+    var diff = (hScore - aScore) * 0.12 + (hPPG - aPPG) * 0.04;
+    factor = 1.0 + Math.max(-0.15, Math.min(0.20, diff));
+  } else if(mk==='awayWin'){
+    var diff = (aScore - hScore) * 0.12 + (Number(awayForm.away_ppg||0) - Number(homeForm.home_ppg||0)) * 0.04;
+    factor = 1.0 + Math.max(-0.15, Math.min(0.20, diff));
+  } else if(mk==='draw'){
+    // Draw mai probabil când echipele sunt echilibrate
+    var evenness = 1.0 - Math.abs(hScore - aScore);
+    factor = 0.90 + evenness * 0.12;
+  } else if(mk==='over25'||mk==='over35'){
+    var avgGoalFlow = (hGoals + aGoals + hConc + aConc) / 4;
+    factor = 0.88 + Math.min(0.28, (avgGoalFlow - 1.0) * 0.14);
+  } else if(mk==='over15'){
+    var avgGoalFlow = (hGoals + aGoals + hConc + aConc) / 4;
+    factor = 0.92 + Math.min(0.18, (avgGoalFlow - 0.8) * 0.10);
+  } else if(mk==='under25'||mk==='under35'){
+    var avgGoalFlow = (hGoals + aGoals + hConc + aConc) / 4;
+    // Echipe cu puține goluri → Under mai probabil
+    var cleanH = Number(homeForm.clean_sheets || 0) / Math.max(1, Number(homeForm.matches_played||5));
+    var cleanA = Number(awayForm.clean_sheets  || 0) / Math.max(1, Number(awayForm.matches_played||5));
+    factor = 1.02 + (cleanH + cleanA) * 0.06 - Math.min(0.20, (avgGoalFlow - 1.0) * 0.10);
+  } else if(mk==='btts'){
+    // Ambele marchează: ambele echipe în formă bună la atac, ambele înscriu (nu clean sheets)
+    var homeSc = Math.min(1.15, 0.85 + hGoals * 0.12);
+    var awaySc = Math.min(1.15, 0.85 + aGoals * 0.12);
+    var cleanPenalty = (Number(homeForm.clean_sheets||0) + Number(awayForm.clean_sheets||0)) /
+                       Math.max(1, Number(homeForm.matches_played||5) + Number(awayForm.matches_played||5));
+    factor = (homeSc + awaySc) / 2 - cleanPenalty * 0.08;
+  }
+
+  return Math.max(0.80, Math.min(1.20, +factor.toFixed(4)));
+}
+
+// --- LAYER 2: H2H FACTOR ---
+// Returnează multiplicator 0.85–1.15 din istoricul direct
+function calcH2HFactor(h2h, marketKey){
+  if(!h2h || !h2h.total_matches || Number(h2h.total_matches) < 3) return 1.0;
+  var total  = Number(h2h.total_matches);
+  var homeWR = Number(h2h.home_win_rate  || 0);   // 0-1
+  var awayWR = Number(h2h.away_win_rate  || 0);   // 0-1
+  var drawR  = Math.max(0, 1 - homeWR - awayWR);
+  var avgG   = Number(h2h.avg_total_goals|| 2.5);
+  var hGoals = Number(h2h.home_goals     || 0);
+  var aGoals = Number(h2h.away_goals     || 0);
+
+  // Reliability: mai multe meciuri = mai sigur, cap la 12
+  var rel = Math.min(1.0, total / 12);
+
+  var factor = 1.0;
+  var mk = marketKey;
+
+  if(mk==='homeWin'){
+    factor = 1.0 + (homeWR - 0.45) * 0.22 * rel;
+  } else if(mk==='awayWin'){
+    factor = 1.0 + (awayWR - 0.28) * 0.22 * rel;
+  } else if(mk==='draw'){
+    factor = 1.0 + (drawR  - 0.27) * 0.28 * rel;
+  } else if(mk==='over25'){
+    factor = 0.90 + Math.min(0.22, (avgG - 2.0) * 0.12) * rel;
+  } else if(mk==='over35'){
+    factor = 0.88 + Math.min(0.24, (avgG - 2.5) * 0.16) * rel;
+  } else if(mk==='under25'){
+    factor = 1.0  + Math.max(-0.20, (2.0 - avgG) * 0.10) * rel;
+  } else if(mk==='btts'){
+    // Ambele marchează dacă în H2H au înscris în general
+    var bothScoredRate = (total > 0 && hGoals > 0 && aGoals > 0) ?
+      Math.min(1.0, Math.min(hGoals, aGoals) / total) : 0.5;
+    factor = 0.92 + bothScoredRate * 0.20 * rel;
+  }
+
+  return Math.max(0.85, Math.min(1.15, +factor.toFixed(4)));
+}
+
+// --- LAYER 3: ABSENCE FACTOR v2 (îmbunătățit față de calcInjuryAdjustment) ---
+// Returnează multiplicator 0.72–1.10 cu greutăți pe poziție implicită
+function calcAbsenceFactorV2(unavailablePlayers, marketKey){
+  if(!unavailablePlayers) return 1.0;
+  var up = unavailablePlayers;
+  function weight(list){
+    if(!Array.isArray(list)) return 0;
+    return list.reduce(function(acc, p){
+      if(!p) return acc;
+      var s = String(p.status||'').toLowerCase();
+      var w = (s==='injured'||s==='suspended') ? 1.0 : s==='doubtful' ? 0.45 : 0.75;
+      return acc + w;
+    }, 0);
+  }
+  var h = weight(up.home);
+  var a = weight(up.away);
+  var total = h + a;
+  if(total < 0.8) return 1.0;
+
+  var mk = marketKey;
+  var factor = 1.0;
+  // Penalizare: fiecare absent "complet" reduce probabilitatea echipei afectate cu ~5%
+  if(mk==='homeWin'){
+    factor = 1.0 - Math.min(0.22, h * 0.055) + Math.min(0.06, a * 0.022);
+  } else if(mk==='awayWin'){
+    factor = 1.0 - Math.min(0.22, a * 0.055) + Math.min(0.06, h * 0.022);
+  } else if(mk==='draw'){
+    // Draw poate creste sau scade; absente multe reduce draw (dezechilibru)
+    factor = 1.0 - Math.abs(h - a) * 0.035 - Math.max(0, total - 2) * 0.025;
+  } else if(mk==='over35'){
+    factor = 1.0 - Math.min(0.22, total * 0.045);
+  } else if(mk==='over25'){
+    factor = 1.0 - Math.min(0.18, total * 0.038);
+  } else if(mk==='over15'){
+    factor = 1.0 - Math.min(0.12, total * 0.025);
+  } else if(mk==='under25'||mk==='under35'){
+    factor = 1.0 + Math.min(0.12, total * 0.030);
+  } else if(mk==='btts'){
+    factor = 1.0 - Math.min(0.16, total * 0.032);
+  }
+
+  return Math.max(0.72, Math.min(1.10, +factor.toFixed(4)));
+}
+
+// --- LAYER 3: TACTICAL FACTOR ---
+// Returnează multiplicator 0.83–1.17 din pressing_intensity, defensive_line, top_styles
+function calcTactFactor(homeCoach, awayCoach, marketKey){
+  if(!homeCoach && !awayCoach) return 1.0;
+
+  // pressing_intensity: 1-10 (10 = gegenpressing maxim)
+  // defensive_line: 1-10 (10 = linie sus, risc mai mare)
+  var hPress  = Number((homeCoach && homeCoach.pressing_intensity) || 5);
+  var aPress  = Number((awayCoach && awayCoach.pressing_intensity) || 5);
+  var hDefLn  = Number((homeCoach && homeCoach.defensive_line)     || 5);
+  var aDefLn  = Number((awayCoach && awayCoach.defensive_line)     || 5);
+
+  var hStyles = Array.isArray(homeCoach && homeCoach.top_styles) ? homeCoach.top_styles : [];
+  var aStyles = Array.isArray(awayCoach && awayCoach.top_styles) ? awayCoach.top_styles : [];
+
+  var attackStyles   = ['tiki_taka','gegenpressing','counter_attack','high_press','direct_play'];
+  var defensiveStyles= ['low_block','park_the_bus','defensive','deep_defensive'];
+
+  var hAttack  = hStyles.some(function(s){ return attackStyles.indexOf(s)>=0; })   ? 1 : 0;
+  var aAttack  = aStyles.some(function(s){ return attackStyles.indexOf(s)>=0; })   ? 1 : 0;
+  var hDefense = hStyles.some(function(s){ return defensiveStyles.indexOf(s)>=0; }) ? 1 : 0;
+  var aDefense = aStyles.some(function(s){ return defensiveStyles.indexOf(s)>=0; }) ? 1 : 0;
+
+  var mk = marketKey;
+  var factor = 1.0;
+
+  if(mk==='over25'||mk==='over35'){
+    // Presing ridicat + linie sus → mai multe goluri
+    var pressFactor = ((hPress + aPress) / 10) * 0.12;           // 0–0.12
+    var lineFactor  = ((hDefLn + aDefLn) / 10) * 0.08;           // 0–0.08
+    factor = 0.90 + pressFactor + lineFactor
+             - aDefense * 0.06 - hDefense * 0.06
+             + hAttack  * 0.04 + aAttack  * 0.04;
+  } else if(mk==='over15'){
+    factor = 0.93 + ((hPress + aPress) / 10) * 0.08 - aDefense * 0.04;
+  } else if(mk==='under25'||mk==='under35'){
+    factor = 1.10 - ((hPress + aPress) / 10) * 0.08 + aDefense * 0.05 + hDefense * 0.05;
+  } else if(mk==='btts'){
+    factor = 0.94 + hAttack * 0.07 + aAttack * 0.07 - aDefense * 0.05 - hDefense * 0.05;
+  } else if(mk==='homeWin'){
+    factor = 1.0 + hAttack * 0.05 - aDefense * 0.04 + (hPress - 5) * 0.008;
+  } else if(mk==='awayWin'){
+    factor = 1.0 + aAttack * 0.05 - hDefense * 0.04 + (aPress - 5) * 0.008;
+  }
+
+  return Math.max(0.83, Math.min(1.17, +factor.toFixed(4)));
+}
+
+// --- LAYER 3: REFEREE FACTOR ---
+// Pre-meci: neutru 1.0 (datele istorice arbitru vin din /api/referees/ — implementare viitoare)
+// Post-meci (yellowCards/redCards pe meciul curent): penalizare Over dacă cartonașe puține
+function calcRefFactor(referee, marketKey){
+  if(!referee) return 1.0;
+  // referee.yellowCards și referee.redCards sunt datele din MECIUL CURENT (disponibile live/finished)
+  // Pentru pre-meci nu avem stats istorice în response — returnăm 1.0 cu posibilitate de extindere
+  return 1.0;
+}
+
+// --- LAYER 4: MARKET AGREEMENT SCORE ---
+// Cât de mult sunt de acord piața (no-vig) și modelul ML?
+// Returnează 0.0–1.0; folosit ca factor de încredere în Layer 5
+function calcMarketAgreementScore(noVigProb, mlProb){
+  if(!noVigProb || !mlProb || noVigProb <= 0 || mlProb <= 0) return 0.50;
+  var diff = Math.abs(Number(noVigProb) - Number(mlProb));
+  if(diff <  2) return 1.00;
+  if(diff <  4) return 0.90;
+  if(diff <  7) return 0.78;
+  if(diff < 10) return 0.65;
+  if(diff < 15) return 0.52;
+  return 0.40;
+}
+
+// --- LAYER 5: PROBABILITATE FINALĂ MULTI-FACTOR ---
+// Formula: FinalProb = MLProb × Σ(factors) [dampened ±25%]
+// Blending: 68% ML base + 32% factor-adjusted pentru stabilitate
+function calcFinalProbML5(mlProb, enrichedDetail, marketKey, noVigProb){
+  if(!enrichedDetail){
+    return { finalProb: mlProb, factors: null, agreementScore: 0.5 };
+  }
+
+  var homeForm = enrichedDetail.home_form   || null;
+  var awayForm = enrichedDetail.away_form   || null;
+  var h2h      = enrichedDetail.head_to_head|| null;
+  var upPlayers= enrichedDetail.unavailable_players || null;
+  var hCoach   = enrichedDetail.home_coach  || null;
+  var aCoach   = enrichedDetail.away_coach  || null;
+  var referee  = enrichedDetail.referee     || null;
+
+  var formF  = calcFormFactor(homeForm, awayForm, marketKey);
+  var h2hF   = calcH2HFactor(h2h, marketKey);
+  var absF   = calcAbsenceFactorV2(upPlayers, marketKey);
+  var tactF  = calcTactFactor(hCoach, aCoach, marketKey);
+  var refF   = calcRefFactor(referee, marketKey);
+
+  // Combinare multiplicativă cu dampening: nu lăsăm factorii să devanseze ±25%
+  var combined = formF * h2hF * absF * tactF * refF;
+  combined = Math.max(0.75, Math.min(1.25, combined));
+
+  // Agreement score Layer 4
+  var agreementScore = calcMarketAgreementScore(noVigProb, mlProb);
+
+  // Blending: 68% ML + 32% factor-ajustat; agreement redus dampens factorul
+  var factorWeight = 0.32 * agreementScore;
+  var mlWeight     = 1.0 - factorWeight;
+  // Nu mutăm probabilitatea absolut — scalăm multiplicativ față de ML
+  var adjustedProb = mlProb * (mlWeight + factorWeight * combined);
+
+  // Clamp realist
+  adjustedProb = Math.max(5, Math.min(92, adjustedProb));
+
+  return {
+    finalProb: +adjustedProb.toFixed(2),
+    factors: {
+      formFactor   : formF,
+      h2hFactor    : h2hF,
+      absenceFactor: absF,
+      tactFactor   : tactF,
+      refFactor    : refF,
+      combined     : +combined.toFixed(4)
+    },
+    agreementScore: agreementScore
+  };
+}
+
+// --- LAYER 5: SMART SCORE ML5 (extins față de calcSmartScore) ---
+// Aceeași scală 0-100 dar cu bonus/penalizare din factorii contextuali
+function calcSmartScoreML5(adjProb, value, confidence, edgePct, factors, agreementScore){
+  var c    = normalizeConfidence(confidence);
+  var edge = Number(edgePct || 0);
+  var val  = Number(value   || 0);
+
+  // Componente identice cu v17 (pentru backward compatibility în Python)
+  var probScore  = Math.min(55, (safePct(adjProb)/100) * 55);
+  var valueScore = Math.min(14, Math.max(0, val)  * 120);
+  var edgeScore  = Math.min(17, Math.max(0, edge) * 2.0);
+  var confScore  = Math.min(8,  (c/100) * 8);
+
+  // Bonus contextual din factori (Layer 2+3): max ±5 puncte
+  var factorBonus = 0;
+  if(factors){
+    var c5 = Number(factors.combined || 1.0);
+    if     (c5 >= 1.12) factorBonus =  5;
+    else if(c5 >= 1.06) factorBonus =  3;
+    else if(c5 >= 1.02) factorBonus =  1;
+    else if(c5 <= 0.88) factorBonus = -5;
+    else if(c5 <= 0.94) factorBonus = -3;
+    else if(c5 <= 0.98) factorBonus = -1;
+  }
+
+  // Bonus acord piata (Layer 4): max +1 punct
+  var agrBonus = 0;
+  if(agreementScore != null){
+    if(agreementScore >= 0.90)      agrBonus = 1;
+    else if(agreementScore <= 0.45) agrBonus = -1;
+  }
+
+  // Penalizări
+  var penalty = 0;
+  if(val  < -0.03) penalty += 8;
+  if(edge < -2.0)  penalty += 12;
+
+  return Math.min(100, Math.round(
+    probScore + valueScore + edgeScore + confScore + factorBonus + agrBonus - penalty
+  ));
+}
+
+// --- KELLY ¼ CU CAP 5% ---
+function calcKellyML5(prob, odds, bankrollPct){
+  var p = Number(prob || 0) / 100;
+  var o = Number(odds || 0);
+  if(p <= 0 || o <= 1.01) return 0;
+  var kelly = (p * (o - 1) - (1 - p)) / (o - 1);
+  var quarter = kelly / 4;
+  return Math.max(0, Math.min(5, +quarter.toFixed(2))); // cap 5%
+}
+
+// --- ENRICHMENT APPLY ---
+// Aplică datele live (Layer 2+3) pe un match deja analizat
+function applyEnrichmentToMatch(m, raw, enrichedDetail){
+  if(!enrichedDetail) return m;
+
+  // Re-scorăm fiecare bet cu probabilitati multi-layer
+  var enrichedBets = (m.allBets || []).map(function(bet){
+    var noVig = bet.marketProb;
+    var ml5   = calcFinalProbML5(bet.prob, enrichedDetail, bet.type, noVig);
+    var newAdj= ml5.finalProb;
+    var newSc = calcSmartScoreML5(newAdj, bet.value, m.confidence, bet.edgePct, ml5.factors, ml5.agreementScore);
+    var newKelly = calcKellyML5(newAdj, bet.odds, null);
+
+    return Object.assign({}, bet, {
+      adjProb      : newAdj,
+      score        : newSc,
+      ml5Factors   : ml5.factors,
+      ml5Agreement : ml5.agreementScore,
+      ml5Kelly     : newKelly,
+      isEnriched   : true
+    });
+  });
+
+  var newBest = enrichedBets.reduce(function(best, b){
+    return (!best || b.score > best.score) ? b : best;
+  }, null);
+
+  // Date vizibile pe card
+  var hf = enrichedDetail.home_form    || null;
+  var af = enrichedDetail.away_form    || null;
+  var h2 = enrichedDetail.head_to_head || null;
+  var hc = enrichedDetail.home_coach   || null;
+  var ac = enrichedDetail.away_coach   || null;
+
+  // Form string compact: ultimi 5
+  function fStr(form){ return form && form.form_string ? String(form.form_string).slice(-5) : ''; }
+
+  return Object.assign({}, m, {
+    allBets    : enrichedBets,
+    bestBet    : newBest,
+    smartScore : newBest ? newBest.score : m.smartScore,
+    isEnriched : true,
+    enrichedAt : Date.now(),
+    // Layer 2 summary
+    homeForm   : hf,
+    awayForm   : af,
+    homeFormStr: fStr(hf),
+    awayFormStr: fStr(af),
+    h2h        : h2,
+    h2hLabel   : h2 ? (h2.total_matches + ' H2H, ' + (h2.avg_total_goals||0).toFixed(1) + 'g/m') : '',
+    // Layer 3 summary
+    homeCoach  : hc,
+    awayCoach  : ac,
+    homeCoachName : hc ? (hc.short_name || hc.name || '') : '',
+    awayCoachName : ac ? (ac.short_name || ac.name || '') : '',
+    homeCoachStyles: hc && hc.top_styles ? hc.top_styles : [],
+    awayCoachStyles: ac && ac.top_styles ? ac.top_styles : []
+  });
+}
+
+// --- ENRICHMENT BACKGROUND BATCH ---
+// Fetch top 30 meciuri (după SmartScore) în background la 150ms/request
+function enrichTopMatchesBackground(){
+  if(ENRICHMENT_BATCH_RUNNING) return Promise.resolve();
+  var token = API_TOKEN || localStorage.getItem('bsd_token') || '';
+  if(!token) return Promise.resolve();
+
+  ENRICHMENT_BATCH_RUNNING = true;
+
+  var candidates = (window.ALL_MATCHES || [])
+    .filter(function(m){ return m.eventId && Number(m.smartScore||0) > 0; })
+    .sort(function(a,b){ return (b.smartScore||0)-(a.smartScore||0); })
+    .slice(0,30);
+
+  var toFetch = candidates.filter(function(m){
+    return !ENRICHED_EVENT_CACHE[String(m.eventId)];
+  });
+
+  if(!toFetch.length){
+    ENRICHMENT_BATCH_RUNNING = false;
+    return Promise.resolve();
+  }
+
+  // Promissum secvențial cu delay
+  var chain = Promise.resolve(0);
+  toFetch.forEach(function(m){
+    chain = chain.then(function(count){
+      return new Promise(function(res){ setTimeout(res, 150); })
+        .then(function(){
+          return fetchEventDetail(m.eventId);
+        })
+        .then(function(d){ return count + (d ? 1 : 0); });
+    });
+  });
+
+  return chain.then(function(enriched){
+    ENRICHMENT_BATCH_RUNNING = false;
+    if(enriched > 0){
+      // Re-run pipeline cu datele noi
+      try {
+        var preds = window.__RAW_PREDICTIONS || [];
+        ALL_MATCHES = preds.map(function(raw){
+          var m = analyzeMatch(raw);
+          var eid = String(m.eventId||'');
+          if(eid && ENRICHED_EVENT_CACHE[eid])
+            return applyEnrichmentToMatch(m, raw, ENRICHED_EVENT_CACHE[eid]);
+          return m;
+        });
+        rebuildVisualMatchIndex();
+        syncRecommendationEngine();
+        renderAll();
+        toast('🔬 ML5 activ: ' + enriched + ' meciuri cu date contextuale', 'ok');
+      } catch(e){ console.warn('[ML5] Re-render failed', e); }
+    }
+    return enriched;
+  }).catch(function(e){
+    ENRICHMENT_BATCH_RUNNING = false;
+    console.warn('[ML5] Enrichment batch error', e);
+  });
+}
+
+// ============================================================
+// END MOTOR MULTI-FACTOR v1
+// ============================================================
 
 // V17 FIX 4: Stake sizing scalar (inlocuieste blocking-ul cu sizing diferentiat).
 // Returneaza un multiplicator 0.25-1.30 aplicat peste Kelly 1/4 precomputat.
@@ -3436,7 +3938,22 @@ function analyzeMatch(raw){
     rawVerdict: bestBet ? bestBet.verdict : 'avoid',
     analysisState: bestBet ? 'RAW_ONLY' : 'NO_ODDS',
     eligibleCandidates: [],
-    apiFlagsCount: [raw.over_15_recommend, raw.over_25_recommend, raw.btts_recommend, raw.favorite_recommend, raw.winner_recommend].filter(Boolean).length
+    apiFlagsCount: [raw.over_15_recommend, raw.over_25_recommend, raw.btts_recommend, raw.favorite_recommend, raw.winner_recommend].filter(Boolean).length,
+    // ML5 fields (completate de applyEnrichmentToMatch)
+    isEnriched   : false,
+    enrichedAt   : null,
+    homeForm     : null,
+    awayForm     : null,
+    homeFormStr  : '',
+    awayFormStr  : '',
+    h2h          : null,
+    h2hLabel     : '',
+    homeCoach    : null,
+    awayCoach    : null,
+    homeCoachName: '',
+    awayCoachName: '',
+    homeCoachStyles: [],
+    awayCoachStyles: []
   };
 }
 
@@ -3685,9 +4202,20 @@ function normalizeResultList(data){
 function rerunPredictionPipeline(rawPredictions){
   var preds = Array.isArray(rawPredictions) ? rawPredictions : [];
   rebuildTrainingBaselineMap();
-  ALL_MATCHES = preds.map(analyzeMatch);
+  // Dacă există date enriched în cache, aplică imediat
+  ALL_MATCHES = preds.map(function(raw){
+    var m = analyzeMatch(raw);
+    var eid = String(m.eventId||'');
+    if(eid && ENRICHED_EVENT_CACHE[eid])
+      return applyEnrichmentToMatch(m, raw, ENRICHED_EVENT_CACHE[eid]);
+    return m;
+  });
   rebuildVisualMatchIndex();
   syncRecommendationEngine();
+  // Pornește enrichment în background după 2s (nu blochează render-ul inițial)
+  setTimeout(function(){
+    enrichTopMatchesBackground().catch(function(){});
+  }, 2000);
 }
 
 var PREDICTION_RESYNC_SCHEDULED = false;
@@ -3856,7 +4384,8 @@ function doRefresh(){
     getJson('/data/signal_audit.json', {}),
     getJson('/data/ai_memory.json', {}),
     getJson('/data/training_market_baselines.json', []),
-    getJson('/data/training_scoring_summary.json', {})
+    getJson('/data/training_scoring_summary.json', {}),
+    getJson('/data/enriched.json', {})   // ML5 pre-baked enrichment
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -3866,6 +4395,7 @@ function doRefresh(){
     var aiMemoryData = results[5];
     var trainingBaselinesData = results[6];
     var trainingSummaryData = results[7];
+    var enrichedFile = results[8] || {};
 
     var preds = predData.results || predData || [];
     window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
@@ -3894,6 +4424,18 @@ function doRefresh(){
     LAZY_DATA_READY.trainingBaselines = true;
     LAZY_DATA_READY.trainingSummary = true;
 
+    // Pre-populate ENRICHED_EVENT_CACHE din enriched.json (generat de fetch_enriched.py)
+    var enrichedDict = enrichedFile.data || enrichedFile || {};
+    var enrichedCount = 0;
+    if(enrichedDict && typeof enrichedDict === 'object'){
+      Object.keys(enrichedDict).forEach(function(eid){
+        if(!ENRICHED_EVENT_CACHE[eid]){
+          ENRICHED_EVENT_CACHE[eid] = enrichedDict[eid];
+          enrichedCount++;
+        }
+      });
+    }
+
     rerunPredictionPipeline(window.__RAW_PREDICTIONS || []);
     BILETE = null;
 
@@ -3906,8 +4448,9 @@ function doRefresh(){
 
     var statusTime = getStatusDisplayTime();
     var statusMetrics = getStatusDisplayMetrics();
+    var enrichLabel = enrichedCount > 0 ? (' • 🔬 ML5 ' + enrichedCount + ' meciuri') : '';
     toast(
-      'API sync: ' + statusMetrics.ml + ' ML / ' + statusMetrics.odds + ' cote' + (statusTime ? ' @ ' + statusTime : ''),
+      'API sync: ' + statusMetrics.ml + ' ML / ' + statusMetrics.odds + ' cote' + enrichLabel + (statusTime ? ' @ ' + statusTime : ''),
       'ok'
     );
   }).catch(function(err){
@@ -5464,6 +6007,51 @@ function renderMatches(){
     var motorBadge = motorMeta && motorMeta.state === 'validated'
       ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
       : '';
+
+    // --- ML5 ENRICHMENT BADGE & BREAKDOWN ---
+    var ml5Badge = '';
+    var ml5ContextBlock = '';
+    if(m.isEnriched){
+      ml5Badge = '<span class="card-reco-badge" style="background:rgba(139,92,246,.13);border-color:rgba(139,92,246,.35);color:#a78bfa;font-weight:800">🔬 ML5</span>';
+      function formDots(fs){
+        if(!fs) return '<span style="color:var(--muted)">—</span>';
+        return String(fs).toUpperCase().split('').map(function(c){
+          var col = c==='W'?'#22c55e':c==='D'?'#f59e0b':'#ef4444';
+          return '<span style="color:'+col+';font-weight:900">'+c+'</span>';
+        }).join(' ');
+      }
+      var homeFS = formDots(m.homeFormStr);
+      var awayFS = formDots(m.awayFormStr);
+      var formRow = (m.homeFormStr || m.awayFormStr)
+        ? '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">'
+            +'<div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Formă gazde</div><div style="font-size:12px;letter-spacing:2px">'+homeFS+'</div></div>'
+            +'<div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Formă oaspeți</div><div style="font-size:12px;letter-spacing:2px">'+awayFS+'</div></div>'
+            +'</div>' : '';
+      var h2hRow = m.h2hLabel
+        ? '<div style="font-size:11px;color:var(--muted);margin-top:5px">⚔️ '+htmlEsc(m.h2hLabel)+'</div>' : '';
+      var coachRow = (m.homeCoachName || m.awayCoachName)
+        ? '<div style="font-size:11px;color:var(--muted);margin-top:4px">🧠 '
+            +(m.homeCoachName ? htmlEsc(m.homeCoachName) : '?')+' vs '
+            +(m.awayCoachName ? htmlEsc(m.awayCoachName) : '?')
+            +'</div>' : '';
+      var factPills = '';
+      if(b && b.ml5Factors){
+        var fmap5 = {formFactor:'Formă',h2hFactor:'H2H',absenceFactor:'Absențe',tactFactor:'Tactici',refFactor:'Arbitru'};
+        Object.keys(fmap5).forEach(function(k){
+          var v = Number(b.ml5Factors[k]||1);
+          if(Math.abs(v-1) < 0.006) return;
+          var col = v>1?'#22c55e':'#ef4444';
+          factPills += '<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.06);color:'+col+';font-weight:700">'+(v>1?'↑':'↓')+' '+fmap5[k]+'</span>';
+        });
+      }
+      if(formRow||h2hRow||coachRow||factPills){
+        ml5ContextBlock = '<div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.18)">'
+          +'<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#a78bfa;margin-bottom:6px">🔬 Context ML5</div>'
+          +formRow+h2hRow+coachRow
+          +(factPills?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'+factPills+'</div>':'')
+          +'</div>';
+      }
+    }
     var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă'+oddsInlineTag+'</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var m16ProbabilityHtml = b ? ('<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(59,130,246,.12));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:28px;font-weight:900;line-height:1;margin-top:6px;color:var(--txt)">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right">'+(motorBadge || '')+'<div style="font-size:10px;color:var(--muted);margin-top:'+(motorBadge ? '8' : '0')+'px">Cotă'+oddsInlineTag+'</div><div style="font-size:20px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var fairOdds = b && Number(b.adjProb || 0) > 0 ? (100 / Number(b.adjProb || 0)).toFixed(2) : '—';
@@ -5496,12 +6084,13 @@ function renderMatches(){
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         predictionProbabilityHtml+
-        '<div class="card-reco-badges">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+ml5Badge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
         hybridBlock+
         oddsCompareBlock+
         altMarketsHtml+
       '</div>'+
       compactWhy+
+      ml5ContextBlock+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '');
 
     // SIMPLU: fara grila metrica tehnica, fara badges — doar esentialul
@@ -5518,7 +6107,8 @@ function renderMatches(){
         simpleMetrics+
         altMarketsHtml+
       '</div>'+
-      (compactWhy ? compactWhy : '');
+      (compactWhy ? compactWhy : '')+
+      ml5ContextBlock;
     var detailBlock = MATCH_CARD_MODE === 'expert' ? expertDetails : simpleDetails;
     var key = getMatchCardKey(m);
     var homeProb = Math.max(0, Number(m.probHome || 0));
@@ -8940,6 +9530,223 @@ function renderCota2History(){
     '</tbody></table></div>'+
   '</div>';
 }
+
+// ============================================================
+// MOTOR MULTI-FACTOR v1 — renderML5Analysis()
+// ============================================================
+function renderML5Analysis(){
+  var root = $('ml5-root');
+  if(!root) return;
+
+  var enriched = (window.ALL_MATCHES||[]).filter(function(m){ return m.isEnriched; });
+  var total    = (window.ALL_MATCHES||[]).length;
+  var coverage = total > 0 ? Math.round(enriched.length * 100 / total) : 0;
+  var cacheCount = Object.keys(ENRICHED_EVENT_CACHE).length;
+
+  // Header stats
+  var headerHtml =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
+      ml5StatPill('🔬 Enriched', enriched.length + '/' + total, '#a78bfa') +
+      ml5StatPill('📡 Cache', cacheCount + ' meciuri', 'var(--cyan)') +
+      ml5StatPill('📊 Coverage', coverage + '%', coverage>=70?'var(--grn)':coverage>=40?'var(--yel)':'var(--red)') +
+    '</div>';
+
+  // Coverage bar
+  var covBar =
+    '<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-bottom:20px;overflow:hidden">' +
+      '<div style="height:100%;width:'+coverage+'%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:3px;transition:width .4s"></div>' +
+    '</div>';
+
+  // If no token - prompt
+  var token = API_TOKEN || localStorage.getItem('bsd_token') || '';
+  var tokenWarning = !token ?
+    '<div style="padding:14px 16px;border-radius:14px;background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.25);color:#fca5a5;font-size:12px;margin-bottom:16px">' +
+      '⚠️ <strong>Token BSD lipsă.</strong> Introdu tokenul în Setări pentru a activa enrichment-ul live.' +
+    '</div>' : '';
+
+  // If no enriched matches - info + trigger button
+  if(enriched.length === 0){
+    var triggerBtn = token ?
+      '<button class="btn btn-primary" style="margin-top:14px" onclick="enrichTopMatchesBackground().then(function(){ renderML5Analysis(); })">🔬 Pornește Enrichment Acum</button>'
+      : '';
+    root.innerHTML =
+      '<div style="padding:0 4px">' +
+        headerHtml + covBar + tokenWarning +
+        '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px">' +
+          '<div style="font-size:32px;margin-bottom:12px">🔬</div>' +
+          '<div style="font-weight:700;color:var(--txt);margin-bottom:8px">Motor ML5 pregătit</div>' +
+          '<div style="font-size:12px;line-height:1.6">Datele de enrichment sunt generate automat la refresh.<br>Sau apasă butonul pentru fetch imediat.</div>' +
+          triggerBtn +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
+  // Sort by ML5 score
+  var sorted = enriched.slice().sort(function(a,b){
+    return (b.smartScore||0) - (a.smartScore||0);
+  });
+
+  // Summary header
+  var avgScore = Math.round(sorted.reduce(function(s,m){ return s+(m.smartScore||0); },0)/sorted.length);
+  var topPicks = sorted.filter(function(m){ return (m.smartScore||0) >= 80; }).length;
+  var highConf = sorted.filter(function(m){
+    return m.bestBet && m.bestBet.ml5Factors && Number(m.bestBet.ml5Factors.combined||1) >= 1.05;
+  }).length;
+
+  var summaryBar =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
+      ml5StatPill('⭐ Scor mediu', avgScore, 'var(--acc)') +
+      ml5StatPill('🚀 Top Picks (≥80)', topPicks, 'var(--grn)') +
+      ml5StatPill('✅ Factori pozitivi', highConf, '#a78bfa') +
+    '</div>';
+
+  // Factor distribution chart (quick visual)
+  var factorCounts = {form:0, h2h:0, abs:0, tact:0};
+  enriched.forEach(function(m){
+    var f = m.bestBet && m.bestBet.ml5Factors;
+    if(!f) return;
+    if(Number(f.formFactor||1) > 1.02) factorCounts.form++;
+    if(Number(f.h2hFactor||1) > 1.02) factorCounts.h2h++;
+    if(Number(f.absenceFactor||1) < 0.98) factorCounts.abs++;
+    if(Number(f.tactFactor||1) > 1.02) factorCounts.tact++;
+  });
+  var n = Math.max(1, enriched.length);
+  var distHtml =
+    '<div style="margin-bottom:20px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">' +
+      '<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">Distribuție factori pozitivi</div>' +
+      ml5FactorBar('Formă ↑', factorCounts.form, n, '#22c55e') +
+      ml5FactorBar('H2H ↑',   factorCounts.h2h,  n, '#3b82f6') +
+      ml5FactorBar('Absențe ↑ (echipa adversă)', factorCounts.abs, n, '#f59e0b') +
+      ml5FactorBar('Tactici ↑',factorCounts.tact, n, '#a78bfa') +
+    '</div>';
+
+  // Cards per match
+  var cardsHtml = sorted.map(function(m){ return renderML5MatchCard(m); }).join('');
+
+  root.innerHTML =
+    '<div style="padding:0 4px">' +
+      headerHtml + covBar + tokenWarning +
+      summaryBar + distHtml +
+      '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">Top Picks ML5</div>' +
+      cardsHtml +
+    '</div>';
+}
+
+function ml5StatPill(label, value, color){
+  return '<div style="flex:1;min-width:90px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">' +
+    '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">'+label+'</div>' +
+    '<div style="font-size:18px;font-weight:900;color:'+color+'">'+value+'</div>' +
+  '</div>';
+}
+
+function ml5FactorBar(label, count, total, color){
+  var pct = Math.round(count*100/total);
+  return '<div style="margin-bottom:8px">' +
+    '<div style="display:flex;justify-content:space-between;margin-bottom:3px">' +
+      '<span style="font-size:11px;color:var(--txt)">'+label+'</span>' +
+      '<span style="font-size:11px;color:'+color+';font-weight:700">'+count+' ('+pct+'%)</span>' +
+    '</div>' +
+    '<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.08)">' +
+      '<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderML5MatchCard(m){
+  var b = m.bestBet;
+  if(!b) return '';
+  var score = m.smartScore || 0;
+  var scoreColor = score>=85?'#22c55e':score>=70?'var(--acc)':score>=55?'var(--yel)':'var(--muted)';
+
+  // Form dots
+  function fdots(fs){
+    if(!fs) return '<span style="color:var(--muted);font-size:10px">—</span>';
+    return String(fs).toUpperCase().split('').map(function(ch){
+      var col = ch==='W'?'#22c55e':ch==='D'?'#f59e0b':'#ef4444';
+      return '<span style="color:'+col+';font-weight:900;font-size:11px">'+ch+'</span>';
+    }).join('<span style="color:var(--muted);font-size:9px"> </span>');
+  }
+
+  // Factor pills
+  var factPills = '';
+  if(b.ml5Factors){
+    var fmap = {formFactor:'Formă',h2hFactor:'H2H',absenceFactor:'Absențe',tactFactor:'Tactici'};
+    Object.keys(fmap).forEach(function(k){
+      var v = Number(b.ml5Factors[k]||1);
+      if(Math.abs(v-1)<0.006) return;
+      var col = v>1?'#22c55e':'#ef4444';
+      var arr = v>1?'↑':'↓';
+      var pct = Math.round(Math.abs(v-1)*100);
+      factPills += '<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.07);color:'+col+';font-weight:700">'+arr+' '+fmap[k]+' '+pct+'%</span>';
+    });
+  }
+
+  // Kelly display
+  var kelly = b.ml5Kelly != null ? b.ml5Kelly : (b.kelly_quarter_pct || 0);
+  var kellyColor = kelly>=2?'var(--grn)':kelly>=1?'var(--acc)':'var(--muted)';
+
+  // Agreement
+  var agr = b.ml5Agreement != null ? Math.round(b.ml5Agreement*100) : null;
+  var agrColor = agr!=null ? (agr>=85?'var(--grn)':agr>=65?'var(--yel)':'var(--red)') : 'var(--muted)';
+
+  return '<div style="margin-bottom:12px;padding:14px;border-radius:16px;background:#161d2e;border:1px solid rgba(139,92,246,.22)">' +
+    // Header row: score + teams
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:800;color:var(--txt)">'+htmlEsc(m.home||'')+' vs '+htmlEsc(m.away||'')+'</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+htmlEsc(m.league||'')+' · '+htmlEsc(m.timeLabel||m.dateLabel||'')+'</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:22px;font-weight:900;color:'+scoreColor+';line-height:1">'+score+'</div>' +
+        '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">ML5 Score</div>' +
+      '</div>' +
+    '</div>' +
+    // Recommendation row
+    '<div style="padding:10px 12px;border-radius:12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.18);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+      '<div>' +
+        '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Pronostic</div>' +
+        '<div style="font-size:13px;font-weight:800;color:var(--txt)">'+htmlEsc(b.label||'')+'</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:18px;font-weight:900;color:var(--acc)">@ '+(Number(b.odds||0)).toFixed(2)+'</div>' +
+        '<div style="font-size:10px;color:var(--txt)">'+fmtPct(Number(b.adjProb||0))+'</div>' +
+      '</div>' +
+    '</div>' +
+    // Metrics row
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+      ml5Mini('Edge', (Number(b.edgePct||0)>=0?'+':'')+Number(b.edgePct||0).toFixed(1)+'pp', Number(b.edgePct||0)>=4?'var(--grn)':Number(b.edgePct||0)>=0?'var(--acc)':'var(--red)') +
+      ml5Mini('Value', (Number(b.value||0)>=0?'+':'')+(Number(b.value||0)*100).toFixed(1)+'%', Number(b.value||0)>=0.03?'var(--grn)':Number(b.value||0)>=0?'var(--acc)':'var(--red)') +
+      ml5Mini('Kelly ¼', kelly.toFixed(2)+'%', kellyColor) +
+      (agr!=null ? ml5Mini('Acord piață', agr+'%', agrColor) : '') +
+    '</div>' +
+    // Form row
+    ((m.homeFormStr||m.awayFormStr) ?
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<div><div style="font-size:9px;color:var(--muted);margin-bottom:2px">Gazde</div>'+fdots(m.homeFormStr)+'</div>' +
+        '<div><div style="font-size:9px;color:var(--muted);margin-bottom:2px">Oaspeți</div>'+fdots(m.awayFormStr)+'</div>' +
+        (m.h2hLabel ? '<div><div style="font-size:9px;color:var(--muted);margin-bottom:2px">H2H</div><span style="font-size:11px;color:var(--txt)">⚔️ '+htmlEsc(m.h2hLabel)+'</span></div>' : '') +
+      '</div>' : '') +
+    // Factor pills
+    (factPills ? '<div style="display:flex;flex-wrap:wrap;gap:4px">' + factPills + '</div>' : '') +
+    // Coach
+    ((m.homeCoachName||m.awayCoachName) ?
+      '<div style="font-size:10px;color:var(--muted);margin-top:6px">🧠 ' +
+        htmlEsc(m.homeCoachName||'?')+' vs '+htmlEsc(m.awayCoachName||'?') +
+      '</div>' : '') +
+  '</div>';
+}
+
+function ml5Mini(label, value, color){
+  return '<div style="flex:1;min-width:60px;padding:7px 9px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)">' +
+    '<div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">'+label+'</div>' +
+    '<div style="font-size:12px;font-weight:800;color:'+color+'">'+value+'</div>' +
+  '</div>';
+}
+// ============================================================
+// END renderML5Analysis
+// ============================================================
+
 function renderCota2Section(){
   loadCota2SettingsIntoUi();
   var targetMeta = getCota2TargetMeta(COTA2_SETTINGS);
@@ -9192,7 +9999,9 @@ function renderAll(){
   if($('hq-ml')) $('hq-ml').textContent = rawMl;
   if($('hq-odds')) $('hq-odds').textContent = rawOdds;
   if($('hq-safe')) $('hq-safe').textContent = safe;
-  $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr;
+  var enrichCount = Object.keys(ENRICHED_EVENT_CACHE).length;
+  var enrichSuffix = enrichCount > 0 ? (' — 🔬 ML5 ' + enrichCount) : (ENRICHMENT_BATCH_RUNNING ? ' — 🔬 ML5 …' : '');
+  $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr+enrichSuffix;
 
   buildLeagueFilter();
   renderTicketQuickPeek();
