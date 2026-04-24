@@ -98,6 +98,10 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
       <span class="more-card-title">💰 Bankroll</span>
       <span class="more-card-sub">Mize, evoluție bankroll și disciplină de staking.</span>
     </button>
+    <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
+      <span class="more-card-title">🔬 Analiză ML5</span>
+      <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Top picks cu breakdown complet.</span>
+    </button>
     <button class="more-card-btn" onclick="switchTab('istoric21')">
       <span class="more-card-title">🧾 Istoric 21</span>
       <span class="more-card-sub">Rezultate reale și trenduri pe ultimele 21 de zile.</span>
@@ -976,6 +980,11 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
   </div>
 
   <!-- ===== BANKROLL ===== -->
+  <!-- ML5 ANALYSIS TAB -->
+  <div class="tab-content" id="tab-ml5">
+    <div id="ml5-root" style="padding:16px 0 80px"></div>
+  </div>
+
   <div class="tab-content" id="tab-bankroll">
     
     <div class="help-panel amber">
@@ -1188,6 +1197,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
   <button class="mobile-sheet-btn" onclick="switchTab('tracking');closeMobileMore()"><span class="sheet-btn-title">📈 Tracking</span><small class="sheet-btn-sub">Bilete generate și rezultate</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 Daily</span><small class="sheet-btn-sub">Secțiune dedicată cotei 2 și învățare continuă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
   
@@ -1220,6 +1230,5 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 
 
 
-  <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
 </body>
 </html>
