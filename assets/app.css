@@ -2059,3 +2059,69 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--font-sans); letter-spacing: -0.02em; }
   *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}
   .loader-spin{animation:none!important}
 }
+
+/* ============================================================
+   MOTOR MULTI-FACTOR v1 — ML5 styles
+   ============================================================ */
+.ml5-context-block {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(139,92,246,.07);
+  border: 1px solid rgba(139,92,246,.18);
+}
+.ml5-context-title {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #a78bfa;
+  margin-bottom: 6px;
+}
+.ml5-form-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.ml5-form-col-label {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 3px;
+}
+.ml5-form-dots {
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.ml5-fact-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.ml5-fact-pill {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255,255,255,.06);
+  font-weight: 700;
+}
+.ml5-fact-pill.up   { color: #22c55e; }
+.ml5-fact-pill.down { color: #ef4444; }
+/* ML5 badge in source chips */
+.source-chip-ml5 {
+  background: rgba(139,92,246,.13);
+  border-color: rgba(139,92,246,.35);
+  color: #a78bfa;
+}
+/* Enrichment pulse — apare pe card cât timp e în progres fetch */
+@keyframes ml5Pulse {
+  0%,100%{ opacity:.5; } 50%{ opacity:1; }
+}
+.ml5-loading-badge {
+  animation: ml5Pulse 1.4s ease-in-out infinite;
+  font-size: 10px;
+  color: #a78bfa;
+}
