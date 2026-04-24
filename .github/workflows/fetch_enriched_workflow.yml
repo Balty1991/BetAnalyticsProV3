@@ -1,0 +1,70 @@
+# .github/workflows/fetch_enriched.yml
+# ─────────────────────────────────────────────────────────────
+# Rulează fetch_enriched.py și commit-uiește data/enriched.json
+# Schedule: la fiecare 2 ore (între 07:00 - 23:00 UTC)
+# Manual: workflow_dispatch
+# ─────────────────────────────────────────────────────────────
+
+name: ML5 Enrichment Fetch
+
+on:
+  schedule:
+    # La fiecare 2 ore, 7:00-23:00 UTC (09:00-01:00 EET)
+    - cron: '0 7,9,11,13,15,17,19,21,23 * * *'
+  workflow_dispatch:
+    inputs:
+      max_events:
+        description: 'Număr maxim meciuri (default 100)'
+        required: false
+        default: '100'
+      delay_ms:
+        description: 'Delay între request-uri în ms (default 200)'
+        required: false
+        default: '200'
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run fetch_enriched.py
+        env:
+          BSD_TOKEN:   ${{ secrets.BSD_TOKEN }}
+          MAX_EVENTS:  ${{ github.event.inputs.max_events || '100' }}
+          DELAY_MS:    ${{ github.event.inputs.delay_ms   || '200' }}
+          OUTPUT_PATH: data/enriched.json
+        run: python3 fetch_enriched.py
+
+      - name: Check output
+        run: |
+          if [ -f data/enriched.json ]; then
+            COUNT=$(python3 -c "import json; d=json.load(open('data/enriched.json')); print(d.get('count',0))")
+            COVERAGE=$(python3 -c "import json; d=json.load(open('data/enriched.json')); print(d.get('coverage_pct',0))")
+            echo "✅ enriched.json: $COUNT meciuri, coverage $COVERAGE%"
+          else
+            echo "❌ data/enriched.json nu a fost generat"
+            exit 1
+          fi
+
+      - name: Commit enriched data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/enriched.json
+          git diff --staged --quiet && echo "No changes" || \
+            git commit -m "🔬 ML5 enriched data — $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
