@@ -10,6 +10,7 @@
   var inflight={};
   var mem={};
   var ttl=30000;
+  var headerUpdateLabel='';
   var dataRe=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
   var files=['data/meta.json','data/events.json','data/predictions.json','data/leagues.json','data/teams.json','data/ai_memory.json','data/backtest.json','data/history_engine.json','data/recommendation_log.json','data/recommendation_journal.json','data/signal_audit.json','data/finished_events.json','data/adaptive_predictions.json','data/model_diagnostics.json','data/journal_learning_memory.json'];
 
@@ -45,14 +46,35 @@
     s.textContent='.match-card,.top-pick-card,.ml-card,.bilet-card,.ticket-card,.bankroll-card,.visual-card,.history-table-wrapper{content-visibility:auto;contain-intrinsic-size:1px 260px}.matches-grid,.top-picks-grid,.ml-grid,.focus-grid,.visual-grid{contain:layout style paint}@media(max-width:900px){.header-inner{display:grid!important;grid-template-columns:minmax(0,1fr)64px!important;grid-template-areas:"logo refresh" "status refresh"!important;align-items:center!important;gap:6px 10px!important;padding:10px 14px!important}.logo{grid-area:logo!important;min-width:0!important}.logo-title{font-size:18px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.logo-sub{font-size:10px!important}.status-bar{grid-area:status!important;width:100%!important;max-width:none!important;min-width:0!important;height:34px!important;padding:7px 12px!important;border-radius:14px!important;justify-content:flex-start!important}.status-bar span,#sb-text{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;line-height:1.2!important;display:block!important;font-size:12px!important}.header-tools{grid-area:refresh!important;justify-self:end!important;align-self:center!important}.header-quick-stats{display:none!important}#btn-refresh{width:56px!important;height:56px!important;min-width:56px!important;border-radius:18px!important;padding:0!important;font-size:0!important;display:flex!important;align-items:center!important;justify-content:center!important}#btn-refresh:before{content:"↻";font-size:26px!important;line-height:1!important}}';
     document.head.appendChild(s);
   }
+  function formatUpdateLabel(value){
+    if(!value)return '';
+    try{
+      var d=new Date(String(value));
+      if(isNaN(d.getTime()))return '';
+      return d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Bucharest'});
+    }catch(e){return ''}
+  }
+  function loadHeaderUpdateTime(force){
+    originalFetch('data/meta.json'+(force?'?t='+Date.now():''),{cache:force?'no-store':'default'})
+      .then(function(r){return r.ok?r.json():null})
+      .then(function(meta){
+        if(!meta)return;
+        var source=(meta.bsd_status&&meta.bsd_status.fetched_at)||meta.updated_at||meta.started_at;
+        var label=formatUpdateLabel(source);
+        if(label){headerUpdateLabel='upd '+label;compactStatusText();}
+      })
+      .catch(function(){});
+  }
   function compactStatusText(){
     var el=document.getElementById('sb-text');
     if(!el||el.__baCompactBusy)return;
     var raw=(el.textContent||'').trim();
     if(!raw)return;
     var compact=raw.replace(/\bpredictions?\b/ig,'').replace(/\bcu\s+cote\b/ig,'cote').replace(/\bcote\s+BSD\b/ig,'cote').replace(/\s*[–—-]\s*/g,' • ').replace(/\s+/g,' ').trim();
+    compact=compact.replace(/\s*•\s*upd\s*\d{1,2}:\d{2}\s*$/i,'').trim();
     var m=raw.match(/(\d+)\s*ML[^0-9]+(\d+)/i);
     if(m)compact=m[1]+' ML • '+m[2]+' cote';
+    if(headerUpdateLabel&&compact.indexOf(headerUpdateLabel)<0)compact+=' • '+headerUpdateLabel;
     if(!compact||compact===raw)return;
     el.__baCompactBusy=true;
     el.textContent=compact;
@@ -82,8 +104,15 @@
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
+  loadHeaderUpdateTime(false);
   watchHeaderStatus();
   loadHybridRuntime();
-  document.addEventListener('DOMContentLoaded',watchHeaderStatus);
+  document.addEventListener('DOMContentLoaded',function(){watchHeaderStatus();loadHeaderUpdateTime(false)});
+  var btn=document.getElementById('btn-refresh');
+  if(btn&&!btn.__baMetaRefreshHook){
+    btn.__baMetaRefreshHook=true;
+    btn.addEventListener('click',function(){setTimeout(function(){loadHeaderUpdateTime(true)},1200)});
+  }
+  setInterval(function(){loadHeaderUpdateTime(false)},60000);
   if('requestIdleCallback'in window)requestIdleCallback(prefetch,{timeout:2500});else setTimeout(prefetch,600);
 })();
