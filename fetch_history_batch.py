@@ -219,7 +219,11 @@ def normalize_event(ev, season_id, season_meta):
     xg_away = _float(ev, "away_xg", ("xg_away", "away_expected_goals"))
 
     league_id  = ev.get("league_id") or (season_meta or {}).get("league_id")
-    league     = ev.get("league")    or (season_meta or {}).get("league") or ""
+    _lg_raw    = ev.get("league") or (season_meta or {}).get("league") or ""
+    if isinstance(_lg_raw, dict):
+        league = _lg_raw.get("name") or _lg_raw.get("short_code") or str(_lg_raw.get("id",""))
+    else:
+        league = str(_lg_raw) if _lg_raw else ""
 
     row = {
         "event_id":    int(event_id),
