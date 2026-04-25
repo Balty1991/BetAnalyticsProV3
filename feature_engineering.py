@@ -367,7 +367,12 @@ def build_league_baselines(rows):
     """Baseline per ligă (pe tot istoricul)."""
     per_league = defaultdict(list)
     for r in rows:
-        lg = r.get("league") or "Unknown"
+        lg_raw = r.get("league") or "Unknown"
+        if isinstance(lg_raw, dict):
+            lg = lg_raw.get("name") or lg_raw.get("short_code") or str(lg_raw.get("id", "Unknown"))
+        else:
+            lg = str(lg_raw) if lg_raw else "Unknown"
+        r["league"] = lg
         per_league[lg].append(r)
 
     baselines = {}
