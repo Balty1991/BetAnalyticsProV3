@@ -4109,7 +4109,7 @@ var LAZY_DATA_READY = {
   fullHistoryAssets:false
 };
 var FULL_HISTORY_ASSETS_PROMISE = null;
-var DATASET_CACHE_VERSION = '20260423step8';
+var DATASET_CACHE_VERSION = '20260425archivefix1';
 
 function getDatasetCacheKey(key){
   return 'bet_dataset_cache_' + DATASET_CACHE_VERSION + '_' + key;
@@ -4234,6 +4234,7 @@ function ensureArchiveSummaryData(){
   var jobs = {
     fullMeta: getJson('/data/full_history_meta.json', null),
     apiSummary: getJson('/data/api_history_summary.json', null),
+    apiEventsSummary: getJson('/data/api_events_history_summary.json', null),
     trainSum: getJson('/data/training_dataset_summary.json', null),
     trainModel: getJson('/data/training_model_summary.json', null),
     baselines: getJson('/data/training_market_baselines.json', []),
@@ -4245,6 +4246,7 @@ function ensureArchiveSummaryData(){
   ARCHIVE_SUMMARY_PROMISE = Promise.all([
     jobs.fullMeta,
     jobs.apiSummary,
+    jobs.apiEventsSummary,
     jobs.trainSum,
     jobs.trainModel,
     jobs.baselines,
@@ -4255,12 +4257,13 @@ function ensureArchiveSummaryData(){
     applyArchiveSummaryData({
       fullMeta: values[0] || {},
       apiSummary: values[1] || {},
-      trainSum: values[2] || {},
-      trainModel: values[3] || {},
-      baselines: Array.isArray(values[4]) ? values[4] : [],
-      aiMemory: values[5] || {},
-      modelPackV2: values[6] || null,
-      sbMetaV2: values[7] || null
+      apiEventsSummary: values[2] || {},
+      trainSum: values[3] || {},
+      trainModel: values[4] || {},
+      baselines: Array.isArray(values[5]) ? values[5] : [],
+      aiMemory: values[6] || {},
+      modelPackV2: values[7] || null,
+      sbMetaV2: values[8] || null
     });
     return true;
   }).catch(function(err){
@@ -13069,6 +13072,7 @@ function renderArchivePanel(){
   var memSum = mem.summary || {};
   var fullMeta = summary.fullMeta || ((typeof W!=='undefined' && W.FULL_HISTORY_META) ? W.FULL_HISTORY_META : (window.FULL_HISTORY_META || {}));
   var apiSum = summary.apiSummary || ((typeof W!=='undefined' && W.API_HISTORY_SUMMARY) ? W.API_HISTORY_SUMMARY : (window.API_HISTORY_SUMMARY || {}));
+  var apiEventsSum = summary.apiEventsSummary || ((typeof W!=='undefined' && W.API_EVENTS_HISTORY_SUMMARY) ? W.API_EVENTS_HISTORY_SUMMARY : (window.API_EVENTS_HISTORY_SUMMARY || {}));
   var apiValid = apiSum.valid || {};
   var trainSum = summary.trainSum || ((typeof W!=='undefined' && W.TRAINING_DATASET_SUMMARY) ? W.TRAINING_DATASET_SUMMARY : (window.TRAINING_DATASET_SUMMARY || {}));
   var trainModel = summary.trainModel || ((typeof W!=='undefined' && W.TRAINING_MODEL_SUMMARY) ? W.TRAINING_MODEL_SUMMARY : (window.TRAINING_MODEL_SUMMARY || {}));
@@ -13080,6 +13084,28 @@ function renderArchivePanel(){
   }
 
   function fmtN(v){ var n=Number(v); return Number.isFinite(n) ? n.toLocaleString('ro-RO') : '—'; }
+  function firstFinite(){
+    for(var i=0; i<arguments.length; i++){
+      var n = Number(arguments[i]);
+      if(Number.isFinite(n)) return n;
+    }
+    return 0;
+  }
+  function countReadyMarkets(){
+    if(Array.isArray(trainModel.markets) && trainModel.markets.length){
+      return trainModel.markets.filter(function(m){ return m && (m.ready === true || Number(m.rows || 0) > 0); }).length;
+    }
+    if(Array.isArray(trainSum.markets_ready) && trainSum.markets_ready.length) return trainSum.markets_ready.length;
+    return 0;
+  }
+
+  var apiIndexedMatches = firstFinite(
+    apiEventsSum && apiEventsSum.total_events_counted,
+    apiEventsSum && apiEventsSum.total_matches,
+    apiSum && apiSum.events_summary && apiSum.events_summary.total_events_counted,
+    apiSum && apiSum.valid && apiSum.valid.total_events
+  );
+  var calibratedMarketsCount = countReadyMarkets();
 
   var hasSummaryData = !!(summaryLoaded || Number(fullMeta.journal_rows || 0) || Number((apiValid||{}).leagues_total || 0) || Number((trainSum||{}).rows_total || 0) || (baselines || []).length || Number((memSum||{}).settled_bets || 0));
   if(!hasSummaryData){
@@ -13098,7 +13124,7 @@ function renderArchivePanel(){
     {
       emoji:'🌐', title:'Baza Istorică API',
       value: fmtN(apiValid.leagues_total||0) + ' ligi • ' + fmtN(apiValid.seasons_total||0) + ' sezoane',
-      sub: fmtN((apiSum.events_summary||{}).total_events_counted||(apiSum.valid||{}).total_events||0) + ' meciuri indexate',
+      sub: fmtN(apiIndexedMatches) + ' meciuri indexate',
       role:'Datele brute din BSD API — calibrează probabilitățile și ajustează cotele fair pe fiecare piață.',
       color:'rgba(99,102,241,.12)', border:'rgba(99,102,241,.25)'
     },
@@ -13124,7 +13150,7 @@ function renderArchivePanel(){
       return {
         emoji:'🤖', title:'Model AI + Patterns',
         value: fmtN(trainSum.rows_total||0) + ' rows antrenament',
-        sub: fmtN((trainModel.rows_eligible_min5||trainSum.rows_ready)||0) + ' ready • ' + fmtN(baselines.filter(function(b){return b&&b.win_rate>0;}).length) + ' piețe calibrate',
+        sub: fmtN((trainModel.rows_eligible_min5||trainSum.rows_ready)||0) + ' ready • ' + fmtN(calibratedMarketsCount) + ' piețe calibrate',
         role:'Modelul statistic și pattern-urile învățate — ajustează scorul fiecărui pick cu bonus/penalizare din memorie.',
         color:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.22)'
       };
@@ -13144,16 +13170,24 @@ function renderArchivePanel(){
   }).join('');
 
   if(impact){
-    var adaptivePicks = (mem.adaptive_picks||[]).length;
-    var posPatterns = (mem.positive_patterns||[]).length;
-    var negPatterns = (mem.negative_patterns||[]).length;
+    var adaptivePicks = Array.isArray(mem.adaptive_picks) ? mem.adaptive_picks.length : firstFinite(memSum.pending_scored, memSum.adaptive_picks_journal_adjusted);
+    var posPatterns = firstFinite(
+      memSum.positive_patterns,
+      Array.isArray(mem.positive_patterns) ? mem.positive_patterns.length : undefined,
+      Array.isArray(mem.top_patterns) ? mem.top_patterns.length : undefined
+    );
+    var negPatterns = firstFinite(
+      memSum.negative_patterns,
+      Array.isArray(mem.negative_patterns) ? mem.negative_patterns.length : undefined,
+      Array.isArray(mem.avoid_patterns) ? mem.avoid_patterns.length : undefined
+    );
     var settledROI = Number(memSum.settled_roi||0);
     impact.innerHTML = '<div style="padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)">' +
       '<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">⚡ Impact direct al arhivei asupra motorului</div>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">' +
         ['Picks adaptive: '+adaptivePicks, 'Patterns pozitive: '+posPatterns, 'Patterns negative: '+negPatterns,
          'ROI validat: '+(settledROI>=0?'+':'')+settledROI.toFixed(2)+'%',
-         'Piețe calibrate: '+baselines.filter(function(b){return b&&b.win_rate>0;}).length,
+         'Piețe calibrate: '+fmtN(calibratedMarketsCount),
          'Settled bets: '+fmtN(memSum.settled_bets||0)
         ].map(function(txt){
           return '<div style="padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:12px;font-weight:700;color:var(--txt)">'+txt+'</div>';
