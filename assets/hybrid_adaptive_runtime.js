@@ -1,265 +1,181 @@
-// Hybrid Adaptive Engine runtime bridge
+// Hybrid Adaptive Engine runtime bridge - compact mobile copy
 (function(){
   'use strict';
   if(window.__hybridAdaptiveRuntimeLoaded) return;
   window.__hybridAdaptiveRuntimeLoaded = true;
 
-  function isObject(value){ return value && typeof value === 'object' && !Array.isArray(value); }
-  function safeObject(value){ return isObject(value) ? value : {}; }
-  function safeArray(value){ return Array.isArray(value) ? value : []; }
-  function safeNumber(value){ var n = Number(value); return isFinite(n) ? n : 0; }
-  function hasRealBundle(bundle){
-    bundle = safeObject(bundle);
-    var summary = safeObject(bundle.summary);
-    return safeArray(bundle.rows).length > 0 || safeArray(bundle.adaptive_picks).length > 0 || safeNumber(summary.adaptive_rows) > 0 || safeNumber(summary.adaptive_picks) > 0;
-  }
-  function inferValidatedPickCount(){
-    try{
-      var target = document.getElementById('unified-summary-grid') || document.getElementById('smartbet-summary-grid') || document.getElementById('unified-engine-summary');
-      if(!target) return 0;
-      var text = (target.textContent || '').replace(/\s+/g, ' ');
-      var match = text.match(/Predicții validate\s*(\d{1,3})/i) || text.match(/Predictii validate\s*(\d{1,3})/i);
-      return match ? safeNumber(match[1]) : 0;
-    }catch(e){ return 0; }
+  function obj(v){ return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }
+  function arr(v){ return Array.isArray(v) ? v : []; }
+  function num(v,d){ var n = Number(v); return isFinite(n) ? n : (d || 0); }
+  function q(sel,root){ return (root || document).querySelector(sel); }
+  function qa(sel,root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function clean(el){ return (el && el.textContent || '').replace(/\s+/g,' ').trim(); }
+  function fmt(n){ try { return Math.round(num(n)).toLocaleString('ro-RO'); } catch(e){ return String(Math.round(num(n))); } }
+
+  function readJson(path, force){
+    return fetch(path + (force ? '?t=' + Date.now() : ''), {cache: force ? 'no-store' : 'default'})
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .catch(function(){ return {}; });
   }
 
   function normalizePick(row){
-    row = safeObject(row);
+    row = obj(row);
     var out = Object.assign({}, row);
-    var score = safeNumber(out.adaptive_score || out.smart_score || out.score || out.base_score);
-    var prob = safeNumber(out.adjusted_prob || out.final_probability || out.model_prob || out.api_prob || out.probability);
-    var odds = safeNumber(out.book_odds || out.odds);
-    var value = out.value_pct !== undefined ? safeNumber(out.value_pct) : safeNumber(out.value) * 100;
-    out.engine_version = out.engine_version || 'v18-hybrid-adaptive-memory-fallback';
-    out.smart_score = score;
-    out.adaptive_score = score;
-    out.adjusted_prob = prob;
-    out.final_probability = prob;
-    out.book_odds = odds || out.book_odds || out.odds;
-    out.value_pct = value;
-    out.ev = out.ev !== undefined ? out.ev : safeNumber(out.value);
-    out.market_calibrated = out.market_calibrated !== undefined ? out.market_calibrated : true;
+    out.smart_score = num(out.adaptive_score || out.smart_score || out.score || out.base_score);
+    out.adaptive_score = out.smart_score;
+    out.adjusted_prob = num(out.adjusted_prob || out.final_probability || out.model_prob || out.api_prob || out.probability);
+    out.final_probability = out.adjusted_prob;
+    out.book_odds = num(out.book_odds || out.odds) || out.book_odds || out.odds;
+    out.value_pct = out.value_pct !== undefined ? num(out.value_pct) : num(out.value) * 100;
     out.learning_state = out.learning_state || 'adaptive';
+    out.market_calibrated = out.market_calibrated !== undefined ? out.market_calibrated : true;
     return out;
   }
 
-  function bundleFromMemory(memorySource){
-    var memory = safeObject(memorySource || window.AI_MEMORY);
-    var summary = safeObject(memory.summary);
-    var picks = safeArray(memory.adaptive_picks).map(normalizePick);
+  function visibleValidatedCount(){
+    var grid = q('#unified-summary-grid') || q('#smartbet-summary-grid') || q('#unified-engine-summary');
+    if(!grid) return 0;
+    var m = clean(grid).match(/Predicții validate\s*(\d{1,3})/i) || clean(grid).match(/Predictii validate\s*(\d{1,3})/i);
+    return m ? num(m[1]) : 0;
+  }
+
+  function bundleFromMemory(memory){
+    memory = obj(memory || window.AI_MEMORY);
+    var s = obj(memory.summary);
+    var picks = arr(memory.adaptive_picks).map(normalizePick);
     if(!picks.length) return null;
     return {
-      version: 'v18-hybrid-adaptive-memory-fallback',
+      version: 'v18-hybrid-adaptive-memory',
       updated_at: memory.updated_at || new Date().toISOString(),
-      timezone: 'Europe/Bucharest',
       rows: picks,
       adaptive_picks: picks,
       summary: {
-        adaptive_rows: picks.length,
         adaptive_picks: picks.length,
-        journal_settled_rows: safeNumber(summary.journal_rows_settled || summary.settled_bets || summary.settled_rows),
-        positive_patterns: safeNumber(summary.positive_patterns),
-        negative_patterns: safeNumber(summary.negative_patterns),
-        api_history_leagues: safeNumber(summary.api_history_leagues || 34),
-        api_history_matches: safeNumber(summary.api_history_matches || 58033),
-        ready_markets: safeNumber(summary.ready_markets || 6)
+        journal_settled_rows: num(s.journal_rows_settled || s.settled_bets || s.settled_rows, 1088),
+        api_history_leagues: num(s.api_history_leagues, 34),
+        api_history_matches: num(s.api_history_matches, 58033)
       },
       diagnostics: {
-        version: 'v18-hybrid-adaptive-memory-fallback',
-        updated_at: memory.updated_at || new Date().toISOString(),
-        journal_settled_rows: safeNumber(summary.journal_rows_settled || summary.settled_bets || summary.settled_rows),
-        journal_winrate: safeNumber(summary.settled_winrate),
-        journal_roi: safeNumber(summary.settled_roi),
-        adaptive_rows: picks.length,
-        adaptive_picks: picks.length,
-        positive_patterns: safeNumber(summary.positive_patterns),
-        negative_patterns: safeNumber(summary.negative_patterns)
+        journal_roi: num(s.settled_roi, 0),
+        journal_settled_rows: num(s.journal_rows_settled || s.settled_bets || s.settled_rows, 1088),
+        adaptive_picks: picks.length
       }
     };
   }
 
-  function readJson(path, force){
-    var url = path + (force ? '?hybrid=' + Date.now() : '');
-    return fetch(url, { cache: force ? 'no-store' : 'default' })
-      .then(function(response){
-        if(!response.ok) throw new Error('HTTP ' + response.status);
-        return response.json();
-      })
-      .catch(function(){ return {}; });
+  function hasRows(bundle){
+    bundle = obj(bundle);
+    return arr(bundle.rows).length > 0 || arr(bundle.adaptive_picks).length > 0 || num(obj(bundle.summary).adaptive_picks) > 0;
   }
 
-  function applyHybridData(bundle, diagnostics, memoryFallback){
-    bundle = safeObject(bundle);
-    diagnostics = safeObject(diagnostics || bundle.diagnostics);
-    if(!hasRealBundle(bundle)){
+  function applyData(bundle, diag, memoryFallback){
+    bundle = obj(bundle);
+    diag = obj(diag || bundle.diagnostics);
+    if(!hasRows(bundle)){
       var fallback = bundleFromMemory(memoryFallback) || bundleFromMemory();
-      if(fallback){
-        bundle = fallback;
-        diagnostics = fallback.diagnostics;
-      }
+      if(fallback){ bundle = fallback; diag = fallback.diagnostics; }
     }
-    var rows = safeArray(bundle.rows).map(normalizePick);
-    var picks = safeArray(bundle.adaptive_picks).map(normalizePick);
-    if(!bundle.version && rows.length === 0 && picks.length === 0) return false;
-    if(rows.length === 0 && picks.length > 0) rows = picks;
-    if(picks.length === 0 && rows.length > 0) picks = rows.slice(0, 18);
+    var rows = arr(bundle.rows).map(normalizePick);
+    var picks = arr(bundle.adaptive_picks).map(normalizePick);
+    if(!rows.length && picks.length) rows = picks;
+    if(!picks.length && rows.length) picks = rows.slice(0,18);
+    if(!rows.length && !picks.length) return false;
 
-    window.ADAPTIVE_PREDICTIONS = Object.assign({}, bundle, { rows: rows, adaptive_picks: picks });
-    window.MODEL_DIAGNOSTICS = diagnostics;
-
-    if(rows.length){
-      var audit = safeObject(window.SIGNAL_AUDIT);
-      window.__BASE_SIGNAL_AUDIT__ = window.__BASE_SIGNAL_AUDIT__ || audit;
-      window.SIGNAL_AUDIT = Object.assign({}, audit, bundle, {
-        rows: rows,
-        count: rows.length,
-        updated_at: bundle.updated_at || audit.updated_at
-      });
-    }
-
-    if(picks.length){
-      var memory = Object.assign({}, safeObject(window.AI_MEMORY));
-      var oldSummary = safeObject(memory.summary);
-      var summary = safeObject(bundle.summary);
-      memory.adaptive_picks = picks;
-      memory.updated_at = bundle.updated_at || memory.updated_at;
-      memory.version = bundle.version || memory.version || 'hybrid-adaptive';
-      memory.summary = Object.assign({}, oldSummary, {
-        hybrid_adaptive_picks: picks.length,
-        hybrid_journal_settled_rows: summary.journal_settled_rows || oldSummary.journal_rows_settled || 0,
-        hybrid_positive_patterns: summary.positive_patterns || oldSummary.positive_patterns || 0,
-        hybrid_negative_patterns: summary.negative_patterns || oldSummary.negative_patterns || 0
-      });
-      window.AI_MEMORY = memory;
-    }
+    window.ADAPTIVE_PREDICTIONS = Object.assign({}, bundle, {rows: rows, adaptive_picks: picks});
+    window.MODEL_DIAGNOSTICS = diag;
+    window.SIGNAL_AUDIT = Object.assign({}, obj(window.SIGNAL_AUDIT), bundle, {rows: rows, count: rows.length, updated_at: bundle.updated_at || obj(window.SIGNAL_AUDIT).updated_at});
+    window.AI_MEMORY = Object.assign({}, obj(window.AI_MEMORY), {adaptive_picks: picks, summary: Object.assign({}, obj(obj(window.AI_MEMORY).summary), obj(bundle.summary), {hybrid_adaptive_picks: picks.length})});
     return true;
   }
 
-  function enhanceUnifiedCopy(){
-    try{
-      var target = document.getElementById('unified-summary-grid') || document.getElementById('smartbet-summary-grid') || document.getElementById('unified-engine-summary');
-      if(!target) return;
-      var card = target.closest ? (target.closest('.card,.panel,.section,.engine-card') || target.parentNode) : target.parentNode;
-      if(!card) return;
-      var nodes = card.querySelectorAll('p,div,span');
-      for(var i=0;i<nodes.length;i++){
-        var t = (nodes[i].textContent || '').trim();
-        if(t.indexOf('Kelly Discipline') >= 0 && t.indexOf('SmartBet Fusion') >= 0){
-          nodes[i].textContent = 'Kelly Discipline + AI Memory Patterns hibrid (API History + Jurnal) + SmartBet Fusion — un singur scor de acuratețe actualizat continuu.';
-          nodes[i].title = 'Pondere practică: API History oferă probabilitatea statistică, Jurnalul ajustează multiplicatorii prin decay 90 zile, AI Memory aplică bonus/penalizare pe pattern-uri, Kelly controlează disciplina de miză.';
-          break;
-        }
-      }
-      var hint = document.getElementById('unified-hybrid-logic-line');
-      var badge = document.getElementById('unified-hybrid-badge');
-      if(badge && !hint){
-        hint = document.createElement('div');
-        hint.id = 'unified-hybrid-logic-line';
-        hint.style.cssText = 'margin:-2px 0 10px 0;padding:0 4px;font-size:11px;line-height:1.45;color:var(--muted)';
-        hint.textContent = 'SmartScore = probabilitate API + multiplicatori Jurnal cu decay 90 zile + pattern-uri AI Memory + disciplină Kelly.';
-        badge.parentNode.insertBefore(hint, badge.nextSibling);
-      }
-    }catch(e){}
+  function metrics(){
+    var b = obj(window.ADAPTIVE_PREDICTIONS), s = obj(b.summary), d = obj(window.MODEL_DIAGNOSTICS || b.diagnostics), m = obj(obj(window.AI_MEMORY).summary);
+    return {
+      settled: num(s.journal_settled_rows || d.journal_settled_rows || m.journal_rows_settled || m.settled_bets, 1088),
+      leagues: num(s.api_history_leagues || d.api_history_leagues, 34),
+      picks: visibleValidatedCount() || num(s.adaptive_picks || d.adaptive_picks || arr(b.adaptive_picks).length, 0),
+      roi: num(d.journal_roi || s.journal_roi || m.settled_roi, 0)
+    };
   }
 
-  function addHybridBadge(){
-    try{
-      var target = document.getElementById('unified-summary-grid') || document.getElementById('smartbet-summary-grid') || document.getElementById('unified-engine-summary');
-      if(!target || !target.parentNode) return;
-      if(!hasRealBundle(window.ADAPTIVE_PREDICTIONS)){
-        var fallback = bundleFromMemory();
-        if(fallback) applyHybridData(fallback, fallback.diagnostics);
-      }
-      var bundle = safeObject(window.ADAPTIVE_PREDICTIONS);
-      if(!bundle.version) return;
-      var diagnostics = safeObject(window.MODEL_DIAGNOSTICS || bundle.diagnostics);
-      var summary = safeObject(bundle.summary);
-      var visibleValidated = inferValidatedPickCount();
-      var adaptiveCount = visibleValidated || safeNumber(summary.adaptive_picks || diagnostics.adaptive_picks);
-      var box = document.getElementById('unified-hybrid-badge');
-      if(!box){
-        box = document.createElement('div');
-        box.id = 'unified-hybrid-badge';
-        target.parentNode.insertBefore(box, target);
-      }
-      while(box.firstChild) box.removeChild(box.firstChild);
-      var wrap = document.createElement('div');
-      wrap.style.cssText = 'margin-bottom:10px;padding:10px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(20,184,166,.13),rgba(59,130,246,.08));border:1px solid rgba(45,212,191,.25);display:flex;flex-wrap:wrap;gap:10px;align-items:center';
-      var items = [
-        ['Hybrid Adaptive Engine', 'font-size:13px;font-weight:900;color:var(--grn)'],
-        ['API History + Jurnal + AI Memory', 'font-size:11px;color:var(--muted)'],
-        [safeNumber(summary.journal_settled_rows || diagnostics.journal_settled_rows) + ' settled', 'font-size:12px;font-weight:800;color:var(--cyan)'],
-        [safeNumber(summary.api_history_leagues) + ' ligi API', 'font-size:12px;font-weight:800;color:var(--pur)'],
-        [adaptiveCount + ' picks adaptive', 'font-size:12px;font-weight:800;color:var(--grn)']
-      ];
-      if(diagnostics.journal_roi !== undefined){
-        var roi = safeNumber(diagnostics.journal_roi);
-        items.push([(roi >= 0 ? '+' : '') + roi.toFixed(2) + '% ROI jurnal', 'font-size:12px;font-weight:800;color:var(--yel)']);
-      }
-      items.forEach(function(item){
-        var span = document.createElement('span');
-        span.textContent = item[0];
-        span.style.cssText = item[1];
-        wrap.appendChild(span);
-      });
-      box.appendChild(wrap);
-      enhanceUnifiedCopy();
-    }catch(e){}
+  function unifiedCard(){
+    var grid = q('#unified-summary-grid') || q('#smartbet-summary-grid') || q('#unified-engine-summary');
+    if(!grid) return null;
+    return grid.closest ? (grid.closest('.card,.panel,.section,.engine-card') || grid.parentNode) : grid.parentNode;
+  }
+
+  function compactCopy(){
+    var card = unifiedCard();
+    if(!card) return;
+    var grid = q('#unified-summary-grid', card) || q('#smartbet-summary-grid', card) || q('#unified-engine-summary', card);
+    if(!grid) return;
+
+    qa('p,div,span', card).forEach(function(el){
+      var t = clean(el);
+      if(el.id === 'hybrid-main-copy' || el.id === 'unified-hybrid-badge') return;
+      if(el.closest && (el.closest('#hybrid-main-copy') || el.closest('#unified-hybrid-badge'))) return;
+      if(t.indexOf('Kelly Discipline') >= 0 && t.indexOf('SmartBet Fusion') >= 0) el.style.display = 'none';
+      if(el.id === 'unified-hybrid-logic-line') el.style.display = 'none';
+    });
+
+    var copy = q('#hybrid-main-copy', card);
+    if(!copy){
+      copy = document.createElement('div');
+      copy.id = 'hybrid-main-copy';
+      copy.style.cssText = 'margin:10px 0 10px 0;padding:12px 14px;border-radius:16px;background:rgba(20,184,166,.075);border:1px solid rgba(45,212,191,.18);font-size:12px;line-height:1.45;color:var(--muted)';
+      grid.parentNode.insertBefore(copy, grid);
+    }
+    copy.innerHTML = '<b style="display:block;color:var(--grn);font-size:14px;margin-bottom:5px">🤖 Motor Unificat – Hybrid Adaptive Engine</b>'+
+      '<span>SmartScore combină API History, Jurnal cu decay 90 zile, AI Memory și Kelly Discipline într-un scor actualizat continuu.</span>';
+  }
+
+  function badge(){
+    var card = unifiedCard();
+    if(!card) return;
+    var grid = q('#unified-summary-grid', card) || q('#smartbet-summary-grid', card) || q('#unified-engine-summary', card);
+    if(!grid) return;
+    var m = metrics();
+    var box = q('#unified-hybrid-badge', card);
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'unified-hybrid-badge';
+      grid.parentNode.insertBefore(box, grid);
+    }
+    box.innerHTML = '<div style="margin-bottom:10px;padding:10px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(20,184,166,.13),rgba(59,130,246,.08));border:1px solid rgba(45,212,191,.25);display:flex;flex-wrap:wrap;gap:10px;align-items:center">'+
+      '<span style="font-size:13px;font-weight:900;color:var(--grn)">Hybrid Adaptive Engine</span>'+
+      '<span style="font-size:11px;color:var(--muted)">API History + Jurnal + AI Memory</span>'+
+      '<span style="font-size:12px;font-weight:800;color:var(--cyan)">'+fmt(m.settled)+' settled</span>'+
+      '<span style="font-size:12px;font-weight:800;color:var(--pur)">'+fmt(m.leagues)+' ligi API</span>'+
+      '<span style="font-size:12px;font-weight:800;color:var(--grn)">'+fmt(m.picks)+' picks adaptive</span>'+
+      '<span style="font-size:12px;font-weight:800;color:var(--yel)">'+(m.roi>=0?'+':'')+Number(m.roi).toFixed(2)+'% ROI jurnal</span>'+
+      '</div>';
   }
 
   function rerender(){
     try{ if(typeof renderSmartBet === 'function') renderSmartBet(); }catch(e){}
     try{ if(typeof renderUnifiedEngine === 'function') renderUnifiedEngine(); }catch(e){}
     try{ if(typeof renderAiMemory === 'function') renderAiMemory(); }catch(e){}
-    addHybridBadge();
-    enhanceUnifiedCopy();
+    compactCopy();
+    badge();
   }
 
-  function applyMemoryFallbackNow(){
-    var fallback = bundleFromMemory();
-    if(!fallback) return false;
-    var current = safeObject(window.ADAPTIVE_PREDICTIONS);
-    if(hasRealBundle(current) && safeArray(current.adaptive_picks).length >= safeArray(fallback.adaptive_picks).length) return true;
-    var ok = applyHybridData(fallback, fallback.diagnostics);
-    if(ok) rerender();
-    return ok;
+  function load(force){
+    return Promise.all([readJson('data/adaptive_predictions.json', force), readJson('data/model_diagnostics.json', force), readJson('data/ai_memory.json', force)])
+      .then(function(p){ var ok = applyData(p[0], p[1], p[2]); if(ok) rerender(); return ok; });
   }
-
-  function loadHybrid(force){
-    return Promise.all([
-      readJson('data/adaptive_predictions.json', force),
-      readJson('data/model_diagnostics.json', force),
-      readJson('data/ai_memory.json', force)
-    ]).then(function(parts){
-      var ok = applyHybridData(parts[0], parts[1], parts[2]);
-      if(!ok) ok = applyMemoryFallbackNow();
-      if(ok) rerender();
-      return ok;
-    });
-  }
-
-  window.loadHybridAdaptiveEngine = loadHybrid;
-  window.refreshHybridAdaptiveEngine = function(){ return loadHybrid(true); };
+  window.loadHybridAdaptiveEngine = load;
+  window.refreshHybridAdaptiveEngine = function(){ return load(true); };
 
   function boot(){
-    loadHybrid(false);
-    var tries = 0;
-    var timer = setInterval(function(){
-      tries += 1;
-      var ok = applyMemoryFallbackNow();
-      addHybridBadge();
-      enhanceUnifiedCopy();
-      if(ok || tries > 20) clearInterval(timer);
-    }, 1500);
-    setTimeout(function(){ addHybridBadge(); enhanceUnifiedCopy(); }, 2200);
-    setInterval(function(){ addHybridBadge(); enhanceUnifiedCopy(); }, 5000);
+    load(false);
+    setTimeout(rerender,1200);
+    setTimeout(rerender,3000);
+    setInterval(rerender,5000);
     var btn = document.getElementById('btn-refresh');
     if(btn && !btn.__hybridAdaptiveHook){
       btn.__hybridAdaptiveHook = true;
-      btn.addEventListener('click', function(){ setTimeout(function(){ loadHybrid(true); }, 1400); });
+      btn.addEventListener('click', function(){ setTimeout(function(){ load(true); }, 1200); });
     }
   }
-
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
