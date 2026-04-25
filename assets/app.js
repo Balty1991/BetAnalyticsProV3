@@ -27,7 +27,7 @@ var AUDIT_TICKETS = {premium:null, double:null, triple:null, contrarian:null};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BILETE = null;
-var CURRENT_FILTER = 'motor_validated';
+var CURRENT_FILTER = 'all';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
 var MATCHES_PAGE_SIZE = 25;        // câte carduri se afișează per batch
 var MATCHES_RENDERED_COUNT = 0;    // câte carduri sunt acum în DOM
@@ -5718,9 +5718,9 @@ function hasSyncedOdds(match){
 
 function resetMatchFilters(){
   clearMatchFocus();
-  CURRENT_FILTER = 'motor_validated';
+  CURRENT_FILTER = 'all';
   document.querySelectorAll('.filter-btn,.mf-chip').forEach(function(b){ b.classList.remove('active'); });
-  activateMatchFilterButton('motor_validated');
+  activateMatchFilterButton('all');
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';

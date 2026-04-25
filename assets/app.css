@@ -22,7 +22,6 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-heig
 .header-stat-pill strong{display:block;font-size:16px;font-family:var(--mono);line-height:1;color:var(--txt)}
 .header-stat-pill span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
 #dashboard-stats{display:none!important}
-#market-performance-panel{display:none!important}
 #header-quick-stats{display:none!important}
 #audit-legend-box{display:none!important}
 
@@ -3749,3 +3748,968 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
 }
 
 /* ── End of polish ───────────────────────────────────────── */
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  AURORA v4 — REFINEMENT PASS 2                           ║
+   ║  Match cards: more compact, cleaner, professional        ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ── A. Match filters card — fix toggles & selects ─────── */
+.mf-card {
+  padding: 12px !important;
+  border-radius: var(--r-md) !important;
+}
+
+/* Mode toggle (Simplu / Expert) — pill segmented control */
+.mf-mode-toggle {
+  display: inline-flex !important;
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  border-radius: var(--r-pill) !important;
+  padding: 3px !important;
+  gap: 0 !important;
+}
+.mf-mode-btn {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  padding: 6px 14px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--c-muted) !important;
+  border-radius: var(--r-pill) !important;
+  cursor: pointer !important;
+  transition: all var(--t-base) !important;
+  letter-spacing: -0.005em !important;
+}
+.mf-mode-btn:hover:not(.active) {
+  color: var(--c-text2) !important;
+}
+.mf-mode-btn.active {
+  background: var(--c-acc-lo) !important;
+  color: var(--c-acc) !important;
+  border: 1px solid var(--c-acc-mid) !important;
+  box-shadow: 0 0 12px rgba(43,229,197,.10) !important;
+}
+
+/* Sort row — Ora dropdown + Filtre button — same height & polish */
+.mf-sort-row {
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+}
+.mf-select {
+  flex: 1 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  border-radius: var(--r-sm) !important;
+  color: var(--c-text) !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  padding: 9px 30px 9px 12px !important;
+  cursor: pointer !important;
+  transition: all var(--t-base) !important;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%232BE5C5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 11px center !important;
+  background-size: 10px 6px !important;
+}
+.mf-select:focus {
+  outline: none !important;
+  border-color: var(--c-acc-mid) !important;
+  box-shadow: 0 0 0 3px rgba(43,229,197,.10) !important;
+}
+.mf-select option {
+  background: var(--c-surface) !important;
+  color: var(--c-text) !important;
+}
+
+/* Filtre button — match height & style with select */
+.mf-advanced-toggle {
+  flex: 0 0 auto !important;
+  padding: 9px 14px !important;
+  border-radius: var(--r-sm) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  background: rgba(255,255,255,.03) !important;
+  color: var(--c-text2) !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: all var(--t-base) !important;
+  letter-spacing: -0.005em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+.mf-advanced-toggle:hover {
+  border-color: var(--c-acc-mid) !important;
+  color: var(--c-acc) !important;
+}
+.mf-advanced-toggle.active {
+  background: var(--c-acc-lo) !important;
+  border-color: var(--c-acc-mid) !important;
+  color: var(--c-acc) !important;
+}
+
+/* Filter chips — slightly smaller + tighter spacing */
+.mf-chips-scroll {
+  gap: 6px !important;
+  margin-bottom: 10px !important;
+  padding-bottom: 4px !important;
+}
+.mf-chip {
+  padding: 6px 11px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.005em !important;
+}
+
+/* Title row */
+.mf-title-row { gap: 10px !important; }
+.mf-title { font-size: 15px !important; }
+.mf-icon { display: none !important; }  /* remove emoji ⚽ at left, redundant */
+.mf-count {
+  background: var(--c-acc-lo) !important;
+  border: 1px solid var(--c-acc-mid) !important;
+  color: var(--c-acc) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  padding: 2px 9px !important;
+}
+
+/* Validate Motor pill (next to title) cleaner */
+.mf-card .sec-badge,
+.mf-title-row + .sec-badge {
+  background: var(--c-acc-lo) !important;
+  border: 1px solid var(--c-acc-mid) !important;
+  color: var(--c-acc) !important;
+}
+
+/* ── B. Match card v16 — more compact, less padding ──── */
+.match-card-v16 {
+  padding: 12px !important;
+  gap: 8px !important;
+  border-radius: var(--r-md) !important;
+  border-left: 1px solid var(--c-border) !important;  /* override any orange left border */
+}
+.match-card-v16.safe,
+.match-card-v16.moderate,
+.match-card-v16.avoid {
+  border-left: 1px solid var(--c-border) !important;  /* no thick coloured edge */
+}
+/* Thin coloured top accent INSTEAD of left bar */
+.match-card-v16.safe::before,
+.match-card-v16.moderate::before,
+.match-card-v16.avoid::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important; left: 0 !important; right: 0 !important;
+  height: 2px !important;
+  border-radius: var(--r-md) var(--r-md) 0 0 !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+.match-card-v16.safe::before     { background: linear-gradient(90deg, var(--c-ok), rgba(45,212,145,.3)) !important; }
+.match-card-v16.moderate::before { background: linear-gradient(90deg, var(--c-warn), rgba(245,167,66,.3)) !important; }
+.match-card-v16.avoid::before    { background: linear-gradient(90deg, var(--c-bad), rgba(242,89,117,.3)) !important; }
+
+/* Match focus state — soft glow, no thick orange line */
+.match-card-v16.match-card-focus {
+  border: 1px solid var(--c-acc) !important;
+  border-left: 1px solid var(--c-acc) !important;
+  box-shadow:
+    0 0 0 1px var(--c-acc-mid),
+    0 0 24px rgba(43,229,197,.15),
+    var(--shadow-2) !important;
+}
+.match-card-v16.match-card-focus::before {
+  background: linear-gradient(90deg, var(--c-acc), var(--c-blue)) !important;
+}
+
+/* Inner panels — tighter padding */
+.match-card-v16 .m16-top,
+.match-card-v16 .m16-reco,
+.match-card-v16 .m16-signals,
+.match-card-v16 .m16-actions,
+.match-card-v16 .m16-extra {
+  padding: 10px 12px !important;
+  border-radius: var(--r-sm) !important;
+}
+
+/* Top strip — league + kickoff: more compact */
+.match-card-v16 .m16-top {
+  padding: 9px 12px !important;
+  background: rgba(255,255,255,.02) !important;
+}
+.match-card-v16 .m16-league {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--c-text2) !important;
+  letter-spacing: -0.01em !important;
+  gap: 7px !important;
+}
+.match-card-v16 .m16-league img {
+  width: 16px !important; height: 16px !important;
+}
+.match-card-v16 .m16-kickoff {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  gap: 7px !important;
+}
+.match-card-v16 .m16-kickoff-pill {
+  padding: 3px 9px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+
+/* Country/score row — visually quieter */
+.match-card-v16 .m16-top:nth-of-type(2) {
+  padding: 7px 12px !important;
+  background: rgba(255,255,255,.015) !important;
+}
+.match-card-v16 .m16-top:nth-of-type(2) .m16-league span {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--c-muted) !important;
+}
+.mc-score-pill {
+  padding: 3px 9px !important;
+  font-size: 10px !important;
+}
+
+/* Teams display — tighter, balanced */
+.match-card-v16 .m16-teams {
+  padding: 14px 12px 8px !important;
+  background: transparent !important;
+  border: none !important;
+  gap: 8px !important;
+}
+.match-card-v16 .m16-team {
+  gap: 5px !important;
+}
+.match-card-v16 .m16-team-logo {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: var(--r-sm) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: var(--c-text2) !important;
+}
+.match-card-v16 .m16-team-name {
+  font-family: var(--font-display) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.2 !important;
+  color: var(--c-text) !important;
+}
+.match-card-v16 .m16-team-prob {
+  font-family: var(--font-display) !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+  color: var(--c-acc-hi) !important;
+  line-height: 1 !important;
+}
+.match-card-v16 .m16-vs {
+  font-family: var(--font-display) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  color: var(--c-muted) !important;
+}
+
+/* ML probability bar — thinner & cleaner */
+.match-card-v16 .m16-ml-bar {
+  height: 7px !important;
+  margin-top: 4px !important;
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid var(--c-hairline) !important;
+}
+.match-card-v16 .m16-ml-note {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  color: var(--c-muted) !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  margin-top: 6px !important;
+}
+
+/* Recommendation block — emphasised but compact */
+.match-card-v16 .m16-reco {
+  padding: 12px !important;
+  background: linear-gradient(135deg, rgba(43,229,197,.08), rgba(95,168,255,.04)) !important;
+  border: 1px solid var(--c-acc-mid) !important;
+}
+.match-card-v16 .m16-reco-title {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.16em !important;
+  color: var(--c-acc) !important;
+  text-transform: uppercase !important;
+}
+.match-card-v16 .m16-reco-main {
+  font-size: 17px !important;
+  margin-top: 5px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+}
+.match-card-v16 .m16-reco-meta {
+  margin-top: 5px !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
+  color: var(--c-text2) !important;
+}
+
+/* If reco-main contains "PROBABILITATE PRONOSTIC" / "Cota STD" / "@ 1.33" — stack neatly */
+.match-card-v16 .m16-reco-main { line-height: 1.3 !important; }
+
+/* Probability % big number — make compact */
+.match-card-v16 .m16-reco strong[style*="font-size"],
+.match-card-v16 .m16-reco strong {
+  font-family: var(--font-display) !important;
+  font-feature-settings: 'tnum' 1 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+}
+
+/* Signals block — cleaner */
+.match-card-v16 .m16-signals { padding: 10px 12px !important; gap: 6px !important; }
+.match-card-v16 .m16-signal-text { font-size: 10px !important; line-height: 1.55 !important; }
+.match-card-v16 .m16-signal-pill { padding: 3px 9px !important; font-size: 9px !important; font-weight: 700 !important; }
+
+/* Action buttons */
+.match-card-v16 .m16-actions {
+  padding: 8px !important;
+  gap: 6px !important;
+}
+.match-card-v16 .m16-btn {
+  padding: 9px 10px !important;
+  font-size: 11px !important;
+  border-radius: var(--r-sm) !important;
+  font-weight: 700 !important;
+}
+
+/* ── C. Glosar rapid box — too prominent, soften it ──── */
+.help-panel {
+  padding: 12px 14px !important;
+  margin-bottom: 10px !important;
+  background: linear-gradient(135deg, rgba(43,229,197,.04), rgba(95,168,255,.02)) !important;
+  border-color: var(--c-hairline2) !important;
+}
+.help-title { font-size: 13px !important; }
+.help-sub { font-size: 11px !important; }
+.help-chip {
+  padding: 5px 11px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+.help-chip-row { gap: 6px !important; margin-top: 10px !important; }
+
+/* Smaller "Glosar rapid" emoji */
+.help-title { letter-spacing: -0.015em !important; }
+
+/* ── D. Date label "Sam 25 apr" — minimal ─────────────── */
+.date-label {
+  background: transparent !important;
+  border: none !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--c-muted) !important;
+  padding: 8px 0 !important;
+  margin-bottom: 6px !important;
+}
+.date-label::before {
+  content: '— ';
+  color: var(--c-acc);
+  font-weight: 800;
+}
+
+/* ── E. Mobile match list — even tighter on phone ─────── */
+@media (max-width: 768px) {
+  .mf-card { padding: 10px !important; }
+  .mf-title-row { gap: 8px !important; }
+  .mf-title { font-size: 14px !important; }
+  .mf-mode-btn { padding: 5px 12px !important; font-size: 10px !important; }
+  .mf-chips-scroll { margin: 0 -10px 8px !important; padding: 0 10px 4px !important; }
+  .mf-chip { padding: 5px 10px !important; font-size: 10px !important; }
+  .mf-select { padding: 8px 28px 8px 10px !important; font-size: 11px !important; }
+  .mf-advanced-toggle { padding: 8px 12px !important; font-size: 11px !important; }
+
+  /* Match card v16 mobile */
+  .match-card-v16 { padding: 10px !important; gap: 7px !important; }
+  .match-card-v16 .m16-top,
+  .match-card-v16 .m16-reco,
+  .match-card-v16 .m16-signals,
+  .match-card-v16 .m16-actions { padding: 9px 11px !important; }
+  .match-card-v16 .m16-teams { padding: 11px 8px 6px !important; gap: 6px !important; }
+  .match-card-v16 .m16-team-logo { width: 34px !important; height: 34px !important; }
+  .match-card-v16 .m16-team-name { font-size: 12px !important; }
+  .match-card-v16 .m16-team-prob { font-size: 19px !important; }
+  .match-card-v16 .m16-vs { font-size: 10px !important; }
+  .match-card-v16 .m16-reco-main { font-size: 15px !important; }
+  .match-card-v16 .m16-reco-meta { font-size: 10px !important; }
+  .match-card-v16 .m16-ml-bar { height: 6px !important; }
+  .match-card-v16 .m16-ml-note { font-size: 9px !important; }
+  .match-card-v16 .m16-btn { padding: 8px !important; font-size: 11px !important; }
+  .match-card-v16 .m16-signal-text { font-size: 10px !important; }
+  .match-card-v16 .m16-signal-pill { font-size: 9px !important; }
+}
+
+/* ── F. RECOMANDARE PRINCIPALĂ — premium card layout ──── */
+.match-card-v16 .m16-reco {
+  position: relative;
+}
+/* Big % + "Motor" / "@ cota" arrangement */
+.match-card-v16 .m16-reco > div:has(> .m16-reco-main),
+.match-card-v16 .m16-reco-main {
+  font-feature-settings: 'tnum' 1, 'cv11' 1 !important;
+}
+
+/* Trend & Eligible row */
+.match-card-v16 .m16-signal-row {
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Validate Motor inline pill (small green) — refine */
+.match-card-v16 .m16-signal-text strong {
+  color: var(--c-text) !important;
+  font-weight: 700 !important;
+}
+
+/* "Detalii analiză" expand button — full width subtle */
+.match-card-v16 .m16-actions:has(.m16-actions-single),
+.match-card-v16 .m16-actions-single {
+  grid-template-columns: 1fr !important;
+}
+
+/* ── G. Improve "ELIGIBLE" / "Value +x%" pills ─────────── */
+.match-card-v16 .m16-signal-pill,
+.match-card-v16 .m16-signal-text > span {
+  font-family: var(--font-mono) !important;
+}
+
+/* ── H. Country emoji 🌍 alignment ─────────────────────── */
+.match-card-v16 .m16-top span:has(+ *)::first-letter {
+  font-size: 1.1em;
+}
+
+/* ── I. Hide the redundant "Glosar rapid Meciuri" panel
+       on mobile to save space ─────────────────────────── */
+@media (max-width: 768px) {
+  #matches-help-panel {
+    margin-bottom: 8px !important;
+    padding: 10px 12px !important;
+  }
+  #matches-help-panel .help-title { font-size: 12px !important; }
+  #matches-help-panel .help-sub { display: none !important; }
+  #matches-help-panel .action-row { display: none !important; }
+}
+
+/* ── J. Match card "PROBABILITATE PRONOSTIC" header ───── */
+.match-card-v16 .m16-reco div[style*="text-transform"],
+.match-card-v16 .m16-reco-title + div {
+  font-family: var(--font-mono) !important;
+}
+
+/* ── K. Override any inline style oranges/yellows from JS ─ */
+.match-card-v16[style*="border-left"] {
+  border-left-color: var(--c-border) !important;
+  border-left-width: 1px !important;
+}
+
+/* End refinement pass 2 */
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  AURORA v4.2 — POLISH PASS 3                            ║
+   ║  Final cleanups: borders, spacing, status pills          ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ── Force-kill any remaining thick coloured left borders on cards ── */
+.match-card,
+.match-card-v16,
+.match-card.safe,
+.match-card.moderate,
+.match-card.avoid,
+.match-card-v16.safe,
+.match-card-v16.moderate,
+.match-card-v16.avoid {
+  border-left-width: 1px !important;
+  border-left-style: solid !important;
+  border-left-color: var(--c-border) !important;
+}
+
+/* Re-apply the 2px top accent for verdict (we overrode in v4.1, just confirm) */
+.match-card-v16 { overflow: hidden !important; }
+
+/* ── Dashboard cards — tighten spacing between sections ─── */
+#tab-dashboard > .section,
+#tab-dashboard > .sec-hdr,
+#tab-dashboard > div[class*="section"] {
+  margin-top: 10px !important;
+  margin-bottom: 10px !important;
+}
+#tab-dashboard > .stats-grid { margin-bottom: 10px !important; }
+#dashboard-monitor-panel { margin-bottom: 10px !important; padding: 12px !important; }
+#dashboard-visual-panel { margin-bottom: 10px !important; padding: 12px !important; }
+#health-panel { margin-bottom: 10px !important; padding: 10px 12px !important; }
+.help-panel { margin-bottom: 10px !important; }
+
+/* Less breathing room inside dashboard panels on mobile */
+@media (max-width: 768px) {
+  #tab-dashboard > .section,
+  #tab-dashboard > div[class*="section"] {
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+  }
+  #tab-dashboard > div[class*="panel"] { padding: 12px !important; }
+}
+
+/* ── Header status pill — ensure ellipsis truncation ──── */
+.status-bar {
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+.status-bar #sb-text {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+@media (max-width: 768px) {
+  .header-inner { flex-wrap: nowrap !important; }
+  .status-bar { flex: 1 1 0 !important; min-width: 0 !important; }
+  .status-bar #sb-text { font-size: 10px !important; }
+}
+
+/* ── Toast / floating "API sync" indicator — keep above mobile nav ── */
+.toast-wrap {
+  z-index: 250 !important;  /* above mobile nav (200) */
+}
+@media (max-width: 768px) {
+  .toast-wrap {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(96px + env(safe-area-inset-bottom,0px)) !important;
+    /* sits ABOVE the floating bottom nav, not on top of it */
+  }
+  .toast {
+    width: 100% !important;
+    max-width: none !important;
+    text-align: center !important;
+    font-size: 11px !important;
+  }
+}
+
+/* ── Headers that are still raw style attributes — keep them but
+       align typography ──────────────────────────────────── */
+[id$="-help-panel"] .help-title,
+[class*="-shell-title"],
+[class*="-card-title"]:not(.modern-kpi-label):not(.dashboard-v16-section-label) {
+  font-family: var(--font-display) !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* ── "0 ML predictions — 0 cu cote — 0 semnale top — ora 11:39"
+       in the header is too long on mobile. Truncate at "—" ── */
+@media (max-width: 480px) {
+  .status-bar #sb-text {
+    max-width: 130px !important;
+  }
+  .logo-title { font-size: 14px !important; letter-spacing: -0.04em !important; }
+  .logo-sub { font-size: 8px !important; }
+}
+
+/* ── Dashboard "Top 3 oportunități" empty state polish ── */
+.dashboard-v16-opp-scroll .dashboard-v16-empty,
+.dashboard-v16-opp-card.empty {
+  background: rgba(255,255,255,.02) !important;
+  border: 1px dashed var(--c-hairline2) !important;
+  border-radius: var(--r-md) !important;
+  padding: 18px !important;
+  color: var(--c-muted) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  text-align: center !important;
+}
+
+/* ── Dashboard greeting block — softer copy ────────────── */
+.dashboard-v16-greeting-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.03em !important;
+}
+.dashboard-v16-greeting-sub {
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  color: var(--c-text2) !important;
+  line-height: 1.55 !important;
+}
+
+/* ── KPI quick grid — clearer empty values ──────────── */
+.dashboard-v16-quick-grid .dashboard-v16-stat-v {
+  font-family: var(--font-display) !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1 !important;
+  margin: 6px 0 !important;
+  background: linear-gradient(135deg, #F0F4FB 0%, var(--c-acc-hi) 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+.dashboard-v16-quick-grid .dashboard-v16-stat-v[data-empty="true"],
+.dashboard-v16-quick-grid .dashboard-v16-stat-v:empty::before {
+  content: "—";
+  background: none !important;
+  -webkit-text-fill-color: var(--c-muted) !important;
+  color: var(--c-muted) !important;
+  opacity: 0.5;
+}
+
+/* ── Force teal accent on all "Validate Motor • X meciuri" pills ── */
+.mf-card .sec-badge,
+.mf-card span.sec-badge {
+  background: var(--c-acc-lo) !important;
+  border-color: var(--c-acc-mid) !important;
+  color: var(--c-acc) !important;
+}
+
+/* ── Country chip & score chip — matching size and weight ── */
+.mc-score-pill {
+  font-family: var(--font-mono) !important;
+  font-weight: 600 !important;
+  font-size: 10px !important;
+  padding: 3px 9px !important;
+  letter-spacing: 0.01em !important;
+  background: rgba(255,255,255,.03) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  border-radius: var(--r-pill) !important;
+  color: var(--c-text2) !important;
+}
+
+/* ── Bottom nav — keep above all content properly ──────── */
+@media (max-width: 768px) {
+  .mobile-nav { z-index: 200 !important; }
+  .mobile-sheet { z-index: 199 !important; }
+
+  /* Make sure tickets/floating items don't collide */
+  .ticket-quickpeek {
+    bottom: calc(96px + env(safe-area-inset-bottom,0px)) !important;
+    left: 12px !important; right: 12px !important;
+    width: auto !important;
+  }
+}
+
+/* ── Better ml-card and similar grids ──────────────────── */
+.ml-grid, .matches-grid, .top-picks-grid, .live-grid {
+  gap: 10px !important;
+}
+@media (max-width: 768px) {
+  .ml-grid, .matches-grid, .top-picks-grid, .live-grid {
+    gap: 10px !important;
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Smartlearn nav (sub-tabs in SmartBet section) ──── */
+.smartlearn-nav {
+  padding: 0 0 12px !important;
+  border-bottom: 1px solid var(--c-hairline) !important;
+  margin-bottom: 14px !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+}
+.smartlearn-nav::-webkit-scrollbar { display: none !important; }
+.smartlearn-tab {
+  flex-shrink: 0 !important;
+  padding: 8px 14px !important;
+  font-size: 11px !important;
+}
+
+/* ── Polish "Resetează filtrele" green button ────────── */
+button[onclick*="resetMatchFilters"],
+button[onclick*="resetFilter"] {
+  background: linear-gradient(135deg, var(--c-acc), var(--c-blue)) !important;
+  color: var(--c-bg) !important;
+  border: 1px solid var(--c-acc) !important;
+  font-family: var(--font-display) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.015em !important;
+  border-radius: var(--r-pill) !important;
+  padding: 11px 22px !important;
+  font-size: 13px !important;
+  box-shadow:
+    0 0 0 1px rgba(43,229,197,.18),
+    0 8px 26px rgba(43,229,197,.28),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+  transition: all var(--t-base) !important;
+}
+button[onclick*="resetMatchFilters"]:hover,
+button[onclick*="resetFilter"]:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+  box-shadow:
+    0 0 0 1px rgba(43,229,197,.30),
+    0 12px 32px rgba(43,229,197,.40),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+}
+
+/* ── Empty state container ─────────────────────────── */
+.empty-state {
+  padding: 36px 20px !important;
+  font-family: var(--font-sans) !important;
+  font-size: 12px !important;
+  color: var(--c-muted) !important;
+  text-align: center !important;
+  line-height: 1.6 !important;
+}
+
+/* ── Focus shell — top 3 oportunități box ────────────── */
+.focus-shell { padding: 14px !important; }
+.focus-title { font-size: 16px !important; }
+.focus-path {
+  display: grid !important;
+  gap: 6px !important;
+  margin: 10px 0 12px !important;
+}
+.focus-step {
+  padding: 8px 11px !important;
+  font-size: 11px !important;
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  border-radius: var(--r-sm) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+}
+.focus-step span {
+  flex-shrink: 0 !important;
+  width: 22px !important; height: 22px !important;
+  border-radius: 50% !important;
+  background: var(--c-acc-lo) !important;
+  border: 1px solid var(--c-acc-mid) !important;
+  color: var(--c-acc) !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+/* End v4.2 polish */
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  AURORA v4.3 — UX REFINEMENT (user feedback)            ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ── A. Header status pill — show full text (auto-scrolling marquee) ── */
+@media (max-width: 768px) {
+  .header-inner {
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  .logo {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+  }
+  /* Status pill: take all available space, auto-scroll if too long */
+  .status-bar {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 5px 10px !important;
+    font-size: 9.5px !important;
+    max-width: none !important;
+    position: relative !important;
+  }
+  .status-bar #sb-text {
+    display: inline-block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;  /* no ellipsis */
+    max-width: none !important;
+    min-width: 0 !important;
+    animation: marquee 18s linear infinite !important;
+    padding-left: 100% !important;
+  }
+  /* Pause marquee on tap/hover so user can read */
+  .status-bar:hover #sb-text,
+  .status-bar:active #sb-text {
+    animation-play-state: paused !important;
+  }
+  /* Refresh button stays compact icon-only */
+  #btn-refresh {
+    flex: 0 0 auto !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 7px 9px !important;
+  }
+}
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* If text is short and fits, no scroll — detect via container query (best-effort) */
+@media (max-width: 768px) {
+  /* Only animate when overflowing — fallback: always animate slowly so users can see all info */
+  .status-bar #sb-text { animation-duration: 22s !important; }
+}
+
+/* On wider mobile, give it more breathing space */
+@media (min-width: 481px) and (max-width: 768px) {
+  .status-bar { font-size: 10.5px !important; }
+}
+
+/* ── B. Reveal "Performanță pe fiecare pronostic" panel on dashboard ── */
+#market-performance-panel {
+  display: block !important;
+  background: linear-gradient(180deg, var(--c-surface) 0%, var(--c-bg2) 100%) !important;
+  border: 1px solid var(--c-border) !important;
+  border-radius: var(--r-md) !important;
+  padding: 14px !important;
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+  box-shadow: var(--shadow-2) !important;
+}
+#market-performance-panel > div:first-child > div:first-child {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: -0.02em !important;
+  color: var(--c-text) !important;
+}
+#market-performance-panel > div:first-child > div:last-child {
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  color: var(--c-muted) !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Style the table inside */
+#market-performance-table {
+  margin-top: 4px !important;
+}
+#market-performance-table table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+}
+#market-performance-table thead th {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.10em !important;
+  text-transform: uppercase !important;
+  color: var(--c-muted) !important;
+  padding: 9px 8px !important;
+  border-bottom: 1px solid var(--c-hairline2) !important;
+  text-align: left !important;
+}
+#market-performance-table thead th:not(:first-child) {
+  text-align: right !important;
+}
+#market-performance-table tbody td {
+  padding: 10px 8px !important;
+  border-bottom: 1px solid var(--c-hairline) !important;
+  color: var(--c-text2) !important;
+}
+#market-performance-table tbody td:first-child {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  color: var(--c-text) !important;
+  letter-spacing: -0.015em !important;
+  font-size: 12px !important;
+}
+#market-performance-table tbody td:not(:first-child) {
+  font-family: var(--font-mono) !important;
+  font-feature-settings: 'tnum' 1 !important;
+  text-align: right !important;
+  font-weight: 600 !important;
+}
+#market-performance-table tbody tr:hover td {
+  background: rgba(43,229,197,.03) !important;
+}
+#market-performance-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* Mobile: scrollable horizontally with first column sticky */
+@media (max-width: 600px) {
+  #market-performance-table {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  #market-performance-table table {
+    min-width: 460px !important;
+  }
+  #market-performance-table thead th,
+  #market-performance-table tbody td {
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+  }
+  #market-performance-table tbody td:first-child {
+    font-size: 11px !important;
+  }
+}
+
+/* ── C. Hide "Adaugă la bilet" button if it ever shows up ── */
+.match-card-v16 .m16-btn[onclick*="addToBilet"],
+.match-card-v16 .m16-btn[onclick*="addMatchToTicket"],
+.match-card-v16 .m16-btn[onclick*="adaugaLaBilet"],
+.match-card-v16 .m16-btn.add-to-ticket {
+  display: none !important;
+}
+/* Force single-button actions row to be just one column */
+.match-card-v16 .m16-actions { grid-template-columns: 1fr !important; }
+
+/* ── D. Reduce empty space below match cards ────────── */
+#matches-container { padding-bottom: 0 !important; }
+.matches-grid { gap: 10px !important; padding-bottom: 0 !important; }
+.date-group { margin-bottom: 14px !important; }
+.date-group:last-child { margin-bottom: 0 !important; }
+
+/* The big bottom whitespace was caused by .main bottom padding on mobile.
+   Reduce when there are few cards. */
+@media (max-width: 768px) {
+  .main { padding-bottom: calc(82px + env(safe-area-inset-bottom,0px)) !important; }
+}
+
+/* ── E. Performance card — visual heading polish ────── */
+#tab-dashboard #market-performance-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 1px; right: 1px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--c-acc), var(--c-blue), transparent);
+  pointer-events: none;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+}
+#market-performance-panel { position: relative !important; overflow: hidden !important; }
+
+/* End v4.3 */
