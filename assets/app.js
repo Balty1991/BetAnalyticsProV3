@@ -1804,7 +1804,7 @@ function enrichTopMatchesBackground(){
   var candidates = (window.ALL_MATCHES || [])
     .filter(function(m){ return m.eventId && Number(m.smartScore||0) > 0; })
     .sort(function(a,b){ return (b.smartScore||0)-(a.smartScore||0); })
-    .slice(0,30);
+    .slice(0, 15); // ↓ redus de la 30 la 15
 
   var toFetch = candidates.filter(function(m){
     return !ENRICHED_EVENT_CACHE[String(m.eventId)];
@@ -1815,14 +1815,12 @@ function enrichTopMatchesBackground(){
     return Promise.resolve();
   }
 
-  // Promissum secvențial cu delay
+  // Fetch secvențial cu delay mai mic (100ms în loc de 150ms)
   var chain = Promise.resolve(0);
   toFetch.forEach(function(m){
     chain = chain.then(function(count){
-      return new Promise(function(res){ setTimeout(res, 150); })
-        .then(function(){
-          return fetchEventDetail(m.eventId);
-        })
+      return new Promise(function(res){ setTimeout(res, 100); })
+        .then(function(){ return fetchEventDetail(m.eventId); })
         .then(function(d){ return count + (d ? 1 : 0); });
     });
   });
@@ -1830,9 +1828,13 @@ function enrichTopMatchesBackground(){
   return chain.then(function(enriched){
     ENRICHMENT_BATCH_RUNNING = false;
     if(enriched > 0){
-      // Re-run pipeline cu datele noi
       try {
         var preds = window.__RAW_PREDICTIONS || [];
+        // Actualizează doar meciurile care au primit enrichment nou
+        // NU re-rulăm toată pipeline-ul — doar patch-uim în ALL_MATCHES
+        var enrichedEids = {};
+        toFetch.forEach(function(m){ if(ENRICHED_EVENT_CACHE[String(m.eventId)]) enrichedEids[String(m.eventId)] = true; });
+
         ALL_MATCHES = preds.map(function(raw){
           var m = analyzeMatch(raw);
           var eid = String(m.eventId||'');
@@ -1842,7 +1844,10 @@ function enrichTopMatchesBackground(){
         });
         rebuildVisualMatchIndex();
         syncRecommendationEngine();
-        renderAll();
+
+        // Re-render doar tab-ul activ, nu tot renderAll()
+        var activeTab = getCurrentActiveTabName ? getCurrentActiveTabName() : 'dashboard';
+        try { renderActiveTab(activeTab, {}); } catch(e){}
         toast('🔬 ML5 activ: ' + enriched + ' meciuri cu date contextuale', 'ok');
       } catch(e){ console.warn('[ML5] Re-render failed', e); }
     }
@@ -4066,14 +4071,33 @@ function hydrateLazyBootstrapCache(){
   }
 }
 
-function getJson(path, fallback){
-  var url = getBase() + path + '?t=' + Date.now();
-  return fetch(url, { cache: 'no-store' })
+// ── In-memory JSON cache (5 minute TTL) ──────────────────────
+var _JSON_MEM_CACHE = {};
+var _JSON_CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+function getJson(path, fallback, _forceRefresh){
+  var now = Date.now();
+  var entry = _JSON_MEM_CACHE[path];
+  if(!_forceRefresh && entry && (now - entry.ts) < _JSON_CACHE_TTL){
+    return Promise.resolve(entry.data);
+  }
+  // Only bust cache on explicit force-refresh, use normal browser cache otherwise
+  var url = getBase() + path + (_forceRefresh ? ('?t=' + now) : '');
+  return fetch(url, { cache: _forceRefresh ? 'no-store' : 'default' })
     .then(function(r){
       if(!r.ok) throw new Error('HTTP ' + r.status + ' @ ' + path);
       return r.json();
     })
+    .then(function(data){
+      _JSON_MEM_CACHE[path] = { ts: Date.now(), data: data };
+      return data;
+    })
     .catch(function(){ return fallback; });
+}
+
+function getJsonFresh(path, fallback){
+  delete _JSON_MEM_CACHE[path];
+  return getJson(path, fallback, true);
 }
 
 var ARCHIVE_SUMMARY_PROMISE = null;
@@ -4178,20 +4202,48 @@ function normalizeResultList(data){
 function rerunPredictionPipeline(rawPredictions){
   var preds = Array.isArray(rawPredictions) ? rawPredictions : [];
   rebuildTrainingBaselineMap();
-  // Dacă există date enriched în cache, aplică imediat
-  ALL_MATCHES = preds.map(function(raw){
-    var m = analyzeMatch(raw);
-    var eid = String(m.eventId||'');
-    if(eid && ENRICHED_EVENT_CACHE[eid])
-      return applyEnrichmentToMatch(m, raw, ENRICHED_EVENT_CACHE[eid]);
-    return m;
+
+  return new Promise(function(resolve){
+    if(preds.length === 0){
+      ALL_MATCHES = [];
+      rebuildVisualMatchIndex();
+      syncRecommendationEngine();
+      resolve();
+      return;
+    }
+
+    // Procesare în chunks de 60 pentru a nu bloca thread-ul principal
+    var CHUNK = 60;
+    var results = new Array(preds.length);
+    var idx = 0;
+
+    function processChunk(){
+      var end = Math.min(idx + CHUNK, preds.length);
+      for(var i = idx; i < end; i++){
+        var raw = preds[i];
+        var m = analyzeMatch(raw);
+        var eid = String(m.eventId||'');
+        if(eid && ENRICHED_EVENT_CACHE[eid])
+          m = applyEnrichmentToMatch(m, raw, ENRICHED_EVENT_CACHE[eid]);
+        results[i] = m;
+      }
+      idx = end;
+      if(idx < preds.length){
+        // Yield la browser între chunks — UI rămâne responsiv
+        setTimeout(processChunk, 0);
+      } else {
+        ALL_MATCHES = results;
+        rebuildVisualMatchIndex();
+        syncRecommendationEngine();
+        // Enrichment în background după 2s
+        setTimeout(function(){
+          enrichTopMatchesBackground().catch(function(){});
+        }, 2000);
+        resolve();
+      }
+    }
+    processChunk();
   });
-  rebuildVisualMatchIndex();
-  syncRecommendationEngine();
-  // Pornește enrichment în background după 2s (nu blochează render-ul inițial)
-  setTimeout(function(){
-    enrichTopMatchesBackground().catch(function(){});
-  }, 2000);
 }
 
 var PREDICTION_RESYNC_SCHEDULED = false;
@@ -4202,13 +4254,14 @@ function schedulePredictionResync(reason){
     PREDICTION_RESYNC_SCHEDULED = false;
     try {
       (window.__RAW_PREDICTIONS || []).forEach(function(raw){ if(raw) raw.__hybridProbCache = null; });
-      rerunPredictionPipeline(window.__RAW_PREDICTIONS || []);
-      if(typeof getCurrentActiveTabName === 'function' && getCurrentActiveTabName() === 'smartbet'){
-        try { renderSmartBet(); } catch(e){}
-        try {
-          if((window._smartLearnSection || 'predictii') === 'predictii') renderUnifiedEngine();
-        } catch(e){}
-      }
+      rerunPredictionPipeline(window.__RAW_PREDICTIONS || []).then(function(){
+        if(typeof getCurrentActiveTabName === 'function' && getCurrentActiveTabName() === 'smartbet'){
+          try { renderSmartBet(); } catch(e){}
+          try {
+            if((window._smartLearnSection || 'predictii') === 'predictii') renderUnifiedEngine();
+          } catch(e){}
+        }
+      });
     } catch(e){
       console.warn('[LearningEngine] deferred re-sync failed' + (reason ? ' (' + reason + ')' : ''), e);
     }
@@ -4343,7 +4396,7 @@ function ensureTabData(name){
   return Promise.all(keys.map(loadLazyDataset));
 }
 
-function doRefresh(){
+function doRefresh(isManual){
   showLoader('Incarcare date actualizate...');
 
   LAZY_DATA_PROMISES = {};
@@ -4352,16 +4405,19 @@ function doRefresh(){
   LAZY_DATA_READY.historyEngine = false;
   LAZY_DATA_READY.recommendationJournal = false;
 
+  // Manual refresh (buton) = forțăm re-descărcarea; auto-refresh = folosim cache-ul dacă e valid
+  var fetch9 = isManual ? getJsonFresh : getJson;
+
   Promise.all([
-    getJson('/data/predictions.json', []),
-    getJson('/data/meta.json', {}),
-    getJson('/data/leagues.json', []),
-    getJson('/data/backtest.json', {}),
-    getJson('/data/signal_audit.json', {}),
-    getJson('/data/ai_memory.json', {}),
-    getJson('/data/training_market_baselines.json', []),
-    getJson('/data/training_scoring_summary.json', {}),
-    getJson('/data/enriched.json', {})   // ML5 pre-baked enrichment
+    fetch9('/data/predictions.json', []),
+    fetch9('/data/meta.json', {}),
+    fetch9('/data/leagues.json', []),
+    fetch9('/data/backtest.json', {}),
+    fetch9('/data/signal_audit.json', {}),
+    fetch9('/data/ai_memory.json', {}),
+    fetch9('/data/training_market_baselines.json', []),
+    fetch9('/data/training_scoring_summary.json', {}),
+    fetch9('/data/enriched.json', {})   // ML5 pre-baked enrichment
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -4412,23 +4468,24 @@ function doRefresh(){
       });
     }
 
-    rerunPredictionPipeline(window.__RAW_PREDICTIONS || []);
-    BILETE = null;
+    rerunPredictionPipeline(window.__RAW_PREDICTIONS || []).then(function(){
+      BILETE = null;
 
-    var storedToken = localStorage.getItem('bsd_token');
-    if(storedToken) API_TOKEN = storedToken;
-    else if(meta && meta.api_token) API_TOKEN = meta.api_token;
+      var storedToken = localStorage.getItem('bsd_token');
+      if(storedToken) API_TOKEN = storedToken;
+      else if(meta && meta.api_token) API_TOKEN = meta.api_token;
 
-    renderAll();
-    hideLoader();
+      renderAll();
+      hideLoader();
 
-    var statusTime = getStatusDisplayTime();
-    var statusMetrics = getStatusDisplayMetrics();
-    var enrichLabel = enrichedCount > 0 ? (' • 🔬 ML5 ' + enrichedCount + ' meciuri') : '';
-    toast(
-      'API sync: ' + statusMetrics.ml + ' ML / ' + statusMetrics.odds + ' cote' + enrichLabel + (statusTime ? ' @ ' + statusTime : ''),
-      'ok'
-    );
+      var statusTime = getStatusDisplayTime();
+      var statusMetrics = getStatusDisplayMetrics();
+      var enrichLabel = enrichedCount > 0 ? (' • 🔬 ML5 ' + enrichedCount + ' meciuri') : '';
+      toast(
+        'API sync: ' + statusMetrics.ml + ' ML / ' + statusMetrics.odds + ' cote' + enrichLabel + (statusTime ? ' @ ' + statusTime : ''),
+        'ok'
+      );
+    });
   }).catch(function(err){
     hideLoader();
     toast('Eroare la incarcarea datelor', 'err');
