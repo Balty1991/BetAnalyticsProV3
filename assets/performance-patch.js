@@ -71,7 +71,7 @@
     if(window.__hybridAdaptiveRuntimeLoader)return;
     window.__hybridAdaptiveRuntimeLoader=true;
     var s=document.createElement('script');
-    s.src='assets/hybrid_adaptive_runtime.js?v=20260426hybrid3';
+    s.src='assets/hybrid_adaptive_runtime.js?v=20260426hybrid4';
     s.defer=true;
     document.head.appendChild(s);
   }
