@@ -90,6 +90,11 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python build_ai_memory_enhanced.py
 
+      - name: Build Hybrid Adaptive Predictions
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_adaptive_predictions.py
+
       - name: SmartBet v2 — Predicții CatBoost pe meciuri de azi
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
@@ -102,7 +107,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data/ index.html build_training_features.py build_training_model_pack.py .github/workflows/fetch-data.yml .gitignore
+          git add data/ index.html assets/hybrid_adaptive_runtime.js assets/performance-patch.js build_adaptive_predictions.py build_training_features.py build_training_model_pack.py .github/workflows/fetch-data.yml .gitignore
 
           if git diff --staged --quiet; then
             echo "No data changes detected. Skipping commit."
