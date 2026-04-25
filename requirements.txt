@@ -1,0 +1,20 @@
+# SmartBet Fusion v2 — requirements.txt
+# Instalare: pip install -r requirements.txt
+
+# ─── ML Core ──────────────────────────────────────────────────────────────────
+catboost>=1.2.5             # Model principal (CatBoost nativ Python)
+shap>=0.44.0                # Explicabilitate SHAP values
+scikit-learn>=1.4.0         # Calibrare Isotonic, metrici, splits
+optuna>=3.6.1               # Hyperparameter tuning (opțional)
+
+# ─── Data ─────────────────────────────────────────────────────────────────────
+pandas>=2.2.0               # Data manipulation
+numpy>=1.26.0               # Calcul numeric
+scipy>=1.12.0               # Distribuții Poisson
+
+# ─── API & I/O ────────────────────────────────────────────────────────────────
+requests>=2.31.0            # Bzzoiro API calls
+tqdm>=4.66.0                # Progress bars (fetch batch)
+
+# ─── Optional (stocare eficientă) ────────────────────────────────────────────
+# pyarrow>=15.0.0           # Parquet (pentru warehouse >100k meciuri)
