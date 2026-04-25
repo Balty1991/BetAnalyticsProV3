@@ -67,13 +67,19 @@
     try{new MutationObserver(function(){setTimeout(compactStatusText,0)}).observe(el,{childList:true,characterData:true,subtree:true})}catch(e){}
     setInterval(compactStatusText,2500);
   }
+  function loadScript(src,id){
+    if(id&&document.getElementById(id))return;
+    var s=document.createElement('script');
+    if(id)s.id=id;
+    s.src=src;
+    s.defer=true;
+    document.head.appendChild(s);
+  }
   function loadHybridRuntime(){
     if(window.__hybridAdaptiveRuntimeLoader)return;
     window.__hybridAdaptiveRuntimeLoader=true;
-    var s=document.createElement('script');
-    s.src='assets/hybrid_adaptive_runtime.js?v=20260426hybrid5';
-    s.defer=true;
-    document.head.appendChild(s);
+    loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid5','hybrid-adaptive-runtime-script');
+    loadScript('assets/hybrid_copy_runtime.js?v=20260426copy1','hybrid-copy-runtime-script');
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
