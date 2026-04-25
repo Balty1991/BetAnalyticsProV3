@@ -73,7 +73,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 <nav class="tabs" aria-label="Navigare principală">
   <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">🏠 Dashboard</button>
   <button class="tab" data-tab="meciuri" onclick="switchTab('meciuri')">⚽ Meciuri</button>
-  <button class="tab" data-tab="bilete" onclick="switchTab('bilete')">🎫 Bilete</button>
   <button class="tab" data-tab="more" onclick="toggleDesktopMore()">☰ Mai mult</button>
 </nav>
 
@@ -86,17 +85,9 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
     <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="closeDesktopMore()">Închide</button>
   </div>
   <div class="more-grid">
-    <button class="more-card-btn" onclick="switchTab('tracking')">
-      <span class="more-card-title">📈 Tracking</span>
-      <span class="more-card-sub">Jurnalul biletelor generate, status și rezultate.</span>
-    </button>
     <button class="more-card-btn" onclick="switchTab('cota2')">
       <span class="more-card-title">🎯 Cota 2 Daily</span>
       <span class="more-card-sub">Generator zilnic 1.70–3.00, auto-învățare și monitorizare ROI.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('bankroll')">
-      <span class="more-card-title">💰 Bankroll</span>
-      <span class="more-card-sub">Mize, evoluție bankroll și disciplină de staking.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
       <span class="more-card-title">🔬 Analiză ML5</span>
@@ -109,10 +100,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 <button class="more-card-btn" onclick="switchTab('smartbet')">
       <span class="more-card-title">🎯 Motor de Predicții Unificat</span>
       <span class="more-card-sub">Kelly + AI Memory + SmartBet — cel mai bun din 3 motoare, un singur scor.</span>
-    </button>
-    <button class="more-card-btn" onclick="openOnboarding(true);closeDesktopMore()">
-      <span class="more-card-title">🧭 Onboarding wizard</span>
-      <span class="more-card-sub">Relansează ghidul complet pentru utilizatori noi.</span>
     </button>
   </div>
 </div>
@@ -328,17 +315,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
       <div class="ml-grid" id="ml-15-grid"></div>
     </div>
 
-    <!-- ML +2.5G -->
-    <div class="sec-hdr collapsible-header" id="ml25-hdr" onclick="toggleSection('ml25')" style="border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:10px 14px;background:rgba(16,185,129,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
-      <div class="sec-title">🎯 ML +2.5G Recommendations <span class="sec-badge" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:var(--val)">Over 2.5G</span> <span class="collapse-count" id="ml25-count">—</span></div>
-      <span class="collapse-toggle" id="ml25-toggle" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.25);color:var(--val)">▼</span>
-    </div>
-    <div class="collapsible-body" id="ml25-body">
-      <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
-        <strong style="color:var(--val)">⚽ Zona lipsă din API-ul ML, acum expusă:</strong> meciuri unde modelul recomandă <strong style="color:var(--txt)">Peste 2.5 Goluri</strong> sau probabilitatea este suficient de puternică.
-      </div>
-      <div class="ml-grid" id="ml-25-grid"></div>
-    </div>
 
     <!-- ML Under 3.5G -->
     <div class="sec-hdr collapsible-header" id="ml35-hdr" onclick="toggleSection('ml35')" style="border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:10px 14px;background:rgba(6,182,212,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
@@ -709,19 +685,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 
   <!-- ===== LIVE TAB ===== -->
   <div class="tab-content" id="tab-meciuri">
-    <div class="section matches-section-card" id="matches-dashboard-hub" style="margin-bottom:14px">
-      <div class="matches-card-head">
-        <div>
-          <div class="matches-card-title">📚 Radaruri și categorii</div>
-          <div class="matches-card-sub">Le deschizi doar când vrei radarurile și topurile, nu stau permanent peste lista principală de meciuri.</div>
-        </div>
-        <button class="btn" style="background:rgba(255,255,255,.04);border:1px solid var(--brd2);color:var(--txt);padding:6px 10px" onclick="toggleMatchesHub()">☰ Arată / ascunde</button>
-      </div>
-      <div class="collapsible-body" id="matches-hub-body">
-        <div id="matches-dashboard-sections"></div>
-      </div>
-    </div>
-
     <div class="section matches-section-card matches-filter-card" style="margin-bottom:14px">
       <div class="matches-card-head">
         <div>
@@ -740,7 +703,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
           <button class="filter-btn active" onclick="setFilter('motor_validated',this)">🧠 Validate Motor</button>
           <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
           <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
-          <button class="filter-btn" onclick="setFilter('o25',this)">🎯 Over 2.5G</button>
           <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
           <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
           <button class="filter-btn" onclick="setFilter('dc',this)">🛡️ Șansă Dublă</button>
@@ -780,7 +742,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
           <select class="league-filter-select" id="match-market-filter" onchange="renderMatches()">
             <option value="">Toate piețele</option>
             <option value="Over 1.5G">Over 1.5G</option>
-            <option value="Over 2.5G">Over 2.5G</option>
             <option value="Under 3.5G">Under 3.5G</option>
             <option value="BTTS">BTTS</option>
             <option value="Șansă Dublă 1X">Șansă Dublă 1X</option>
@@ -853,91 +814,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
     </div>
 
     <div id="matches-container"></div>
-  </div>
-
-  <!-- ===== BILETE ===== -->
-  <div class="tab-content" id="tab-bilete">
-    <div style="display:grid;gap:16px;margin-bottom:22px">
-      
-<div class="bilet-card" style="margin-bottom:0;padding:16px">
-<div style="margin-bottom:14px;padding:16px;border:1px solid rgba(59,130,246,.18);border-radius:14px;background:linear-gradient(180deg,rgba(14,22,40,.92),rgba(10,16,30,.96))">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px">
-            <div>
-              <div class="sec-title" style="margin-bottom:6px">📦 Portfolio Daily</div>
-              <div style="font-size:12px;color:var(--muted);line-height:1.55">Generează automat biletele zilei și evidențiază recomandarea #1 pe baza probabilității de reușită. Contrarian rămâne separat, manual.</div>
-            </div>
-            <button class="btn btn-green" style="justify-content:center" onclick="handleGenerateDailyPortfolio(this)">📦 Generează Portfolio Daily</button>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Single → Double → Triple. La generare, aplicația încarcă automat recomandarea cea mai puternică a zilei în biletul principal.</div>
-          <div id="daily-portfolio-output" style="display:grid;gap:12px"></div>
-        </div>
-        <div class="generator-board">
-          <div class="generator-section">
-            <div class="generator-section-title"><strong>Generatoare portofoliu</strong><span class="generator-tag">Curat și compact</span></div>
-            <div class="grid cols-2">
-              <div class="memory-generator-card premium"><div class="memory-generator-title">🔥 Single Premium</div><div class="memory-generator-sub">1 selecție cu edge dominant. Prioritate maximă în ziua curentă.</div><button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGeneratePortfolioTicket('premium', this)">Generează</button><div class="generator-status" id="portfolio-status-premium">Verifică pool-ul curent.</div></div>
-              <div class="memory-generator-card double"><div class="memory-generator-title">✅ Double Confirmed</div><div class="memory-generator-sub">2 selecții necorelate, doar dacă probabilitatea compusă rămâne curată.</div><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGeneratePortfolioTicket('double', this)">Generează</button><div class="generator-status" id="portfolio-status-double">Verifică pool-ul curent.</div></div>
-              <div class="memory-generator-card triple"><div class="memory-generator-title">⚖️ Triple Value</div><div class="memory-generator-sub">3 selecții doar când setup-ul are logică și minim un underdog value.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--yel),var(--acc))" onclick="handleGeneratePortfolioTicket('triple', this)">Generează</button><div class="generator-status" id="portfolio-status-triple">Verifică pool-ul curent.</div></div>
-              <div class="memory-generator-card contrarian"><div class="memory-generator-title">🎯 Contrarian Shot</div><div class="memory-generator-sub">2-3 selecții oportuniste, cu expunere mică și frecvență redusă.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGeneratePortfolioTicket('contrarian', this)">Generează</button><div class="generator-status" id="portfolio-status-contrarian">Verifică pool-ul curent.</div></div>
-            </div>
-          </div>
-          <div class="generator-section">
-            <div class="generator-section-title"><strong>Personalizat</strong><span class="generator-tag">Configurare manuală</span></div>
-            <div class="generator-grid">
-              <button class="generator-tile custom full" onclick="toggleCustomBuilder(true)"><span class="icon">🎛️</span><span class="text"><span class="title">Constructor personalizat</span><span class="badge">Custom</span></span></button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="extra-form" id="custom-builder">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <div>
-            <div style="font-size:14px;font-weight:800;color:var(--acc)">🎛️ Constructor de Bilet</div>
-            <div style="font-size:11px;color:var(--muted)">Setezi direcția, iar AI-ul caută cel mai curat bilet posibil în limitele tale.</div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-primary" style="font-size:11px;padding:6px 10px" onclick="applyCustomPreset('safe')">Conservator</button>
-            <button class="btn btn-primary" style="font-size:11px;padding:6px 10px;background:linear-gradient(135deg,var(--pur),var(--acc))" onclick="applyCustomPreset('balanced')">Echilibrat</button>
-            <button class="btn" style="font-size:11px;padding:6px 10px;background:var(--brd);color:var(--txt)" onclick="applyCustomPreset('attack')">Agresiv</button>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div class="form-group"><label>Miza (RON)</label><input type="number" id="cust-stake" class="form-input" value="50" min="1" step="1"></div>
-          <div class="form-group"><label>Cota totală dorită</label><input type="number" id="cust-target-odds" class="form-input" value="2.20" min="1.05" step="0.05"></div>
-          <div class="form-group"><label>Nr. evenimente</label><input type="number" id="cust-picks" class="form-input" value="2" min="1" max="20"></div>
-          <div class="form-group"><label>Format</label><select id="cust-format" class="form-input"><option value="combo">Combo</option><option value="single">Single</option></select></div>
-          <div class="form-group"><label>Data evenimentelor</label><select id="cust-date-window" class="form-input"><option value="today">Azi</option><option value="3d">1-3 zile</option><option value="7d" selected>1-7 zile</option><option value="14d">1-14 zile</option><option value="30d">1-30 zile</option></select></div>
-          <div class="form-group"><label>Nivel risc</label><select id="cust-risk" class="form-input"><option value="low">Scăzut</option><option value="medium" selected>Mediu</option><option value="high">Ridicat</option></select></div>
-          <div class="form-group"><label>Mod generare</label><select id="cust-mode" class="form-input"><option value="strict">Strict</option><option value="flex" selected>Flexibil</option><option value="optimize">Optimizează AI</option></select></div>
-        </div>
-
-        <div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:var(--txt)">Piețe permise</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-over15" checked style="margin-right:6px">Over 1.5</label>
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-over25" checked style="margin-right:6px">Over 2.5</label>
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-btts" checked style="margin-right:6px">BTTS</label>
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-under35" checked style="margin-right:6px">Under 3.5</label>
-        </div>
-
-        <div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:var(--txt)">Filtre suplimentare</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-ai-only" checked style="margin-right:6px">Doar AI recommended</label>
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-fav-only" style="margin-right:6px">Favorit aliniat</label>
-          <label class="sec-badge" style="cursor:pointer"><input type="checkbox" id="cb-goals-only" style="margin-right:6px">Doar goluri</label>
-        </div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-green" onclick="generateCustomTicket()" style="flex:1;justify-content:center;min-width:180px">Generează bilet personalizat</button>
-          <button class="btn" onclick="toggleCustomBuilder()" style="background:var(--brd);color:var(--txt)">Închide</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="section compact-context-panel" style="margin-bottom:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">🗂️ Biletul activ</div><div style="font-size:11px;color:var(--muted);line-height:1.55">Zona de mai jos afișează doar biletul curent deschis. Generatoarele rămân sus, iar Portfolio Daily alege automat recomandarea #1 a zilei când găsește setup valid.</div></div>
-
-    <div id="bilete-container"></div>
   </div>
 
   <!-- ===== TRACKING ===== -->
@@ -1190,40 +1066,16 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 <nav class="mobile-nav" id="mobile-nav" aria-label="Navigare mobilă">
   <button class="mobile-nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')"><span>🏠</span><small>Dashboard</small></button>
   <button class="mobile-nav-btn" data-tab="meciuri" onclick="switchTab('meciuri')"><span>⚽</span><small>Meciuri</small></button>
-  <button class="mobile-nav-btn" data-tab="bilete" onclick="switchTab('bilete')"><span>🎫</span><small>Bilete</small></button>
   <button class="mobile-nav-btn" data-tab="more" onclick="toggleMobileMore()"><span>☰</span><small>Mai mult</small></button>
 </nav>
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
-  <button class="mobile-sheet-btn" onclick="switchTab('tracking');closeMobileMore()"><span class="sheet-btn-title">📈 Tracking</span><small class="sheet-btn-sub">Bilete generate și rezultate</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 Daily</span><small class="sheet-btn-sub">Secțiune dedicată cotei 2 și învățare continuă</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('bankroll');closeMobileMore()"><span class="sheet-btn-title">💰 Bankroll</span><small class="sheet-btn-sub">Mize și evoluția sumei</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
   
-  <button class="mobile-sheet-btn" onclick="switchTab('charts');closeMobileMore()"><span class="sheet-btn-title">🆕 📊 Grafice</span><small class="sheet-btn-sub">Heatmap, radar și flow avansat</small></button>
-  <button class="mobile-sheet-btn" onclick="openOnboarding(true);closeMobileMore()"><span class="sheet-btn-title">🧭 Onboarding wizard</span><small class="sheet-btn-sub">Relansează ghidul complet pentru utilizatori noi</small></button>
 </div>
 
-
-<div class="onboarding-overlay" id="onboarding-overlay" aria-hidden="true">
-  <div class="onboarding-card">
-    <div class="onboarding-top">
-      <div>
-        <div class="onboarding-step" id="onboarding-step-label">Pas 1 / 6</div>
-        <div class="onboarding-title" id="onboarding-title">Bine ai venit în BetAnalytics Pro</div>
-        <div class="onboarding-sub" id="onboarding-sub">Ghid rapid pentru utilizatori noi.</div>
-      </div>
-      <button class="btn" onclick="skipOnboarding()" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--txt)">Skip</button>
-    </div>
-    <div class="onboarding-progress" id="onboarding-progress"></div>
-    <div class="onboarding-body" id="onboarding-body"></div>
-    <div class="onboarding-actions">
-      <div class="onboarding-actions-left"><button class="btn" id="onboarding-back-btn" onclick="prevOnboarding()" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--txt)">Înapoi</button></div>
-      <div class="onboarding-actions-right"><button class="btn btn-primary" id="onboarding-next-btn" onclick="nextOnboarding()">Înainte</button><button class="btn btn-green" id="onboarding-finish-btn" onclick="finishOnboarding()" style="display:none">Finalizează</button></div>
-    </div>
-  </div>
-</div>
 
 <!-- ═══ DESIGN SYSTEM v3 — Animation Engine ═══ -->
 
