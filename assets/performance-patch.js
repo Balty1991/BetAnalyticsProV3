@@ -78,8 +78,7 @@
   function loadHybridRuntime(){
     if(window.__hybridAdaptiveRuntimeLoader)return;
     window.__hybridAdaptiveRuntimeLoader=true;
-    loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid5','hybrid-adaptive-runtime-script');
-    loadScript('assets/hybrid_copy_runtime.js?v=20260426copy1','hybrid-copy-runtime-script');
+    loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid6','hybrid-adaptive-runtime-script');
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
