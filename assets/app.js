@@ -29,6 +29,10 @@ var APP_META = {};
 var BILETE = null;
 var CURRENT_FILTER = 'motor_validated';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
+var MATCHES_PAGE_SIZE = 25;        // câte carduri se afișează per batch
+var MATCHES_RENDERED_COUNT = 0;    // câte carduri sunt acum în DOM
+var MATCHES_FILTERED_CACHE = [];   // lista filtrată curentă (pentru load more)
+var MATCHES_SCROLL_OBSERVER = null; // IntersectionObserver sentinel
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
 var TICKET_JOURNAL = JSON.parse(localStorage.getItem('bet_ticket_journal') || '[]');
 var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{"initial":1000,"single":4,"double":2.5,"triple":1.5,"contrarian":0.8}');
@@ -5850,6 +5854,13 @@ function toggleLiveAlert(key){
 }
 function hasLiveAlert(key){ return MATCH_ALERTS.indexOf(key) >= 0; }
 
+// Debounce pentru renderMatches — evită re-render la fiecare keystroke pe mobile
+var _renderMatchesTimer = null;
+function renderMatchesDebounced(){
+  if(_renderMatchesTimer) clearTimeout(_renderMatchesTimer);
+  _renderMatchesTimer = setTimeout(function(){ _renderMatchesTimer = null; renderMatches(); }, 120);
+}
+
 function renderMatches(){
   var container = $('matches-container');
   var sort = $('sort-select').value;
@@ -6203,23 +6214,92 @@ function renderMatches(){
     '</div>';
   }
 
-  var html = '';
-  if(sort === 'date'){
-    var groups = {};
-    filtered.forEach(function(m){
-      if(!groups[m.dateLabel]) groups[m.dateLabel] = [];
-      groups[m.dateLabel].push(m);
-    });
-    Object.keys(groups).forEach(function(date){
-      html += '<div class="date-group"><div class="date-label">📅 '+date+'</div><div class="matches-grid">';
-      html += groups[date].map(renderCard).join('');
-      html += '</div></div>';
-    });
-  } else {
-    html = '<div class="matches-grid">' + filtered.map(renderCard).join('') + '</div>';
+  // ── Paginare progresivă ────────────────────────────────────
+  MATCHES_FILTERED_CACHE = filtered;
+  MATCHES_RENDERED_COUNT = 0;
+
+  // Deconectează observerul anterior dacă există
+  if(MATCHES_SCROLL_OBSERVER){ try{ MATCHES_SCROLL_OBSERVER.disconnect(); }catch(e){} MATCHES_SCROLL_OBSERVER = null; }
+
+  function buildBatchHtml(startIdx, count){
+    var slice = MATCHES_FILTERED_CACHE.slice(startIdx, startIdx + count);
+    if(sort === 'date'){
+      var html = '';
+      var groups = {};
+      var groupOrder = [];
+      slice.forEach(function(m){
+        if(!groups[m.dateLabel]){ groups[m.dateLabel] = []; groupOrder.push(m.dateLabel); }
+        groups[m.dateLabel].push(m);
+      });
+      groupOrder.forEach(function(date){
+        // Check if group div already exists (for appending)
+        var existingGroup = container.querySelector('[data-date-group="' + date + '"]');
+        if(existingGroup && startIdx > 0){
+          existingGroup.querySelector('.matches-grid').innerHTML += groups[date].map(renderCard).join('');
+        } else {
+          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">📅 ' + date + '</div><div class="matches-grid">' + groups[date].map(renderCard).join('') + '</div></div>';
+        }
+      });
+      return html;
+    }
+    return slice.map(renderCard).join('');
   }
 
-  container.innerHTML = html;
+  // Render primul batch
+  var firstBatch = buildBatchHtml(0, MATCHES_PAGE_SIZE);
+  if(sort === 'date'){
+    container.innerHTML = firstBatch;
+  } else {
+    container.innerHTML = '<div class="matches-grid" id="matches-grid-inner">' + firstBatch + '</div>';
+  }
+  MATCHES_RENDERED_COUNT = Math.min(MATCHES_PAGE_SIZE, MATCHES_FILTERED_CACHE.length);
+
+  // Funcție pentru a adăuga batch-ul următor
+  function appendNextBatch(){
+    if(MATCHES_RENDERED_COUNT >= MATCHES_FILTERED_CACHE.length) return;
+    var nextBatch = MATCHES_FILTERED_CACHE.slice(MATCHES_RENDERED_COUNT, MATCHES_RENDERED_COUNT + MATCHES_PAGE_SIZE);
+    MATCHES_RENDERED_COUNT += nextBatch.length;
+
+    if(sort === 'date'){
+      var extra = buildBatchHtml(MATCHES_RENDERED_COUNT - nextBatch.length, nextBatch.length);
+      if(extra){ var tmp = document.createElement('div'); tmp.innerHTML = extra; while(tmp.firstChild) container.appendChild(tmp.firstChild); }
+    } else {
+      var grid = container.querySelector('#matches-grid-inner');
+      if(grid){ grid.innerHTML += nextBatch.map(renderCard).join(''); }
+    }
+
+    // Actualizează sau elimină sentinela
+    var oldSentinel = container.querySelector('.matches-load-sentinel');
+    if(oldSentinel) oldSentinel.remove();
+    if(MATCHES_RENDERED_COUNT < MATCHES_FILTERED_CACHE.length) attachSentinel();
+  }
+
+  // Sentinelă IntersectionObserver pentru scroll infinit
+  function attachSentinel(){
+    var sentinel = document.createElement('div');
+    sentinel.className = 'matches-load-sentinel';
+    sentinel.style.cssText = 'height:1px;margin-top:20px';
+    container.appendChild(sentinel);
+
+    if(typeof IntersectionObserver !== 'undefined'){
+      MATCHES_SCROLL_OBSERVER = new IntersectionObserver(function(entries){
+        if(entries[0].isIntersecting){
+          MATCHES_SCROLL_OBSERVER.disconnect();
+          MATCHES_SCROLL_OBSERVER = null;
+          appendNextBatch();
+        }
+      }, { rootMargin: '200px' });
+      MATCHES_SCROLL_OBSERVER.observe(sentinel);
+    } else {
+      // Fallback fără IntersectionObserver
+      sentinel.innerHTML = '<button class="btn btn-primary" style="width:100%;margin:12px 0;font-size:12px" onclick="appendNextBatch()">Încarcă mai multe (' + (MATCHES_FILTERED_CACHE.length - MATCHES_RENDERED_COUNT) + ' rămase)</button>';
+      window.appendNextBatch = appendNextBatch;
+    }
+  }
+
+  if(MATCHES_RENDERED_COUNT < MATCHES_FILTERED_CACHE.length) attachSentinel();
+  // ── End paginare ───────────────────────────────────────────
+
   if(MATCH_FOCUS_KEY){
     setTimeout(function(){
       var node = $('match-card-' + MATCH_FOCUS_KEY);
