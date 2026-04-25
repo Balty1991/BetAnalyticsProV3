@@ -1,11 +1,8 @@
 name: SmartBet Fusion v2 — Full ML Pipeline
 
 on:
-  # Retrain complet: prima zi a lunii, 03:00 UTC
   schedule:
     - cron: '0 3 1 * *'
-  # Actualizare incrementală: în fiecare Luni, 04:00 UTC
-  # (workflow separat — vezi incremental.yml)
   workflow_dispatch:
     inputs:
       mode:
@@ -17,21 +14,16 @@ on:
           - full-retrain
           - incremental
           - features-only
-          - fetch-only
 
 env:
   PYTHON_VERSION: '3.11'
 
 jobs:
-  # ─── JOB 1: Fetch date istorice ────────────────────────────────────────────
-  fetch-history:
-    name: 'Fetch: Date Istorice'
+  # ─── JOB 1: Fetch + Features + Train + Export (un singur job) ──────────────
+  full-pipeline:
+    name: 'SmartBet v2 Full Pipeline'
     runs-on: ubuntu-latest
-    if: |
-      github.event.inputs.mode == 'full-retrain' ||
-      github.event.inputs.mode == 'fetch-only' ||
-      github.event_name == 'schedule'
-    timeout-minutes: 240   # 4h pentru fetch complet
+    timeout-minutes: 360
 
     steps:
       - uses: actions/checkout@v4
@@ -40,153 +32,60 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          pip install requests tqdm
+          pip install catboost shap scikit-learn pandas numpy scipy requests tqdm optuna
 
-      - name: Fetch incremental (date recente)
-        run: python3 fetch_history_batch.py --mode incremental
+      # ─── FETCH ────────────────────────────────────────────────────────────
+      - name: Fetch date istorice (FULL — toate sezoanele)
+        run: python3 fetch_history_batch.py --mode full
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-          DELAY_MS: '350'
+          DELAY_MS: '400'
 
-      - name: Upload warehouse artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: warehouse-data
-          path: data/warehouse/
-          retention-days: 7
+      - name: Verificare warehouse
+        run: |
+          python3 -c "
+          import json
+          from pathlib import Path
+          files = list(Path('data/warehouse').glob('events_season_*.json'))
+          total = sum(len(json.load(open(f))) for f in files)
+          print(f'Warehouse: {len(files)} sezoane, {total} meciuri')
+          if total < 1000:
+              raise SystemExit('EROARE: Prea puțin date în warehouse!')
+          "
 
-  # ─── JOB 2: Feature Engineering ────────────────────────────────────────────
-  build-features:
-    name: 'Build: Feature Engineering'
-    runs-on: ubuntu-latest
-    needs: fetch-history
-    if: |
-      always() && (
-        github.event.inputs.mode == 'full-retrain' ||
-        github.event.inputs.mode == 'features-only' ||
-        github.event_name == 'schedule'
-      )
-    timeout-minutes: 60
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download warehouse
-        uses: actions/download-artifact@v4
-        with:
-          name: warehouse-data
-          path: data/warehouse/
-        continue-on-error: true  # OK dacă deja există în repo
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install pandas numpy scipy
-
-      - name: Build features_v2.json
+      # ─── FEATURES ─────────────────────────────────────────────────────────
+      - name: Feature engineering
         run: python3 feature_engineering.py
 
-      - name: Upload features artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: features-data
-          path: |
-            data/features_v2.json
-            data/features_v2_summary.json
-            data/league_baselines_v2.json
-          retention-days: 3
-
-  # ─── JOB 3: ML Training ─────────────────────────────────────────────────────
-  train-models:
-    name: 'Train: CatBoost + Calibrare + SHAP'
-    runs-on: ubuntu-latest
-    needs: build-features
-    if: |
-      always() && (
-        github.event.inputs.mode == 'full-retrain' ||
-        github.event_name == 'schedule'
-      )
-    timeout-minutes: 180   # 3h pentru training complet cu WFV
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download features
-        uses: actions/download-artifact@v4
-        with:
-          name: features-data
-          path: data/
-        continue-on-error: true
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install ML dependencies
+      - name: Verificare features
         run: |
-          pip install catboost shap scikit-learn pandas numpy optuna
+          python3 -c "
+          import json
+          rows = json.load(open('data/features_v2.json'))
+          print(f'Features: {len(rows)} rânduri')
+          if len(rows) < 500:
+              raise SystemExit('EROARE: Prea puțin features!')
+          "
 
-      - name: Train all markets (cu WFV + SHAP)
-        run: python3 train_engine_v2.py
-        # Note: pentru speed în CI, poți adăuga --skip-shap sau --skip-wfv
+      # ─── TRAIN ────────────────────────────────────────────────────────────
+      - name: Train CatBoost (fără SHAP pentru viteză)
+        run: python3 train_engine_v2.py --skip-shap
 
-      - name: Upload models artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: trained-models
-          path: |
-            models/
-            data/model_pack_v2.json
-            data/wfv_results_v2.json
-            data/calibration_report_v2.json
-          retention-days: 30
-
-  # ─── JOB 4: Export + Commit ─────────────────────────────────────────────────
-  export-and-deploy:
-    name: 'Export: JSON-uri Frontend + Deploy'
-    runs-on: ubuntu-latest
-    needs: [build-features, train-models]
-    if: always() && needs.build-features.result != 'failure'
-    timeout-minutes: 30
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download toate artifactele
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install requests pandas numpy
-
-      - name: EV Calculator (semnale pe meciuri curente)
+      # ─── EXPORT ───────────────────────────────────────────────────────────
+      - name: EV Calculator
         run: python3 ev_calculator.py
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         continue-on-error: true
 
-      - name: Export App JSONs
+      - name: Export JSON-uri frontend
         run: python3 export_app.py
 
-      - name: Commit și push date actualizate
+      # ─── COMMIT ───────────────────────────────────────────────────────────
+      - name: Commit și push
         run: |
           git config --global user.name  'SmartBet Bot'
           git config --global user.email 'bot@betanalytics.local'
