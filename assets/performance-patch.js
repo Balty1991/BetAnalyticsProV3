@@ -48,23 +48,23 @@
   function compactStatusText(){
     var el=document.getElementById('sb-text');
     if(!el||el.__baCompactBusy)return;
-    var raw=(el.getAttribute('data-full-status')||el.textContent||'').trim();
+    var raw=(el.textContent||'').trim();
     if(!raw)return;
-    if(!el.getAttribute('data-full-status'))el.setAttribute('data-full-status',raw);
     var compact=raw.replace(/\bpredictions?\b/ig,'').replace(/\bcu\s+cote\b/ig,'cote').replace(/\bcote\s+BSD\b/ig,'cote').replace(/\s*[–—-]\s*/g,' • ').replace(/\s+/g,' ').trim();
     var m=raw.match(/(\d+)\s*ML[^0-9]+(\d+)/i);
     if(m)compact=m[1]+' ML • '+m[2]+' cote';
+    if(!compact||compact===raw)return;
     el.__baCompactBusy=true;
     el.textContent=compact;
     el.title=raw;
-    setTimeout(function(){el.__baCompactBusy=false},0);
+    setTimeout(function(){el.__baCompactBusy=false},50);
   }
   function watchHeaderStatus(){
     compactStatusText();
     var el=document.getElementById('sb-text');
     if(!el||el.__baStatusObserver)return;
     el.__baStatusObserver=true;
-    try{new MutationObserver(function(){compactStatusText()}).observe(el,{childList:true,characterData:true,subtree:true})}catch(e){}
+    try{new MutationObserver(function(){setTimeout(compactStatusText,0)}).observe(el,{childList:true,characterData:true,subtree:true})}catch(e){}
     setInterval(compactStatusText,2500);
   }
   function loadHybridRuntime(){
