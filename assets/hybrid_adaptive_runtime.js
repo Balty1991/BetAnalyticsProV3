@@ -13,6 +13,15 @@
     var summary = safeObject(bundle.summary);
     return safeArray(bundle.rows).length > 0 || safeArray(bundle.adaptive_picks).length > 0 || safeNumber(summary.adaptive_rows) > 0 || safeNumber(summary.adaptive_picks) > 0;
   }
+  function inferValidatedPickCount(){
+    try{
+      var target = document.getElementById('unified-summary-grid') || document.getElementById('smartbet-summary-grid') || document.getElementById('unified-engine-summary');
+      if(!target) return 0;
+      var text = (target.textContent || '').replace(/\s+/g, ' ');
+      var match = text.match(/Predicții validate\s*(\d{1,3})/i) || text.match(/Predictii validate\s*(\d{1,3})/i);
+      return match ? safeNumber(match[1]) : 0;
+    }catch(e){ return 0; }
+  }
 
   function normalizePick(row){
     row = safeObject(row);
@@ -165,6 +174,8 @@
       if(!bundle.version) return;
       var diagnostics = safeObject(window.MODEL_DIAGNOSTICS || bundle.diagnostics);
       var summary = safeObject(bundle.summary);
+      var visibleValidated = inferValidatedPickCount();
+      var adaptiveCount = visibleValidated || safeNumber(summary.adaptive_picks || diagnostics.adaptive_picks);
       var box = document.getElementById('unified-hybrid-badge');
       if(!box){
         box = document.createElement('div');
@@ -179,7 +190,7 @@
         ['API History + Jurnal + AI Memory', 'font-size:11px;color:var(--muted)'],
         [safeNumber(summary.journal_settled_rows || diagnostics.journal_settled_rows) + ' settled', 'font-size:12px;font-weight:800;color:var(--cyan)'],
         [safeNumber(summary.api_history_leagues) + ' ligi API', 'font-size:12px;font-weight:800;color:var(--pur)'],
-        [safeNumber(summary.adaptive_picks || diagnostics.adaptive_picks) + ' picks adaptive', 'font-size:12px;font-weight:800;color:var(--grn)']
+        [adaptiveCount + ' picks adaptive', 'font-size:12px;font-weight:800;color:var(--grn)']
       ];
       if(diagnostics.journal_roi !== undefined){
         var roi = safeNumber(diagnostics.journal_roi);
