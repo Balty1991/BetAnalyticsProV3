@@ -34,8 +34,8 @@
     return out;
   }
 
-  function bundleFromMemory(){
-    var memory = safeObject(window.AI_MEMORY);
+  function bundleFromMemory(memorySource){
+    var memory = safeObject(memorySource || window.AI_MEMORY);
     var summary = safeObject(memory.summary);
     var picks = safeArray(memory.adaptive_picks).map(normalizePick);
     if(!picks.length) return null;
@@ -79,11 +79,11 @@
       .catch(function(){ return {}; });
   }
 
-  function applyHybridData(bundle, diagnostics){
+  function applyHybridData(bundle, diagnostics, memoryFallback){
     bundle = safeObject(bundle);
     diagnostics = safeObject(diagnostics || bundle.diagnostics);
     if(!hasRealBundle(bundle)){
-      var fallback = bundleFromMemory();
+      var fallback = bundleFromMemory(memoryFallback) || bundleFromMemory();
       if(fallback){
         bundle = fallback;
         diagnostics = fallback.diagnostics;
@@ -126,6 +126,33 @@
     return true;
   }
 
+  function enhanceUnifiedCopy(){
+    try{
+      var target = document.getElementById('unified-summary-grid') || document.getElementById('smartbet-summary-grid') || document.getElementById('unified-engine-summary');
+      if(!target) return;
+      var card = target.closest ? (target.closest('.card,.panel,.section,.engine-card') || target.parentNode) : target.parentNode;
+      if(!card) return;
+      var nodes = card.querySelectorAll('p,div,span');
+      for(var i=0;i<nodes.length;i++){
+        var t = (nodes[i].textContent || '').trim();
+        if(t.indexOf('Kelly Discipline') >= 0 && t.indexOf('SmartBet Fusion') >= 0){
+          nodes[i].textContent = 'Kelly Discipline + AI Memory Patterns hibrid (API History + Jurnal) + SmartBet Fusion — un singur scor de acuratețe actualizat continuu.';
+          nodes[i].title = 'Pondere practică: API History oferă probabilitatea statistică, Jurnalul ajustează multiplicatorii prin decay 90 zile, AI Memory aplică bonus/penalizare pe pattern-uri, Kelly controlează disciplina de miză.';
+          break;
+        }
+      }
+      var hint = document.getElementById('unified-hybrid-logic-line');
+      var badge = document.getElementById('unified-hybrid-badge');
+      if(badge && !hint){
+        hint = document.createElement('div');
+        hint.id = 'unified-hybrid-logic-line';
+        hint.style.cssText = 'margin:-2px 0 10px 0;padding:0 4px;font-size:11px;line-height:1.45;color:var(--muted)';
+        hint.textContent = 'SmartScore = probabilitate API + multiplicatori Jurnal cu decay 90 zile + pattern-uri AI Memory + disciplină Kelly.';
+        badge.parentNode.insertBefore(hint, badge.nextSibling);
+      }
+    }catch(e){}
+  }
+
   function addHybridBadge(){
     try{
       var target = document.getElementById('unified-summary-grid') || document.getElementById('smartbet-summary-grid') || document.getElementById('unified-engine-summary');
@@ -165,6 +192,7 @@
         wrap.appendChild(span);
       });
       box.appendChild(wrap);
+      enhanceUnifiedCopy();
     }catch(e){}
   }
 
@@ -173,6 +201,7 @@
     try{ if(typeof renderUnifiedEngine === 'function') renderUnifiedEngine(); }catch(e){}
     try{ if(typeof renderAiMemory === 'function') renderAiMemory(); }catch(e){}
     addHybridBadge();
+    enhanceUnifiedCopy();
   }
 
   function applyMemoryFallbackNow(){
@@ -188,9 +217,10 @@
   function loadHybrid(force){
     return Promise.all([
       readJson('data/adaptive_predictions.json', force),
-      readJson('data/model_diagnostics.json', force)
+      readJson('data/model_diagnostics.json', force),
+      readJson('data/ai_memory.json', force)
     ]).then(function(parts){
-      var ok = applyHybridData(parts[0], parts[1]);
+      var ok = applyHybridData(parts[0], parts[1], parts[2]);
       if(!ok) ok = applyMemoryFallbackNow();
       if(ok) rerender();
       return ok;
@@ -207,10 +237,11 @@
       tries += 1;
       var ok = applyMemoryFallbackNow();
       addHybridBadge();
+      enhanceUnifiedCopy();
       if(ok || tries > 20) clearInterval(timer);
     }, 1500);
-    setTimeout(addHybridBadge, 2200);
-    setInterval(addHybridBadge, 5000);
+    setTimeout(function(){ addHybridBadge(); enhanceUnifiedCopy(); }, 2200);
+    setInterval(function(){ addHybridBadge(); enhanceUnifiedCopy(); }, 5000);
     var btn = document.getElementById('btn-refresh');
     if(btn && !btn.__hybridAdaptiveHook){
       btn.__hybridAdaptiveHook = true;
