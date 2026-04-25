@@ -936,7 +936,7 @@ function closeMobileMore(){
 function setMatchCardMode(mode, btn){
   MATCH_CARD_MODE = mode === 'expert' ? 'expert' : 'simple';
   localStorage.setItem('bet_match_card_mode', MATCH_CARD_MODE);
-  document.querySelectorAll('.view-mode-btn').forEach(function(el){
+  document.querySelectorAll('.view-mode-btn,.mf-mode-btn').forEach(function(el){
     el.classList.toggle('active', el.getAttribute('data-mode') === MATCH_CARD_MODE);
   });
   if(typeof renderMatches === 'function') renderMatches();
@@ -5612,15 +5612,15 @@ function renderTopSafe(){
 function setFilter(f, btn){
   clearMatchFocus();
   CURRENT_FILTER = f;
-  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.filter-btn,.mf-chip').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
   renderMatches();
 }
 
 
 function activateMatchFilterButton(filterKey){
-  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
-  var buttons = Array.prototype.slice.call(document.querySelectorAll('.filter-btn'));
+  document.querySelectorAll('.filter-btn,.mf-chip').forEach(function(b){ b.classList.remove('active'); });
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.filter-btn,.mf-chip'));
   var target = buttons.find(function(btn){
     return String(btn.getAttribute('onclick') || '').indexOf("setFilter('" + filterKey + "'") !== -1;
   });
@@ -5658,7 +5658,7 @@ function hasSyncedOdds(match){
 function resetMatchFilters(){
   clearMatchFocus();
   CURRENT_FILTER = 'motor_validated';
-  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.filter-btn,.mf-chip').forEach(function(b){ b.classList.remove('active'); });
   activateMatchFilterButton('motor_validated');
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
@@ -5805,7 +5805,7 @@ function renderMatches(){
   var kickoffF = $('match-kickoff-filter') ? $('match-kickoff-filter').value : 'all';
   var tierF = $('match-tier-filter') ? $('match-tier-filter').value : 'all';
   var minScore = $('match-min-score') ? Number($('match-min-score').value || 0) : 0;
-  document.querySelectorAll('.view-mode-btn').forEach(function(el){
+  document.querySelectorAll('.view-mode-btn,.mf-mode-btn').forEach(function(el){
     el.classList.toggle('active', el.getAttribute('data-mode') === MATCH_CARD_MODE);
   });
   var now = Date.now();
@@ -6139,9 +6139,8 @@ function renderMatches(){
         '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
         '<div class="m16-signal-text">ℹ️ '+infoLine+'</div>'+
       '</div>'+
-      '<div class="m16-actions">'+
-        '<button class="m16-btn primary" onclick="quickAddMatchToTicket(&quot;'+key+'&quot;, this)">Adaugă în bilet</button>'+
-        '<button class="m16-btn" onclick="toggleMatchAnalysisDetails(&quot;'+key+'&quot;)">Detalii analiză</button>'+
+      '<div class="m16-actions m16-actions-single">'+
+        '<button class="m16-btn" onclick="toggleMatchAnalysisDetails(&quot;'+key+'&quot;)">🔍 Detalii analiză</button>'+
       '</div>'+
       '<div class="m16-extra'+(MATCH_FOCUS_KEY === key ? ' open' : '')+'" id="match-extra-'+key+'">'+detailBlock+(reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+'</div>'+
     '</div>';
@@ -9947,6 +9946,14 @@ function renderAdvancedCharts(){
   ]) + '<div class="sankey-legend"><span class="sankey-pill">Toate → pool brut</span><span class="sankey-pill">Cu cote → disponibile pe piață</span><span class="sankey-pill">PRO → filtru intern strict</span><span class="sankey-pill">Value → EV mai bun</span></div>';
 }
 
+
+function toggleMfAdvanced(btn){
+  var panel = document.getElementById('mf-advanced');
+  if(!panel) return;
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('active', !isOpen);
+}
 function renderAll(){
   LAST_DAY_KEY = getCurrentDayKey();
   var total = ALL_MATCHES.length;
@@ -10756,11 +10763,12 @@ function getHistory21CategoryDefs(rows){
   ];
   var known = {};
   defs.forEach(function(def){ known[def.key] = true; });
+  var BLACKLISTED_MARKETS = {'over25':true,'under25':true};
   var extra = {};
   (rows || []).forEach(function(row){
     var mk = row.market_key || inferMarketTypeFromLabel(row.market || '');
     var label = row.market || mk || '';
-    if(!mk || known[mk] || extra[mk]) return;
+    if(!mk || known[mk] || extra[mk] || BLACKLISTED_MARKETS[mk]) return;
     extra[mk] = {key:mk, label:label};
   });
   Object.keys(extra).forEach(function(k){ defs.push(extra[k]); });
@@ -12338,7 +12346,7 @@ function getOnboardingSteps(){
     {title:'Bine ai venit în BetAnalytics Pro', sub:'Wizard-ul te ajută să înțelegi rapid ce vezi în aplicație și să pornești direct util.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Ce rezolvi aici</div><div class="onboarding-list"><div class="onboarding-item">📊 vezi meciuri analizate și recomandări clare<small>Meciuri, score, edge, value și fair odds.</small></div><div class="onboarding-item">🎫 generezi bilete și le urmărești în jurnal<small>Single, combo, manual din card și tracking.</small></div><div class="onboarding-item">🧠 folosești glosarul rapid când termenii devin prea tehnici<small>Edge, value, fair odds, xG și confidence.</small></div></div></div>'; }},
     {title:'Cum citești un card de meci', sub:'Cardul nou este gândit să-ți dea verdictul fără să te îngroape în text.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Ordinea corectă de citire</div><div class="onboarding-list"><div class="onboarding-item">1. UITĂ-TE LA RECOMANDARE<small>Piața, cota și scorul general.</small></div><div class="onboarding-item">2. UITĂ-TE LA PROBABILITATE + EDGE<small>Acolo vezi dacă pariul are logică matematică.</small></div><div class="onboarding-item">3. UITĂ-TE LA VALUE ȘI CONTEXT<small>Trend, scor probabil, xG și motivul principal.</small></div></div></div>'; }},
     {title:'Cum generezi un bilet', sub:'Poți folosi generatoarele sau poți construi unul manual direct din cardurile de meci.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">2 fluxuri rapide</div><div class="onboarding-list"><div class="onboarding-item">🎯 Din tabul Bilete<small>Folosești generatoarele sau constructorul personalizat.</small></div><div class="onboarding-item">🧩 Dintr-un card de meci<small>Butonul „Adaugă în bilet” îl trimite instant în preview-ul activ.</small></div></div></div>'; }},
-    {title:'Setări rapide inițiale', sub:'Alege stilul de joc și preferințele de bază. Le aplic imediat în filtre.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Profil & preferințe</div><div class="onboarding-form"><div><label>Profil</label><select id="ob-profile"><option value="safe">Safe</option><option value="balanced" selected>Balanced</option><option value="aggressive">Aggressive</option></select></div><div><label>Piață preferată</label><select id="ob-market"><option value="">Fără preferință</option><option value="Over 1.5G">Over 1.5G</option><option value="Over 2.5G">Over 2.5G</option><option value="Under 3.5G">Under 3.5G</option><option value="BTTS">BTTS</option></select></div><div><label>Probabilitate minimă %</label><input id="ob-minprob" type="number" min="0" max="100" step="1" value="72"></div></div></div>'; }}
+    {title:'Setări rapide inițiale', sub:'Alege stilul de joc și preferințele de bază. Le aplic imediat în filtre.', body:function(){ return '<div class="onboarding-panel"><div class="onboarding-panel-title">Profil & preferințe</div><div class="onboarding-form"><div><label>Profil</label><select id="ob-profile"><option value="safe">Safe</option><option value="balanced" selected>Balanced</option><option value="aggressive">Aggressive</option></select></div><div><label>Piață preferată</label><select id="ob-market"><option value="">Fără preferință</option><option value="Over 1.5G">Over 1.5G</option><option value="Under 3.5G">Under 3.5G</option><option value="BTTS">BTTS</option></select></div><div><label>Probabilitate minimă %</label><input id="ob-minprob" type="number" min="0" max="100" step="1" value="72"></div></div></div>'; }}
   ];
 }
 function renderOnboarding(){
