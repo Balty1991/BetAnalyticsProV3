@@ -102,6 +102,6 @@ jobs:
                   || true
           git diff --staged --quiet || git commit -m \
             "chore(ml): SmartBet v2 retrain $(date -u +%Y-%m-%d)"
-          git push
+          git pull --rebase && git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
