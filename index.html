@@ -685,40 +685,42 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
 
   <!-- ===== LIVE TAB ===== -->
   <div class="tab-content" id="tab-meciuri">
-    <div class="section matches-section-card matches-filter-card" style="margin-bottom:14px">
-      <div class="matches-card-head">
-        <div>
-          <div class="matches-card-title">ℹ️ Info meciuri</div>
-          <div class="matches-card-sub">Tot ce ține de filtrare și sortare este grupat aici, compact și mai ușor de urmărit pe mobil.</div>
+    <div class="section mf-card" style="margin-bottom:12px">
+      <div class="mf-header">
+        <div class="mf-title-row">
+          <span class="mf-icon">⚽</span>
+          <span class="mf-title">Meciuri</span>
+          <span class="mf-count" id="filter-count">0</span>
         </div>
-        <div class="view-mode-switch">
-          <button class="view-mode-btn active" data-mode="simple" onclick="setMatchCardMode('simple', this)">Simplu</button>
-          <button class="view-mode-btn" data-mode="expert" onclick="setMatchCardMode('expert', this)">Expert</button>
+        <div class="mf-mode-toggle">
+          <button class="mf-mode-btn active" data-mode="simple" onclick="setMatchCardMode('simple', this)">Simplu</button>
+          <button class="mf-mode-btn" data-mode="expert" onclick="setMatchCardMode('expert', this)">Expert</button>
         </div>
       </div>
 
-      <div class="filter-bar matches-filter-toolbar">
-        <div class="matches-chip-group">
-          <button class="filter-btn" onclick="setFilter('all',this)">🌐 Toate</button>
-          <button class="filter-btn active" onclick="setFilter('motor_validated',this)">🧠 Validate Motor</button>
-          <button class="filter-btn" onclick="setFilter('safe',this)">⭐ Top analizate</button>
-          <button class="filter-btn" onclick="setFilter('o15',this)">🔥 Over 1.5G</button>
-          <button class="filter-btn" onclick="setFilter('btts',this)">🤝 BTTS</button>
-          <button class="filter-btn" onclick="setFilter('u35',this)">🧊 Under 3.5G</button>
-          <button class="filter-btn" onclick="setFilter('dc',this)">🛡️ Șansă Dublă</button>
-          <button class="filter-btn" onclick="setFilter('value',this)">💰 Value</button>
-        </div>
-        <div class="matches-chip-meta">
-          <select class="sort-select" id="sort-select" onchange="renderMatches()">
-            <option value="date" selected>🕒 Ora meciului</option>
-            <option value="edge">📈 Edge</option>
-            <option value="prob">📊 Probabilitate</option>
-            <option value="score">🧠 Score</option>
-            <option value="value">💰 Value</option>
-          </select>
-          <span class="filter-count" id="filter-count">0 meciuri</span>
-        </div>
+      <div class="mf-chips-scroll">
+        <button class="mf-chip" onclick="setFilter('all',this)">Toate</button>
+        <button class="mf-chip active" onclick="setFilter('motor_validated',this)">🧠 Motor</button>
+        <button class="mf-chip" onclick="setFilter('safe',this)">⭐ Top</button>
+        <button class="mf-chip" onclick="setFilter('o15',this)">🔥 O1.5</button>
+        <button class="mf-chip" onclick="setFilter('btts',this)">🤝 BTTS</button>
+        <button class="mf-chip" onclick="setFilter('u35',this)">🧊 U3.5</button>
+        <button class="mf-chip" onclick="setFilter('dc',this)">🛡️ DC</button>
+        <button class="mf-chip" onclick="setFilter('value',this)">💰 Value</button>
       </div>
+
+      <div class="mf-sort-row">
+        <select class="mf-select" id="sort-select" onchange="renderMatches()">
+          <option value="date" selected>🕒 Ora</option>
+          <option value="edge">📈 Edge</option>
+          <option value="prob">📊 Prob</option>
+          <option value="score">🧠 Score</option>
+          <option value="value">💰 Value</option>
+        </select>
+        <button class="mf-advanced-toggle" onclick="toggleMfAdvanced(this)">⚙️ Filtre</button>
+      </div>
+
+      <div class="mf-advanced" id="mf-advanced" style="display:none">
 
       <div class="league-filter-wrap matches-filter-advanced">
         <div class="filter-field filter-field-wide">
@@ -789,11 +791,8 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden}
           <input id="match-min-score" class="bk-input" type="number" min="0" max="150" step="1" value="0" onchange="renderMatches()">
         </div>
       </div>
-    </div>
-
-    <div class="pro-filters-strip"><div class="pro-filters-strip-title">🆕 Filtre PRO noi active în Meciuri</div><div class="pro-filters-strip-sub">Ai acum filtre dedicate pentru <b>time to kickoff</b>, <b>league confidence</b> și <b>min smart score</b>, pe lângă probabilitate și edge.</div></div>
-
-<div class="section compact-context-panel" style="margin-bottom:12px;padding:12px 14px"><div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:4px">🧩 Cum să citești un card de meci</div><div style="font-size:11px;color:var(--muted);line-height:1.55">Vezi întâi <b>pronosticul recomandat</b>, apoi <b>șansa</b> și linia <b>De ce a fost ales</b>. Restul informațiilor rămân compacte, ca suport, nu ca zgomot.</div></div>
+      </div><!-- /mf-advanced -->
+    </div><!-- /mf-card -->
 
     <div class="help-panel" id="matches-help-panel" style="margin-top:0;margin-bottom:12px">
       <div class="help-head">
