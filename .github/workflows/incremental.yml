@@ -1,0 +1,60 @@
+name: SmartBet Fusion v2 — Incremental Update (Weekly)
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'   # Luni 04:00 UTC
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  incremental:
+    name: 'Incremental: Fetch + Update + EV'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install catboost scikit-learn pandas numpy requests shap
+
+      - name: Fetch date recente (ultimele 90 zile)
+        run: python3 fetch_history_batch.py --mode incremental
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          DELAY_MS: '300'
+
+      - name: Feature engineering incremental
+        run: python3 feature_engineering.py
+
+      - name: Incremental model update
+        run: python3 incremental_update.py --days 45
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+
+      - name: Export app JSONs
+        run: python3 export_app.py
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+
+      - name: Commit actualizări
+        run: |
+          git config --global user.name  'SmartBet Bot'
+          git config --global user.email 'bot@betanalytics.local'
+          git add data/ || true
+          git diff --staged --quiet || git commit -m \
+            "chore(ml): weekly incremental $(date -u +%Y-%m-%d)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

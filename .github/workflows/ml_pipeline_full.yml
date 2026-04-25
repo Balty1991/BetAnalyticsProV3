@@ -1,0 +1,208 @@
+name: SmartBet Fusion v2 — Full ML Pipeline
+
+on:
+  # Retrain complet: prima zi a lunii, 03:00 UTC
+  schedule:
+    - cron: '0 3 1 * *'
+  # Actualizare incrementală: în fiecare Luni, 04:00 UTC
+  # (workflow separat — vezi incremental.yml)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Mod rulare'
+        required: true
+        default: 'full-retrain'
+        type: choice
+        options:
+          - full-retrain
+          - incremental
+          - features-only
+          - fetch-only
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ─── JOB 1: Fetch date istorice ────────────────────────────────────────────
+  fetch-history:
+    name: 'Fetch: Date Istorice'
+    runs-on: ubuntu-latest
+    if: |
+      github.event.inputs.mode == 'full-retrain' ||
+      github.event.inputs.mode == 'fetch-only' ||
+      github.event_name == 'schedule'
+    timeout-minutes: 240   # 4h pentru fetch complet
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install requests tqdm
+
+      - name: Fetch incremental (date recente)
+        run: python3 fetch_history_batch.py --mode incremental
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          DELAY_MS: '350'
+
+      - name: Upload warehouse artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: warehouse-data
+          path: data/warehouse/
+          retention-days: 7
+
+  # ─── JOB 2: Feature Engineering ────────────────────────────────────────────
+  build-features:
+    name: 'Build: Feature Engineering'
+    runs-on: ubuntu-latest
+    needs: fetch-history
+    if: |
+      always() && (
+        github.event.inputs.mode == 'full-retrain' ||
+        github.event.inputs.mode == 'features-only' ||
+        github.event_name == 'schedule'
+      )
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download warehouse
+        uses: actions/download-artifact@v4
+        with:
+          name: warehouse-data
+          path: data/warehouse/
+        continue-on-error: true  # OK dacă deja există în repo
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install pandas numpy scipy
+
+      - name: Build features_v2.json
+        run: python3 feature_engineering.py
+
+      - name: Upload features artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: features-data
+          path: |
+            data/features_v2.json
+            data/features_v2_summary.json
+            data/league_baselines_v2.json
+          retention-days: 3
+
+  # ─── JOB 3: ML Training ─────────────────────────────────────────────────────
+  train-models:
+    name: 'Train: CatBoost + Calibrare + SHAP'
+    runs-on: ubuntu-latest
+    needs: build-features
+    if: |
+      always() && (
+        github.event.inputs.mode == 'full-retrain' ||
+        github.event_name == 'schedule'
+      )
+    timeout-minutes: 180   # 3h pentru training complet cu WFV
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download features
+        uses: actions/download-artifact@v4
+        with:
+          name: features-data
+          path: data/
+        continue-on-error: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install ML dependencies
+        run: |
+          pip install catboost shap scikit-learn pandas numpy optuna
+
+      - name: Train all markets (cu WFV + SHAP)
+        run: python3 train_engine_v2.py
+        # Note: pentru speed în CI, poți adăuga --skip-shap sau --skip-wfv
+
+      - name: Upload models artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-models
+          path: |
+            models/
+            data/model_pack_v2.json
+            data/wfv_results_v2.json
+            data/calibration_report_v2.json
+          retention-days: 30
+
+  # ─── JOB 4: Export + Commit ─────────────────────────────────────────────────
+  export-and-deploy:
+    name: 'Export: JSON-uri Frontend + Deploy'
+    runs-on: ubuntu-latest
+    needs: [build-features, train-models]
+    if: always() && needs.build-features.result != 'failure'
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download toate artifactele
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install requests pandas numpy
+
+      - name: EV Calculator (semnale pe meciuri curente)
+        run: python3 ev_calculator.py
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        continue-on-error: true
+
+      - name: Export App JSONs
+        run: python3 export_app.py
+
+      - name: Commit și push date actualizate
+        run: |
+          git config --global user.name  'SmartBet Bot'
+          git config --global user.email 'bot@betanalytics.local'
+          git add data/model_pack_v2.json \
+                  data/ev_signals_v2.json \
+                  data/shap_global_v2.json \
+                  data/smartbet_meta_v2.json \
+                  data/backtest_v2.json \
+                  data/wfv_results_v2.json \
+                  data/calibration_report_v2.json \
+                  data/league_baselines_v2.json \
+                  data/league_baselines_compact.json \
+                  data/features_v2_summary.json \
+                  || true
+          git diff --staged --quiet || git commit -m \
+            "chore(ml): SmartBet v2 retrain $(date -u +%Y-%m-%d)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
