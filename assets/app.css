@@ -2125,3 +2125,51 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--font-sans); letter-spacing: -0.02em; }
   font-size: 10px;
   color: #a78bfa;
 }
+
+/* ===== MF-CARD: Info Meciuri Redesign ===== */
+.mf-card{background:linear-gradient(180deg,rgba(18,28,50,.98),rgba(14,22,40,.98));border:1px solid rgba(84,119,255,.16);border-radius:16px;padding:12px 12px 10px;box-shadow:0 8px 20px rgba(0,0,0,.14)}
+.mf-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.mf-title-row{display:flex;align-items:center;gap:8px}
+.mf-icon{font-size:16px;line-height:1}
+.mf-title{font-size:14px;font-weight:900;color:var(--txt);letter-spacing:-.01em}
+.mf-count{font-size:11px;font-weight:800;color:var(--acc);background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.2);border-radius:999px;padding:2px 8px;font-family:var(--mono)}
+.mf-mode-toggle{display:flex;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:3px;gap:2px}
+.mf-mode-btn{padding:5px 14px;border-radius:999px;border:none;background:transparent;color:var(--muted);font-size:11px;font-weight:800;cursor:pointer;transition:all .18s ease}
+.mf-mode-btn.active{background:rgba(59,130,246,.18);color:var(--acc);border:1px solid rgba(59,130,246,.25)}
+.mf-chips-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.mf-chips-scroll::-webkit-scrollbar{display:none}
+.mf-chip{flex-shrink:0;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .18s ease}
+.mf-chip.active{background:rgba(59,130,246,.16);border-color:rgba(59,130,246,.35);color:var(--acc)}
+.mf-sort-row{display:flex;align-items:center;gap:8px;margin-bottom:0}
+.mf-select{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--txt);font-size:11px;padding:7px 10px;font-family:var(--font-sans)}
+.mf-advanced-toggle{flex-shrink:0;padding:7px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .18s ease}
+.mf-advanced-toggle.active{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:var(--acc)}
+.mf-advanced{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)}
+.mf-advanced .league-filter-wrap{gap:8px}
+.mf-advanced .filter-field label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;display:block;font-weight:700}
+.mf-advanced .league-filter-select,.mf-advanced .bk-input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--txt);font-size:11px;padding:7px 10px;width:100%}
+
+/* ===== MATCH CARD COMPACT ===== */
+.match-card-v16{gap:8px!important;padding:11px!important}
+.match-card-v16 .m16-top,.match-card-v16 .m16-reco,.match-card-v16 .m16-signals,.match-card-v16 .m16-actions,.match-card-v16 .m16-extra{padding:9px 11px!important;border-radius:12px!important}
+.match-card-v16 .m16-league{font-size:11px!important}
+.match-card-v16 .m16-kickoff{font-size:10px!important}
+.match-card-v16 .m16-kickoff-pill{font-size:9px!important;padding:3px 7px!important}
+.match-card-v16 .m16-team-logo{width:34px!important;height:34px!important;border-radius:10px!important}
+.match-card-v16 .m16-team-name{font-size:13px!important}
+.match-card-v16 .m16-team-prob{font-size:17px!important}
+.match-card-v16 .m16-vs{font-size:11px!important}
+.match-card-v16 .m16-ml-bar{height:8px!important}
+.match-card-v16 .m16-ml-note{font-size:9px!important}
+.match-card-v16 .m16-reco-title{font-size:10px!important}
+.match-card-v16 .m16-reco-main{font-size:18px!important;margin-top:5px!important}
+.match-card-v16 .m16-reco-meta{font-size:10px!important;margin-top:5px!important;line-height:1.55!important}
+.match-card-v16 .m16-signal-text{font-size:10px!important}
+.match-card-v16 .m16-signal-pill{font-size:9px!important;padding:4px 8px!important}
+.match-card-v16 .m16-actions.m16-actions-single{grid-template-columns:1fr!important}
+.match-card-v16 .m16-btn{padding:9px 10px!important;font-size:11px!important;border-radius:10px!important}
+@media(max-width:640px){
+  .match-card-v16 .m16-team-name{font-size:12px!important}
+  .match-card-v16 .m16-team-prob{font-size:15px!important}
+  .match-card-v16 .m16-reco-main{font-size:16px!important}
+}
