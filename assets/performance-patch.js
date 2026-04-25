@@ -11,7 +11,7 @@
   var mem={};
   var ttl=30000;
   var dataRe=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
-  var files=['data/meta.json','data/events.json','data/predictions.json','data/leagues.json','data/teams.json','data/ai_memory.json','data/backtest.json','data/history_engine.json','data/recommendation_log.json','data/recommendation_journal.json','data/signal_audit.json','data/finished_events.json'];
+  var files=['data/meta.json','data/events.json','data/predictions.json','data/leagues.json','data/teams.json','data/ai_memory.json','data/backtest.json','data/history_engine.json','data/recommendation_log.json','data/recommendation_journal.json','data/signal_audit.json','data/finished_events.json','data/adaptive_predictions.json','data/model_diagnostics.json','data/journal_learning_memory.json'];
 
   function urlOf(input){try{return new URL(typeof input==='string'?input:input.url,location.href)}catch(e){return null}}
   function methodOf(input,init){return String((init&&init.method)||(input&&input.method)||'GET').toUpperCase()}
@@ -45,7 +45,16 @@
     s.textContent='.match-card,.top-pick-card,.ml-card,.bilet-card,.ticket-card,.bankroll-card,.visual-card,.history-table-wrapper{content-visibility:auto;contain-intrinsic-size:1px 260px}.matches-grid,.top-picks-grid,.ml-grid,.focus-grid,.visual-grid{contain:layout style paint}';
     document.head.appendChild(s);
   }
+  function loadHybridRuntime(){
+    if(window.__hybridAdaptiveRuntimeLoader)return;
+    window.__hybridAdaptiveRuntimeLoader=true;
+    var s=document.createElement('script');
+    s.src='assets/hybrid_adaptive_runtime.js?v=20260426hybrid';
+    s.defer=true;
+    document.head.appendChild(s);
+  }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
+  loadHybridRuntime();
   if('requestIdleCallback'in window)requestIdleCallback(prefetch,{timeout:2500});else setTimeout(prefetch,600);
 })();
