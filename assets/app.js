@@ -4206,6 +4206,9 @@ function applyArchiveSummaryData(bundle){
   try {
     if(ARCHIVE_SUMMARY_STATE.aiMemory) AI_MEMORY = ARCHIVE_SUMMARY_STATE.aiMemory;
     if(ARCHIVE_SUMMARY_STATE.baselines) TRAINING_MARKET_BASELINES = ARCHIVE_SUMMARY_STATE.baselines;
+    // SmartBet Fusion v2 — stochează în window pentru acces global
+    if(ARCHIVE_SUMMARY_STATE.modelPackV2) window.__SBV2_MODEL_PACK__ = ARCHIVE_SUMMARY_STATE.modelPackV2;
+    if(ARCHIVE_SUMMARY_STATE.sbMetaV2)   window.__SBV2_META__       = ARCHIVE_SUMMARY_STATE.sbMetaV2;
   } catch(err){}
 }
 
@@ -4234,7 +4237,9 @@ function ensureArchiveSummaryData(){
     trainSum: getJson('/data/training_dataset_summary.json', null),
     trainModel: getJson('/data/training_model_summary.json', null),
     baselines: getJson('/data/training_market_baselines.json', []),
-    aiMemory: getJson('/data/ai_memory.json', null)
+    aiMemory: getJson('/data/ai_memory.json', null),
+    modelPackV2: getJson('/data/model_pack_v2.json', null),
+    sbMetaV2: getJson('/data/smartbet_meta_v2.json', null)
   };
 
   ARCHIVE_SUMMARY_PROMISE = Promise.all([
@@ -4243,7 +4248,9 @@ function ensureArchiveSummaryData(){
     jobs.trainSum,
     jobs.trainModel,
     jobs.baselines,
-    jobs.aiMemory
+    jobs.aiMemory,
+    jobs.modelPackV2,
+    jobs.sbMetaV2
   ]).then(function(values){
     applyArchiveSummaryData({
       fullMeta: values[0] || {},
@@ -4251,7 +4258,9 @@ function ensureArchiveSummaryData(){
       trainSum: values[2] || {},
       trainModel: values[3] || {},
       baselines: Array.isArray(values[4]) ? values[4] : [],
-      aiMemory: values[5] || {}
+      aiMemory: values[5] || {},
+      modelPackV2: values[6] || null,
+      sbMetaV2: values[7] || null
     });
     return true;
   }).catch(function(err){
@@ -12817,7 +12826,30 @@ function calcUnifiedScore(row){
   var adaptive = Math.min(100, Math.max(0, Number(row.adaptiveScore || row.prob || 0)));
   var bonus = Math.max(0, Number(row.memoryBonus || 0)) * 4;
   var kellyBoost = Number(row.kelly_qtr || row.kelly || 0) > 3 ? 4 : (Number(row.kelly_qtr || row.kelly || 0) > 1.5 ? 2 : 0);
-  return Math.min(100, Math.round(smart * 0.45 + adaptive * 0.40 + bonus + kellyBoost));
+  var base = Math.min(100, Math.round(smart * 0.45 + adaptive * 0.40 + bonus + kellyBoost));
+
+  // SmartBet Fusion v2: boost dacă avem WFV AUC validat pentru piața aceasta
+  try {
+    var v2pack = window.__SBV2_MODEL_PACK__ || (window.__SBV2__ && window.__SBV2__.modelPack);
+    if(v2pack && v2pack.markets) {
+      var mkt = row.market || row.bet_type || '';
+      // mapare market → cheie v2
+      var mktMap = {'over15':'over15','over25':'over25','under35':'under35',
+                    'btts':'btts','home_win':'home_win','away_win':'away_win','draw':'draw',
+                    'Over 1.5G':'over15','Over 2.5G':'over25','BTTS Yes':'btts'};
+      var v2key = mktMap[mkt] || mkt.toLowerCase().replace(/[^a-z0-9]/g,'_');
+      var v2m   = v2pack.markets[v2key];
+      if(v2m && v2m.wfv_avg_auc) {
+        var auc  = Number(v2m.wfv_avg_auc);
+        var ece  = Number(v2m.test_ece || 0.05);
+        // Bonus proporțional cu calitatea modelului: AUC 0.67 → +5, AUC 0.70 → +8
+        var v2boost = Math.round(Math.max(0, (auc - 0.55) / 0.15 * 10) * (1 - ece * 5));
+        base = Math.min(100, base + v2boost);
+      }
+    }
+  } catch(e){}
+
+  return base;
 }
 
 function unifiedScoreColor(score){
@@ -12840,6 +12872,38 @@ function renderUnifiedEngine(){
   var updated = document.getElementById('unified-updated');
   var meta = document.getElementById('unified-list-meta');
   if(!summary || !list) return;
+
+  // Injectare SmartBet v2 model info în header dacă e disponibil
+  (function(){
+    var v2pack = window.__SBV2_MODEL_PACK__ || null;
+    var v2info = document.getElementById('unified-v2-badge');
+    if(!v2info) {
+      v2info = document.createElement('div');
+      v2info.id = 'unified-v2-badge';
+      if(summary && summary.parentNode) summary.parentNode.insertBefore(v2info, summary);
+    }
+    if(v2pack && v2pack.version === 'smartbet-fusion-v2') {
+      var mkts   = v2pack.markets || {};
+      var aucs   = Object.values(mkts).map(function(m){ return m.wfv_avg_auc; }).filter(Boolean);
+      var avgAUC = aucs.length ? (aucs.reduce(function(a,b){return a+b;},0)/aucs.length).toFixed(3) : '—';
+      var featN  = v2pack.feature_count || '—';
+      var mktsN  = Object.keys(mkts).length;
+      var upd    = v2pack.updated_at ? v2pack.updated_at.slice(0,10) : '—';
+      v2info.innerHTML =
+        '<div style="margin-bottom:10px;padding:10px 14px;border-radius:14px;' +
+        'background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(16,185,129,.08));' +
+        'border:1px solid rgba(99,102,241,.25);display:flex;flex-wrap:wrap;gap:10px;align-items:center">' +
+          '<span style="font-size:13px;font-weight:900;color:var(--acc)">⚡ SmartBet Fusion v2</span>' +
+          '<span style="font-size:11px;color:var(--muted)">CatBoost calibrat</span>' +
+          '<span style="font-size:12px;font-weight:700;color:var(--grn)">WFV AUC ' + avgAUC + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:var(--cyan)">' + featN + ' features</span>' +
+          '<span style="font-size:12px;font-weight:700;color:var(--pur)">' + mktsN + ' piețe</span>' +
+          '<span style="font-size:11px;color:var(--muted);margin-left:auto">' + upd + '</span>' +
+        '</div>';
+    } else {
+      v2info.innerHTML = '';
+    }
+  })();
 
   var analysis = getSmartBetAnalysis ? getSmartBetAnalysis() : {pool:[],blocked:[]};
   var pool = (analysis.pool || []).map(function(row){
@@ -13007,13 +13071,33 @@ function renderArchivePanel(){
       role:'Datele brute din BSD API — calibrează probabilitățile și ajustează cotele fair pe fiecare piață.',
       color:'rgba(99,102,241,.12)', border:'rgba(99,102,241,.25)'
     },
-    {
-      emoji:'🤖', title:'Model AI + Patterns',
-      value: fmtN(trainSum.rows_total||0) + ' rows antrenament',
-      sub: fmtN((trainModel.rows_eligible_min5||trainSum.rows_ready)||0) + ' ready • ' + fmtN(baselines.filter(function(b){return b&&b.win_rate>0;}).length) + ' piețe calibrate',
-      role:'Modelul statistic și pattern-urile învățate — ajustează scorul fiecărui pick cu bonus/penalizare din memorie.',
-      color:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.22)'
-    }
+    (function(){
+      var v2pack = window.__SBV2_MODEL_PACK__ || ARCHIVE_SUMMARY_STATE.modelPackV2 || null;
+      var v2meta = window.__SBV2_META__       || ARCHIVE_SUMMARY_STATE.sbMetaV2   || null;
+      var v2sys  = v2meta && v2meta.system ? v2meta.system : null;
+      if(v2pack && v2pack.version === 'smartbet-fusion-v2') {
+        var mkts    = v2pack.markets || {};
+        var aucs    = Object.values(mkts).map(function(m){ return m.wfv_avg_auc; }).filter(Boolean);
+        var avgAUC  = aucs.length ? (aucs.reduce(function(a,b){return a+b;},0)/aucs.length).toFixed(3) : '—';
+        var featN   = v2pack.feature_count || (v2sys && v2sys.feature_count) || '—';
+        var trainN  = v2sys ? v2sys.training_rows : (trainSum.rows_total||0);
+        var updDate = v2pack.updated_at ? v2pack.updated_at.slice(0,10) : '—';
+        return {
+          emoji:'🤖', title:'Model AI + Patterns',
+          value: fmtN(trainN) + ' rows antrenament',
+          sub: fmtN(Object.keys(mkts).length) + ' piețe CatBoost • ' + featN + ' features • WFV AUC avg ' + avgAUC,
+          role:'SmartBet Fusion v2 — CatBoost calibrat pe ' + fmtN(trainN) + ' meciuri reale, ' + fmtN(featN) + ' features, walk-forward validation, actualizat ' + updDate + '.',
+          color:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.22)'
+        };
+      }
+      return {
+        emoji:'🤖', title:'Model AI + Patterns',
+        value: fmtN(trainSum.rows_total||0) + ' rows antrenament',
+        sub: fmtN((trainModel.rows_eligible_min5||trainSum.rows_ready)||0) + ' ready • ' + fmtN(baselines.filter(function(b){return b&&b.win_rate>0;}).length) + ' piețe calibrate',
+        role:'Modelul statistic și pattern-urile învățate — ajustează scorul fiecărui pick cu bonus/penalizare din memorie.',
+        color:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.22)'
+      };
+    })()
   ];
 
   cards.innerHTML = cardData.map(function(c){
