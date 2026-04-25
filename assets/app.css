@@ -4526,7 +4526,7 @@ button[onclick*="resetFilter"]:hover {
    ║  AURORA v4.3 — UX REFINEMENT (user feedback)            ║
    ╚══════════════════════════════════════════════════════════╝ */
 
-/* ── A. Header status pill — show full text (auto-scrolling marquee) ── */
+/* ── A. Header status pill — scrollable ticker (no broken marquee) ── */
 @media (max-width: 768px) {
   .header-inner {
     flex-wrap: nowrap !important;
@@ -4537,32 +4537,34 @@ button[onclick*="resetFilter"]:hover {
     flex: 0 0 auto !important;
     min-width: 0 !important;
   }
-  /* Status pill: take all available space, auto-scroll if too long */
+
+  /* Status pill: flex-1, hides overflow, swipe left to read more */
   .status-bar {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
     padding: 5px 10px !important;
-    font-size: 9.5px !important;
+    font-size: 10px !important;
     max-width: none !important;
     position: relative !important;
+    cursor: pointer !important;
   }
+
+  /* The text itself scrolls left on tap-and-hold / long-press via JS trick
+     but also ticks automatically with a CSS animation that starts AFTER a delay */
   .status-bar #sb-text {
-    display: inline-block !important;
+    display: block !important;
     white-space: nowrap !important;
     overflow: hidden !important;
-    text-overflow: clip !important;  /* no ellipsis */
-    max-width: none !important;
-    min-width: 0 !important;
-    animation: marquee 18s linear infinite !important;
-    padding-left: 100% !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    animation: none !important;
+    transition: none !important;
+    padding-left: 0 !important;
+    font-size: 10px !important;
   }
-  /* Pause marquee on tap/hover so user can read */
-  .status-bar:hover #sb-text,
-  .status-bar:active #sb-text {
-    animation-play-state: paused !important;
-  }
-  /* Refresh button stays compact icon-only */
+
+  /* Refresh button icon-only */
   #btn-refresh {
     flex: 0 0 auto !important;
     min-width: 36px !important;
@@ -4570,20 +4572,11 @@ button[onclick*="resetFilter"]:hover {
     padding: 7px 9px !important;
   }
 }
-@keyframes marquee {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
-}
 
-/* If text is short and fits, no scroll — detect via container query (best-effort) */
-@media (max-width: 768px) {
-  /* Only animate when overflowing — fallback: always animate slowly so users can see all info */
-  .status-bar #sb-text { animation-duration: 22s !important; }
-}
-
-/* On wider mobile, give it more breathing space */
+/* On wider mobile */
 @media (min-width: 481px) and (max-width: 768px) {
   .status-bar { font-size: 10.5px !important; }
+  .status-bar #sb-text { font-size: 10.5px !important; }
 }
 
 /* ── B. Reveal "Performanță pe fiecare pronostic" panel on dashboard ── */
@@ -4713,3 +4706,244 @@ button[onclick*="resetFilter"]:hover {
 #market-performance-panel { position: relative !important; overflow: hidden !important; }
 
 /* End v4.3 */
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  AURORA v4.4 — Category table + Yesterday strip          ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ── Category breakdown table ───────────────────────────── */
+.dash-cat-table-wrap {
+  margin-top: 10px !important;
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--c-border) !important;
+  overflow: hidden !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.02), transparent) !important;
+}
+.dash-cat-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+}
+.dash-cat-table thead tr {
+  background: rgba(255,255,255,.025) !important;
+  border-bottom: 1px solid var(--c-hairline2) !important;
+}
+.dash-cat-table thead th {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.10em !important;
+  text-transform: uppercase !important;
+  color: var(--c-muted) !important;
+  padding: 8px 10px !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+}
+.dash-cat-table thead th:not(:first-child) {
+  text-align: right !important;
+}
+.dash-cat-row td {
+  padding: 9px 10px !important;
+  border-bottom: 1px solid var(--c-hairline) !important;
+  vertical-align: middle !important;
+}
+.dash-cat-row:last-child td {
+  border-bottom: none !important;
+}
+.dash-cat-row:hover td {
+  background: rgba(43,229,197,.03) !important;
+}
+.dash-cat-name {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  letter-spacing: -0.015em !important;
+  color: var(--c-text) !important;
+}
+.dash-cat-val {
+  font-family: var(--font-mono) !important;
+  font-feature-settings: 'tnum' 1 !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+  color: var(--c-text2) !important;
+}
+.dash-cat-pending {
+  color: var(--c-muted) !important;
+  font-size: 10px !important;
+}
+
+/* Mobile: allow horizontal scroll on table */
+@media (max-width: 500px) {
+  .dash-cat-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .dash-cat-table { min-width: 340px !important; }
+  .dash-cat-table thead th,
+  .dash-cat-row td { padding: 7px 8px !important; }
+}
+
+/* ── Yesterday results strip ─────────────────────────────── */
+.dash-yday-strip {
+  margin-top: 10px !important;
+  border-radius: var(--r-md) !important;
+  border: 1px solid var(--c-border) !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.02), transparent) !important;
+  overflow: hidden !important;
+}
+.dash-yday-head {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: var(--c-muted) !important;
+  padding: 8px 12px 6px !important;
+  border-bottom: 1px solid var(--c-hairline) !important;
+}
+.dash-yday-scroll {
+  display: flex !important;
+  gap: 6px !important;
+  padding: 8px 10px !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  flex-wrap: nowrap !important;
+}
+.dash-yday-scroll::-webkit-scrollbar { display: none !important; }
+
+.dash-yday-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  border-radius: var(--r-sm) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  background: rgba(255,255,255,.025) !important;
+  padding: 5px 9px !important;
+  flex-shrink: 0 !important;
+  cursor: default !important;
+  transition: all var(--t-fast) !important;
+}
+.dash-yday-pill:hover {
+  border-color: var(--c-acc-mid) !important;
+}
+.dash-yday-w {
+  border-color: rgba(45,212,145,.28) !important;
+  background: rgba(45,212,145,.06) !important;
+}
+.dash-yday-l {
+  border-color: rgba(242,89,117,.28) !important;
+  background: rgba(242,89,117,.06) !important;
+}
+.dash-yday-badge {
+  font-family: var(--font-display) !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  letter-spacing: -0.01em !important;
+  min-width: 14px !important;
+}
+.dash-yday-w .dash-yday-badge { color: var(--c-ok) !important; }
+.dash-yday-l .dash-yday-badge { color: var(--c-bad) !important; }
+
+.dash-yday-label {
+  font-family: var(--font-sans) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: -0.01em !important;
+  color: var(--c-text) !important;
+  white-space: nowrap !important;
+}
+.dash-yday-mkt {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 500 !important;
+  color: var(--c-muted) !important;
+  white-space: nowrap !important;
+}
+
+/* ── Stat cards — 3-column grid on mobile ────────────────── */
+.dashboard-v16-perf-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+@media (max-width: 420px) {
+  .dashboard-v16-perf-stats {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+.dashboard-v16-stat-card {
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid var(--c-hairline2) !important;
+  border-radius: var(--r-sm) !important;
+  padding: 10px !important;
+  transition: all var(--t-base) !important;
+}
+.dashboard-v16-stat-card:hover {
+  border-color: var(--c-acc-mid) !important;
+  background: rgba(43,229,197,.04) !important;
+}
+.dashboard-v16-stat-k {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.10em !important;
+  text-transform: uppercase !important;
+  color: var(--c-muted) !important;
+}
+.dashboard-v16-stat-v {
+  font-family: var(--font-display) !important;
+  font-feature-settings: 'tnum' 1 !important;
+  font-weight: 800 !important;
+  font-size: 22px !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.1 !important;
+  margin: 4px 0 3px !important;
+}
+.dashboard-v16-stat-sub {
+  font-family: var(--font-sans) !important;
+  font-size: 10px !important;
+  color: var(--c-muted) !important;
+  line-height: 1.45 !important;
+}
+
+/* Performance section heading */
+.dashboard-v16-chart-title {
+  font-family: var(--font-display) !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  letter-spacing: -0.02em !important;
+  color: var(--c-text) !important;
+}
+.dashboard-v16-chart-note {
+  font-family: var(--font-sans) !important;
+  font-size: 10px !important;
+  color: var(--c-muted) !important;
+  margin-top: 2px !important;
+}
+
+/* End v4.4 */
+
+/* ── Fix: category table columns always visible on mobile ── */
+.dash-cat-table { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; }
+.dash-cat-table colgroup { display: none !important; }
+.dash-cat-table thead th:first-child  { width: 38% !important; }
+.dash-cat-table thead th:nth-child(2) { width: 14% !important; }
+.dash-cat-table thead th:nth-child(3) { width: 14% !important; }
+.dash-cat-table thead th:nth-child(4) { width: 18% !important; }
+.dash-cat-table thead th:nth-child(5) { width: 16% !important; }
+.dash-cat-name  { font-size: 11px !important; }
+.dash-cat-val   { font-size: 11px !important; }
+@media (max-width: 500px) {
+  .dash-cat-table-wrap { overflow-x: unset !important; }
+  .dash-cat-table { min-width: 0 !important; }
+  .dash-cat-table thead th,
+  .dash-cat-row td { padding: 7px 6px !important; }
+  .dash-cat-name  { font-size: 10.5px !important; }
+  .dash-cat-val   { font-size: 10px !important; }
+}

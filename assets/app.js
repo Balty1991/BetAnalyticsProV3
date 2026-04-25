@@ -579,7 +579,7 @@ function renderModernDashboard(){
   var above90 = topMatches.filter(function(m){ return Number(m.smartScore || 0) >= 90; });
   var topOpps = (above90.length ? above90 : topMatches).slice(0,3);
 
-  var cutoff30 = new Date(Date.now() - (30 * 86400000));
+  var cutoff30 = new Date(Date.now() - (21 * 86400000));
   var settled30 = typeof getHistory21SettledRows === 'function' ? getHistory21SettledRows(cutoff30).filter(function(r){ return eventStamp(r) >= cutoff30.getTime(); }) : [];
   var pending30 = typeof getHistory21LivePendingRows === 'function' ? getHistory21LivePendingRows().filter(function(r){ return eventStamp(r) >= cutoff30.getTime(); }) : [];
   settled30.sort(function(a,b){ return eventStamp(a) - eventStamp(b); });
@@ -601,11 +601,76 @@ function renderModernDashboard(){
   if(bankrollSeries.length < 2) bankrollSeries.push(bankrollSeries[0]);
   var perfChart = spark(bankrollSeries);
 
+  // ── Per-category breakdown (21 zile) ──────────────────────
   var combined30 = [];
   var merged = {};
   settled30.forEach(function(r){ merged[getHistory21RowKey ? getHistory21RowKey(r) : String(Math.random())] = r; });
   pending30.forEach(function(r){ merged[getHistory21RowKey ? getHistory21RowKey(r) : String(Math.random())] = r; });
   combined30 = Object.keys(merged).map(function(k){ return merged[k]; });
+
+  var catTableHtml = '';
+  if(typeof getHistory21CategoryDefs === 'function' && typeof buildHistory21Group === 'function' && combined30.length){
+    var catDefs = [
+      {key:'over15',  label:'Over 1.5G'},
+      {key:'under35', label:'Under 3.5G'},
+      {key:'btts',    label:'BTTS'},
+      {key:'safe',    label:'Top analizate'},
+      {key:'value',   label:'Value'}
+    ];
+    var catGroups = catDefs.map(function(def){
+      return buildHistory21Group(def.label, def.key, combined30.filter(function(r){ return historyRowMatchesCategory(r, def.key); }));
+    }).filter(function(g){ return g && g.bets > 0; });
+
+    if(catGroups.length){
+      var catRows = catGroups.map(function(g){
+        var roi = Number(g.roi || 0);
+        var wr  = Number(g.winrate || 0);
+        var roiColor = roi >= 5 ? 'var(--grn)' : roi < 0 ? 'var(--red)' : 'var(--txt)';
+        var wrColor  = wr  >= 65 ? 'var(--grn)' : wr < 50 ? 'var(--red)' : 'var(--txt)';
+        return '<tr class="dash-cat-row">'+
+          '<td class="dash-cat-name">'+ esc(g.label) +'</td>'+
+          '<td class="dash-cat-val" style="color:'+ roiColor +'">'+ (roi>=0?'+':'') + roi.toFixed(1) +'%</td>'+
+          '<td class="dash-cat-val" style="color:'+ wrColor +'">'+ (g.bets ? wr.toFixed(0)+'%' : '—') +'</td>'+
+          '<td class="dash-cat-val">'+ Number(g.wins||0) +'/'+ Number(g.bets||0) +'</td>'+
+          '<td class="dash-cat-val dash-cat-pending">'+ (Number(g.pending||0)||'—') +'</td>'+
+        '</tr>';
+      }).join('');
+      catTableHtml =
+        '<div class="dash-cat-table-wrap">'+
+          '<table class="dash-cat-table">'+
+            '<thead><tr>'+
+              '<th>Categorie</th><th>ROI</th><th>W%</th><th>W/Total</th><th>Pend.</th>'+
+            '</tr></thead>'+
+            '<tbody>'+ catRows +'</tbody>'+
+          '</table>'+
+        '</div>';
+    }
+  }
+
+  // ── Yesterday's results strip ────────────────────────────
+  var yesterdayStart = new Date(); yesterdayStart.setHours(0,0,0,0); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  var yesterdayEnd   = new Date(); yesterdayEnd.setHours(0,0,0,0);
+  var yesterdayRows  = settled30.filter(function(r){
+    var t = eventStamp(r);
+    return t >= yesterdayStart.getTime() && t < yesterdayEnd.getTime();
+  });
+  var yesterdayHtml = '';
+  if(yesterdayRows.length){
+    var pills = yesterdayRows.map(function(r){
+      var isW = r.status === 'win';
+      var label = (r.home && r.away) ? (r.home.split(' ')[0] + ' vs ' + r.away.split(' ')[0]) : (r.market || '—');
+      return '<span class="dash-yday-pill '+ (isW ? 'dash-yday-w' : 'dash-yday-l') +'">'+
+        '<span class="dash-yday-badge">'+ (isW ? 'W' : 'L') +'</span>'+
+        '<span class="dash-yday-label">'+ esc(label) +'</span>'+
+        '<span class="dash-yday-mkt">'+ esc(r.market || '') +'</span>'+
+      '</span>';
+    }).join('');
+    yesterdayHtml =
+      '<div class="dash-yday-strip">'+
+        '<div class="dash-yday-head">📅 Ieri · '+ yesterdayRows.length +' finalizate</div>'+
+        '<div class="dash-yday-scroll">'+ pills +'</div>'+
+      '</div>';
+  }
   var bestHistoryMarket = null;
   if(typeof getHistory21CategoryDefs === 'function' && typeof buildHistory21Group === 'function' && combined30.length){
     var defs = getHistory21CategoryDefs(combined30).filter(function(def){ return ['all','safe','value'].indexOf(def.key) === -1; });
@@ -690,14 +755,16 @@ function renderModernDashboard(){
 
     '<div class="dashboard-v16-performance">'+
       '<div class="dashboard-v16-chart-wrap">'+
-        '<div class="dashboard-v16-chart-head"><div><div class="dashboard-v16-chart-title">📊 PERFORMANȚA TA · ultimele 30 zile</div><div class="dashboard-v16-chart-note">Model 1 unit / recomandare închisă • pending separat</div></div><div class="dashboard-v16-swipe-note">' + bets30 + ' închise • ' + pending30.length + ' pending</div></div>'+
+        '<div class="dashboard-v16-chart-head"><div><div class="dashboard-v16-chart-title">📊 PERFORMANȚA TA · ultimele 21 zile</div><div class="dashboard-v16-chart-note">Model 1 unit / recomandare închisă • pending separat</div></div><div class="dashboard-v16-swipe-note">' + bets30 + ' închise • ' + pending30.length + ' pending</div></div>'+
         '<div class="dashboard-v16-chart">' + perfChart + '</div>'+
       '</div>'+
       '<div class="dashboard-v16-perf-stats">'+
-        '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">ROI</div><div class="dashboard-v16-stat-v" style="color:' + (bets30 ? (roi30 >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)') + '">' + (bets30 ? signed(roi30, '%') : '—') + '</div><div class="dashboard-v16-stat-sub">rentabilitate pe recomandările închise din ultimele 30 de zile</div></div>'+
+        '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">ROI</div><div class="dashboard-v16-stat-v" style="color:' + (bets30 ? (roi30 >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)') + '">' + (bets30 ? signed(roi30, '%') : '—') + '</div><div class="dashboard-v16-stat-sub">rentabilitate pe recomandările închise din ultimele 21 de zile</div></div>'+
         '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">Win</div><div class="dashboard-v16-stat-v">' + (bets30 ? winrate30.toFixed(1) + '%' : '—') + '</div><div class="dashboard-v16-stat-sub">' + wins30 + ' câștigate din ' + bets30 + ' închise</div></div>'+
         '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">Profit unit</div><div class="dashboard-v16-stat-v" style="color:' + (bets30 ? (profit30 >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)') + '">' + (bets30 ? signed(profit30, 'u') : '—') + '</div><div class="dashboard-v16-stat-sub">bankroll modelat de la 100u • pending ' + pending30.length + '</div></div>'+
       '</div>'+
+      (catTableHtml ? catTableHtml : '')+
+      (yesterdayHtml ? yesterdayHtml : '')+
     '</div>'+
 
     '<div class="dashboard-v16-reco">'+
