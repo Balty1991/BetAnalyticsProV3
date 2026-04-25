@@ -447,7 +447,6 @@ function renderDashboardVisuals(){
     {key:'safe', label:'Top analizate'},
     {key:'value', label:'Value'},
     {key:'over15', label:'Over 1.5G'},
-    {key:'over25', label:'Over 2.5G'},
     {key:'btts', label:'BTTS'},
     {key:'under35', label:'Under 3.5G'}
   ];
@@ -676,16 +675,8 @@ function renderModernDashboard(){
   var helloText = todayLiveCount + ' meciuri disponibile azi';
 
   target.innerHTML = '<div class="dashboard-v16-shell">'+
-    '<div class="dashboard-v16-topbar">'+
-      '<div class="dashboard-v16-brand">'+
-        '<div class="dashboard-v16-logo">📊</div>'+
-        '<div class="dashboard-v16-brand-text"><div class="dashboard-v16-brand-title">BetAnalytics Pro v16</div><div class="dashboard-v16-brand-sub">Dashboard strategic • status live ' + esc(statusTime || '—') + '</div></div>'+
-      '</div>'+
     '</div>'+
 
-    '<div class="dashboard-v16-greeting">'+
-      '<div><div class="dashboard-v16-greeting-title">' + helloText + '</div><div class="dashboard-v16-greeting-sub">' + rawMl + ' ML • ' + rawOdds + ' cu cote • ' + proActiveCount + ' filtru Pro • actualizat ' + esc(statusTime || '—') + '</div></div>'+
-      '<div class="dashboard-v16-mini-pills"><span class="dashboard-v16-mini-pill live">Azi ' + todayLiveCount + '</span><span class="dashboard-v16-mini-pill">ML ' + rawMl + '</span><span class="dashboard-v16-mini-pill">Cote ' + rawOdds + '</span><span class="dashboard-v16-mini-pill">Pro ' + proActiveCount + '</span><span class="dashboard-v16-mini-pill update">Update ' + esc(statusTime || '—') + '</span></div>'+
     '</div>'+
 
     '<div class="dashboard-v16-section">'+
@@ -702,19 +693,6 @@ function renderModernDashboard(){
         '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">ROI</div><div class="dashboard-v16-stat-v" style="color:' + (bets30 ? (roi30 >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)') + '">' + (bets30 ? signed(roi30, '%') : '—') + '</div><div class="dashboard-v16-stat-sub">rentabilitate pe recomandările închise din ultimele 30 de zile</div></div>'+
         '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">Win</div><div class="dashboard-v16-stat-v">' + (bets30 ? winrate30.toFixed(1) + '%' : '—') + '</div><div class="dashboard-v16-stat-sub">' + wins30 + ' câștigate din ' + bets30 + ' închise</div></div>'+
         '<div class="dashboard-v16-stat-card"><div class="dashboard-v16-stat-k">Profit unit</div><div class="dashboard-v16-stat-v" style="color:' + (bets30 ? (profit30 >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--txt)') + '">' + (bets30 ? signed(profit30, 'u') : '—') + '</div><div class="dashboard-v16-stat-sub">bankroll modelat de la 100u • pending ' + pending30.length + '</div></div>'+
-      '</div>'+
-    '</div>'+
-
-    '<div class="dashboard-v16-section">'+
-      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">⚡ COMENZI RAPIDE</div><div class="dashboard-v16-section-sub">Am compactat acțiunile rapide și modulele utile într-o singură zonă, mai curată și mai rapidă.</div></div></div>'+
-      '<div class="feature-launch-grid">'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'bilete\')"><span class="feature-launch-badge">GO</span><div class="feature-launch-title">🎫 Generează bilet</div><div class="feature-launch-sub">Intră direct în generator și vezi selecțiile disponibile.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">LIVE</span><div class="feature-launch-title">⚽ Vezi analize</div><div class="feature-launch-sub">Lista completă de meciuri, predicții și filtre active.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'istoric21\')"><span class="feature-launch-badge">DATA</span><div class="feature-launch-title">📚 Istoric</div><div class="feature-launch-sub">Verifică rapid ROI, win rate și trendurile reale.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'tracking\')"><span class="feature-launch-badge">AUTO</span><div class="feature-launch-title">📌 Tracking</div><div class="feature-launch-sub">Vezi biletele urmărite și starea lor actuală.</div></button>'+
-                '<button class="feature-launch-btn" onclick="switchTab(\'charts\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">📊 Grafice avansate</div><div class="feature-launch-sub">Heatmap, radar și flow pentru citire rapidă.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'bankroll\')"><span class="feature-launch-badge">BANK</span><div class="feature-launch-title">💰 Bankroll</div><div class="feature-launch-sub">Stake, progres și controlul capitalului într-un singur loc.</div></button>'+
-        '<button class="feature-launch-btn" onclick="switchTab(\'meciuri\')"><span class="feature-launch-badge">PRO</span><div class="feature-launch-title">⚡ Filtre PRO</div><div class="feature-launch-sub">Kickoff, league confidence și smart score minim.</div></button>'+
       '</div>'+
     '</div>'+
 
@@ -1018,7 +996,6 @@ function renderMatchesTab(){
   renderML();
   renderMLDC();
   renderML15();
-  renderML25();
   renderML35();
   renderMlApiCenter();
   renderMatches();
@@ -1131,7 +1108,6 @@ function switchTab(name){
 // ============================================================
 var BET_TYPES = [
   {key:'over15',   label:'Over 1.5G',    probField:'prob_over_15',   oddsField:'odds_over_15'},
-  {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
   {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35', probGetter:function(raw){ return 100 - safePct(raw.prob_over_35); }},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
   // Double Chance markets: odds calculated from 1X2 (margin is minimal on DC)
@@ -1339,7 +1315,7 @@ function getLeagueTierInfo(leagueName){
   return { tier:'neutral', label:'Tier 2', multiplier:1.0 };
 }
 function getMarketBacktestMultiplier(type){
-  var labelMap = { over15:'Over 1.5G', over25:'Over 2.5G', under35:'Under 3.5G', btts:'BTTS' };
+  var labelMap = { over15:'Over 1.5G', under35:'Under 3.5G', btts:'BTTS' };
   var row = findBacktestRow('by_market', labelMap[type] || type) || {};
   var bets = Number(row.bets || 0);
   var roi = Number(row.roi || 0);
@@ -5390,7 +5366,6 @@ function renderBacktest(){
 function buildMlRecommendTags(m){
   var tags = '';
   if(m.mlFlags.o15) tags += '<span class="rec-tag rec-tag-o15">O1.5</span>';
-  if(m.mlFlags.o25) tags += '<span class="rec-tag rec-tag-o25">O2.5</span>';
   if(m.mlFlags.btts) tags += '<span class="rec-tag rec-tag-btts">BTTS</span>';
   if(m.mlFlags.u35) tags += '<span class="rec-tag rec-tag-o35">U3.5</span>';
   if(m.mlFlags.fav) tags += '<span class="rec-tag rec-tag-fav">FAV</span>';
@@ -8618,7 +8593,6 @@ function renderMarketPerformance(){
   var rows = settledRows.concat(livePendingRows);
   var defs = [
     {key:'over15', label:'Over 1.5G'},
-    {key:'over25', label:'Over 2.5G'},
     {key:'btts', label:'BTTS'},
     {key:'under35', label:'Under 3.5G'},
     {key:'safe', label:'Top analizate'},
@@ -10777,7 +10751,6 @@ function getHistory21CategoryDefs(rows){
     {key:'safe', label:'Top analizate'},
     {key:'value', label:'Value'},
     {key:'over15', label:'Over 1.5G'},
-    {key:'over25', label:'Over 2.5G'},
     {key:'btts', label:'BTTS'},
     {key:'under35', label:'Under 3.5G'}
   ];
