@@ -1,23 +1,55 @@
 {
-  "name": "BetAnalytics Pro",
+  "name": "BetAnalytics Pro · Aurora",
   "short_name": "BetAnalytics",
-  "description": "Analiză avansată și generare de bilete fotbal",
-  "start_url": "index.html?v=16",
+  "description": "Analiză avansată și generare de bilete fotbal · ML, Kelly Criterion, AI Memory",
+  "start_url": "index.html?v=aurora",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0a0e17",
-  "theme_color": "#0a0e17",
+  "orientation": "portrait-primary",
+  "background_color": "#06080F",
+  "theme_color": "#06080F",
+  "categories": ["sports", "finance", "productivity"],
+  "lang": "ro",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Meciuri azi",
+      "short_name": "Meciuri",
+      "description": "Vezi meciurile cu cote și predicții",
+      "url": "index.html?v=aurora#meciuri",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Cota 2 Daily",
+      "short_name": "Cota 2",
+      "description": "Generator zilnic de bilete",
+      "url": "index.html?v=aurora#cota2",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
