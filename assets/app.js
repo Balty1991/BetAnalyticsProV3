@@ -4856,8 +4856,8 @@ function renderHybridProbabilityBlock(meta){
   var deltaClass = Math.abs(delta) > 5 ? (delta > 0 ? 'delta-positive' : 'delta-negative') : 'delta-neutral';
   return '<div class="hybrid-prob-block">'+
     '<div class="hybrid-prob-head">'+
-      '<div class="hybrid-prob-title">Poisson vs API</div>'+
-      '<div class="hybrid-prob-live">Hybrid model active</div>'+
+      '<div class="hybrid-prob-title">' + (meta.v2Used ? 'CatBoost v2 + Poisson + API' : 'Poisson vs API') + '</div>'+
+      '<div class="hybrid-prob-live">' + (meta.v2Used ? '⚡ SmartBet v2 activ' : 'Hybrid model active') + '</div>'+
     '</div>'+
     '<div class="hybrid-prob-grid">'+
       '<div class="hybrid-prob-item"><div class="hybrid-prob-value">'+apiProb.toFixed(1)+'%</div><div class="hybrid-prob-label">API</div></div>'+
@@ -4936,7 +4936,7 @@ function renderSignalAudit(){
             '<span class="audit-row-rank">#'+(idx+1)+'</span>'+
             '<div class="audit-row-teams">'+renderEventIdentity({ home:r.home, away:r.away, league:r.league, event_id:r.event_id, prediction_id:r.prediction_id, event_date:r.event_date, home_api_id:r.home_api_id, away_api_id:r.away_api_id, league_api_id:r.league_api_id }, { logoSize:16, leagueSize:12, showLeague:false })+'</div>'+
           '</div>'+
-          '<div class="audit-row-meta">'+renderLeagueBadge({ league:r.league, event_id:r.event_id, prediction_id:r.prediction_id, event_date:r.event_date, league_api_id:r.league_api_id }, 12)+' • '+evDate+' • model '+(r.model_version || '—')+'</div>'+
+          '<div class="audit-row-meta">'+renderLeagueBadge({ league:r.league, event_id:r.event_id, prediction_id:r.prediction_id, event_date:r.event_date, league_api_id:r.league_api_id }, 12)+' • '+evDate+' • model '+(r.v2_signal ? '<span style="color:var(--grn);font-weight:800">⚡v2</span>' : (r.model_version || '—'))+'</div>'+
         '</div>'+
         '<div class="audit-pick-box">'+
           '<div class="audit-pick-label">Pronostic</div>'+
@@ -11711,6 +11711,37 @@ function getSmartBetPatternMatchInfo(row, patternMaps){
 }
 function getSmartBetAnalysis(){
   var auditRows = ((SIGNAL_AUDIT && SIGNAL_AUDIT.rows) || []).slice();
+
+  // SmartBet v2: îmbogățim auditRows cu edge_pp și score din ev_signals_v2
+  var v2idx = window.__SBV2_SIGNALS_INDEX__ || {};
+  var mktKeyMap = {
+    'Over 1.5G':'over15','Over 2.5G':'over25','BTTS Yes':'btts',
+    'Under 3.5G':'under35','Home Win':'homeWin','Away Win':'awayWin','Draw':'draw',
+    'over15':'over15','over25':'over25','btts':'btts','under35':'under35',
+    'homeWin':'homeWin','awayWin':'awayWin','draw':'draw'
+  };
+  if(Object.keys(v2idx).length > 0) {
+    auditRows = auditRows.map(function(row){
+      if(!row || !row.event_id) return row;
+      var mk = mktKeyMap[row.market_key || row.market] || (row.market_key || row.market || '');
+      var sig = v2idx[String(row.event_id) + '|' + mk];
+      if(!sig) return row;
+      // Îmbunătățim: edge_pct = max(existent, v2 edge), score boost dacă v2 score e mai mare
+      var newEdge = Math.max(Number(row.edge_pct || 0), Number(sig.edge_pp || 0));
+      var v2score = Number(sig.score || 0);
+      var curScore= Number(row.score || 0);
+      var newScore= v2score > curScore ? Math.round(curScore * 0.6 + v2score * 0.4) : curScore;
+      return Object.assign({}, row, {
+        edge_pct:  +newEdge.toFixed(2),
+        score:     newScore,
+        v2_signal: sig,
+        v2_edge:   sig.edge_pp,
+        v2_ev:     sig.ev_pct,
+        v2_kelly:  sig.kelly_pct,
+        v2_prob:   sig.model_prob,
+      });
+    });
+  }
   var adaptiveMap = getSmartBetAdaptiveMap();
   var patternMaps = getSmartBetPatternMaps();
   var policy = getSmartBetEnginePolicy();
