@@ -1,5 +1,5 @@
 // BetAnalyticsProV3 service worker - runtime cache only
-const CACHE='ba-v3-runtime-20260426-7day-index';
+const CACHE='ba-v3-runtime-20260426-7day-lossfix';
 const DATA=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
 const PRECACHE=['./','./index.html','./manifest.json','./assets/app.css','./assets/app.js','./assets/performance-patch.js','./assets/api_history_label_runtime.js','./data/meta.json','./data/events.json','./data/predictions.json','./data/leagues.json','./data/teams.json','./data/ai_memory.json','./data/backtest.json','./data/history_engine.json','./data/recommendation_log.json','./data/signal_audit.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(PRECACHE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting()))});
