@@ -1,43 +1,43 @@
 #!/usr/bin/env python3
 """
-Build per-pronostic history for BetAnalytics Pro.
+Validated Prediction Tracker for BetAnalytics Pro.
+
+This intentionally does NOT summarize the whole historical archive.
+It starts from the current Motor Unificat validated picks and then keeps only
+those picks going forward, so the UI can answer: did the predictions offered
+by the unified engine actually win or lose?
 
 Output:
   data/prediction_type_history.json
-
-Source priority:
-  1) recommendation_journal.json — settled journal built from live + historical backfill
-  2) recommendation_log.json — fallback/current offered predictions
-
-The report groups by prediction type / market and keeps:
-  wins, losses, pending, void, winrate, ROI, yield, avg odds, recent 21-day form.
 """
 from __future__ import annotations
 
 import json
-import math
 from collections import defaultdict
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 try:
     from fetch_data import load_existing_json, save_json, TZ
-except Exception:  # local fallback
-    from pathlib import Path
+except Exception:
     TZ = "Europe/Bucharest"
     DATA_DIR = Path("data")
-    def load_existing_json(name, default=None):
+
+    def load_existing_json(name: str, default=None):
         try:
             with open(DATA_DIR / name, encoding="utf-8") as handle:
                 return json.load(handle)
         except Exception:
             return default
-    def save_json(payload, name):
+
+    def save_json(payload, name: str):
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with open(DATA_DIR / name, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
 
-WINDOWS_DAYS = [21, 90, 365]
+VERSION = "v2-validated-prediction-tracker"
+MAX_CURRENT_PICKS = 12
 MARKET_LABELS = {
     "over15": "Over 1.5G",
     "over25": "Over 2.5G",
@@ -56,7 +56,7 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def to_float(value: Any, default: float = 0.0) -> float:
+def f(value: Any, default: float = 0.0) -> float:
     try:
         if value is None or value == "":
             return default
@@ -65,7 +65,7 @@ def to_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def to_int(value: Any, default: int = 0) -> int:
+def i(value: Any, default: int = 0) -> int:
     try:
         if value is None or value == "":
             return default
@@ -113,55 +113,161 @@ def market_key(value: Any) -> str:
     return text[:40] if text else "unknown"
 
 
-def market_label(key: str, sample_row: Optional[Dict[str, Any]] = None) -> str:
-    if key in MARKET_LABELS:
-        return MARKET_LABELS[key]
-    raw = str((sample_row or {}).get("market") or key or "Unknown").strip()
-    return raw if raw else "Unknown"
+def market_label(key: str, row: Optional[Dict[str, Any]] = None) -> str:
+    return MARKET_LABELS.get(key) or str((row or {}).get("market") or key or "Unknown")
+
+
+def normalized_id(row: Dict[str, Any]) -> str:
+    event_id = str(row.get("event_id") or row.get("id") or "")
+    prediction_id = str(row.get("prediction_id") or "")
+    mk = market_key(row.get("market_key") or row.get("market") or row.get("bet") or row.get("pick"))
+    date = str(row.get("event_date") or row.get("date") or "")[:10]
+    home = str(row.get("home") or row.get("home_team") or "").strip().lower()
+    away = str(row.get("away") or row.get("away_team") or "").strip().lower()
+    # prediction_id changes less reliably across sources, so event+market is the primary identity.
+    primary = "|".join([event_id, mk])
+    if event_id and mk != "unknown":
+        return primary
+    return "|".join([event_id, prediction_id, mk, date, home, away])
 
 
 def outcome(row: Dict[str, Any]) -> str:
-    status = str(row.get("status") or row.get("result") or "").lower().strip()
+    status = str(row.get("status") or row.get("result") or row.get("outcome") or "").lower().strip()
     if row.get("won") is True:
         return "win"
     if row.get("won") is False:
         return "loss"
-    if status in {"win", "won", "green", "success"}:
+    if status in {"win", "won", "green", "success", "w"}:
         return "win"
-    if status in {"lose", "loss", "lost", "red", "failed"}:
+    if status in {"lose", "loss", "lost", "red", "failed", "l"}:
         return "loss"
     if status in {"void", "push", "cancelled", "canceled", "stale_no_score"}:
         return "void"
     return "pending"
 
 
-def row_date(row: Dict[str, Any]) -> Optional[datetime]:
-    return parse_dt(row.get("settled_at") or row.get("event_date") or row.get("date") or row.get("logged_at") or row.get("created_at") or row.get("first_logged_at"))
-
-
-def row_id(row: Dict[str, Any]) -> str:
-    event_id = row.get("event_id") or row.get("id") or ""
-    prediction_id = row.get("prediction_id") or ""
-    key = market_key(row.get("market_key") or row.get("market") or row.get("bet"))
-    date = str(row.get("event_date") or row.get("date") or row.get("logged_at") or "")[:10]
-    home = str(row.get("home") or row.get("home_team") or "").strip().lower()
-    away = str(row.get("away") or row.get("away_team") or "").strip().lower()
-    return "|".join([str(event_id), str(prediction_id), key, date, home, away])
-
-
 def profit_units(row: Dict[str, Any], out: str) -> float:
     if out == "win":
-        return max(0.0, to_float(row.get("odds") or row.get("book_odds"), 0.0) - 1.0)
+        return max(0.0, f(row.get("odds") or row.get("book_odds"), 0.0) - 1.0)
     if out == "loss":
         return -1.0
     return 0.0
+
+
+def load_current_validated() -> List[Dict[str, Any]]:
+    adaptive = load_existing_json("adaptive_predictions.json", {}) or {}
+    memory = load_existing_json("ai_memory.json", {}) or {}
+    candidates: List[Dict[str, Any]] = []
+    if isinstance(adaptive, dict):
+        candidates.extend(adaptive.get("adaptive_picks") or [])
+        candidates.extend(adaptive.get("rows") or [])
+    if isinstance(memory, dict):
+        candidates.extend(memory.get("adaptive_picks") or [])
+
+    by_key: Dict[str, Dict[str, Any]] = {}
+    for row in candidates:
+        if not isinstance(row, dict):
+            continue
+        key = normalized_id(row)
+        score = max(f(row.get("adaptive_score")), f(row.get("smart_score")), f(row.get("score")), f(row.get("base_score")))
+        if score <= 0:
+            continue
+        copy = dict(row)
+        copy["market_key"] = market_key(copy.get("market_key") or copy.get("market"))
+        copy["market"] = market_label(copy["market_key"], copy)
+        copy["score"] = round(score, 2)
+        if key not in by_key or score > f(by_key[key].get("score")):
+            by_key[key] = copy
+    picks = list(by_key.values())
+    picks.sort(key=lambda r: (f(r.get("score")), f(r.get("edge_pct") or r.get("edge_pp")), f(r.get("value_pct"))), reverse=True)
+    return picks[:MAX_CURRENT_PICKS]
+
+
+def tracked_from_previous() -> Dict[str, Dict[str, Any]]:
+    previous = load_existing_json("prediction_type_history.json", {}) or {}
+    if not isinstance(previous, dict) or previous.get("version") != VERSION:
+        return {}
+    rows = previous.get("tracked_predictions") or []
+    out: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        if isinstance(row, dict):
+            out[normalized_id(row)] = dict(row)
+    return out
+
+
+def outcome_lookup() -> Dict[str, Dict[str, Any]]:
+    # Full journal is used only as a settlement source for already-tracked picks.
+    # It is not used to create history rows.
+    journal = load_existing_json("recommendation_journal.json", []) or []
+    log = load_existing_json("recommendation_log.json", []) or []
+    lookup: Dict[str, Dict[str, Any]] = {}
+    for source in (journal, log):
+        for row in source or []:
+            if not isinstance(row, dict):
+                continue
+            out = outcome(row)
+            if out not in {"win", "loss", "void"}:
+                continue
+            lookup[normalized_id(row)] = row
+    return lookup
+
+
+def add_current_to_tracker(tracked: Dict[str, Dict[str, Any]], current: Iterable[Dict[str, Any]], now: str) -> None:
+    for pick in current:
+        key = normalized_id(pick)
+        if key in tracked:
+            # Keep the tracked status, but refresh display fields if the same pick is still visible.
+            old = tracked[key]
+            old.update({
+                "last_seen_at": now,
+                "score": pick.get("score", old.get("score")),
+                "edge_pct": pick.get("edge_pct", old.get("edge_pct")),
+                "adjusted_prob": pick.get("adjusted_prob", old.get("adjusted_prob")),
+            })
+            continue
+        tracked[key] = {
+            "tracker_id": key,
+            "tracking_started_at": now,
+            "first_seen_at": now,
+            "last_seen_at": now,
+            "status": "pending",
+            "event_id": pick.get("event_id") or pick.get("id"),
+            "prediction_id": pick.get("prediction_id"),
+            "event_date": pick.get("event_date") or pick.get("date"),
+            "home": pick.get("home") or pick.get("home_team"),
+            "away": pick.get("away") or pick.get("away_team"),
+            "league": pick.get("league"),
+            "market_key": market_key(pick.get("market_key") or pick.get("market")),
+            "market": market_label(market_key(pick.get("market_key") or pick.get("market")), pick),
+            "odds": f(pick.get("odds") or pick.get("book_odds"), 0.0),
+            "score": f(pick.get("score") or pick.get("smart_score") or pick.get("adaptive_score"), 0.0),
+            "probability": f(pick.get("adjusted_prob") or pick.get("final_probability") or pick.get("model_prob"), 0.0),
+            "edge_pct": f(pick.get("edge_pct") or pick.get("edge_pp"), 0.0),
+            "source": "validated_unified_engine",
+        }
+
+
+def settle_tracked(tracked: Dict[str, Dict[str, Any]], lookup: Dict[str, Dict[str, Any]], now: str) -> None:
+    for key, row in tracked.items():
+        if row.get("status") in {"win", "loss", "void"}:
+            continue
+        settled = lookup.get(key)
+        if not settled:
+            continue
+        out = outcome(settled)
+        if out in {"win", "loss", "void"}:
+            row["status"] = out
+            row["settled_at"] = settled.get("settled_at") or settled.get("updated_at") or now
+            if settled.get("odds") or settled.get("book_odds"):
+                row["odds"] = f(settled.get("odds") or settled.get("book_odds"), f(row.get("odds"), 0.0))
+            row["profit_units"] = round(profit_units(row, out), 3)
 
 
 def stat_init(key: str, label: str) -> Dict[str, Any]:
     return {
         "market_key": key,
         "market": label,
-        "offered": 0,
+        "tracked": 0,
         "settled": 0,
         "wins": 0,
         "losses": 0,
@@ -170,17 +276,15 @@ def stat_init(key: str, label: str) -> Dict[str, Any]:
         "stake_units": 0.0,
         "profit_units": 0.0,
         "odds_sum": 0.0,
-        "prob_sum": 0.0,
-        "edge_sum": 0.0,
-        "score_sum": 0.0,
-        "last_seen_at": None,
     }
 
 
 def update_stat(stat: Dict[str, Any], row: Dict[str, Any]) -> None:
     out = outcome(row)
-    dt = row_date(row)
-    stat["offered"] += 1
+    stat["tracked"] += 1
+    odds = f(row.get("odds"), 0.0)
+    if odds > 1.01:
+        stat["odds_sum"] += odds
     if out == "win":
         stat["wins"] += 1
         stat["settled"] += 1
@@ -195,121 +299,82 @@ def update_stat(stat: Dict[str, Any], row: Dict[str, Any]) -> None:
         stat["void"] += 1
     else:
         stat["pending"] += 1
-    odds = to_float(row.get("odds") or row.get("book_odds"), 0.0)
-    if odds > 1.01:
-        stat["odds_sum"] += odds
-    prob = to_float(row.get("adjusted_prob") or row.get("final_probability") or row.get("model_prob") or row.get("probability"), 0.0)
-    if prob > 0:
-        stat["prob_sum"] += prob if prob <= 100 else prob / 100.0
-    stat["edge_sum"] += to_float(row.get("edge_pct") or row.get("edge_pp"), 0.0)
-    stat["score_sum"] += to_float(row.get("score") or row.get("smart_score") or row.get("adaptive_score"), 0.0)
-    if dt:
-        iso = dt.isoformat()
-        if not stat["last_seen_at"] or iso > stat["last_seen_at"]:
-            stat["last_seen_at"] = iso
 
 
-def finalize_stat(stat: Dict[str, Any]) -> Dict[str, Any]:
-    offered = max(0, to_int(stat.get("offered")))
-    settled = max(0, to_int(stat.get("settled")))
-    wins = to_int(stat.get("wins"))
-    profit = to_float(stat.get("profit_units"))
-    stake = to_float(stat.get("stake_units"))
-    winrate = (wins / settled * 100.0) if settled else 0.0
-    roi = (profit / stake * 100.0) if stake else 0.0
-    avg_odds = to_float(stat.get("odds_sum")) / offered if offered else 0.0
-    avg_prob = to_float(stat.get("prob_sum")) / offered if offered else 0.0
-    avg_edge = to_float(stat.get("edge_sum")) / offered if offered else 0.0
-    avg_score = to_float(stat.get("score_sum")) / offered if offered else 0.0
-    confidence = min(1.0, math.sqrt(settled / 40.0)) if settled else 0.0
-    out = dict(stat)
-    out.update({
-        "offered": offered,
+def finalize(stat: Dict[str, Any]) -> Dict[str, Any]:
+    tracked = i(stat.get("tracked"))
+    settled = i(stat.get("settled"))
+    wins = i(stat.get("wins"))
+    stake = f(stat.get("stake_units"), 0.0)
+    profit = f(stat.get("profit_units"), 0.0)
+    return {
+        **stat,
+        "tracked": tracked,
         "settled": settled,
         "wins": wins,
-        "losses": to_int(stat.get("losses")),
-        "pending": to_int(stat.get("pending")),
-        "void": to_int(stat.get("void")),
+        "losses": i(stat.get("losses")),
+        "pending": i(stat.get("pending")),
+        "void": i(stat.get("void")),
         "stake_units": round(stake, 3),
         "profit_units": round(profit, 3),
-        "winrate": round(winrate, 2),
-        "roi": round(roi, 2),
-        "yield": round(roi, 2),
-        "avg_odds": round(avg_odds, 3),
-        "avg_probability": round(avg_prob, 2),
-        "avg_edge": round(avg_edge, 2),
-        "avg_score": round(avg_score, 2),
-        "confidence": round(confidence, 3),
-    })
-    return out
-
-
-def dedupe_rows(*sources: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    by_id: Dict[str, Dict[str, Any]] = {}
-    for source in sources:
-        for row in source or []:
-            if not isinstance(row, dict):
-                continue
-            key = row_id(row)
-            current = by_id.get(key)
-            # Prefer rows that are settled over pending snapshots.
-            if not current or (outcome(current) in {"pending", "void"} and outcome(row) in {"win", "loss"}):
-                by_id[key] = row
-    return list(by_id.values())
-
-
-def build_history(rows: List[Dict[str, Any]], days: Optional[int] = None) -> List[Dict[str, Any]]:
-    cutoff = None
-    if days:
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    stats: Dict[str, Dict[str, Any]] = {}
-    for row in rows:
-        dt = row_date(row)
-        if cutoff and dt and dt < cutoff:
-            continue
-        key = market_key(row.get("market_key") or row.get("market") or row.get("bet") or row.get("pick"))
-        if not key or key == "unknown":
-            continue
-        if key not in stats:
-            stats[key] = stat_init(key, market_label(key, row))
-        update_stat(stats[key], row)
-    out = [finalize_stat(x) for x in stats.values()]
-    out.sort(key=lambda r: (to_int(r.get("settled")), to_float(r.get("roi")), to_float(r.get("winrate"))), reverse=True)
-    return out
+        "winrate": round(wins / settled * 100.0, 2) if settled else 0.0,
+        "roi": round(profit / stake * 100.0, 2) if stake else 0.0,
+        "avg_odds": round(f(stat.get("odds_sum"), 0.0) / tracked, 3) if tracked else 0.0,
+    }
 
 
 def summarize(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
-    total = stat_init("all", "Toate pronosticurile")
+    total = stat_init("all", "Predicții validate")
     for row in rows:
         update_stat(total, row)
-    return finalize_stat(total)
+    return finalize(total)
+
+
+def summarize_markets(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    stats: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        key = market_key(row.get("market_key") or row.get("market"))
+        if key not in stats:
+            stats[key] = stat_init(key, market_label(key, row))
+        update_stat(stats[key], row)
+    out = [finalize(v) for v in stats.values()]
+    out.sort(key=lambda r: (i(r.get("tracked")), f(r.get("roi")), f(r.get("winrate"))), reverse=True)
+    return out
 
 
 def main() -> None:
-    journal = load_existing_json("recommendation_journal.json", []) or []
-    log = load_existing_json("recommendation_log.json", []) or []
-    rows = dedupe_rows(journal, log)
-    all_rows = build_history(rows)
-    windows = {str(days): build_history(rows, days) for days in WINDOWS_DAYS}
+    now = now_iso()
+    tracked = tracked_from_previous()
+    current = load_current_validated()
+    add_current_to_tracker(tracked, current, now)
+    settle_tracked(tracked, outcome_lookup(), now)
+    rows = list(tracked.values())
+    rows.sort(key=lambda r: (str(r.get("tracking_started_at") or ""), f(r.get("score"))), reverse=True)
+
     payload = {
-        "version": "v1-prediction-type-history",
-        "updated_at": now_iso(),
+        "version": VERSION,
+        "updated_at": now,
         "timezone": TZ,
+        "scope": "validated_predictions_from_activation_only",
+        "activation_note": "Nu include arhiva veche. Monitorizează doar predicțiile validate din Motorul Unificat, începând cu activarea trackerului.",
         "summary": summarize(rows),
-        "markets": all_rows,
-        "windows": windows,
+        "markets": summarize_markets(rows),
+        "tracked_predictions": rows,
+        "current_validated_count": len(current),
         "notes": [
-            "ROI este calculat la miză fixă 1 unitate pe pronostic: win = odds - 1, loss = -1.",
-            "Pending și void nu intră în winrate/ROI; apar separat ca volum operațional.",
-            "Fereastra 21 zile urmărește forma recentă, iar all-time urmărește stabilitatea pe termen lung.",
+            "Istoricul pornește de la predicțiile validate curente și continuă doar cu selecțiile oferite de Motorul Unificat după activare.",
+            "Arhiva recommendation_journal este folosită doar pentru a afla rezultatul unei predicții deja monitorizate, nu pentru a popula istoricul.",
+            "ROI este calculat cu miză fixă 1 unitate pe predicție: win = odds - 1, loss = -1.",
         ],
     }
     save_json(payload, "prediction_type_history.json")
     print(json.dumps({
-        "markets": len(all_rows),
-        "offered": payload["summary"].get("offered"),
+        "scope": payload["scope"],
+        "tracked": payload["summary"].get("tracked"),
+        "pending": payload["summary"].get("pending"),
         "settled": payload["summary"].get("settled"),
-        "winrate": payload["summary"].get("winrate"),
+        "wins": payload["summary"].get("wins"),
+        "losses": payload["summary"].get("losses"),
         "roi": payload["summary"].get("roi"),
     }, ensure_ascii=False, indent=2))
 
