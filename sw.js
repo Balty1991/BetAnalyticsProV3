@@ -1,7 +1,7 @@
 // BetAnalyticsProV3 service worker - runtime cache only
-const CACHE='ba-v3-runtime-20260425';
+const CACHE='ba-v3-runtime-20260426-yday-index';
 const DATA=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
-const PRECACHE=['./','./index.html','./manifest.json','./assets/app.css','./assets/app.js','./assets/performance-patch.js','./data/meta.json','./data/events.json','./data/predictions.json','./data/leagues.json','./data/teams.json','./data/ai_memory.json','./data/backtest.json','./data/history_engine.json','./data/recommendation_log.json','./data/signal_audit.json'];
+const PRECACHE=['./','./index.html','./manifest.json','./assets/app.css','./assets/app.js','./assets/performance-patch.js','./assets/api_history_label_runtime.js','./data/meta.json','./data/events.json','./data/predictions.json','./data/leagues.json','./data/teams.json','./data/ai_memory.json','./data/backtest.json','./data/history_engine.json','./data/recommendation_log.json','./data/signal_audit.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.allSettled(PRECACHE.map(u=>c.add(new Request(u,{cache:'reload'}))))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 async function save(req,res){try{if(res&&res.ok){let c=await caches.open(CACHE);await c.put(req,res.clone())}}catch(e){}return res}
