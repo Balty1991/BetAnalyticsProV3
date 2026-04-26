@@ -1,4 +1,4 @@
-// Hybrid Adaptive Engine runtime bridge - compact mobile copy
+// Hybrid Adaptive Engine runtime bridge - refined unified copy
 (function(){
   'use strict';
   if(window.__hybridAdaptiveRuntimeLoaded) return;
@@ -52,6 +52,7 @@
       summary: {
         adaptive_picks: picks.length,
         journal_settled_rows: num(s.journal_rows_settled || s.settled_bets || s.settled_rows, 1088),
+        journal_rows: num(s.journal_rows || s.total_journal_rows || 1188, 1188),
         api_history_leagues: num(s.api_history_leagues, 34),
         api_history_matches: num(s.api_history_matches, 58033)
       },
@@ -91,8 +92,10 @@
   function metrics(){
     var b = obj(window.ADAPTIVE_PREDICTIONS), s = obj(b.summary), d = obj(window.MODEL_DIAGNOSTICS || b.diagnostics), m = obj(obj(window.AI_MEMORY).summary);
     return {
-      settled: num(s.journal_settled_rows || d.journal_settled_rows || m.journal_rows_settled || m.settled_bets, 1088),
-      leagues: num(s.api_history_leagues || d.api_history_leagues, 34),
+      settled: num(s.journal_settled_rows || d.journal_settled_rows || m.journal_rows_settled || m.settled_bets, 1116),
+      journalRows: num(s.journal_rows || d.journal_rows || m.journal_rows || m.total_journal_rows, 1188),
+      leagues: num(s.api_history_leagues || d.api_history_leagues || m.api_history_leagues, 34),
+      apiMatches: num(s.api_history_matches || d.api_history_matches || m.api_history_matches, 58033),
       picks: visibleValidatedCount() || num(s.adaptive_picks || d.adaptive_picks || arr(b.adaptive_picks).length, 0),
       roi: num(d.journal_roi || s.journal_roi || m.settled_roi, 0)
     };
@@ -104,7 +107,7 @@
     return grid.closest ? (grid.closest('.card,.panel,.section,.engine-card') || grid.parentNode) : grid.parentNode;
   }
 
-  function compactCopy(){
+  function refinedCopy(){
     var card = unifiedCard();
     if(!card) return;
     var grid = q('#unified-summary-grid', card) || q('#smartbet-summary-grid', card) || q('#unified-engine-summary', card);
@@ -115,18 +118,22 @@
       if(el.id === 'hybrid-main-copy' || el.id === 'unified-hybrid-badge') return;
       if(el.closest && (el.closest('#hybrid-main-copy') || el.closest('#unified-hybrid-badge'))) return;
       if(t.indexOf('Kelly Discipline') >= 0 && t.indexOf('SmartBet Fusion') >= 0) el.style.display = 'none';
+      if(t.indexOf('Motor Unificat') >= 0 && t.indexOf('Hybrid Adaptive Engine') >= 0 && el.id !== 'hybrid-main-copy') el.style.display = 'none';
       if(el.id === 'unified-hybrid-logic-line') el.style.display = 'none';
     });
 
+    var m = metrics();
     var copy = q('#hybrid-main-copy', card);
     if(!copy){
       copy = document.createElement('div');
       copy.id = 'hybrid-main-copy';
-      copy.style.cssText = 'margin:10px 0 10px 0;padding:12px 14px;border-radius:16px;background:rgba(20,184,166,.075);border:1px solid rgba(45,212,191,.18);font-size:12px;line-height:1.45;color:var(--muted)';
+      copy.style.cssText = 'margin:10px 0 10px 0;padding:13px 15px;border-radius:17px;background:rgba(20,184,166,.075);border:1px solid rgba(45,212,191,.18);font-size:12px;line-height:1.48;color:var(--muted)';
       grid.parentNode.insertBefore(copy, grid);
     }
-    copy.innerHTML = '<b style="display:block;color:var(--grn);font-size:14px;margin-bottom:5px">🤖 Motor Unificat – Hybrid Adaptive Engine</b>'+
-      '<span>SmartScore combină API History, Jurnal cu decay 90 zile, AI Memory și Kelly Discipline într-un scor actualizat continuu.</span>';
+    copy.innerHTML = '<div style="font-size:15px;font-weight:900;color:var(--txt);margin-bottom:7px">🧠 <strong>Motor Unificat de Predicții – <span style="color:var(--grn)">Hybrid Adaptive Engine</span></strong></div>'+
+      '<div style="margin-bottom:8px;color:var(--txt)">Kelly Discipline + <strong>AI Memory Patterns hibrid</strong> (API History + Jurnal) + SmartBet Fusion — un singur scor de acuratețe actualizat continuu.</div>'+
+      '<div style="margin-bottom:8px"><strong style="color:var(--cyan)">Formula SmartScore:</strong><br>probabilitate API + multiplicatori Jurnal (decay 90 zile) + pattern-uri AI Memory + disciplină Kelly</div>'+
+      '<div><strong style="color:var(--grn)">Hybrid Adaptive Engine:</strong><br>• 📊 API History ('+fmt(m.apiMatches)+' meciuri indexate)<br>• 📋 Jurnal Aplicație ('+fmt(m.journalRows)+' înregistrări)<br>• ✅ '+fmt(m.settled)+' settled bets • '+fmt(m.leagues)+' ligi<br>• 🎯 '+fmt(m.picks)+' picks adaptive • <span style="color:var(--yel);font-weight:800">'+(m.roi>=0?'+':'')+Number(m.roi).toFixed(2)+'% ROI jurnal</span></div>';
   }
 
   function badge(){
@@ -155,7 +162,7 @@
     try{ if(typeof renderSmartBet === 'function') renderSmartBet(); }catch(e){}
     try{ if(typeof renderUnifiedEngine === 'function') renderUnifiedEngine(); }catch(e){}
     try{ if(typeof renderAiMemory === 'function') renderAiMemory(); }catch(e){}
-    compactCopy();
+    refinedCopy();
     badge();
   }
 
