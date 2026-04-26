@@ -10,7 +10,7 @@
   function num(v,d){ var n = Number(v); return isFinite(n) ? n : (d || 0); }
   function keyOf(p){ return String(p.event_id || p.id || '') + '|' + String(p.market_key || p.market || '') + '|' + String(p.prediction_id || ''); }
   function pickDate(p){ try { var d = new Date(p.event_date || p.date || p.created_at || 0); return isNaN(d.getTime()) ? null : d; } catch(e){ return null; } }
-  function scoreOf(p){ return Math.max(num(p.adaptive_score), num(p.smart_score), num(p.score), num(p.base_score)); }
+  function scoreOf(p){ return Math.max(num(p.adaptive_score), num(p.smart_score), num(p.score), num(p.base_score), num(p.adaptive_score_raw)); }
   function isFresh(p){
     var d = pickDate(p);
     if(!d) return true;
@@ -19,7 +19,7 @@
   function normalize(p){
     p = Object.assign({}, obj(p));
     var rawScore = scoreOf(p);
-    var displayScore = rawScore >= 90 ? 100 : Math.min(100, Math.round(rawScore));
+    var displayScore = rawScore >= 85 ? 100 : Math.min(100, Math.round(rawScore));
     p.score = displayScore;
     p.smart_score = displayScore;
     p.adaptive_score_raw = rawScore;
@@ -89,10 +89,11 @@
     return true;
   }
   function rerender(){
+    // Important: do not call loadHybridAdaptiveEngine() here. That reloads the stricter raw bundle
+    // and overwrites this restored top-9 adaptive set.
     try{ if(typeof renderSmartBet === 'function') renderSmartBet(); }catch(e){}
     try{ if(typeof renderUnifiedEngine === 'function') renderUnifiedEngine(); }catch(e){}
     try{ if(typeof renderAiMemory === 'function') renderAiMemory(); }catch(e){}
-    try{ if(typeof window.loadHybridAdaptiveEngine === 'function') window.loadHybridAdaptiveEngine(false); }catch(e){}
   }
   function run(force){
     return Promise.all([
