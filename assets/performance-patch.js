@@ -100,7 +100,7 @@
   function loadRuntimes(){
     if(window.__baRuntimeLoader)return;
     window.__baRuntimeLoader=true;
-    loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid6','hybrid-adaptive-runtime-script');
+    loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid7','hybrid-adaptive-runtime-script');
     loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
     loadScript('assets/adaptive_restore_runtime.js?v=20260426restore1','adaptive-restore-runtime-script');
   }
