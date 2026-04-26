@@ -1,4 +1,4 @@
-// Prediction type history runtime for BetAnalytics Pro
+// Validated predictions tracker runtime for BetAnalytics Pro
 (function(){
   'use strict';
   if(window.__predictionHistoryRuntimeLoaded) return;
@@ -7,7 +7,6 @@
   var DATA_PATH = 'data/prediction_type_history.json';
 
   function q(sel, root){ return (root || document).querySelector(sel); }
-  function qa(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
   function num(v,d){ var n = Number(v); return isFinite(n) ? n : (d || 0); }
   function fmtPct(v){ return (num(v) >= 0 ? '+' : '') + num(v).toFixed(2) + '%'; }
   function fmtWin(v){ return num(v).toFixed(1) + '%'; }
@@ -27,37 +26,36 @@
     return grid.closest ? (grid.closest('.card,.panel,.section,.engine-card') || grid.parentNode) : grid.parentNode;
   }
 
-  function metricChip(label, value, color){
+  function chip(label, value, color){
     return '<span style="display:inline-flex;gap:5px;align-items:center;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--muted)"><b style="color:' + color + ';font-size:12px">' + value + '</b>' + label + '</span>';
   }
 
   function marketRow(row){
     row = obj(row);
+    var settled = num(row.settled);
     var roi = num(row.roi);
-    var roiColor = roi >= 0 ? 'var(--grn)' : 'var(--red)';
     var wr = num(row.winrate);
-    var wrColor = wr >= 65 ? 'var(--grn)' : (wr >= 50 ? 'var(--yel)' : 'var(--red)');
+    var roiColor = settled ? (roi >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)';
+    var wrColor = settled ? (wr >= 65 ? 'var(--grn)' : (wr >= 50 ? 'var(--yel)' : 'var(--red)')) : 'var(--muted)';
     return '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.07)">' +
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:7px">' +
         '<div style="font-weight:900;color:var(--txt);font-size:13px">' + (row.market || row.market_key || 'Pronostic') + '</div>' +
-        '<div style="font-size:12px;font-weight:900;color:' + roiColor + '">' + fmtPct(roi) + ' ROI</div>' +
+        '<div style="font-size:12px;font-weight:900;color:' + roiColor + '">' + (settled ? fmtPct(roi) + ' ROI' : 'în așteptare') + '</div>' +
       '</div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:7px">' +
-        metricChip('settled', ro(row.settled), 'var(--cyan)') +
-        metricChip('W', ro(row.wins), 'var(--grn)') +
-        metricChip('L', ro(row.losses), 'var(--red)') +
-        metricChip('WR', fmtWin(row.winrate), wrColor) +
-        metricChip('pend', ro(row.pending), 'var(--muted)') +
-        metricChip('cotă medie', num(row.avg_odds).toFixed(2), 'var(--pur)') +
+        chip('urmărite', ro(row.tracked), 'var(--cyan)') +
+        chip('settled', ro(row.settled), 'var(--cyan)') +
+        chip('W', ro(row.wins), 'var(--grn)') +
+        chip('L', ro(row.losses), 'var(--red)') +
+        chip('WR', fmtWin(row.winrate), wrColor) +
+        chip('pend', ro(row.pending), 'var(--muted)') +
       '</div>' +
     '</div>';
   }
 
   function render(payload){
     payload = obj(payload);
-    var markets = arr(obj(payload.windows)['21']);
-    if(!markets.length) markets = arr(payload.markets);
-    if(!markets.length) return false;
+    var markets = arr(payload.markets);
     var summary = obj(payload.summary);
     var card = findUnifiedCard();
     if(!card) return false;
@@ -73,17 +71,25 @@
     }
 
     var top = markets.slice(0, 6).map(marketRow).join('');
+    if(!top){
+      top = '<div style="padding:10px 0;border-top:1px solid rgba(255,255,255,.07);font-size:12px;color:var(--muted)">Tracker activ. Primele predicții validate vor apărea după următorul refresh de date.</div>';
+    }
+    var settled = num(summary.settled);
+    var totalRoi = settled ? fmtPct(summary.roi || 0) : '0.00%';
+    var totalRoiColor = settled ? (num(summary.roi) >= 0 ? 'var(--grn)' : 'var(--red)') : 'var(--muted)';
     box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px">' +
-        '<div><div style="font-size:15px;font-weight:900;color:var(--txt)">📚 Istoric pronosticuri</div><div style="font-size:11px;color:var(--muted);margin-top:2px">ultimele 21 zile • win/lose, winrate și ROI pe tip de piață</div></div>' +
-        '<div style="text-align:right;font-size:11px;color:var(--muted)"><b style="display:block;color:var(--grn);font-size:14px">' + fmtPct(summary.roi || 0) + '</b>ROI total</div>' +
+        '<div><div style="font-size:15px;font-weight:900;color:var(--txt)">🎯 Tracker predicții validate</div><div style="font-size:11px;color:var(--muted);margin-top:2px">doar selecțiile oferite de Motorul Unificat după activare</div></div>' +
+        '<div style="text-align:right;font-size:11px;color:var(--muted)"><b style="display:block;color:' + totalRoiColor + ';font-size:14px">' + totalRoi + '</b>ROI tracker</div>' +
       '</div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px">' +
-        metricChip('total settled', ro(summary.settled), 'var(--cyan)') +
-        metricChip('W', ro(summary.wins), 'var(--grn)') +
-        metricChip('L', ro(summary.losses), 'var(--red)') +
-        metricChip('WR', fmtWin(summary.winrate), 'var(--grn)') +
+        chip('urmărite', ro(summary.tracked), 'var(--cyan)') +
+        chip('settled', ro(summary.settled), 'var(--cyan)') +
+        chip('W', ro(summary.wins), 'var(--grn)') +
+        chip('L', ro(summary.losses), 'var(--red)') +
+        chip('pending', ro(summary.pending), 'var(--muted)') +
+        chip('WR', fmtWin(summary.winrate), settled ? 'var(--grn)' : 'var(--muted)') +
       '</div>' + top +
-      '<div style="font-size:10px;color:var(--muted);margin-top:9px;line-height:1.35">ROI = miză fixă 1 unitate/pronostic. Pending și void sunt excluse din winrate/ROI.</div>';
+      '<div style="font-size:10px;color:var(--muted);margin-top:9px;line-height:1.35">Nu include arhiva veche. Jurnalul este folosit doar ca să marcheze W/L pentru predicțiile deja urmărite.</div>';
     return true;
   }
 
