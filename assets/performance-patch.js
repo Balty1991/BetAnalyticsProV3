@@ -12,7 +12,7 @@
   var ttl=30000;
   var headerUpdateLabel='';
   var dataRe=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
-  var files=['data/meta.json','data/events.json','data/predictions.json','data/leagues.json','data/teams.json','data/ai_memory.json','data/backtest.json','data/history_engine.json','data/recommendation_log.json','data/recommendation_journal.json','data/signal_audit.json','data/finished_events.json','data/adaptive_predictions.json','data/model_diagnostics.json','data/journal_learning_memory.json','data/prediction_type_history.json'];
+  var files=['data/meta.json','data/events.json','data/predictions.json','data/leagues.json','data/teams.json','data/ai_memory.json','data/backtest.json','data/history_engine.json','data/recommendation_log.json','data/recommendation_journal.json','data/signal_audit.json','data/finished_events.json','data/adaptive_predictions.json','data/model_diagnostics.json','data/journal_learning_memory.json','data/prediction_type_history.json','data/api_events_history_summary.json'];
 
   function urlOf(input){try{return new URL(typeof input==='string'?input:input.url,location.href)}catch(e){return null}}
   function methodOf(input,init){return String((init&&init.method)||(input&&input.method)||'GET').toUpperCase()}
@@ -103,6 +103,7 @@
     loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid8','hybrid-adaptive-runtime-script');
     loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
     loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
+    loadScript('assets/api_history_label_runtime.js?v=20260426apihist1','api-history-label-runtime-script');
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
