@@ -106,7 +106,10 @@
     loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
     loadScript('assets/api_history_label_runtime.js?v=20260426hist21exact1','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260426hist21sync2','dashboard-history21-sync-script');
-    loadScript('assets/dashboard_history21_ruler_sync.js?v=20260426rulersync1','dashboard-history21-ruler-sync-script');
+    // FIX 2026-04-26: ruler_sync rescrie .ba-21-ruler la 350ms iar api_history_label_runtime
+    // o face la 700ms + MutationObserver -> licarit pe rigla 21 zile.
+    // api_history_label_runtime.js deja patcheaza rigla cu aceleasi date, deci nu pierdem nimic.
+    // loadScript('assets/dashboard_history21_ruler_sync.js?v=20260426rulersync1','dashboard-history21-ruler-sync-script');
     // FIX 2026-04-26: layout cu 4 carduri (ROI/WIN RATE/WIN-JUCATE/PENDING) intra in conflict
     // cu layout-ul de 3 carduri (ROI/WIN/PROFIT) din api_history_label_runtime.js
     // si producea flicker. Pastram doar layout-ul cu 3 carduri pe un rand.
