@@ -115,6 +115,12 @@
     // si producea flicker. Pastram doar layout-ul cu 3 carduri pe un rand.
     // loadScript('assets/dashboard_history21_exact_ui.js?v=20260426exactui1','dashboard-history21-exact-ui-script');
   }
+  function shouldHideToastText(t){
+    if(typeof t !== 'string') return false;
+    if(t.indexOf('ML5') >= 0) return true;
+    if(t.indexOf('API sync:') === 0) return true;
+    return false;
+  }
   function installToastFilter(){
     // Suprima toast-urile informationale care apar peste graficul Performanta:
     //   - "🔬 ML5 activ: N meciuri cu date contextuale"
@@ -124,14 +130,31 @@
     if(window.toast.__baFilterInstalled) return true;
     var original = window.toast;
     window.toast = function(msg, type){
-      if(typeof msg === 'string'){
-        if(msg.indexOf('ML5') >= 0) return;
-        if(msg.indexOf('API sync:') === 0) return;
-      }
+      if(shouldHideToastText(msg)) return;
       return original.apply(this, arguments);
     };
     window.toast.__baFilterInstalled = true;
     return true;
+  }
+  function installToastDomGuard(){
+    // Backup la nivel de DOM: orice nod adaugat in #toast-wrap care matchuieste
+    // este sters imediat. Functioneaza chiar daca cineva are referinta directa
+    // la functia toast originala si o apeleaza ocolind override-ul.
+    if(window.__baToastDomGuard) return;
+    var wrap = document.getElementById('toast-wrap');
+    if(!wrap) return;
+    window.__baToastDomGuard = true;
+    function purge(){
+      [].slice.call(wrap.children).forEach(function(node){
+        if(node && shouldHideToastText(node.textContent || '')){
+          try { node.remove(); } catch(e){ if(node.parentNode) node.parentNode.removeChild(node); }
+        }
+      });
+    }
+    purge();
+    try {
+      new MutationObserver(purge).observe(wrap, {childList:true, subtree:true, characterData:true});
+    } catch(e){}
   }
   if(!installToastFilter()){
     document.addEventListener('DOMContentLoaded', installToastFilter);
@@ -140,6 +163,14 @@
       if(installToastFilter() || ++__toastTries > 40) clearInterval(__toastPoll);
     }, 100);
   }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', installToastDomGuard);
+  } else {
+    installToastDomGuard();
+  }
+  // Re-incercam si dupa cateva secunde, in caz ca #toast-wrap e creat dinamic
+  setTimeout(installToastDomGuard, 500);
+  setTimeout(installToastDomGuard, 2000);
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
   loadHeaderUpdateTime(false);
