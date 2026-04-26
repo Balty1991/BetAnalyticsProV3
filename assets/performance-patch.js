@@ -105,7 +105,8 @@
     loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
     loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
     loadScript('assets/api_history_label_runtime.js?v=20260426dashgraphv14','api-history-label-runtime-script');
-    loadScript('assets/dashboard_history21_sync.js?v=20260426hist21sync1','dashboard-history21-sync-script');
+    loadScript('assets/dashboard_history21_sync.js?v=20260426hist21sync2','dashboard-history21-sync-script');
+    loadScript('assets/dashboard_history21_ruler_sync.js?v=20260426rulersync1','dashboard-history21-ruler-sync-script');
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
