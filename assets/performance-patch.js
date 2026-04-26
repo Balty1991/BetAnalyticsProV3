@@ -107,7 +107,10 @@
     loadScript('assets/api_history_label_runtime.js?v=20260426hist21exact1','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260426hist21sync2','dashboard-history21-sync-script');
     loadScript('assets/dashboard_history21_ruler_sync.js?v=20260426rulersync1','dashboard-history21-ruler-sync-script');
-    loadScript('assets/dashboard_history21_exact_ui.js?v=20260426exactui1','dashboard-history21-exact-ui-script');
+    // FIX 2026-04-26: layout cu 4 carduri (ROI/WIN RATE/WIN-JUCATE/PENDING) intra in conflict
+    // cu layout-ul de 3 carduri (ROI/WIN/PROFIT) din api_history_label_runtime.js
+    // si producea flicker. Pastram doar layout-ul cu 3 carduri pe un rand.
+    // loadScript('assets/dashboard_history21_exact_ui.js?v=20260426exactui1','dashboard-history21-exact-ui-script');
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
