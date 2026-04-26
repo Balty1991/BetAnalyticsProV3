@@ -107,6 +107,7 @@
     loadScript('assets/api_history_label_runtime.js?v=20260426hist21exact1','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260426hist21sync2','dashboard-history21-sync-script');
     loadScript('assets/dashboard_history21_ruler_sync.js?v=20260426rulersync1','dashboard-history21-ruler-sync-script');
+    loadScript('assets/dashboard_history21_exact_ui.js?v=20260426exactui1','dashboard-history21-exact-ui-script');
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
