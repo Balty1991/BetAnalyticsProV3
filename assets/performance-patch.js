@@ -115,6 +115,31 @@
     // si producea flicker. Pastram doar layout-ul cu 3 carduri pe un rand.
     // loadScript('assets/dashboard_history21_exact_ui.js?v=20260426exactui1','dashboard-history21-exact-ui-script');
   }
+  function installToastFilter(){
+    // Suprima toast-urile informationale care apar peste graficul Performanta:
+    //   - "🔬 ML5 activ: N meciuri cu date contextuale"
+    //   - "API sync: ... ML / ... cote • 🔬 ML5 ... meciuri @ ..."
+    // Ramane functional pentru toast-uri de eroare (toast('...', 'err')) si altele.
+    if(typeof window.toast !== 'function') return false;
+    if(window.toast.__baFilterInstalled) return true;
+    var original = window.toast;
+    window.toast = function(msg, type){
+      if(typeof msg === 'string'){
+        if(msg.indexOf('ML5') >= 0) return;
+        if(msg.indexOf('API sync:') === 0) return;
+      }
+      return original.apply(this, arguments);
+    };
+    window.toast.__baFilterInstalled = true;
+    return true;
+  }
+  if(!installToastFilter()){
+    document.addEventListener('DOMContentLoaded', installToastFilter);
+    var __toastTries = 0;
+    var __toastPoll = setInterval(function(){
+      if(installToastFilter() || ++__toastTries > 40) clearInterval(__toastPoll);
+    }, 100);
+  }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
   loadHeaderUpdateTime(false);
