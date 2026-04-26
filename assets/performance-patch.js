@@ -102,7 +102,7 @@
     window.__baRuntimeLoader=true;
     loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid7','hybrid-adaptive-runtime-script');
     loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
-    loadScript('assets/adaptive_restore_runtime.js?v=20260426restore1','adaptive-restore-runtime-script');
+    loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
   }
   function prefetch(){files.forEach(function(f){try{originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
   addCss();
