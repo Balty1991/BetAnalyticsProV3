@@ -113,13 +113,126 @@
     '</div>';
   }
 
-  function sanitizePayload(payload){
-    payload = obj(payload);
-    if(payload.version !== EXPECTED_VERSION || payload.scope !== 'validated_predictions_from_activation_only'){
-      var live = activePicksPayload();
-      if(num(live.summary.tracked) > 0) return live;
+  function livePoolRows(){
+    // Citeste pool-ul curent SmartBet din browser (cele care trec acum prin
+    // filtrele Kelly + AI Memory + SmartBet). Returneaza null daca app.js
+    // nu a expus inca getSmartBetAnalysis (la primele cateva ms din boot).
+    var fn = (typeof window.getSmartBetAnalysis === 'function') ? window.getSmartBetAnalysis : null;
+    if(!fn) return null;
+    var pool = [];
+    try {
+      var analysis = fn() || {};
+      pool = arr(analysis.pool);
+    } catch(e){ return null; }
+    if(typeof window.calcUnifiedScore === 'function'){
+      pool = pool.map(function(row){
+        var copy = Object.assign({}, row);
+        try { copy._unifiedScore = window.calcUnifiedScore(row); } catch(e){ copy._unifiedScore = num(row.score); }
+        return copy;
+      }).sort(function(a,b){ return num(b._unifiedScore) - num(a._unifiedScore); });
     }
-    return payload;
+    return pool.map(function(p){
+      var mk = marketKey(p);
+      return {
+        tracker_id: String(p.event_id || p.id || '') + '|' + mk,
+        status: 'pending',
+        event_id: p.event_id || p.id,
+        prediction_id: p.prediction_id,
+        event_date: p.event_date || p.date,
+        home: p.home || p.home_team,
+        away: p.away || p.away_team,
+        league: p.league,
+        market_key: mk,
+        market: marketLabel(mk),
+        odds: num(p.odds || p.book_odds || p.displayOdds),
+        score: num(p._unifiedScore || p.score || p.smart_score || p.adaptive_score),
+        probability: num(p.adjusted_prob || p.prob || p.final_probability || p.api_prob),
+        edge_pct: num(p.edge_pct || p.edge_pp || p.edge),
+        source: 'live_smartbet_pool'
+      };
+    });
+  }
+
+  function settledOnly(rows){
+    return arr(rows).filter(function(r){
+      var s = String(obj(r).status||'').toLowerCase();
+      return s === 'win' || s === 'loss' || s === 'lose' || s === 'void';
+    });
+  }
+
+  function aggregateMarkets(rows){
+    var markets = {};
+    var totals = {tracked:0, settled:0, wins:0, losses:0, pending:0, void_:0, stake:0, profit:0, oddsSum:0};
+    rows.forEach(function(r){
+      var mk = r.market_key || marketKey(r);
+      if(!markets[mk]) markets[mk] = {market_key:mk, market:r.market||marketLabel(mk), tracked:0, settled:0, wins:0, losses:0, pending:0, void:0, stake_units:0, profit_units:0, winrate:0, roi:0, avg_odds:0, _o:0};
+      var m = markets[mk];
+      m.tracked++; m._o += num(r.odds);
+      totals.tracked++; totals.oddsSum += num(r.odds);
+      var st = String(r.status||'').toLowerCase();
+      if(st === 'win'){
+        m.settled++; m.wins++; m.stake_units++; m.profit_units += (num(r.odds)-1);
+        totals.settled++; totals.wins++; totals.stake++; totals.profit += (num(r.odds)-1);
+      } else if(st === 'loss' || st === 'lose'){
+        m.settled++; m.losses++; m.stake_units++; m.profit_units -= 1;
+        totals.settled++; totals.losses++; totals.stake++; totals.profit -= 1;
+      } else if(st === 'void'){
+        m.void++; totals.void_++;
+      } else {
+        m.pending++; totals.pending++;
+      }
+    });
+    Object.keys(markets).forEach(function(k){
+      var m = markets[k];
+      m.avg_odds = m.tracked ? (m._o / m.tracked) : 0;
+      m.winrate = m.settled ? (100 * m.wins / m.settled) : 0;
+      m.roi = m.stake_units ? (100 * m.profit_units / m.stake_units) : 0;
+      delete m._o;
+    });
+    return {
+      markets: Object.keys(markets).map(function(k){ return markets[k]; })
+        .sort(function(a,b){ return num(b.tracked) - num(a.tracked); }),
+      summary: {
+        tracked: totals.tracked,
+        settled: totals.settled,
+        wins: totals.wins,
+        losses: totals.losses,
+        pending: totals.pending,
+        void: totals.void_,
+        stake_units: totals.stake,
+        profit_units: totals.profit,
+        winrate: totals.settled ? (100 * totals.wins / totals.settled) : 0,
+        roi: totals.stake ? (100 * totals.profit / totals.stake) : 0,
+        avg_odds: totals.tracked ? (totals.oddsSum / totals.tracked) : 0
+      }
+    };
+  }
+
+  function sanitizePayload(payload){
+    // Strategia noua: pending = pool-ul live SmartBet (cele 8 valide acum).
+    // Settled (W/L/void) = pastrate din JSON-ul istoric ca sa ramana ce s-a jucat.
+    payload = obj(payload);
+    var live = livePoolRows();
+    if(live === null){
+      // SmartBet nu e inca disponibil (boot prea timpuriu) -> folosim payload-ul
+      // original ca sa nu spargem UI-ul. Va re-randa cand ajungem la urmatorul tick.
+      return payload;
+    }
+    var historyRows = arr(payload.tracked_predictions);
+    var settled = settledOnly(historyRows);
+    var settledKeys = {};
+    settled.forEach(function(r){ if(r && r.tracker_id) settledKeys[r.tracker_id] = true; });
+    var pending = live.filter(function(r){ return !settledKeys[r.tracker_id]; });
+    var rows = settled.concat(pending);
+    var agg = aggregateMarkets(rows);
+    return {
+      version: EXPECTED_VERSION,
+      scope: 'validated_predictions_from_activation_only',
+      summary: agg.summary,
+      markets: agg.markets,
+      tracked_predictions: rows,
+      current_validated_count: pending.length
+    };
   }
 
   function render(payload){
@@ -174,7 +287,10 @@
     load(false);
     setTimeout(function(){ load(true); }, 1800);
     setTimeout(function(){ load(true); }, 4200);
-    setInterval(function(){ if(window.PREDICTION_TYPE_HISTORY) render(window.PREDICTION_TYPE_HISTORY); }, 5000);
+    // Re-randam la 5s ca sa surprindem schimbarile in pool-ul live SmartBet
+    // (cotele se schimba, AI Memory se actualizeaza, etc.). sanitizePayload
+    // ia mereu pool-ul live proaspat din getSmartBetAnalysis().
+    setInterval(function(){ if(window.PREDICTION_TYPE_HISTORY) render(window.PREDICTION_TYPE_HISTORY); }, 3000);
     var btn = document.getElementById('btn-refresh');
     if(btn && !btn.__predictionHistoryHook){
       btn.__predictionHistoryHook = true;
