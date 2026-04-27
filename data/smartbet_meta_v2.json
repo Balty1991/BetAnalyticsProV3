@@ -1,0 +1,59 @@
+{
+  "version": "smartbet-fusion-v2",
+  "updated_at": "2026-04-27T06:36:27.384075+00:00",
+  "system": {
+    "avg_wfv_auc": null,
+    "avg_test_ece": null,
+    "models_trained": 0,
+    "feature_count": null,
+    "training_rows": 8481,
+    "eligible_rows_min5": 6665,
+    "warehouse_events": 8481,
+    "warehouse_leagues": 34,
+    "warehouse_year_min": 2025,
+    "warehouse_year_max": 2079
+  },
+  "markets_ranked": [],
+  "leagues_count": 29,
+  "health": {
+    "all_ok": false,
+    "files": {
+      "model_pack_v2.json": {
+        "exists": false
+      },
+      "features_v2.json": {
+        "exists": true,
+        "age_hours": 0.0
+      },
+      "league_baselines_v2.json": {
+        "exists": true,
+        "age_hours": 0.0
+      },
+      "models_count": 0,
+      "models": []
+    }
+  },
+  "score_config": {
+    "weights": {
+      "prob": 0.4,
+      "edge": 0.3,
+      "wfv_auc": 0.2,
+      "ece": 0.1
+    },
+    "thresholds": {
+      "strong_buy": 85,
+      "buy": 70,
+      "watch": 60,
+      "weak": 50
+    },
+    "ev_filters": {
+      "min_edge_pp": 2.5,
+      "min_ev_pct": 0.0,
+      "min_prob": 0.52,
+      "odds_min": 1.25,
+      "odds_max": 5.0,
+      "kelly_fraction": 0.25,
+      "kelly_max_stake_pct": 8.0
+    }
+  }
+}
