@@ -26,6 +26,7 @@ var AI_MEMORY_TICKETS = {premium:null, double:null, triple:null, contrarian:null
 var AUDIT_TICKETS = {premium:null, double:null, triple:null, contrarian:null};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
+var BUILD_STATUS = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
@@ -4516,7 +4517,8 @@ function doRefresh(isManual){
     fetch9('/data/ai_memory.json', {}),
     fetch9('/data/training_market_baselines.json', []),
     fetch9('/data/training_scoring_summary.json', {}),
-    fetch9('/data/enriched.json', {})   // ML5 pre-baked enrichment
+    fetch9('/data/enriched.json', {}),  // ML5 pre-baked enrichment
+    fetch9('/data/build_status.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -4527,6 +4529,7 @@ function doRefresh(isManual){
     var trainingBaselinesData = results[6];
     var trainingSummaryData = results[7];
     var enrichedFile = results[8] || {};
+    BUILD_STATUS = results[9] || {};
 
     var preds = predData.results || predData || [];
     window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
@@ -5989,9 +5992,10 @@ function renderMatches(){
     } else {
       if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
       if(CURRENT_FILTER === 'motor_validated' && getSmartBetStatusForMatch(m, b, smartBetLookup).state !== 'validated') return false;
-      if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'safe')) return false;
+      if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && (m.verdict === 'safe' || m.riskTier === 'Safe'))) return false;
       if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
-      if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)) return false;
+      if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && (m.riskTier === 'Value' || (b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)))) return false;
+      if(CURRENT_FILTER === 'balanced' && !(m.analysisState === 'ELIGIBLE' && (m.riskTier === 'Balanced' || m.riskTier === 'Safe' || m.riskTier === 'Value'))) return false;
       // Filtre pe piață: verificam in TOATE candidatii eligibili, nu doar bestBet
       // (altfel un meci cu Over 1.5 valid dar BTTS si mai bun nu mai apare la "Over 1.5")
       function hasEligibleType(match, t){
@@ -10103,6 +10107,17 @@ function getStatusDisplayMetrics(){
   };
 }
 
+function getDataFreshnessHtml(){
+  // Calculează vârsta datelor din build_status.json sau APP_META
+  var ts = (BUILD_STATUS && BUILD_STATUS.updated_at) || (APP_META && APP_META.updated_at) || null;
+  if(!ts) return '';
+  var ageMs = Date.now() - new Date(ts).getTime();
+  if(!isFinite(ageMs) || ageMs < 0) return '';
+  var ageH = ageMs / 3600000;
+  var color = ageH <= 6 ? '#22c55e' : (ageH <= 24 ? '#f59e0b' : '#ef4444');
+  var label = ageH < 1 ? Math.round(ageH*60)+'m' : (ageH < 24 ? ageH.toFixed(1)+'h' : Math.round(ageH)+'h — date vechi');
+  return ' <span style="color:'+color+';font-weight:700" title="Ultima actualizare date">● '+label+'</span>';
+}
 function getStatusDisplayTime(){
   var raw = (APP_META && APP_META.bsd_status && APP_META.bsd_status.fetched_at) || (APP_META && APP_META.updated_at) || null;
   if(!raw) return '';
@@ -10194,7 +10209,9 @@ function toggleMfAdvanced(btn){
 function renderAll(){
   LAST_DAY_KEY = getCurrentDayKey();
   var total = ALL_MATCHES.length;
-  var safe = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.verdict === 'safe'; }).length;
+  var safe = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && (m.verdict === 'safe' || m.riskTier === 'Safe'); }).length;
+  var balanced = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.riskTier === 'Balanced'; }).length;
+  if($('st-balanced')) $('st-balanced').textContent = balanced;
   var value = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && m.bestBet && m.bestBet.value >= 0.05; }).length;
   var mlComplete = ALL_MATCHES.filter(function(m){ return m.createdAt && m.modelVersion && (m.probOver25 || m.probUnder25) && (m.xgTotal || m.xgHome || m.xgAway); }).length;
 
@@ -10219,7 +10236,11 @@ function renderAll(){
   if($('hq-safe')) $('hq-safe').textContent = safe;
   var enrichCount = Object.keys(ENRICHED_EVENT_CACHE).length;
   var enrichSuffix = enrichCount > 0 ? (' — 🔬 ML5 ' + enrichCount) : (ENRICHMENT_BATCH_RUNNING ? ' — 🔬 ML5 …' : '');
-  $('sb-text').textContent = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr+enrichSuffix;
+  var freshnessHtml = getDataFreshnessHtml();
+  var sbEl = $('sb-text');
+  if(sbEl){
+    sbEl.innerHTML = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr+enrichSuffix+freshnessHtml;
+  }
 
   buildLeagueFilter();
   renderTicketQuickPeek();
