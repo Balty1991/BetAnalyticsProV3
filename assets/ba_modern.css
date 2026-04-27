@@ -1,0 +1,873 @@
+/*
+ * BetAnalytics Pro — Modern Design Overlay
+ * =========================================
+ * Strat de design care imbunatateste vizual aplicatia tintind clasele existente
+ * (.match-card-v16, .matches-grid, .mobile-nav-btn, .focus-card, etc.) fara
+ * sa modifice app.css sau app.js.
+ *
+ * Adaugare in index.html, in <head> DUPA app.css:
+ *   <link rel="stylesheet" href="./assets/ba_modern.css?v=20260427mod1">
+ *
+ * Dezactivare temporara: comenteaza linia. Nu schimba structura DOM.
+ *
+ * Sistem:
+ *   - Token-uri suplimentare cu prefix --bam-* (nu suprascriu --bg, --txt etc.)
+ *   - Risk tiers: safe (verde), value (violet), balanced (chihlimbar), speculativ (rosu)
+ *   - Performanta: content-visibility, contain, prefers-reduced-motion
+ *   - Mobile-first: spatieri reduse, taps targets minim 44x44px
+ */
+
+/* ===================================================================
+ * 1. TOKEN-URI SUPLIMENTARE
+ * =================================================================== */
+:root {
+  /* Suprafete cu adancime */
+  --bam-surface-0: #06090f;
+  --bam-surface-1: #0d121d;
+  --bam-surface-2: #131a28;
+  --bam-surface-3: #1b2538;
+  --bam-surface-elev: rgba(20, 28, 45, 0.72);
+
+  /* Borduri rafinate */
+  --bam-border-1: rgba(255, 255, 255, 0.06);
+  --bam-border-2: rgba(255, 255, 255, 0.10);
+  --bam-border-3: rgba(255, 255, 255, 0.16);
+
+  /* Text scara */
+  --bam-text-0: #f8fafc;
+  --bam-text-1: #e2e8f0;
+  --bam-text-2: #94a3b8;
+  --bam-text-3: #64748b;
+
+  /* Risc tiers */
+  --bam-safe: #10b981;
+  --bam-safe-bg: rgba(16, 185, 129, 0.12);
+  --bam-value: #a855f7;
+  --bam-value-bg: rgba(168, 85, 247, 0.14);
+  --bam-balanced: #f59e0b;
+  --bam-balanced-bg: rgba(245, 158, 11, 0.14);
+  --bam-speculativ: #ef4444;
+  --bam-speculativ-bg: rgba(239, 68, 68, 0.12);
+
+  /* Status */
+  --bam-status-good: #22c55e;
+  --bam-status-warn: #f59e0b;
+  --bam-status-bad: #ef4444;
+
+  /* Spatieri */
+  --bam-gap-xs: 4px;
+  --bam-gap-sm: 8px;
+  --bam-gap-md: 12px;
+  --bam-gap-lg: 16px;
+  --bam-gap-xl: 24px;
+
+  /* Radius */
+  --bam-radius-sm: 6px;
+  --bam-radius-md: 10px;
+  --bam-radius-lg: 14px;
+  --bam-radius-xl: 20px;
+
+  /* Umbre subtile, mobile-friendly */
+  --bam-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --bam-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --bam-shadow-glow-safe: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 4px 14px rgba(16, 185, 129, 0.18);
+  --bam-shadow-glow-value: 0 0 0 1px rgba(168, 85, 247, 0.3), 0 4px 14px rgba(168, 85, 247, 0.18);
+
+  /* Tranzitii */
+  --bam-tr-fast: 120ms ease;
+  --bam-tr-base: 180ms ease;
+}
+
+/* ===================================================================
+ * 2. PERFORMANTA — APLICAT GLOBAL
+ * =================================================================== */
+
+/* Optimizare paint pentru carduri mari off-screen */
+.match-card,
+.match-card-v16,
+.bilet-card,
+.focus-card,
+.history-detail-card,
+.heatmap-league-card,
+.dashboard-v16-stat-card,
+.dashboard-v16-opp-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 220px;
+  contain: layout paint style;
+}
+
+/* Reducere animatii pe dispozitive low-end sau preferinte user */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+}
+
+/* Smoother scroll pe iOS, fara lag pe Android */
+.matches-grid,
+.matches-list,
+.bilete-list,
+.history-card-grid {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ===================================================================
+ * 3. TIPOGRAFIE — RAFINARE
+ * =================================================================== */
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Numere tabulare pe metrice (EV, Kelly, cote) */
+.match-card-v16 .card-reco-odd,
+.bilet-pick-prob,
+.audit-card-value,
+.dashboard-v16-stat-card,
+.focus-card-metrics,
+[class*="-prob"],
+[class*="-odd"],
+[class*="-ev"],
+[class*="-kelly"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  letter-spacing: -0.01em;
+}
+
+/* ===================================================================
+ * 4. BANNER DE STATUS — montat de ba_modern.js
+ * =================================================================== */
+
+.bam-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bam-gap-md);
+  padding: 8px 14px;
+  margin: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 22, 36, 0.96),
+    rgba(11, 16, 28, 0.96)
+  );
+  border-bottom: 1px solid var(--bam-border-2);
+  font-size: 12px;
+  color: var(--bam-text-2);
+  font-family: var(--mono, ui-monospace, "SF Mono", monospace);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.bam-status-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.bam-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.bam-status-dot[data-tone="good"] {
+  background: var(--bam-status-good);
+  color: var(--bam-status-good);
+  animation: bam-pulse 2.4s infinite;
+}
+
+.bam-status-dot[data-tone="warn"] {
+  background: var(--bam-status-warn);
+  color: var(--bam-status-warn);
+}
+
+.bam-status-dot[data-tone="bad"] {
+  background: var(--bam-status-bad);
+  color: var(--bam-status-bad);
+  animation: bam-blink 1s infinite;
+}
+
+.bam-status-dot[data-tone="unknown"] {
+  background: var(--bam-text-3);
+}
+
+.bam-status-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bam-status-text strong {
+  color: var(--bam-text-1);
+  font-weight: 600;
+}
+
+.bam-status-right {
+  display: flex;
+  align-items: center;
+  gap: var(--bam-gap-md);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.bam-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--bam-surface-2);
+  border: 1px solid var(--bam-border-2);
+  border-radius: 999px;
+  color: var(--bam-text-2);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bam-status-pill strong {
+  color: var(--bam-text-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes bam-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes bam-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ===================================================================
+ * 5. CARDURI DE MECI — MATCH-CARD V16
+ * =================================================================== */
+
+.matches-grid,
+.matches-list {
+  display: grid;
+  gap: var(--bam-gap-md);
+  padding: var(--bam-gap-md);
+}
+
+.match-card,
+.match-card-v16 {
+  position: relative;
+  background: var(--bam-surface-1);
+  border: 1px solid var(--bam-border-2);
+  border-radius: var(--bam-radius-lg);
+  padding: 14px;
+  transition: transform var(--bam-tr-fast),
+              border-color var(--bam-tr-fast),
+              box-shadow var(--bam-tr-base);
+  overflow: hidden;
+}
+
+/* Banda colorata pe stanga in functie de risc/verdict.
+   Folosim atributele/clasele existente unde se poate. */
+.match-card-v16::before,
+.match-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--bam-text-3);
+  transition: background var(--bam-tr-base);
+}
+
+.match-card-v16.verdict-safe::before,
+.match-card-v16[data-tier="safe"]::before,
+.focus-card.recommended::before {
+  background: var(--bam-safe);
+}
+
+.match-card-v16.verdict-value::before,
+.match-card-v16[data-tier="value"]::before {
+  background: var(--bam-value);
+}
+
+.match-card-v16.verdict-balanced::before,
+.match-card-v16[data-tier="balanced"]::before {
+  background: var(--bam-balanced);
+}
+
+.match-card-v16.verdict-speculativ::before,
+.match-card-v16.verdict-avoid::before,
+.match-card-v16[data-tier="avoid"]::before {
+  background: var(--bam-speculativ);
+}
+
+/* Hover/focus subtil pe touch */
+@media (hover: hover) {
+  .match-card-v16:hover,
+  .match-card:hover {
+    border-color: var(--bam-border-3);
+    transform: translateY(-1px);
+    box-shadow: var(--bam-shadow-md);
+  }
+}
+
+.match-card-v16:active,
+.match-card:active {
+  transform: scale(0.997);
+}
+
+/* Card focusat / extins */
+.match-card-v16.match-card-focus {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3),
+              0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ===================================================================
+ * 6. SUB-COMPONENTE CARD: card-reco-*
+ * =================================================================== */
+
+.card-reco-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--bam-border-1);
+}
+
+.card-reco-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bam-text-1);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.card-reco-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.card-reco-pick {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bam-text-0);
+  letter-spacing: -0.01em;
+}
+
+.card-reco-odd {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--bam-safe);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  padding: 4px 10px;
+  background: var(--bam-safe-bg);
+  border-radius: var(--bam-radius-sm);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.card-reco-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.card-reco-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--bam-surface-2);
+  color: var(--bam-text-2);
+  border: 1px solid var(--bam-border-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.card-reco-badge[data-tone="safe"],
+.card-reco-badge.safe {
+  background: var(--bam-safe-bg);
+  color: var(--bam-safe);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.card-reco-badge[data-tone="value"],
+.card-reco-badge.value {
+  background: var(--bam-value-bg);
+  color: var(--bam-value);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.card-reco-badge[data-tone="balanced"],
+.card-reco-badge.balanced {
+  background: var(--bam-balanced-bg);
+  color: var(--bam-balanced);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.card-reco-badge[data-tone="speculativ"],
+.card-reco-badge.speculativ {
+  background: var(--bam-speculativ-bg);
+  color: var(--bam-speculativ);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ===================================================================
+ * 7. INLINE METRICS PE CARD
+ * =================================================================== */
+
+.match-inline-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--bam-border-1);
+}
+
+.match-inline-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 3px 8px;
+  background: var(--bam-surface-2);
+  border: 1px solid var(--bam-border-1);
+  border-radius: var(--bam-radius-sm);
+  color: var(--bam-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.match-inline-chip strong {
+  color: var(--bam-text-1);
+  font-weight: 700;
+}
+
+.match-inline-summary {
+  font-size: 11px;
+  color: var(--bam-text-2);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.match-why {
+  font-size: 11px;
+  color: var(--bam-text-2);
+  background: var(--bam-surface-2);
+  border-left: 2px solid var(--bam-border-3);
+  padding: 6px 10px;
+  margin-top: 8px;
+  border-radius: 0 var(--bam-radius-sm) var(--bam-radius-sm) 0;
+  line-height: 1.45;
+}
+
+/* ===================================================================
+ * 8. FOCUS CARD (recomandari principale)
+ * =================================================================== */
+
+.focus-card {
+  background: linear-gradient(
+    135deg,
+    var(--bam-surface-1) 0%,
+    var(--bam-surface-2) 100%
+  );
+  border: 1px solid var(--bam-border-2);
+  border-radius: var(--bam-radius-lg);
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--bam-tr-fast),
+              box-shadow var(--bam-tr-base);
+}
+
+.focus-card.recommended {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: var(--bam-shadow-glow-safe);
+}
+
+.focus-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.focus-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bam-text-0);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.focus-card-sub {
+  font-size: 11px;
+  color: var(--bam-text-2);
+  margin-top: 2px;
+}
+
+.focus-card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.focus-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bam-border-1);
+}
+
+.focus-card-metrics > * {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ===================================================================
+ * 9. NAVIGATIE MOBILA
+ * =================================================================== */
+
+.mobile-nav {
+  background: rgba(8, 12, 20, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--bam-border-2);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-nav-btn {
+  position: relative;
+  min-height: 56px;
+  min-width: 44px;
+  color: var(--bam-text-3);
+  transition: color var(--bam-tr-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-btn small {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+  display: block;
+}
+
+.mobile-nav-btn.active {
+  color: var(--acc, #3b82f6);
+}
+
+.mobile-nav-btn.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 2px;
+  background: var(--acc, #3b82f6);
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 0 8px var(--acc, #3b82f6);
+}
+
+.mobile-nav-btn:active small {
+  transform: scale(0.96);
+}
+
+/* ===================================================================
+ * 10. FILTRE — PILE MODERNE
+ * =================================================================== */
+
+.league-filter-select,
+select#match-tier-filter,
+select#match-market-filter,
+select#league-filter,
+select#match-date-filter,
+select#match-kickoff-filter {
+  background: var(--bam-surface-2);
+  border: 1px solid var(--bam-border-2);
+  color: var(--bam-text-1);
+  border-radius: var(--bam-radius-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  min-height: 40px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  transition: border-color var(--bam-tr-fast),
+              background-color var(--bam-tr-fast);
+}
+
+.league-filter-select:focus,
+select#match-tier-filter:focus,
+select#match-market-filter:focus {
+  outline: none;
+  border-color: var(--acc, #3b82f6);
+  background-color: var(--bam-surface-3);
+}
+
+#filter-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--bam-surface-2);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bam-text-2);
+  border: 1px solid var(--bam-border-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===================================================================
+ * 11. BUTOANE — RAFINARE
+ * =================================================================== */
+
+.btn,
+.btn-primary,
+.btn-green,
+.btn-ghost {
+  min-height: 40px;
+  border-radius: var(--bam-radius-md);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  transition: transform var(--bam-tr-fast),
+              filter var(--bam-tr-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active,
+.btn-primary:active,
+.btn-green:active,
+.btn-ghost:active {
+  transform: scale(0.97);
+  filter: brightness(0.92);
+}
+
+@media (hover: hover) {
+  .btn-primary:hover,
+  .btn-green:hover {
+    filter: brightness(1.08);
+  }
+}
+
+/* ===================================================================
+ * 12. SKELETON LOADING — RAFINARE
+ * =================================================================== */
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bam-surface-2) 0%,
+    var(--bam-surface-3) 40%,
+    var(--bam-surface-3) 60%,
+    var(--bam-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: bam-shimmer 1.4s linear infinite;
+  border-radius: var(--bam-radius-sm);
+}
+
+@keyframes bam-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.boot-skeleton-card {
+  background: var(--bam-surface-1);
+  border: 1px solid var(--bam-border-2);
+  border-radius: var(--bam-radius-lg);
+  padding: 14px;
+}
+
+/* ===================================================================
+ * 13. DASHBOARD — STAT CARDS
+ * =================================================================== */
+
+.dashboard-monitor-grid,
+.dashboard-v16-stat-card {
+  border-radius: var(--bam-radius-lg);
+}
+
+.dashboard-v16-stat-card {
+  background: var(--bam-surface-1);
+  border: 1px solid var(--bam-border-2);
+  padding: 12px;
+  transition: border-color var(--bam-tr-fast);
+}
+
+.dashboard-v16-stat-card:hover {
+  border-color: var(--bam-border-3);
+}
+
+#dashboard-monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--bam-gap-md);
+  padding: var(--bam-gap-md);
+}
+
+/* ===================================================================
+ * 14. BILETE
+ * =================================================================== */
+
+.bilet-card {
+  background: linear-gradient(
+    180deg,
+    var(--bam-surface-1) 0%,
+    var(--bam-surface-2) 100%
+  );
+  border: 1px solid var(--bam-border-2);
+  border-radius: var(--bam-radius-lg);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.bilet-match {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bam-border-1);
+}
+
+.bilet-match:last-child {
+  border-bottom: none;
+}
+
+.bilet-match-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bam-text-1);
+}
+
+.bilet-match-info {
+  font-size: 10px;
+  color: var(--bam-text-3);
+  margin-top: 2px;
+}
+
+.bilet-pick {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.bilet-pick-type {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bam-text-1);
+}
+
+.bilet-pick-prob {
+  font-size: 10px;
+  color: var(--bam-text-2);
+  margin-top: 1px;
+}
+
+/* ===================================================================
+ * 15. RESPONSIVE
+ * =================================================================== */
+
+/* Telefon mic — spatieri reduse */
+@media (max-width: 380px) {
+  .matches-grid,
+  .matches-list {
+    padding: 8px;
+    gap: 8px;
+  }
+  .match-card,
+  .match-card-v16 {
+    padding: 10px;
+  }
+  .card-reco-title {
+    font-size: 12px;
+  }
+  .card-reco-odd {
+    font-size: 16px;
+  }
+}
+
+/* Telefon mediu/mare */
+@media (min-width: 600px) {
+  .matches-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Tableta */
+@media (min-width: 900px) {
+  .matches-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  #dashboard-monitor-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1280px) {
+  .matches-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ===================================================================
+ * 16. ACCESIBILITATE
+ * =================================================================== */
+
+/* Focus vizibil pentru navigare cu tastatura */
+.btn:focus-visible,
+.mobile-nav-btn:focus-visible,
+.match-card-v16:focus-visible,
+.league-filter-select:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--acc, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* High contrast pentru cei care prefera */
+@media (prefers-contrast: more) {
+  :root {
+    --bam-border-1: rgba(255, 255, 255, 0.18);
+    --bam-border-2: rgba(255, 255, 255, 0.28);
+    --bam-border-3: rgba(255, 255, 255, 0.40);
+    --bam-text-2: #cbd5e1;
+    --bam-text-3: #94a3b8;
+  }
+}
