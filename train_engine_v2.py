@@ -219,12 +219,12 @@ def shap_importance(model, X_sample, feat_cols, top_n=30):
 
 
 # ─── Walk-Forward Validation ──────────────────────────────────────────────────
-def walk_forward_splits(df, min_train_years=3, val_months=6, gap_days=30):
+def walk_forward_splits(df, min_train_years=0.75, val_months=3, gap_days=14):
     """Generează split-uri WFV time-series."""
     dates   = df["date"]
     t_min   = dates.min()
     t_max   = dates.max()
-    cutoff  = t_min + pd.DateOffset(years=min_train_years)
+    cutoff  = t_min + pd.DateOffset(months=int(min_train_years * 12))
     end     = t_max - pd.DateOffset(months=val_months)
 
     splits  = []
@@ -237,7 +237,7 @@ def walk_forward_splits(df, min_train_years=3, val_months=6, gap_days=30):
 
         n_train = train_mask.sum()
         n_val   = val_mask.sum()
-        if n_train >= 500 and n_val >= 100:
+        if n_train >= 300 and n_val >= 50:
             splits.append({
                 "train_end":   cutoff.isoformat(),
                 "val_start":   val_start.isoformat(),
@@ -247,7 +247,7 @@ def walk_forward_splits(df, min_train_years=3, val_months=6, gap_days=30):
                 "train_idx":   df.index[train_mask].tolist(),
                 "val_idx":     df.index[val_mask].tolist(),
             })
-        cutoff += pd.DateOffset(months=6)
+        cutoff += pd.DateOffset(months=3)
 
     print(f"  WFV: {len(splits)} folduri generate")
     return splits
