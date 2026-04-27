@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-27T16:13:34.210122+00:00",
+  "updated_at": "2026-04-27T16:40:06.954257+00:00",
   "version": "pro-intelligence-v1",
   "overall_score": 61.4,
   "executive_summary": {
@@ -8,7 +8,7 @@
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 584,
+    "recommendation_rows": 585,
     "pending_rows": 97,
     "candidates_with_odds_and_probability": 95,
     "top_ev_count": 30,
@@ -24,8 +24,8 @@
   "market_distribution_top150": {
     "Under 3.5G": 48,
     "Over 2.5G": 2,
-    "BTTS": 24,
-    "Over 1.5G": 21
+    "BTTS": 25,
+    "Over 1.5G": 20
   },
   "league_distribution_top150": {
     "Copa Libertadores": 5,
@@ -41,8 +41,8 @@
     "FA Cup": 1,
     "Parva Liga": 2,
     "Premier League": 7,
-    "Trendyol Super Lig": 6,
-    "Saudi Pro League": 3,
+    "Trendyol Super Lig": 5,
+    "Saudi Pro League": 4,
     "Allsvenskan": 4,
     "Pro League": 2,
     "Champions League": 1,
@@ -522,34 +522,6 @@
       ]
     },
     {
-      "event_id": 1737,
-      "prediction_id": 3356,
-      "home": "Bayer 04 Leverkusen",
-      "away": "RB Leipzig",
-      "league": "Bundesliga",
-      "event_date": "2026-05-02T19:30:00+03:00",
-      "market": "BTTS",
-      "odds": 1.37,
-      "model_probability": 0.762,
-      "model_probability_pct": 76.2,
-      "implied_probability_pct": 72.99,
-      "fair_odds": 1.312,
-      "edge_pp": 3.21,
-      "ev_pct": 4.39,
-      "kelly_fraction": 0.0297,
-      "kelly_units_100": 2.97,
-      "confidence": 41.6,
-      "score": 101.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.2% vs. probabilitate implicată 73.0%.",
-        "EV estimat 4.4% și edge 3.2 puncte procentuale.",
-        "Miză Kelly fracțională 2.97% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 1744,
       "prediction_id": 3325,
       "home": "TSG Hoffenheim",
@@ -603,6 +575,34 @@
         "Probabilitate model 68.7% vs. probabilitate implicată 66.7%.",
         "EV estimat 3.1% și edge 2.1 puncte procentuale.",
         "Miză Kelly fracțională 1.54% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 1737,
+      "prediction_id": 3356,
+      "home": "Bayer 04 Leverkusen",
+      "away": "RB Leipzig",
+      "league": "Bundesliga",
+      "event_date": "2026-05-02T19:30:00+03:00",
+      "market": "BTTS",
+      "odds": 1.36,
+      "model_probability": 0.762,
+      "model_probability_pct": 76.2,
+      "implied_probability_pct": 73.53,
+      "fair_odds": 1.312,
+      "edge_pp": 2.67,
+      "ev_pct": 3.63,
+      "kelly_fraction": 0.0252,
+      "kelly_units_100": 2.52,
+      "confidence": 41.6,
+      "score": 100.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 76.2% vs. probabilitate implicată 73.5%.",
+        "EV estimat 3.6% și edge 2.7 puncte procentuale.",
+        "Miză Kelly fracțională 2.52% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1455,23 +1455,23 @@
       "league": "La Liga",
       "event_date": "2026-04-27T22:00:00+03:00",
       "market": "Over 1.5G",
-      "odds": 1.35,
+      "odds": 1.37,
       "model_probability": 0.811,
       "model_probability_pct": 81.1,
-      "implied_probability_pct": 74.07,
+      "implied_probability_pct": 72.99,
       "fair_odds": 1.233,
-      "edge_pp": 7.03,
-      "ev_pct": 9.48,
+      "edge_pp": 8.11,
+      "ev_pct": 11.11,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 45.18,
-      "score": 90.0,
+      "score": 92.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 81.1% vs. probabilitate implicată 74.1%.",
-        "EV estimat 9.5% și edge 7.0 puncte procentuale.",
+        "Probabilitate model 81.1% vs. probabilitate implicată 73.0%.",
+        "EV estimat 11.1% și edge 8.1 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -2068,11 +2068,11 @@
     },
     {
       "key": "Over 1.5G",
-      "bets": 137,
-      "wins": 92,
-      "winrate": 67.15,
-      "profit_units": -15.74,
-      "roi_pct": -11.49,
+      "bets": 138,
+      "wins": 93,
+      "winrate": 67.39,
+      "profit_units": -15.45,
+      "roi_pct": -11.2,
       "avg_odds": 1.321
     }
   ],
@@ -2142,12 +2142,12 @@
     },
     {
       "key": "Trendyol Super Lig",
-      "bets": 14,
-      "wins": 12,
-      "winrate": 85.71,
-      "profit_units": 2.74,
-      "roi_pct": 19.57,
-      "avg_odds": 1.394
+      "bets": 15,
+      "wins": 13,
+      "winrate": 86.67,
+      "profit_units": 3.03,
+      "roi_pct": 20.2,
+      "avg_odds": 1.387
     },
     {
       "key": "CAF Champions League",
