@@ -1,31 +1,32 @@
 {
-  "updated_at": "2026-04-27T17:09:37.586516+00:00",
+  "updated_at": "2026-04-27T20:44:05.848533+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 61.1,
+  "overall_score": 60.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 585,
-    "pending_rows": 95,
-    "candidates_with_odds_and_probability": 93,
+    "recommendation_rows": 589,
+    "pending_rows": 89,
+    "candidates_with_odds_and_probability": 87,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "safe": 3,
-    "balanced": 20,
-    "speculative": 70
+    "balanced": 18,
+    "speculative": 66,
+    "safe": 3
   },
   "market_distribution_top150": {
     "Under 3.5G": 46,
     "Over 2.5G": 2,
-    "BTTS": 25,
-    "Over 1.5G": 20
+    "Under 3.5G": 42,
+    "BTTS": 24,
+    "Over 1.5G": 19
   },
   "league_distribution_top150": {
     "Copa Libertadores": 5,
@@ -35,18 +36,16 @@
     "Copa Sudamericana": 5,
     "La Liga": 7,
     "MLS": 5,
-    "Brasileirão Serie A": 3,
     "Championship": 8,
-    "Serie A": 8,
+    "Brasileirão Serie A": 3,
+    "Serie A": 7,
+    "Champions League": 2,
     "FA Cup": 1,
     "Parva Liga": 1,
     "Premier League": 7,
     "Trendyol Super Lig": 5,
     "Saudi Pro League": 4,
-    "Allsvenskan": 4,
-    "Pro League": 2,
-    "Champions League": 1,
-    "Ekstraklasa": 1,
+    "Pro League": 1,
     "Super League": 1,
     "Liga Portugal Betclic": 1,
     "Superliga": 1
@@ -606,6 +605,34 @@
       ]
     },
     {
+      "event_id": 3919,
+      "prediction_id": 3312,
+      "home": "Derby County",
+      "away": "Sheffield United",
+      "league": "Championship",
+      "event_date": "2026-05-02T14:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.5,
+      "model_probability": 0.7689,
+      "model_probability_pct": 76.89,
+      "implied_probability_pct": 66.67,
+      "fair_odds": 1.301,
+      "edge_pp": 10.22,
+      "ev_pct": 15.34,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 37.52,
+      "score": 99.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 76.9% vs. probabilitate implicată 66.7%.",
+        "EV estimat 15.3% și edge 10.2 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 204846,
       "prediction_id": 3247,
       "home": "Avispa Fukuoka",
@@ -687,34 +714,6 @@
         "Probabilitate model 68.6% vs. probabilitate implicată 66.2%.",
         "EV estimat 3.6% și edge 2.4 puncte procentuale.",
         "Miză Kelly fracțională 1.77% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 3919,
-      "prediction_id": 3312,
-      "home": "Derby County",
-      "away": "Sheffield United",
-      "league": "Championship",
-      "event_date": "2026-05-02T14:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.48,
-      "model_probability": 0.7689,
-      "model_probability_pct": 76.89,
-      "implied_probability_pct": 67.57,
-      "fair_odds": 1.301,
-      "edge_pp": 9.32,
-      "ev_pct": 13.8,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 37.52,
-      "score": 98.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.9% vs. probabilitate implicată 67.6%.",
-        "EV estimat 13.8% și edge 9.3 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -2050,12 +2049,12 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 274,
-      "wins": 198,
-      "winrate": 72.26,
-      "profit_units": -0.26,
-      "roi_pct": -0.09,
-      "avg_odds": 1.394
+      "bets": 281,
+      "wins": 204,
+      "winrate": 72.6,
+      "profit_units": 0.91,
+      "roi_pct": 0.32,
+      "avg_odds": 1.393
     },
     {
       "key": "Over 2.5G",
@@ -2115,12 +2114,12 @@
     },
     {
       "key": "Pro League",
-      "bets": 22,
-      "wins": 20,
-      "winrate": 90.91,
-      "profit_units": 6.2,
-      "roi_pct": 28.18,
-      "avg_odds": 1.415
+      "bets": 23,
+      "wins": 21,
+      "winrate": 91.3,
+      "profit_units": 6.64,
+      "roi_pct": 28.87,
+      "avg_odds": 1.417
     },
     {
       "key": "Coupe de France",
