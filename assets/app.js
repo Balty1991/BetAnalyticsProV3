@@ -3861,6 +3861,12 @@ function analyzeMatch(raw){
       verdict: verdict,
       marketProb: marketProb,
       edgePct: edgePct,
+      kellyPct: (function(p, o){
+        if(!p || !o || o < 1.01) return 0;
+        var b2 = o - 1, pf = p / 100;
+        var k = (pf * b2 - (1 - pf)) / b2;
+        return +Math.max(0, Math.min(k * 0.25, 0.06) * 100).toFixed(3);
+      })(adjProb, odds),
       sourceApi: apiRecommendForRaw(raw, bt.key),
       sourceHeuristic: heuristicRecommendForRaw(raw, bt.key),
       probabilityEngine: (probMeta && probMeta.poissonProb != null) ? 'hybrid' : 'api',
@@ -4005,7 +4011,17 @@ function analyzeMatch(raw){
     homeCoachName: '',
     awayCoachName: '',
     homeCoachStyles: [],
-    awayCoachStyles: []
+    awayCoachStyles: [],
+    // Câmpuri îmbogățite din enrich_predictions.py
+    riskTier       : raw.risk_tier || null,
+    rationale      : raw.rationale || null,
+    enrichedKellyPct: raw.kelly_pct != null ? Number(raw.kelly_pct) : null,
+    enrichedEvPct  : raw.ev_pct != null ? Number(raw.ev_pct) : null,
+    catboostSignal : raw.catboost_signal || null,
+    catboostMarket : raw.catboost_market || null,
+    catboostScore  : raw.catboost_score != null ? Number(raw.catboost_score) : null,
+    catboostEvPct  : raw.catboost_ev_pct != null ? Number(raw.catboost_ev_pct) : null,
+    catboostKellyPct: raw.catboost_kelly_pct != null ? Number(raw.catboost_kelly_pct) : null
   };
 }
 
@@ -6125,7 +6141,8 @@ function renderMatches(){
         '</div>';
       }
     }
-    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
+    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
+    var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
     var motorBadge = motorMeta && motorMeta.state === 'validated'
       ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
       : '';
@@ -6184,6 +6201,8 @@ function renderMatches(){
       '<div class="analysis-metric warn"><div class="analysis-metric-k">Fair odds</div><div class="analysis-metric-v">'+fairOdds+'</div><div class="analysis-metric-sub">cota teoretică</div></div>'+
       '<div class="analysis-metric"><div class="analysis-metric-k">Confidence</div><div class="analysis-metric-v">'+Number(m.confidence || 0).toFixed(0)+'%</div><div class="analysis-metric-sub">încredere model</div></div>'+
       '<div class="analysis-metric"><div class="analysis-metric-k">xG total</div><div class="analysis-metric-v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="analysis-metric-sub">context ofensiv estimat</div></div>'+
+      '<div class="analysis-metric"><div class="analysis-metric-k">Kelly %</div><div class="analysis-metric-v" style="color:'+(Number(b.kellyPct||0)>0?'var(--grn)':'var(--muted)')+'">'+Number(b.kellyPct||0).toFixed(1)+'%</div><div class="analysis-metric-sub">fracție recomandată</div></div>'+
+      (m.riskTier ? '<div class="analysis-metric '+(m.riskTier==="Safe"?'prob':m.riskTier==="Value"?'value':m.riskTier==="Balanced"?'edge':'warn')+'"><div class="analysis-metric-k">Risk Tier</div><div class="analysis-metric-v">'+m.riskTier+'</div><div class="analysis-metric-sub">clasificare risc</div></div>' : '')+
       (bestMarketLine ? '<div class="analysis-metric value"><div class="analysis-metric-k">Best market</div><div class="analysis-metric-v">'+Number(b.odds || 0).toFixed(2)+'</div><div class="analysis-metric-sub">'+bestMarketLine+'</div></div>' : '')+
     '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
     var simpleMetrics = '<div class="match-inline-row">'+
@@ -6191,7 +6210,7 @@ function renderMatches(){
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
-    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+'</div>') : '';
+    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(Number(b.kellyPct||0)>0?' • Kelly <strong>'+Number(b.kellyPct||0).toFixed(1)+'%</strong>':'')+(m.riskTier&&m.riskTier!=='Avoid'?' • <span style="color:'+(m.riskTier==='Safe'?'var(--grn)':m.riskTier==='Value'?'var(--yel)':'var(--acc)')+';font-weight:700">'+m.riskTier+'</span>':'')+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+'</div>') : '';
     var expertDetails = analysisMetricCards +
       predictionProbabilityHtml+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
@@ -6206,7 +6225,7 @@ function renderMatches(){
         '</div>'+
         '<div class="card-reco-pick">'+recLabel+'</div>'+
         predictionProbabilityHtml+
-        '<div class="card-reco-badges">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+ml5Badge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
+        '<div class="card-reco-badges">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
         hybridBlock+
         oddsCompareBlock+
         altMarketsHtml+
@@ -6250,6 +6269,8 @@ function renderMatches(){
       '<div class="analysis-metric warn"><div class="analysis-metric-k">Fair odds</div><div class="analysis-metric-v">'+fairOdds+'</div><div class="analysis-metric-sub">cota teoretică</div></div>'+
       '<div class="analysis-metric"><div class="analysis-metric-k">Confidence</div><div class="analysis-metric-v">'+Number(m.confidence || 0).toFixed(0)+'%</div><div class="analysis-metric-sub">încredere model</div></div>'+
       '<div class="analysis-metric"><div class="analysis-metric-k">xG total</div><div class="analysis-metric-v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="analysis-metric-sub">context ofensiv estimat</div></div>'+
+      '<div class="analysis-metric"><div class="analysis-metric-k">Kelly %</div><div class="analysis-metric-v" style="color:'+(Number(b.kellyPct||0)>0?'var(--grn)':'var(--muted)')+'">'+Number(b.kellyPct||0).toFixed(1)+'%</div><div class="analysis-metric-sub">fracție recomandată</div></div>'+
+      (m.riskTier ? '<div class="analysis-metric '+(m.riskTier==="Safe"?'prob':m.riskTier==="Value"?'value':m.riskTier==="Balanced"?'edge':'warn')+'"><div class="analysis-metric-k">Risk Tier</div><div class="analysis-metric-v">'+m.riskTier+'</div><div class="analysis-metric-sub">clasificare risc</div></div>' : '')+
       (bestMarketLine ? '<div class="analysis-metric value"><div class="analysis-metric-k">Best market</div><div class="analysis-metric-v">'+Number(b.odds || 0).toFixed(2)+'</div><div class="analysis-metric-sub">'+bestMarketLine+'</div></div>' : '')+
     '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
     var kickoffLabel = getMatchKickoffLabel(m);
