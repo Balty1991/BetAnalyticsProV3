@@ -1,0 +1,57 @@
+name: Build Pro Intelligence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'build_pro_intelligence.py'
+      - 'build_model_quality.py'
+      - 'data/recommendation_log.json'
+      - 'data/backtest.json'
+      - 'data/training_scoring_summary.json'
+      - 'data/training_market_baselines.json'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-pro-intelligence
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build model quality audit
+        run: python build_model_quality.py
+
+      - name: Build pro intelligence layer
+        run: python build_pro_intelligence.py
+
+      - name: Validate generated JSON
+        run: |
+          python -m json.tool data/model_quality.json > /tmp/model_quality.json
+          python -m json.tool data/pro_intelligence.json > /tmp/pro_intelligence.json
+
+      - name: Commit generated intelligence files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/model_quality.json data/pro_intelligence.json
+          if git diff --staged --quiet; then
+            echo 'No intelligence changes detected.'
+            exit 0
+          fi
+          git commit -m 'Build professional intelligence data'
+          git pull --rebase origin main || true
+          git push
