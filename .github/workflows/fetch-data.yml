@@ -114,11 +114,11 @@ jobs:
           python predict_current.py
         continue-on-error: true
 
-      - name: Build model quality audit
-        run: python build_model_quality.py
-
       - name: Walk-Forward Validation (calibrare time-series)
         run: python build_wfv_validation.py
+
+      - name: Build model quality audit
+        run: python build_model_quality.py
 
       - name: Build professional intelligence cockpit data
         run: python build_pro_intelligence.py
