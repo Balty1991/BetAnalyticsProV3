@@ -1,49 +1,116 @@
 {
-  "updated_at": "2026-04-27T10:53:38.294696+00:00",
-  "quality_score": 68.1,
+  "updated_at": "2026-04-27T11:17:20.874260+00:00",
+  "quality_score": 71.1,
   "quality_grade": "C",
   "coverage": {
     "predictions": 313,
     "ev_signals": 0,
-    "markets": 0,
-    "backtest_keys": 21,
-    "training_summary_keys": 17
+    "log_total": 583,
+    "log_closed": 487,
+    "markets_audited": 4
   },
   "freshness": {
-    "meta_generated_at": "2026-04-27T10:37:10.113489+00:00",
-    "meta_age_hours": 0.27,
-    "score": 100.0
+    "age_hours": 0.67,
+    "color": "green",
+    "label": "0.7h"
   },
-  "markets": [],
-  "top_ev_signals": [],
+  "markets": [
+    {
+      "market": "btts",
+      "label": "Ambele marchează",
+      "n": 69,
+      "credible": true,
+      "brier": 0.2135,
+      "log_loss": 0.6205,
+      "ece": 0.0186,
+      "calib_label": "excelent",
+      "winrate": 69.57,
+      "roi_pct": 7.9,
+      "n_wins": 48,
+      "score": 77.1,
+      "grade": "B"
+    },
+    {
+      "market": "over15",
+      "label": "Peste 1.5G",
+      "n": 137,
+      "credible": true,
+      "brier": 0.2321,
+      "log_loss": 0.6683,
+      "ece": 0.0898,
+      "calib_label": "acceptabil",
+      "winrate": 67.15,
+      "roi_pct": -11.49,
+      "n_wins": 92,
+      "score": 60.6,
+      "grade": "C"
+    },
+    {
+      "market": "over25",
+      "label": "Peste 2.5G",
+      "n": 9,
+      "credible": false,
+      "brier": 0.2169,
+      "log_loss": 0.6235,
+      "ece": 0.0677,
+      "calib_label": "bun",
+      "winrate": 66.67,
+      "roi_pct": -4.11,
+      "n_wins": 6,
+      "score": 66.5,
+      "grade": "C"
+    },
+    {
+      "market": "under35",
+      "label": "Sub 3.5G",
+      "n": 272,
+      "credible": true,
+      "brier": 0.1969,
+      "log_loss": 0.582,
+      "ece": 0.0329,
+      "calib_label": "excelent",
+      "winrate": 72.06,
+      "roi_pct": -0.27,
+      "n_wins": 196,
+      "score": 75.6,
+      "grade": "B"
+    }
+  ],
+  "backtest": {
+    "roi_pct": 19.68,
+    "winrate": 82.93,
+    "n_bets": 41,
+    "avg_odds": 1.45,
+    "avg_edge": 13.63
+  },
+  "recommendations": [
+    "ROI negativ persistent: Peste 1.5G (-11.5%).",
+    "Backtest ROI global: +19.7% — semnal pozitiv."
+  ],
   "ui_cards": [
     {
-      "label": "Scor produs",
-      "value": 68.1,
+      "label": "Scor calibrare",
+      "value": 71.1,
       "suffix": "/100",
       "tone": "warn"
     },
     {
-      "label": "Predicții",
-      "value": 313,
-      "suffix": " active",
+      "label": "Meciuri analizate",
+      "value": 487,
+      "suffix": " finalizate",
       "tone": "good"
     },
     {
-      "label": "Semnale EV+",
-      "value": 0,
-      "suffix": " găsite",
-      "tone": "warn"
+      "label": "ROI backtest",
+      "value": 19.7,
+      "suffix": "%",
+      "tone": "good"
     },
     {
-      "label": "Piețe model",
-      "value": 0,
-      "suffix": " auditate",
-      "tone": "warn"
+      "label": "Piețe auditate",
+      "value": 4,
+      "suffix": " piețe",
+      "tone": "good"
     }
-  ],
-  "recommendations": [
-    "Nu există semnale EV+. Verifică predict_current.py, modelele CatBoost și pragurile de edge.",
-    "model_pack_v2.json lipsește sau nu conține piețe. Rulează workflow-ul SmartBet v2 Full Pipeline."
   ]
 }
