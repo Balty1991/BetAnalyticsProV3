@@ -25,48 +25,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Patch index with visible Pro V21 markers
+      - name: Patch index titles
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           s = s.replace('BetAnalytics Pro · Aurora', 'BetAnalytics Pro · PRO V21')
           s = s.replace('AURORA · v17', 'PRO V21 · Intelligence')
-          s = s.replace('./assets/pro_command_center.css?v=20260427procc3', './assets/pro_command_center.css?v=20260427proV21')
-          s = s.replace('./assets/performance-patch.js?v=20260427procc3', './assets/performance-patch.js?v=20260427proV21')
-          s = s.replace('./assets/pro_command_center.js?v=20260427procc3', './assets/pro_command_center.js?v=20260427proV21')
-          if 'pro_intelligence_runtime.js' not in s:
-              marker = '<script defer src="./assets/pro_command_center.js?v=20260427proV21"></script>'
-              if marker in s:
-                  s = s.replace(marker, marker + '\n<script defer src="./assets/pro_intelligence_runtime.js?v=20260427proV21"></script>', 1)
-              else:
-                  s = s.replace('</head>', '<script defer src="./assets/pro_intelligence_runtime.js?v=20260427proV21"></script>\n</head>', 1)
-          if 'ba-force-pro-v21-css' not in s:
-              css = '''
-<style id="ba-force-pro-v21-css">
-body{background:radial-gradient(circle at 0 0,rgba(43,229,197,.18),transparent 32%),radial-gradient(circle at 100% 0,rgba(96,165,250,.18),transparent 32%),#030712!important}.ba-static-pro-hero{margin:12px 0 16px;padding:18px;border-radius:28px;border:2px solid rgba(43,229,197,.55);background:radial-gradient(circle at 0 0,rgba(43,229,197,.22),transparent 38%),linear-gradient(135deg,rgba(15,23,42,.98),rgba(2,6,23,.96));box-shadow:0 26px 80px rgba(0,0,0,.42),0 0 34px rgba(43,229,197,.10);position:relative;overflow:hidden}.ba-static-pro-hero:before{content:"";position:absolute;left:-20%;right:-20%;top:0;height:4px;background:linear-gradient(90deg,transparent,#2BE5C5,#60A5FA,#A78BFA,transparent);animation:baScan 2.4s linear infinite}@keyframes baScan{from{transform:translateX(-20%)}to{transform:translateX(20%)}}.ba-static-kicker{font-size:10px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:#2BE5C5}.ba-static-title{margin-top:6px;font-size:28px;line-height:1.02;font-weight:950;letter-spacing:-.07em;color:#F8FAFC}.ba-static-sub{margin-top:8px;color:#AAB7CA;font-size:12px;line-height:1.55}.ba-static-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}.ba-static-card{padding:11px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}.ba-static-card span{display:block;font-size:9px;font-weight:900;text-transform:uppercase;color:#AAB7CA}.ba-static-card b{display:block;margin-top:4px;font-size:20px;color:#F8FAFC}.ba-static-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.ba-static-btn{border:0;border-radius:999px;background:linear-gradient(135deg,#2BE5C5,#60A5FA);color:#041018;font-size:11px;font-weight:950;padding:9px 12px}.ba-v21-fixed{position:fixed;z-index:999999;left:10px;right:10px;bottom:10px;padding:10px 12px;border-radius:18px;background:linear-gradient(135deg,#2BE5C5,#60A5FA);color:#041018;font-size:12px;font-weight:950;text-align:center;box-shadow:0 16px 44px rgba(0,0,0,.45)}.tab.active{background:linear-gradient(135deg,rgba(43,229,197,.30),rgba(96,165,250,.18))!important;border-color:rgba(43,229,197,.6)!important}.stat-card,.section,.match-card,.ml-card,.top-pick-card{border-radius:24px!important;border-color:rgba(43,229,197,.22)!important;box-shadow:0 18px 52px rgba(0,0,0,.30)!important}@media(max-width:700px){.ba-static-title{font-size:23px}.ba-static-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-</style>
-'''
-              s = s.replace('</head>', css + '\n</head>', 1)
-          hero = '''
-    <section class="ba-static-pro-hero" id="ba-static-pro-hero">
-      <div class="ba-static-kicker">SCHIMBARE VIZIBILĂ ACTIVĂ · PRO V21</div>
-      <div class="ba-static-title">BetAnalytics Pro Intelligence Cockpit</div>
-      <div class="ba-static-sub">Acesta este panoul static introdus direct în index.html, nu un patch ascuns. Dacă vezi acest bloc, fișierul principal este actualizat: design, cockpit, EV, Kelly, risc și shortlist sunt încărcate explicit.</div>
-      <div class="ba-static-grid">
-        <div class="ba-static-card"><span>Mod</span><b>PRO V21</b></div>
-        <div class="ba-static-card"><span>Scor</span><b>EV + Kelly</b></div>
-        <div class="ba-static-card"><span>UI</span><b>Redesign</b></div>
-        <div class="ba-static-card"><span>Cache</span><b>Busted</b></div>
-      </div>
-      <div class="ba-static-actions"><button class="ba-static-btn" onclick="switchTab && switchTab('meciuri')">Vezi Meciuri Pro</button><button class="ba-static-btn" onclick="document.getElementById('pro-intelligence-shell')?.scrollIntoView({behavior:'smooth'})">Analyst Cockpit</button></div>
-    </section>
-'''
-          if 'ba-static-pro-hero' not in s:
-              s = s.replace('    <!-- Stats row -->', hero + '\n    <!-- Stats row -->', 1)
-          if 'ba-v21-fixed' not in s:
-              s = s.replace('</body>', '<div class="ba-v21-fixed">PRO V21 activ — index.html schimbat vizibil</div>\n</body>', 1)
           p.write_text(s, encoding='utf-8')
           PY
 
