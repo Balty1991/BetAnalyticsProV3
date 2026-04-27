@@ -132,7 +132,13 @@ jobs:
           fi
 
           git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin main || true
+          git pull --rebase -X theirs origin main || {
+            git rebase --abort
+            git fetch origin main
+            git reset --hard origin/main
+            git add data/ index.html
+            git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC') [conflict-resolved]" || true
+          }
           git push origin HEAD:main
 
       - name: Notify on failure
