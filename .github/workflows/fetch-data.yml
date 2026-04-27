@@ -47,6 +47,9 @@ jobs:
           test -f data/events.json
           test -f data/recommendation_log.json
 
+      - name: Enrich predictions with EV/Kelly/fair_odds/risk_tier
+        run: python enrich_predictions.py
+
       - name: Build API history catalog
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
