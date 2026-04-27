@@ -101,6 +101,7 @@ def build_recommendations(markets, backtest, n_closed):
 def main():
     print("=== BUILD MODEL QUALITY v2 ===")
     log        = as_list(load_json(DATA_DIR/"recommendation_log.json", []))
+    wfv        = load_json(DATA_DIR/"wfv_results_v2.json", {}) or {}
     meta       = load_json(DATA_DIR/"meta.json", {})
     backtest   = load_json(DATA_DIR/"backtest.json", {}) or {}
     predictions = as_list(load_json(DATA_DIR/"predictions.json", []))
@@ -122,11 +123,21 @@ def main():
         "markets":       list(markets_data.values()),
         "backtest":{"roi_pct":safe_float(bt.get("engine_roi"),0.0),"winrate":safe_float(bt.get("engine_winrate"),0.0),"n_bets":int(safe_float(bt.get("engine_bets"),0.0)),"avg_odds":safe_float(bt.get("engine_avg_odds"),0.0),"avg_edge":safe_float(bt.get("engine_avg_edge"),0.0)},
         "recommendations": recs,
+        "wfv": {
+            "global_score": wfv.get("global_score"),
+            "global_grade": wfv.get("global_grade"),
+            "n_folds":      wfv.get("n_folds", 0),
+            "source":       wfv.get("source","—"),
+            "markets":      wfv.get("markets", []),
+            "warnings":     wfv.get("warnings", []),
+            "updated_at":   wfv.get("updated_at"),
+        },
         "ui_cards":[
             {"label":"Scor calibrare","value":global_score,"suffix":"/100","tone":"good" if global_score>=72 else ("warn" if global_score>=55 else "bad")},
             {"label":"Meciuri analizate","value":len(closed),"suffix":" finalizate","tone":"good" if len(closed)>=MIN_SAMPLES else "warn"},
             {"label":"ROI backtest","value":round(safe_float(bt.get("engine_roi"),0.0),1),"suffix":"%","tone":"good" if safe_float(bt.get("engine_roi"),0.0)>0 else "bad"},
             {"label":"Piețe auditate","value":len(markets_data),"suffix":" piețe","tone":"good" if len(markets_data)>=3 else "warn"},
+            {"label":"WFV folduri","value":wfv.get("n_folds",0),"suffix":" folduri","tone":"good" if wfv.get("n_folds",0)>=3 else "warn"},
         ],
     }
     save_json(DATA_DIR/"model_quality.json", payload)
