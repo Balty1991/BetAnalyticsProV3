@@ -1462,49 +1462,36 @@ function getBenchmarkData(marketKey, edgePct) {
 function getBenchmarkRow(marketKey, edgePct) {
   var d = getBenchmarkData(marketKey, edgePct);
   if (!d) return '';
+  if (d.mktRoi === null && d.bucketRoi === null) return '';
 
-  var parts = [];
+  var isBad    = d.edgeBad;
+  var bg       = isBad ? 'rgba(239,68,68,.08)'    : 'rgba(16,185,129,.07)';
+  var border   = isBad ? 'rgba(239,68,68,.28)'    : 'rgba(16,185,129,.18)';
+  var icon     = isBad ? '⚠️' : '📊';
 
   // Piață
+  var mktPart = '';
   if (d.mktRoi !== null && d.mktN >= 20) {
-    var mktColor = d.mktRoi >= 3 ? '#22c55e' : d.mktRoi >= 0 ? '#f59e0b' : '#ef4444';
-    var mktSign  = d.mktRoi >= 0 ? '+' : '';
-    parts.push(
-      '<span style="color:' + mktColor + ';font-weight:700">BT ' + mktSign + d.mktRoi.toFixed(1) + '%</span>' +
-      '<span style="color:rgba(255,255,255,.35);font-size:.85em"> (' + d.mktN + ' par.)</span>'
-    );
+    var mc = d.mktRoi >= 3 ? '#22c55e' : d.mktRoi >= 0 ? '#f59e0b' : '#ef4444';
+    mktPart = '<span style="color:rgba(255,255,255,.45)">BT:</span> <span style="color:' + mc + ';font-weight:700">' + (d.mktRoi >= 0 ? '+' : '') + d.mktRoi.toFixed(1) + '%</span>';
   }
 
   // Edge bucket
+  var bucketPart = '';
   if (d.bucketRoi !== null && d.bucketN >= 10) {
-    var bColor = d.bucketRoi >= 3 ? '#22c55e' : d.bucketRoi >= 0 ? '#f59e0b' : '#ef4444';
-    var bSign  = d.bucketRoi >= 0 ? '+' : '';
-    var warn   = d.edgeBad
-      ? '<span style="color:#ef4444;font-weight:900"> ⚠ evită</span>'
-      : '<span style="color:#22c55e;font-weight:700"> ✓</span>';
-    parts.push(
-      '<span style="color:rgba(255,255,255,.5)">Edge ' + d.bucketKey + ':</span> ' +
-      '<span style="color:' + bColor + ';font-weight:700">' + bSign + d.bucketRoi.toFixed(1) + '%</span>' +
-      warn
-    );
+    var bc   = d.bucketRoi >= 3 ? '#22c55e' : d.bucketRoi >= 0 ? '#f59e0b' : '#ef4444';
+    var warn = isBad ? ' <span style="color:#ef4444;font-weight:900">⚠ evită</span>' : ' <span style="color:#22c55e">✓</span>';
+    bucketPart = '<span style="color:rgba(255,255,255,.45)">Edge ' + d.bucketKey + ':</span> <span style="color:' + bc + ';font-weight:700">' + (d.bucketRoi >= 0 ? '+' : '') + d.bucketRoi.toFixed(1) + '%</span>' + warn;
   }
 
-  if (!parts.length) return '';
+  var sep = (mktPart && bucketPart) ? '<span style="color:rgba(255,255,255,.2);margin:0 6px">•</span>' : '';
 
-  var bgColor  = d.edgeBad ? 'rgba(239,68,68,.09)'   : 'rgba(16,185,129,.07)';
-  var bdColor  = d.edgeBad ? 'rgba(239,68,68,.30)'   : 'rgba(16,185,129,.18)';
-  var icon     = d.edgeBad ? '⚠' : '📊';
-  var label    = d.edgeBad ? 'Backtest: edge neprofitabil' : 'Backtest istoric';
-  var lbColor  = d.edgeBad ? '#ef4444' : 'rgba(255,255,255,.40)';
-
-  return '<div style="margin-top:8px;padding:8px 12px;border-radius:10px;background:' + bgColor + ';border:1px solid ' + bdColor + ';display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-    '<span style="font-size:13px">' + icon + '</span>' +
-    '<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:' + lbColor + '">' + label + '</span>' +
-    '<span style="flex:1;display:flex;gap:12px;flex-wrap:wrap;font-size:12px">' + parts.join('<span style="color:rgba(255,255,255,.2)"> • </span>') + '</span>' +
+  return '<div style="margin-top:7px;padding:6px 11px;border-radius:9px;background:' + bg + ';border:1px solid ' + border + ';display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.3">' +
+    '<span>' + icon + '</span>' +
+    mktPart + sep + bucketPart +
   '</div>';
 }
 
-// Returnează true dacă edge bucket curent e negativ (pentru a suprima Validat Motor)
 function benchmarkEdgeIsBad(marketKey, edgePct) {
   var d = getBenchmarkData(marketKey, edgePct);
   return d ? d.edgeBad : false;
