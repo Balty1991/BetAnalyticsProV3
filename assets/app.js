@@ -1426,52 +1426,88 @@ function oddsInRanges(odds, ranges){
 }
 
 // ─── BENCHMARK BADGE ─────────────────────────────────────────────────────────
-// Returnează un badge HTML cu contextul istoric al modelului pe piața curentă.
-// edgePct: valoarea edge curentă (număr)
-// marketKey: 'under35', 'over25', 'btts', etc.
-function getBenchmarkBadge(marketKey, edgePct) {
+// Returnează un rând HTML separat cu contextul istoric al modelului.
+// Dacă edge bucket e negativ → avertizare clară + motorBadge supresat.
+function getBenchmarkData(marketKey, edgePct) {
   try {
     var bt = MODEL_BENCHMARKS && MODEL_BENCHMARKS.real_backtest;
-    if (!bt || !bt.by_market) return '';
+    if (!bt || !bt.by_market) return null;
 
-    // ROI per piață din backtestul real
-    var mktStats = bt.by_market[marketKey];
-    var roiPct   = mktStats ? Number(mktStats.roi_pct || 0) : null;
-    var nBets    = mktStats ? Number(mktStats.n || 0) : 0;
+    var mktStats   = bt.by_market[marketKey];
+    var mktRoi     = mktStats  ? Number(mktStats.roi_pct  || 0) : null;
+    var mktN       = mktStats  ? Number(mktStats.n        || 0) : 0;
 
-    // Bucket edge curent
     var edge = Number(edgePct || 0);
-    var bucketStats = null;
-    var bucketLabel = '';
+    var bucketKey = '', bucketStats = null;
     if (bt.by_edge_bucket) {
-      if (edge < 5)        { bucketStats = bt.by_edge_bucket['0-5%'];   bucketLabel = '0-5%'; }
-      else if (edge < 10)  { bucketStats = bt.by_edge_bucket['5-10%'];  bucketLabel = '5-10%'; }
-      else if (edge < 15)  { bucketStats = bt.by_edge_bucket['10-15%']; bucketLabel = '10-15%'; }
-      else                 { bucketStats = bt.by_edge_bucket['15%+'];   bucketLabel = '15%+'; }
+      if      (edge < 5)  { bucketKey = '0-5%';   bucketStats = bt.by_edge_bucket['0-5%'];   }
+      else if (edge < 10) { bucketKey = '5-10%';  bucketStats = bt.by_edge_bucket['5-10%'];  }
+      else if (edge < 15) { bucketKey = '10-15%'; bucketStats = bt.by_edge_bucket['10-15%']; }
+      else                { bucketKey = '15%+';   bucketStats = bt.by_edge_bucket['15%+'];   }
     }
     var bucketRoi = bucketStats ? Number(bucketStats.roi_pct || 0) : null;
+    var bucketN   = bucketStats ? Number(bucketStats.n       || 0) : 0;
 
-    // Construiește badge-ul
-    var parts = [];
+    return {
+      mktRoi:    mktRoi,
+      mktN:      mktN,
+      bucketKey: bucketKey,
+      bucketRoi: bucketRoi,
+      bucketN:   bucketN,
+      edgeBad:   bucketRoi !== null && bucketN >= 10 && bucketRoi < 0
+    };
+  } catch(e) { return null; }
+}
 
-    // Indicator piață
-    if (roiPct !== null && nBets >= 20) {
-      var roiColor = roiPct >= 3 ? 'var(--grn)' : roiPct >= 0 ? 'var(--yel)' : 'var(--red,#e55)';
-      var roiSign  = roiPct >= 0 ? '+' : '';
-      parts.push('<span style="color:' + roiColor + ';font-size:.72em">BT ' + roiSign + roiPct.toFixed(1) + '%</span>');
-    }
+function getBenchmarkRow(marketKey, edgePct) {
+  var d = getBenchmarkData(marketKey, edgePct);
+  if (!d) return '';
 
-    // Indicator edge bucket
-    if (bucketRoi !== null && bucketStats && bucketStats.n >= 10) {
-      var bColor = bucketRoi >= 3 ? 'var(--grn)' : bucketRoi >= 0 ? 'var(--yel)' : 'var(--red,#e55)';
-      var bSign  = bucketRoi >= 0 ? '+' : '';
-      var warn   = bucketRoi < 0 ? ' ⚠' : '';
-      parts.push('<span style="color:' + bColor + ';font-size:.72em">Edge ' + bucketLabel + ': ' + bSign + bucketRoi.toFixed(1) + '%' + warn + '</span>');
-    }
+  var parts = [];
 
-    if (!parts.length) return '';
-    return ' • ' + parts.join(' • ');
-  } catch(e) { return ''; }
+  // Piață
+  if (d.mktRoi !== null && d.mktN >= 20) {
+    var mktColor = d.mktRoi >= 3 ? '#22c55e' : d.mktRoi >= 0 ? '#f59e0b' : '#ef4444';
+    var mktSign  = d.mktRoi >= 0 ? '+' : '';
+    parts.push(
+      '<span style="color:' + mktColor + ';font-weight:700">BT ' + mktSign + d.mktRoi.toFixed(1) + '%</span>' +
+      '<span style="color:rgba(255,255,255,.35);font-size:.85em"> (' + d.mktN + ' par.)</span>'
+    );
+  }
+
+  // Edge bucket
+  if (d.bucketRoi !== null && d.bucketN >= 10) {
+    var bColor = d.bucketRoi >= 3 ? '#22c55e' : d.bucketRoi >= 0 ? '#f59e0b' : '#ef4444';
+    var bSign  = d.bucketRoi >= 0 ? '+' : '';
+    var warn   = d.edgeBad
+      ? '<span style="color:#ef4444;font-weight:900"> ⚠ evită</span>'
+      : '<span style="color:#22c55e;font-weight:700"> ✓</span>';
+    parts.push(
+      '<span style="color:rgba(255,255,255,.5)">Edge ' + d.bucketKey + ':</span> ' +
+      '<span style="color:' + bColor + ';font-weight:700">' + bSign + d.bucketRoi.toFixed(1) + '%</span>' +
+      warn
+    );
+  }
+
+  if (!parts.length) return '';
+
+  var bgColor  = d.edgeBad ? 'rgba(239,68,68,.09)'   : 'rgba(16,185,129,.07)';
+  var bdColor  = d.edgeBad ? 'rgba(239,68,68,.30)'   : 'rgba(16,185,129,.18)';
+  var icon     = d.edgeBad ? '⚠' : '📊';
+  var label    = d.edgeBad ? 'Backtest: edge neprofitabil' : 'Backtest istoric';
+  var lbColor  = d.edgeBad ? '#ef4444' : 'rgba(255,255,255,.40)';
+
+  return '<div style="margin-top:8px;padding:8px 12px;border-radius:10px;background:' + bgColor + ';border:1px solid ' + bdColor + ';display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+    '<span style="font-size:13px">' + icon + '</span>' +
+    '<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:' + lbColor + '">' + label + '</span>' +
+    '<span style="flex:1;display:flex;gap:12px;flex-wrap:wrap;font-size:12px">' + parts.join('<span style="color:rgba(255,255,255,.2)"> • </span>') + '</span>' +
+  '</div>';
+}
+
+// Returnează true dacă edge bucket curent e negativ (pentru a suprima Validat Motor)
+function benchmarkEdgeIsBad(marketKey, edgePct) {
+  var d = getBenchmarkData(marketKey, edgePct);
+  return d ? d.edgeBad : false;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -6201,9 +6237,12 @@ function renderMatches(){
     }
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
     var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
-    var motorBadge = motorMeta && motorMeta.state === 'validated'
+    var _btEdgeBad = b ? benchmarkEdgeIsBad(b.type || b.marketKey || '', Number(b.edgePct || 0)) : false;
+    var motorBadge = motorMeta && motorMeta.state === 'validated' && !_btEdgeBad
       ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
-      : '';
+      : (motorMeta && motorMeta.state === 'validated' && _btEdgeBad
+        ? '<span class="card-reco-badge" style="background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.30);color:#ef4444">⚠ Motor validat • edge neprofitabil</span>'
+        : '');
 
     // --- ML5 ENRICHMENT BADGE & BREAKDOWN ---
     var ml5Badge = '';
@@ -6268,7 +6307,7 @@ function renderMatches(){
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
-    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(Number(b.kellyPct||0)>0?' • Kelly <strong>'+Number(b.kellyPct||0).toFixed(1)+'%</strong>':'')+(m.riskTier&&m.riskTier!=='Avoid'?' • <span style="color:'+(m.riskTier==='Safe'?'var(--grn)':m.riskTier==='Value'?'var(--yel)':'var(--acc)')+';font-weight:700">'+m.riskTier+'</span>':'')+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+(b ? getBenchmarkBadge(b.type || b.marketKey || '', Number(b.edgePct||0)) : '')+'</div>') : '';
+    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(Number(b.kellyPct||0)>0?' • Kelly <strong>'+Number(b.kellyPct||0).toFixed(1)+'%</strong>':'')+(m.riskTier&&m.riskTier!=='Avoid'?' • <span style="color:'+(m.riskTier==='Safe'?'var(--grn)':m.riskTier==='Value'?'var(--yel)':'var(--acc)')+';font-weight:700">'+m.riskTier+'</span>':'')+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+'</div>'+(b ? getBenchmarkRow(b.type || b.marketKey || '', Number(b.edgePct||0)) : '')) : '';
     var expertDetails = analysisMetricCards +
       predictionProbabilityHtml+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
