@@ -1,35 +1,35 @@
 {
-  "updated_at": "2026-04-28T00:03:11.052447+00:00",
+  "updated_at": "2026-04-28T00:24:49.262410+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 60.0,
+  "overall_score": 60.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 590,
-    "pending_rows": 86,
-    "candidates_with_odds_and_probability": 84,
+    "recommendation_rows": 592,
+    "pending_rows": 88,
+    "candidates_with_odds_and_probability": 86,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "balanced": 17,
-    "speculative": 64,
+    "balanced": 18,
+    "speculative": 65,
     "safe": 3
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 41,
-    "BTTS": 23,
+    "Under 3.5G": 42,
+    "BTTS": 24,
     "Over 1.5G": 18
   },
   "league_distribution_top150": {
     "Bundesliga": 8,
-    "Copa Libertadores": 6,
+    "Copa Libertadores": 7,
     "Ligue 1": 6,
     "J1 League": 9,
     "Copa Sudamericana": 6,
@@ -542,6 +542,34 @@
         "Probabilitate model 77.1% vs. probabilitate implicată 74.1%.",
         "EV estimat 4.1% și edge 3.0 puncte procentuale.",
         "Miză Kelly fracțională 2.94% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 1023,
+      "prediction_id": 3478,
+      "home": "Espanyol",
+      "away": "Real Madrid",
+      "league": "La Liga",
+      "event_date": "2026-05-03T22:00:00+03:00",
+      "market": "BTTS",
+      "odds": 1.53,
+      "model_probability": 0.6861,
+      "model_probability_pct": 68.61,
+      "implied_probability_pct": 65.36,
+      "fair_odds": 1.458,
+      "edge_pp": 3.25,
+      "ev_pct": 4.97,
+      "kelly_fraction": 0.0235,
+      "kelly_units_100": 2.35,
+      "confidence": 49.37,
+      "score": 100.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 68.6% vs. probabilitate implicată 65.4%.",
+        "EV estimat 5.0% și edge 3.3 puncte procentuale.",
+        "Miză Kelly fracțională 2.35% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1443,31 +1471,31 @@
       ]
     },
     {
-      "event_id": 202969,
-      "prediction_id": 3205,
-      "home": "Atlético Madrid",
-      "away": "Arsenal",
-      "league": "Champions League",
-      "event_date": "2026-04-29T22:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.4,
+      "event_id": 9402,
+      "prediction_id": 3211,
+      "home": "Barcelona SC Guayaquil",
+      "away": "Universidad Católica",
+      "league": "Copa Libertadores",
+      "event_date": "2026-04-30T03:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.22,
       "model_probability": 0.814,
       "model_probability_pct": 81.4,
-      "implied_probability_pct": 71.43,
+      "implied_probability_pct": 81.97,
       "fair_odds": 1.229,
-      "edge_pp": 9.97,
-      "ev_pct": 13.96,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 49.83,
-      "score": 97.0,
+      "edge_pp": -0.57,
+      "ev_pct": -0.69,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 46.64,
+      "score": 83.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 81.4% vs. probabilitate implicată 71.4%.",
-        "EV estimat 14.0% și edge 10.0 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+        "Probabilitate model 81.4% vs. probabilitate implicată 82.0%.",
+        "EV estimat -0.7% și edge -0.6 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1893,6 +1921,34 @@
       ]
     },
     {
+      "event_id": 9291,
+      "prediction_id": 3212,
+      "home": "Cienciano",
+      "away": "Atlético Mineiro",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-04-30T03:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.26,
+      "model_probability": 0.7977,
+      "model_probability_pct": 79.77,
+      "implied_probability_pct": 79.37,
+      "fair_odds": 1.254,
+      "edge_pp": 0.4,
+      "ev_pct": 0.51,
+      "kelly_fraction": 0.0049,
+      "kelly_units_100": 0.49,
+      "confidence": 63.63,
+      "score": 86.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 79.8% vs. probabilitate implicată 79.4%.",
+        "EV estimat 0.5% și edge 0.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.49% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 9398,
       "prediction_id": 3187,
       "home": "Deportes Tolima",
@@ -2003,34 +2059,6 @@
         "EV estimat 3.0% și edge 2.1 puncte procentuale.",
         "Miză Kelly fracțională 1.69% din bancă, plafonată prudent."
       ]
-    },
-    {
-      "event_id": 4785,
-      "prediction_id": 3175,
-      "home": "Al-Khaleej",
-      "away": "Al-Najma SC",
-      "league": "Saudi Pro League",
-      "event_date": "2026-04-28T21:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.53,
-      "model_probability": 0.6651,
-      "model_probability_pct": 66.51,
-      "implied_probability_pct": 65.36,
-      "fair_odds": 1.504,
-      "edge_pp": 1.15,
-      "ev_pct": 1.76,
-      "kelly_fraction": 0.0083,
-      "kelly_units_100": 0.83,
-      "confidence": 54.08,
-      "score": 66.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 66.5% vs. probabilitate implicată 65.4%.",
-        "EV estimat 1.8% și edge 1.2 puncte procentuale.",
-        "Miză Kelly fracțională 0.83% din bancă, plafonată prudent."
-      ]
     }
   ],
   "settled_market_performance": [
@@ -2048,8 +2076,8 @@
       "bets": 283,
       "wins": 206,
       "winrate": 72.79,
-      "profit_units": 1.82,
-      "roi_pct": 0.64,
+      "profit_units": 1.78,
+      "roi_pct": 0.63,
       "avg_odds": 1.394
     },
     {
@@ -2068,7 +2096,7 @@
       "winrate": 66.9,
       "profit_units": -16.71,
       "roi_pct": -11.77,
-      "avg_odds": 1.322
+      "avg_odds": 1.321
     }
   ],
   "settled_league_performance": [
