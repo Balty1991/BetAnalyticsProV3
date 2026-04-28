@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-04-28T18:51:11.754607+00:00",
+  "updated_at": "2026-04-28T19:24:35.086223+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 64.8,
+  "overall_score": 64.6,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 624,
-    "pending_rows": 119,
-    "candidates_with_odds_and_probability": 110,
+    "pending_rows": 118,
+    "candidates_with_odds_and_probability": 109,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,12 +18,12 @@
   },
   "risk_distribution": {
     "balanced": 21,
-    "speculative": 85,
+    "speculative": 84,
     "safe": 4
   },
   "market_distribution_top150": {
     "Over 2.5G": 3,
-    "Under 3.5G": 57,
+    "Under 3.5G": 56,
     "BTTS": 26,
     "Over 1.5G": 24
   },
@@ -35,7 +35,6 @@
     "La Liga": 7,
     "MLS": 5,
     "Eredivisie": 7,
-    "Saudi Pro League": 4,
     "Copa Sudamericana": 10,
     "Championship": 9,
     "Brasileirão Serie A": 3,
@@ -50,6 +49,7 @@
     "Segunda División": 3,
     "Pro League": 1,
     "Super League": 1,
+    "Saudi Pro League": 3,
     "Europa League": 1
   },
   "bankroll": {
@@ -523,34 +523,6 @@
       ]
     },
     {
-      "event_id": 4792,
-      "prediction_id": 3173,
-      "home": "Neom SC",
-      "away": "Al-Hazem",
-      "league": "Saudi Pro League",
-      "event_date": "2026-04-28T19:45:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.602,
-      "model_probability": 0.7396,
-      "model_probability_pct": 73.96,
-      "implied_probability_pct": 62.42,
-      "fair_odds": 1.352,
-      "edge_pp": 11.54,
-      "ev_pct": 18.48,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 51.85,
-      "score": 100.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 74.0% vs. probabilitate implicată 62.4%.",
-        "EV estimat 18.5% și edge 11.5 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 204848,
       "prediction_id": 3250,
       "home": "Urawa Red Diamonds",
@@ -911,6 +883,34 @@
       "rationale": [
         "Probabilitate model 85.3% vs. probabilitate implicată 80.0%.",
         "EV estimat 6.7% și edge 5.3 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9285,
+      "prediction_id": 3186,
+      "home": "Millonarios",
+      "away": "São Paulo",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-04-29T03:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.23,
+      "model_probability": 0.8604,
+      "model_probability_pct": 86.04,
+      "implied_probability_pct": 81.3,
+      "fair_odds": 1.162,
+      "edge_pp": 4.74,
+      "ev_pct": 5.83,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 38.32,
+      "score": 97.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 86.0% vs. probabilitate implicată 81.3%.",
+        "EV estimat 5.8% și edge 4.7 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -2051,11 +2051,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 283,
-      "wins": 206,
-      "winrate": 72.79,
-      "profit_units": 1.78,
-      "roi_pct": 0.63,
+      "bets": 284,
+      "wins": 207,
+      "winrate": 72.89,
+      "profit_units": 2.38,
+      "roi_pct": 0.84,
       "avg_odds": 1.394
     },
     {
@@ -2104,6 +2104,15 @@
       "profit_units": 0.4,
       "roi_pct": 40.0,
       "avg_odds": 1.4
+    },
+    {
+      "key": "Saudi Pro League",
+      "bets": 9,
+      "wins": 8,
+      "winrate": 88.89,
+      "profit_units": 2.67,
+      "roi_pct": 29.69,
+      "avg_odds": 1.457
     },
     {
       "key": "Coppa Italia",
