@@ -1,7 +1,7 @@
 // BetAnalyticsProV3 performance + runtime loader
 (function(){
   'use strict';
-  if(window.__baPerfV6)return; window.__baPerfV6=true;
+  if(window.__baPerfV7)return; window.__baPerfV7=true;
 
   var originalFetch=window.fetch&&window.fetch.bind(window);
   var dataRe=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
@@ -44,13 +44,13 @@
     setInterval(removeBadges,800);
   }
   function loadRuntimes(){
-    if(window.__baRuntimeLoaderV6)return; window.__baRuntimeLoaderV6=true;
+    if(window.__baRuntimeLoaderV7)return; window.__baRuntimeLoaderV7=true;
     loadScript('assets/logic_safety_patch.js?v=20260426logic1','logic-safety-patch-script');
     loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid8','hybrid-adaptive-runtime-script');
     loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
     loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
-    loadScript('assets/api_history_label_runtime.js?v=20260426hist21exact1','api-history-label-runtime-script');
-    loadScript('assets/dashboard_history21_sync.js?v=20260426hist21sync2','dashboard-history21-sync-script');
+    loadScript('assets/api_history_label_runtime.js?v=20260428restorevideo1','api-history-label-runtime-script');
+    loadScript('assets/dashboard_history21_sync.js?v=20260428restorevideo1','dashboard-history21-sync-script');
     addLink('assets/pro_command_center.css?v=20260428weekstable','pro-command-center-css');
     loadScript('assets/pro_command_center.js?v=20260428weekstable','pro-command-center-script');
     loadScript('assets/pro_intelligence_runtime.js?v=20260427clean2','pro-intelligence-runtime-script');
@@ -66,9 +66,9 @@
   function installToastFilter(){if(typeof window.toast!=='function'||window.toast.__baFilterInstalled)return;var old=window.toast;window.toast=function(msg,type){var t=String(msg||'');if(t.indexOf('API sync:')===0||t.indexOf('ML5')>=0||isBadgeText(t))return;return old.apply(this,arguments)};window.toast.__baFilterInstalled=true}
   function prefetch(){['data/meta.json','data/predictions.json','data/leagues.json','data/backtest.json','data/model_quality.json','data/pro_intelligence.json','data/ev_signals_v2.json'].forEach(function(f){try{originalFetch&&originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
 
-  addStyle('ba-perf-css','.dashboard-v16-perf-stats,.dash-yday-strip{display:none!important}.match-card,.top-pick-card,.ml-card,.bilet-card,.ticket-card,.bankroll-card,.visual-card,.history-table-wrapper{content-visibility:auto;contain-intrinsic-size:1px 260px}.matches-grid,.top-picks-grid,.ml-grid,.focus-grid,.visual-grid{contain:layout style paint}@media(max-width:900px){.header-quick-stats{display:none!important}#btn-refresh{min-width:52px!important;border-radius:18px!important}}');
+  addStyle('ba-perf-css','.dash-yday-strip{display:none!important}.match-card,.top-pick-card,.ml-card,.bilet-card,.ticket-card,.bankroll-card,.visual-card,.history-table-wrapper{content-visibility:auto;contain-intrinsic-size:1px 260px}.matches-grid,.top-picks-grid,.ml-grid,.focus-grid,.visual-grid{contain:layout style paint}@media(max-width:900px){.header-quick-stats{display:none!important}#btn-refresh{min-width:52px!important;border-radius:18px!important}}');
   installBadgeCleaner();
-  // Legacy weekly renderer intentionally disabled. The Pro Command Center owns "ULTIMELE 7 ZILE", so refresh no longer flashes the older card first.
+  // Performance card stays in the original Dashboard V16 layout. Runtime only syncs values with Istoric 21; it no longer hides the card or replaces it with duplicate mini cards.
   loadRuntimes();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){watchHeader();installToastFilter();prefetch();removeBadges()});else{watchHeader();installToastFilter();prefetch();removeBadges()}
   setTimeout(installToastFilter,1200);
