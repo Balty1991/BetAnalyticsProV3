@@ -27,6 +27,7 @@ var AUDIT_TICKETS = {premium:null, double:null, triple:null, contrarian:null};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BUILD_STATUS = {};
+var MODEL_BENCHMARKS = {};  // model_benchmarks.json — real backtest per piață
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
@@ -1423,6 +1424,57 @@ function oddsInRanges(odds, ranges){
   var o = Number(odds || 0);
   return (ranges || []).some(function(range){ return o >= range[0] && o <= range[1]; });
 }
+
+// ─── BENCHMARK BADGE ─────────────────────────────────────────────────────────
+// Returnează un badge HTML cu contextul istoric al modelului pe piața curentă.
+// edgePct: valoarea edge curentă (număr)
+// marketKey: 'under35', 'over25', 'btts', etc.
+function getBenchmarkBadge(marketKey, edgePct) {
+  try {
+    var bt = MODEL_BENCHMARKS && MODEL_BENCHMARKS.real_backtest;
+    if (!bt || !bt.by_market) return '';
+
+    // ROI per piață din backtestul real
+    var mktStats = bt.by_market[marketKey];
+    var roiPct   = mktStats ? Number(mktStats.roi_pct || 0) : null;
+    var nBets    = mktStats ? Number(mktStats.n || 0) : 0;
+
+    // Bucket edge curent
+    var edge = Number(edgePct || 0);
+    var bucketStats = null;
+    var bucketLabel = '';
+    if (bt.by_edge_bucket) {
+      if (edge < 5)        { bucketStats = bt.by_edge_bucket['0-5%'];   bucketLabel = '0-5%'; }
+      else if (edge < 10)  { bucketStats = bt.by_edge_bucket['5-10%'];  bucketLabel = '5-10%'; }
+      else if (edge < 15)  { bucketStats = bt.by_edge_bucket['10-15%']; bucketLabel = '10-15%'; }
+      else                 { bucketStats = bt.by_edge_bucket['15%+'];   bucketLabel = '15%+'; }
+    }
+    var bucketRoi = bucketStats ? Number(bucketStats.roi_pct || 0) : null;
+
+    // Construiește badge-ul
+    var parts = [];
+
+    // Indicator piață
+    if (roiPct !== null && nBets >= 20) {
+      var roiColor = roiPct >= 3 ? 'var(--grn)' : roiPct >= 0 ? 'var(--yel)' : 'var(--red,#e55)';
+      var roiSign  = roiPct >= 0 ? '+' : '';
+      parts.push('<span style="color:' + roiColor + ';font-size:.72em">BT ' + roiSign + roiPct.toFixed(1) + '%</span>');
+    }
+
+    // Indicator edge bucket
+    if (bucketRoi !== null && bucketStats && bucketStats.n >= 10) {
+      var bColor = bucketRoi >= 3 ? 'var(--grn)' : bucketRoi >= 0 ? 'var(--yel)' : 'var(--red,#e55)';
+      var bSign  = bucketRoi >= 0 ? '+' : '';
+      var warn   = bucketRoi < 0 ? ' ⚠' : '';
+      parts.push('<span style="color:' + bColor + ';font-size:.72em">Edge ' + bucketLabel + ': ' + bSign + bucketRoi.toFixed(1) + '%' + warn + '</span>');
+    }
+
+    if (!parts.length) return '';
+    return ' • ' + parts.join(' • ');
+  } catch(e) { return ''; }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function calcSmartScore(adjProb, value, confidence, edgePct){
   // Sincronizat cu fetch_data.py:calc_smart_score — aceeași scală, penalizări identice
   var c = normalizeConfidence(confidence);
@@ -4518,7 +4570,8 @@ function doRefresh(isManual){
     fetch9('/data/training_market_baselines.json', []),
     fetch9('/data/training_scoring_summary.json', {}),
     fetch9('/data/enriched.json', {}),  // ML5 pre-baked enrichment
-    fetch9('/data/build_status.json', {})
+    fetch9('/data/build_status.json', {}),
+    fetch9('/data/model_benchmarks.json', {})  // benchmark model vs model
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -4530,6 +4583,7 @@ function doRefresh(isManual){
     var trainingSummaryData = results[7];
     var enrichedFile = results[8] || {};
     BUILD_STATUS = results[9] || {};
+    MODEL_BENCHMARKS = results[10] || {};
 
     var preds = predData.results || predData || [];
     window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
@@ -6214,7 +6268,7 @@ function renderMatches(){
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
-    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(Number(b.kellyPct||0)>0?' • Kelly <strong>'+Number(b.kellyPct||0).toFixed(1)+'%</strong>':'')+(m.riskTier&&m.riskTier!=='Avoid'?' • <span style="color:'+(m.riskTier==='Safe'?'var(--grn)':m.riskTier==='Value'?'var(--yel)':'var(--acc)')+';font-weight:700">'+m.riskTier+'</span>':'')+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+'</div>') : '';
+    var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(Number(b.kellyPct||0)>0?' • Kelly <strong>'+Number(b.kellyPct||0).toFixed(1)+'%</strong>':'')+(m.riskTier&&m.riskTier!=='Avoid'?' • <span style="color:'+(m.riskTier==='Safe'?'var(--grn)':m.riskTier==='Value'?'var(--yel)':'var(--acc)')+';font-weight:700">'+m.riskTier+'</span>':'')+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+(b ? getBenchmarkBadge(b.type || b.marketKey || '', Number(b.edgePct||0)) : '')+'</div>') : '';
     var expertDetails = analysisMetricCards +
       predictionProbabilityHtml+
       '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
@@ -6608,7 +6662,8 @@ function buildMarketCandidate(m, type){
   var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
   // Over 1.5 — praguri relaxate (xG 2.00, prob 72, value 0.02, edge 2) pentru a include mai multe evenimente
-  if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < 2 || Number(b.value || 0) < 0.02)) return null;
+  if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < 15 || Number(b.value || 0) < 0.02)) return null; // prag ridicat 2→15 (backtest real: ROI -11.77% sub 15%)
+  if(type === 'under35' && edgePct < 8) return null; // prag adaugat (backtest real: ROI +0.6% overall, negativ sub 8%)
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
   // DC 1X / X2 — safe bet, prob >=75%, value >=0.02, odds >=1.15 (sub 1.15 devine irelevant)
   if(type === 'dc1x' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
