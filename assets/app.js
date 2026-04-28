@@ -1464,31 +1464,28 @@ function getBenchmarkRow(marketKey, edgePct) {
   if (!d) return '';
   if (d.mktRoi === null && d.bucketRoi === null) return '';
 
-  var isBad    = d.edgeBad;
-  var bg       = isBad ? 'rgba(239,68,68,.08)'    : 'rgba(16,185,129,.07)';
-  var border   = isBad ? 'rgba(239,68,68,.28)'    : 'rgba(16,185,129,.18)';
-  var icon     = isBad ? '⚠️' : '📊';
+  var isBad  = d.edgeBad;
+  var bg     = isBad ? 'rgba(239,68,68,.10)'  : 'rgba(16,185,129,.08)';
+  var border = isBad ? 'rgba(239,68,68,.30)'  : 'rgba(16,185,129,.22)';
+  var icon   = isBad ? '⚠️' : '📊';
 
-  // Piață
-  var mktPart = '';
+  var mktStr = '';
   if (d.mktRoi !== null && d.mktN >= 20) {
     var mc = d.mktRoi >= 3 ? '#22c55e' : d.mktRoi >= 0 ? '#f59e0b' : '#ef4444';
-    mktPart = '<span style="color:rgba(255,255,255,.45)">BT:</span> <span style="color:' + mc + ';font-weight:700">' + (d.mktRoi >= 0 ? '+' : '') + d.mktRoi.toFixed(1) + '%</span>';
+    mktStr = 'BT <b style="color:' + mc + '">' + (d.mktRoi >= 0 ? '+' : '') + d.mktRoi.toFixed(1) + '%</b>';
   }
 
-  // Edge bucket
-  var bucketPart = '';
+  var bucketStr = '';
   if (d.bucketRoi !== null && d.bucketN >= 10) {
     var bc   = d.bucketRoi >= 3 ? '#22c55e' : d.bucketRoi >= 0 ? '#f59e0b' : '#ef4444';
-    var warn = isBad ? ' <span style="color:#ef4444;font-weight:900">⚠ evită</span>' : ' <span style="color:#22c55e">✓</span>';
-    bucketPart = '<span style="color:rgba(255,255,255,.45)">Edge ' + d.bucketKey + ':</span> <span style="color:' + bc + ';font-weight:700">' + (d.bucketRoi >= 0 ? '+' : '') + d.bucketRoi.toFixed(1) + '%</span>' + warn;
+    var suf  = isBad ? ' <b style="color:#ef4444">⚠ evită</b>' : ' <span style="color:#22c55e">✓</span>';
+    bucketStr = d.bucketKey + ' <b style="color:' + bc + '">' + (d.bucketRoi >= 0 ? '+' : '') + d.bucketRoi.toFixed(1) + '%</b>' + suf;
   }
 
-  var sep = (mktPart && bucketPart) ? '<span style="color:rgba(255,255,255,.2);margin:0 6px">•</span>' : '';
+  var inner = [mktStr, bucketStr].filter(Boolean).join('<span style="color:rgba(255,255,255,.2);margin:0 5px">•</span>');
 
-  return '<div style="margin-top:7px;padding:6px 11px;border-radius:9px;background:' + bg + ';border:1px solid ' + border + ';display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.3">' +
-    '<span>' + icon + '</span>' +
-    mktPart + sep + bucketPart +
+  return '<div style="margin-top:6px;padding:5px 10px;border-radius:8px;background:' + bg + ';border:1px solid ' + border + ';font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+    icon + ' ' + inner +
   '</div>';
 }
 
