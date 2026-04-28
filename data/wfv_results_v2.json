@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-04-28T20:27:44.113188",
+  "updated_at": "2026-04-28T20:57:55.284763",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 9043,
+  "n_rows": 9044,
   "n_folds": 4,
   "global_score": 73.0,
   "global_grade": "B",
@@ -23,7 +23,7 @@
           "n": 553,
           "brier": 0.2462,
           "log_loss": 0.6854,
-          "ece": 0.0085,
+          "ece": 0.0082,
           "winrate": 0.4575
         },
         {
@@ -65,7 +65,7 @@
           "n": 553,
           "brier": 0.1957,
           "log_loss": 0.5804,
-          "ece": 0.0111,
+          "ece": 0.0108,
           "winrate": 0.2658
         },
         {
@@ -107,7 +107,7 @@
           "n": 553,
           "brier": 0.1968,
           "log_loss": 0.5814,
-          "ece": 0.0205,
+          "ece": 0.0204,
           "winrate": 0.2767
         },
         {
@@ -128,7 +128,7 @@
           "n": 2477,
           "brier": 0.2078,
           "log_loss": 0.6043,
-          "ece": 0.0088,
+          "ece": 0.009,
           "winrate": 0.304
         }
       ]
@@ -181,7 +181,7 @@
       "folds": 4,
       "avg_brier": 0.1971,
       "avg_log_loss": 0.5812,
-      "avg_ece": 0.0202,
+      "avg_ece": 0.0203,
       "avg_winrate": 0.7199,
       "score": 78.2,
       "grade": "B",
@@ -191,7 +191,7 @@
           "n": 553,
           "brier": 0.1839,
           "log_loss": 0.5538,
-          "ece": 0.0474,
+          "ece": 0.0476,
           "winrate": 0.7577
         },
         {
@@ -233,7 +233,7 @@
           "n": 553,
           "brier": 0.2519,
           "log_loss": 0.697,
-          "ece": 0.0392,
+          "ece": 0.0393,
           "winrate": 0.5081
         },
         {
@@ -264,8 +264,8 @@
       "label": "Peste 1.5G",
       "folds": 4,
       "avg_brier": 0.2793,
-      "avg_log_loss": 0.7524,
-      "avg_ece": 0.2878,
+      "avg_log_loss": 0.7525,
+      "avg_ece": 0.2879,
       "avg_winrate": 0.7407,
       "score": 50.1,
       "grade": "D",
@@ -273,9 +273,9 @@
       "fold_details": [
         {
           "n": 553,
-          "brier": 0.2752,
-          "log_loss": 0.7441,
-          "ece": 0.2554,
+          "brier": 0.2753,
+          "log_loss": 0.7443,
+          "ece": 0.2556,
           "winrate": 0.7052
         },
         {
@@ -295,7 +295,7 @@
         {
           "n": 2477,
           "brier": 0.284,
-          "log_loss": 0.7619,
+          "log_loss": 0.762,
           "ece": 0.2986,
           "winrate": 0.7477
         }
