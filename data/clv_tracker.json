@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-29T07:55:56.654648+00:00",
+  "updated_at": "2026-04-29T08:25:10.901674+00:00",
   "summary": {
-    "total_picks": 503,
-    "avg_clv_pct": -0.6497,
+    "total_picks": 504,
+    "avg_clv_pct": -0.6538,
     "median_clv_pct": 0.0,
     "clv_positive_n": 78,
-    "clv_negative_n": 425,
-    "clv_positive_rate": 0.1551,
-    "avg_clv_wins": -0.2966,
+    "clv_negative_n": 426,
+    "clv_positive_rate": 0.1548,
+    "avg_clv_wins": -0.3033,
     "avg_clv_losses": -1.5213,
-    "win_rate_pct": 71.17,
-    "roi_flat_pct": -1.2161,
+    "win_rate_pct": 71.23,
+    "roi_flat_pct": -1.1185,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.2424
+    "std_clv_pct": 6.2368
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 285,
-      "avg_clv_pct": -1.2738,
-      "clv_positive_rate": 0.1088,
-      "win_rate_pct": 73.33,
-      "roi_flat_pct": 1.0712,
-      "avg_ev_at_pick": 3.1486
+      "n": 286,
+      "avg_clv_pct": -1.2788,
+      "clv_positive_rate": 0.1084,
+      "win_rate_pct": 73.43,
+      "roi_flat_pct": 1.2353,
+      "avg_ev_at_pick": 3.1793
     }
   },
   "clv_buckets": {
@@ -69,10 +69,10 @@
       "avg_clv": -0.0684
     },
     "clv_mild_neg": {
-      "n": 96,
-      "win_rate": 76.04,
-      "roi_pct": 8.5844,
-      "avg_clv": -2.732
+      "n": 97,
+      "win_rate": 76.29,
+      "roi_pct": 8.9907,
+      "avg_clv": -2.7317
     },
     "clv_strong_neg": {
       "n": 52,
@@ -82,24 +82,24 @@
     }
   },
   "rolling_30d": {
-    "n": 503,
-    "avg_clv_pct": -0.6497,
-    "win_rate_pct": 71.17,
-    "roi_flat_pct": -1.2161,
+    "n": 504,
+    "avg_clv_pct": -0.6538,
+    "win_rate_pct": 71.23,
+    "roi_flat_pct": -1.1185,
     "days": 30
   },
   "rolling_90d": {
-    "n": 503,
-    "avg_clv_pct": -0.6497,
-    "win_rate_pct": 71.17,
-    "roi_flat_pct": -1.2161,
+    "n": 504,
+    "avg_clv_pct": -0.6538,
+    "win_rate_pct": 71.23,
+    "roi_flat_pct": -1.1185,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 316,
-      "avg_clv": 0.6814,
-      "clv_positive_rate": 0.2057
+      "n": 317,
+      "avg_clv": 0.6707,
+      "clv_positive_rate": 0.205
     },
     "ev_negative_picks": {
       "n": 187,
@@ -110,12 +110,35 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.22%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.12%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "204848",
+      "date": "2026-04-29",
+      "home": "Urawa Red Diamonds",
+      "away": "Kawasaki Frontale",
+      "league": "J1 League",
+      "market": "under35",
+      "picked_odds": 1.44,
+      "closing_odds": 1.48,
+      "picked_implied": 0.694444,
+      "closing_implied": 0.675676,
+      "clv_pct": -2.7027,
+      "clv_positive": false,
+      "ev_at_pick_pct": 11.9312,
+      "model_prob": 77.73,
+      "edge_pct": 15.47,
+      "score": 99,
+      "line_move_pct": 2.7778,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-29T08:04:21.634053+00:00",
+      "prediction_id": 3250
+    },
     {
       "event_id": "204847",
       "date": "2026-04-29",
@@ -136,7 +159,7 @@
       "line_move_pct": -10.0,
       "won": false,
       "status": "lose",
-      "settled_at": "2026-04-29T07:34:24.277639+00:00",
+      "settled_at": "2026-04-29T08:04:21.634053+00:00",
       "prediction_id": 3246
     },
     {

@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-04-29T07:55:33.470139+00:00",
-  "quality_score": 70.2,
+  "updated_at": "2026-04-29T08:24:47.982270+00:00",
+  "quality_score": 70.3,
   "quality_grade": "C",
   "coverage": {
-    "predictions": 310,
+    "predictions": 311,
     "ev_signals": 0,
     "log_total": 666,
-    "log_closed": 521,
+    "log_closed": 522,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.35,
+    "age_hours": 0.34,
     "color": "green",
     "label": "0.4h"
   },
@@ -63,16 +63,16 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 296,
+      "n": 297,
       "credible": true,
-      "brier": 0.1907,
-      "log_loss": 0.5671,
-      "ece": 0.0261,
+      "brier": 0.1902,
+      "log_loss": 0.5661,
+      "ece": 0.0252,
       "calib_label": "excelent",
-      "winrate": 72.97,
-      "roi_pct": 0.49,
-      "n_wins": 216,
-      "score": 77.5,
+      "winrate": 73.06,
+      "roi_pct": 0.65,
+      "n_wins": 217,
+      "score": 77.8,
       "grade": "B"
     }
   ],
@@ -349,8 +349,8 @@
         "market": "over15",
         "label": "Peste 1.5G",
         "folds": 4,
-        "avg_brier": 0.2793,
-        "avg_log_loss": 0.7524,
+        "avg_brier": 0.2794,
+        "avg_log_loss": 0.7525,
         "avg_ece": 0.2878,
         "avg_winrate": 0.7406,
         "score": 50.1,
@@ -392,18 +392,18 @@
       "Peste 1.5G: calibrare în degradare (ECE crește în timp).",
       "Peste 1.5G: ECE mediu 0.288 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-04-29T07:55:33.357232"
+    "updated_at": "2026-04-29T08:24:47.870462"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.2,
+      "value": 70.3,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 521,
+      "value": 522,
       "suffix": " finalizate",
       "tone": "good"
     },
