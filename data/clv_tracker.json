@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-29T08:48:26.606431+00:00",
+  "updated_at": "2026-04-29T09:38:32.459492+00:00",
   "summary": {
-    "total_picks": 504,
-    "avg_clv_pct": -0.6538,
+    "total_picks": 505,
+    "avg_clv_pct": -0.6569,
     "median_clv_pct": 0.0,
     "clv_positive_n": 78,
-    "clv_negative_n": 426,
-    "clv_positive_rate": 0.1548,
+    "clv_negative_n": 427,
+    "clv_positive_rate": 0.1545,
     "avg_clv_wins": -0.3033,
-    "avg_clv_losses": -1.5213,
-    "win_rate_pct": 71.23,
-    "roi_flat_pct": -1.1185,
+    "avg_clv_losses": -1.5264,
+    "win_rate_pct": 71.09,
+    "roi_flat_pct": -1.3143,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.2368
+    "std_clv_pct": 6.2311
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 286,
-      "avg_clv_pct": -1.2788,
-      "clv_positive_rate": 0.1084,
-      "win_rate_pct": 73.43,
-      "roi_flat_pct": 1.2353,
-      "avg_ev_at_pick": 3.1793
+      "n": 287,
+      "avg_clv_pct": -1.2822,
+      "clv_positive_rate": 0.108,
+      "win_rate_pct": 73.17,
+      "roi_flat_pct": 0.8826,
+      "avg_ev_at_pick": 3.1632
     }
   },
   "clv_buckets": {
@@ -69,10 +69,10 @@
       "avg_clv": -0.0684
     },
     "clv_mild_neg": {
-      "n": 97,
-      "win_rate": 76.29,
-      "roi_pct": 8.9907,
-      "avg_clv": -2.7317
+      "n": 98,
+      "win_rate": 75.51,
+      "roi_pct": 7.8786,
+      "avg_clv": -2.7268
     },
     "clv_strong_neg": {
       "n": 52,
@@ -82,17 +82,17 @@
     }
   },
   "rolling_30d": {
-    "n": 504,
-    "avg_clv_pct": -0.6538,
-    "win_rate_pct": 71.23,
-    "roi_flat_pct": -1.1185,
+    "n": 505,
+    "avg_clv_pct": -0.6569,
+    "win_rate_pct": 71.09,
+    "roi_flat_pct": -1.3143,
     "days": 30
   },
   "rolling_90d": {
-    "n": 504,
-    "avg_clv_pct": -0.6538,
-    "win_rate_pct": 71.23,
-    "roi_flat_pct": -1.1185,
+    "n": 505,
+    "avg_clv_pct": -0.6569,
+    "win_rate_pct": 71.09,
+    "roi_flat_pct": -1.3143,
     "days": 90
   },
   "ev_correlation": {
@@ -102,20 +102,43 @@
       "clv_positive_rate": 0.205
     },
     "ev_negative_picks": {
-      "n": 187,
-      "avg_clv": -2.899,
-      "clv_positive_rate": 0.0695
+      "n": 188,
+      "avg_clv": -2.8956,
+      "clv_positive_rate": 0.0691
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.12%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.66%) și ROI negativ (-1.31%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "204851",
+      "date": "2026-04-29",
+      "home": "Kashiwa Reysol",
+      "away": "FC Tokyo",
+      "league": "J1 League",
+      "market": "under35",
+      "picked_odds": 1.3,
+      "closing_odds": 1.33,
+      "picked_implied": 0.769231,
+      "closing_implied": 0.75188,
+      "clv_pct": -2.2556,
+      "clv_positive": false,
+      "ev_at_pick_pct": -1.46,
+      "model_prob": 75.8,
+      "edge_pct": 6.44,
+      "score": 85,
+      "line_move_pct": 2.3077,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-04-29T09:18:51.236921+00:00",
+      "prediction_id": 3251
+    },
     {
       "event_id": "204848",
       "date": "2026-04-29",
@@ -159,7 +182,7 @@
       "line_move_pct": -10.0,
       "won": false,
       "status": "lose",
-      "settled_at": "2026-04-29T08:04:21.634053+00:00",
+      "settled_at": "2026-04-29T07:34:24.277639+00:00",
       "prediction_id": 3246
     },
     {
