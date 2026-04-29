@@ -1436,7 +1436,16 @@ function getMarketThresholds() {
 var EDGE_FALLBACK = { over15: 15.0, under35: 15.0, over25: 10.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
   var t = getMarketThresholds()[marketKey];
-  if (t && !t.disabled && typeof t.min_edge === 'number') return t.min_edge;
+  if (t && !t.disabled && typeof t.min_edge === 'number'){
+    // Bootstrap activ: bucketul profitabil are date insuficiente (n < bootstrap_target_n).
+    // Folosim bootstrap_min_edge (prag mai permisiv) ca să acumulăm istoric.
+    // Când n atinge target → build_model_benchmarks.py setează bootstrap_min_edge=null
+    // și revenim automat la min_edge data-driven.
+    if(typeof t.bootstrap_min_edge === 'number' && t.bootstrap_min_edge > 0){
+      return t.bootstrap_min_edge;
+    }
+    return t.min_edge;
+  }
   return EDGE_FALLBACK[marketKey] != null ? EDGE_FALLBACK[marketKey] : 3.0;
 }
 function isMarketDisabled(marketKey) {
