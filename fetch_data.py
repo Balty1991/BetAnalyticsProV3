@@ -65,7 +65,8 @@ MARKET_MAP = {m["key"]: m for m in MARKETS}
 STRATEGIES = {
     "engine_overall": {
         "label": "Engine Overall",
-        "allowed": {m["key"] for m in MARKETS},
+        "allowed": {"homeWin", "draw", "awayWin", "over15", "under15", "over25", "under25", "under35"},
+        # btts exclus: CLV -2.17%, ROI +10.32% pe noroc (69 picks) — nesustenabil
         "min_adj": 66.0,
         "min_conf": 45.0,
         "min_edge": 8.0,           # backtested: 8pp+ = ROI +2.85% (71 bets), sub 8pp = negativ
@@ -75,7 +76,8 @@ STRATEGIES = {
     },
     "best_single": {
         "label": "Evenimentul zilei",
-        "allowed": {"homeWin", "over15", "over25", "under35", "btts"},  # awayWin/under25 scoase
+        "allowed": {"homeWin", "over15", "over25", "under35"},
+        # btts exclus: CLV -2.17% → noroc, nu edge real
         "min_adj": 72.0,
         "min_conf": 50.0,
         "min_edge": 8.0,           # aliniat cu zona profitabilă 8pp+
@@ -85,7 +87,8 @@ STRATEGIES = {
     },
     "profit_single": {
         "label": "Profit Focus Single",
-        "allowed": {"homeWin", "over15", "over25", "under35", "btts"},  # awayWin/under25 scoase
+        "allowed": {"homeWin", "over15", "over25", "under35"},
+        # btts exclus: CLV -2.17% → noroc, nu edge real
         "min_adj": 70.0,
         "min_conf": 48.0,
         "max_conf": 65.0,          # exclude conf 66-75: ROI -37.75% pe 4 pariuri
@@ -107,6 +110,7 @@ STRATEGIES = {
     "smart_ev": {
         "label": "Smart EV",
         "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts"},
+        # btts păstrat doar în smart_ev (strategie experimentală, nu în recomandarea principală)
         "min_adj": 66.0,
         "min_conf": 45.0,
         "min_edge": 2.0,
@@ -117,7 +121,8 @@ STRATEGIES = {
     },
     "controlled_combo": {
         "label": "Combo Controlat",
-        "allowed": {"over15", "over25", "under35", "btts", "homeWin"},  # awayWin/under25 scoase
+        "allowed": {"over15", "over25", "under35", "homeWin"},
+        # btts exclus: CLV -2.17% → noroc, nu edge real
         "min_adj": 71.0,
         "min_conf": 48.0,
         "min_edge": 5.0,
@@ -128,11 +133,16 @@ STRATEGIES = {
     "over15": {
         "label": "Bilet Over 1.5 EV+",
         "allowed": {"over15"},
+        # Audit CLV (143 picks, 2026-04-29):
+        #   Zona 1.43-1.60 + edge≥8pp: n=9, WR=78%, ROI=+16.7% ✅
+        #   Zona 1.25-1.42: ROI -13% până la -29% pe orice edge → MOARTĂ
+        #   Logică: la cote <1.43, piața prețuiește over15 la >69% implied
+        #   Modelul nostru nu bate sistematic această zonă (WR reală 60-65%)
         "min_adj": 76.0,
         "min_conf": 50.0,
-        "min_edge": 5.0,           # Over 1.5G ROI -6.57% general — necesită edge ridicat
+        "min_edge": 8.0,           # edge standard, dar zona de cotă face filtrarea
         "min_value": -0.02,
-        "odd_min": 1.15,
+        "odd_min": 1.43,           # ridicat de la 1.15 → eliminăm zona moartă 1.15-1.42
         "odd_max": 1.60,
     },
 }
