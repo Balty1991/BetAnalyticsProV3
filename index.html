@@ -120,6 +120,10 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
       <span class="more-card-title">🎯 Motor de Predicții Unificat</span>
       <span class="more-card-sub">Kelly + AI Memory + SmartBet — cel mai bun din 3 motoare, un singur scor.</span>
     </button>
+    <button class="more-card-btn" onclick="switchTab('clv');closeDesktopMore()">
+      <span class="more-card-title">📈 CLV Tracker</span>
+      <span class="more-card-sub">Closing Line Value — verifică dacă modelul bate piața real.</span>
+    </button>
   </div>
 </div>
 
@@ -1090,6 +1094,14 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
         <div class="sankey-wrap" id="advanced-sankey"></div>
       </div>
     </div>
+  </div><!-- end tab-charts -->
+
+  <!-- ===== CLV TRACKER ===== -->
+  <div class="tab-content" id="tab-clv">
+    <div class="clv-loading-init" style="text-align:center;padding:48px;color:var(--muted,#64748b)">
+      <div style="display:inline-block;width:22px;height:22px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:clvspin .7s linear infinite;margin-bottom:8px"></div>
+      <br>Se încarcă datele CLV…
+    </div>
   </div>
 
 </div><!-- /main -->
@@ -1120,7 +1132,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
-  
+  <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
 </div>
 
 
