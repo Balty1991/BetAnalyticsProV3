@@ -1433,7 +1433,7 @@ function getMarketThresholds() {
   return _MARKET_THRESHOLDS_CACHE;
 }
 
-var EDGE_FALLBACK = { over15: 15.0, under35: 15.0, over25: 10.0, btts: 5.0 };
+var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 10.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
   var t = getMarketThresholds()[marketKey];
   if (t && !t.disabled && typeof t.min_edge === 'number'){
