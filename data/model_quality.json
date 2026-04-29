@@ -1,18 +1,18 @@
 {
-  "updated_at": "2026-04-29T02:10:07.708813+00:00",
-  "quality_score": 70.7,
+  "updated_at": "2026-04-29T02:41:00.359618+00:00",
+  "quality_score": 70.8,
   "quality_grade": "C",
   "coverage": {
     "predictions": 291,
     "ev_signals": 0,
-    "log_total": 625,
-    "log_closed": 511,
+    "log_total": 666,
+    "log_closed": 512,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.34,
+    "age_hours": 0.37,
     "color": "green",
-    "label": "0.3h"
+    "label": "0.4h"
   },
   "markets": [
     {
@@ -63,16 +63,16 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 288,
+      "n": 289,
       "credible": true,
-      "brier": 0.1934,
-      "log_loss": 0.5736,
-      "ece": 0.0287,
+      "brier": 0.1928,
+      "log_loss": 0.5724,
+      "ece": 0.0279,
       "calib_label": "excelent",
-      "winrate": 72.57,
-      "roi_pct": 0.26,
-      "n_wins": 209,
-      "score": 76.7,
+      "winrate": 72.66,
+      "roi_pct": 0.33,
+      "n_wins": 210,
+      "score": 77.0,
       "grade": "B"
     }
   ],
@@ -182,7 +182,7 @@
         "label": "Victorie oaspete",
         "folds": 4,
         "avg_brier": 0.2071,
-        "avg_log_loss": 0.6038,
+        "avg_log_loss": 0.6039,
         "avg_ece": 0.0171,
         "avg_winrate": 0.2979,
         "score": 77.9,
@@ -214,7 +214,7 @@
             "n": 2476,
             "brier": 0.2078,
             "log_loss": 0.6044,
-            "ece": 0.0089,
+            "ece": 0.009,
             "winrate": 0.3041
           }
         ]
@@ -225,7 +225,7 @@
         "folds": 4,
         "avg_brier": 0.2456,
         "avg_log_loss": 0.6842,
-        "avg_ece": 0.0252,
+        "avg_ece": 0.0254,
         "avg_winrate": 0.5062,
         "score": 72.8,
         "grade": "B",
@@ -256,7 +256,7 @@
             "n": 2476,
             "brier": 0.2439,
             "log_loss": 0.6808,
-            "ece": 0.0156,
+            "ece": 0.0162,
             "winrate": 0.5129
           }
         ]
@@ -298,7 +298,7 @@
             "n": 2476,
             "brier": 0.1975,
             "log_loss": 0.5814,
-            "ece": 0.0088,
+            "ece": 0.0087,
             "winrate": 0.7173
           }
         ]
@@ -340,7 +340,7 @@
             "n": 2476,
             "brier": 0.2432,
             "log_loss": 0.6793,
-            "ece": 0.0031,
+            "ece": 0.003,
             "winrate": 0.5158
           }
         ]
@@ -392,18 +392,18 @@
       "Peste 1.5G: calibrare în degradare (ECE crește în timp).",
       "Peste 1.5G: ECE mediu 0.288 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-04-29T02:10:07.604697"
+    "updated_at": "2026-04-29T02:41:00.254959"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.7,
+      "value": 70.8,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 511,
+      "value": 512,
       "suffix": " finalizate",
       "tone": "good"
     },
