@@ -42,6 +42,12 @@ WEEKDAY_RESTRICTIONS = {
     "over15":  {0, 3, 4},       # Luni -12.7%, Joi -10.4%, Vineri -9%
 }
 
+# ─── Line Movement Filter (bazat pe CLV Buckets) ──────────────────────────────
+# CLV ≤-5% bucket: ROI -12.29% pe 51 pick-uri → excludem
+# from_open_pct > 5.3% ≈ CLV < -5% (calcul invers din formula CLV)
+LINE_MOVE_DRIFT_REJECT = 5.3   # % drift în sus față de opening → piața s-a mișcat contra
+LINE_MOVE_CONFIRM_MIN  = -1.0  # % drift în jos față de opening → piața confirmă direcția
+
 MARKETS = [
     {"key": "homeWin", "label": "1 (Home Win)", "prob": lambda r: pct(r.get("prob_home_win")), "odds": lambda e: e.get("odds_home")},
     {"key": "draw", "label": "X (Draw)", "prob": lambda r: pct(r.get("prob_draw")), "odds": lambda e: e.get("odds_draw")},
@@ -770,6 +776,12 @@ def qualifies_for_strategy(candidate, strategy_cfg):
     if edge < eff_min_edge:
         return False
     if candidate["verdict"] == "avoid":
+        return False
+
+    # ─── Line Move Filter ─────────────────────────────────────────────────────
+    # Exclude pick-uri unde piața s-a mișcat puternic contra (drift > 5.3%)
+    # CLV ≤-5% bucket: ROI -12.29% pe 51 pick-uri — nu merită pariat
+    if candidate.get("line_move_signal") == "DRIFTING":
         return False
 
     # Filtru weekday bazat pe jurnal (ROI +6.65pp la aplicare)
@@ -1923,8 +1935,9 @@ def build_ui_live_candidate(row, market_key):
 
 
 
-def build_current_recommendation_rows(predictions, logged_at_iso):
+def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event_ids=None):
     rows = []
+    drifting_event_ids = drifting_event_ids or set()
     tracked_market_keys = ["over15", "over25", "under35", "btts"]
 
     for row in predictions or []:
@@ -1952,6 +1965,10 @@ def build_current_recommendation_rows(predictions, logged_at_iso):
         pick = candidates[0]
         event_id = pick.get("event_id")
         if not event_id:
+            continue
+
+        # ─── Excludem pick-urile DRIFTING (piața s-a mișcat >5.3% contra) ────
+        if str(event_id) in drifting_event_ids:
             continue
 
         rows.append({
@@ -2037,6 +2054,7 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
         existing = by_event_id.get(key)
 
         if not existing:
+            row["line_move_signal"] = "NEW"
             by_event_id[key] = row
             continue
 
@@ -2063,6 +2081,15 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
         except Exception:
             row["line_movement_pct"] = 0.0
             row["from_open_pct"] = 0.0
+        # ─── Line Move Signal ─────────────────────────────────────────────────
+        # Bazat pe CLV Buckets: drift > 5.3% = CLV ≤-5% = ROI -12.29% → DRIFTING
+        fop = row.get("from_open_pct") or 0.0
+        if fop > LINE_MOVE_DRIFT_REJECT:
+            row["line_move_signal"] = "DRIFTING"   # piața s-a mișcat contra → excludem
+        elif fop < LINE_MOVE_CONFIRM_MIN:
+            row["line_move_signal"] = "CONFIRMED"  # piața confirmă direcția → prioritizăm
+        else:
+            row["line_move_signal"] = "NEUTRAL"
         row["status"] = existing.get("status") or row.get("status")
         row["won"] = existing.get("won")
         row["home_score"] = existing.get("home_score")
@@ -2520,7 +2547,16 @@ def main():
     history_rows = build_history_rows(history_predictions)
     recommendation_log = load_existing_json("recommendation_log.json", [])
     signal_audit = build_signal_audit(predictions, recommendation_log=recommendation_log)
-    current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat())
+    # ─── Line Move Filter: colectăm event-urile DRIFTING din log-ul anterior ──
+    # Picks unde piața s-a mișcat >5.3% contra noastră (CLV ≤-5% → ROI -12.29%)
+    drifting_event_ids = {
+        str(r.get("event_id"))
+        for r in recommendation_log
+        if r.get("line_move_signal") == "DRIFTING" and r.get("status") == "pending"
+    }
+    if drifting_event_ids:
+        print(f"[LineMove] {len(drifting_event_ids)} pick-uri DRIFTING excluse (drift >{LINE_MOVE_DRIFT_REJECT}%)")
+    current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat(), drifting_event_ids=drifting_event_ids)
     finished_events = build_finished_event_index(history_predictions)
     recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
     ai_memory = build_ai_memory(current_recommendations, recommendation_log, history_rows, started_at)
