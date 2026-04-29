@@ -4211,7 +4211,33 @@ function analyzeMatch(raw){
       injuryHome: probMeta ? Number(probMeta.injuryHome || 0) : 0,
       injuryAway: probMeta ? Number(probMeta.injuryAway || 0) : 0,
       calibrationDelta: probMeta && probMeta.calibrationDelta != null ? Number(probMeta.calibrationDelta) : null,
-      preCalibrationProb: probMeta && probMeta.preCalibrationProb != null ? Number(probMeta.preCalibrationProb) : null
+      preCalibrationProb: probMeta && probMeta.preCalibrationProb != null ? Number(probMeta.preCalibrationProb) : null,
+      // ─── Odds Consensus ────────────────────────────────────────────────────
+      consensusFlag: (function(){
+        var hasCompare = !!(compareMeta && compareMeta.hasCompare && Number(compareMeta.bestOdds || 0) > 1.01);
+        if(!hasCompare) return 'NO_DATA';
+        var bkCount = compareMeta ? Number(compareMeta.bookmakersCount || 0) : 0;
+        var bestO = compareMeta ? Number(compareMeta.bestOdds || 0) : 0;
+        var avgO  = compareMeta ? Number(compareMeta.avgOdds  || 0) : 0;
+        // no-vig: folosim avgOdds dacă există, altfel bestOdds
+        var useO  = (avgO > 1.01) ? avgO : bestO;
+        var mNoVig = useO > 1.01 ? (100 / useO) : 0;
+        var edgeVM = mNoVig > 0 ? (adjProb - mNoVig) : null;
+        if(bkCount > 0 && bkCount < 3) return 'LOW_BOOKS';
+        if(avgO > 1.01 && bestO > avgO * 1.08) return 'ISOLATED_ODDS';
+        if(edgeVM !== null && edgeVM < -2) return 'AGAINST_MARKET';
+        if(edgeVM !== null && edgeVM >= 0 && edgeVM < 2) return 'WEAK_CONSENSUS';
+        return 'OK';
+      })(),
+      edgeVsMarket: (function(){
+        var hasCompare = !!(compareMeta && compareMeta.hasCompare && Number(compareMeta.bestOdds || 0) > 1.01);
+        if(!hasCompare) return null;
+        var bestO = compareMeta ? Number(compareMeta.bestOdds || 0) : 0;
+        var avgO  = compareMeta ? Number(compareMeta.avgOdds  || 0) : 0;
+        var useO  = (avgO > 1.01) ? avgO : bestO;
+        var mNoVig = useO > 1.01 ? (100 / useO) : 0;
+        return mNoVig > 0 ? +((adjProb - mNoVig).toFixed(2)) : null;
+      })()
     };
 
     allBets.push(item);
@@ -6649,6 +6675,28 @@ function renderMatches(){
         '<div class="m16-reco-main" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+recLabel+(b ? ' '+getVerdictPill(m,b) : '')+'</div>'+
         m16ProbabilityHtml+
         '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+' | Sursă cotă: '+(oddsSourceMeta ? oddsSourceMeta.active : '—')+(bestMarketLine ? (' | ' + bestMarketLine) : '')+'</div>'+
+        (function(){
+          if(!b || !b.consensusFlag) return '';
+          var flag = b.consensusFlag;
+          var bkCount = Number(b.bookmakersCount || 0);
+          var edgeVM  = b.edgeVsMarket;
+          var cfg = {
+            'OK':             {icon:'✅', txt:'Consens OK',          clr:'rgba(34,197,94,.15)',  brd:'rgba(34,197,94,.3)',   col:'#22c55e'},
+            'WEAK_CONSENSUS': {icon:'⚠️', txt:'Edge slab vs piață',  clr:'rgba(245,158,11,.12)', brd:'rgba(245,158,11,.3)',  col:'#f59e0b'},
+            'LOW_BOOKS':      {icon:'⚠️', txt:'Puțini bk (<3)',      clr:'rgba(148,163,184,.1)', brd:'rgba(148,163,184,.25)',col:'#94a3b8'},
+            'ISOLATED_ODDS':  {icon:'🔴', txt:'Cotă izolată',        clr:'rgba(239,68,68,.08)',  brd:'rgba(239,68,68,.25)',  col:'#ef4444'},
+            'AGAINST_MARKET': {icon:'🔴', txt:'Contra pieței',       clr:'rgba(239,68,68,.08)',  brd:'rgba(239,68,68,.25)',  col:'#ef4444'},
+            'NO_DATA':        {icon:'—',  txt:'Fără cotă de piață',  clr:'rgba(148,163,184,.06)',brd:'rgba(148,163,184,.15)',col:'#64748b'},
+          };
+          var c = cfg[flag] || cfg['NO_DATA'];
+          var edgeTxt = (edgeVM !== null && flag !== 'NO_DATA') ? (' • piață: '+(edgeVM >= 0 ? '+' : '')+edgeVM.toFixed(1)+'pp') : '';
+          var bkTxt   = (bkCount > 0) ? (' • '+bkCount+' bk') : '';
+          return '<div style="margin-top:6px;padding:4px 9px;border-radius:8px;font-size:11px;background:'+c.clr+';border:1px solid '+c.brd+';color:'+c.col+';display:flex;align-items:center;gap:5px;flex-wrap:wrap">'+
+            '<span>'+c.icon+' '+c.txt+'</span>'+
+            (edgeTxt ? '<span style="opacity:.75">'+edgeTxt+'</span>' : '')+
+            (bkTxt   ? '<span style="opacity:.55">'+bkTxt+'</span>' : '')+
+          '</div>';
+        })()+
       '</div>'+
       '<div class="m16-signals">'+
         '<div class="m16-signal-row"><div class="m16-signal-text">📈 Trend: <strong>'+trend+'</strong> • '+state.label+'</div><div class="m16-signal-pill">'+(b && b.value != null ? ('🔥 Value ' + (Number(b.value || 0) >= 0 ? '+' : '') + (Number(b.value || 0) * 100).toFixed(1) + '%') : 'ℹ️ Value n/a')+'</div></div>'+
