@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-29T09:38:10.736503",
+  "updated_at": "2026-04-29T10:05:44.067943",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
   "n_rows": 9056,
@@ -179,33 +179,33 @@
       "market": "under35",
       "label": "Sub 3.5G",
       "folds": 4,
-      "avg_brier": 0.1969,
+      "avg_brier": 0.197,
       "avg_log_loss": 0.5809,
-      "avg_ece": 0.02,
+      "avg_ece": 0.0203,
       "avg_winrate": 0.7202,
-      "score": 78.3,
+      "score": 78.2,
       "grade": "B",
       "trend": "îmbunătățire",
       "fold_details": [
         {
           "n": 554,
-          "brier": 0.1838,
-          "log_loss": 0.5535,
-          "ece": 0.0477,
+          "brier": 0.1839,
+          "log_loss": 0.5537,
+          "ece": 0.0483,
           "winrate": 0.7581
         },
         {
           "n": 887,
           "brier": 0.2055,
           "log_loss": 0.6002,
-          "ece": 0.0093,
+          "ece": 0.0097,
           "winrate": 0.7024
         },
         {
           "n": 2603,
           "brier": 0.2009,
-          "log_loss": 0.5883,
-          "ece": 0.015,
+          "log_loss": 0.5882,
+          "ece": 0.0149,
           "winrate": 0.7034
         },
         {
