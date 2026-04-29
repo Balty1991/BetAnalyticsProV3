@@ -2,7 +2,7 @@
 'use strict';
 if(window.__baWeekFastHistory21)return;window.__baWeekFastHistory21=true;
 var active='d1',last='',lastKey='',expanded={},lastMountAsk=0;
-var DAY=86400000,STORE='ba_week7_history21_snapshot_v2';
+var DAY=86400000,STORE='ba_week7_history21_snapshot_v3';
 function css(){
   if(document.getElementById('ba-week-pro-css'))return;
   var s=document.createElement('style');
@@ -19,12 +19,21 @@ function sanitize(r){return{status:st(r),event_date:r&&r.event_date||r&&r.eventD
 function rowKey(r){try{if(typeof window.getHistory21RowKey==='function')return window.getHistory21RowKey(r)}catch(e){}return[String(r&&r.event_id||r&&r.eventId||''),String(r&&r.home||''),String(r&&r.away||''),String(r&&r.market_key||r&&r.market||''),String(r&&r.event_date||r&&r.date||r&&r.logged_at||'')].join('::')}
 function loadSnapshot(){try{var s=JSON.parse(localStorage.getItem(STORE)||'null');if(!s||s.day!==dayKey()||!Array.isArray(s.rows))return null;if(Date.now()-Number(s.at||0)>6*3600000)return null;return s}catch(e){return null}}
 function saveSnapshot(rows,ready){try{localStorage.setItem(STORE,JSON.stringify({day:dayKey(),at:Date.now(),ready:!!ready,rows:(rows||[]).slice(0,300).map(sanitize)}))}catch(e){}}
-function collectHistory21Settled(){var cutoff21=new Date(Date.now()-21*DAY),map={},out=[];cutoff21.setHours(0,0,0,0);try{if(typeof window.getHistory21SettledRows==='function'){(window.getHistory21SettledRows(cutoff21)||[]).forEach(function(r){if(r)map[rowKey(r)]=r})}}catch(e){}Object.keys(map).forEach(function(k){out.push(map[k])});if(!out.length){try{if(Array.isArray(window.RECOMMENDATION_LOG))out=out.concat(window.RECOMMENDATION_LOG)}catch(e){}try{if(Array.isArray(window.RECOMMENDATION_JOURNAL))out=out.concat(window.RECOMMENDATION_JOURNAL)}catch(e){}try{if(Array.isArray(window.HISTORY_ENGINE))out=out.concat(window.HISTORY_ENGINE)}catch(e){}}
+function getBetTypesSupported(){var sup={};try{var bt=window.BET_TYPES||[];bt.forEach(function(b){if(b){sup[String(b.label||'')]=true;sup[String(b.key||'')]=true;}})}catch(e){}return sup}
+function inferMK(r){try{if(typeof window.inferMarketTypeFromLabel==='function')return window.inferMarketTypeFromLabel(r.market||'')}catch(e){}return r.market||''}
+function matchesBetTypes(r,sup){if(!r||!Object.keys(sup).length)return false;var mk=r.market_key||inferMK(r);return !!(sup[r.market]||sup[mk])}
+function collectHistory21Settled(){var cutoff21=new Date(Date.now()-21*DAY),map={},out=[];cutoff21.setHours(0,0,0,0);
+  // Calea principală: aceeași sursă ca Istoric 21
+  try{if(typeof window.getHistory21SettledRows==='function'){(window.getHistory21SettledRows(cutoff21)||[]).forEach(function(r){if(r)map[rowKey(r)]=r})}}catch(e){}
+  Object.keys(map).forEach(function(k){out.push(map[k])});
+  // Fallback NUMAI dacă datele sunt complet încărcate și getHistory21SettledRows n-a dat nimic
+  // Aplicăm același filtru BET_TYPES ca getHistory21SettledRows — fără RECOMMENDATION_JOURNAL (are duplicate)
+  if(!out.length&&!dataLoading()){var sup=getBetTypesSupported();try{(window.RECOMMENDATION_LOG||[]).forEach(function(r){if(r&&matchesBetTypes(r,sup)){var x=st(r);if(x==='win'||x==='loss'){map[rowKey(r)]=r;}}})}catch(e){}Object.keys(map).forEach(function(k){out.push(map[k])})}
   return out.filter(function(r){var x=st(r);return r&&(x==='win'||x==='loss')&&ts(r)>=cutoff21.getTime()}).map(sanitize)}
 function rows(){var cutoff7=new Date(Date.now()-8*DAY);cutoff7.setHours(0,0,0,0);var live=collectHistory21Settled(),snap=loadSnapshot(),ready=!dataLoading();if(live.length){saveSnapshot(live,true)}else if(!snap&&ready){saveSnapshot(live,ready)}var src=live.length?live:(snap?snap.rows:live);return{snapshot:false,usingCache:!live.length&&!!snap,at:snap&&snap.at||Date.now(),rows:(src||[]).filter(function(r){return ts(r)>=cutoff7.getTime()})}}
 function odds(r){return Number(r&&(r.odds||r.book_odds||r.best_odds||r.price)||0)}
 function profit(r){var o=odds(r);return st(r)==='win'?(o>1?o-1:0):-1}
-function met(rs){var w=0,p=0,n=rs.length;rs.forEach(function(r){if(st(r)==='win')w++;p+=profit(r)});return{n:n,w:w,l:n-w,profit:p,roi:n?p*100/n:0,wr:n?w*100/n:0}}
+function met(rs){var settled=rs.filter(function(r){var s=st(r);return s==='win'||s==='loss'});var w=0,p=0,n=settled.length;settled.forEach(function(r){if(st(r)==='win')w++;p+=profit(r)});return{n:n,w:w,l:n-w,profit:p,roi:n?p*100/n:0,wr:n?w*100/n:0}}
 function sign(n,s){n=Number(n||0);return(n>=0?'+':'')+n.toFixed(1)+(s||'')}
 function cls(m){return !m.n?'is-neutral':(m.roi>=0?'is-pos':'is-neg')}
 function col(m){return !m.n?'var(--muted,#9AA8BD)':(m.roi>=0?'var(--grn,#22C55E)':'var(--red,#EF4444)')}
