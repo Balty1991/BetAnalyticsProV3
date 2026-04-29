@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-04-29T03:55:51.354486+00:00",
+  "updated_at": "2026-04-29T04:26:09.665166+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 64.5,
+  "overall_score": 64.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,27 +9,27 @@
   },
   "data_quality": {
     "recommendation_rows": 666,
-    "pending_rows": 151,
-    "candidates_with_odds_and_probability": 132,
+    "pending_rows": 148,
+    "candidates_with_odds_and_probability": 130,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "balanced": 28,
-    "speculative": 102,
+    "balanced": 27,
+    "speculative": 101,
     "safe": 2
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 67,
+    "Under 3.5G": 65,
     "BTTS": 26,
     "Over 1.5G": 37
   },
   "league_distribution_top150": {
     "Bundesliga": 8,
-    "Copa Libertadores": 7,
+    "Copa Libertadores": 6,
     "Parva Liga": 3,
     "Liga Portugal Betclic": 3,
     "J1 League": 8,
@@ -37,11 +37,11 @@
     "La Liga": 7,
     "MLS": 7,
     "Eredivisie": 7,
-    "Copa Sudamericana": 8,
     "Brasileirão Serie A": 4,
-    "Championship": 10,
+    "Championship": 11,
     "Serie A": 6,
     "FA Cup": 1,
+    "Copa Sudamericana": 7,
     "Segunda División": 6,
     "Premier League": 7,
     "K League 1": 5,
@@ -530,62 +530,6 @@
       ]
     },
     {
-      "event_id": 2045,
-      "prediction_id": 3366,
-      "home": "Metz",
-      "away": "AS Monaco",
-      "league": "Ligue 1",
-      "event_date": "2026-05-02T20:00:00+03:00",
-      "market": "BTTS",
-      "odds": 1.56,
-      "model_probability": 0.6801,
-      "model_probability_pct": 68.01,
-      "implied_probability_pct": 64.1,
-      "fair_odds": 1.47,
-      "edge_pp": 3.91,
-      "ev_pct": 6.1,
-      "kelly_fraction": 0.0272,
-      "kelly_units_100": 2.72,
-      "confidence": 45.96,
-      "score": 101.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 68.0% vs. probabilitate implicată 64.1%.",
-        "EV estimat 6.1% și edge 3.9 puncte procentuale.",
-        "Miză Kelly fracțională 2.72% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9287,
-      "prediction_id": 3188,
-      "home": "O'Higgins",
-      "away": "Boston River",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-04-29T05:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.29,
-      "model_probability": 0.8556,
-      "model_probability_pct": 85.56,
-      "implied_probability_pct": 77.52,
-      "fair_odds": 1.169,
-      "edge_pp": 8.04,
-      "ev_pct": 10.37,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 55.08,
-      "score": 100.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 85.6% vs. probabilitate implicată 77.5%.",
-        "EV estimat 10.4% și edge 8.0 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 202985,
       "prediction_id": 3306,
       "home": "Beroe Stara Zagora",
@@ -810,6 +754,34 @@
       ]
     },
     {
+      "event_id": 2045,
+      "prediction_id": 3366,
+      "home": "Metz",
+      "away": "AS Monaco",
+      "league": "Ligue 1",
+      "event_date": "2026-05-02T20:00:00+03:00",
+      "market": "BTTS",
+      "odds": 1.571,
+      "model_probability": 0.6601,
+      "model_probability_pct": 66.01,
+      "implied_probability_pct": 63.65,
+      "fair_odds": 1.515,
+      "edge_pp": 2.36,
+      "ev_pct": 3.7,
+      "kelly_fraction": 0.0162,
+      "kelly_units_100": 1.62,
+      "confidence": 45.96,
+      "score": 98.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 66.0% vs. probabilitate implicată 63.7%.",
+        "EV estimat 3.7% și edge 2.4 puncte procentuale.",
+        "Miză Kelly fracțională 1.62% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 1741,
       "prediction_id": 3426,
       "home": "FC St. Pauli",
@@ -919,6 +891,34 @@
         "Probabilitate model 72.1% vs. probabilitate implicată 63.7%.",
         "EV estimat 13.2% și edge 8.4 puncte procentuale.",
         "Miză Kelly fracțională 5.80% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 204846,
+      "prediction_id": 3247,
+      "home": "Avispa Fukuoka",
+      "away": "Sanfrecce Hiroshima",
+      "league": "J1 League",
+      "event_date": "2026-04-29T08:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.37,
+      "model_probability": 0.8073,
+      "model_probability_pct": 80.73,
+      "implied_probability_pct": 72.99,
+      "fair_odds": 1.239,
+      "edge_pp": 7.74,
+      "ev_pct": 10.6,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 42.6,
+      "score": 96.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.7% vs. probabilitate implicată 73.0%.",
+        "EV estimat 10.6% și edge 7.7 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1032,34 +1032,6 @@
       "rationale": [
         "Probabilitate model 86.9% vs. probabilitate implicată 71.4%.",
         "EV estimat 21.7% și edge 15.5 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9287,
-      "prediction_id": 3188,
-      "home": "O'Higgins",
-      "away": "Boston River",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-04-29T05:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.29,
-      "model_probability": 0.8556,
-      "model_probability_pct": 85.56,
-      "implied_probability_pct": 77.52,
-      "fair_odds": 1.169,
-      "edge_pp": 8.04,
-      "ev_pct": 10.37,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 55.08,
-      "score": 100.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 85.6% vs. probabilitate implicată 77.5%.",
-        "EV estimat 10.4% și edge 8.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1482,6 +1454,34 @@
         "EV estimat 24.6% și edge 16.4 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 205051,
+      "prediction_id": 3305,
+      "home": "FC Anyang",
+      "away": "Bucheon FC 1995",
+      "league": "K League 1",
+      "event_date": "2026-05-02T13:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.21,
+      "model_probability": 0.8303,
+      "model_probability_pct": 83.03,
+      "implied_probability_pct": 82.64,
+      "fair_odds": 1.204,
+      "edge_pp": 0.39,
+      "ev_pct": 0.47,
+      "kelly_fraction": 0.0056,
+      "kelly_units_100": 0.56,
+      "confidence": 39.13,
+      "score": 88.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.0% vs. probabilitate implicată 82.6%.",
+        "EV estimat 0.5% și edge 0.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.56% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1706,34 +1706,6 @@
       "rationale": [
         "Probabilitate model 72.5% vs. probabilitate implicată 61.0%.",
         "EV estimat 18.9% și edge 11.5 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9287,
-      "prediction_id": 3188,
-      "home": "O'Higgins",
-      "away": "Boston River",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-04-29T05:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.29,
-      "model_probability": 0.8556,
-      "model_probability_pct": 85.56,
-      "implied_probability_pct": 77.52,
-      "fair_odds": 1.169,
-      "edge_pp": 8.04,
-      "ev_pct": 10.37,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 55.08,
-      "score": 100.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 85.6% vs. probabilitate implicată 77.5%.",
-        "EV estimat 10.4% și edge 8.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -2044,6 +2016,34 @@
         "EV estimat 9.2% și edge 6.1 puncte procentuale.",
         "Miză Kelly fracțională 4.44% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 2051,
+      "prediction_id": 3450,
+      "home": "RC Strasbourg",
+      "away": "Toulouse",
+      "league": "Ligue 1",
+      "event_date": "2026-05-03T18:15:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.26,
+      "model_probability": 0.8187,
+      "model_probability_pct": 81.87,
+      "implied_probability_pct": 79.37,
+      "fair_odds": 1.221,
+      "edge_pp": 2.5,
+      "ev_pct": 3.16,
+      "kelly_fraction": 0.0303,
+      "kelly_units_100": 3.03,
+      "confidence": 54.15,
+      "score": 85.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 81.9% vs. probabilitate implicată 79.4%.",
+        "EV estimat 3.2% și edge 2.5 puncte procentuale.",
+        "Miză Kelly fracțională 3.03% din bancă, plafonată prudent."
+      ]
     }
   ],
   "settled_market_performance": [
@@ -2067,12 +2067,12 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 291,
-      "wins": 212,
-      "winrate": 72.85,
-      "profit_units": 1.41,
-      "roi_pct": 0.49,
-      "avg_odds": 1.392
+      "bets": 294,
+      "wins": 215,
+      "winrate": 73.13,
+      "profit_units": 2.11,
+      "roi_pct": 0.72,
+      "avg_odds": 1.391
     },
     {
       "key": "Over 1.5G",
@@ -2149,6 +2149,15 @@
       "avg_odds": 1.394
     },
     {
+      "key": "Copa Sudamericana",
+      "bets": 19,
+      "wins": 17,
+      "winrate": 89.47,
+      "profit_units": 3.29,
+      "roi_pct": 17.32,
+      "avg_odds": 1.316
+    },
+    {
       "key": "CAF Champions League",
       "bets": 2,
       "wins": 2,
@@ -2165,15 +2174,6 @@
       "profit_units": 1.67,
       "roi_pct": 16.72,
       "avg_odds": 1.476
-    },
-    {
-      "key": "Copa Sudamericana",
-      "bets": 18,
-      "wins": 16,
-      "winrate": 88.89,
-      "profit_units": 3.0,
-      "roi_pct": 16.67,
-      "avg_odds": 1.318
     },
     {
       "key": "Liga MX Clausura",
