@@ -40,7 +40,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
 <script src="./assets/performance-patch.js?v=20260427procc3"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
-<script defer src="./assets/app.js?v=20260428bench1"></script>
+<script defer src="./assets/app.js?v=20260429perf1"></script>
 <script defer src="./assets/pro_command_center.js?v=20260427procc3"></script>
 </head>
 <body>
@@ -705,6 +705,17 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   </div>
 
   <!-- ===== LIVE TAB ===== -->
+
+  <!-- TAB PERFORMANTA VERDICT -->
+  <div class="tab-content" id="tab-performanta">
+    <div style="padding:16px 14px 80px">
+      <div style="font-size:17px;font-weight:900;color:var(--txt);margin-bottom:4px">📊 Performanță Verdict</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">Acuratețe semnale ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</div>
+      <div id="perf-verdict-content">
+        <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Se încarcă...</div>
+      </div>
+    </div>
+  </div>
   <div class="tab-content" id="tab-meciuri">
     <div class="section mf-card" style="margin-bottom:12px">
       <div class="mf-header">
@@ -1108,6 +1119,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   
 </div>
 
