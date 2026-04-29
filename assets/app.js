@@ -1510,23 +1510,27 @@ function getBetVerdict(match, bet) {
   if (btBad) {
     return { state:'avoid', label:'\u274c EVITA', sub:'Edge bucket neprofitabil', bg:'rgba(239,68,68,.13)', border:'rgba(239,68,68,.35)', color:'#ef4444', score:0 };
   }
+  // 5 semnale reale (fara !btBad care e intotdeauna true)
   var signals = 0;
-  if (edgePct >= 10)  signals++;
-  if (value  >= 0.05) signals++;
-  if (adjProb >= 75)  signals++;
-  if (btMktOk)        signals++;
-  if (bucketOk)       signals++;
-  if (!btBad)         signals++;
-  if (signals >= 5) {
-    return { state:'bet', label:'\u2705 PARIAZA', sub:'Semnale pozitive (' + signals + '/6)', bg:'rgba(16,185,129,.13)', border:'rgba(16,185,129,.35)', color:'#22c55e', score:signals };
+  if (edgePct >= 10)  signals++;   // edge solid
+  if (value  >= 0.05) signals++;   // value >= 5%
+  if (adjProb >= 75)  signals++;   // probabilitate ridicata
+  if (btMktOk)        signals++;   // piata profitabila istoric
+  if (bucketOk)       signals++;   // edge bucket profitabil >= 3%
+
+  // PARIAZA: 4+ semnale din 5 SAU 3+ cu edge bun
+  if (signals >= 4) {
+    return { state:'bet', label:'\u2705 PARIAZA', sub:'Semnale pozitive (' + signals + '/5)', bg:'rgba(16,185,129,.13)', border:'rgba(16,185,129,.35)', color:'#22c55e', score:signals };
   }
-  if (signals >= 3 && edgePct >= 8) {
-    return { state:'bet', label:'\u2705 PARIAZA', sub:signals + '/6 semnale ok', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.25)', color:'#22c55e', score:signals };
+  if (signals >= 3 && edgePct >= 10) {
+    return { state:'bet', label:'\u2705 PARIAZA', sub:signals + '/5 semnale + edge bun', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.25)', color:'#22c55e', score:signals };
   }
+  // RISC: 2-3 semnale mixte
   if (signals >= 2) {
-    return { state:'risk', label:'\u26a0\ufe0f RISC', sub:signals + '/6 semnale', bg:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.30)', color:'#f59e0b', score:signals };
+    return { state:'risk', label:'\u26a0\ufe0f RISC', sub:signals + '/5 semnale', bg:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.30)', color:'#f59e0b', score:signals };
   }
-  return { state:'avoid', label:'\u274c EVITA', sub:'Semnale insuficiente (' + signals + '/6)', bg:'rgba(239,68,68,.10)', border:'rgba(239,68,68,.28)', color:'#ef4444', score:signals };
+  // EVITA: 0-1 semnal
+  return { state:'avoid', label:'\u274c EVITA', sub:'Semnale insuficiente (' + signals + '/5)', bg:'rgba(239,68,68,.10)', border:'rgba(239,68,68,.28)', color:'#ef4444', score:signals };
 }
 
 function getVerdictPill(match, bet) {
@@ -1543,7 +1547,7 @@ function getVerdictBlock(match, bet) {
   var adjProb = Number((bet || {}).adjProb || 0);
   var value   = Number((bet || {}).value   || 0);
   var rows = [
-    { label:'Edge',          ok: edgePct >= 10, val: (edgePct>=0?'+':'') + edgePct.toFixed(1) + 'pp',  note: edgePct >= 10 ? '>= 10pp \u2713' : edgePct >= 8 ? 'limita' : '< 8pp \u2717' },
+    { label:'Edge (1/5)',     ok: edgePct >= 10, val: (edgePct>=0?'+':'') + edgePct.toFixed(1) + 'pp',  note: edgePct >= 10 ? '>= 10pp \u2713' : edgePct >= 8 ? 'limita' : '< 8pp \u2717' },
     { label:'Value',         ok: value  >= 0.05, val: (value>=0?'+':'') + (value*100).toFixed(1) + '%', note: value >= 0.05 ? '>= 5% \u2713' : '< 5% \u2717' },
     { label:'Probabilitate', ok: adjProb>= 75,  val: adjProb.toFixed(1) + '%',                          note: adjProb >= 75 ? '>= 75% \u2713' : '< 75%' },
     { label:'BT piata',      ok: bd && bd.mktRoi !== null && bd.mktRoi >= 0,
