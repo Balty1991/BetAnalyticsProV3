@@ -27,7 +27,7 @@ var AUDIT_TICKETS = {premium:null, double:null, triple:null, contrarian:null};
 var ACTIVE_HISTORY_MARKET = '';
 var APP_META = {};
 var BUILD_STATUS = {};
-var MODEL_BENCHMARKS = {};  // model_benchmarks.json — real backtest per piață
+var MODEL_BENCHMARKS = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
@@ -1425,161 +1425,15 @@ function oddsInRanges(odds, ranges){
   return (ranges || []).some(function(range){ return o >= range[0] && o <= range[1]; });
 }
 
-// ─── VERDICT FINAL PARIERE ───────────────────────────────────────────────────
-function getBetVerdict(match, bet) {
-  if (!bet) return null;
-  var mkey    = String(bet.type || bet.marketKey || '');
-  var edgePct = Number(bet.edgePct || 0);
-  var adjProb = Number(bet.adjProb || 0);
-  var value   = Number(bet.value   || 0);
-
-  // Date benchmark
-  var bd      = getBenchmarkData(mkey, edgePct);
-  var btBad   = bd ? bd.edgeBad : false;
-  var btMktOk = bd && bd.mktRoi !== null && bd.mktN >= 20 && bd.mktRoi >= 0;
-  var bucketOk= bd && bd.bucketRoi !== null && bd.bucketN >= 10 && bd.bucketRoi >= 3;
-
-  // Motor
-  var motorConflict = (typeof benchmarkEdgeIsBad === 'function') && benchmarkEdgeIsBad(mkey, edgePct);
-
-  // ── Reguli verdict ──────────────────────────────────────────
-  // EVITĂ — semnal negativ clar
-  if (btBad) {
-    return {
-      state:  'avoid',
-      label:  '❌ EVITĂ',
-      sub:    'Edge bucket neprofitabil istoric',
-      bg:     'rgba(239,68,68,.13)',
-      border: 'rgba(239,68,68,.35)',
-      color:  '#ef4444',
-      score:  0
-    };
-  }
-
-  // PAREAZĂ — toate semnalele pozitive
-  var signals = 0;
-  if (edgePct >= 10)   signals++;
-  if (value  >= 0.05)  signals++;
-  if (adjProb >= 75)   signals++;
-  if (btMktOk)         signals++;
-  if (bucketOk)        signals++;
-  if (!motorConflict)  signals++;
-
-  if (signals >= 5) {
-    return {
-      state:  'bet',
-      label:  '✅ PAREAZĂ',
-      sub:    'Toate semnalele pozitive (' + signals + '/6)',
-      bg:     'rgba(16,185,129,.13)',
-      border: 'rgba(16,185,129,.35)',
-      color:  '#22c55e',
-      score:  signals
-    };
-  }
-
-  if (signals >= 3 && edgePct >= 8 && !btBad) {
-    return {
-      state:  'bet',
-      label:  '✅ PAREAZĂ',
-      sub:    signals + '/6 semnale pozitive',
-      bg:     'rgba(16,185,129,.10)',
-      border: 'rgba(16,185,129,.25)',
-      color:  '#22c55e',
-      score:  signals
-    };
-  }
-
-  // RISC — semnale mixte
-  if (signals >= 2) {
-    return {
-      state:  'risk',
-      label:  '⚠️ RISC',
-      sub:    signals + '/6 semnale pozitive',
-      bg:     'rgba(245,158,11,.10)',
-      border: 'rgba(245,158,11,.30)',
-      color:  '#f59e0b',
-      score:  signals
-    };
-  }
-
-  // Default — insuficient
-  return {
-    state:  'avoid',
-    label:  '❌ EVITĂ',
-    sub:    'Semnale insuficiente (' + signals + '/6)',
-    bg:     'rgba(239,68,68,.10)',
-    border: 'rgba(239,68,68,.28)',
-    color:  '#ef4444',
-    score:  signals
-  };
-}
-
-// Pill mic pentru cardul simplu
-function getVerdictPill(match, bet) {
-  var v = getBetVerdict(match, bet);
-  if (!v) return '';
-  return '<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;' +
-    'background:' + v.bg + ';border:1px solid ' + v.border + ';' +
-    'font-size:12px;font-weight:800;color:' + v.color + ';letter-spacing:.02em">' +
-    v.label + '</div>';
-}
-
-// Bloc detaliat pentru view extins
-function getVerdictBlock(match, bet) {
-  var v = getBetVerdict(match, bet);
-  if (!v) return '';
-  var bd = bet ? getBenchmarkData(String(bet.type || bet.marketKey || ''), Number(bet.edgePct || 0)) : null;
-  var edgePct = Number((bet || {}).edgePct || 0);
-  var adjProb = Number((bet || {}).adjProb || 0);
-  var value   = Number((bet || {}).value   || 0);
-
-  // Rânduri detaliu
-  var rows = [
-    { label: 'Edge',         ok: edgePct >= 10, val: (edgePct >= 0 ? '+' : '') + edgePct.toFixed(1) + 'pp',  note: edgePct >= 10 ? '≥ 10pp ✓' : edgePct >= 8 ? 'limită' : '< 8pp ✗' },
-    { label: 'Value',        ok: value >= 0.05,  val: (value >= 0 ? '+' : '') + (value * 100).toFixed(1) + '%', note: value >= 0.05 ? '≥ 5% ✓' : '< 5% ✗' },
-    { label: 'Probabilitate',ok: adjProb >= 75,  val: adjProb.toFixed(1) + '%',   note: adjProb >= 75 ? '≥ 75% ✓' : '< 75%' },
-    { label: 'BT piață',     ok: bd && bd.mktRoi !== null && bd.mktRoi >= 0,
-      val: bd && bd.mktRoi !== null ? (bd.mktRoi >= 0 ? '+' : '') + bd.mktRoi.toFixed(1) + '%' : 'N/A',
-      note: bd && bd.mktRoi !== null && bd.mktRoi >= 0 ? 'profitabil ✓' : 'negativ ✗' },
-    { label: 'BT edge bucket', ok: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3,
-      val: bd && bd.bucketRoi !== null ? (bd.bucketRoi >= 0 ? '+' : '') + bd.bucketRoi.toFixed(1) + '%' : 'N/A',
-      note: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3 ? '≥ 3% ✓' : bd && bd.bucketRoi !== null && bd.bucketRoi >= 0 ? 'marginală' : 'negativ ✗' },
-    { label: 'Motor',         ok: !((typeof benchmarkEdgeIsBad==='function') && benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct)),
-      val: '', note: !((typeof benchmarkEdgeIsBad==='function') && benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct)) ? 'OK ✓' : 'conflict ✗' }
-  ];
-
-  var rowsHtml = rows.map(function(r) {
-    var c = r.ok ? '#22c55e' : '#ef4444';
-    var dot = '<span style="width:7px;height:7px;border-radius:50%;background:' + c + ';display:inline-block;flex-shrink:0"></span>';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">' +
-      '<div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.55);font-size:12px">' + dot + r.label + '</div>' +
-      '<div style="font-size:12px;color:rgba(255,255,255,.75)">' + (r.val ? '<span style="font-weight:700;margin-right:6px">' + r.val + '</span>' : '') +
-      '<span style="color:' + c + '">' + r.note + '</span></div>' +
-    '</div>';
-  }).join('');
-
-  return '<div style="margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid ' + v.border + '">' +
-    '<div style="padding:10px 14px;background:' + v.bg + ';display:flex;align-items:center;justify-content:space-between">' +
-      '<div style="font-size:16px;font-weight:900;color:' + v.color + '">' + v.label + '</div>' +
-      '<div style="font-size:11px;color:rgba(255,255,255,.5)">' + v.sub + '</div>' +
-    '</div>' +
-    '<div style="padding:4px 14px 8px;background:rgba(0,0,0,.15)">' + rowsHtml + '</div>' +
-  '</div>';
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── BENCHMARK BADGE ───
-// ─── PRAG DINAMIC per piată ───────────────────────────────────────────────────
 var _MARKET_THRESHOLDS_CACHE = null;
+
 function getMarketThresholds() {
   if (_MARKET_THRESHOLDS_CACHE) return _MARKET_THRESHOLDS_CACHE;
   _MARKET_THRESHOLDS_CACHE = (MODEL_BENCHMARKS && MODEL_BENCHMARKS.dynamic_thresholds) || {};
   return _MARKET_THRESHOLDS_CACHE;
 }
 
-// Returnează pragul minim de edge pentru o piată.
-// Fallback hardcodat dacă JSON-ul nu e disponibil.
-var EDGE_FALLBACK = { over15: 15.0, under35: 8.0, over25: 5.0, btts: 3.0 };
+var EDGE_FALLBACK = { over15: 15.0, under35: 15.0, over25: 10.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
   var t = getMarketThresholds()[marketKey];
   if (t && !t.disabled && typeof t.min_edge === 'number') return t.min_edge;
@@ -1589,38 +1443,28 @@ function isMarketDisabled(marketKey) {
   var t = getMarketThresholds()[marketKey];
   return t && t.disabled === true;
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
-──────────────────────────────────────────────────────
-// Returnează un rând HTML separat cu contextul istoric al modelului.
-// Dacă edge bucket e negativ → avertizare clară + motorBadge supresat.
 function getBenchmarkData(marketKey, edgePct) {
   try {
     var bt = MODEL_BENCHMARKS && MODEL_BENCHMARKS.real_backtest;
     if (!bt || !bt.by_market) return null;
-
-    var mktStats   = bt.by_market[marketKey];
-    var mktRoi     = mktStats  ? Number(mktStats.roi_pct  || 0) : null;
-    var mktN       = mktStats  ? Number(mktStats.n        || 0) : 0;
-
+    var mktStats = bt.by_market[marketKey];
+    var mktRoi   = mktStats ? Number(mktStats.roi_pct || 0) : null;
+    var mktN     = mktStats ? Number(mktStats.n || 0) : 0;
     var edge = Number(edgePct || 0);
     var bucketKey = '', bucketStats = null;
-    if (bt.by_edge_bucket) {
-      if      (edge < 5)  { bucketKey = '0-5%';   bucketStats = bt.by_edge_bucket['0-5%'];   }
-      else if (edge < 10) { bucketKey = '5-10%';  bucketStats = bt.by_edge_bucket['5-10%'];  }
-      else if (edge < 15) { bucketKey = '10-15%'; bucketStats = bt.by_edge_bucket['10-15%']; }
-      else                { bucketKey = '15%+';   bucketStats = bt.by_edge_bucket['15%+'];   }
-    }
+    var mktBuckets = bt.by_market_bucket && bt.by_market_bucket[marketKey];
+    var src = mktBuckets || bt.by_edge_bucket || {};
+    if (edge < 5)        { bucketKey = '0-5%';   bucketStats = src['0-5%'];   }
+    else if (edge < 10)  { bucketKey = '5-10%';  bucketStats = src['5-10%'];  }
+    else if (edge < 15)  { bucketKey = '10-15%'; bucketStats = src['10-15%']; }
+    else                 { bucketKey = '15%+';   bucketStats = src['15%+'];   }
     var bucketRoi = bucketStats ? Number(bucketStats.roi_pct || 0) : null;
-    var bucketN   = bucketStats ? Number(bucketStats.n       || 0) : 0;
-
+    var bucketN   = bucketStats ? Number(bucketStats.n || 0) : 0;
     return {
-      mktRoi:    mktRoi,
-      mktN:      mktN,
-      bucketKey: bucketKey,
-      bucketRoi: bucketRoi,
-      bucketN:   bucketN,
-      edgeBad:   bucketRoi !== null && bucketN >= 10 && bucketRoi < 0
+      mktRoi: mktRoi, mktN: mktN,
+      bucketKey: bucketKey, bucketRoi: bucketRoi, bucketN: bucketN,
+      edgeBad: bucketRoi !== null && bucketN >= 5 && bucketRoi < 0
     };
   } catch(e) { return null; }
 }
@@ -1629,37 +1473,102 @@ function getBenchmarkRow(marketKey, edgePct) {
   var d = getBenchmarkData(marketKey, edgePct);
   if (!d) return '';
   if (d.mktRoi === null && d.bucketRoi === null) return '';
-
   var isBad  = d.edgeBad;
   var bg     = isBad ? 'rgba(239,68,68,.10)'  : 'rgba(16,185,129,.08)';
-  var border = isBad ? 'rgba(239,68,68,.30)'  : 'rgba(16,185,129,.22)';
-  var icon   = isBad ? '⚠️' : '📊';
-
+  var border = isBad ? 'rgba(239,68,68,.28)'  : 'rgba(16,185,129,.22)';
+  var icon   = isBad ? '\u26a0\ufe0f' : '\ud83d\udcca';
   var mktStr = '';
   if (d.mktRoi !== null && d.mktN >= 20) {
     var mc = d.mktRoi >= 3 ? '#22c55e' : d.mktRoi >= 0 ? '#f59e0b' : '#ef4444';
     mktStr = 'BT <b style="color:' + mc + '">' + (d.mktRoi >= 0 ? '+' : '') + d.mktRoi.toFixed(1) + '%</b>';
   }
-
   var bucketStr = '';
-  if (d.bucketRoi !== null && d.bucketN >= 10) {
-    var bc   = d.bucketRoi >= 3 ? '#22c55e' : d.bucketRoi >= 0 ? '#f59e0b' : '#ef4444';
-    var suf  = isBad ? ' <b style="color:#ef4444">⚠ evită</b>' : ' <span style="color:#22c55e">✓</span>';
+  if (d.bucketRoi !== null && d.bucketN >= 5) {
+    var bc  = d.bucketRoi >= 3 ? '#22c55e' : d.bucketRoi >= 0 ? '#f59e0b' : '#ef4444';
+    var suf = isBad ? ' <b style="color:#ef4444">\u26a0 evita</b>' : ' <span style="color:#22c55e">\u2713</span>';
     bucketStr = d.bucketKey + ' <b style="color:' + bc + '">' + (d.bucketRoi >= 0 ? '+' : '') + d.bucketRoi.toFixed(1) + '%</b>' + suf;
   }
-
-  var inner = [mktStr, bucketStr].filter(Boolean).join('<span style="color:rgba(255,255,255,.2);margin:0 5px">•</span>');
-
-  return '<div style="margin-top:6px;padding:5px 10px;border-radius:8px;background:' + bg + ';border:1px solid ' + border + ';font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-    icon + ' ' + inner +
-  '</div>';
+  var inner = [mktStr, bucketStr].filter(Boolean).join('<span style="color:rgba(255,255,255,.2);margin:0 5px">&bull;</span>');
+  return '<div style="margin-top:6px;padding:5px 10px;border-radius:8px;background:' + bg + ';border:1px solid ' + border + ';font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + icon + ' ' + inner + '</div>';
 }
 
 function benchmarkEdgeIsBad(marketKey, edgePct) {
   var d = getBenchmarkData(marketKey, edgePct);
   return d ? d.edgeBad : false;
 }
-// ─────────────────────────────────────────────────────────────────────────────
+
+function getBetVerdict(match, bet) {
+  if (!bet) return null;
+  var mkey    = String(bet.type || bet.marketKey || '');
+  var edgePct = Number(bet.edgePct || 0);
+  var adjProb = Number(bet.adjProb || 0);
+  var value   = Number(bet.value   || 0);
+  var bd      = getBenchmarkData(mkey, edgePct);
+  var btBad   = bd ? bd.edgeBad : false;
+  var btMktOk = bd && bd.mktRoi !== null && bd.mktN >= 20 && bd.mktRoi >= 0;
+  var bucketOk= bd && bd.bucketRoi !== null && bd.bucketN >= 5 && bd.bucketRoi >= 3;
+  if (btBad) {
+    return { state:'avoid', label:'\u274c EVITA', sub:'Edge bucket neprofitabil', bg:'rgba(239,68,68,.13)', border:'rgba(239,68,68,.35)', color:'#ef4444', score:0 };
+  }
+  var signals = 0;
+  if (edgePct >= 10)  signals++;
+  if (value  >= 0.05) signals++;
+  if (adjProb >= 75)  signals++;
+  if (btMktOk)        signals++;
+  if (bucketOk)       signals++;
+  if (!btBad)         signals++;
+  if (signals >= 5) {
+    return { state:'bet', label:'\u2705 PARIAZA', sub:'Semnale pozitive (' + signals + '/6)', bg:'rgba(16,185,129,.13)', border:'rgba(16,185,129,.35)', color:'#22c55e', score:signals };
+  }
+  if (signals >= 3 && edgePct >= 8) {
+    return { state:'bet', label:'\u2705 PARIAZA', sub:signals + '/6 semnale ok', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.25)', color:'#22c55e', score:signals };
+  }
+  if (signals >= 2) {
+    return { state:'risk', label:'\u26a0\ufe0f RISC', sub:signals + '/6 semnale', bg:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.30)', color:'#f59e0b', score:signals };
+  }
+  return { state:'avoid', label:'\u274c EVITA', sub:'Semnale insuficiente (' + signals + '/6)', bg:'rgba(239,68,68,.10)', border:'rgba(239,68,68,.28)', color:'#ef4444', score:signals };
+}
+
+function getVerdictPill(match, bet) {
+  var v = getBetVerdict(match, bet);
+  if (!v) return '';
+  return '<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:' + v.bg + ';border:1px solid ' + v.border + ';font-size:12px;font-weight:800;color:' + v.color + '">' + v.label + '</div>';
+}
+
+function getVerdictBlock(match, bet) {
+  var v = getBetVerdict(match, bet);
+  if (!v) return '';
+  var bd      = bet ? getBenchmarkData(String(bet.type || bet.marketKey || ''), Number(bet.edgePct || 0)) : null;
+  var edgePct = Number((bet || {}).edgePct || 0);
+  var adjProb = Number((bet || {}).adjProb || 0);
+  var value   = Number((bet || {}).value   || 0);
+  var rows = [
+    { label:'Edge',          ok: edgePct >= 10, val: (edgePct>=0?'+':'') + edgePct.toFixed(1) + 'pp',  note: edgePct >= 10 ? '>= 10pp \u2713' : edgePct >= 8 ? 'limita' : '< 8pp \u2717' },
+    { label:'Value',         ok: value  >= 0.05, val: (value>=0?'+':'') + (value*100).toFixed(1) + '%', note: value >= 0.05 ? '>= 5% \u2713' : '< 5% \u2717' },
+    { label:'Probabilitate', ok: adjProb>= 75,  val: adjProb.toFixed(1) + '%',                          note: adjProb >= 75 ? '>= 75% \u2713' : '< 75%' },
+    { label:'BT piata',      ok: bd && bd.mktRoi !== null && bd.mktRoi >= 0,
+      val:  bd && bd.mktRoi  !== null ? (bd.mktRoi>=0?'+':'')  + bd.mktRoi.toFixed(1)  + '%' : 'N/A',
+      note: bd && bd.mktRoi  !== null && bd.mktRoi  >= 0 ? 'profitabil \u2713' : 'negativ \u2717' },
+    { label:'BT edge bucket',ok: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3,
+      val:  bd && bd.bucketRoi !== null ? (bd.bucketRoi>=0?'+':'') + bd.bucketRoi.toFixed(1) + '%' : 'N/A',
+      note: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3 ? '>= 3% \u2713' : bd && bd.bucketRoi !== null && bd.bucketRoi >= 0 ? 'marginala' : 'negativ \u2717' },
+    { label:'Motor', ok: !benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct),
+      val:'', note: !benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct) ? 'OK \u2713' : 'conflict \u2717' }
+  ];
+  var rowsHtml = rows.map(function(r) {
+    var c   = r.ok ? '#22c55e' : '#ef4444';
+    var dot = '<span style="width:7px;height:7px;border-radius:50%;background:' + c + ';display:inline-block;flex-shrink:0"></span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">' +
+      '<div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.55);font-size:12px">' + dot + r.label + '</div>' +
+      '<div style="font-size:12px;color:rgba(255,255,255,.75)">' + (r.val ? '<span style="font-weight:700;margin-right:6px">' + r.val + '</span>' : '') +
+      '<span style="color:' + c + '">' + r.note + '</span></div></div>';
+  }).join('');
+  return '<div style="margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid ' + v.border + '">' +
+    '<div style="padding:10px 14px;background:' + v.bg + ';display:flex;align-items:center;justify-content:space-between">' +
+      '<div style="font-size:16px;font-weight:900;color:' + v.color + '">' + v.label + '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,.5)">' + v.sub + '</div></div>' +
+    '<div style="padding:4px 14px 8px;background:rgba(0,0,0,.15)">' + rowsHtml + '</div></div>';
+}
 
 function calcSmartScore(adjProb, value, confidence, edgePct){
   // Sincronizat cu fetch_data.py:calc_smart_score — aceeași scală, penalizări identice
@@ -4757,7 +4666,7 @@ function doRefresh(isManual){
     fetch9('/data/training_scoring_summary.json', {}),
     fetch9('/data/enriched.json', {}),  // ML5 pre-baked enrichment
     fetch9('/data/build_status.json', {}),
-    fetch9('/data/model_benchmarks.json', {})  // benchmark model vs model
+    fetch9('/data/model_benchmarks.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -4770,7 +4679,7 @@ function doRefresh(isManual){
     var enrichedFile = results[8] || {};
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
-    _MARKET_THRESHOLDS_CACHE = null; // invalidează cache prag la reload
+    _MARKET_THRESHOLDS_CACHE = null;
 
     var preds = predData.results || predData || [];
     window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
@@ -6478,7 +6387,7 @@ function renderMatches(){
         oddsCompareBlock+
         altMarketsHtml+
       '</div>'+
-      (b ? getVerdictBlock(m, b) : '')+
+      (b ? getVerdictBlock(m,b) : '')+
       compactWhy+
       ml5ContextBlock+
       (reasons ? '<div class="reason-list">'+reasons+'</div>' : '');
@@ -6494,7 +6403,7 @@ function renderMatches(){
         '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+sourceBadge+oddsSourceBadge+'</div>'+
         oddsCompareBlock+
         simpleSummary+
-        (b ? getVerdictBlock(m, b) : '')+
+        (b ? getVerdictBlock(m,b) : '')+
         simpleMetrics+
         altMarketsHtml+
       '</div>'+
@@ -6549,7 +6458,7 @@ function renderMatches(){
       '</div>'+
       '<div class="m16-reco">'+
         '<div class="m16-reco-title">🎯 Recomandare '+(b && b.type === 'ml' ? 'ML' : 'principală')+'</div>'+
-        '<div class="m16-reco-main" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+recLabel+(b ? ' '+getVerdictPill(m, b) : '')+'</div>'+
+        '<div class="m16-reco-main" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+recLabel+(b ? ' '+getVerdictPill(m,b) : '')+'</div>'+
         m16ProbabilityHtml+
         '<div class="m16-reco-meta">Scor: '+Math.round(Number(m.smartScore || 0))+' | Edge: '+(b && b.edgePct != null ? ((Number(b.edgePct || 0) >= 0 ? '+' : '') + Number(b.edgePct || 0).toFixed(1)+'%') : '—')+' | Fair odds: '+fairOdds+' | Sursă cotă: '+(oddsSourceMeta ? oddsSourceMeta.active : '—')+(bestMarketLine ? (' | ' + bestMarketLine) : '')+'</div>'+
       '</div>'+
@@ -6855,9 +6764,9 @@ function buildMarketCandidate(m, type){
   var edgePct = Number(b.edgePct || 0);
   // Over 1.5 — praguri relaxate (xG 2.00, prob 72, value 0.02, edge 2) pentru a include mai multe evenimente
   if(isMarketDisabled('over15')) return null;
-  if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over15') || Number(b.value || 0) < 0.02)) return null; // prag dinamic din model_benchmarks.json
+  if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over15') || Number(b.value || 0) < 0.02)) return null;
   if(isMarketDisabled('under35')) return null;
-  if(type === 'under35' && edgePct < getMarketMinEdge('under35')) return null; // prag dinamic din model_benchmarks.json
+  if(type === 'under35' && edgePct < getMarketMinEdge('under35')) return null;
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
   // DC 1X / X2 — safe bet, prob >=75%, value >=0.02, odds >=1.15 (sub 1.15 devine irelevant)
   if(type === 'dc1x' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
