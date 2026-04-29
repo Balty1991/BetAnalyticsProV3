@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-29T04:40:03.231744+00:00",
+  "updated_at": "2026-04-29T06:22:19.875800+00:00",
   "summary": {
-    "total_picks": 500,
-    "avg_clv_pct": -0.658,
+    "total_picks": 501,
+    "avg_clv_pct": -0.6628,
     "median_clv_pct": 0.0,
     "clv_positive_n": 77,
-    "clv_negative_n": 423,
-    "clv_positive_rate": 0.154,
-    "avg_clv_wins": -0.2888,
+    "clv_negative_n": 424,
+    "clv_positive_rate": 0.1537,
+    "avg_clv_wins": -0.2966,
     "avg_clv_losses": -1.5795,
-    "win_rate_pct": 71.4,
-    "roi_flat_pct": -0.8896,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -0.8218,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.2337
+    "std_clv_pct": 6.2284
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 283,
-      "avg_clv_pct": -1.2513,
-      "clv_positive_rate": 0.1095,
-      "win_rate_pct": 73.5,
-      "roi_flat_pct": 1.3152,
-      "avg_ev_at_pick": 3.1969
+      "n": 284,
+      "avg_clv_pct": -1.2577,
+      "clv_positive_rate": 0.1092,
+      "win_rate_pct": 73.59,
+      "roi_flat_pct": 1.4271,
+      "avg_ev_at_pick": 3.1865
     }
   },
   "clv_buckets": {
@@ -69,10 +69,10 @@
       "avg_clv": -0.0684
     },
     "clv_mild_neg": {
-      "n": 95,
-      "win_rate": 75.79,
-      "roi_pct": 8.3263,
-      "avg_clv": -2.7283
+      "n": 96,
+      "win_rate": 76.04,
+      "roi_pct": 8.5844,
+      "avg_clv": -2.732
     },
     "clv_strong_neg": {
       "n": 51,
@@ -82,24 +82,24 @@
     }
   },
   "rolling_30d": {
-    "n": 500,
-    "avg_clv_pct": -0.658,
-    "win_rate_pct": 71.4,
-    "roi_flat_pct": -0.8896,
+    "n": 501,
+    "avg_clv_pct": -0.6628,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -0.8218,
     "days": 30
   },
   "rolling_90d": {
-    "n": 500,
-    "avg_clv_pct": -0.658,
-    "win_rate_pct": 71.4,
-    "roi_flat_pct": -0.8896,
+    "n": 501,
+    "avg_clv_pct": -0.6628,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -0.8218,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 314,
-      "avg_clv": 0.6602,
-      "clv_positive_rate": 0.2038
+      "n": 315,
+      "avg_clv": 0.6483,
+      "clv_positive_rate": 0.2032
     },
     "ev_negative_picks": {
       "n": 186,
@@ -110,12 +110,35 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.66%) și ROI negativ (-0.89%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.66%) și ROI negativ (-0.82%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "204844",
+      "date": "2026-04-29",
+      "home": "Shimizu S-Pulse",
+      "away": "V-Varen Nagasaki",
+      "league": "J1 League",
+      "market": "under35",
+      "picked_odds": 1.29,
+      "closing_odds": 1.331,
+      "picked_implied": 0.775194,
+      "closing_implied": 0.751315,
+      "clv_pct": -3.0804,
+      "clv_positive": false,
+      "ev_at_pick_pct": 0.2588,
+      "model_prob": 77.72,
+      "edge_pct": 7.8,
+      "score": 89,
+      "line_move_pct": 3.1783,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-29T06:06:23.646369+00:00",
+      "prediction_id": 3243
+    },
     {
       "event_id": "9399",
       "date": "2026-04-29",

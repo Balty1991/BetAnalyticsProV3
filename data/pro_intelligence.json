@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-04-29T05:52:11.068330+00:00",
+  "updated_at": "2026-04-29T06:22:19.817184+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 64.2,
+  "overall_score": 64.1,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,21 +9,21 @@
   },
   "data_quality": {
     "recommendation_rows": 666,
-    "pending_rows": 148,
-    "candidates_with_odds_and_probability": 130,
+    "pending_rows": 147,
+    "candidates_with_odds_and_probability": 129,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "balanced": 27,
+    "balanced": 26,
     "speculative": 101,
     "safe": 2
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 65,
+    "Under 3.5G": 64,
     "BTTS": 26,
     "Over 1.5G": 37
   },
@@ -32,7 +32,7 @@
     "Copa Libertadores": 6,
     "Parva Liga": 3,
     "Liga Portugal Betclic": 3,
-    "J1 League": 8,
+    "J1 League": 7,
     "Ligue 1": 6,
     "La Liga": 7,
     "MLS": 7,
@@ -1934,34 +1934,6 @@
       ]
     },
     {
-      "event_id": 204844,
-      "prediction_id": 3243,
-      "home": "Shimizu S-Pulse",
-      "away": "V-Varen Nagasaki",
-      "league": "J1 League",
-      "event_date": "2026-04-29T07:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.331,
-      "model_probability": 0.7772,
-      "model_probability_pct": 77.72,
-      "implied_probability_pct": 75.13,
-      "fair_odds": 1.287,
-      "edge_pp": 2.59,
-      "ev_pct": 3.45,
-      "kelly_fraction": 0.026,
-      "kelly_units_100": 2.6,
-      "confidence": 59.91,
-      "score": 89.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 77.7% vs. probabilitate implicată 75.1%.",
-        "EV estimat 3.4% și edge 2.6 puncte procentuale.",
-        "Miză Kelly fracțională 2.60% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 4902,
       "prediction_id": 2571,
       "home": "FC Thun",
@@ -2044,6 +2016,34 @@
         "EV estimat 3.2% și edge 2.5 puncte procentuale.",
         "Miză Kelly fracțională 3.03% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 9291,
+      "prediction_id": 3212,
+      "home": "Cienciano",
+      "away": "Atlético Mineiro",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-04-30T03:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.31,
+      "model_probability": 0.7743,
+      "model_probability_pct": 77.43,
+      "implied_probability_pct": 76.34,
+      "fair_odds": 1.291,
+      "edge_pp": 1.09,
+      "ev_pct": 1.43,
+      "kelly_fraction": 0.0116,
+      "kelly_units_100": 1.16,
+      "confidence": 63.63,
+      "score": 85.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 77.4% vs. probabilitate implicată 76.3%.",
+        "EV estimat 1.4% și edge 1.1 puncte procentuale.",
+        "Miză Kelly fracțională 1.16% din bancă, plafonată prudent."
+      ]
     }
   ],
   "settled_market_performance": [
@@ -2057,6 +2057,15 @@
       "avg_odds": 1.545
     },
     {
+      "key": "Under 3.5G",
+      "bets": 295,
+      "wins": 216,
+      "winrate": 73.22,
+      "profit_units": 2.44,
+      "roi_pct": 0.83,
+      "avg_odds": 1.391
+    },
+    {
       "key": "Over 2.5G",
       "bets": 10,
       "wins": 7,
@@ -2064,15 +2073,6 @@
       "profit_units": 0.08,
       "roi_pct": 0.8,
       "avg_odds": 1.452
-    },
-    {
-      "key": "Under 3.5G",
-      "bets": 294,
-      "wins": 215,
-      "winrate": 73.13,
-      "profit_units": 2.11,
-      "roi_pct": 0.72,
-      "avg_odds": 1.391
     },
     {
       "key": "Over 1.5G",
@@ -2087,12 +2087,12 @@
   "settled_league_performance": [
     {
       "key": "J1 League",
-      "bets": 3,
-      "wins": 3,
+      "bets": 4,
+      "wins": 4,
       "winrate": 100.0,
-      "profit_units": 1.5,
-      "roi_pct": 50.0,
-      "avg_odds": 1.5
+      "profit_units": 1.83,
+      "roi_pct": 45.77,
+      "avg_odds": 1.458
     },
     {
       "key": "DFB Pokal",
