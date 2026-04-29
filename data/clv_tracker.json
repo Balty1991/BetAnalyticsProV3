@@ -1,36 +1,36 @@
 {
-  "updated_at": "2026-04-29T17:59:47.901553+00:00",
+  "updated_at": "2026-04-29T18:34:31.745588+00:00",
   "summary": {
-    "total_picks": 508,
-    "avg_clv_pct": -0.6521,
+    "total_picks": 510,
+    "avg_clv_pct": -0.6548,
     "median_clv_pct": 0.0,
     "clv_positive_n": 79,
-    "clv_negative_n": 429,
-    "clv_positive_rate": 0.1555,
-    "avg_clv_wins": -0.2995,
-    "avg_clv_losses": -1.5264,
-    "win_rate_pct": 71.26,
-    "roi_flat_pct": -1.1941,
+    "clv_negative_n": 431,
+    "clv_positive_rate": 0.1549,
+    "avg_clv_wins": -0.2987,
+    "avg_clv_losses": -1.5341,
+    "win_rate_pct": 71.18,
+    "roi_flat_pct": -1.3404,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.213
+    "std_clv_pct": 6.2015
   },
   "by_market": {
     "btts": {
-      "n": 69,
-      "avg_clv_pct": -2.1669,
-      "clv_positive_rate": 0.2609,
-      "win_rate_pct": 71.01,
-      "roi_flat_pct": 10.3188,
-      "avg_ev_at_pick": 3.1841
+      "n": 70,
+      "avg_clv_pct": -2.1741,
+      "clv_positive_rate": 0.2571,
+      "win_rate_pct": 70.0,
+      "roi_flat_pct": 8.7429,
+      "avg_ev_at_pick": 3.1881
     },
     "over15": {
-      "n": 140,
-      "avg_clv_pct": 1.5458,
-      "clv_positive_rate": 0.2,
-      "win_rate_pct": 66.43,
-      "roi_flat_pct": -12.4071,
-      "avg_ev_at_pick": 3.46
+      "n": 141,
+      "avg_clv_pct": 1.5349,
+      "clv_positive_rate": 0.1986,
+      "win_rate_pct": 66.67,
+      "roi_flat_pct": -12.156,
+      "avg_ev_at_pick": 3.4084
     },
     "over25": {
       "n": 9,
@@ -63,16 +63,16 @@
       "avg_clv": 1.6682
     },
     "clv_neutral": {
-      "n": 279,
-      "win_rate": 70.97,
-      "roi_pct": -3.3301,
-      "avg_clv": -0.0685
+      "n": 280,
+      "win_rate": 71.07,
+      "roi_pct": -3.2361,
+      "avg_clv": -0.0683
     },
     "clv_mild_neg": {
-      "n": 98,
-      "win_rate": 75.51,
-      "roi_pct": 7.8786,
-      "avg_clv": -2.7268
+      "n": 99,
+      "win_rate": 74.75,
+      "roi_pct": 6.7889,
+      "avg_clv": -2.7262
     },
     "clv_strong_neg": {
       "n": 52,
@@ -82,40 +82,86 @@
     }
   },
   "rolling_30d": {
-    "n": 508,
-    "avg_clv_pct": -0.6521,
-    "win_rate_pct": 71.26,
-    "roi_flat_pct": -1.1941,
+    "n": 510,
+    "avg_clv_pct": -0.6548,
+    "win_rate_pct": 71.18,
+    "roi_flat_pct": -1.3404,
     "days": 30
   },
   "rolling_90d": {
-    "n": 508,
-    "avg_clv_pct": -0.6521,
-    "win_rate_pct": 71.26,
-    "roi_flat_pct": -1.1941,
+    "n": 510,
+    "avg_clv_pct": -0.6548,
+    "win_rate_pct": 71.18,
+    "roi_flat_pct": -1.3404,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 318,
-      "avg_clv": 0.6707,
-      "clv_positive_rate": 0.2075
+      "n": 319,
+      "avg_clv": 0.6602,
+      "clv_positive_rate": 0.2069
     },
     "ev_negative_picks": {
-      "n": 190,
-      "avg_clv": -2.866,
-      "clv_positive_rate": 0.0684
+      "n": 191,
+      "avg_clv": -2.851,
+      "clv_positive_rate": 0.0681
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.19%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.34%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "4791",
+      "date": "2026-04-29",
+      "home": "Al-Taawoun",
+      "away": "Al-Ittihad",
+      "league": "Saudi Pro League",
+      "market": "over15",
+      "picked_odds": 1.23,
+      "closing_odds": 1.23,
+      "picked_implied": 0.813008,
+      "closing_implied": 0.813008,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -3.814,
+      "model_prob": 78.2,
+      "edge_pct": 3.21,
+      "score": 76,
+      "line_move_pct": 0.0,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-29T18:11:44.615799+00:00",
+      "prediction_id": 3203
+    },
+    {
+      "event_id": "4789",
+      "date": "2026-04-29",
+      "home": "Al-Riyadh",
+      "away": "Al-Qadsiah",
+      "league": "Saudi Pro League",
+      "market": "btts",
+      "picked_odds": 1.57,
+      "closing_odds": 1.613,
+      "picked_implied": 0.636943,
+      "closing_implied": 0.619963,
+      "clv_pct": -2.6658,
+      "clv_positive": false,
+      "ev_at_pick_pct": 3.463,
+      "model_prob": 65.9,
+      "edge_pct": 9.75,
+      "score": 88,
+      "line_move_pct": 2.7389,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-04-29T18:11:44.615799+00:00",
+      "prediction_id": 3202
+    },
     {
       "event_id": "204694",
       "date": "2026-04-29",
@@ -136,7 +182,7 @@
       "line_move_pct": -0.6504,
       "won": true,
       "status": "win",
-      "settled_at": "2026-04-29T17:16:52.907832+00:00",
+      "settled_at": "2026-04-29T16:47:16.734633+00:00",
       "prediction_id": 3255
     },
     {
@@ -159,7 +205,7 @@
       "line_move_pct": 0.1695,
       "won": true,
       "status": "win",
-      "settled_at": "2026-04-29T17:16:52.907832+00:00",
+      "settled_at": "2026-04-29T16:47:16.734633+00:00",
       "prediction_id": 3256
     },
     {
@@ -182,7 +228,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-04-29T17:16:52.907832+00:00",
+      "settled_at": "2026-04-29T16:47:16.734633+00:00",
       "prediction_id": 3253
     },
     {
