@@ -134,7 +134,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data/ index.html assets/hybrid_adaptive_runtime.js assets/performance-patch.js assets/prediction_history_runtime.js assets/pro_command_center.css assets/pro_command_center.js assets/pro_intelligence_runtime.js assets/clv_tracker_runtime.js build_adaptive_predictions.py build_prediction_type_history.py build_training_features.py build_training_model_pack.py build_model_quality.py build_model_benchmarks.py build_pro_intelligence.py build_wfv_validation.py build_clv_tracker.py .github/workflows/fetch-data.yml .github/workflows/pro-intelligence.yml .gitignore
+          git add data/ index.html assets/app.js assets/hybrid_adaptive_runtime.js assets/performance-patch.js assets/prediction_history_runtime.js assets/pro_command_center.css assets/pro_command_center.js assets/pro_intelligence_runtime.js assets/clv_tracker_runtime.js build_adaptive_predictions.py build_prediction_type_history.py build_training_features.py build_training_model_pack.py build_model_quality.py build_model_benchmarks.py build_pro_intelligence.py build_wfv_validation.py build_clv_tracker.py .github/workflows/fetch-data.yml .github/workflows/pro-intelligence.yml .gitignore
 
           if git diff --staged --quiet; then
             echo "No data changes detected. Skipping commit."
