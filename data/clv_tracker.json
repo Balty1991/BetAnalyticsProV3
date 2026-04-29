@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-29T16:36:41.019571+00:00",
+  "updated_at": "2026-04-29T17:07:40.149576+00:00",
   "summary": {
-    "total_picks": 505,
-    "avg_clv_pct": -0.6569,
+    "total_picks": 508,
+    "avg_clv_pct": -0.6521,
     "median_clv_pct": 0.0,
-    "clv_positive_n": 78,
-    "clv_negative_n": 427,
-    "clv_positive_rate": 0.1545,
-    "avg_clv_wins": -0.3033,
+    "clv_positive_n": 79,
+    "clv_negative_n": 429,
+    "clv_positive_rate": 0.1555,
+    "avg_clv_wins": -0.2995,
     "avg_clv_losses": -1.5264,
-    "win_rate_pct": 71.09,
-    "roi_flat_pct": -1.3143,
+    "win_rate_pct": 71.26,
+    "roi_flat_pct": -1.1941,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.2311
+    "std_clv_pct": 6.213
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 287,
-      "avg_clv_pct": -1.2822,
-      "clv_positive_rate": 0.108,
-      "win_rate_pct": 73.17,
-      "roi_flat_pct": 0.8826,
-      "avg_ev_at_pick": 3.1632
+      "n": 290,
+      "avg_clv_pct": -1.2672,
+      "clv_positive_rate": 0.1103,
+      "win_rate_pct": 73.45,
+      "roi_flat_pct": 1.0703,
+      "avg_ev_at_pick": 3.1301
     }
   },
   "clv_buckets": {
@@ -57,16 +57,16 @@
       "avg_clv": 22.1133
     },
     "clv_mild_pos": {
-      "n": 60,
-      "win_rate": 76.67,
-      "roi_pct": 6.5833,
-      "avg_clv": 1.6851
+      "n": 61,
+      "win_rate": 77.05,
+      "roi_pct": 6.8393,
+      "avg_clv": 1.6682
     },
     "clv_neutral": {
-      "n": 277,
-      "win_rate": 70.76,
-      "roi_pct": -3.4801,
-      "avg_clv": -0.0684
+      "n": 279,
+      "win_rate": 70.97,
+      "roi_pct": -3.3301,
+      "avg_clv": -0.0685
     },
     "clv_mild_neg": {
       "n": 98,
@@ -82,40 +82,109 @@
     }
   },
   "rolling_30d": {
-    "n": 505,
-    "avg_clv_pct": -0.6569,
-    "win_rate_pct": 71.09,
-    "roi_flat_pct": -1.3143,
+    "n": 508,
+    "avg_clv_pct": -0.6521,
+    "win_rate_pct": 71.26,
+    "roi_flat_pct": -1.1941,
     "days": 30
   },
   "rolling_90d": {
-    "n": 505,
-    "avg_clv_pct": -0.6569,
-    "win_rate_pct": 71.09,
-    "roi_flat_pct": -1.3143,
+    "n": 508,
+    "avg_clv_pct": -0.6521,
+    "win_rate_pct": 71.26,
+    "roi_flat_pct": -1.1941,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 317,
+      "n": 318,
       "avg_clv": 0.6707,
-      "clv_positive_rate": 0.205
+      "clv_positive_rate": 0.2075
     },
     "ev_negative_picks": {
-      "n": 188,
-      "avg_clv": -2.8956,
-      "clv_positive_rate": 0.0691
+      "n": 190,
+      "avg_clv": -2.866,
+      "clv_positive_rate": 0.0684
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.66%) și ROI negativ (-1.31%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.19%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "204694",
+      "date": "2026-04-29",
+      "home": "US Monastir",
+      "away": "Avenir Sportif De Gabes",
+      "league": "Tunisian Ligue Professionnelle 1",
+      "market": "under35",
+      "picked_odds": 1.23,
+      "closing_odds": 1.222,
+      "picked_implied": 0.813008,
+      "closing_implied": 0.818331,
+      "clv_pct": 0.6547,
+      "clv_positive": true,
+      "ev_at_pick_pct": 2.8157,
+      "model_prob": 83.59,
+      "edge_pct": 8.96,
+      "score": 90,
+      "line_move_pct": -0.6504,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-29T16:47:16.734633+00:00",
+      "prediction_id": 3255
+    },
+    {
+      "event_id": "204692",
+      "date": "2026-04-29",
+      "home": "AS Soliman",
+      "away": "Club Africain",
+      "league": "Tunisian Ligue Professionnelle 1",
+      "market": "under35",
+      "picked_odds": 1.18,
+      "closing_odds": 1.182,
+      "picked_implied": 0.847458,
+      "closing_implied": 0.846024,
+      "clv_pct": -0.1692,
+      "clv_positive": false,
+      "ev_at_pick_pct": -0.0068,
+      "model_prob": 84.74,
+      "edge_pct": 5.51,
+      "score": 87,
+      "line_move_pct": 0.1695,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-29T16:47:16.734633+00:00",
+      "prediction_id": 3256
+    },
+    {
+      "event_id": "204691",
+      "date": "2026-04-29",
+      "home": "Stade Tunisien",
+      "away": "JS Omrane",
+      "league": "Tunisian Ligue Professionnelle 1",
+      "market": "under35",
+      "picked_odds": 1.167,
+      "closing_odds": 1.167,
+      "picked_implied": 0.856898,
+      "closing_implied": 0.856898,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -2.9056,
+      "model_prob": 83.2,
+      "edge_pct": 4.7,
+      "score": 80,
+      "line_move_pct": 0.0,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-29T16:47:16.734633+00:00",
+      "prediction_id": 3253
+    },
     {
       "event_id": "204851",
       "date": "2026-04-29",

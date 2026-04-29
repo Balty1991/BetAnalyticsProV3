@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-29T16:36:40.864545+00:00",
+  "updated_at": "2026-04-29T17:07:39.994737+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -666,7 +666,7 @@
         "credible": true,
         "brier": 0.2789,
         "log_loss": 0.7654,
-        "ece": 0.1425,
+        "ece": 0.1427,
         "score": 50.1,
         "grade": "D",
         "n_bets": 1152,
@@ -4542,16 +4542,16 @@
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 523,
+    "n_total": 526,
     "overall": {
-      "n": 523,
-      "n_wins": 369,
-      "winrate": 70.55,
-      "roi_pct": -2.14,
-      "profit": -11.187,
-      "avg_odds": 1.394,
+      "n": 526,
+      "n_wins": 372,
+      "winrate": 70.72,
+      "roi_pct": -2.02,
+      "profit": -10.616,
+      "avg_odds": 1.393,
       "max_drawdown": 16.69,
-      "avg_edge_pct": 8.75
+      "avg_edge_pct": 8.73
     },
     "by_market": {
       "btts": {
@@ -4585,14 +4585,14 @@
         "avg_edge_pct": 7.5
       },
       "under35": {
-        "n": 298,
-        "n_wins": 217,
-        "winrate": 72.82,
-        "roi_pct": 0.31,
-        "profit": 0.923,
-        "avg_odds": 1.391,
+        "n": 301,
+        "n_wins": 220,
+        "winrate": 73.09,
+        "roi_pct": 0.5,
+        "profit": 1.494,
+        "avg_odds": 1.389,
         "max_drawdown": 15.36,
-        "avg_edge_pct": 9.1
+        "avg_edge_pct": 9.07
       }
     },
     "by_league": {
@@ -4886,6 +4886,16 @@
         "max_drawdown": 3.0,
         "avg_edge_pct": 9.47
       },
+      "Tunisian Ligue Professionnelle 1": {
+        "n": 3,
+        "n_wins": 3,
+        "winrate": 100.0,
+        "roi_pct": 19.03,
+        "profit": 0.571,
+        "avg_odds": 1.19,
+        "max_drawdown": 0.0,
+        "avg_edge_pct": 6.39
+      },
       "Stoiximan Super League": {
         "n": 3,
         "n_wins": 2,
@@ -4949,22 +4959,22 @@
     },
     "by_edge_bucket": {
       "0-5%": {
-        "n": 81,
-        "n_wins": 55,
-        "winrate": 67.9,
-        "roi_pct": -9.79,
-        "profit": -7.93,
-        "avg_odds": 1.358,
+        "n": 82,
+        "n_wins": 56,
+        "winrate": 68.29,
+        "roi_pct": -9.47,
+        "profit": -7.763,
+        "avg_odds": 1.356,
         "max_drawdown": 11.74,
-        "avg_edge_pct": 3.76
+        "avg_edge_pct": 3.78
       },
       "5-10%": {
-        "n": 282,
-        "n_wins": 196,
-        "winrate": 69.5,
-        "roi_pct": -4.86,
-        "profit": -13.709,
-        "avg_odds": 1.38,
+        "n": 284,
+        "n_wins": 198,
+        "winrate": 69.72,
+        "roi_pct": -4.68,
+        "profit": -13.305,
+        "avg_odds": 1.378,
         "max_drawdown": 16.84,
         "avg_edge_pct": 7.32
       },
@@ -4992,22 +5002,22 @@
     "by_market_bucket": {
       "under35": {
         "0-5%": {
-          "n": 43,
-          "n_wins": 31,
-          "winrate": 72.09,
-          "roi_pct": -4.28,
-          "profit": -1.84,
-          "avg_odds": 1.365,
+          "n": 44,
+          "n_wins": 32,
+          "winrate": 72.73,
+          "roi_pct": -3.8,
+          "profit": -1.673,
+          "avg_odds": 1.361,
           "max_drawdown": 7.61,
-          "avg_edge_pct": 3.69
+          "avg_edge_pct": 3.71
         },
         "5-10%": {
-          "n": 151,
-          "n_wins": 109,
-          "winrate": 72.19,
-          "roi_pct": -1.63,
-          "profit": -2.459,
-          "avg_odds": 1.376,
+          "n": 153,
+          "n_wins": 111,
+          "winrate": 72.55,
+          "roi_pct": -1.34,
+          "profit": -2.055,
+          "avg_odds": 1.374,
           "max_drawdown": 10.22,
           "avg_edge_pct": 7.34
         },
