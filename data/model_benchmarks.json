@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-04-29T01:13:58.491517+00:00",
+  "updated_at": "2026-04-29T01:41:54.011520+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
-  "n_train": 6333,
+  "n_train": 6334,
   "n_test": 2715,
   "vig_factor": 0.93,
   "min_bet_edge": 0.002,
@@ -84,7 +84,7 @@
         "credible": true,
         "brier": 0.244,
         "log_loss": 0.681,
-        "ece": 0.0139,
+        "ece": 0.0138,
         "score": 75.3,
         "grade": "B",
         "n_bets": 2715,
@@ -143,7 +143,7 @@
         "n": 2715,
         "credible": true,
         "brier": 0.2359,
-        "log_loss": 0.6643,
+        "log_loss": 0.6642,
         "ece": 0.0386,
         "score": 70.9,
         "grade": "C",
@@ -283,7 +283,7 @@
         "credible": true,
         "brier": 0.23,
         "log_loss": 0.6519,
-        "ece": 0.1426,
+        "ece": 0.1425,
         "score": 54.5,
         "grade": "D",
         "n_bets": 2669,
@@ -510,7 +510,7 @@
       "elo_logit": {
         "n": 2715,
         "credible": true,
-        "brier": 0.2848,
+        "brier": 0.2847,
         "log_loss": 0.7977,
         "ece": 0.164,
         "score": 50.0,
@@ -4523,7 +4523,7 @@
     "home_win: cel mai bun ROI = +31.7% cu modelul ensemble.",
     "over15: cel mai bun ROI = +61.0% cu modelul team_form_blend.",
     "over25: cel mai bun ROI = +12.9% cu modelul poisson_simple.",
-    "under35: cel mai bun ROI = +8.6% cu modelul poisson_simple."
+    "under35: cel mai bun ROI = +8.6% cu modelul elo_logit."
   ],
   "ui_summary": {
     "best_model": "league_baseline",
