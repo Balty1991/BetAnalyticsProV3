@@ -640,14 +640,106 @@ def real_backtest_from_log(log_path: Path) -> Dict:
     if mkts_few:
         warnings.append(f"Piețe cu <20 pariuri (nesemnificativ statistic): {', '.join(mkts_few)}")
 
+    # Bucket per piata × edge
+    by_market_bucket: Dict[str, Dict[str, List]] = defaultdict(lambda: defaultdict(list))
+    for e in settled:
+        mkey  = str(e.get("market_key") or e.get("market") or "unknown")
+        edge  = safe_float(e.get("edge_pct"), 0.0)
+        bet   = {
+            "won":      bool(e["won"]),
+            "odds":     safe_float(e["odds"], 1.0),
+            "edge_pct": edge,
+            "model_prob": safe_float(e.get("adjusted_prob") or e.get("model_prob"), 0.0),
+        }
+        if edge < 5:    bk = "0-5%"
+        elif edge < 10: bk = "5-10%"
+        elif edge < 15: bk = "10-15%"
+        else:           bk = "15%+"
+        by_market_bucket[mkey][bk].append(bet)
+
+    mkt_bucket_stats: Dict[str, Dict] = {}
+    for mkey, buckets in by_market_bucket.items():
+        mkt_bucket_stats[mkey] = {
+            bk: _stats(buckets[bk])
+            for bk in ["0-5%","5-10%","10-15%","15%+"] if bk in buckets
+        }
+
     return {
-        "n_total":       len(settled),
-        "overall":       _stats(settled),
-        "by_market":     {k: _stats(v) for k, v in sorted(by_market.items())},
-        "by_league":     {k: _stats(v) for k, v in sorted(by_league.items(), key=lambda x: -len(x[1]))},
-        "by_edge_bucket":{k: _stats(by_edge_bucket[k]) for k in ["0-5%","5-10%","10-15%","15%+"] if k in by_edge_bucket},
-        "warnings":      warnings,
+        "n_total":          len(settled),
+        "overall":          _stats(settled),
+        "by_market":        {k: _stats(v) for k, v in sorted(by_market.items())},
+        "by_league":        {k: _stats(v) for k, v in sorted(by_league.items(), key=lambda x: -len(x[1]))},
+        "by_edge_bucket":   {k: _stats(by_edge_bucket[k]) for k in ["0-5%","5-10%","10-15%","15%+"] if k in by_edge_bucket},
+        "by_market_bucket": mkt_bucket_stats,
+        "warnings":         warnings,
     }
+
+
+# ─── PRAGURI DINAMICE per piată ───────────────────────────────────────────────
+
+EDGE_BUCKETS = [
+    ("0-5%",   0.0,  5.0),
+    ("5-10%",  5.0, 10.0),
+    ("10-15%", 10.0, 15.0),
+    ("15%+",   15.0, 999.0),
+]
+
+def compute_dynamic_thresholds(real_bt: Dict) -> Dict:
+    """
+    Calculează pragul minim de edge per piată din backtestul real.
+    Logica: primul bucket (de jos) cu ROI >= 0% și n >= 10 devine pragul.
+    Dacă niciun bucket nu e profitabil → piața primește flag disabled=True.
+
+    Output:
+    {
+      "market_key": {
+        "min_edge": float,
+        "disabled": bool,
+        "basis": str,   # bucketul care a determinat pragul
+        "roi_at_threshold": float
+      }
+    }
+    """
+    thresholds: Dict = {}
+    by_mkt    = real_bt.get("by_market", {})
+    by_bucket = real_bt.get("by_edge_bucket", {})
+
+    markets = list(by_mkt.keys())
+    by_mkt_bucket = real_bt.get("by_market_bucket", {})
+
+    for mkt in markets:
+        # Folosim bucket-urile per piata daca exista, altfel global
+        mkt_buckets = by_mkt_bucket.get(mkt, by_bucket)
+        # Caută primul bucket profitabil de jos în sus
+        found = None
+        for bname, bmin, bmax in EDGE_BUCKETS:
+            bs = mkt_buckets.get(bname, {})
+            if bs.get("n", 0) < 5:
+                # fallback la global dacă date insuficiente
+                bs = by_bucket.get(bname, {})
+            if bs.get("n", 0) < 5:
+                continue
+            if bs.get("roi_pct", -999) >= 0:
+                found = (bname, bmin, bs["roi_pct"])
+                break
+
+        if found:
+            thresholds[mkt] = {
+                "min_edge":           found[1],
+                "disabled":           False,
+                "basis":              found[0],
+                "roi_at_threshold":   found[2],
+            }
+        else:
+            # Niciun bucket profitabil — dezactivat
+            thresholds[mkt] = {
+                "min_edge":           999.0,
+                "disabled":           True,
+                "basis":              "none_profitable",
+                "roi_at_threshold":   None,
+            }
+
+    return thresholds
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -715,6 +807,8 @@ def main() -> None:
     # 10b. Real backtest din log cu cote reale
     print("  Calculez real backtest din recommendation_log.json...")
     real_bt = real_backtest_from_log(DATA_DIR / "recommendation_log.json")
+    dynamic_thresholds = compute_dynamic_thresholds(real_bt) if real_bt.get("n_total", 0) > 50 else {}
+    print(f"  Praguri dinamice calculate: {json.dumps(dynamic_thresholds, indent=None)}")
     if real_bt.get("n_total", 0):
         rb = real_bt["overall"]
         print(f"  Real backtest: {real_bt['n_total']} pariuri | ROI={rb.get('roi_pct',0):+.2f}% | "
@@ -739,7 +833,8 @@ def main() -> None:
         "per_league":      per_league,
         "recommendations": recommendations,
         "ui_summary": _build_ui_summary(ranking, by_market, rps_per_model),
-        "real_backtest": real_bt,
+        "real_backtest":       real_bt,
+        "dynamic_thresholds":  dynamic_thresholds,
     }
 
     save_json(DATA_DIR / "model_benchmarks.json", payload)
