@@ -13,6 +13,7 @@ Important pentru piețe:
 from __future__ import annotations
 
 import json
+import pickle
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -34,7 +35,18 @@ TARGETS = {
 KELLY_FRACTION = 0.25
 EDGE_MIN = 2.5
 EV_MIN = 0.0
-PROB_MIN = 0.50
+# FIX: PROB_MIN per piață — un singur threshold de 0.50 excludea away_win (~30%) și draw (~27%)
+# chiar când modelul era confident. Thresholds calibrate pe distribuțiile reale per piață.
+PROB_MIN_BY_MARKET = {
+    "home_win": 0.48,
+    "draw":     0.30,
+    "away_win": 0.33,
+    "btts":     0.48,
+    "over15":   0.58,
+    "over25":   0.48,
+    "under35":  0.48,
+}
+PROB_MIN = 0.48  # fallback dacă piața nu e în dict
 ODDS_MIN = 1.25
 ODDS_MAX = 5.00
 CAT_FEATURES = ["league", "home_streak_type", "away_streak_type"]
@@ -285,7 +297,20 @@ def run_catboost_inference(feats_list, market_key, feat_cols, model_path):
                 fill = df[c].median() if not df[c].isna().all() else 0.0
                 df[c] = df[c].fillna(fill)
         pool = Pool(df[feat_cols].values, cat_features=cat_idx, feature_names=list(feat_cols))
-        return [round(float(p), 6) for p in model.predict_proba(pool)[:, 1]]
+        raw_probs = model.predict_proba(pool)[:, 1]
+
+        # FIX: aplică calibratorul Isotonic dacă există pe disc
+        cal_path = MODELS_DIR / f"calibrator_{market_key}.pkl"
+        if cal_path.exists():
+            with open(cal_path, "rb") as _f:
+                calibrator = pickle.load(_f)
+            cal_probs = calibrator.transform(raw_probs)
+            print(f"  Calibrator aplicat pentru {market_key} (delta_med={abs(cal_probs.mean()-raw_probs.mean()):.4f})")
+        else:
+            print(f"  WARN: calibrator_{market_key}.pkl lipsă — folosesc probabilități brute (necalibrate)")
+            cal_probs = raw_probs
+
+        return [round(float(p), 6) for p in cal_probs]
     except Exception as exc:
         print(f"  WARN inference {market_key}: {exc}")
         return None
@@ -358,7 +383,9 @@ def main():
 
         for ev, feat, prob in zip(upcoming, feats_list, probs):
             # FIX under35: nu inversăm. Modelul dă deja P(target_under_35 = 1).
-            if prob < PROB_MIN:
+            # FIX: PROB_MIN per piață — away_win și draw au distribuție naturală sub 0.50
+            prob_min = PROB_MIN_BY_MARKET.get(market_key, PROB_MIN)
+            if prob < prob_min:
                 continue
             odds = _f(ev.get(odds_key), 0)
             if odds < ODDS_MIN or odds > ODDS_MAX:

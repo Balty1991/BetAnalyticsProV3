@@ -14,6 +14,7 @@ import os
 import json
 import math
 import re
+import tempfile
 import requests
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
@@ -1324,9 +1325,25 @@ def load_existing_json(filename, default):
 def save_json(data, filename):
     os.makedirs(DATA_DIR, exist_ok=True)
     path = os.path.join(DATA_DIR, filename)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"Saved: {path} ({os.path.getsize(path)} bytes)")
+    # FIX: atomic write — scriem în fișier temp în același director și facem rename atomic.
+    # os.replace() este atomic pe POSIX (rename syscall); pe Windows e best-effort.
+    # Previne race condition în care alte procese citesc un JSON parțial scris.
+    dir_name = os.path.dirname(os.path.abspath(path))
+    tmp_path = None
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".tmp", prefix=f"{filename}.")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(tmp_path, path)  # atomic pe POSIX
+        tmp_path = None  # semnalăm că rename a reușit
+        print(f"Saved: {path} ({os.path.getsize(path)} bytes)")
+    except Exception as exc:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+        raise exc
 
 
 def unique_team_ids_from_events(events):
