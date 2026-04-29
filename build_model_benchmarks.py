@@ -775,6 +775,13 @@ def compute_dynamic_thresholds(real_bt: Dict) -> Dict:
                 "bootstrap_target_n":  BOOTSTRAP_MIN_N,
             }
 
+    # Exceptie over15: prag maxim 10% (la 15%+ exista prea putine sample-uri)
+    if "over15" in thresholds and not thresholds["over15"].get("disabled"):
+        if thresholds["over15"]["min_edge"] > 10.0:
+            thresholds["over15"]["min_edge"]    = 10.0
+            thresholds["over15"]["basis"]       = "capped_at_10pct"
+            thresholds["over15"]["cap_warning"] = True
+
     # Detecteaza modificari fata de pragurile anterioare
     changes: List[Dict] = []
     for mkt, t in thresholds.items():
