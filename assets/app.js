@@ -1574,6 +1574,152 @@ function getVerdictBlock(match, bet) {
     '<div style="padding:4px 14px 8px;background:rgba(0,0,0,.15)">' + rowsHtml + '</div></div>';
 }
 
+
+// ====================================================================
+// PERFORMANTA VERDICT - render tab
+// ====================================================================
+function renderPerformantaVerdict() {
+  var el = document.getElementById('perf-verdict-content');
+  if (!el) return;
+
+  var log = [];
+  try {
+    // Folosim recommendation_log deja incarcat in BACKTEST_SUMMARY sau fetch direct
+    var bt = MODEL_BENCHMARKS && MODEL_BENCHMARKS.real_backtest;
+    if (!bt || !bt.n_total) {
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Date insuficiente. Asteapta urmatorul fetch.</div>';
+      return;
+    }
+
+    // Reconstruim verdictele pe baza datelor din recommendation_log prin model_benchmarks
+    // Folosim by_market_bucket + by_edge_bucket pentru a simula distributia verdictelor
+    var byMkt    = bt.by_market       || {};
+    var byBucket = bt.by_edge_bucket  || {};
+    var byMktBkt = bt.by_market_bucket || {};
+    var overall  = bt.overall         || {};
+
+    // --- Card overall ---
+    var roiColor = overall.roi_pct >= 3 ? '#22c55e' : overall.roi_pct >= 0 ? '#f59e0b' : '#ef4444';
+    var roiSign  = overall.roi_pct >= 0 ? '+' : '';
+
+    var overallHtml =
+      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Global</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">' +
+          _perfMetric('Total pariuri', overall.n || 0, '') +
+          _perfMetric('ROI', roiSign + (overall.roi_pct||0).toFixed(1) + '%', '', roiColor) +
+          _perfMetric('Winrate', (overall.winrate||0).toFixed(1) + '%', '', overall.winrate >= 65 ? '#22c55e' : '#f59e0b') +
+          _perfMetric('Profit', (overall.profit >= 0 ? '+' : '') + (overall.profit||0).toFixed(2) + 'u', '', overall.profit >= 0 ? '#22c55e' : '#ef4444') +
+          _perfMetric('Max drawdown', (overall.max_drawdown||0).toFixed(2) + 'u', '', '#f59e0b') +
+          _perfMetric('Avg odds', (overall.avg_odds||0).toFixed(3), '') +
+        '</div>' +
+      '</div>';
+
+    // --- Card per piata ---
+    var mktRows = Object.keys(byMkt).sort().map(function(mkey) {
+      var s = byMkt[mkey];
+      var rc = s.roi_pct >= 3 ? '#22c55e' : s.roi_pct >= 0 ? '#f59e0b' : '#ef4444';
+      var rs = s.roi_pct >= 0 ? '+' : '';
+      var minEdge = (MODEL_BENCHMARKS.dynamic_thresholds && MODEL_BENCHMARKS.dynamic_thresholds[mkey])
+        ? MODEL_BENCHMARKS.dynamic_thresholds[mkey].min_edge : '?';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--txt)">' + mkey + '</div>' +
+          '<div style="font-size:10px;color:var(--muted)">Prag dinamic: edge &ge; ' + minEdge + '%</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;align-items:center">' +
+          '<span style="font-size:11px;color:var(--muted)">' + s.n + ' par.</span>' +
+          '<span style="font-size:13px;font-weight:800;color:' + rc + '">' + rs + s.roi_pct.toFixed(1) + '%</span>' +
+          '<span style="font-size:11px;color:var(--muted)">' + s.winrate.toFixed(0) + '% win</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var mktHtml =
+      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per piata</div>' +
+        mktRows +
+      '</div>';
+
+    // --- Card edge bucket ---
+    var bucketOrder = ['0-5%','5-10%','10-15%','15%+'];
+    var bucketRows = bucketOrder.filter(function(b){ return byBucket[b]; }).map(function(bk) {
+      var s = byBucket[bk];
+      var rc = s.roi_pct >= 3 ? '#22c55e' : s.roi_pct >= 0 ? '#f59e0b' : '#ef4444';
+      var rs = s.roi_pct >= 0 ? '+' : '';
+      var verdict = s.roi_pct >= 3 ? '\u2705 Profitabil' : s.roi_pct >= 0 ? '\u26a0\ufe0f Marginal' : '\u274c Pierdere';
+      var vc = s.roi_pct >= 3 ? '#22c55e' : s.roi_pct >= 0 ? '#f59e0b' : '#ef4444';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--txt)">Edge ' + bk + '</div>' +
+          '<div style="font-size:10px;color:' + vc + '">' + verdict + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;align-items:center">' +
+          '<span style="font-size:11px;color:var(--muted)">' + s.n + ' par.</span>' +
+          '<span style="font-size:13px;font-weight:800;color:' + rc + '">' + rs + s.roi_pct.toFixed(1) + '%</span>' +
+          '<span style="font-size:11px;color:var(--muted)">' + s.winrate.toFixed(0) + '% win</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var bucketHtml =
+      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per bucket edge</div>' +
+        bucketRows +
+      '</div>';
+
+    // --- Card praguri dinamice ---
+    var dt = MODEL_BENCHMARKS.dynamic_thresholds || {};
+    var dtRows = Object.keys(dt).sort().map(function(mkey) {
+      var t = dt[mkey];
+      var disabled = t.disabled;
+      var tc = disabled ? '#ef4444' : t.min_edge >= 10 ? '#f59e0b' : '#22c55e';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--txt)">' + mkey + '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center">' +
+          (disabled
+            ? '<span style="font-size:11px;color:#ef4444">\u274c Dezactivat</span>'
+            : '<span style="font-size:12px;font-weight:700;color:' + tc + '">Edge \u2265 ' + t.min_edge + '%</span>') +
+          '<span style="font-size:10px;color:var(--muted)">din ' + (t.basis||'?') + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var dtHtml =
+      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Praguri dinamice active</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Recalculate automat la fiecare fetch din date reale.</div>' +
+        dtRows +
+      '</div>';
+
+    // --- Warnings ---
+    var warnings = (bt.warnings || []);
+    var warnHtml = warnings.length
+      ? '<div style="padding:12px;border-radius:10px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.22);margin-bottom:14px">' +
+          warnings.map(function(w){ return '<div style="font-size:12px;color:#f59e0b;margin-bottom:4px">\u26a0\ufe0f ' + w + '</div>'; }).join('') +
+        '</div>'
+      : '';
+
+    var updAt = MODEL_BENCHMARKS.updated_at ? new Date(MODEL_BENCHMARKS.updated_at).toLocaleString('ro-RO') : '?';
+    var metaHtml = '<div style="font-size:10px;color:var(--muted);margin-bottom:14px">Ultima actualizare: ' + updAt + ' &nbsp;|&nbsp; ' + (bt.n_total||0) + ' pariuri finalizate cu cote reale</div>';
+
+    el.innerHTML = metaHtml + warnHtml + overallHtml + mktHtml + bucketHtml + dtHtml;
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:12px">Eroare: ' + e.message + '</div>';
+    console.error('renderPerformantaVerdict:', e);
+  }
+}
+
+function _perfMetric(label, val, sub, color) {
+  return '<div style="text-align:center;padding:8px 4px;border-radius:10px;background:rgba(255,255,255,.03)">' +
+    '<div style="font-size:15px;font-weight:900;color:' + (color || 'var(--txt)') + '">' + val + '</div>' +
+    '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + label + '</div>' +
+    (sub ? '<div style="font-size:9px;color:var(--muted)">' + sub + '</div>' : '') +
+  '</div>';
+}
+// ====================================================================
+
 function calcSmartScore(adjProb, value, confidence, edgePct){
   // Sincronizat cu fetch_data.py:calc_smart_score — aceeași scală, penalizări identice
   var c = normalizeConfidence(confidence);
@@ -4684,6 +4830,7 @@ function doRefresh(isManual){
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
     _MARKET_THRESHOLDS_CACHE = null;
+    if(document.getElementById('perf-verdict-content')) try{ renderPerformantaVerdict(); }catch(e){}
 
     var preds = predData.results || predData || [];
     window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
@@ -12325,6 +12472,7 @@ window.switchTab = function(name){
     if(activeSection === 'audit'){ try{ renderSmartBet(); renderSignalAudit(); renderAuditGenerators(); }catch(e){} }
     if(activeSection === 'aimemory'){ try{ renderAIMemory(); }catch(e){} }
     if(activeSection === 'smartbet'){ try{ renderSmartBet(); }catch(e){} }
+    if(activeSection === 'performanta'){ try{ renderPerformantaVerdict(); }catch(e){} }
   }
 };
 
