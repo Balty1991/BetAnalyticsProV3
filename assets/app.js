@@ -1568,7 +1568,30 @@ function getVerdictBlock(match, bet) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─── BENCHMARK BADGE ─────────────────────────────────────────────────────────
+// ─── BENCHMARK BADGE ───
+// ─── PRAG DINAMIC per piată ───────────────────────────────────────────────────
+var _MARKET_THRESHOLDS_CACHE = null;
+function getMarketThresholds() {
+  if (_MARKET_THRESHOLDS_CACHE) return _MARKET_THRESHOLDS_CACHE;
+  _MARKET_THRESHOLDS_CACHE = (MODEL_BENCHMARKS && MODEL_BENCHMARKS.dynamic_thresholds) || {};
+  return _MARKET_THRESHOLDS_CACHE;
+}
+
+// Returnează pragul minim de edge pentru o piată.
+// Fallback hardcodat dacă JSON-ul nu e disponibil.
+var EDGE_FALLBACK = { over15: 15.0, under35: 8.0, over25: 5.0, btts: 3.0 };
+function getMarketMinEdge(marketKey) {
+  var t = getMarketThresholds()[marketKey];
+  if (t && !t.disabled && typeof t.min_edge === 'number') return t.min_edge;
+  return EDGE_FALLBACK[marketKey] != null ? EDGE_FALLBACK[marketKey] : 3.0;
+}
+function isMarketDisabled(marketKey) {
+  var t = getMarketThresholds()[marketKey];
+  return t && t.disabled === true;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+──────────────────────────────────────────────────────
 // Returnează un rând HTML separat cu contextul istoric al modelului.
 // Dacă edge bucket e negativ → avertizare clară + motorBadge supresat.
 function getBenchmarkData(marketKey, edgePct) {
@@ -4747,6 +4770,7 @@ function doRefresh(isManual){
     var enrichedFile = results[8] || {};
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
+    _MARKET_THRESHOLDS_CACHE = null; // invalidează cache prag la reload
 
     var preds = predData.results || predData || [];
     window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
@@ -6830,8 +6854,10 @@ function buildMarketCandidate(m, type){
   var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
   // Over 1.5 — praguri relaxate (xG 2.00, prob 72, value 0.02, edge 2) pentru a include mai multe evenimente
-  if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < 15 || Number(b.value || 0) < 0.02)) return null; // prag ridicat 2→15 (backtest real: ROI -11.77% sub 15%)
-  if(type === 'under35' && edgePct < 8) return null; // prag adaugat (backtest real: ROI +0.6% overall, negativ sub 8%)
+  if(isMarketDisabled('over15')) return null;
+  if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over15') || Number(b.value || 0) < 0.02)) return null; // prag dinamic din model_benchmarks.json
+  if(isMarketDisabled('under35')) return null;
+  if(type === 'under35' && edgePct < getMarketMinEdge('under35')) return null; // prag dinamic din model_benchmarks.json
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
   // DC 1X / X2 — safe bet, prob >=75%, value >=0.02, odds >=1.15 (sub 1.15 devine irelevant)
   if(type === 'dc1x' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
