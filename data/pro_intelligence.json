@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-04-29T00:13:52.911965+00:00",
+  "updated_at": "2026-04-29T00:42:27.050762+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 63.9,
+  "overall_score": 63.8,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 625,
-    "pending_rows": 116,
-    "candidates_with_odds_and_probability": 103,
+    "pending_rows": 114,
+    "candidates_with_odds_and_probability": 102,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,18 +18,18 @@
   },
   "risk_distribution": {
     "balanced": 18,
-    "speculative": 81,
+    "speculative": 80,
     "safe": 4
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 53,
+    "Under 3.5G": 52,
     "BTTS": 25,
     "Over 1.5G": 23
   },
   "league_distribution_top150": {
     "Bundesliga": 8,
-    "Copa Libertadores": 9,
+    "Copa Libertadores": 8,
     "Ligue 1": 6,
     "J1 League": 8,
     "La Liga": 7,
@@ -1337,34 +1337,6 @@
       ]
     },
     {
-      "event_id": 9394,
-      "prediction_id": 3180,
-      "home": "CA Lanús",
-      "away": "LDU",
-      "league": "Copa Libertadores",
-      "event_date": "2026-04-29T01:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.2,
-      "model_probability": 0.8349,
-      "model_probability_pct": 83.49,
-      "implied_probability_pct": 83.33,
-      "fair_odds": 1.198,
-      "edge_pp": 0.16,
-      "ev_pct": 0.19,
-      "kelly_fraction": 0.0023,
-      "kelly_units_100": 0.23,
-      "confidence": 38.7,
-      "score": 86.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.5% vs. probabilitate implicată 83.3%.",
-        "EV estimat 0.2% și edge 0.2 puncte procentuale.",
-        "Miză Kelly fracțională 0.23% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 7121,
       "prediction_id": 3146,
       "home": "Red Bull Bragantino",
@@ -1474,6 +1446,34 @@
         "Probabilitate model 82.5% vs. probabilitate implicată 77.5%.",
         "EV estimat 6.4% și edge 5.0 puncte procentuale.",
         "Miză Kelly fracțională 5.55% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 353,
+      "prediction_id": 3338,
+      "home": "Wolverhampton",
+      "away": "Sunderland",
+      "league": "Premier League",
+      "event_date": "2026-05-02T17:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.33,
+      "model_probability": 0.8193,
+      "model_probability_pct": 81.93,
+      "implied_probability_pct": 75.19,
+      "fair_odds": 1.221,
+      "edge_pp": 6.74,
+      "ev_pct": 8.97,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 51.09,
+      "score": 91.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 81.9% vs. probabilitate implicată 75.2%.",
+        "EV estimat 9.0% și edge 6.7 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -2060,12 +2060,12 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 286,
-      "wins": 207,
-      "winrate": 72.38,
-      "profit_units": 0.38,
-      "roi_pct": 0.13,
-      "avg_odds": 1.396
+      "bets": 288,
+      "wins": 209,
+      "winrate": 72.57,
+      "profit_units": 0.76,
+      "roi_pct": 0.26,
+      "avg_odds": 1.394
     },
     {
       "key": "Over 1.5G",
@@ -2161,12 +2161,12 @@
     },
     {
       "key": "Copa Sudamericana",
-      "bets": 14,
-      "wins": 12,
-      "winrate": 85.71,
-      "profit_units": 2.17,
-      "roi_pct": 15.5,
-      "avg_odds": 1.349
+      "bets": 15,
+      "wins": 13,
+      "winrate": 86.67,
+      "profit_units": 2.35,
+      "roi_pct": 15.67,
+      "avg_odds": 1.338
     },
     {
       "key": "Liga MX Clausura",
