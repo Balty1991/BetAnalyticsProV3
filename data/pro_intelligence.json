@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-04-29T02:41:23.384742+00:00",
+  "updated_at": "2026-04-29T03:09:59.222287+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 64.8,
+  "overall_score": 64.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 666,
-    "pending_rows": 154,
-    "candidates_with_odds_and_probability": 134,
+    "recommendation_rows": 665,
+    "pending_rows": 150,
+    "candidates_with_odds_and_probability": 131,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,18 +18,18 @@
   },
   "risk_distribution": {
     "balanced": 28,
-    "speculative": 104,
+    "speculative": 101,
     "safe": 2
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 68,
-    "BTTS": 26,
-    "Over 1.5G": 38
+    "Under 3.5G": 67,
+    "BTTS": 25,
+    "Over 1.5G": 37
   },
   "league_distribution_top150": {
     "Bundesliga": 8,
-    "Copa Libertadores": 8,
+    "Copa Libertadores": 7,
     "Parva Liga": 3,
     "Liga Portugal Betclic": 3,
     "J1 League": 8,
@@ -37,9 +37,9 @@
     "La Liga": 7,
     "MLS": 7,
     "Eredivisie": 7,
-    "Copa Sudamericana": 9,
+    "Copa Sudamericana": 8,
     "Brasileirão Serie A": 4,
-    "Championship": 11,
+    "Championship": 10,
     "Serie A": 6,
     "FA Cup": 1,
     "Segunda División": 6,
@@ -530,6 +530,34 @@
       ]
     },
     {
+      "event_id": 2045,
+      "prediction_id": 3366,
+      "home": "Metz",
+      "away": "AS Monaco",
+      "league": "Ligue 1",
+      "event_date": "2026-05-02T20:00:00+03:00",
+      "market": "BTTS",
+      "odds": 1.56,
+      "model_probability": 0.6801,
+      "model_probability_pct": 68.01,
+      "implied_probability_pct": 64.1,
+      "fair_odds": 1.47,
+      "edge_pp": 3.91,
+      "ev_pct": 6.1,
+      "kelly_fraction": 0.0272,
+      "kelly_units_100": 2.72,
+      "confidence": 45.96,
+      "score": 101.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 68.0% vs. probabilitate implicată 64.1%.",
+        "EV estimat 6.1% și edge 3.9 puncte procentuale.",
+        "Miză Kelly fracțională 2.72% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 9287,
       "prediction_id": 3188,
       "home": "O'Higgins",
@@ -894,31 +922,31 @@
       ]
     },
     {
-      "event_id": 9285,
-      "prediction_id": 3186,
-      "home": "Millonarios",
-      "away": "São Paulo",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-04-29T03:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.23,
-      "model_probability": 0.8604,
-      "model_probability_pct": 86.04,
-      "implied_probability_pct": 81.3,
-      "fair_odds": 1.162,
-      "edge_pp": 4.74,
-      "ev_pct": 5.83,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 38.32,
-      "score": 97.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "event_id": 204243,
+      "prediction_id": 3358,
+      "home": "CD Castellón",
+      "away": "Córdoba",
+      "league": "Segunda División",
+      "event_date": "2026-05-02T19:30:00+03:00",
+      "market": "BTTS",
+      "odds": 1.571,
+      "model_probability": 0.7208,
+      "model_probability_pct": 72.08,
+      "implied_probability_pct": 63.65,
+      "fair_odds": 1.387,
+      "edge_pp": 8.43,
+      "ev_pct": 13.24,
+      "kelly_fraction": 0.058,
+      "kelly_units_100": 5.8,
+      "confidence": 59.24,
+      "score": 96.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 86.0% vs. probabilitate implicată 81.3%.",
-        "EV estimat 5.8% și edge 4.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+        "Probabilitate model 72.1% vs. probabilitate implicată 63.7%.",
+        "EV estimat 13.2% și edge 8.4 puncte procentuale.",
+        "Miză Kelly fracțională 5.80% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1032,34 +1060,6 @@
       "rationale": [
         "Probabilitate model 86.9% vs. probabilitate implicată 71.4%.",
         "EV estimat 21.7% și edge 15.5 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9285,
-      "prediction_id": 3186,
-      "home": "Millonarios",
-      "away": "São Paulo",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-04-29T03:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.23,
-      "model_probability": 0.8604,
-      "model_probability_pct": 86.04,
-      "implied_probability_pct": 81.3,
-      "fair_odds": 1.162,
-      "edge_pp": 4.74,
-      "ev_pct": 5.83,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 38.32,
-      "score": 97.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 86.0% vs. probabilitate implicată 81.3%.",
-        "EV estimat 5.8% și edge 4.7 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1481,6 +1481,34 @@
         "Probabilitate model 83.4% vs. probabilitate implicată 83.3%.",
         "EV estimat 0.1% și edge 0.1 puncte procentuale.",
         "Miză Kelly fracțională 0.08% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9401,
+      "prediction_id": 3209,
+      "home": "Mirassol",
+      "away": "Club Always Ready",
+      "league": "Copa Libertadores",
+      "event_date": "2026-04-30T01:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.5,
+      "model_probability": 0.8306,
+      "model_probability_pct": 83.06,
+      "implied_probability_pct": 66.67,
+      "fair_odds": 1.204,
+      "edge_pp": 16.39,
+      "ev_pct": 24.59,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 63.79,
+      "score": 112.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.1% vs. probabilitate implicată 66.7%.",
+        "EV estimat 24.6% și edge 16.4 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -2067,21 +2095,21 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 289,
-      "wins": 210,
-      "winrate": 72.66,
-      "profit_units": 0.96,
-      "roi_pct": 0.33,
-      "avg_odds": 1.394
+      "bets": 291,
+      "wins": 212,
+      "winrate": 72.85,
+      "profit_units": 1.41,
+      "roi_pct": 0.49,
+      "avg_odds": 1.392
     },
     {
       "key": "Over 1.5G",
-      "bets": 142,
+      "bets": 143,
       "wins": 95,
-      "winrate": 66.9,
-      "profit_units": -16.71,
-      "roi_pct": -11.77,
-      "avg_odds": 1.321
+      "winrate": 66.43,
+      "profit_units": -17.71,
+      "roi_pct": -12.38,
+      "avg_odds": 1.323
     }
   ],
   "settled_league_performance": [
@@ -2168,12 +2196,12 @@
     },
     {
       "key": "Copa Sudamericana",
-      "bets": 16,
-      "wins": 14,
-      "winrate": 87.5,
-      "profit_units": 2.55,
-      "roi_pct": 15.94,
-      "avg_odds": 1.329
+      "bets": 18,
+      "wins": 16,
+      "winrate": 88.89,
+      "profit_units": 3.0,
+      "roi_pct": 16.67,
+      "avg_odds": 1.318
     },
     {
       "key": "Liga MX Clausura",

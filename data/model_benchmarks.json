@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-29T02:41:23.293874+00:00",
+  "updated_at": "2026-04-29T03:09:59.143866+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -4538,18 +4538,18 @@
       "under35": "league_baseline",
       "btts": "league_baseline"
     },
-    "rps_winner": "elo_logit",
+    "rps_winner": "league_baseline",
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 512,
+    "n_total": 515,
     "overall": {
-      "n": 512,
-      "n_wins": 362,
-      "winrate": 70.7,
-      "roi_pct": -1.79,
-      "profit": -9.148,
-      "avg_odds": 1.396,
+      "n": 515,
+      "n_wins": 364,
+      "winrate": 70.68,
+      "roi_pct": -1.88,
+      "profit": -9.698,
+      "avg_odds": 1.395,
       "max_drawdown": 16.69,
       "avg_edge_pct": 8.77
     },
@@ -4565,14 +4565,14 @@
         "avg_edge_pct": 9.37
       },
       "over15": {
-        "n": 142,
+        "n": 143,
         "n_wins": 95,
-        "winrate": 66.9,
-        "roi_pct": -11.77,
-        "profit": -16.71,
-        "avg_odds": 1.321,
-        "max_drawdown": 17.01,
-        "avg_edge_pct": 7.81
+        "winrate": 66.43,
+        "roi_pct": -12.38,
+        "profit": -17.71,
+        "avg_odds": 1.323,
+        "max_drawdown": 18.01,
+        "avg_edge_pct": 7.82
       },
       "over25": {
         "n": 10,
@@ -4585,12 +4585,12 @@
         "avg_edge_pct": 7.5
       },
       "under35": {
-        "n": 289,
-        "n_wins": 210,
-        "winrate": 72.66,
-        "roi_pct": 0.33,
-        "profit": 0.962,
-        "avg_odds": 1.394,
+        "n": 291,
+        "n_wins": 212,
+        "winrate": 72.85,
+        "roi_pct": 0.49,
+        "profit": 1.412,
+        "avg_odds": 1.392,
         "max_drawdown": 15.36,
         "avg_edge_pct": 9.13
       }
@@ -4726,6 +4726,26 @@
         "max_drawdown": 7.05,
         "avg_edge_pct": 7.01
       },
+      "Copa Sudamericana": {
+        "n": 18,
+        "n_wins": 16,
+        "winrate": 88.89,
+        "roi_pct": 16.67,
+        "profit": 3.0,
+        "avg_odds": 1.318,
+        "max_drawdown": 1.0,
+        "avg_edge_pct": 11.38
+      },
+      "Copa Libertadores": {
+        "n": 17,
+        "n_wins": 13,
+        "winrate": 76.47,
+        "roi_pct": 0.59,
+        "profit": 0.1,
+        "avg_odds": 1.352,
+        "max_drawdown": 1.8,
+        "avg_edge_pct": 11.29
+      },
       "Brasileirão Serie B": {
         "n": 17,
         "n_wins": 10,
@@ -4735,26 +4755,6 @@
         "avg_odds": 1.313,
         "max_drawdown": 4.63,
         "avg_edge_pct": 8.78
-      },
-      "Copa Libertadores": {
-        "n": 16,
-        "n_wins": 13,
-        "winrate": 81.25,
-        "roi_pct": 6.88,
-        "profit": 1.1,
-        "avg_odds": 1.341,
-        "max_drawdown": 1.0,
-        "avg_edge_pct": 11.41
-      },
-      "Copa Sudamericana": {
-        "n": 16,
-        "n_wins": 14,
-        "winrate": 87.5,
-        "roi_pct": 15.94,
-        "profit": 2.55,
-        "avg_odds": 1.329,
-        "max_drawdown": 1.0,
-        "avg_edge_pct": 11.75
       },
       "Trendyol Super Lig": {
         "n": 16,
@@ -4949,32 +4949,32 @@
     },
     "by_edge_bucket": {
       "0-5%": {
-        "n": 76,
-        "n_wins": 52,
-        "winrate": 68.42,
-        "roi_pct": -8.63,
-        "profit": -6.56,
-        "avg_odds": 1.365,
+        "n": 77,
+        "n_wins": 53,
+        "winrate": 68.83,
+        "roi_pct": -8.23,
+        "profit": -6.34,
+        "avg_odds": 1.363,
         "max_drawdown": 10.55,
-        "avg_edge_pct": 3.73
+        "avg_edge_pct": 3.75
       },
       "5-10%": {
-        "n": 279,
+        "n": 280,
         "n_wins": 195,
-        "winrate": 69.89,
-        "roi_pct": -4.32,
-        "profit": -12.04,
-        "avg_odds": 1.379,
-        "max_drawdown": 15.91,
+        "winrate": 69.64,
+        "roi_pct": -4.66,
+        "profit": -13.04,
+        "avg_odds": 1.38,
+        "max_drawdown": 16.17,
         "avg_edge_pct": 7.32
       },
       "10-15%": {
-        "n": 109,
-        "n_wins": 78,
-        "winrate": 71.56,
-        "roi_pct": 3.1,
-        "profit": 3.38,
-        "avg_odds": 1.435,
+        "n": 110,
+        "n_wins": 79,
+        "winrate": 71.82,
+        "roi_pct": 3.28,
+        "profit": 3.61,
+        "avg_odds": 1.434,
         "max_drawdown": 5.03,
         "avg_edge_pct": 11.97
       },
