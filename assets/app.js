@@ -1700,10 +1700,47 @@ function renderPerformantaVerdict() {
         '</div>'
       : '';
 
+    // Notificari modificari prag
+    var dt2 = MODEL_BENCHMARKS.dynamic_thresholds || {};
+    var changedMarkets = Object.keys(dt2).filter(function(m){ return dt2[m].changed; });
+    var changeNotifHtml = '';
+    if (changedMarkets.length) {
+      changeNotifHtml = '<div style="padding:12px 14px;border-radius:12px;background:rgba(99,102,241,.10);border:1px solid rgba(99,102,241,.30);margin-bottom:14px">' +
+        '<div style="font-size:12px;font-weight:800;color:#818cf8;margin-bottom:8px">\ud83d\udd04 Praguri auto-recalibrate</div>' +
+        changedMarkets.map(function(m) {
+          var t = dt2[m];
+          var arrow = t.new_edge > t.prev_edge ? '\u2191' : '\u2193';
+          var ac = t.new_edge > t.prev_edge ? '#ef4444' : '#22c55e';
+          return '<div style="font-size:12px;color:var(--txt);margin-bottom:4px">' +
+            '<b>' + m + '</b>: ' + t.prev_edge + '% ' +
+            '<span style="color:' + ac + ';font-weight:900">' + arrow + ' ' + t.new_edge + '%</span>' +
+            (t.roi_at_threshold != null ? ' <span style="color:var(--muted)">(ROI ' + (t.roi_at_threshold >= 0 ? '+' : '') + t.roi_at_threshold.toFixed(1) + '%)</span>' : '') +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    // Istoric modificari
+    var history = MODEL_BENCHMARKS.threshold_history || [];
+    var histHtml = '';
+    if (history.length) {
+      histHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Istoric modificari prag</div>' +
+        history.slice().reverse().map(function(c) {
+          var tc = c.type === 'disabled' ? '#ef4444' : c.new_edge > c.prev_edge ? '#f59e0b' : '#22c55e';
+          var d = c.timestamp ? new Date(c.timestamp).toLocaleDateString('ro-RO') : '?';
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">' +
+            '<div style="font-size:12px;color:var(--txt)">' + c.message + '</div>' +
+            '<div style="font-size:10px;color:var(--muted);flex-shrink:0;margin-left:8px">' + d + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
     var updAt = MODEL_BENCHMARKS.updated_at ? new Date(MODEL_BENCHMARKS.updated_at).toLocaleString('ro-RO') : '?';
     var metaHtml = '<div style="font-size:10px;color:var(--muted);margin-bottom:14px">Ultima actualizare: ' + updAt + ' &nbsp;|&nbsp; ' + (bt.n_total||0) + ' pariuri finalizate cu cote reale</div>';
 
-    el.innerHTML = metaHtml + warnHtml + overallHtml + mktHtml + bucketHtml + dtHtml;
+    el.innerHTML = metaHtml + changeNotifHtml + warnHtml + overallHtml + mktHtml + bucketHtml + histHtml + dtHtml;
 
   } catch(e) {
     el.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:12px">Eroare: ' + e.message + '</div>';
