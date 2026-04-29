@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-29T21:15:20.533921+00:00",
+  "updated_at": "2026-04-29T21:42:04.429494+00:00",
   "summary": {
-    "total_picks": 510,
-    "avg_clv_pct": -0.6548,
+    "total_picks": 511,
+    "avg_clv_pct": -0.6521,
     "median_clv_pct": 0.0,
-    "clv_positive_n": 79,
+    "clv_positive_n": 80,
     "clv_negative_n": 431,
-    "clv_positive_rate": 0.1549,
-    "avg_clv_wins": -0.2987,
+    "clv_positive_rate": 0.1566,
+    "avg_clv_wins": -0.2959,
     "avg_clv_losses": -1.5341,
-    "win_rate_pct": 71.18,
-    "roi_flat_pct": -1.3404,
+    "win_rate_pct": 71.23,
+    "roi_flat_pct": -1.2614,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.2015
+    "std_clv_pct": 6.1957
   },
   "by_market": {
     "btts": {
@@ -25,12 +25,12 @@
       "avg_ev_at_pick": 3.1881
     },
     "over15": {
-      "n": 141,
-      "avg_clv_pct": 1.5349,
-      "clv_positive_rate": 0.1986,
-      "win_rate_pct": 66.67,
-      "roi_flat_pct": -12.156,
-      "avg_ev_at_pick": 3.4084
+      "n": 142,
+      "avg_clv_pct": 1.5291,
+      "clv_positive_rate": 0.2042,
+      "win_rate_pct": 66.9,
+      "roi_flat_pct": -11.7958,
+      "avg_ev_at_pick": 3.4592
     },
     "over25": {
       "n": 9,
@@ -57,10 +57,10 @@
       "avg_clv": 22.1133
     },
     "clv_mild_pos": {
-      "n": 61,
-      "win_rate": 77.05,
-      "roi_pct": 6.8393,
-      "avg_clv": 1.6682
+      "n": 62,
+      "win_rate": 77.42,
+      "roi_pct": 7.3581,
+      "avg_clv": 1.6529
     },
     "clv_neutral": {
       "n": 280,
@@ -82,24 +82,24 @@
     }
   },
   "rolling_30d": {
-    "n": 510,
-    "avg_clv_pct": -0.6548,
-    "win_rate_pct": 71.18,
-    "roi_flat_pct": -1.3404,
+    "n": 511,
+    "avg_clv_pct": -0.6521,
+    "win_rate_pct": 71.23,
+    "roi_flat_pct": -1.2614,
     "days": 30
   },
   "rolling_90d": {
-    "n": 510,
-    "avg_clv_pct": -0.6548,
-    "win_rate_pct": 71.18,
-    "roi_flat_pct": -1.3404,
+    "n": 511,
+    "avg_clv_pct": -0.6521,
+    "win_rate_pct": 71.23,
+    "roi_flat_pct": -1.2614,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 319,
-      "avg_clv": 0.6602,
-      "clv_positive_rate": 0.2069
+      "n": 320,
+      "avg_clv": 0.6604,
+      "clv_positive_rate": 0.2094
     },
     "ev_negative_picks": {
       "n": 191,
@@ -110,12 +110,35 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.34%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.65%) și ROI negativ (-1.26%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "202969",
+      "date": "2026-04-29",
+      "home": "Atlético Madrid",
+      "away": "Arsenal",
+      "league": "Champions League",
+      "market": "over15",
+      "picked_odds": 1.4,
+      "closing_odds": 1.39,
+      "picked_implied": 0.714286,
+      "closing_implied": 0.719424,
+      "clv_pct": 0.7194,
+      "clv_positive": true,
+      "ev_at_pick_pct": 10.614,
+      "model_prob": 79.01,
+      "edge_pct": 12.17,
+      "score": 94,
+      "line_move_pct": -0.7143,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-29T21:24:17.511972+00:00",
+      "prediction_id": 3205
+    },
     {
       "event_id": "4791",
       "date": "2026-04-29",
