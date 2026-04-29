@@ -12,7 +12,7 @@ Rulare:
   python3 train_engine_v2.py --tune               # cu Optuna hyperparameter tuning
 """
 
-import json, os, sys, argparse, math, warnings
+import json, os, sys, argparse, math, warnings, pickle
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -382,6 +382,12 @@ def train_market(df, feat_cols, market_key, target_col, do_wfv=True, do_shap=Tru
     model.save_model(str(model_path))
     print(f"  Model salvat: {model_path}")
 
+    # FIX: Salvare calibrator Isotonic pe disc (era antrenat dar niciodată salvat)
+    cal_path = MODELS_DIR / f"calibrator_{market_key}.pkl"
+    with open(cal_path, "wb") as _cal_f:
+        pickle.dump(ir, _cal_f, protocol=pickle.HIGHEST_PROTOCOL)
+    print(f"  Calibrator salvat: {cal_path}")
+
     return {
         "market":           market_key,
         "target":           target_col,
@@ -396,6 +402,7 @@ def train_market(df, feat_cols, market_key, target_col, do_wfv=True, do_shap=Tru
         "shap_top_features":shap_top[:20],
         "calibrator":       ir,
         "model_path":       str(model_path),
+        "calibrator_path":  str(cal_path),
         "feat_cols":        feat_cols,
     }
 
@@ -410,6 +417,7 @@ def build_model_pack(results, feat_cols):
         markets_out[mk] = {
             "target":            res["target"],
             "model_file":        Path(res["model_path"]).name,
+            "calibrator_file":   Path(res["calibrator_path"]).name,
             "n_train":           res["n_train"],
             "positive_rate":     res["positive_rate"],
             "test_auc":          res["test_metrics_cal"].get("auc_roc"),
