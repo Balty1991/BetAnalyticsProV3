@@ -686,6 +686,19 @@ EDGE_BUCKETS = [
 
 def compute_dynamic_thresholds(real_bt: Dict) -> Dict:
     """
+    Calculeaza pragul minim de edge per piata din backtestul real.
+    Compara cu pragurile anterioare si logeaza modificarile.
+    """
+    # Citeste pragurile anterioare daca exista
+    prev_path = DATA_DIR / "model_benchmarks.json"
+    prev_thresholds: Dict = {}
+    if prev_path.exists():
+        try:
+            prev = json.loads(prev_path.read_text(encoding="utf-8"))
+            prev_thresholds = prev.get("dynamic_thresholds", {})
+        except Exception:
+            pass
+    """
     Calculează pragul minim de edge per piată din backtestul real.
     Logica: primul bucket (de jos) cu ROI >= 0% și n >= 10 devine pragul.
     Dacă niciun bucket nu e profitabil → piața primește flag disabled=True.
@@ -731,13 +744,72 @@ def compute_dynamic_thresholds(real_bt: Dict) -> Dict:
                 "roi_at_threshold":   found[2],
             }
         else:
-            # Niciun bucket profitabil — dezactivat
             thresholds[mkt] = {
                 "min_edge":           999.0,
                 "disabled":           True,
                 "basis":              "none_profitable",
                 "roi_at_threshold":   None,
             }
+
+    # Detecteaza modificari fata de pragurile anterioare
+    changes: List[Dict] = []
+    for mkt, t in thresholds.items():
+        prev = prev_thresholds.get(mkt, {})
+        prev_edge     = prev.get("min_edge")
+        prev_disabled = prev.get("disabled", False)
+        curr_edge     = t["min_edge"]
+        curr_disabled = t["disabled"]
+
+        if prev_edge is None:
+            continue  # prima rulare, nu e o modificare
+
+        if curr_disabled and not prev_disabled:
+            changes.append({
+                "market":    mkt,
+                "type":      "disabled",
+                "prev_edge": prev_edge,
+                "new_edge":  999.0,
+                "message":   f"{mkt}: dezactivat (niciun bucket profitabil)",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+        elif not curr_disabled and prev_disabled:
+            changes.append({
+                "market":    mkt,
+                "type":      "re_enabled",
+                "prev_edge": prev_edge,
+                "new_edge":  curr_edge,
+                "message":   f"{mkt}: reactivat, prag nou = {curr_edge}% (ROI {t['roi_at_threshold']:+.1f}%)",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+        elif abs(curr_edge - prev_edge) >= 1.0:
+            direction = "ridicat" if curr_edge > prev_edge else "coborat"
+            changes.append({
+                "market":    mkt,
+                "type":      "threshold_change",
+                "prev_edge": prev_edge,
+                "new_edge":  curr_edge,
+                "message":   f"{mkt}: prag {direction} {prev_edge}% -> {curr_edge}% (ROI {t.get('roi_at_threshold', 0) or 0:+.1f}%)",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+        t["prev_edge"]   = prev_edge
+        t["changed"]     = abs(curr_edge - prev_edge) >= 1.0 or (curr_disabled != prev_disabled)
+
+    # Pastreaza istoricul modificarilor (max 50 intrari)
+    history_path = DATA_DIR / "threshold_history.json"
+    history: List[Dict] = []
+    if history_path.exists():
+        try:
+            history = json.loads(history_path.read_text(encoding="utf-8"))
+        except Exception:
+            history = []
+    history = (history + changes)[-50:]
+    if changes:
+        history_path.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+        for c in changes:
+            print(f"  ** MODIFICARE PRAG: {c['message']}")
+
+    for mkt, t in thresholds.items():
+        t["recent_changes"] = [c for c in changes if c["market"] == mkt]
 
     return thresholds
 
@@ -835,6 +907,7 @@ def main() -> None:
         "ui_summary": _build_ui_summary(ranking, by_market, rps_per_model),
         "real_backtest":       real_bt,
         "dynamic_thresholds":  dynamic_thresholds,
+        "threshold_history":   history[-10:] if 'history' in dir() else [],
     }
 
     save_json(DATA_DIR / "model_benchmarks.json", payload)
