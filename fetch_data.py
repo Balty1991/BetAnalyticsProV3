@@ -1546,7 +1546,8 @@ def _parse_raw_odds_snapshot(data):
 
 
 def _fetch_raw_odds_snapshot(event_id_int):
-    base_url = f"{API_BASE}/api/odds/?event={event_id_int}"
+    # market=all → returnează 1x2 + btts + over_under_15/25/35 + double_chance + draw_no_bet
+    base_url = f"{API_BASE}/api/odds/?event={event_id_int}&market=all"
     all_rows = []
     event_context = None
     seen_urls = set()
@@ -1594,7 +1595,7 @@ def fetch_event_odds_compare_snapshot(event_id):
     if event_id_int in EVENT_ODDS_COMPARE_CACHE:
         return EVENT_ODDS_COMPARE_CACHE[event_id_int]
     endpoints = [
-        f"{API_BASE}/api/odds/compare/?event={event_id_int}",
+        f"{API_BASE}/api/odds/compare/?event={event_id_int}&market=all",
     ]
     for url in endpoints:
         try:
