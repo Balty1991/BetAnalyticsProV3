@@ -736,19 +736,43 @@ def compute_dynamic_thresholds(real_bt: Dict) -> Dict:
                 found = (bname, bmin, bs["roi_pct"])
                 break
 
+        # Bootstrap: dacă bucketul profitabil are n < BOOTSTRAP_MIN_N, pragul
+        # data-driven e statistic fragil. Folosim un prag mai permisiv temporar
+        # ca să acumulăm date — app.js citește bootstrap_min_edge și îl preferă
+        # până când n devine suficient, după care revine automat la min_edge.
+        BOOTSTRAP_MIN_N = 20
+        BOOTSTRAP_THRESHOLDS = {
+            "over15":  10.0,
+            "under35": 10.0,
+            "over25":   5.0,
+            "btts":     3.0,
+        }
+
         if found:
+            n_at_threshold = mkt_buckets.get(found[0], {}).get("n", 0)
+            bootstrap_edge = None
+            if n_at_threshold < BOOTSTRAP_MIN_N and mkt in BOOTSTRAP_THRESHOLDS:
+                bt_edge = BOOTSTRAP_THRESHOLDS[mkt]
+                if bt_edge < found[1]:
+                    bootstrap_edge = bt_edge
             thresholds[mkt] = {
-                "min_edge":           found[1],
-                "disabled":           False,
-                "basis":              found[0],
-                "roi_at_threshold":   found[2],
+                "min_edge":            found[1],
+                "disabled":            False,
+                "basis":               found[0],
+                "roi_at_threshold":    found[2],
+                "bootstrap_min_edge":  bootstrap_edge,
+                "bootstrap_n":         n_at_threshold,
+                "bootstrap_target_n":  BOOTSTRAP_MIN_N,
             }
         else:
             thresholds[mkt] = {
-                "min_edge":           999.0,
-                "disabled":           True,
-                "basis":              "none_profitable",
-                "roi_at_threshold":   None,
+                "min_edge":            999.0,
+                "disabled":            True,
+                "basis":               "none_profitable",
+                "roi_at_threshold":    None,
+                "bootstrap_min_edge":  None,
+                "bootstrap_n":         0,
+                "bootstrap_target_n":  BOOTSTRAP_MIN_N,
             }
 
     # Detecteaza modificari fata de pragurile anterioare
