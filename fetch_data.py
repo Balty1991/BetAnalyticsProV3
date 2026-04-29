@@ -1587,6 +1587,12 @@ def fetch_event_odds_compare_snapshot(event_id):
     """
     Returnează pentru un eveniment harta cu best odds / best bookmaker / average odds
     pe toate piețele suportate. Cache-uit per event pentru a evita request-uri repetate.
+
+    Strategie:
+    1. Fetch compare endpoint → returnează 1x2 + btts + avg_odds/bookmakers_count
+    2. Fetch raw odds endpoint (market=all) → returnează TOATE piețele incl. over_under_35
+    3. Merge: raw odds furnizează piețele lipsă (under35, over15 etc.)
+       compare endpoint furnizează avg_odds și bookmakers_count mai precise
     """
     try:
         event_id_int = int(event_id)
@@ -1594,29 +1600,43 @@ def fetch_event_odds_compare_snapshot(event_id):
         return {}
     if event_id_int in EVENT_ODDS_COMPARE_CACHE:
         return EVENT_ODDS_COMPARE_CACHE[event_id_int]
-    endpoints = [
-        f"{API_BASE}/api/odds/compare/?event={event_id_int}&market=all",
-    ]
-    for url in endpoints:
-        try:
-            r = requests.get(url, headers=HEADERS, timeout=20)
-            if r.status_code in (400, 404, 405):
-                continue
-            r.raise_for_status()
-            data = r.json()
-            snapshot = _parse_compare_snapshot(data)
-            if snapshot:
-                EVENT_ODDS_COMPARE_CACHE[event_id_int] = snapshot
-                return snapshot
-        except Exception:
-            continue
+
+    # Pasul 1: compare endpoint (1x2 + btts, cu avg_odds precis)
+    compare_snapshot = {}
     try:
-        snapshot = _fetch_raw_odds_snapshot(event_id_int)
-        if snapshot:
-            EVENT_ODDS_COMPARE_CACHE[event_id_int] = snapshot
-            return snapshot
+        r = requests.get(
+            f"{API_BASE}/api/odds/compare/?event={event_id_int}&market=all",
+            headers=HEADERS, timeout=20
+        )
+        if r.status_code not in (400, 404, 405):
+            r.raise_for_status()
+            compare_snapshot = _parse_compare_snapshot(r.json()) or {}
     except Exception:
         pass
+
+    # Pasul 2: raw odds endpoint (market=all → include over_under_35, over_under_15 etc.)
+    raw_snapshot = {}
+    try:
+        raw_snapshot = _fetch_raw_odds_snapshot(event_id_int) or {}
+    except Exception:
+        pass
+
+    # Pasul 3: merge — compare e sursa principală, raw completează piețele lipsă
+    merged = dict(compare_snapshot)
+    for market_key, entry in raw_snapshot.items():
+        if market_key not in merged:
+            # Piața lipsea din compare (ex: under35, over15) — adăugăm din raw
+            merged[market_key] = entry
+        else:
+            # Piața există în compare — completăm câmpuri lipsă din raw (ex: bookmakers_count)
+            existing = merged[market_key]
+            if not existing.get("bookmakers_count") and entry.get("bookmakers_count"):
+                existing["bookmakers_count"] = entry["bookmakers_count"]
+
+    if merged:
+        EVENT_ODDS_COMPARE_CACHE[event_id_int] = merged
+        return merged
+
     EVENT_ODDS_COMPARE_CACHE[event_id_int] = {}
     return {}
 
