@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-29T20:46:47.645068+00:00",
+  "updated_at": "2026-04-29T20:51:06.680067+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -4832,7 +4832,7 @@
         "winrate": 50.0,
         "roi_pct": -32.0,
         "profit": -2.56,
-        "avg_odds": 1.372,
+        "avg_odds": 1.373,
         "max_drawdown": 3.41,
         "avg_edge_pct": 11.29
       },
@@ -5177,16 +5177,26 @@
       "recent_changes": []
     },
     "over15": {
-      "min_edge": 15.0,
+      "min_edge": 10.0,
       "disabled": false,
-      "basis": "15%+",
+      "basis": "capped_at_10pct",
       "roi_at_threshold": 3.09,
       "bootstrap_min_edge": 10.0,
       "bootstrap_n": 11,
       "bootstrap_target_n": 20,
+      "cap_warning": true,
       "prev_edge": 15.0,
-      "changed": false,
-      "recent_changes": []
+      "changed": true,
+      "recent_changes": [
+        {
+          "market": "over15",
+          "type": "threshold_change",
+          "prev_edge": 15.0,
+          "new_edge": 10.0,
+          "message": "over15: prag coborat 15.0% -> 10.0% (ROI +3.1%)",
+          "timestamp": "2026-04-29T20:51:06.678907+00:00"
+        }
+      ]
     },
     "over25": {
       "min_edge": 10.0,
