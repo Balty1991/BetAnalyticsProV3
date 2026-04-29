@@ -4215,28 +4215,50 @@ function analyzeMatch(raw){
       // ─── Odds Consensus ────────────────────────────────────────────────────
       consensusFlag: (function(){
         var hasCompare = !!(compareMeta && compareMeta.hasCompare && Number(compareMeta.bestOdds || 0) > 1.01);
-        if(!hasCompare) return 'NO_DATA';
-        var bkCount = compareMeta ? Number(compareMeta.bookmakersCount || 0) : 0;
-        var bestO = compareMeta ? Number(compareMeta.bestOdds || 0) : 0;
-        var avgO  = compareMeta ? Number(compareMeta.avgOdds  || 0) : 0;
-        // no-vig: folosim avgOdds dacă există, altfel bestOdds
-        var useO  = (avgO > 1.01) ? avgO : bestO;
-        var mNoVig = useO > 1.01 ? (100 / useO) : 0;
-        var edgeVM = mNoVig > 0 ? (adjProb - mNoVig) : null;
-        if(bkCount > 0 && bkCount < 3) return 'LOW_BOOKS';
-        if(avgO > 1.01 && bestO > avgO * 1.08) return 'ISOLATED_ODDS';
-        if(edgeVM !== null && edgeVM < -2) return 'AGAINST_MARKET';
-        if(edgeVM !== null && edgeVM >= 0 && edgeVM < 2) return 'WEAK_CONSENSUS';
-        return 'OK';
+        if(hasCompare){
+          var bkCount = compareMeta ? Number(compareMeta.bookmakersCount || 0) : 0;
+          var bestO = compareMeta ? Number(compareMeta.bestOdds || 0) : 0;
+          var avgO  = compareMeta ? Number(compareMeta.avgOdds  || 0) : 0;
+          // no-vig: folosim avgOdds dacă există, altfel bestOdds
+          var useO  = (avgO > 1.01) ? avgO : bestO;
+          var mNoVig = useO > 1.01 ? (100 / useO) : 0;
+          var edgeVM = mNoVig > 0 ? (adjProb - mNoVig) : null;
+          if(bkCount > 0 && bkCount < 3) return 'LOW_BOOKS';
+          if(avgO > 1.01 && bestO > avgO * 1.08) return 'ISOLATED_ODDS';
+          if(edgeVM !== null && edgeVM < -2) return 'AGAINST_MARKET';
+          if(edgeVM !== null && edgeVM >= 0 && edgeVM < 2) return 'WEAK_CONSENSUS';
+          return 'OK';
+        }
+        // ── Fallback: cotă directă din event (Bzzoiro API single-source) ──
+        // BSD /api/odds/compare/ returnează doar 1X2 + BTTS în market_best_odds;
+        // pentru under35/over15/over25 etc. folosim cota event.odds_<market> și,
+        // dacă există ambele părți ale pieței, no-vig prob din getNoVigMarketProbFromRaw.
+        var evOdds = Number(baseOdds || 0);
+        if(evOdds > 1.01){
+          var mProbSingle = (marketProb != null && Number(marketProb) > 0) ? Number(marketProb) : (100 / evOdds);
+          var edgeSingle = adjProb - mProbSingle;
+          if(edgeSingle < -2) return 'AGAINST_MARKET';
+          if(edgeSingle < 2)  return 'WEAK_CONSENSUS';
+          return 'OK';
+        }
+        return 'NO_DATA';
       })(),
       edgeVsMarket: (function(){
         var hasCompare = !!(compareMeta && compareMeta.hasCompare && Number(compareMeta.bestOdds || 0) > 1.01);
-        if(!hasCompare) return null;
-        var bestO = compareMeta ? Number(compareMeta.bestOdds || 0) : 0;
-        var avgO  = compareMeta ? Number(compareMeta.avgOdds  || 0) : 0;
-        var useO  = (avgO > 1.01) ? avgO : bestO;
-        var mNoVig = useO > 1.01 ? (100 / useO) : 0;
-        return mNoVig > 0 ? +((adjProb - mNoVig).toFixed(2)) : null;
+        if(hasCompare){
+          var bestO = compareMeta ? Number(compareMeta.bestOdds || 0) : 0;
+          var avgO  = compareMeta ? Number(compareMeta.avgOdds  || 0) : 0;
+          var useO  = (avgO > 1.01) ? avgO : bestO;
+          var mNoVig = useO > 1.01 ? (100 / useO) : 0;
+          return mNoVig > 0 ? +((adjProb - mNoVig).toFixed(2)) : null;
+        }
+        // Fallback single-source pe baseOdds (event.odds_*) cu preferință no-vig
+        var evOdds = Number(baseOdds || 0);
+        if(evOdds > 1.01){
+          var mProbSingle = (marketProb != null && Number(marketProb) > 0) ? Number(marketProb) : (100 / evOdds);
+          return +((adjProb - mProbSingle).toFixed(2));
+        }
+        return null;
       })()
     };
 
