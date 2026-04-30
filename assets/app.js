@@ -11401,8 +11401,11 @@ window.addEventListener('DOMContentLoaded', function(){
 
 /* ===== History 21 categories override ===== */
 function getHistory21LivePendingRows(){
+  var DC_MARKETS = {dc1x:true, dcx2:true, dc12:true};
   return (ALL_MATCHES || []).filter(function(m){
-    return m && isMatchStillDisplayable(m) && m.analysisState === 'ELIGIBLE' && m.bestBet;
+    if(!m || !isMatchStillDisplayable(m) || m.analysisState !== 'ELIGIBLE' || !m.bestBet) return false;
+    var mk = m.bestBet.type || inferMarketTypeFromLabel(m.bestBet.label || '');
+    return !DC_MARKETS[mk];
   }).map(function(m){
     var b = m.bestBet || {};
     return {
