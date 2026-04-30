@@ -1,8 +1,8 @@
-// Dashboard + Meciuri Motor sync: Dashboard keeps tracker stats; Meciuri shows only pending-count style.
+// Dashboard Motor tracker sync + Meciuri cleanup.
 (function(){
   'use strict';
-  if(window.__baDashboardMotorTrackerSyncV3)return;
-  window.__baDashboardMotorTrackerSyncV3=1;
+  if(window.__baDashboardMotorTrackerSyncV4)return;
+  window.__baDashboardMotorTrackerSyncV4=1;
 
   var lastJournalSync=0;
   function n(v){return Number(v||0)}
@@ -92,39 +92,47 @@
     row.setAttribute('data-ba-motor-tracker-key',[s.tracked,s.settled,s.wins,s.losses,s.pending,s.roi,s.winrate].join('|'));
   }
 
-  function findMotorChip(){
-    var chips=[].slice.call(document.querySelectorAll('#tab-meciuri .mf-chip,.mf-chip'));
-    return chips.find(function(btn){return String(btn.getAttribute('onclick')||'').indexOf("motor_validated")>=0})||null;
+  function addCleanupCss(){
+    if(document.getElementById('ba-meciuri-cleanup-css'))return;
+    var st=document.createElement('style');
+    st.id='ba-meciuri-cleanup-css';
+    st.textContent='#ba-match-probar,#matches-help-panel{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}';
+    document.head.appendChild(st);
   }
 
-  function cleanMatchesExtraInfo(){
-    var host=document.getElementById('ba-matches-motor-sync');
-    if(host&&host.parentNode)host.parentNode.removeChild(host);
+  function removeNode(id){var el=document.getElementById(id);if(el&&el.parentNode)el.parentNode.removeChild(el)}
+  function removeMotorChip(){
+    var chips=[].slice.call(document.querySelectorAll('#tab-meciuri .mf-chip,.mf-chip'));
+    chips.forEach(function(btn){
+      var txt=(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      var on=String(btn.getAttribute('onclick')||'');
+      if(on.indexOf('motor_validated')>=0||txt.indexOf('motor')>=0){
+        var wasActive=btn.classList&&btn.classList.contains('active');
+        if(wasActive){
+          try{window.CURRENT_FILTER='all'}catch(e){}
+          var all=chips.find(function(b){return String(b.getAttribute('onclick')||'').indexOf("setFilter('all'")>=0||String(b.getAttribute('onclick')||'').indexOf('setFilter(\"all\"')>=0});
+          if(all&&all.classList)all.classList.add('active');
+          try{if(typeof window.renderMatches==='function')window.renderMatches()}catch(e){}
+        }
+        if(btn.parentNode)btn.parentNode.removeChild(btn);
+      }
+    });
+  }
+
+  function cleanupMeciuri(){
+    addCleanupCss();
+    removeNode('ba-match-probar');
+    removeNode('matches-help-panel');
+    removeNode('ba-matches-motor-sync');
     var oldStyle=document.getElementById('ba-motor-tracker-sync-css');
     if(oldStyle&&oldStyle.parentNode)oldStyle.parentNode.removeChild(oldStyle);
-  }
-
-  function patchMatches(s){
-    if(!s)return;
-    cleanMatchesExtraInfo();
-    var chip=findMotorChip();
-    if(chip){
-      if(chip.innerHTML.indexOf('ba-chip-metric')>=0||chip.textContent.replace(/\s+/g,' ').trim()!=='🧠 Motor'){
-        chip.innerHTML='🧠 Motor';
-      }
-      chip.removeAttribute('data-ba-motor-chip');
-      chip.title='Motor validat: '+fmt(s.pending)+' meciuri pending';
-    }
-    var motorActive=(window.CURRENT_FILTER==='motor_validated')||(chip&&chip.classList&&chip.classList.contains('active'));
-    var fc=document.getElementById('filter-count');
-    if(fc&&motorActive)fc.textContent=fmt(s.pending)+' meciuri';
+    removeMotorChip();
   }
 
   function patch(){
+    cleanupMeciuri();
     var s=trackerSummary();
-    if(!s)return;
-    patchDashboard(s);
-    patchMatches(s);
+    if(s)patchDashboard(s);
   }
 
   function boot(){
