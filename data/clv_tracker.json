@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-30T20:46:59.334313+00:00",
+  "updated_at": "2026-04-30T21:18:25.257417+00:00",
   "summary": {
-    "total_picks": 519,
-    "avg_clv_pct": -0.6738,
+    "total_picks": 521,
+    "avg_clv_pct": -0.6741,
     "median_clv_pct": 0.0,
     "clv_positive_n": 82,
-    "clv_negative_n": 437,
-    "clv_positive_rate": 0.158,
-    "avg_clv_wins": -0.3383,
+    "clv_negative_n": 439,
+    "clv_positive_rate": 0.1574,
+    "avg_clv_wins": -0.3406,
     "avg_clv_losses": -1.5147,
-    "win_rate_pct": 71.48,
-    "roi_flat_pct": -1.0243,
+    "win_rate_pct": 71.59,
+    "roi_flat_pct": -0.8802,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1584
+    "std_clv_pct": 6.1468
   },
   "by_market": {
     "btts": {
@@ -25,12 +25,12 @@
       "avg_ev_at_pick": 3.1881
     },
     "over15": {
-      "n": 143,
-      "avg_clv_pct": 1.4735,
-      "clv_positive_rate": 0.2028,
-      "win_rate_pct": 67.13,
-      "roi_flat_pct": -11.4336,
-      "avg_ev_at_pick": 3.4221
+      "n": 144,
+      "avg_clv_pct": 1.4633,
+      "clv_positive_rate": 0.2014,
+      "win_rate_pct": 67.36,
+      "roi_flat_pct": -11.0764,
+      "avg_ev_at_pick": 3.3883
     },
     "over25": {
       "n": 9,
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 297,
-      "avg_clv_pct": -1.2713,
-      "clv_positive_rate": 0.1145,
-      "win_rate_pct": 73.74,
-      "roi_flat_pct": 1.2909,
-      "avg_ev_at_pick": 3.1498
+      "n": 298,
+      "avg_clv_pct": -1.2721,
+      "clv_positive_rate": 0.1141,
+      "win_rate_pct": 73.83,
+      "roi_flat_pct": 1.3973,
+      "avg_ev_at_pick": 3.1263
     }
   },
   "clv_buckets": {
@@ -63,16 +63,16 @@
       "avg_clv": 1.635
     },
     "clv_neutral": {
-      "n": 281,
-      "win_rate": 71.17,
-      "roi_pct": -3.1427,
-      "avg_clv": -0.0681
+      "n": 282,
+      "win_rate": 71.28,
+      "roi_pct": -2.9897,
+      "avg_clv": -0.0678
     },
     "clv_mild_neg": {
-      "n": 102,
-      "win_rate": 75.49,
-      "roi_pct": 7.2657,
-      "avg_clv": -2.7169
+      "n": 103,
+      "win_rate": 75.73,
+      "roi_pct": 7.5155,
+      "avg_clv": -2.7052
     },
     "clv_strong_neg": {
       "n": 54,
@@ -82,17 +82,17 @@
     }
   },
   "rolling_30d": {
-    "n": 519,
-    "avg_clv_pct": -0.6738,
-    "win_rate_pct": 71.48,
-    "roi_flat_pct": -1.0243,
+    "n": 521,
+    "avg_clv_pct": -0.6741,
+    "win_rate_pct": 71.59,
+    "roi_flat_pct": -0.8802,
     "days": 30
   },
   "rolling_90d": {
-    "n": 519,
-    "avg_clv_pct": -0.6738,
-    "win_rate_pct": 71.48,
-    "roi_flat_pct": -1.0243,
+    "n": 521,
+    "avg_clv_pct": -0.6741,
+    "win_rate_pct": 71.59,
+    "roi_flat_pct": -0.8802,
     "days": 90
   },
   "ev_correlation": {
@@ -102,20 +102,66 @@
       "clv_positive_rate": 0.2136
     },
     "ev_negative_picks": {
-      "n": 196,
-      "avg_clv": -2.848,
-      "clv_positive_rate": 0.0663
+      "n": 198,
+      "avg_clv": -2.8268,
+      "clv_positive_rate": 0.0657
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.67%) și ROI negativ (-1.02%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.67%) și ROI negativ (-0.88%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "202973",
+      "date": "2026-04-30",
+      "home": "Sporting Braga",
+      "away": "SC Freiburg",
+      "league": "Europa League",
+      "market": "over15",
+      "picked_odds": 1.4,
+      "closing_odds": 1.4,
+      "picked_implied": 0.714286,
+      "closing_implied": 0.714286,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -1.44,
+      "model_prob": 70.4,
+      "edge_pct": 3.5,
+      "score": 59,
+      "line_move_pct": 0.0,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-30T20:57:52.514436+00:00",
+      "prediction_id": 3263
+    },
+    {
+      "event_id": "202972",
+      "date": "2026-04-30",
+      "home": "Nottingham Forest",
+      "away": "Aston Villa",
+      "league": "Europa League",
+      "market": "under35",
+      "picked_odds": 1.31,
+      "closing_odds": 1.33,
+      "picked_implied": 0.763359,
+      "closing_implied": 0.75188,
+      "clv_pct": -1.5038,
+      "clv_positive": false,
+      "ev_at_pick_pct": -3.8591,
+      "model_prob": 73.39,
+      "edge_pct": 3.75,
+      "score": 78,
+      "line_move_pct": 1.5267,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-30T20:57:52.514436+00:00",
+      "prediction_id": 3264
+    },
     {
       "event_id": "4788",
       "date": "2026-04-30",
