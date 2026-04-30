@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-30T02:20:58.757616+00:00",
+  "updated_at": "2026-04-30T02:51:48.566499+00:00",
   "summary": {
-    "total_picks": 515,
-    "avg_clv_pct": -0.6773,
+    "total_picks": 517,
+    "avg_clv_pct": -0.6806,
     "median_clv_pct": 0.0,
     "clv_positive_n": 80,
-    "clv_negative_n": 435,
-    "clv_positive_rate": 0.1553,
-    "avg_clv_wins": -0.335,
+    "clv_negative_n": 437,
+    "clv_positive_rate": 0.1547,
+    "avg_clv_wins": -0.3415,
     "avg_clv_losses": -1.5341,
-    "win_rate_pct": 71.46,
-    "roi_flat_pct": -0.9817,
+    "win_rate_pct": 71.57,
+    "roi_flat_pct": -0.8754,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1804
+    "std_clv_pct": 6.1694
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 293,
-      "avg_clv_pct": -1.2855,
-      "clv_positive_rate": 0.1092,
-      "win_rate_pct": 73.72,
-      "roi_flat_pct": 1.3973,
-      "avg_ev_at_pick": 3.18
+      "n": 295,
+      "avg_clv_pct": -1.2872,
+      "clv_positive_rate": 0.1085,
+      "win_rate_pct": 73.9,
+      "roi_flat_pct": 1.5675,
+      "avg_ev_at_pick": 3.14
     }
   },
   "clv_buckets": {
@@ -63,16 +63,16 @@
       "avg_clv": 1.6529
     },
     "clv_neutral": {
-      "n": 280,
-      "win_rate": 71.07,
-      "roi_pct": -3.2361,
-      "avg_clv": -0.0683
+      "n": 281,
+      "win_rate": 71.17,
+      "roi_pct": -3.1427,
+      "avg_clv": -0.0681
     },
     "clv_mild_neg": {
-      "n": 101,
-      "win_rate": 75.25,
-      "roi_pct": 7.0406,
-      "avg_clv": -2.7134
+      "n": 102,
+      "win_rate": 75.49,
+      "roi_pct": 7.2657,
+      "avg_clv": -2.7169
     },
     "clv_strong_neg": {
       "n": 54,
@@ -82,17 +82,17 @@
     }
   },
   "rolling_30d": {
-    "n": 515,
-    "avg_clv_pct": -0.6773,
-    "win_rate_pct": 71.46,
-    "roi_flat_pct": -0.9817,
+    "n": 517,
+    "avg_clv_pct": -0.6806,
+    "win_rate_pct": 71.57,
+    "roi_flat_pct": -0.8754,
     "days": 30
   },
   "rolling_90d": {
-    "n": 515,
-    "avg_clv_pct": -0.6773,
-    "win_rate_pct": 71.46,
-    "roi_flat_pct": -0.9817,
+    "n": 517,
+    "avg_clv_pct": -0.6806,
+    "win_rate_pct": 71.57,
+    "roi_flat_pct": -0.8754,
     "days": 90
   },
   "ev_correlation": {
@@ -102,20 +102,43 @@
       "clv_positive_rate": 0.2087
     },
     "ev_negative_picks": {
-      "n": 194,
-      "avg_clv": -2.8615,
-      "clv_positive_rate": 0.067
+      "n": 196,
+      "avg_clv": -2.848,
+      "clv_positive_rate": 0.0663
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.68%) și ROI negativ (-0.98%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.68%) și ROI negativ (-0.88%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "9291",
+      "date": "2026-04-30",
+      "home": "Cienciano",
+      "away": "Atlético Mineiro",
+      "league": "Copa Sudamericana",
+      "market": "under35",
+      "picked_odds": 1.26,
+      "closing_odds": 1.3,
+      "picked_implied": 0.793651,
+      "closing_implied": 0.769231,
+      "clv_pct": -3.0769,
+      "clv_positive": false,
+      "ev_at_pick_pct": -2.4382,
+      "model_prob": 77.43,
+      "edge_pct": 5.45,
+      "score": 84,
+      "line_move_pct": 3.1746,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-30T02:31:48.146821+00:00",
+      "prediction_id": 3212
+    },
     {
       "event_id": "9402",
       "date": "2026-04-30",
@@ -136,7 +159,7 @@
       "line_move_pct": 2.459,
       "won": true,
       "status": "win",
-      "settled_at": "2026-04-30T02:01:39.673946+00:00",
+      "settled_at": "2026-04-30T02:31:48.146821+00:00",
       "prediction_id": 3211
     },
     {
@@ -207,6 +230,29 @@
       "status": "win",
       "settled_at": "2026-04-30T00:07:57.822265+00:00",
       "prediction_id": 3206
+    },
+    {
+      "event_id": "9404",
+      "date": "2026-04-30",
+      "home": "Cerro Porteño",
+      "away": "Palmeiras",
+      "league": "Copa Libertadores",
+      "market": "under35",
+      "picked_odds": 1.23,
+      "closing_odds": 1.23,
+      "picked_implied": 0.813008,
+      "closing_implied": 0.813008,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -2.9899,
+      "model_prob": 78.87,
+      "edge_pct": 2.57,
+      "score": 79,
+      "line_move_pct": 0.0,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-30T02:31:48.146821+00:00",
+      "prediction_id": 3213
     },
     {
       "event_id": "202969",
