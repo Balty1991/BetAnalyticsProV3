@@ -51,6 +51,7 @@
     loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
     loadScript('assets/api_history_label_runtime.js?v=20260428color2','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260428videoexact3','dashboard-history21-sync-script');
+    loadScript('assets/dashboard_motor_tracker_sync.js?v=20260430motortracker1','dashboard-motor-tracker-sync-script');
     loadScript('assets/performance_color_runtime.js?v=20260428color2','performance-color-runtime-script');
     addLink('assets/pro_command_center.css?v=20260428weekstable','pro-command-center-css');
     loadScript('assets/pro_command_center.js?v=20260428weekstable','pro-command-center-script');
