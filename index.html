@@ -315,18 +315,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
       <div class="ml-grid" id="ml-grid"></div>
     </div>
 
-    <!-- Double Chance ML -->
-    <div class="sec-hdr collapsible-header" id="mldc-hdr" onclick="toggleSection('mldc')" style="border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px 14px;background:rgba(245,158,11,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
-      <div class="sec-title">🛡️ Double Chance ML <span class="sec-badge" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.3);color:var(--yel)">1X / X2</span> <span class="collapse-count" id="mldc-count">—</span></div>
-      <span class="collapse-toggle" id="mldc-toggle" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.25);color:var(--yel)">▼</span>
-    </div>
-    <div class="collapsible-body" id="mldc-body">
-      <div style="margin-top:10px;margin-bottom:16px;padding:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:11px;color:var(--muted)">
-        <strong style="color:var(--yel)">🧠 Predicție ML derivată:</strong> aplicația calculează <strong style="color:var(--txt)">1X</strong> și <strong style="color:var(--txt)">X2</strong> din distribuția 1X2 a modelului și afișează varianta mai puternică, împreună cu <strong style="color:var(--txt)">fair odds</strong>.
-      </div>
-      <div class="ml-grid" id="ml-dc-grid"></div>
-    </div>
-
     <!-- ML +1.5G -->
     <div class="sec-hdr collapsible-header" id="ml15-hdr" onclick="toggleSection('ml15')" style="border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 14px;background:rgba(34,197,94,.05);margin-bottom:0;margin-top:12px;cursor:pointer">
       <div class="sec-title">🔥 Radar Over 1.5G <span class="sec-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--grn)">Over 1.5G</span> <span class="collapse-count" id="ml15-count">—</span></div>
@@ -741,7 +729,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
         <button class="mf-chip" onclick="setFilter('o15',this)">🔥 O1.5</button>
         <button class="mf-chip" onclick="setFilter('btts',this)">🤝 BTTS</button>
         <button class="mf-chip" onclick="setFilter('u35',this)">🧊 U3.5</button>
-        <button class="mf-chip" onclick="setFilter('dc',this)">🛡️ DC</button>
         <button class="mf-chip" onclick="setFilter('value',this)">💰 Value</button>
       </div>
 
