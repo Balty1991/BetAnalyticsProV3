@@ -1,8 +1,8 @@
-// Dashboard + Meciuri Motor sync: mirror validated-predictions tracker stats.
+// Dashboard + Meciuri Motor sync: Dashboard keeps tracker stats; Meciuri shows only pending-count style.
 (function(){
   'use strict';
-  if(window.__baDashboardMotorTrackerSync)return;
-  window.__baDashboardMotorTrackerSync=1;
+  if(window.__baDashboardMotorTrackerSyncV3)return;
+  window.__baDashboardMotorTrackerSyncV3=1;
 
   var lastJournalSync=0;
   function n(v){return Number(v||0)}
@@ -53,14 +53,6 @@
   }
   window.baValidatedTrackerSummary=trackerSummary;
 
-  function addCss(){
-    if(document.getElementById('ba-motor-tracker-sync-css'))return;
-    var s=document.createElement('style');
-    s.id='ba-motor-tracker-sync-css';
-    s.textContent='.ba-chip-metric{margin-left:5px;padding:1px 6px;border-radius:999px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.25);font-size:10px;font-family:var(--mono);color:var(--acc)}.ba-matches-motor-panel{margin:10px 0 12px;padding:12px;border-radius:18px;background:linear-gradient(135deg,rgba(43,229,197,.08),rgba(59,130,246,.045));border:1px solid rgba(43,229,197,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}.ba-matches-motor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}.ba-matches-motor-title{font-size:13px;font-weight:900;color:var(--txt);letter-spacing:-.02em}.ba-matches-motor-sub{font-size:10px;color:var(--muted);line-height:1.35;margin-top:2px}.ba-matches-motor-roi{font-size:17px;font-weight:950;font-family:var(--mono);white-space:nowrap}.ba-matches-motor-grid{display:flex;gap:7px;flex-wrap:wrap}.ba-matches-motor-pill{display:inline-flex;align-items:baseline;gap:5px;padding:7px 9px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:11px;color:var(--muted)}.ba-matches-motor-pill b{font-size:13px;color:var(--acc);font-family:var(--mono)}.ba-matches-motor-pill.win b,.ba-matches-motor-pill.wr b{color:var(--grn)}.ba-matches-motor-pill.loss b{color:var(--red)}.ba-matches-motor-pill.pending b{color:var(--yel)}@media(max-width:420px){.ba-matches-motor-panel{padding:10px}.ba-matches-motor-roi{font-size:15px}.ba-matches-motor-pill{padding:6px 8px;font-size:10px}.ba-matches-motor-pill b{font-size:12px}}';
-    document.head.appendChild(s);
-  }
-
   function tableBody(){return document.querySelector('.dash-cat-table tbody')}
   function findMotorRow(body){
     var rows=[].slice.call((body||document).querySelectorAll('.dash-cat-row, tr'));
@@ -105,33 +97,30 @@
     return chips.find(function(btn){return String(btn.getAttribute('onclick')||'').indexOf("motor_validated")>=0})||null;
   }
 
+  function cleanMatchesExtraInfo(){
+    var host=document.getElementById('ba-matches-motor-sync');
+    if(host&&host.parentNode)host.parentNode.removeChild(host);
+    var oldStyle=document.getElementById('ba-motor-tracker-sync-css');
+    if(oldStyle&&oldStyle.parentNode)oldStyle.parentNode.removeChild(oldStyle);
+  }
+
   function patchMatches(s){
     if(!s)return;
-    var card=document.querySelector('#tab-meciuri .mf-card');
-    if(!card)return;
+    cleanMatchesExtraInfo();
     var chip=findMotorChip();
     if(chip){
-      var chipHtml='🧠 Motor <span class="ba-chip-metric">'+fmt(s.tracked)+'</span>';
-      if(chip.getAttribute('data-ba-motor-chip')!==chipHtml){chip.innerHTML=chipHtml;chip.setAttribute('data-ba-motor-chip',chipHtml)}
-      chip.title='Tracker predicții validate: '+fmt(s.tracked)+' urmărite, '+fmt(s.settled)+' settled, '+fmt(s.wins)+'W/'+fmt(s.losses)+'L, '+fmt(s.pending)+' pending, ROI '+pct(s.roi,2)+', WR '+wr(s.winrate);
+      if(chip.innerHTML.indexOf('ba-chip-metric')>=0||chip.textContent.replace(/\s+/g,' ').trim()!=='🧠 Motor'){
+        chip.innerHTML='🧠 Motor';
+      }
+      chip.removeAttribute('data-ba-motor-chip');
+      chip.title='Motor validat: '+fmt(s.pending)+' meciuri pending';
     }
-    var host=document.getElementById('ba-matches-motor-sync');
-    if(!host){
-      host=document.createElement('div');
-      host.id='ba-matches-motor-sync';
-      host.className='ba-matches-motor-panel';
-      var anchor=card.querySelector('.mf-chips-scroll')||card.querySelector('.mf-header');
-      if(anchor&&anchor.parentNode)anchor.insertAdjacentElement('afterend',host);
-      else card.insertBefore(host,card.firstChild);
-    }
-    var html='<div class="ba-matches-motor-head"><div><div class="ba-matches-motor-title">🎯 Tracker predicții validate</div><div class="ba-matches-motor-sub">sincronizat cu Motorul validat: settled, pending, ROI și WR</div></div><div class="ba-matches-motor-roi" style="color:'+tone(s.roi)+'">'+pct(s.roi,2)+' ROI</div></div><div class="ba-matches-motor-grid"><span class="ba-matches-motor-pill"><b>'+fmt(s.tracked)+'</b> urmărite</span><span class="ba-matches-motor-pill"><b>'+fmt(s.settled)+'</b> settled</span><span class="ba-matches-motor-pill win"><b>'+fmt(s.wins)+'</b> W</span><span class="ba-matches-motor-pill loss"><b>'+fmt(s.losses)+'</b> L</span><span class="ba-matches-motor-pill pending"><b>'+fmt(s.pending)+'</b> pending</span><span class="ba-matches-motor-pill wr"><b>'+wr(s.winrate)+'</b> WR</span></div>';
-    if(host.getAttribute('data-ba-motor-panel')!==html){host.setAttribute('data-ba-motor-panel',html);host.innerHTML=html}
+    var motorActive=(window.CURRENT_FILTER==='motor_validated')||(chip&&chip.classList&&chip.classList.contains('active'));
     var fc=document.getElementById('filter-count');
-    if(fc&&window.CURRENT_FILTER==='motor_validated')fc.textContent='Motor validat • '+fmt(s.tracked)+' urmărite • '+fmt(s.settled)+' settled • '+pct(s.roi,2)+' ROI';
+    if(fc&&motorActive)fc.textContent=fmt(s.pending)+' meciuri';
   }
 
   function patch(){
-    addCss();
     var s=trackerSummary();
     if(!s)return;
     patchDashboard(s);
@@ -141,7 +130,7 @@
   function boot(){
     patch();
     [100,350,800,1600,3200,5200,9000].forEach(function(t){setTimeout(patch,t)});
-    setInterval(patch,800);
+    setInterval(patch,700);
     try{new MutationObserver(function(){clearTimeout(window.__baMotorTrackerSyncT);window.__baMotorTrackerSyncT=setTimeout(patch,50)}).observe(document.body,{childList:true,subtree:true})}catch(e){}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
