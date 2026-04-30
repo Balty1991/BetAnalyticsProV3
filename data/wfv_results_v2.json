@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-04-30T13:56:52.522531",
+  "updated_at": "2026-04-30T14:28:49.616734",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
   "n_rows": 9066,
   "n_folds": 4,
-  "global_score": 72.8,
+  "global_score": 72.9,
   "global_grade": "B",
   "markets": [
     {
@@ -263,9 +263,9 @@
       "market": "over15",
       "label": "Peste 1.5G",
       "folds": 4,
-      "avg_brier": 0.2793,
-      "avg_log_loss": 0.7524,
-      "avg_ece": 0.2876,
+      "avg_brier": 0.2792,
+      "avg_log_loss": 0.7522,
+      "avg_ece": 0.2874,
       "avg_winrate": 0.7406,
       "score": 50.1,
       "grade": "D",
@@ -304,7 +304,7 @@
   ],
   "warnings": [
     "Peste 1.5G: calibrare în degradare (ECE crește în timp).",
-    "Peste 1.5G: ECE mediu 0.288 — calibrare slabă consistent."
+    "Peste 1.5G: ECE mediu 0.287 — calibrare slabă consistent."
   ],
   "fold_windows": [
     {
