@@ -6370,6 +6370,9 @@ function renderMatches(){
   });
   var now = Date.now();
   var smartBetLookup = getSmartBetAnalysisLookup();
+  // Pre-build validated event ID index (any market) for fallback matching
+  var _validatedEids = {};
+  Object.keys(smartBetLookup.validated).forEach(function(k){ var p=k.split('|'); if(p[0]) _validatedEids[p[0]]=1; });
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
@@ -6385,7 +6388,15 @@ function renderMatches(){
       if(!hasSyncedOdds(m)) return false;
     } else {
       if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
-      if(CURRENT_FILTER === 'motor_validated' && getSmartBetStatusForMatch(m, b, smartBetLookup).state !== 'validated') return false;
+      if(CURRENT_FILTER === 'motor_validated'){
+        // Check bestBet + ALL eligibleCandidates (covers cases where validated market != bestBet market)
+        var _allBets = b ? [b] : [];
+        if(Array.isArray(m.eligibleCandidates)) m.eligibleCandidates.forEach(function(c){ if(c&&c.bestBet) _allBets.push(c.bestBet); });
+        var _eid = String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:'')); 
+        var _motorOk = (_eid && _validatedEids[_eid]) ||
+          _allBets.some(function(cb){ return getSmartBetStatusForMatch(m,cb,smartBetLookup).state==='validated'; });
+        if(!_motorOk) return false;
+      }
       if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && (m.verdict === 'safe' || m.riskTier === 'Safe'))) return false;
       if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
       if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && (m.riskTier === 'Value' || (b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)))) return false;
@@ -11439,12 +11450,13 @@ function getHistory21LivePendingRows(){
 }
 function getHistory21CategoryDefs(rows){
   var defs = [
-    {key:'all', label:'Toate'},
-    {key:'safe', label:'Top analizate'},
-    {key:'value', label:'Value'},
-    {key:'over15', label:'Over 1.5G'},
-    {key:'btts', label:'BTTS'},
-    {key:'under35', label:'Under 3.5G'}
+    {key:'all',            label:'Toate'},
+    {key:'motor_validated',label:'🧠 Motor'},
+    {key:'safe',           label:'⭐ Top'},
+    {key:'over15',         label:'🔥 O1.5'},
+    {key:'btts',           label:'🤝 BTTS'},
+    {key:'under35',        label:'🧊 U3.5'},
+    {key:'value',          label:'💰 Value'}
   ];
   var known = {};
   defs.forEach(function(def){ known[def.key] = true; });
@@ -11462,6 +11474,8 @@ function getHistory21CategoryDefs(rows){
 function historyRowMatchesCategory(row, categoryKey){
   var mk = row.market_key || inferMarketTypeFromLabel(row.market || '');
   if(categoryKey === 'all') return true;
+  // Motor: proxy for motor-validated — high SmartScore (>=75) or explicit flag
+  if(categoryKey === 'motor_validated') return Number(row.score || 0) >= 75 || row.motor_validated === true || row.smartbet_validated === true;
   if(categoryKey === 'safe') return String(row.verdict || '').toLowerCase() === 'safe' || Number(row.score || 0) >= 80;
   if(categoryKey === 'value') return Number(row.value || 0) >= 0.05;
   return mk === categoryKey;
