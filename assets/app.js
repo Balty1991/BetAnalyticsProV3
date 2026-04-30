@@ -6380,22 +6380,26 @@ function renderMatches(){
     var isDashboardMlSync = CURRENT_FILTER === 'dashboard_ml_sync';
     var isDashboardWithOdds = CURRENT_FILTER === 'dashboard_with_odds';
     var isDashboardStream = isDashboardMlSync || isDashboardWithOdds;
-    if(!isDashboardStream && !isMatchStillDisplayable(m)) return false;
     if(leagueF && m.league !== leagueF) return false;
     if(isDashboardMlSync){
       // show the full synced ML list, not only the currently displayable subset
     } else if(isDashboardWithOdds){
+      if(!isDashboardStream && !isMatchStillDisplayable(m)) return false;
       if(!hasSyncedOdds(m)) return false;
     } else {
       if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
       if(CURRENT_FILTER === 'motor_validated'){
-        // Check bestBet + ALL eligibleCandidates (covers cases where validated market != bestBet market)
+        // Motor: check pool by event_id (same BSD API ID used by signal_audit and predictions)
+        // Skip isMatchStillDisplayable so pool count matches Motor Unificat exactly
         var _allBets = b ? [b] : [];
         if(Array.isArray(m.eligibleCandidates)) m.eligibleCandidates.forEach(function(c){ if(c&&c.bestBet) _allBets.push(c.bestBet); });
         var _eid = String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:'')); 
         var _motorOk = (_eid && _validatedEids[_eid]) ||
           _allBets.some(function(cb){ return getSmartBetStatusForMatch(m,cb,smartBetLookup).state==='validated'; });
         if(!_motorOk) return false;
+      } else {
+        // All other filters: respect displayability
+        if(!isMatchStillDisplayable(m)) return false;
       }
       if(CURRENT_FILTER === 'safe' && !(m.analysisState === 'ELIGIBLE' && (m.verdict === 'safe' || m.riskTier === 'Safe'))) return false;
       if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
@@ -6414,7 +6418,7 @@ function renderMatches(){
       if(CURRENT_FILTER === 'o25' && !hasEligibleType(m, 'over25')) return false;
       if(CURRENT_FILTER === 'u35' && !hasEligibleType(m, 'under35')) return false;
       if(CURRENT_FILTER === 'dc' && !(hasEligibleType(m, 'dc1x') || hasEligibleType(m, 'dcx2') || hasEligibleType(m, 'dc12'))) return false;
-      if(!b) return false;
+      if(!b && CURRENT_FILTER !== 'motor_validated') return false;
     }
 
     if(dateF === 'today'){
@@ -11474,8 +11478,24 @@ function getHistory21CategoryDefs(rows){
 function historyRowMatchesCategory(row, categoryKey){
   var mk = row.market_key || inferMarketTypeFromLabel(row.market || '');
   if(categoryKey === 'all') return true;
-  // Motor: proxy for motor-validated — high SmartScore (>=75) or explicit flag
-  if(categoryKey === 'motor_validated') return Number(row.score || 0) >= 75 || row.motor_validated === true || row.smartbet_validated === true;
+  // Motor: cross-reference with actual getSmartBetAnalysis pool by event_id
+  // Falls back to score>=75 proxy if pool not available
+  if(categoryKey === 'motor_validated'){
+    if(typeof getSmartBetAnalysis === 'function'){
+      try{
+        if(!window.__motorPoolEids__){
+          var _pool = getSmartBetAnalysis().pool || [];
+          window.__motorPoolEids__ = {};
+          _pool.forEach(function(r){ if(r.event_id!=null) window.__motorPoolEids__[String(r.event_id)]=1; });
+          // Invalidate cache after 60s so it refreshes with data
+          setTimeout(function(){ window.__motorPoolEids__=null; }, 60000);
+        }
+        var _rowEid = String(row.event_id!=null?row.event_id:(row.eventId!=null?row.eventId:''));
+        if(_rowEid && window.__motorPoolEids__[_rowEid]) return true;
+      }catch(e){}
+    }
+    return Number(row.score || 0) >= 75 || row.motor_validated === true || row.smartbet_validated === true;
+  }
   if(categoryKey === 'safe') return String(row.verdict || '').toLowerCase() === 'safe' || Number(row.score || 0) >= 80;
   if(categoryKey === 'value') return Number(row.value || 0) >= 0.05;
   return mk === categoryKey;
