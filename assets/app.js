@@ -11574,16 +11574,20 @@ function renderHistory21(){
   if(!ACTIVE_HISTORY_MARKET && summary.length) ACTIVE_HISTORY_MARKET = summary[0].market;
   if(summary.every(function(s){ return s.market !== ACTIVE_HISTORY_MARKET; })) ACTIVE_HISTORY_MARKET = summary[0].market;
 
+  var QUALITY_KEYS = ['safe','value','motor_validated'];
   var cards = '<div class="history-card-grid">' + summary.map(function(s){
     var active = ACTIVE_HISTORY_MARKET === s.market;
+    var isQuality = QUALITY_KEYS.indexOf(s.market) >= 0;
+    var isAll = s.market === 'all';
+    var noteText = isAll ? '21 zile · pariuri unice' : (isQuality ? '21 zile · ⊂ subset' : '21 zile');
     var marketSafe = String(s.market || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     var roiText = s.bets ? ((s.roi >= 0 ? '+' : '') + s.roi.toFixed(1) + '%') : '—';
     var roiColor = !s.bets ? 'var(--muted)' : (s.roi >= 0 ? 'var(--grn)' : 'var(--red)');
     var breakEven = s.avgOdds > 1 ? (100 / s.avgOdds) : 0;
     var delta = s.bets ? (s.winrate - breakEven) : 0;
-    return '<button class="history-summary-card'+(active ? ' active' : '')+'" onclick="setHistoryMarket(&quot;'+marketSafe+'&quot;)">'+
+    return '<button class="history-summary-card'+(active ? ' active' : '')+(isQuality ? ' ba-hist-quality-cat' : '')+'" onclick="setHistoryMarket(&quot;'+marketSafe+'&quot;)">'+
       '<div class="history-summary-top">'+
-        '<div><div class="history-summary-label">'+s.label+'</div><div class="history-summary-note">21 zile</div></div>'+
+        '<div><div class="history-summary-label">'+s.label+'</div><div class="history-summary-note">'+noteText+'</div></div>'+
         '<div class="history-summary-roi" style="color:'+roiColor+'">'+roiText+'</div>'+
       '</div>'+
       '<div class="history-metric-row">'+
@@ -11594,6 +11598,16 @@ function renderHistory21(){
       '</div>'+
     '</button>';
   }).join('') + '</div>';
+  // Nota clarificare: categorii calitate (Top/Value/Motor) sunt subset din categoriile de piata
+  if(summary.some(function(s){ return QUALITY_KEYS.indexOf(s.market) >= 0; })){
+    if(!document.getElementById('ba-hist-quality-css')){
+      var _qcss = document.createElement('style');
+      _qcss.id = 'ba-hist-quality-css';
+      _qcss.textContent = '.ba-hist-quality-cat{opacity:.85;border-style:dashed!important}.ba-hist-quality-cat .history-summary-note{color:var(--yel)!important;font-weight:600!important}.ba-hist-overlap-note{margin:8px 0 12px;padding:9px 12px;border-radius:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);font-size:11px;color:var(--muted);line-height:1.5}.ba-hist-overlap-note strong{color:var(--yel)}';
+      document.head.appendChild(_qcss);
+    }
+    cards = cards + '<div class="ba-hist-overlap-note">⚠️ <strong>⊂ subset</strong> — Top, Value şi Motor sunt <em>filtre de calitate</em>: acelaşi pariu apare şi în categoria de piaţă (O1.5, BTTS, U3.5). <strong>Toate</strong> = pariuri unice, fără duplicare — suma categoriilor va fi mereu mai mare decât Toate.</div>';
+  }
 
   var current = summary.find(function(s){ return s.market === ACTIVE_HISTORY_MARKET; }) || summary[0];
   var breakEven = current.avgOdds > 1 ? (100 / current.avgOdds) : 0;
