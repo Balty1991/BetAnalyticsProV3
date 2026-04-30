@@ -1067,7 +1067,6 @@ function renderDashboardTab(opts){
 }
 function renderMatchesTab(){
   renderML();
-  renderMLDC();
   renderML15();
   renderML35();
   renderMlApiCenter();
@@ -11446,7 +11445,7 @@ function getHistory21CategoryDefs(rows){
   ];
   var known = {};
   defs.forEach(function(def){ known[def.key] = true; });
-  var BLACKLISTED_MARKETS = {'over25':true,'under25':true};
+  var BLACKLISTED_MARKETS = {'over25':true,'under25':true,'dc1x':true,'dcx2':true,'dc12':true};
   var extra = {};
   (rows || []).forEach(function(row){
     var mk = row.market_key || inferMarketTypeFromLabel(row.market || '');
