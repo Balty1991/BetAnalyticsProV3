@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-30T01:53:19.072133+00:00",
+  "updated_at": "2026-04-30T02:20:58.757616+00:00",
   "summary": {
-    "total_picks": 514,
-    "avg_clv_pct": -0.6739,
+    "total_picks": 515,
+    "avg_clv_pct": -0.6773,
     "median_clv_pct": 0.0,
     "clv_positive_n": 80,
-    "clv_negative_n": 434,
-    "clv_positive_rate": 0.1556,
-    "avg_clv_wins": -0.3294,
+    "clv_negative_n": 435,
+    "clv_positive_rate": 0.1553,
+    "avg_clv_wins": -0.335,
     "avg_clv_losses": -1.5341,
-    "win_rate_pct": 71.4,
-    "roi_flat_pct": -1.0323,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -0.9817,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1859
+    "std_clv_pct": 6.1804
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 292,
-      "avg_clv_pct": -1.2817,
-      "clv_positive_rate": 0.1096,
-      "win_rate_pct": 73.63,
-      "roi_flat_pct": 1.3164,
-      "avg_ev_at_pick": 3.1999
+      "n": 293,
+      "avg_clv_pct": -1.2855,
+      "clv_positive_rate": 0.1092,
+      "win_rate_pct": 73.72,
+      "roi_flat_pct": 1.3973,
+      "avg_ev_at_pick": 3.18
     }
   },
   "clv_buckets": {
@@ -69,10 +69,10 @@
       "avg_clv": -0.0683
     },
     "clv_mild_neg": {
-      "n": 100,
-      "win_rate": 75.0,
-      "roi_pct": 6.861,
-      "avg_clv": -2.7165
+      "n": 101,
+      "win_rate": 75.25,
+      "roi_pct": 7.0406,
+      "avg_clv": -2.7134
     },
     "clv_strong_neg": {
       "n": 54,
@@ -82,17 +82,17 @@
     }
   },
   "rolling_30d": {
-    "n": 514,
-    "avg_clv_pct": -0.6739,
-    "win_rate_pct": 71.4,
-    "roi_flat_pct": -1.0323,
+    "n": 515,
+    "avg_clv_pct": -0.6773,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -0.9817,
     "days": 30
   },
   "rolling_90d": {
-    "n": 514,
-    "avg_clv_pct": -0.6739,
-    "win_rate_pct": 71.4,
-    "roi_flat_pct": -1.0323,
+    "n": 515,
+    "avg_clv_pct": -0.6773,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -0.9817,
     "days": 90
   },
   "ev_correlation": {
@@ -102,20 +102,43 @@
       "clv_positive_rate": 0.2087
     },
     "ev_negative_picks": {
-      "n": 193,
-      "avg_clv": -2.8639,
-      "clv_positive_rate": 0.0674
+      "n": 194,
+      "avg_clv": -2.8615,
+      "clv_positive_rate": 0.067
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.67%) și ROI negativ (-1.03%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.68%) și ROI negativ (-0.98%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "9402",
+      "date": "2026-04-30",
+      "home": "Barcelona SC Guayaquil",
+      "away": "Universidad Católica",
+      "league": "Copa Libertadores",
+      "market": "under35",
+      "picked_odds": 1.22,
+      "closing_odds": 1.25,
+      "picked_implied": 0.819672,
+      "closing_implied": 0.8,
+      "clv_pct": -2.4,
+      "clv_positive": false,
+      "ev_at_pick_pct": -2.644,
+      "model_prob": 79.8,
+      "edge_pct": 5.96,
+      "score": 82,
+      "line_move_pct": 2.459,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-04-30T02:01:39.673946+00:00",
+      "prediction_id": 3211
+    },
     {
       "event_id": "9401",
       "date": "2026-04-30",
@@ -136,7 +159,7 @@
       "line_move_pct": 5.2632,
       "won": true,
       "status": "win",
-      "settled_at": "2026-04-30T00:33:16.719026+00:00",
+      "settled_at": "2026-04-30T00:07:57.822265+00:00",
       "prediction_id": 3209
     },
     {
@@ -159,7 +182,7 @@
       "line_move_pct": 1.7857,
       "won": true,
       "status": "win",
-      "settled_at": "2026-04-30T00:33:16.719026+00:00",
+      "settled_at": "2026-04-30T00:07:57.822265+00:00",
       "prediction_id": 3207
     },
     {
@@ -182,7 +205,7 @@
       "line_move_pct": 6.8702,
       "won": true,
       "status": "win",
-      "settled_at": "2026-04-30T00:33:16.719026+00:00",
+      "settled_at": "2026-04-30T00:07:57.822265+00:00",
       "prediction_id": 3206
     },
     {
