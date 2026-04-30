@@ -6371,8 +6371,12 @@ function renderMatches(){
   var now = Date.now();
   var smartBetLookup = getSmartBetAnalysisLookup();
   // Pre-build validated event ID index (any market) for fallback matching
-  var _validatedEids = {};
-  Object.keys(smartBetLookup.validated).forEach(function(k){ var p=k.split('|'); if(p[0]) _validatedEids[p[0]]=1; });
+  // FIX: construiește set de event ID-uri motor direct din SIGNAL_AUDIT.rows (nu din lookup care polua cu nume echipe)
+  var _motorEidSet = {};
+  ((SIGNAL_AUDIT && SIGNAL_AUDIT.rows) || []).forEach(function(r){
+    if(r && r.event_id != null && r.event_id !== '') _motorEidSet[String(r.event_id)] = true;
+    if(r && r.eventId != null && r.eventId !== '') _motorEidSet[String(r.eventId)] = true;
+  });
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
@@ -6389,12 +6393,12 @@ function renderMatches(){
     } else {
       if(CURRENT_FILTER === 'all' && m.analysisState !== 'ELIGIBLE') return false;
       if(CURRENT_FILTER === 'motor_validated'){
-        // Motor: check pool by event_id (same BSD API ID used by signal_audit and predictions)
+        // Motor: check pool by event_id direct din SIGNAL_AUDIT.rows (FIX: evită _validatedEids poluat cu team names)
         // Skip isMatchStillDisplayable so pool count matches Motor Unificat exactly
         var _allBets = b ? [b] : [];
         if(Array.isArray(m.eligibleCandidates)) m.eligibleCandidates.forEach(function(c){ if(c&&c.bestBet) _allBets.push(c.bestBet); });
-        var _eid = String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:'')); 
-        var _motorOk = (_eid && _validatedEids[_eid]) ||
+        var _eid = String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:''));
+        var _motorOk = (_eid && _motorEidSet[_eid]) ||
           _allBets.some(function(cb){ return getSmartBetStatusForMatch(m,cb,smartBetLookup).state==='validated'; });
         if(!_motorOk) return false;
       } else {

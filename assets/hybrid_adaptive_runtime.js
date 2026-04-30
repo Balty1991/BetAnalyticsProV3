@@ -69,7 +69,13 @@
       if(!byKey[key] || rawScore(n) > rawScore(byKey[key])) byKey[key] = n;
     });
     var out = Object.keys(byKey).map(function(k){ return byKey[k]; });
-    out.sort(function(a,b){ return rawScore(b) - rawScore(a) || num(b.edge_pct || b.edge_pp) - num(a.edge_pct || a.edge_pp) || num(b.value_pct) - num(a.value_pct); });
+    // FIX: cap rawScore la 100 înainte de sort — ai_memory adaptive_score (115-127) nu trebuie să
+    // domine adaptive_predictions picks (max 100). Tie-break pe edge_pct, apoi value_pct.
+    out.sort(function(a,b){
+      var aRaw = Math.min(100, rawScore(a));
+      var bRaw = Math.min(100, rawScore(b));
+      return bRaw - aRaw || num(b.edge_pct || b.edge_pp) - num(a.edge_pct || a.edge_pp) || num(b.value_pct) - num(a.value_pct);
+    });
     return out.slice(0, 9);
   }
 
@@ -186,6 +192,12 @@
     try{ if(typeof renderAiMemory === 'function') renderAiMemory(); }catch(e){}
     refinedCopy();
     badge();
+    // FIX: re-renderează filtrul Motor din Meciuri când datele motorului se actualizează
+    try{
+      if(typeof renderMatches === 'function' && typeof CURRENT_FILTER !== 'undefined' && CURRENT_FILTER === 'motor_validated'){
+        renderMatches();
+      }
+    }catch(e){}
   }
   function load(force){
     return Promise.all([readJson('data/adaptive_predictions.json', force), readJson('data/model_diagnostics.json', force), readJson('data/ai_memory.json', force)])
