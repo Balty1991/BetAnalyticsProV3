@@ -1,8 +1,8 @@
-// Dashboard Motor tracker sync + Meciuri cleanup.
+// Dashboard Motor tracker sync + Meciuri/Istoric 21 cleanup.
 (function(){
   'use strict';
-  if(window.__baDashboardMotorTrackerSyncV4)return;
-  window.__baDashboardMotorTrackerSyncV4=1;
+  if(window.__baDashboardMotorTrackerSyncV5)return;
+  window.__baDashboardMotorTrackerSyncV5=1;
 
   var lastJournalSync=0;
   function n(v){return Number(v||0)}
@@ -13,6 +13,7 @@
   function wr(v){return n(v).toFixed(1)+'%'}
   function statusOf(r){var s=String((r&&r.status)||(r&&r.result)||(r&&r.outcome)||'').toLowerCase();if(s==='won'||s==='w'||s==='win')return'win';if(s==='lost'||s==='loss'||s==='l'||s==='lose')return'lose';return'pending'}
   function profitOf(r){var o=n((r&&r.odds)||(r&&r.displayOdds)||(r&&r.book_odds));return statusOf(r)==='win'?(o>1?o-1:0):-1}
+  function normTxt(v){try{return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim()}catch(e){return String(v||'').toUpperCase().replace(/\s+/g,' ').trim()}}
 
   function fallbackPayloadSummary(){
     var payload=window.PREDICTION_TYPE_HISTORY||{};
@@ -93,10 +94,10 @@
   }
 
   function addCleanupCss(){
-    if(document.getElementById('ba-meciuri-cleanup-css'))return;
+    if(document.getElementById('ba-cleanup-css-v5'))return;
     var st=document.createElement('style');
-    st.id='ba-meciuri-cleanup-css';
-    st.textContent='#ba-match-probar,#matches-help-panel{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}';
+    st.id='ba-cleanup-css-v5';
+    st.textContent='#ba-match-probar,#matches-help-panel{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}.ba-hidden-by-user{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}';
     document.head.appendChild(st);
   }
 
@@ -129,8 +130,34 @@
     removeMotorChip();
   }
 
+  function hideHistoryCardFromTitle(el){
+    var node=el, best=null;
+    for(var depth=0;node&&depth<8;depth++,node=node.parentElement){
+      if(node.id==='tab-istoric21'||node.id==='main-content'||node.tagName==='BODY')break;
+      var tx=normTxt(node.textContent||'');
+      var cls=String(node.className||'');
+      if((tx.indexOf('WIN RATE')>=0&&tx.indexOf('PENDING')>=0&&tx.indexOf('WIN / JUCATE')>=0)||/card|panel|section|market|history/i.test(cls))best=node;
+    }
+    if(best)best.classList.add('ba-hidden-by-user');
+  }
+
+  function cleanupIstoric21(){
+    addCleanupCss();
+    var tab=document.getElementById('tab-istoric21');
+    if(!tab)return;
+    var targets=['SANSA DUBLA','OVER 2.5G','OVER 2.5','VALIDATE MOTOR'];
+    [].slice.call(tab.querySelectorAll('div,h1,h2,h3,h4,span,strong')).forEach(function(el){
+      var tx=normTxt(el.textContent||'');
+      if(!tx||tx.length>70)return;
+      for(var i=0;i<targets.length;i++){
+        if(tx===targets[i]||tx.indexOf(targets[i])===0){hideHistoryCardFromTitle(el);break;}
+      }
+    });
+  }
+
   function patch(){
     cleanupMeciuri();
+    cleanupIstoric21();
     var s=trackerSummary();
     if(s)patchDashboard(s);
   }
