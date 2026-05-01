@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-01T15:49:25.979744",
+  "updated_at": "2026-05-01T16:14:38.755393",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 8592,
+  "n_rows": 8593,
   "n_folds": 2,
   "global_score": 74.3,
   "global_grade": "B",
@@ -12,7 +12,7 @@
       "label": "Victorie gazdă",
       "folds": 2,
       "avg_brier": 0.2449,
-      "avg_log_loss": 0.6828,
+      "avg_log_loss": 0.6829,
       "avg_ece": 0.0124,
       "avg_winrate": 0.4507,
       "score": 75.6,
@@ -22,15 +22,15 @@
         {
           "n": 2573,
           "brier": 0.2438,
-          "log_loss": 0.6806,
-          "ece": 0.011,
+          "log_loss": 0.6807,
+          "ece": 0.0111,
           "winrate": 0.4485
         },
         {
           "n": 2448,
           "brier": 0.246,
           "log_loss": 0.6851,
-          "ece": 0.0138,
+          "ece": 0.0137,
           "winrate": 0.453
         }
       ]
@@ -79,7 +79,7 @@
           "n": 2573,
           "brier": 0.2055,
           "log_loss": 0.5999,
-          "ece": 0.0109,
+          "ece": 0.011,
           "winrate": 0.2958
         },
         {
@@ -96,7 +96,7 @@
       "label": "Peste 2.5G",
       "folds": 2,
       "avg_brier": 0.2426,
-      "avg_log_loss": 0.6781,
+      "avg_log_loss": 0.6782,
       "avg_ece": 0.0105,
       "avg_winrate": 0.5119,
       "score": 76.2,
@@ -106,15 +106,15 @@
         {
           "n": 2573,
           "brier": 0.2416,
-          "log_loss": 0.676,
-          "ece": 0.0128,
+          "log_loss": 0.6761,
+          "ece": 0.0127,
           "winrate": 0.5165
         },
         {
           "n": 2448,
           "brier": 0.2436,
           "log_loss": 0.6802,
-          "ece": 0.0081,
+          "ece": 0.0082,
           "winrate": 0.5074
         }
       ]
@@ -124,8 +124,8 @@
       "label": "Sub 3.5G",
       "folds": 2,
       "avg_brier": 0.1983,
-      "avg_log_loss": 0.5831,
-      "avg_ece": 0.0116,
+      "avg_log_loss": 0.583,
+      "avg_ece": 0.0115,
       "avg_winrate": 0.7136,
       "score": 79.9,
       "grade": "B",
@@ -134,15 +134,15 @@
         {
           "n": 2573,
           "brier": 0.2012,
-          "log_loss": 0.5893,
-          "ece": 0.0145,
+          "log_loss": 0.5892,
+          "ece": 0.0144,
           "winrate": 0.7046
         },
         {
           "n": 2448,
           "brier": 0.1954,
           "log_loss": 0.5768,
-          "ece": 0.0087,
+          "ece": 0.0086,
           "winrate": 0.7226
         }
       ]
@@ -153,7 +153,7 @@
       "folds": 2,
       "avg_brier": 0.2433,
       "avg_log_loss": 0.6795,
-      "avg_ece": 0.0094,
+      "avg_ece": 0.0095,
       "avg_winrate": 0.5173,
       "score": 76.3,
       "grade": "B",
@@ -170,7 +170,7 @@
           "n": 2448,
           "brier": 0.2434,
           "log_loss": 0.6799,
-          "ece": 0.0066,
+          "ece": 0.0067,
           "winrate": 0.5139
         }
       ]
@@ -180,8 +180,8 @@
       "label": "Peste 1.5G",
       "folds": 2,
       "avg_brier": 0.2842,
-      "avg_log_loss": 0.7623,
-      "avg_ece": 0.3032,
+      "avg_log_loss": 0.7622,
+      "avg_ece": 0.303,
       "avg_winrate": 0.7525,
       "score": 50.0,
       "grade": "D",
@@ -190,15 +190,15 @@
         {
           "n": 2573,
           "brier": 0.2819,
-          "log_loss": 0.7577,
-          "ece": 0.3052,
+          "log_loss": 0.7576,
+          "ece": 0.3051,
           "winrate": 0.759
         },
         {
           "n": 2448,
           "brier": 0.2864,
-          "log_loss": 0.7668,
-          "ece": 0.3011,
+          "log_loss": 0.7667,
+          "ece": 0.301,
           "winrate": 0.7459
         }
       ]

@@ -1,28 +1,28 @@
 {
-  "updated_at": "2026-05-01T15:49:46.366453+00:00",
+  "updated_at": "2026-05-01T16:15:00.790473+00:00",
   "summary": {
-    "total_picks": 536,
-    "avg_clv_pct": -0.625,
+    "total_picks": 537,
+    "avg_clv_pct": -0.6255,
     "median_clv_pct": 0.0,
     "clv_positive_n": 85,
-    "clv_negative_n": 451,
-    "clv_positive_rate": 0.1586,
-    "avg_clv_wins": -0.2706,
+    "clv_negative_n": 452,
+    "clv_positive_rate": 0.1583,
+    "avg_clv_wins": -0.2722,
     "avg_clv_losses": -1.5203,
-    "win_rate_pct": 71.64,
-    "roi_flat_pct": -0.9304,
+    "win_rate_pct": 71.69,
+    "roi_flat_pct": -0.8086,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.2026
+    "std_clv_pct": 6.1968
   },
   "by_market": {
     "btts": {
-      "n": 70,
-      "avg_clv_pct": -2.1741,
-      "clv_positive_rate": 0.2571,
-      "win_rate_pct": 70.0,
-      "roi_flat_pct": 8.7429,
-      "avg_ev_at_pick": 3.1881
+      "n": 71,
+      "avg_clv_pct": -2.1563,
+      "clv_positive_rate": 0.2535,
+      "win_rate_pct": 70.42,
+      "roi_flat_pct": 9.5282,
+      "avg_ev_at_pick": 3.1462
     },
     "over15": {
       "n": 148,
@@ -63,10 +63,10 @@
       "avg_clv": 1.6151
     },
     "clv_neutral": {
-      "n": 289,
-      "win_rate": 71.28,
-      "roi_pct": -2.9716,
-      "avg_clv": -0.0662
+      "n": 290,
+      "win_rate": 71.38,
+      "roi_pct": -2.739,
+      "avg_clv": -0.0691
     },
     "clv_mild_neg": {
       "n": 107,
@@ -82,24 +82,24 @@
     }
   },
   "rolling_30d": {
-    "n": 536,
-    "avg_clv_pct": -0.625,
-    "win_rate_pct": 71.64,
-    "roi_flat_pct": -0.9304,
+    "n": 537,
+    "avg_clv_pct": -0.6255,
+    "win_rate_pct": 71.69,
+    "roi_flat_pct": -0.8086,
     "days": 30
   },
   "rolling_90d": {
-    "n": 536,
-    "avg_clv_pct": -0.625,
-    "win_rate_pct": 71.64,
-    "roi_flat_pct": -0.9304,
+    "n": 537,
+    "avg_clv_pct": -0.6255,
+    "win_rate_pct": 71.69,
+    "roi_flat_pct": -0.8086,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 335,
-      "avg_clv": 0.6762,
-      "clv_positive_rate": 0.209
+      "n": 336,
+      "avg_clv": 0.6714,
+      "clv_positive_rate": 0.2083
     },
     "ev_negative_picks": {
       "n": 201,
@@ -110,12 +110,35 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.62%) și ROI negativ (-0.93%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.63%) și ROI negativ (-0.81%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "3346",
+      "date": "2026-05-01",
+      "home": "Çaykur Rizespor",
+      "away": "Konyaspor",
+      "league": "Trendyol Super Lig",
+      "market": "btts",
+      "picked_odds": 1.63,
+      "closing_odds": 1.645,
+      "picked_implied": 0.613497,
+      "closing_implied": 0.607903,
+      "clv_pct": -0.9119,
+      "clv_positive": false,
+      "ev_at_pick_pct": 0.2124,
+      "model_prob": 61.48,
+      "edge_pct": 5.09,
+      "score": 78,
+      "line_move_pct": 0.9202,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-01T15:58:32.103442+00:00",
+      "prediction_id": 3287
+    },
     {
       "event_id": "205753",
       "date": "2026-05-01",
@@ -136,7 +159,7 @@
       "line_move_pct": -22.5806,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T14:31:17.302658+00:00",
+      "settled_at": "2026-05-01T14:04:58.069339+00:00",
       "prediction_id": 3562
     },
     {
@@ -159,7 +182,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T14:31:17.302658+00:00",
+      "settled_at": "2026-05-01T14:04:58.069339+00:00",
       "prediction_id": 3560
     },
     {
