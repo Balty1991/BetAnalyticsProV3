@@ -73,7 +73,7 @@
   }
   function cleanupIstoric21(){
     var tab=document.getElementById('tab-istoric21');if(!tab)return;
-    var targets={'SANSA DUBLA':1,'OVER 2.5G':1,'OVER 2.5':1,'VALIDATE MOTOR':1};
+    var targets={'SANSA DUBLA':1,'VALIDATE MOTOR':1};
     [].slice.call(tab.querySelectorAll('.history-summary-card')).forEach(function(card){
       var label=up((card.querySelector('.history-summary-label')||card).textContent||'');
       if(targets[label])card.classList.add('ba-user-hidden');else card.classList.remove('ba-user-hidden');
@@ -100,7 +100,7 @@
       })(b);
       if(inCard)return false;
       var t=cleanText(b);
-      return ['SIMPLU','EXPERT','TOATE','TOP','O1.5','BTTS','U3.5','VALUE'].indexOf(t)>=0||t.indexOf('FILTRE')>=0;
+      return ['SIMPLU','EXPERT','TOATE','TOP','O1.5','O2.5','BTTS','U3.5','VALUE'].indexOf(t)>=0||t.indexOf('FILTRE')>=0;
     });
   }
 
@@ -137,7 +137,7 @@
       if(t==='SIMPLU'||t==='EXPERT'){
         b.classList.add('ba-mode-btn');
         if(b.parentNode!==modeGroup)modeGroup.appendChild(b);
-      }else if(['TOATE','TOP','O1.5','BTTS','U3.5','VALUE'].indexOf(t)>=0){
+      }else if(['TOATE','TOP','O1.5','O2.5','BTTS','U3.5','VALUE'].indexOf(t)>=0){
         b.classList.add('ba-market-chip');
         if(b.parentNode!==marketGroup)marketGroup.appendChild(b);
       }else if(t.indexOf('FILTRE')>=0){
