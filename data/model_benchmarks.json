@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-01T07:15:53.277069+00:00",
+  "updated_at": "2026-05-01T07:43:23.757027+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -4664,11 +4664,669 @@
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 0,
+    "n_total": 549,
+    "overall": {
+      "n": 549,
+      "n_wins": 390,
+      "winrate": 71.04,
+      "roi_pct": -1.82,
+      "profit": -9.98,
+      "avg_odds": 1.391,
+      "max_drawdown": 17.9,
+      "avg_edge_pct": 8.76
+    },
+    "by_market": {
+      "btts": {
+        "n": 72,
+        "n_wins": 50,
+        "winrate": 69.44,
+        "roi_pct": 7.67,
+        "profit": 5.52,
+        "avg_odds": 1.546,
+        "max_drawdown": 3.9,
+        "avg_edge_pct": 9.38
+      },
+      "over15": {
+        "n": 150,
+        "n_wins": 100,
+        "winrate": 66.67,
+        "roi_pct": -11.97,
+        "profit": -17.96,
+        "avg_odds": 1.324,
+        "max_drawdown": 20.01,
+        "avg_edge_pct": 7.78
+      },
+      "over25": {
+        "n": 10,
+        "n_wins": 7,
+        "winrate": 70.0,
+        "roi_pct": 0.8,
+        "profit": 0.08,
+        "avg_odds": 1.452,
+        "max_drawdown": 3.0,
+        "avg_edge_pct": 7.5
+      },
+      "under35": {
+        "n": 317,
+        "n_wins": 233,
+        "winrate": 73.5,
+        "roi_pct": 0.75,
+        "profit": 2.38,
+        "avg_odds": 1.385,
+        "max_drawdown": 15.04,
+        "avg_edge_pct": 9.12
+      }
+    },
+    "by_league": {
+      "Championship": {
+        "n": 43,
+        "n_wins": 29,
+        "winrate": 67.44,
+        "roi_pct": -8.63,
+        "profit": -3.71,
+        "avg_odds": 1.381,
+        "max_drawdown": 5.71,
+        "avg_edge_pct": 6.82
+      },
+      "MLS": {
+        "n": 34,
+        "n_wins": 23,
+        "winrate": 67.65,
+        "roi_pct": 0.82,
+        "profit": 0.28,
+        "avg_odds": 1.498,
+        "max_drawdown": 5.87,
+        "avg_edge_pct": 8.01
+      },
+      "Liga MX Clausura": {
+        "n": 31,
+        "n_wins": 23,
+        "winrate": 74.19,
+        "roi_pct": 11.39,
+        "profit": 3.53,
+        "avg_odds": 1.497,
+        "max_drawdown": 2.0,
+        "avg_edge_pct": 10.63
+      },
+      "Copa Sudamericana": {
+        "n": 27,
+        "n_wins": 24,
+        "winrate": 88.89,
+        "roi_pct": 15.21,
+        "profit": 4.106,
+        "avg_odds": 1.308,
+        "max_drawdown": 1.0,
+        "avg_edge_pct": 10.2
+      },
+      "Brasileirão Serie A": {
+        "n": 27,
+        "n_wins": 20,
+        "winrate": 74.07,
+        "roi_pct": -3.44,
+        "profit": -0.93,
+        "avg_odds": 1.313,
+        "max_drawdown": 4.99,
+        "avg_edge_pct": 6.7
+      },
+      "Serie A": {
+        "n": 27,
+        "n_wins": 18,
+        "winrate": 66.67,
+        "roi_pct": -6.7,
+        "profit": -1.81,
+        "avg_odds": 1.414,
+        "max_drawdown": 4.26,
+        "avg_edge_pct": 6.77
+      },
+      "Copa Libertadores": {
+        "n": 26,
+        "n_wins": 21,
+        "winrate": 80.77,
+        "roi_pct": 6.38,
+        "profit": 1.66,
+        "avg_odds": 1.342,
+        "max_drawdown": 1.8,
+        "avg_edge_pct": 11.56
+      },
+      "La Liga": {
+        "n": 26,
+        "n_wins": 18,
+        "winrate": 69.23,
+        "roi_pct": -3.31,
+        "profit": -0.86,
+        "avg_odds": 1.397,
+        "max_drawdown": 3.36,
+        "avg_edge_pct": 6.94
+      },
+      "Premier League": {
+        "n": 25,
+        "n_wins": 15,
+        "winrate": 60.0,
+        "roi_pct": -15.04,
+        "profit": -3.76,
+        "avg_odds": 1.404,
+        "max_drawdown": 5.6,
+        "avg_edge_pct": 5.45
+      },
+      "Pro League": {
+        "n": 23,
+        "n_wins": 21,
+        "winrate": 91.3,
+        "roi_pct": 28.87,
+        "profit": 6.64,
+        "avg_odds": 1.417,
+        "max_drawdown": 1.0,
+        "avg_edge_pct": 9.05
+      },
+      "Ekstraklasa": {
+        "n": 23,
+        "n_wins": 17,
+        "winrate": 73.91,
+        "roi_pct": 1.91,
+        "profit": 0.44,
+        "avg_odds": 1.378,
+        "max_drawdown": 3.22,
+        "avg_edge_pct": 9.3
+      },
+      "Parva Liga": {
+        "n": 21,
+        "n_wins": 18,
+        "winrate": 85.71,
+        "roi_pct": 9.67,
+        "profit": 2.03,
+        "avg_odds": 1.28,
+        "max_drawdown": 1.7,
+        "avg_edge_pct": 12.7
+      },
+      "Allsvenskan": {
+        "n": 21,
+        "n_wins": 16,
+        "winrate": 76.19,
+        "roi_pct": 6.05,
+        "profit": 1.27,
+        "avg_odds": 1.37,
+        "max_drawdown": 2.08,
+        "avg_edge_pct": 10.39
+      },
+      "Bundesliga": {
+        "n": 21,
+        "n_wins": 16,
+        "winrate": 76.19,
+        "roi_pct": 5.86,
+        "profit": 1.23,
+        "avg_odds": 1.416,
+        "max_drawdown": 2.83,
+        "avg_edge_pct": 7.72
+      },
+      "Ligue 1": {
+        "n": 19,
+        "n_wins": 9,
+        "winrate": 47.37,
+        "roi_pct": -29.21,
+        "profit": -5.55,
+        "avg_odds": 1.487,
+        "max_drawdown": 7.05,
+        "avg_edge_pct": 7.01
+      },
+      "Brasileirão Serie B": {
+        "n": 17,
+        "n_wins": 10,
+        "winrate": 58.82,
+        "roi_pct": -23.41,
+        "profit": -3.98,
+        "avg_odds": 1.313,
+        "max_drawdown": 4.63,
+        "avg_edge_pct": 8.78
+      },
+      "Trendyol Super Lig": {
+        "n": 16,
+        "n_wins": 14,
+        "winrate": 87.5,
+        "roi_pct": 22.06,
+        "profit": 3.53,
+        "avg_odds": 1.394,
+        "max_drawdown": 1.64,
+        "avg_edge_pct": 9.88
+      },
+      "Superliga": {
+        "n": 15,
+        "n_wins": 8,
+        "winrate": 53.33,
+        "roi_pct": -30.93,
+        "profit": -4.64,
+        "avg_odds": 1.303,
+        "max_drawdown": 5.39,
+        "avg_edge_pct": 9.8
+      },
+      "Liga Portugal Betclic": {
+        "n": 14,
+        "n_wins": 11,
+        "winrate": 78.57,
+        "roi_pct": 6.86,
+        "profit": 0.96,
+        "avg_odds": 1.346,
+        "max_drawdown": 1.97,
+        "avg_edge_pct": 8.48
+      },
+      "Saudi Pro League": {
+        "n": 13,
+        "n_wins": 9,
+        "winrate": 69.23,
+        "roi_pct": -0.75,
+        "profit": -0.098,
+        "avg_odds": 1.47,
+        "max_drawdown": 1.77,
+        "avg_edge_pct": 10.0
+      },
+      "Eredivisie": {
+        "n": 10,
+        "n_wins": 6,
+        "winrate": 60.0,
+        "roi_pct": -9.7,
+        "profit": -0.97,
+        "avg_odds": 1.5,
+        "max_drawdown": 2.41,
+        "avg_edge_pct": 8.8
+      },
+      "Champions League": {
+        "n": 9,
+        "n_wins": 5,
+        "winrate": 55.56,
+        "roi_pct": -24.11,
+        "profit": -2.17,
+        "avg_odds": 1.374,
+        "max_drawdown": 3.41,
+        "avg_edge_pct": 11.39
+      },
+      "FA Cup": {
+        "n": 9,
+        "n_wins": 5,
+        "winrate": 55.56,
+        "roi_pct": -23.22,
+        "profit": -2.09,
+        "avg_odds": 1.363,
+        "max_drawdown": 2.09,
+        "avg_edge_pct": 11.64
+      },
+      "J1 League": {
+        "n": 8,
+        "n_wins": 5,
+        "winrate": 62.5,
+        "roi_pct": -8.61,
+        "profit": -0.689,
+        "avg_odds": 1.409,
+        "max_drawdown": 2.52,
+        "avg_edge_pct": 9.78
+      },
+      "Super League": {
+        "n": 8,
+        "n_wins": 6,
+        "winrate": 75.0,
+        "roi_pct": 9.88,
+        "profit": 0.79,
+        "avg_odds": 1.486,
+        "max_drawdown": 1.56,
+        "avg_edge_pct": 7.61
+      },
+      "Europa League": {
+        "n": 7,
+        "n_wins": 3,
+        "winrate": 42.86,
+        "roi_pct": -41.57,
+        "profit": -2.91,
+        "avg_odds": 1.379,
+        "max_drawdown": 4.0,
+        "avg_edge_pct": 7.25
+      },
+      "Scottish Premiership": {
+        "n": 7,
+        "n_wins": 4,
+        "winrate": 57.14,
+        "roi_pct": -17.14,
+        "profit": -1.2,
+        "avg_odds": 1.429,
+        "max_drawdown": 3.0,
+        "avg_edge_pct": 10.03
+      },
+      "Segunda División": {
+        "n": 6,
+        "n_wins": 4,
+        "winrate": 66.67,
+        "roi_pct": -4.0,
+        "profit": -0.24,
+        "avg_odds": 1.45,
+        "max_drawdown": 1.1,
+        "avg_edge_pct": 10.13
+      },
+      "K League 1": {
+        "n": 4,
+        "n_wins": 1,
+        "winrate": 25.0,
+        "roi_pct": -68.75,
+        "profit": -2.75,
+        "avg_odds": 1.258,
+        "max_drawdown": 3.0,
+        "avg_edge_pct": 9.47
+      },
+      "Tunisian Ligue Professionnelle 1": {
+        "n": 3,
+        "n_wins": 3,
+        "winrate": 100.0,
+        "roi_pct": 19.03,
+        "profit": 0.571,
+        "avg_odds": 1.19,
+        "max_drawdown": 0.0,
+        "avg_edge_pct": 6.39
+      },
+      "Stoiximan Super League": {
+        "n": 3,
+        "n_wins": 2,
+        "winrate": 66.67,
+        "roi_pct": -12.67,
+        "profit": -0.38,
+        "avg_odds": 1.327,
+        "max_drawdown": 1.0,
+        "avg_edge_pct": 8.12
+      },
+      "CAF Champions League": {
+        "n": 2,
+        "n_wins": 2,
+        "winrate": 100.0,
+        "roi_pct": 17.0,
+        "profit": 0.34,
+        "avg_odds": 1.17,
+        "max_drawdown": 0.0,
+        "avg_edge_pct": 6.47
+      },
+      "DFB Pokal": {
+        "n": 1,
+        "n_wins": 1,
+        "winrate": 100.0,
+        "roi_pct": 44.0,
+        "profit": 0.44,
+        "avg_odds": 1.44,
+        "max_drawdown": 0.0,
+        "avg_edge_pct": 7.3
+      },
+      "Copa do Brasil": {
+        "n": 1,
+        "n_wins": 1,
+        "winrate": 100.0,
+        "roi_pct": 40.0,
+        "profit": 0.4,
+        "avg_odds": 1.4,
+        "max_drawdown": 0.0,
+        "avg_edge_pct": 20.37
+      },
+      "Coupe de France": {
+        "n": 1,
+        "n_wins": 1,
+        "winrate": 100.0,
+        "roi_pct": 25.0,
+        "profit": 0.25,
+        "avg_odds": 1.25,
+        "max_drawdown": 0.0,
+        "avg_edge_pct": 5.19
+      },
+      "Coppa Italia": {
+        "n": 1,
+        "n_wins": 1,
+        "winrate": 100.0,
+        "roi_pct": 29.0,
+        "profit": 0.29,
+        "avg_odds": 1.29,
+        "max_drawdown": 0.0,
+        "avg_edge_pct": 8.14
+      }
+    },
+    "by_edge_bucket": {
+      "0-5%": {
+        "n": 87,
+        "n_wins": 61,
+        "winrate": 70.11,
+        "roi_pct": -7.38,
+        "profit": -6.423,
+        "avg_odds": 1.351,
+        "max_drawdown": 11.74,
+        "avg_edge_pct": 3.75
+      },
+      "5-10%": {
+        "n": 295,
+        "n_wins": 206,
+        "winrate": 69.83,
+        "roi_pct": -4.81,
+        "profit": -14.189,
+        "avg_odds": 1.376,
+        "max_drawdown": 18.14,
+        "avg_edge_pct": 7.32
+      },
+      "10-15%": {
+        "n": 115,
+        "n_wins": 82,
+        "winrate": 71.3,
+        "roi_pct": 2.27,
+        "profit": 2.61,
+        "avg_odds": 1.43,
+        "max_drawdown": 5.03,
+        "avg_edge_pct": 12.0
+      },
+      "15%+": {
+        "n": 52,
+        "n_wins": 41,
+        "winrate": 78.85,
+        "roi_pct": 15.43,
+        "profit": 8.022,
+        "avg_odds": 1.452,
+        "max_drawdown": 2.76,
+        "avg_edge_pct": 18.14
+      }
+    },
+    "by_market_bucket": {
+      "under35": {
+        "0-5%": {
+          "n": 47,
+          "n_wins": 35,
+          "winrate": 74.47,
+          "roi_pct": -2.05,
+          "profit": -0.963,
+          "avg_odds": 1.353,
+          "max_drawdown": 7.61,
+          "avg_edge_pct": 3.69
+        },
+        "5-10%": {
+          "n": 161,
+          "n_wins": 117,
+          "winrate": 72.67,
+          "roi_pct": -1.66,
+          "profit": -2.669,
+          "avg_odds": 1.368,
+          "max_drawdown": 10.22,
+          "avg_edge_pct": 7.31
+        },
+        "10-15%": {
+          "n": 75,
+          "n_wins": 53,
+          "winrate": 70.67,
+          "roi_pct": -1.36,
+          "profit": -1.02,
+          "avg_odds": 1.406,
+          "max_drawdown": 8.64,
+          "avg_edge_pct": 12.04
+        },
+        "15%+": {
+          "n": 34,
+          "n_wins": 28,
+          "winrate": 82.35,
+          "roi_pct": 20.68,
+          "profit": 7.032,
+          "avg_odds": 1.459,
+          "max_drawdown": 2.0,
+          "avg_edge_pct": 18.79
+        }
+      },
+      "over15": {
+        "0-5%": {
+          "n": 31,
+          "n_wins": 22,
+          "winrate": 70.97,
+          "roi_pct": -8.26,
+          "profit": -2.56,
+          "avg_odds": 1.297,
+          "max_drawdown": 4.37,
+          "avg_edge_pct": 3.67
+        },
+        "5-10%": {
+          "n": 91,
+          "n_wins": 60,
+          "winrate": 65.93,
+          "roi_pct": -13.95,
+          "profit": -12.69,
+          "avg_odds": 1.316,
+          "max_drawdown": 13.72,
+          "avg_edge_pct": 7.29
+        },
+        "10-15%": {
+          "n": 17,
+          "n_wins": 10,
+          "winrate": 58.82,
+          "roi_pct": -17.94,
+          "profit": -3.05,
+          "avg_odds": 1.369,
+          "max_drawdown": 3.44,
+          "avg_edge_pct": 12.12
+        },
+        "15%+": {
+          "n": 11,
+          "n_wins": 8,
+          "winrate": 72.73,
+          "roi_pct": 3.09,
+          "profit": 0.34,
+          "avg_odds": 1.4,
+          "max_drawdown": 1.6,
+          "avg_edge_pct": 16.67
+        }
+      },
+      "btts": {
+        "0-5%": {
+          "n": 6,
+          "n_wins": 2,
+          "winrate": 33.33,
+          "roi_pct": -45.67,
+          "profit": -2.74,
+          "avg_odds": 1.58,
+          "max_drawdown": 2.74,
+          "avg_edge_pct": 4.46
+        },
+        "5-10%": {
+          "n": 39,
+          "n_wins": 26,
+          "winrate": 66.67,
+          "roi_pct": 2.46,
+          "profit": 0.96,
+          "avg_odds": 1.541,
+          "max_drawdown": 3.3,
+          "avg_edge_pct": 7.45
+        },
+        "10-15%": {
+          "n": 20,
+          "n_wins": 17,
+          "winrate": 85.0,
+          "roi_pct": 33.25,
+          "profit": 6.65,
+          "avg_odds": 1.563,
+          "max_drawdown": 2.37,
+          "avg_edge_pct": 11.84
+        },
+        "15%+": {
+          "n": 7,
+          "n_wins": 5,
+          "winrate": 71.43,
+          "roi_pct": 9.29,
+          "profit": 0.65,
+          "avg_odds": 1.501,
+          "max_drawdown": 1.53,
+          "avg_edge_pct": 17.31
+        }
+      },
+      "over25": {
+        "0-5%": {
+          "n": 3,
+          "n_wins": 2,
+          "winrate": 66.67,
+          "roi_pct": -5.33,
+          "profit": -0.16,
+          "avg_odds": 1.413,
+          "max_drawdown": 1.0,
+          "avg_edge_pct": 4.08
+        },
+        "5-10%": {
+          "n": 4,
+          "n_wins": 3,
+          "winrate": 75.0,
+          "roi_pct": 5.25,
+          "profit": 0.21,
+          "avg_odds": 1.438,
+          "max_drawdown": 1.0,
+          "avg_edge_pct": 7.12
+        },
+        "10-15%": {
+          "n": 3,
+          "n_wins": 2,
+          "winrate": 66.67,
+          "roi_pct": 1.0,
+          "profit": 0.03,
+          "avg_odds": 1.51,
+          "max_drawdown": 1.0,
+          "avg_edge_pct": 11.43
+        }
+      }
+    },
     "warnings": [
-      "Niciun pariu finalizat cu cote reale în log."
+      "Piețe cu <20 pariuri (nesemnificativ statistic): over25"
     ]
   },
-  "dynamic_thresholds": {},
+  "dynamic_thresholds": {
+    "btts": {
+      "min_edge": 5.0,
+      "disabled": false,
+      "basis": "5-10%",
+      "roi_at_threshold": 2.46,
+      "bootstrap_min_edge": null,
+      "bootstrap_n": 39,
+      "bootstrap_target_n": 20,
+      "recent_changes": []
+    },
+    "over15": {
+      "min_edge": 10.0,
+      "disabled": false,
+      "basis": "capped_at_10pct",
+      "roi_at_threshold": 3.09,
+      "bootstrap_min_edge": 10.0,
+      "bootstrap_n": 11,
+      "bootstrap_target_n": 20,
+      "cap_warning": true,
+      "recent_changes": []
+    },
+    "over25": {
+      "min_edge": 10.0,
+      "disabled": false,
+      "basis": "10-15%",
+      "roi_at_threshold": 2.27,
+      "bootstrap_min_edge": 5.0,
+      "bootstrap_n": 3,
+      "bootstrap_target_n": 20,
+      "recent_changes": []
+    },
+    "under35": {
+      "min_edge": 15.0,
+      "disabled": false,
+      "basis": "15%+",
+      "roi_at_threshold": 20.68,
+      "bootstrap_min_edge": null,
+      "bootstrap_n": 34,
+      "bootstrap_target_n": 20,
+      "recent_changes": []
+    }
+  },
   "threshold_history": []
 }

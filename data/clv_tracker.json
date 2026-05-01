@@ -1,11 +1,119 @@
 {
-  "updated_at": "2026-05-01T07:15:53.480493+00:00",
+  "updated_at": "2026-05-01T07:43:23.908840+00:00",
   "summary": {
-    "total_picks": 0
+    "total_picks": 531,
+    "avg_clv_pct": -0.6858,
+    "median_clv_pct": 0.0,
+    "clv_positive_n": 84,
+    "clv_negative_n": 447,
+    "clv_positive_rate": 0.1582,
+    "avg_clv_wins": -0.3502,
+    "avg_clv_losses": -1.5304,
+    "win_rate_pct": 71.56,
+    "roi_flat_pct": -1.0226,
+    "max_clv_pct": 39.3162,
+    "min_clv_pct": -28.125,
+    "std_clv_pct": 6.0954
+  },
+  "by_market": {
+    "btts": {
+      "n": 70,
+      "avg_clv_pct": -2.1741,
+      "clv_positive_rate": 0.2571,
+      "win_rate_pct": 70.0,
+      "roi_flat_pct": 8.7429,
+      "avg_ev_at_pick": 3.1881
+    },
+    "over15": {
+      "n": 146,
+      "avg_clv_pct": 1.3804,
+      "clv_positive_rate": 0.1986,
+      "win_rate_pct": 67.12,
+      "roi_flat_pct": -11.3836,
+      "avg_ev_at_pick": 3.334
+    },
+    "over25": {
+      "n": 9,
+      "avg_clv_pct": -3.407,
+      "clv_positive_rate": 0.1111,
+      "win_rate_pct": 77.78,
+      "roi_flat_pct": 12.0,
+      "avg_ev_at_pick": -0.9752
+    },
+    "under35": {
+      "n": 306,
+      "avg_clv_pct": -1.2512,
+      "clv_positive_rate": 0.1176,
+      "win_rate_pct": 73.86,
+      "roi_flat_pct": 1.3039,
+      "avg_ev_at_pick": 3.2453
+    }
+  },
+  "clv_buckets": {
+    "clv_strong_pos": {
+      "n": 18,
+      "win_rate": 72.22,
+      "roi_pct": -7.7778,
+      "avg_clv": 22.1133
+    },
+    "clv_mild_pos": {
+      "n": 66,
+      "win_rate": 77.27,
+      "roi_pct": 6.3758,
+      "avg_clv": 1.6151
+    },
+    "clv_neutral": {
+      "n": 285,
+      "win_rate": 71.23,
+      "roi_pct": -3.0986,
+      "avg_clv": -0.0671
+    },
+    "clv_mild_neg": {
+      "n": 107,
+      "win_rate": 75.7,
+      "roi_pct": 7.3467,
+      "avg_clv": -2.6928
+    },
+    "clv_strong_neg": {
+      "n": 55,
+      "win_rate": 58.18,
+      "roi_pct": -13.2145,
+      "avg_clv": -10.2099
+    }
+  },
+  "rolling_30d": {
+    "n": 531,
+    "avg_clv_pct": -0.6858,
+    "win_rate_pct": 71.56,
+    "roi_flat_pct": -1.0226,
+    "days": 30
+  },
+  "rolling_90d": {
+    "n": 531,
+    "avg_clv_pct": -0.6858,
+    "win_rate_pct": 71.56,
+    "roi_flat_pct": -1.0226,
+    "days": 90
+  },
+  "ev_correlation": {
+    "ev_positive_picks": {
+      "n": 330,
+      "avg_clv": 0.598,
+      "clv_positive_rate": 0.2091
+    },
+    "ev_negative_picks": {
+      "n": 201,
+      "avg_clv": -2.7936,
+      "clv_positive_rate": 0.0746
+    },
+    "divergence_warning": false
   },
   "diagnosis": {
-    "signal": "NO_DATA",
-    "interpretation": "Fără date CLV disponibile."
+    "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
+    "interpretation": "❌ CLV negativ (-0.69%) și ROI negativ (-1.02%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
+    "confidence": "high",
+    "rolling_trend": "stabil"
   },
   "picks": [
     {
