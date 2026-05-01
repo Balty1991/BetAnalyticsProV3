@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-01T13:55:50.877341+00:00",
+  "updated_at": "2026-05-01T14:21:20.550781+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 76.5,
+  "overall_score": 74.8,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,23 +9,23 @@
   },
   "data_quality": {
     "recommendation_rows": 773,
-    "pending_rows": 221,
-    "candidates_with_odds_and_probability": 192,
+    "pending_rows": 219,
+    "candidates_with_odds_and_probability": 190,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "safe": 5,
-    "speculative": 152,
+    "safe": 4,
+    "speculative": 151,
     "balanced": 35
   },
   "market_distribution_top150": {
     "Over 2.5G": 3,
     "Under 3.5G": 83,
-    "BTTS": 30,
-    "Over 1.5G": 34
+    "BTTS": 31,
+    "Over 1.5G": 33
   },
   "league_distribution_top150": {
     "Segunda División": 8,
@@ -35,14 +35,13 @@
     "Liga Portugal Betclic": 4,
     "J1 League": 10,
     "Ligue 1": 7,
-    "Chinese Super League": 3,
     "Copa Libertadores": 11,
     "La Liga": 6,
     "MLS": 5,
     "Saudi Pro League": 5,
     "Eredivisie": 6,
     "Liga F": 1,
-    "Championship": 9,
+    "Championship": 10,
     "FA Cup": 1,
     "Brasileirão Serie A": 4,
     "Premier League": 4,
@@ -55,7 +54,8 @@
     "Allsvenskan": 7,
     "Brasileirão Serie B": 5,
     "Super League": 2,
-    "Scottish Premiership": 1,
+    "Chinese Super League": 1,
+    "Scottish Premiership": 2,
     "Europa League": 1,
     "Champions League": 1
   },
@@ -386,34 +386,6 @@
       "rationale": [
         "Probabilitate model 83.0% vs. probabilitate implicată 71.4%.",
         "EV estimat 16.2% și edge 11.6 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 205752,
-      "prediction_id": 3560,
-      "home": "Tianjin Jinmen Tiger",
-      "away": "Wuhan Three Towns",
-      "league": "Chinese Super League",
-      "event_date": "2026-05-01T14:35:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.863,
-      "model_probability_pct": 86.3,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.159,
-      "edge_pp": 11.11,
-      "ev_pct": 14.78,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 59.48,
-      "score": 103.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 86.3% vs. probabilitate implicată 75.2%.",
-        "EV estimat 14.8% și edge 11.1 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -924,34 +896,6 @@
   ],
   "safest": [
     {
-      "event_id": 205753,
-      "prediction_id": 3562,
-      "home": "Shanghai Shenhua",
-      "away": "Chengdu Rongcheng",
-      "league": "Chinese Super League",
-      "event_date": "2026-05-01T15:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.2,
-      "model_probability": 0.8894,
-      "model_probability_pct": 88.94,
-      "implied_probability_pct": 83.33,
-      "fair_odds": 1.124,
-      "edge_pp": 5.61,
-      "ev_pct": 6.73,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 41.19,
-      "score": 94.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 88.9% vs. probabilitate implicată 83.3%.",
-        "EV estimat 6.7% și edge 5.6 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9300,
       "prediction_id": 3524,
       "home": "Deportivo Riestra",
@@ -1116,34 +1060,6 @@
       "rationale": [
         "Probabilitate model 86.4% vs. probabilitate implicată 74.6%.",
         "EV estimat 15.8% și edge 11.8 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 205752,
-      "prediction_id": 3560,
-      "home": "Tianjin Jinmen Tiger",
-      "away": "Wuhan Three Towns",
-      "league": "Chinese Super League",
-      "event_date": "2026-05-01T14:35:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.863,
-      "model_probability_pct": 86.3,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.159,
-      "edge_pp": 11.11,
-      "ev_pct": 14.78,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 59.48,
-      "score": 103.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 86.3% vs. probabilitate implicată 75.2%.",
-        "EV estimat 14.8% și edge 11.1 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1482,6 +1398,62 @@
         "EV estimat 9.2% și edge 7.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 9415,
+      "prediction_id": 3546,
+      "home": "Cusco FC",
+      "away": "Estudiantes de La Plata",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-07T01:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.2,
+      "model_probability": 0.8307,
+      "model_probability_pct": 83.07,
+      "implied_probability_pct": 83.33,
+      "fair_odds": 1.204,
+      "edge_pp": -0.26,
+      "ev_pct": -0.32,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 45.05,
+      "score": 88.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.1% vs. probabilitate implicată 83.3%.",
+        "EV estimat -0.3% și edge -0.3 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9412,
+      "prediction_id": 3525,
+      "home": "Barcelona SC Guayaquil",
+      "away": "Boca Juniors",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-06T03:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.19,
+      "model_probability": 0.8305,
+      "model_probability_pct": 83.05,
+      "implied_probability_pct": 84.03,
+      "fair_odds": 1.204,
+      "edge_pp": -0.98,
+      "ev_pct": -1.17,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 49.83,
+      "score": 85.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.0% vs. probabilitate implicată 84.0%.",
+        "EV estimat -1.2% și edge -1.0 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1650,34 +1622,6 @@
       "rationale": [
         "Probabilitate model 83.0% vs. probabilitate implicată 71.4%.",
         "EV estimat 16.2% și edge 11.6 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 205752,
-      "prediction_id": 3560,
-      "home": "Tianjin Jinmen Tiger",
-      "away": "Wuhan Three Towns",
-      "league": "Chinese Super League",
-      "event_date": "2026-05-01T14:35:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.863,
-      "model_probability_pct": 86.3,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.159,
-      "edge_pp": 11.11,
-      "ev_pct": 14.78,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 59.48,
-      "score": 103.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 86.3% vs. probabilitate implicată 75.2%.",
-        "EV estimat 14.8% și edge 11.1 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -2076,11 +2020,11 @@
     },
     {
       "key": "Over 1.5G",
-      "bets": 150,
-      "wins": 100,
-      "winrate": 66.67,
-      "profit_units": -17.96,
-      "roi_pct": -11.97,
+      "bets": 152,
+      "wins": 102,
+      "winrate": 67.11,
+      "profit_units": -17.43,
+      "roi_pct": -11.47,
       "avg_odds": 1.324
     }
   ],
