@@ -122,7 +122,6 @@
           "</div>" +
         "</div>" +
         "<div class=\"dashboard-v16-header-actions\">" +
-          "<button class=\"dashboard-v16-icon-btn\" type=\"button\" data-dfix-action=\"refresh\" aria-label=\"Reîmprospătează datele\">↻</button>" +
           "<button class=\"dashboard-v16-icon-btn\" type=\"button\" data-dfix-action=\"tracking\" aria-label=\"Tracking bilete\">🎫<span class=\"dashboard-v16-badge\">" + metric.openTracking + "</span></button>" +
           "<button class=\"dashboard-v16-pro-btn\" type=\"button\" data-dfix-action=\"pro\">Vezi meciuri</button>" +
         "</div>" +
