@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-05-01T16:14:38.879188+00:00",
-  "quality_score": 70.7,
+  "updated_at": "2026-05-01T16:40:15.413790+00:00",
+  "quality_score": 70.3,
   "quality_grade": "C",
   "coverage": {
     "predictions": 326,
     "ev_signals": 0,
     "log_total": 773,
-    "log_closed": 555,
+    "log_closed": 557,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.27,
+    "age_hours": 0.28,
     "color": "green",
     "label": "0.3h"
   },
@@ -33,16 +33,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 152,
+      "n": 153,
       "credible": true,
-      "brier": 0.2313,
-      "log_loss": 0.6653,
-      "ece": 0.1034,
+      "brier": 0.2339,
+      "log_loss": 0.6712,
+      "ece": 0.1079,
       "calib_label": "acceptabil",
-      "winrate": 67.11,
-      "roi_pct": -11.47,
+      "winrate": 66.67,
+      "roi_pct": -12.05,
       "n_wins": 102,
-      "score": 57.8,
+      "score": 56.6,
       "grade": "D"
     },
     {
@@ -63,16 +63,16 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 320,
+      "n": 321,
       "credible": true,
-      "brier": 0.1881,
-      "log_loss": 0.5608,
-      "ece": 0.0251,
+      "brier": 0.1875,
+      "log_loss": 0.5595,
+      "ece": 0.0247,
       "calib_label": "excelent",
-      "winrate": 73.44,
-      "roi_pct": 0.72,
-      "n_wins": 235,
-      "score": 78.0,
+      "winrate": 73.52,
+      "roi_pct": 0.79,
+      "n_wins": 236,
+      "score": 78.1,
       "grade": "B"
     }
   ],
@@ -84,7 +84,7 @@
     "avg_edge": 12.63
   },
   "recommendations": [
-    "ROI negativ persistent: Peste 1.5G (-11.5%).",
+    "ROI negativ persistent: Peste 1.5G (-12.1%).",
     "Backtest ROI global: +30.9% — semnal pozitiv."
   ],
   "wfv": {
@@ -293,18 +293,18 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-01T16:14:38.755393"
+    "updated_at": "2026-05-01T16:40:15.285177"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.7,
+      "value": 70.3,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 555,
+      "value": 557,
       "suffix": " finalizate",
       "tone": "good"
     },

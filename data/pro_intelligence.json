@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-01T16:15:00.729897+00:00",
+  "updated_at": "2026-05-01T16:40:35.453379+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 74.6,
+  "overall_score": 74.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 773,
-    "pending_rows": 218,
-    "candidates_with_odds_and_probability": 189,
+    "pending_rows": 216,
+    "candidates_with_odds_and_probability": 187,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,22 +18,22 @@
   },
   "risk_distribution": {
     "safe": 4,
-    "speculative": 150,
+    "speculative": 148,
     "balanced": 35
   },
   "market_distribution_top150": {
     "Over 2.5G": 3,
     "Under 3.5G": 83,
-    "BTTS": 31,
-    "Over 1.5G": 33
+    "BTTS": 32,
+    "Over 1.5G": 32
   },
   "league_distribution_top150": {
-    "Segunda División": 8,
+    "Segunda División": 7,
     "Copa Sudamericana": 7,
-    "Parva Liga": 7,
+    "Parva Liga": 6,
     "Bundesliga": 8,
     "Liga Portugal Betclic": 4,
-    "J1 League": 10,
+    "J1 League": 11,
     "Ligue 1": 7,
     "Copa Libertadores": 11,
     "La Liga": 6,
@@ -48,7 +48,7 @@
     "Serie A": 4,
     "K League 1": 4,
     "Pro League": 6,
-    "Ekstraklasa": 3,
+    "Ekstraklasa": 4,
     "Superliga": 4,
     "Trendyol Super Lig": 6,
     "Allsvenskan": 7,
@@ -586,34 +586,6 @@
       ]
     },
     {
-      "event_id": 202988,
-      "prediction_id": 3288,
-      "home": "FK Septemvri Sofia",
-      "away": "PFK Montana 1921",
-      "league": "Parva Liga",
-      "event_date": "2026-05-01T17:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.25,
-      "model_probability": 0.8703,
-      "model_probability_pct": 87.03,
-      "implied_probability_pct": 80.0,
-      "fair_odds": 1.149,
-      "edge_pp": 7.03,
-      "ev_pct": 8.79,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 41.55,
-      "score": 101.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 87.0% vs. probabilitate implicată 80.0%.",
-        "EV estimat 8.8% și edge 7.0 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9298,
       "prediction_id": 3520,
       "home": "Juventud de Las Piedras",
@@ -920,6 +892,34 @@
         "EV estimat 16.1% și edge 10.4 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 3039,
+      "prediction_id": 3419,
+      "home": "PEC Zwolle",
+      "away": "Heracles Almelo",
+      "league": "Eredivisie",
+      "event_date": "2026-05-03T15:30:00+03:00",
+      "market": "BTTS",
+      "odds": 1.62,
+      "model_probability": 0.7105,
+      "model_probability_pct": 71.05,
+      "implied_probability_pct": 61.73,
+      "fair_odds": 1.407,
+      "edge_pp": 9.32,
+      "ev_pct": 15.1,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 57.4,
+      "score": 97.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 71.0% vs. probabilitate implicată 61.7%.",
+        "EV estimat 15.1% și edge 9.3 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
     }
   ],
   "safest": [
@@ -1004,34 +1004,6 @@
       "rationale": [
         "Probabilitate model 87.1% vs. probabilitate implicată 79.4%.",
         "EV estimat 9.7% și edge 7.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 202988,
-      "prediction_id": 3288,
-      "home": "FK Septemvri Sofia",
-      "away": "PFK Montana 1921",
-      "league": "Parva Liga",
-      "event_date": "2026-05-01T17:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.25,
-      "model_probability": 0.8703,
-      "model_probability_pct": 87.03,
-      "implied_probability_pct": 80.0,
-      "fair_odds": 1.149,
-      "edge_pp": 7.03,
-      "ev_pct": 8.79,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 41.55,
-      "score": 101.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 87.0% vs. probabilitate implicată 80.0%.",
-        "EV estimat 8.8% și edge 7.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1481,6 +1453,34 @@
         "Probabilitate model 83.0% vs. probabilitate implicată 84.0%.",
         "EV estimat -1.2% și edge -1.0 puncte procentuale.",
         "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 205051,
+      "prediction_id": 3305,
+      "home": "FC Anyang",
+      "away": "Bucheon FC 1995",
+      "league": "K League 1",
+      "event_date": "2026-05-02T13:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.222,
+      "model_probability": 0.8303,
+      "model_probability_pct": 83.03,
+      "implied_probability_pct": 81.83,
+      "fair_odds": 1.204,
+      "edge_pp": 1.2,
+      "ev_pct": 1.46,
+      "kelly_fraction": 0.0165,
+      "kelly_units_100": 1.65,
+      "confidence": 39.13,
+      "score": 89.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.0% vs. probabilitate implicată 81.8%.",
+        "EV estimat 1.5% și edge 1.2 puncte procentuale.",
+        "Miză Kelly fracțională 1.65% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -2067,21 +2067,21 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 320,
-      "wins": 235,
-      "winrate": 73.44,
-      "profit_units": 2.29,
-      "roi_pct": 0.72,
+      "bets": 321,
+      "wins": 236,
+      "winrate": 73.52,
+      "profit_units": 2.54,
+      "roi_pct": 0.79,
       "avg_odds": 1.385
     },
     {
       "key": "Over 1.5G",
-      "bets": 152,
+      "bets": 153,
       "wins": 102,
-      "winrate": 67.11,
-      "profit_units": -17.43,
-      "roi_pct": -11.47,
-      "avg_odds": 1.324
+      "winrate": 66.67,
+      "profit_units": -18.43,
+      "roi_pct": -12.05,
+      "avg_odds": 1.323
     }
   ],
   "settled_league_performance": [
@@ -2176,6 +2176,15 @@
       "avg_odds": 1.497
     },
     {
+      "key": "Parva Liga",
+      "bets": 22,
+      "wins": 19,
+      "winrate": 86.36,
+      "profit_units": 2.28,
+      "roi_pct": 10.36,
+      "avg_odds": 1.279
+    },
+    {
       "key": "Super League",
       "bets": 8,
       "wins": 6,
@@ -2183,15 +2192,6 @@
       "profit_units": 0.79,
       "roi_pct": 9.88,
       "avg_odds": 1.486
-    },
-    {
-      "key": "Parva Liga",
-      "bets": 21,
-      "wins": 18,
-      "winrate": 85.71,
-      "profit_units": 2.03,
-      "roi_pct": 9.67,
-      "avg_odds": 1.28
     }
   ],
   "recommendations": [

@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-05-01T16:15:00.790473+00:00",
+  "updated_at": "2026-05-01T16:40:35.517582+00:00",
   "summary": {
-    "total_picks": 537,
-    "avg_clv_pct": -0.6255,
+    "total_picks": 539,
+    "avg_clv_pct": -0.6262,
     "median_clv_pct": 0.0,
     "clv_positive_n": 85,
-    "clv_negative_n": 452,
-    "clv_positive_rate": 0.1583,
-    "avg_clv_wins": -0.2722,
-    "avg_clv_losses": -1.5203,
-    "win_rate_pct": 71.69,
-    "roi_flat_pct": -0.8086,
+    "clv_negative_n": 454,
+    "clv_positive_rate": 0.1577,
+    "avg_clv_wins": -0.2757,
+    "avg_clv_losses": -1.5104,
+    "win_rate_pct": 71.61,
+    "roi_flat_pct": -0.9447,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1968
+    "std_clv_pct": 6.1854
   },
   "by_market": {
     "btts": {
@@ -25,12 +25,12 @@
       "avg_ev_at_pick": 3.1462
     },
     "over15": {
-      "n": 148,
-      "avg_clv_pct": 1.5589,
-      "clv_positive_rate": 0.2027,
-      "win_rate_pct": 67.57,
-      "roi_flat_pct": -10.8716,
-      "avg_ev_at_pick": 3.6446
+      "n": 149,
+      "avg_clv_pct": 1.5484,
+      "clv_positive_rate": 0.2013,
+      "win_rate_pct": 67.11,
+      "roi_flat_pct": -11.4698,
+      "avg_ev_at_pick": 3.6194
     },
     "over25": {
       "n": 9,
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 309,
-      "avg_clv_pct": -1.239,
-      "clv_positive_rate": 0.1165,
-      "win_rate_pct": 73.79,
-      "roi_flat_pct": 1.2631,
-      "avg_ev_at_pick": 3.2819
+      "n": 310,
+      "avg_clv_pct": -1.2402,
+      "clv_positive_rate": 0.1161,
+      "win_rate_pct": 73.87,
+      "roi_flat_pct": 1.3397,
+      "avg_ev_at_pick": 3.294
     }
   },
   "clv_buckets": {
@@ -63,16 +63,16 @@
       "avg_clv": 1.6151
     },
     "clv_neutral": {
-      "n": 290,
-      "win_rate": 71.38,
-      "roi_pct": -2.739,
-      "avg_clv": -0.0691
+      "n": 291,
+      "win_rate": 71.13,
+      "roi_pct": -3.0732,
+      "avg_clv": -0.0688
     },
     "clv_mild_neg": {
-      "n": 107,
-      "win_rate": 75.7,
-      "roi_pct": 7.3467,
-      "avg_clv": -2.6928
+      "n": 108,
+      "win_rate": 75.93,
+      "roi_pct": 7.5102,
+      "avg_clv": -2.6827
     },
     "clv_strong_neg": {
       "n": 55,
@@ -82,40 +82,86 @@
     }
   },
   "rolling_30d": {
-    "n": 537,
-    "avg_clv_pct": -0.6255,
-    "win_rate_pct": 71.69,
-    "roi_flat_pct": -0.8086,
+    "n": 539,
+    "avg_clv_pct": -0.6262,
+    "win_rate_pct": 71.61,
+    "roi_flat_pct": -0.9447,
     "days": 30
   },
   "rolling_90d": {
-    "n": 537,
-    "avg_clv_pct": -0.6255,
-    "win_rate_pct": 71.69,
-    "roi_flat_pct": -0.8086,
+    "n": 539,
+    "avg_clv_pct": -0.6262,
+    "win_rate_pct": 71.61,
+    "roi_flat_pct": -0.9447,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 336,
-      "avg_clv": 0.6714,
-      "clv_positive_rate": 0.2083
+      "n": 337,
+      "avg_clv": 0.6647,
+      "clv_positive_rate": 0.2077
     },
     "ev_negative_picks": {
-      "n": 201,
-      "avg_clv": -2.7936,
-      "clv_positive_rate": 0.0746
+      "n": 202,
+      "avg_clv": -2.7797,
+      "clv_positive_rate": 0.0743
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.63%) și ROI negativ (-0.81%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.63%) și ROI negativ (-0.94%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "202988",
+      "date": "2026-05-01",
+      "home": "FK Septemvri Sofia",
+      "away": "PFK Montana 1921",
+      "league": "Parva Liga",
+      "market": "under35",
+      "picked_odds": 1.23,
+      "closing_odds": 1.25,
+      "picked_implied": 0.813008,
+      "closing_implied": 0.8,
+      "clv_pct": -1.6,
+      "clv_positive": false,
+      "ev_at_pick_pct": 7.0469,
+      "model_prob": 87.03,
+      "edge_pct": 14.06,
+      "score": 101,
+      "line_move_pct": 1.626,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-01T16:23:41.972748+00:00",
+      "prediction_id": 3288
+    },
+    {
+      "event_id": "204239",
+      "date": "2026-05-01",
+      "home": "FC Andorra",
+      "away": "Albacete Balompié",
+      "league": "Segunda División",
+      "market": "over15",
+      "picked_odds": 1.26,
+      "closing_odds": 1.26,
+      "picked_implied": 0.793651,
+      "closing_implied": 0.793651,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -0.1072,
+      "model_prob": 79.28,
+      "edge_pct": 5.71,
+      "score": 83,
+      "line_move_pct": 0.0,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-05-01T16:23:41.972748+00:00",
+      "prediction_id": 3275
+    },
     {
       "event_id": "3346",
       "date": "2026-05-01",
@@ -136,7 +182,7 @@
       "line_move_pct": 0.9202,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T15:58:32.103442+00:00",
+      "settled_at": "2026-05-01T16:23:41.972748+00:00",
       "prediction_id": 3287
     },
     {
