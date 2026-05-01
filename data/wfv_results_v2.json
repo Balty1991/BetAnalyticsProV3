@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-01T16:40:15.285177",
+  "updated_at": "2026-05-01T17:06:02.663366",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 8593,
+  "n_rows": 8594,
   "n_folds": 2,
   "global_score": 74.3,
   "global_grade": "B",
@@ -13,7 +13,7 @@
       "folds": 2,
       "avg_brier": 0.2449,
       "avg_log_loss": 0.6829,
-      "avg_ece": 0.0124,
+      "avg_ece": 0.0123,
       "avg_winrate": 0.4507,
       "score": 75.6,
       "grade": "B",
@@ -23,7 +23,7 @@
           "n": 2573,
           "brier": 0.2438,
           "log_loss": 0.6807,
-          "ece": 0.0111,
+          "ece": 0.011,
           "winrate": 0.4485
         },
         {
@@ -50,15 +50,15 @@
         {
           "n": 2573,
           "brier": 0.1898,
-          "log_loss": 0.5672,
-          "ece": 0.0018,
+          "log_loss": 0.5671,
+          "ece": 0.0017,
           "winrate": 0.2557
         },
         {
           "n": 2448,
           "brier": 0.1855,
-          "log_loss": 0.557,
-          "ece": 0.0076,
+          "log_loss": 0.5571,
+          "ece": 0.0077,
           "winrate": 0.2492
         }
       ]
@@ -79,14 +79,14 @@
           "n": 2573,
           "brier": 0.2055,
           "log_loss": 0.5999,
-          "ece": 0.011,
+          "ece": 0.0109,
           "winrate": 0.2958
         },
         {
           "n": 2448,
           "brier": 0.2057,
           "log_loss": 0.6001,
-          "ece": 0.0075,
+          "ece": 0.0076,
           "winrate": 0.2978
         }
       ]
@@ -107,14 +107,14 @@
           "n": 2573,
           "brier": 0.2416,
           "log_loss": 0.6761,
-          "ece": 0.0127,
+          "ece": 0.0128,
           "winrate": 0.5165
         },
         {
           "n": 2448,
           "brier": 0.2436,
           "log_loss": 0.6802,
-          "ece": 0.0082,
+          "ece": 0.0081,
           "winrate": 0.5074
         }
       ]
@@ -124,17 +124,17 @@
       "label": "Sub 3.5G",
       "folds": 2,
       "avg_brier": 0.1983,
-      "avg_log_loss": 0.583,
-      "avg_ece": 0.0115,
+      "avg_log_loss": 0.5831,
+      "avg_ece": 0.0103,
       "avg_winrate": 0.7136,
-      "score": 79.9,
+      "score": 80.1,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
         {
           "n": 2573,
           "brier": 0.2012,
-          "log_loss": 0.5892,
+          "log_loss": 0.5893,
           "ece": 0.0144,
           "winrate": 0.7046
         },
@@ -142,7 +142,7 @@
           "n": 2448,
           "brier": 0.1954,
           "log_loss": 0.5768,
-          "ece": 0.0086,
+          "ece": 0.0061,
           "winrate": 0.7226
         }
       ]
@@ -153,7 +153,7 @@
       "folds": 2,
       "avg_brier": 0.2433,
       "avg_log_loss": 0.6795,
-      "avg_ece": 0.0095,
+      "avg_ece": 0.0094,
       "avg_winrate": 0.5173,
       "score": 76.3,
       "grade": "B",
@@ -163,14 +163,14 @@
           "n": 2573,
           "brier": 0.2431,
           "log_loss": 0.6791,
-          "ece": 0.0122,
+          "ece": 0.0121,
           "winrate": 0.5208
         },
         {
           "n": 2448,
-          "brier": 0.2434,
+          "brier": 0.2435,
           "log_loss": 0.6799,
-          "ece": 0.0067,
+          "ece": 0.0066,
           "winrate": 0.5139
         }
       ]
@@ -180,8 +180,8 @@
       "label": "Peste 1.5G",
       "folds": 2,
       "avg_brier": 0.2842,
-      "avg_log_loss": 0.7622,
-      "avg_ece": 0.303,
+      "avg_log_loss": 0.7623,
+      "avg_ece": 0.3031,
       "avg_winrate": 0.7525,
       "score": 50.0,
       "grade": "D",
@@ -190,14 +190,14 @@
         {
           "n": 2573,
           "brier": 0.2819,
-          "log_loss": 0.7576,
-          "ece": 0.3051,
+          "log_loss": 0.7577,
+          "ece": 0.3052,
           "winrate": 0.759
         },
         {
           "n": 2448,
           "brier": 0.2864,
-          "log_loss": 0.7667,
+          "log_loss": 0.7668,
           "ece": 0.301,
           "winrate": 0.7459
         }
