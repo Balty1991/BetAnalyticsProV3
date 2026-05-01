@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-01T01:26:15.370950+00:00",
+  "updated_at": "2026-05-01T01:50:59.537227+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 66.0,
+  "overall_score": 65.8,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 720,
-    "pending_rows": 177,
-    "candidates_with_odds_and_probability": 156,
+    "pending_rows": 175,
+    "candidates_with_odds_and_probability": 154,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -19,13 +19,13 @@
   "risk_distribution": {
     "speculative": 124,
     "safe": 1,
-    "balanced": 31
+    "balanced": 29
   },
   "market_distribution_top150": {
-    "Under 3.5G": 73,
+    "Under 3.5G": 72,
     "Over 2.5G": 3,
     "BTTS": 30,
-    "Over 1.5G": 44
+    "Over 1.5G": 45
   },
   "league_distribution_top150": {
     "Copa Libertadores": 2,
@@ -37,14 +37,14 @@
     "Ligue 1": 7,
     "La Liga": 8,
     "Eredivisie": 7,
-    "MLS": 7,
-    "Brasileirão Serie A": 6,
+    "MLS": 8,
     "Championship": 12,
     "Saudi Pro League": 3,
     "FA Cup": 1,
+    "Brasileirão Serie A": 4,
     "K League 1": 5,
     "Premier League": 7,
-    "Serie A": 6,
+    "Serie A": 7,
     "Pro League": 7,
     "Superliga": 4,
     "Trendyol Super Lig": 5,
@@ -528,34 +528,6 @@
       ]
     },
     {
-      "event_id": 7121,
-      "prediction_id": 3146,
-      "home": "Red Bull Bragantino",
-      "away": "Palmeiras",
-      "league": "Brasileirão Serie A",
-      "event_date": "2026-04-27T00:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.32,
-      "model_probability": 0.8349,
-      "model_probability_pct": 83.49,
-      "implied_probability_pct": 75.76,
-      "fair_odds": 1.198,
-      "edge_pp": 7.73,
-      "ev_pct": 10.21,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 53.37,
-      "score": 99.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.5% vs. probabilitate implicată 75.8%.",
-        "EV estimat 10.2% și edge 7.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 2045,
       "prediction_id": 3366,
       "home": "Metz",
@@ -918,6 +890,34 @@
         "EV estimat 8.5% și edge 6.2 puncte procentuale.",
         "Miză Kelly fracțională 5.82% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 205049,
+      "prediction_id": 3302,
+      "home": "Jeju SK",
+      "away": "Jeonbuk Hyundai Motors",
+      "league": "K League 1",
+      "event_date": "2026-05-02T10:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.27,
+      "model_probability": 0.8387,
+      "model_probability_pct": 83.87,
+      "implied_probability_pct": 78.74,
+      "fair_odds": 1.192,
+      "edge_pp": 5.13,
+      "ev_pct": 6.51,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 39.13,
+      "score": 96.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.9% vs. probabilitate implicată 78.7%.",
+        "EV estimat 6.5% și edge 5.1 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
     }
   ],
   "safest": [
@@ -1170,34 +1170,6 @@
       "rationale": [
         "Probabilitate model 83.9% vs. probabilitate implicată 78.7%.",
         "EV estimat 6.5% și edge 5.1 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 7121,
-      "prediction_id": 3146,
-      "home": "Red Bull Bragantino",
-      "away": "Palmeiras",
-      "league": "Brasileirão Serie A",
-      "event_date": "2026-04-27T00:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.32,
-      "model_probability": 0.8349,
-      "model_probability_pct": 83.49,
-      "implied_probability_pct": 75.76,
-      "fair_odds": 1.198,
-      "edge_pp": 7.73,
-      "ev_pct": 10.21,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 53.37,
-      "score": 99.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.5% vs. probabilitate implicată 75.8%.",
-        "EV estimat 10.2% și edge 7.7 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1480,6 +1452,34 @@
         "EV estimat 1.8% și edge 1.4 puncte procentuale.",
         "Miză Kelly fracțională 1.83% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 204852,
+      "prediction_id": 3252,
+      "home": "Mito Hollyhock",
+      "away": "Machida Zelvia",
+      "league": "J1 League",
+      "event_date": "2026-04-29T10:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.23,
+      "model_probability": 0.8186,
+      "model_probability_pct": 81.86,
+      "implied_probability_pct": 81.3,
+      "fair_odds": 1.222,
+      "edge_pp": 0.56,
+      "ev_pct": 0.69,
+      "kelly_fraction": 0.0075,
+      "kelly_units_100": 0.75,
+      "confidence": 41.61,
+      "score": 88.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 81.9% vs. probabilitate implicată 81.3%.",
+        "EV estimat 0.7% și edge 0.6 puncte procentuale.",
+        "Miză Kelly fracțională 0.75% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1677,34 +1677,6 @@
         "Probabilitate model 67.6% vs. probabilitate implicată 63.3%.",
         "EV estimat 6.8% și edge 4.3 puncte procentuale.",
         "Miză Kelly fracțională 2.91% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 7121,
-      "prediction_id": 3146,
-      "home": "Red Bull Bragantino",
-      "away": "Palmeiras",
-      "league": "Brasileirão Serie A",
-      "event_date": "2026-04-27T00:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.32,
-      "model_probability": 0.8349,
-      "model_probability_pct": 83.49,
-      "implied_probability_pct": 75.76,
-      "fair_odds": 1.198,
-      "edge_pp": 7.73,
-      "ev_pct": 10.21,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 53.37,
-      "score": 99.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.5% vs. probabilitate implicată 75.8%.",
-        "EV estimat 10.2% și edge 7.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -2042,6 +2014,34 @@
         "EV estimat 1.8% și edge 1.3 puncte procentuale.",
         "Miză Kelly fracțională 1.04% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 9920,
+      "prediction_id": 3483,
+      "home": "Operário-PR",
+      "away": "Londrina",
+      "league": "Brasileirão Serie B",
+      "event_date": "2026-05-03T22:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.222,
+      "model_probability": 0.8246,
+      "model_probability_pct": 82.46,
+      "implied_probability_pct": 81.83,
+      "fair_odds": 1.213,
+      "edge_pp": 0.63,
+      "ev_pct": 0.77,
+      "kelly_fraction": 0.0086,
+      "kelly_units_100": 0.86,
+      "confidence": 59.28,
+      "score": 87.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 82.5% vs. probabilitate implicată 81.8%.",
+        "EV estimat 0.8% și edge 0.6 puncte procentuale.",
+        "Miză Kelly fracțională 0.86% din bancă, plafonată prudent."
+      ]
     }
   ],
   "settled_market_performance": [
@@ -2065,11 +2065,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 312,
-      "wins": 229,
-      "winrate": 73.4,
-      "profit_units": 2.24,
-      "roi_pct": 0.72,
+      "bets": 314,
+      "wins": 230,
+      "winrate": 73.25,
+      "profit_units": 1.56,
+      "roi_pct": 0.5,
       "avg_odds": 1.386
     },
     {
