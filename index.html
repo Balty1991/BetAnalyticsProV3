@@ -27,9 +27,14 @@
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt)}
 body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,.85);backdrop-filter:saturate(160%) blur(22px);-webkit-backdrop-filter:saturate(160%) blur(22px);border-bottom:1px solid rgba(255,255,255,.05)}
-.header-inner{max-width:1500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 16px}
-.logo-title{font-size:19px;font-weight:800;letter-spacing:-.035em}
+.header-inner{max-width:1500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 16px}
+.logo-title{font-size:21px;font-weight:900;letter-spacing:-.04em;color:var(--txt)}
 .logo-sub,.status-bar{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.logo-sync-row{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;font-family:var(--mono);color:var(--muted);flex-wrap:wrap}
+.logo-sync-row b{color:var(--acc);font-weight:700;font-size:11px}
+.lsr-dot{opacity:.3;font-size:10px}
+.btn-refresh-ico{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border-radius:12px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.3);color:var(--acc);cursor:pointer;flex-shrink:0}
+.btn-refresh-ico:active{opacity:.75}
 .container,.main,.app-shell{max-width:1500px;margin:0 auto;width:100%}
 .section,.panel,.card,.tab-content{background:#0E1424;border:1px solid var(--brd);border-radius:20px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -63,18 +68,21 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     <div class="logo">
       <div class="logo-title">BetAnalytics Pro</div>
       <div class="logo-sub">PRO V21 · Intelligence</div>
-    </div>
-    <div class="status-bar">
-      <div class="sb-dot live" id="sb-dot"></div>
-      <span id="sb-text" role="status" aria-live="polite">Se incarca...</span>
+      <div class="logo-sync-row">
+        <div class="sb-dot live" id="sb-dot"></div>
+        <span><b id="hq-ml">—</b> ML</span>
+        <span class="lsr-dot">·</span>
+        <span><b id="hq-odds">—</b> cote</span>
+        <span class="lsr-dot">·</span>
+        <span id="hq-time">—</span>
+      </div>
+      <div id="sb-text" role="status" aria-live="polite" class="sr-only"></div>
+      <span id="hq-safe" style="display:none"></span>
     </div>
     <div class="header-tools">
-      <button class="btn btn-primary" id="btn-refresh" onclick="doRefresh(true)">🔄 Reimprospateaza</button>
-      <div class="header-quick-stats" id="header-quick-stats">
-        <div class="header-stat-pill"><strong id="hq-ml">—</strong><span>ML</span></div>
-        <div class="header-stat-pill"><strong id="hq-odds">—</strong><span>Cote</span></div>
-        <div class="header-stat-pill"><strong id="hq-safe">—</strong><span>Safe</span></div>
-      </div>
+      <button class="btn btn-refresh-ico" id="btn-refresh" onclick="doRefresh(true)" aria-label="Reimprospateaza date" title="Reimprospateaza">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
     </div>
   </div>
 </div>
@@ -1131,5 +1139,24 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
   <script src="./assets/historic_meciuri_tracker.js?v=20260501hist1" defer></script>
   <script src="./assets/clv_tracker_runtime.js?v=20260429clv1" defer></script>
+  <script>
+  // Actualizeaza ora ultimei sincronizari in header
+  (function(){
+    function updateSyncTime(){
+      var el = document.getElementById('hq-time');
+      if(!el) return;
+      var t = '';
+      try { t = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : ''; } catch(e){}
+      if(!t){
+        // Fallback: citeste din sb-text (contine "ora HH:MM")
+        var sb = document.getElementById('sb-text');
+        if(sb){ var m = (sb.textContent||sb.innerText||'').match(/ora\s+(\d{2}:\d{2})/); if(m) t = m[1]; }
+      }
+      el.textContent = t ? '\u23F1 '+t : '';
+    }
+    [1000,2000,4000,8000].forEach(function(d){ setTimeout(updateSyncTime,d); });
+    setInterval(updateSyncTime, 15000);
+  })();
+  </script>
 </body>
 </html>
