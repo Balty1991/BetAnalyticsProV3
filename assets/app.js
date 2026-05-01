@@ -453,6 +453,7 @@ function renderDashboardVisuals(){
     {key:'safe', label:'Top analizate'},
     {key:'value', label:'Value'},
     {key:'over15', label:'Over 1.5G'},
+    {key:'over25', label:'Over 2.5G'},
     {key:'btts', label:'BTTS'},
     {key:'under35', label:'Under 3.5G'}
   ];
@@ -614,6 +615,7 @@ function renderModernDashboard(){
   if(typeof getHistory21CategoryDefs === 'function' && typeof buildHistory21Group === 'function' && combined30.length){
     var catDefs = [
       {key:'over15',  label:'Over 1.5G'},
+      {key:'over25',  label:'Over 2.5G'},
       {key:'under35', label:'Under 3.5G'},
       {key:'btts',    label:'BTTS'},
       {key:'safe',    label:'Top analizate'},
@@ -1387,7 +1389,7 @@ function getLeagueTierInfo(leagueName){
   return { tier:'neutral', label:'Tier 2', multiplier:1.0 };
 }
 function getMarketBacktestMultiplier(type){
-  var labelMap = { over15:'Over 1.5G', under35:'Under 3.5G', btts:'BTTS' };
+  var labelMap = { over15:'Over 1.5G', over25:'Over 2.5G', under35:'Under 3.5G', btts:'BTTS' };
   var row = findBacktestRow('by_market', labelMap[type] || type) || {};
   var bets = Number(row.bets || 0);
   var roi = Number(row.roi || 0);
@@ -9276,6 +9278,7 @@ function renderMarketPerformance(){
   var rows = settledRows.concat(livePendingRows);
   var defs = [
     {key:'over15', label:'Over 1.5G'},
+    {key:'over25', label:'Over 2.5G'},
     {key:'btts', label:'BTTS'},
     {key:'under35', label:'Under 3.5G'},
     {key:'safe', label:'Top analizate'},
@@ -11462,13 +11465,14 @@ function getHistory21CategoryDefs(rows){
     {key:'motor_validated',label:'🧠 Motor'},
     {key:'safe',           label:'⭐ Top'},
     {key:'over15',         label:'🔥 O1.5'},
+    {key:'over25',         label:'📈 O2.5'},
     {key:'btts',           label:'🤝 BTTS'},
     {key:'under35',        label:'🧊 U3.5'},
     {key:'value',          label:'💰 Value'}
   ];
   var known = {};
   defs.forEach(function(def){ known[def.key] = true; });
-  var BLACKLISTED_MARKETS = {'over25':true,'under25':true,'dc1x':true,'dcx2':true,'dc12':true};
+  var BLACKLISTED_MARKETS = {'under25':true,'dc1x':true,'dcx2':true,'dc12':true};
   var extra = {};
   (rows || []).forEach(function(row){
     var mk = row.market_key || inferMarketTypeFromLabel(row.market || '');
