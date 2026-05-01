@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-05-01T18:44:00.681303+00:00",
+  "updated_at": "2026-05-01T19:18:52.933176+00:00",
   "summary": {
-    "total_picks": 541,
-    "avg_clv_pct": -0.6239,
+    "total_picks": 544,
+    "avg_clv_pct": -0.6241,
     "median_clv_pct": 0.0,
     "clv_positive_n": 85,
-    "clv_negative_n": 456,
-    "clv_positive_rate": 0.1571,
-    "avg_clv_wins": -0.2743,
+    "clv_negative_n": 459,
+    "clv_positive_rate": 0.1562,
+    "avg_clv_wins": -0.2773,
     "avg_clv_losses": -1.5104,
-    "win_rate_pct": 71.72,
-    "roi_flat_pct": -0.8187,
+    "win_rate_pct": 71.88,
+    "roi_flat_pct": -0.5763,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1741
+    "std_clv_pct": 6.1574
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.9752
     },
     "under35": {
-      "n": 311,
-      "avg_clv_pct": -1.2362,
-      "clv_positive_rate": 0.1158,
-      "win_rate_pct": 73.95,
-      "roi_flat_pct": 1.4424,
-      "avg_ev_at_pick": 3.3151
+      "n": 314,
+      "avg_clv_pct": -1.2308,
+      "clv_positive_rate": 0.1146,
+      "win_rate_pct": 74.2,
+      "roi_flat_pct": 1.8408,
+      "avg_ev_at_pick": 3.33
     }
   },
   "clv_buckets": {
@@ -63,16 +63,16 @@
       "avg_clv": 1.6151
     },
     "clv_neutral": {
-      "n": 293,
-      "win_rate": 71.33,
-      "roi_pct": -2.8259,
-      "avg_clv": -0.0684
+      "n": 295,
+      "win_rate": 71.53,
+      "roi_pct": -2.4651,
+      "avg_clv": -0.0679
     },
     "clv_mild_neg": {
-      "n": 108,
-      "win_rate": 75.93,
-      "roi_pct": 7.5102,
-      "avg_clv": -2.6827
+      "n": 109,
+      "win_rate": 76.15,
+      "roi_pct": 7.7037,
+      "avg_clv": -2.6766
     },
     "clv_strong_neg": {
       "n": 55,
@@ -82,85 +82,108 @@
     }
   },
   "rolling_30d": {
-    "n": 541,
-    "avg_clv_pct": -0.6239,
-    "win_rate_pct": 71.72,
-    "roi_flat_pct": -0.8187,
+    "n": 544,
+    "avg_clv_pct": -0.6241,
+    "win_rate_pct": 71.88,
+    "roi_flat_pct": -0.5763,
     "days": 30
   },
   "rolling_90d": {
-    "n": 541,
-    "avg_clv_pct": -0.6239,
-    "win_rate_pct": 71.72,
-    "roi_flat_pct": -0.8187,
+    "n": 544,
+    "avg_clv_pct": -0.6241,
+    "win_rate_pct": 71.88,
+    "roi_flat_pct": -0.5763,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 339,
-      "avg_clv": 0.6608,
-      "clv_positive_rate": 0.2065
+      "n": 341,
+      "avg_clv": 0.6569,
+      "clv_positive_rate": 0.2053
     },
     "ev_negative_picks": {
-      "n": 202,
-      "avg_clv": -2.7797,
-      "clv_positive_rate": 0.0743
+      "n": 203,
+      "avg_clv": -2.776,
+      "clv_positive_rate": 0.0739
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.62%) și ROI negativ (-0.82%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.62%) și ROI negativ (-0.58%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
     {
-      "event_id": "8010",
+      "event_id": "202987",
       "date": "2026-05-01",
-      "home": "MKS Korona Kielce",
-      "away": "Piast Gliwice",
-      "league": "Ekstraklasa",
-      "market": "over15",
-      "picked_odds": 1.33,
-      "closing_odds": 1.33,
-      "picked_implied": 0.75188,
-      "closing_implied": 0.75188,
+      "home": "FK Dobrudzha Dobrich",
+      "away": "Lokomotiv Sofia",
+      "league": "Parva Liga",
+      "market": "under35",
+      "picked_odds": 1.26,
+      "closing_odds": 1.286,
+      "picked_implied": 0.793651,
+      "closing_implied": 0.777605,
+      "clv_pct": -2.0218,
+      "clv_positive": false,
+      "ev_at_pick_pct": -1.909,
+      "model_prob": 77.85,
+      "edge_pct": 6.37,
+      "score": 86,
+      "line_move_pct": 2.0635,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-01T18:56:21.554592+00:00",
+      "prediction_id": 3290
+    },
+    {
+      "event_id": "3349",
+      "date": "2026-05-01",
+      "home": "Gaziantep FK",
+      "away": "Beşiktaş JK",
+      "league": "Trendyol Super Lig",
+      "market": "under35",
+      "picked_odds": 1.648,
+      "closing_odds": 1.648,
+      "picked_implied": 0.606796,
+      "closing_implied": 0.606796,
       "clv_pct": 0.0,
       "clv_positive": false,
-      "ev_at_pick_pct": 8.5014,
-      "model_prob": 81.58,
-      "edge_pct": 11.26,
-      "score": 93,
+      "ev_at_pick_pct": 14.7008,
+      "model_prob": 69.6,
+      "edge_pct": 12.75,
+      "score": 92,
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T18:21:41.641391+00:00",
-      "prediction_id": 3277
+      "settled_at": "2026-05-01T18:56:21.554592+00:00",
+      "prediction_id": 3289
     },
     {
-      "event_id": "202988",
+      "event_id": "204240",
       "date": "2026-05-01",
-      "home": "FK Septemvri Sofia",
-      "away": "PFK Montana 1921",
-      "league": "Parva Liga",
+      "home": "Deportivo La Coruña",
+      "away": "Leganés",
+      "league": "Segunda División",
       "market": "under35",
-      "picked_odds": 1.23,
-      "closing_odds": 1.25,
-      "picked_implied": 0.813008,
-      "closing_implied": 0.8,
-      "clv_pct": -1.6,
+      "picked_odds": 1.36,
+      "closing_odds": 1.36,
+      "picked_implied": 0.735294,
+      "closing_implied": 0.735294,
+      "clv_pct": 0.0,
       "clv_positive": false,
-      "ev_at_pick_pct": 7.0469,
-      "model_prob": 87.03,
-      "edge_pct": 14.06,
-      "score": 101,
-      "line_move_pct": 1.626,
+      "ev_at_pick_pct": 1.8504,
+      "model_prob": 74.89,
+      "edge_pct": 6.91,
+      "score": 84,
+      "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T16:23:41.972748+00:00",
-      "prediction_id": 3288
+      "settled_at": "2026-05-01T18:56:21.554592+00:00",
+      "prediction_id": 3278
     },
     {
       "event_id": "9827",
@@ -274,7 +297,7 @@
       "line_move_pct": -22.5806,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T14:31:17.302658+00:00",
+      "settled_at": "2026-05-01T14:04:58.069339+00:00",
       "prediction_id": 3562
     },
     {
@@ -297,7 +320,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T14:31:17.302658+00:00",
+      "settled_at": "2026-05-01T14:04:58.069339+00:00",
       "prediction_id": 3560
     },
     {
