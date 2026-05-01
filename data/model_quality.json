@@ -1,18 +1,18 @@
 {
-  "updated_at": "2026-05-01T03:52:19.573738+00:00",
-  "quality_score": 71.5,
+  "updated_at": "2026-05-01T04:19:43.375880+00:00",
+  "quality_score": 71.6,
   "quality_grade": "C",
   "coverage": {
-    "predictions": 319,
+    "predictions": 326,
     "ev_signals": 0,
     "log_total": 773,
-    "log_closed": 547,
+    "log_closed": 549,
     "markets_audited": 4
   },
   "freshness": {
     "age_hours": 0.29,
     "color": "green",
-    "label": "0.4h"
+    "label": "0.3h"
   },
   "markets": [
     {
@@ -63,16 +63,16 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 315,
+      "n": 317,
       "credible": true,
-      "brier": 0.1885,
-      "log_loss": 0.562,
-      "ece": 0.0257,
+      "brier": 0.1875,
+      "log_loss": 0.5595,
+      "ece": 0.0246,
       "calib_label": "excelent",
-      "winrate": 73.33,
-      "roi_pct": 0.56,
-      "n_wins": 231,
-      "score": 77.8,
+      "winrate": 73.5,
+      "roi_pct": 0.75,
+      "n_wins": 233,
+      "score": 78.1,
       "grade": "B"
     }
   ],
@@ -116,7 +116,7 @@
             "n": 2450,
             "brier": 0.2459,
             "log_loss": 0.685,
-            "ece": 0.0136,
+            "ece": 0.0135,
             "winrate": 0.4527
           }
         ]
@@ -256,7 +256,7 @@
             "n": 2450,
             "brier": 0.2434,
             "log_loss": 0.6798,
-            "ece": 0.0065,
+            "ece": 0.0066,
             "winrate": 0.5143
           }
         ]
@@ -267,7 +267,7 @@
         "folds": 2,
         "avg_brier": 0.2843,
         "avg_log_loss": 0.7626,
-        "avg_ece": 0.3034,
+        "avg_ece": 0.3033,
         "avg_winrate": 0.7525,
         "score": 50.0,
         "grade": "D",
@@ -284,7 +284,7 @@
             "n": 2450,
             "brier": 0.2866,
             "log_loss": 0.7672,
-            "ece": 0.3015,
+            "ece": 0.3014,
             "winrate": 0.7461
           }
         ]
@@ -293,18 +293,18 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-01T03:52:19.455789"
+    "updated_at": "2026-05-01T04:19:43.253380"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 71.5,
+      "value": 71.6,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 547,
+      "value": 549,
       "suffix": " finalizate",
       "tone": "good"
     },
