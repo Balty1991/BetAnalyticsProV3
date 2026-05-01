@@ -147,17 +147,21 @@
     }).map(function(r){return Object.assign({},r,{_st:normSt(r),source:'log'});});
   }
 
-  // Categorie pentru randul settled (aproximare, fara riskTier)
-  function settledRowMatchesCat(r,key){
-    if(key==='all')  return true;
-    var mk=r.market_key||'';
-    // safe: verdict SAU scor >=80 (proxy pentru settled, fara riskTier)
-    if(key==='safe') return String(r.verdict||'').toLowerCase()==='safe'||nv(r.score)>=80;
-    if(key==='o15')  return mk==='over15';
-    if(key==='btts') return mk==='btts';
-    if(key==='u35')  return mk==='under35';
-    // value: prag aliniat cu filtrul Meciuri (value>=0.08 && edge>=3)
-    if(key==='value')return nv(r.value)>=0.08&&nv(r.edge_pct)>=3;
+  // Categorie pentru randul settled din RECOMMENDATION_LOG
+  // Daca randul are eligible_categories (nou format) → clasificare exacta
+  // Daca nu → fallback la aproximare (intrari vechi din log)
+  function settledRowMatchesCat(r, key) {
+    if (key === 'all') return true;
+    // Format nou: eligible_categories salvate la momentul logarii
+    var cats = r.eligible_categories;
+    if (Array.isArray(cats) && cats.length > 0) return cats.indexOf(key) >= 0;
+    // Fallback pentru intrari vechi fara eligible_categories
+    var mk = r.market_key || '';
+    if (key === 'safe')  return String(r.verdict || '').toLowerCase() === 'safe' || r.risk_tier === 'Safe' || nv(r.score) >= 80;
+    if (key === 'o15')   return mk === 'over15';
+    if (key === 'btts')  return mk === 'btts';
+    if (key === 'u35')   return mk === 'under35';
+    if (key === 'value') return r.risk_tier === 'Value' || (nv(r.value) >= 0.08 && nv(r.edge_pct) >= 3);
     return false;
   }
 
