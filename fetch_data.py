@@ -1979,6 +1979,14 @@ def build_ui_live_candidate(row, market_key):
         "away_api_id": (event.get("away_team_obj") or {}).get("api_id"),
         "league_api_id": (event.get("league") or {}).get("api_id"),
         "most_likely_score": row.get("most_likely_score"),
+        # verdict & risk_tier — salvate in log pentru clasificare exacta pe categorii Meciuri
+        "verdict": verdict_from_metrics(adj, value, confidence, edge_pct or 0),
+        "risk_tier": (
+            "Safe"     if verdict_from_metrics(adj, value, confidence, edge_pct or 0) == "safe"
+            else "Value"    if (value >= 0.08 and float(edge_pct or 0) >= 3)
+            else "Balanced" if verdict_from_metrics(adj, value, confidence, edge_pct or 0) == "value"
+            else "Avoid"
+        ),
     }
 
 
@@ -2019,6 +2027,21 @@ def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event
         if str(event_id) in drifting_event_ids:
             continue
 
+        # ── Calculeaza toate categoriile Meciuri la care apartine acest meci ──
+        _pick_verdict  = pick.get("verdict") or ""
+        _pick_value    = float(pick.get("value") or 0)
+        _pick_edge     = float(pick.get("edge_pct") or 0)
+        _pick_risk     = pick.get("risk_tier") or ""
+        _all_mkt_keys  = {c.get("market_key") for c in candidates if c.get("market_key")}
+        _eligible_cats = ["all"]
+        if _pick_verdict == "safe" or _pick_risk == "Safe":
+            _eligible_cats.append("safe")
+        if _pick_value >= 0.08 and _pick_edge >= 3 or _pick_risk == "Value":
+            _eligible_cats.append("value")
+        if "over15"  in _all_mkt_keys: _eligible_cats.append("o15")
+        if "btts"    in _all_mkt_keys: _eligible_cats.append("btts")
+        if "under35" in _all_mkt_keys: _eligible_cats.append("u35")
+
         rows.append({
             "log_id": str(event_id),
             "logged_at": logged_at_iso,
@@ -2051,6 +2074,9 @@ def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event
             "model_version": row.get("model_version"),
             "most_likely_score": pick.get("most_likely_score"),
             "league_tier": pick.get("league_tier"),
+            "verdict": _pick_verdict,
+            "risk_tier": _pick_risk,
+            "eligible_categories": _eligible_cats,
             "opening_odds": pick.get("odds"),
             "previous_odds": pick.get("odds"),
             "line_movement_pct": 0.0,
