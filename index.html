@@ -113,8 +113,8 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
       <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Top picks cu breakdown complet.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('istoric21')">
-      <span class="more-card-title">🧾 Istoric 21</span>
-      <span class="more-card-sub">Rezultate reale și trenduri pe ultimele 21 de zile.</span>
+      <span class="more-card-title">📊 Istoric</span>
+      <span class="more-card-sub">Monitorizare per categorie: ROI, WR, Edge pe 7 zile / săptămâni / lună / an.</span>
     </button>
 <button class="more-card-btn" onclick="switchTab('smartbet')">
       <span class="more-card-title">🎯 Motor de Predicții Unificat</span>
@@ -226,7 +226,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
       <div class="visual-card-head" style="margin-bottom:12px">
         <div>
           <div class="visual-card-title">📊 Statistici vizuale rapide</div>
-          <div class="visual-card-sub">Statistici reale pe ultimele 21 de zile, aliniate cu Istoric 21.</div>
+          <div class="visual-card-sub">Statistici reale pe ultimele 21 de zile, aliniate cu Istoric.</div>
         </div>
         <div class="visual-mini-meta">Tracking + bankroll</div>
       </div>
@@ -255,7 +255,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
           <div class="visual-card-head">
             <div>
               <div class="visual-card-title">Randament pe categorie</div>
-              <div class="visual-card-sub">ROI pe categoriile din Istoric 21, în aceeași perioadă de 21 zile.</div>
+              <div class="visual-card-sub">ROI pe categoriile din Istoric, în aceeași perioadă de 21 zile.</div>
             </div>
             <div class="visual-mini-meta" id="dash-category-meta">—</div>
           </div>
@@ -1042,10 +1042,10 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   <div class="tab-content" id="tab-istoric21">
     <div class="section" style="margin-bottom:12px">
       <div class="sec-hdr">
-        <div class="sec-title">🧾 Istoric recomandări reale 21 zile</div>
-        <div style="font-size:11px;color:var(--muted)">jurnal real, salvat când recomandarea a fost emisă</div>
+        <div class="sec-title">📊 Istoric Meciuri</div>
+        <div style="font-size:11px;color:var(--muted)">monitorizare per categorie · date reale din recomandările motorului</div>
       </div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px">Istoricul este compactat pe aceleași categorii folosite în aplicație. Pe fiecare card vezi clar <b>ROI</b>, <b>win rate</b>, <b>win / jucate</b> și contextul de bază pe aceeași perioadă de 21 de zile.</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px">Statistici complete pentru fiecare categorie din tab-ul Meciuri: <b>Toate · ⭐ Top · 🔥 O1.5 · 🤝 BTTS · 🧊 U3.5 · 💰 Value</b>. Selectează perioada, apasă pe o categorie pentru a vedea meciurile W/L.</div>
     </div>
     <div id="history21-root">
       <div class="history21-shell-placeholder" aria-hidden="true">
@@ -1116,7 +1116,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
   <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 Daily</span><small class="sheet-btn-sub">Secțiune dedicată cotei 2 și învățare continuă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">🧾 Istoric 21</span><small class="sheet-btn-sub">Trenduri și performanță recentă</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">📊 Istoric</span><small class="sheet-btn-sub">Monitorizare per categorie · ROI · WR · Edge · pe perioade selectabile</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
@@ -1129,6 +1129,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 
 
   <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
+  <script src="./assets/historic_meciuri_tracker.js?v=20260501hist1" defer></script>
   <script src="./assets/clv_tracker_runtime.js?v=20260429clv1" defer></script>
 </body>
 </html>
