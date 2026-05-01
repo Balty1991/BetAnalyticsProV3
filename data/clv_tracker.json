@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-05-01T02:19:27.317964+00:00",
+  "updated_at": "2026-05-01T02:51:25.298531+00:00",
   "summary": {
-    "total_picks": 528,
-    "avg_clv_pct": -0.676,
+    "total_picks": 529,
+    "avg_clv_pct": -0.6849,
     "median_clv_pct": 0.0,
     "clv_positive_n": 83,
-    "clv_negative_n": 445,
-    "clv_positive_rate": 0.1572,
+    "clv_negative_n": 446,
+    "clv_positive_rate": 0.1569,
     "avg_clv_wins": -0.3471,
-    "avg_clv_losses": -1.5046,
-    "win_rate_pct": 71.59,
-    "roi_flat_pct": -0.9564,
+    "avg_clv_losses": -1.5304,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -1.1437,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1082
+    "std_clv_pct": 6.1059
   },
   "by_market": {
     "btts": {
@@ -25,12 +25,12 @@
       "avg_ev_at_pick": 3.1881
     },
     "over15": {
-      "n": 145,
-      "avg_clv_pct": 1.4272,
-      "clv_positive_rate": 0.2,
-      "win_rate_pct": 67.59,
-      "roi_flat_pct": -10.7724,
-      "avg_ev_at_pick": 3.3483
+      "n": 146,
+      "avg_clv_pct": 1.3804,
+      "clv_positive_rate": 0.1986,
+      "win_rate_pct": 67.12,
+      "roi_flat_pct": -11.3836,
+      "avg_ev_at_pick": 3.334
     },
     "over25": {
       "n": 9,
@@ -75,31 +75,31 @@
       "avg_clv": -2.6925
     },
     "clv_strong_neg": {
-      "n": 54,
-      "win_rate": 59.26,
-      "roi_pct": -11.6074,
-      "avg_clv": -10.2989
+      "n": 55,
+      "win_rate": 58.18,
+      "roi_pct": -13.2145,
+      "avg_clv": -10.2099
     }
   },
   "rolling_30d": {
-    "n": 528,
-    "avg_clv_pct": -0.676,
-    "win_rate_pct": 71.59,
-    "roi_flat_pct": -0.9564,
+    "n": 529,
+    "avg_clv_pct": -0.6849,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -1.1437,
     "days": 30
   },
   "rolling_90d": {
-    "n": 528,
-    "avg_clv_pct": -0.676,
-    "win_rate_pct": 71.59,
-    "roi_flat_pct": -0.9564,
+    "n": 529,
+    "avg_clv_pct": -0.6849,
+    "win_rate_pct": 71.46,
+    "roi_flat_pct": -1.1437,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 328,
-      "avg_clv": 0.6264,
-      "clv_positive_rate": 0.2104
+      "n": 329,
+      "avg_clv": 0.6081,
+      "clv_positive_rate": 0.2097
     },
     "ev_negative_picks": {
       "n": 200,
@@ -110,7 +110,7 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.68%) și ROI negativ (-0.96%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.68%) și ROI negativ (-1.14%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
@@ -136,7 +136,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T02:00:30.504949+00:00",
+      "settled_at": "2026-05-01T02:30:16.170609+00:00",
       "prediction_id": 3269
     },
     {
@@ -159,7 +159,7 @@
       "line_move_pct": 1.5267,
       "won": false,
       "status": "lose",
-      "settled_at": "2026-05-01T01:03:18.176898+00:00",
+      "settled_at": "2026-05-01T00:29:00.441399+00:00",
       "prediction_id": 3266
     },
     {
@@ -182,7 +182,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T01:03:18.176898+00:00",
+      "settled_at": "2026-05-01T00:29:00.441399+00:00",
       "prediction_id": 3265
     },
     {
@@ -205,7 +205,7 @@
       "line_move_pct": 3.9063,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T01:03:18.176898+00:00",
+      "settled_at": "2026-05-01T00:29:00.441399+00:00",
       "prediction_id": 3267
     },
     {
@@ -228,8 +228,31 @@
       "line_move_pct": -1.0769,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-01T01:03:18.176898+00:00",
+      "settled_at": "2026-05-01T00:29:00.441399+00:00",
       "prediction_id": 3268
+    },
+    {
+      "event_id": "9296",
+      "date": "2026-05-01",
+      "home": "Red Bull Bragantino",
+      "away": "River Plate",
+      "league": "Copa Sudamericana",
+      "market": "over15",
+      "picked_odds": 1.4,
+      "closing_odds": 1.48,
+      "picked_implied": 0.714286,
+      "closing_implied": 0.675676,
+      "clv_pct": -5.4054,
+      "clv_positive": false,
+      "ev_at_pick_pct": 1.262,
+      "model_prob": 72.33,
+      "edge_pct": 10.22,
+      "score": 73,
+      "line_move_pct": 5.7143,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-05-01T02:30:16.170609+00:00",
+      "prediction_id": 3271
     },
     {
       "event_id": "202973",
@@ -297,7 +320,7 @@
       "line_move_pct": -1.3158,
       "won": false,
       "status": "lose",
-      "settled_at": "2026-04-30T18:38:51.365126+00:00",
+      "settled_at": "2026-04-30T18:08:06.075853+00:00",
       "prediction_id": 3261
     },
     {
