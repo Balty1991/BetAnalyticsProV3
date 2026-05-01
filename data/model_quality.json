@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-05-01T21:16:45.543638+00:00",
-  "quality_score": 70.4,
+  "updated_at": "2026-05-01T21:42:24.914262+00:00",
+  "quality_score": 70.0,
   "quality_grade": "C",
   "coverage": {
-    "predictions": 325,
+    "predictions": 326,
     "ev_signals": 0,
     "log_total": 778,
-    "log_closed": 567,
+    "log_closed": 568,
     "markets_audited": 4
   },
   "freshness": {
@@ -33,16 +33,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 156,
+      "n": 157,
       "credible": true,
-      "brier": 0.2342,
-      "log_loss": 0.672,
-      "ece": 0.1078,
+      "brier": 0.2365,
+      "log_loss": 0.677,
+      "ece": 0.1121,
       "calib_label": "acceptabil",
-      "winrate": 66.67,
-      "roi_pct": -11.9,
+      "winrate": 66.24,
+      "roi_pct": -12.46,
       "n_wins": 104,
-      "score": 56.6,
+      "score": 55.5,
       "grade": "D"
     },
     {
@@ -84,7 +84,7 @@
     "avg_edge": 12.63
   },
   "recommendations": [
-    "ROI negativ persistent: Peste 1.5G (-11.9%).",
+    "ROI negativ persistent: Peste 1.5G (-12.5%).",
     "Backtest ROI global: +30.9% — semnal pozitiv."
   ],
   "wfv": {
@@ -99,9 +99,9 @@
         "folds": 2,
         "avg_brier": 0.2449,
         "avg_log_loss": 0.6828,
-        "avg_ece": 0.0125,
+        "avg_ece": 0.0124,
         "avg_winrate": 0.4509,
-        "score": 75.5,
+        "score": 75.6,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
@@ -126,7 +126,7 @@
         "label": "Egal",
         "folds": 2,
         "avg_brier": 0.1878,
-        "avg_log_loss": 0.5624,
+        "avg_log_loss": 0.5623,
         "avg_ece": 0.0046,
         "avg_winrate": 0.2527,
         "score": 82.3,
@@ -154,7 +154,7 @@
         "label": "Victorie oaspete",
         "folds": 2,
         "avg_brier": 0.2054,
-        "avg_log_loss": 0.5997,
+        "avg_log_loss": 0.5996,
         "avg_ece": 0.0092,
         "avg_winrate": 0.2964,
         "score": 79.7,
@@ -293,18 +293,18 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-01T21:16:45.406882"
+    "updated_at": "2026-05-01T21:42:24.782889"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.4,
+      "value": 70.0,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 567,
+      "value": 568,
       "suffix": " finalizate",
       "tone": "good"
     },
