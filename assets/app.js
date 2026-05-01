@@ -1182,6 +1182,7 @@ function switchTab(name){
 // ============================================================
 var BET_TYPES = [
   {key:'over15',   label:'Over 1.5G',    probField:'prob_over_15',   oddsField:'odds_over_15'},
+  {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
   {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35', probGetter:function(raw){ return 100 - safePct(raw.prob_over_35); }},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
   // Double Chance markets: odds calculated from 1X2 (margin is minimal on DC)
@@ -1434,7 +1435,7 @@ function getMarketThresholds() {
   return _MARKET_THRESHOLDS_CACHE;
 }
 
-var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 10.0, btts: 5.0 };
+var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 5.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
   var t = getMarketThresholds()[marketKey];
   if (t && !t.disabled && typeof t.min_edge === 'number'){
@@ -7052,6 +7053,8 @@ function buildMarketCandidate(m, type){
   // Over 1.5 — praguri relaxate (xG 2.00, prob 72, value 0.02, edge 2) pentru a include mai multe evenimente
   if(isMarketDisabled('over15')) return null;
   if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over15') || Number(b.value || 0) < 0.02)) return null;
+  if(isMarketDisabled('over25')) return null;
+  if(type === 'over25' && (Number(b.adjProb || 0) < 58 || Number(m.probOver25 || 0) < 56 || Number(m.xgTotal || 0) < 2.20 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over25') || Number(b.value || 0) < 0.02)) return null;
   if(isMarketDisabled('under35')) return null;
   if(type === 'under35' && edgePct < getMarketMinEdge('under35')) return null;
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
