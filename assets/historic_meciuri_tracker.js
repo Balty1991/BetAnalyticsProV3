@@ -74,13 +74,19 @@
   }
 
   function weekBounds(wIdx){
-    // wIdx=0 → saptamana imediat anterioara celor 7 zile curente (zilele 7-13 de azi)
-    // wIdx=1 → zilele 14-20, wIdx=2 → zilele 21-27
+    // Saptamanile sunt Luni-Duminica (prima zi = Luni)
+    // wIdx=0 → ultima saptamana completa Lun-Dum inainte de saptamana curenta
+    // wIdx=1 → cu doua saptamani in urma, wIdx=2 → cu trei saptamani in urma
     var today = new Date(); today.setHours(0,0,0,0);
-    var endD  = new Date(today); endD.setDate(today.getDate() - (7 + wIdx*7));
-    var startD= new Date(endD);  startD.setDate(endD.getDate() - 6);
-    var e = new Date(endD); e.setHours(23,59,59,999);
-    return { s: startD.getTime(), e: e.getTime(), startDate: new Date(startD), endDate: new Date(endD) };
+    var dow = today.getDay(); // 0=Dum,1=Lun,...,6=Sam
+    var toMon = dow === 0 ? 6 : dow - 1; // zile de la ultima Luni
+    // inceputul saptamanii curente (Luni)
+    var curWeekMon = new Date(today); curWeekMon.setDate(today.getDate() - toMon);
+    // saptamana wIdx: incepe cu (wIdx+1)*7 zile inainte de Lunea curenta
+    var startD = new Date(curWeekMon); startD.setDate(curWeekMon.getDate() - (wIdx + 1) * 7);
+    var endD   = new Date(startD);     endD.setDate(startD.getDate() + 6);
+    endD.setHours(23,59,59,999);
+    return { s: startD.getTime(), e: endD.getTime(), startDate: new Date(startD), endDate: new Date(endD) };
   }
 
   /* ────────────────────────────────────────────────────────────────────
