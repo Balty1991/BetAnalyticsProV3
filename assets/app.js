@@ -1435,7 +1435,7 @@ function getMarketThresholds() {
   return _MARKET_THRESHOLDS_CACHE;
 }
 
-var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 5.0, btts: 5.0 };
+var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 3.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
   var t = getMarketThresholds()[marketKey];
   if (t && !t.disabled && typeof t.min_edge === 'number'){
@@ -6422,10 +6422,24 @@ function renderMatches(){
       if(CURRENT_FILTER === 'o15' && !hasEligibleType(m, 'over15')) return false;
       if(CURRENT_FILTER === 'issues' && !(m.analysisState !== 'ELIGIBLE')) return false;
       if(CURRENT_FILTER === 'btts' && !hasEligibleType(m, 'btts')) return false;
-      if(CURRENT_FILTER === 'o25' && !hasEligibleType(m, 'over25')) return false;
+      if(CURRENT_FILTER === 'o25'){
+        var _eid25 = String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:''));
+        var _inAudit25 = _eid25 && ((SIGNAL_AUDIT && SIGNAL_AUDIT.rows)||[]).some(function(r){ return String(r.event_id||r.eventId||'')===_eid25 && (r.market_key==='over25'||r.market==='Over 2.5G'); });
+        if(!hasEligibleType(m, 'over25') && !_inAudit25) return false;
+        if(_inAudit25 && m.analysisState !== 'ELIGIBLE'){
+          // Forțăm eligibilitate din signal_audit (ca Motor)
+          return true;
+        }
+      }
       if(CURRENT_FILTER === 'u35' && !hasEligibleType(m, 'under35')) return false;
       if(CURRENT_FILTER === 'dc' && !(hasEligibleType(m, 'dc1x') || hasEligibleType(m, 'dcx2') || hasEligibleType(m, 'dc12'))) return false;
-      if(!b && CURRENT_FILTER !== 'motor_validated') return false;
+      if(!b && CURRENT_FILTER !== 'motor_validated' && CURRENT_FILTER !== 'o25') return false;
+      // o25 fără bestBet: acceptăm dacă e în signal_audit
+      if(!b && CURRENT_FILTER === 'o25'){
+        var _eid25b = String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:''));
+        var _inAudit25b = _eid25b && ((SIGNAL_AUDIT && SIGNAL_AUDIT.rows)||[]).some(function(r){ return String(r.event_id||r.eventId||'')===_eid25b && (r.market_key==='over25'||r.market==='Over 2.5G'); });
+        if(!_inAudit25b) return false;
+      }
     }
 
     if(dateF === 'today'){
@@ -7054,7 +7068,13 @@ function buildMarketCandidate(m, type){
   if(isMarketDisabled('over15')) return null;
   if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over15') || Number(b.value || 0) < 0.02)) return null;
   if(isMarketDisabled('over25')) return null;
-  if(type === 'over25' && (Number(b.adjProb || 0) < 58 || Number(m.probOver25 || 0) < 56 || Number(m.xgTotal || 0) < 2.20 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over25') || Number(b.value || 0) < 0.02)) return null;
+  if(type === 'over25'){
+    var _edgeO25 = (b.edgePct != null) ? Number(b.edgePct) : null;
+    var _edgeMinO25 = getMarketMinEdge('over25');
+    // Dacă nu avem date de piață (edgePct=null), nu blocăm — lăsăm scorul să decidă
+    var _edgeFailO25 = (_edgeO25 !== null) && (_edgeO25 < _edgeMinO25);
+    if(Number(b.adjProb || 0) < 52 || Number(m.probOver25 || 0) < 50 || Number(m.xgTotal || 0) < 1.80 || Number(b.odds || 0) < 1.15 || _edgeFailO25 || Number(b.value || 0) < 0.01) return null;
+  }
   if(isMarketDisabled('under35')) return null;
   if(type === 'under35' && edgePct < getMarketMinEdge('under35')) return null;
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
