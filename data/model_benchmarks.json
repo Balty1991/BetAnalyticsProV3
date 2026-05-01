@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-01T04:45:24.652637+00:00",
+  "updated_at": "2026-05-01T05:20:06.009534+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -50,14 +50,14 @@
     },
     {
       "model": "ensemble",
-      "avg_score": 62.5,
+      "avg_score": 62.6,
       "grade": "C",
       "n_markets_credible": 7,
       "rank": 3
     },
     {
       "model": "elo_logit",
-      "avg_score": 61.4,
+      "avg_score": 61.5,
       "grade": "C",
       "n_markets_credible": 7,
       "rank": 4
@@ -82,7 +82,7 @@
       "league_baseline": {
         "n": 2578,
         "credible": true,
-        "brier": 0.2442,
+        "brier": 0.2441,
         "log_loss": 0.6813,
         "ece": 0.0168,
         "score": 74.7,
@@ -418,9 +418,9 @@
       "elo_logit": {
         "n": 2578,
         "credible": true,
-        "brier": 0.2231,
-        "log_loss": 0.6574,
-        "ece": 0.1366,
+        "brier": 0.223,
+        "log_loss": 0.6573,
+        "ece": 0.1367,
         "score": 55.1,
         "grade": "D",
         "n_bets": 2242,
