@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-01T01:50:59.537227+00:00",
+  "updated_at": "2026-05-01T02:19:27.260110+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 65.8,
+  "overall_score": 65.6,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,26 +9,26 @@
   },
   "data_quality": {
     "recommendation_rows": 720,
-    "pending_rows": 175,
-    "candidates_with_odds_and_probability": 154,
+    "pending_rows": 174,
+    "candidates_with_odds_and_probability": 153,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 124,
+    "speculative": 123,
     "safe": 1,
     "balanced": 29
   },
   "market_distribution_top150": {
-    "Under 3.5G": 72,
+    "Under 3.5G": 71,
     "Over 2.5G": 3,
     "BTTS": 30,
-    "Over 1.5G": 45
+    "Over 1.5G": 46
   },
   "league_distribution_top150": {
-    "Copa Libertadores": 2,
+    "Copa Libertadores": 1,
     "Segunda División": 7,
     "Parva Liga": 7,
     "Bundesliga": 8,
@@ -42,7 +42,7 @@
     "Saudi Pro League": 3,
     "FA Cup": 1,
     "Brasileirão Serie A": 4,
-    "K League 1": 5,
+    "K League 1": 6,
     "Premier League": 7,
     "Serie A": 7,
     "Pro League": 7,
@@ -1034,34 +1034,6 @@
       ]
     },
     {
-      "event_id": 9408,
-      "prediction_id": 3269,
-      "home": "Corinthians",
-      "away": "Peñarol",
-      "league": "Copa Libertadores",
-      "event_date": "2026-05-01T03:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.2,
-      "model_probability": 0.8466,
-      "model_probability_pct": 84.66,
-      "implied_probability_pct": 83.33,
-      "fair_odds": 1.181,
-      "edge_pp": 1.33,
-      "ev_pct": 1.59,
-      "kelly_fraction": 0.0199,
-      "kelly_units_100": 1.99,
-      "confidence": 47.42,
-      "score": 88.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.7% vs. probabilitate implicată 83.3%.",
-        "EV estimat 1.6% și edge 1.3 puncte procentuale.",
-        "Miză Kelly fracțională 1.99% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 205053,
       "prediction_id": 3304,
       "home": "Gwangju FC",
@@ -1479,6 +1451,34 @@
         "Probabilitate model 81.9% vs. probabilitate implicată 81.3%.",
         "EV estimat 0.7% și edge 0.6 puncte procentuale.",
         "Miză Kelly fracțională 0.75% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9916,
+      "prediction_id": 3492,
+      "home": "Avaí",
+      "away": "Grêmio Novorizontino",
+      "league": "Brasileirão Serie B",
+      "event_date": "2026-05-04T02:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.222,
+      "model_probability": 0.8185,
+      "model_probability_pct": 81.85,
+      "implied_probability_pct": 81.83,
+      "fair_odds": 1.222,
+      "edge_pp": 0.02,
+      "ev_pct": 0.02,
+      "kelly_fraction": 0.0002,
+      "kelly_units_100": 0.02,
+      "confidence": 38.56,
+      "score": 85.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 81.8% vs. probabilitate implicată 81.8%.",
+        "EV estimat 0.0% și edge 0.0 puncte procentuale.",
+        "Miză Kelly fracțională 0.02% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -2065,12 +2065,12 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 314,
-      "wins": 230,
-      "winrate": 73.25,
-      "profit_units": 1.56,
-      "roi_pct": 0.5,
-      "avg_odds": 1.386
+      "bets": 315,
+      "wins": 231,
+      "winrate": 73.33,
+      "profit_units": 1.76,
+      "roi_pct": 0.56,
+      "avg_odds": 1.385
     },
     {
       "key": "Over 1.5G",
