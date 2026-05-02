@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-02T01:16:54.759990+00:00",
+  "updated_at": "2026-05-02T01:42:08.301318+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 73.5,
+  "overall_score": 73.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,23 +9,23 @@
   },
   "data_quality": {
     "recommendation_rows": 778,
-    "pending_rows": 210,
-    "candidates_with_odds_and_probability": 180,
+    "pending_rows": 208,
+    "candidates_with_odds_and_probability": 178,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 141,
+    "speculative": 140,
     "safe": 4,
     "balanced": 34
   },
   "market_distribution_top150": {
     "Over 1.5G": 35,
     "Over 2.5G": 3,
-    "Under 3.5G": 79,
-    "BTTS": 33
+    "Under 3.5G": 78,
+    "BTTS": 34
   },
   "league_distribution_top150": {
     "Liga F": 2,
@@ -38,7 +38,6 @@
     "Ligue 1": 7,
     "Liga Portugal Betclic": 4,
     "La Liga": 6,
-    "Copa Libertadores": 11,
     "MLS": 5,
     "Eredivisie": 6,
     "Saudi Pro League": 5,
@@ -48,7 +47,7 @@
     "Premier League": 4,
     "Serie A": 4,
     "Brasileirão Serie A": 4,
-    "Pro League": 6,
+    "Pro League": 5,
     "Superliga": 4,
     "Trendyol Super Lig": 5,
     "Allsvenskan": 8,
@@ -56,7 +55,7 @@
     "Brasileirão Serie B": 5,
     "Super League": 2,
     "Chinese Super League": 2,
-    "Scottish Premiership": 2,
+    "Scottish Premiership": 3,
     "Europa League": 1,
     "Champions League": 1
   },
@@ -167,30 +166,30 @@
       ]
     },
     {
-      "event_id": 202986,
-      "prediction_id": 3329,
-      "home": "Botev Vratsa",
-      "away": "FK Spartak Varna",
-      "league": "Parva Liga",
-      "event_date": "2026-05-02T16:30:00+03:00",
+      "event_id": 9414,
+      "prediction_id": 3529,
+      "home": "Club Always Ready",
+      "away": "CA Lanús",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-06T03:30:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.333,
-      "model_probability": 0.8702,
-      "model_probability_pct": 87.02,
-      "implied_probability_pct": 75.02,
-      "fair_odds": 1.149,
-      "edge_pp": 12.0,
-      "ev_pct": 16.0,
+      "odds": 1.41,
+      "model_probability": 0.8335,
+      "model_probability_pct": 83.35,
+      "implied_probability_pct": 70.92,
+      "fair_odds": 1.2,
+      "edge_pp": 12.43,
+      "ev_pct": 17.52,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
-      "confidence": 45.06,
+      "confidence": 62.85,
       "score": 109.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 87.0% vs. probabilitate implicată 75.0%.",
-        "EV estimat 16.0% și edge 12.0 puncte procentuale.",
+        "Probabilitate model 83.3% vs. probabilitate implicată 70.9%.",
+        "EV estimat 17.5% și edge 12.4 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1795,34 +1794,6 @@
       ]
     },
     {
-      "event_id": 9414,
-      "prediction_id": 3529,
-      "home": "Club Always Ready",
-      "away": "CA Lanús",
-      "league": "Copa Libertadores",
-      "event_date": "2026-05-06T03:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.31,
-      "model_probability": 0.8335,
-      "model_probability_pct": 83.35,
-      "implied_probability_pct": 76.34,
-      "fair_odds": 1.2,
-      "edge_pp": 7.01,
-      "ev_pct": 9.19,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.85,
-      "score": 97.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.3% vs. probabilitate implicată 76.3%.",
-        "EV estimat 9.2% și edge 7.0 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 204243,
       "prediction_id": 3358,
       "home": "CD Castellón",
@@ -2096,11 +2067,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 328,
-      "wins": 241,
-      "winrate": 73.48,
-      "profit_units": 2.47,
-      "roi_pct": 0.75,
+      "bets": 330,
+      "wins": 242,
+      "winrate": 73.33,
+      "profit_units": 2.0,
+      "roi_pct": 0.61,
       "avg_odds": 1.386
     },
     {
@@ -2169,15 +2140,6 @@
       "avg_odds": 1.25
     },
     {
-      "key": "Pro League",
-      "bets": 24,
-      "wins": 21,
-      "winrate": 87.5,
-      "profit_units": 5.64,
-      "roi_pct": 23.5,
-      "avg_odds": 1.425
-    },
-    {
       "key": "Tunisian Ligue Professionnelle 1",
       "bets": 3,
       "wins": 3,
@@ -2185,6 +2147,15 @@
       "profit_units": 0.57,
       "roi_pct": 19.03,
       "avg_odds": 1.19
+    },
+    {
+      "key": "Pro League",
+      "bets": 25,
+      "wins": 21,
+      "winrate": 84.0,
+      "profit_units": 4.64,
+      "roi_pct": 18.56,
+      "avg_odds": 1.42
     },
     {
       "key": "CAF Champions League",
