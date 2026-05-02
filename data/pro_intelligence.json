@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-02T19:08:41.531188+00:00",
+  "updated_at": "2026-05-02T19:34:56.756760+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 65.8,
+  "overall_score": 64.8,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 793,
-    "pending_rows": 159,
-    "candidates_with_odds_and_probability": 118,
+    "pending_rows": 153,
+    "candidates_with_odds_and_probability": 110,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,24 +18,24 @@
   },
   "risk_distribution": {
     "safe": 4,
-    "speculative": 89,
+    "speculative": 81,
     "balanced": 25
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 55,
-    "BTTS": 25,
+    "Under 3.5G": 51,
+    "BTTS": 21,
     "Over 1.5G": 36
   },
   "league_distribution_top150": {
     "Segunda División": 4,
-    "Copa Libertadores": 9,
     "Copa Sudamericana": 8,
-    "Ligue 1": 6,
+    "Ligue 1": 5,
     "Bundesliga": 3,
     "J1 League": 7,
-    "MLS": 7,
-    "Liga Portugal Betclic": 3,
+    "MLS": 6,
+    "Copa Libertadores": 9,
+    "Liga Portugal Betclic": 2,
     "Eredivisie": 5,
     "Saudi Pro League": 3,
     "Parva Liga": 3,
@@ -44,16 +44,16 @@
     "FA Cup": 1,
     "Premier League": 3,
     "Serie A": 6,
-    "Superliga": 4,
+    "Superliga": 3,
     "Liga F": 1,
     "Allsvenskan": 6,
     "Pro League": 5,
     "Brasileirão Serie A": 1,
-    "Trendyol Super Lig": 7,
     "Brasileirão Serie B": 3,
     "Ekstraklasa": 3,
     "Liga MX Clausura": 3,
     "Super League": 3,
+    "Trendyol Super Lig": 4,
     "Champions League": 1,
     "Europa League": 2,
     "Scottish Premiership": 1,
@@ -559,62 +559,6 @@
       ]
     },
     {
-      "event_id": 1023,
-      "prediction_id": 3478,
-      "home": "Espanyol",
-      "away": "Real Madrid",
-      "league": "La Liga",
-      "event_date": "2026-05-03T22:00:00+03:00",
-      "market": "BTTS",
-      "odds": 1.6,
-      "model_probability": 0.6727,
-      "model_probability_pct": 67.27,
-      "implied_probability_pct": 62.5,
-      "fair_odds": 1.487,
-      "edge_pp": 4.77,
-      "ev_pct": 7.63,
-      "kelly_fraction": 0.0318,
-      "kelly_units_100": 3.18,
-      "confidence": 49.37,
-      "score": 99.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 67.3% vs. probabilitate implicată 62.5%.",
-        "EV estimat 7.6% și edge 4.8 puncte procentuale.",
-        "Miză Kelly fracțională 3.18% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 2051,
-      "prediction_id": 3450,
-      "home": "RC Strasbourg",
-      "away": "Toulouse",
-      "league": "Ligue 1",
-      "event_date": "2026-05-03T18:15:00+03:00",
-      "market": "BTTS",
-      "odds": 1.64,
-      "model_probability": 0.6386,
-      "model_probability_pct": 63.86,
-      "implied_probability_pct": 60.98,
-      "fair_odds": 1.566,
-      "edge_pp": 2.88,
-      "ev_pct": 4.73,
-      "kelly_fraction": 0.0185,
-      "kelly_units_100": 1.85,
-      "confidence": 54.15,
-      "score": 99.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 63.9% vs. probabilitate implicată 61.0%.",
-        "EV estimat 4.7% și edge 2.9 puncte procentuale.",
-        "Miză Kelly fracțională 1.85% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 3039,
       "prediction_id": 3419,
       "home": "PEC Zwolle",
@@ -640,6 +584,34 @@
         "Probabilitate model 70.3% vs. probabilitate implicată 60.6%.",
         "EV estimat 16.0% și edge 9.7 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 1023,
+      "prediction_id": 3478,
+      "home": "Espanyol",
+      "away": "Real Madrid",
+      "league": "La Liga",
+      "event_date": "2026-05-03T22:00:00+03:00",
+      "market": "BTTS",
+      "odds": 1.571,
+      "model_probability": 0.666,
+      "model_probability_pct": 66.6,
+      "implied_probability_pct": 63.65,
+      "fair_odds": 1.502,
+      "edge_pp": 2.95,
+      "ev_pct": 4.63,
+      "kelly_fraction": 0.0203,
+      "kelly_units_100": 2.03,
+      "confidence": 49.37,
+      "score": 98.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 66.6% vs. probabilitate implicată 63.7%.",
+        "EV estimat 4.6% și edge 2.9 puncte procentuale.",
+        "Miză Kelly fracțională 2.03% din bancă, plafonată prudent."
       ]
     },
     {
@@ -892,6 +864,34 @@
         "Probabilitate model 62.7% vs. probabilitate implicată 60.6%.",
         "EV estimat 3.5% și edge 2.1 puncte procentuale.",
         "Miză Kelly fracțională 1.35% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 202991,
+      "prediction_id": 3425,
+      "home": "Botev Plovdiv",
+      "away": "Lokomotiv Plovdiv",
+      "league": "Parva Liga",
+      "event_date": "2026-05-03T16:15:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.3,
+      "model_probability": 0.813,
+      "model_probability_pct": 81.3,
+      "implied_probability_pct": 76.92,
+      "fair_odds": 1.23,
+      "edge_pp": 4.38,
+      "ev_pct": 5.69,
+      "kelly_fraction": 0.0474,
+      "kelly_units_100": 4.74,
+      "confidence": 62.02,
+      "score": 95.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 81.3% vs. probabilitate implicată 76.9%.",
+        "EV estimat 5.7% și edge 4.4 puncte procentuale.",
+        "Miză Kelly fracțională 4.74% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1413,18 +1413,18 @@
       "model_probability_pct": 81.94,
       "implied_probability_pct": 75.19,
       "fair_odds": 1.22,
-      "edge_pp": 9.0,
-      "ev_pct": 12.33,
+      "edge_pp": 6.75,
+      "ev_pct": 8.98,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
-      "confidence": 53.04,
-      "score": 94.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "confidence": 42.92,
+      "score": 99.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 82.0% vs. probabilitate implicată 73.0%.",
-        "EV estimat 12.3% și edge 9.0 puncte procentuale.",
+        "Probabilitate model 81.9% vs. probabilitate implicată 75.2%.",
+        "EV estimat 9.0% și edge 6.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1483,34 +1483,6 @@
       "rationale": [
         "Probabilitate model 76.7% vs. probabilitate implicată 60.6%.",
         "EV estimat 26.5% și edge 16.1 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9414,
-      "prediction_id": 3529,
-      "home": "Club Always Ready",
-      "away": "CA Lanús",
-      "league": "Copa Libertadores",
-      "event_date": "2026-05-06T03:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.41,
-      "model_probability": 0.8335,
-      "model_probability_pct": 83.35,
-      "implied_probability_pct": 70.92,
-      "fair_odds": 1.2,
-      "edge_pp": 12.43,
-      "ev_pct": 17.52,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.85,
-      "score": 109.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.3% vs. probabilitate implicată 70.9%.",
-        "EV estimat 17.5% și edge 12.4 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -2022,12 +1994,12 @@
   "settled_market_performance": [
     {
       "key": "BTTS",
-      "bets": 82,
-      "wins": 59,
-      "winrate": 71.95,
-      "profit_units": 9.4,
-      "roi_pct": 11.46,
-      "avg_odds": 1.547
+      "bets": 85,
+      "wins": 62,
+      "winrate": 72.94,
+      "profit_units": 11.13,
+      "roi_pct": 13.09,
+      "avg_odds": 1.548
     },
     {
       "key": "Over 2.5G",
@@ -2040,20 +2012,20 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 362,
-      "wins": 266,
-      "winrate": 73.48,
-      "profit_units": 4.04,
-      "roi_pct": 1.12,
-      "avg_odds": 1.389
+      "bets": 365,
+      "wins": 267,
+      "winrate": 73.15,
+      "profit_units": 2.68,
+      "roi_pct": 0.73,
+      "avg_odds": 1.39
     },
     {
       "key": "Over 1.5G",
       "bets": 178,
       "wins": 119,
       "winrate": 66.85,
-      "profit_units": -21.29,
-      "roi_pct": -11.96,
+      "profit_units": -21.27,
+      "roi_pct": -11.95,
       "avg_odds": 1.323
     }
   ],
@@ -2095,15 +2067,6 @@
       "avg_odds": 1.29
     },
     {
-      "key": "Trendyol Super Lig",
-      "bets": 18,
-      "wins": 16,
-      "winrate": 88.89,
-      "profit_units": 4.82,
-      "roi_pct": 26.79,
-      "avg_odds": 1.422
-    },
-    {
       "key": "Coupe de France",
       "bets": 1,
       "wins": 1,
@@ -2111,6 +2074,15 @@
       "profit_units": 0.25,
       "roi_pct": 25.0,
       "avg_odds": 1.25
+    },
+    {
+      "key": "Trendyol Super Lig",
+      "bets": 21,
+      "wins": 18,
+      "winrate": 85.71,
+      "profit_units": 4.92,
+      "roi_pct": 23.44,
+      "avg_odds": 1.445
     },
     {
       "key": "Tunisian Ligue Professionnelle 1",
@@ -2153,9 +2125,9 @@
       "bets": 27,
       "wins": 22,
       "winrate": 81.48,
-      "profit_units": 3.31,
-      "roi_pct": 12.25,
-      "avg_odds": 1.4
+      "profit_units": 3.32,
+      "roi_pct": 12.29,
+      "avg_odds": 1.401
     },
     {
       "key": "Liga MX Clausura",
@@ -2165,15 +2137,6 @@
       "profit_units": 3.53,
       "roi_pct": 11.39,
       "avg_odds": 1.497
-    },
-    {
-      "key": "Bundesliga",
-      "bets": 26,
-      "wins": 21,
-      "winrate": 80.77,
-      "profit_units": 2.95,
-      "roi_pct": 11.36,
-      "avg_odds": 1.402
     }
   ],
   "recommendations": [
