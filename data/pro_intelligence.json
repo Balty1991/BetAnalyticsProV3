@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-02T02:39:25.856427+00:00",
+  "updated_at": "2026-05-02T03:13:37.059355+00:00",
   "version": "pro-intelligence-v1",
   "overall_score": 73.6,
   "executive_summary": {
@@ -8,8 +8,8 @@
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 781,
-    "pending_rows": 211,
+    "recommendation_rows": 785,
+    "pending_rows": 215,
     "candidates_with_odds_and_probability": 181,
     "top_ev_count": 30,
     "has_backtest": true,
@@ -22,10 +22,10 @@
     "balanced": 36
   },
   "market_distribution_top150": {
-    "Over 1.5G": 33,
+    "Over 1.5G": 32,
     "Over 2.5G": 3,
-    "Under 3.5G": 80,
-    "BTTS": 34
+    "Under 3.5G": 82,
+    "BTTS": 33
   },
   "league_distribution_top150": {
     "Liga F": 2,
@@ -37,6 +37,7 @@
     "Ligue 1": 7,
     "Liga Portugal Betclic": 4,
     "La Liga": 5,
+    "Copa Libertadores": 11,
     "MLS": 5,
     "Eredivisie": 6,
     "Saudi Pro League": 5,
@@ -47,13 +48,14 @@
     "Serie A": 4,
     "Brasileirão Serie A": 4,
     "Pro League": 5,
+    "Liga MX Clausura": 3,
     "Superliga": 4,
     "Trendyol Super Lig": 5,
     "Allsvenskan": 8,
     "Ekstraklasa": 4,
     "Brasileirão Serie B": 5,
     "Super League": 2,
-    "Chinese Super League": 5,
+    "Chinese Super League": 2,
     "Scottish Premiership": 2,
     "Europa League": 1,
     "Champions League": 1
@@ -165,30 +167,30 @@
       ]
     },
     {
-      "event_id": 9414,
-      "prediction_id": 3529,
-      "home": "Club Always Ready",
-      "away": "CA Lanús",
-      "league": "Copa Libertadores",
-      "event_date": "2026-05-06T03:30:00+03:00",
+      "event_id": 202986,
+      "prediction_id": 3329,
+      "home": "Botev Vratsa",
+      "away": "FK Spartak Varna",
+      "league": "Parva Liga",
+      "event_date": "2026-05-02T16:30:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.41,
-      "model_probability": 0.8335,
-      "model_probability_pct": 83.35,
-      "implied_probability_pct": 70.92,
-      "fair_odds": 1.2,
-      "edge_pp": 12.43,
-      "ev_pct": 17.52,
+      "odds": 1.333,
+      "model_probability": 0.8702,
+      "model_probability_pct": 87.02,
+      "implied_probability_pct": 75.02,
+      "fair_odds": 1.149,
+      "edge_pp": 12.0,
+      "ev_pct": 16.0,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
-      "confidence": 62.85,
+      "confidence": 45.06,
       "score": 109.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 83.3% vs. probabilitate implicată 70.9%.",
-        "EV estimat 17.5% și edge 12.4 puncte procentuale.",
+        "Probabilitate model 87.0% vs. probabilitate implicată 75.0%.",
+        "EV estimat 16.0% și edge 12.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1765,6 +1767,34 @@
       ]
     },
     {
+      "event_id": 9414,
+      "prediction_id": 3529,
+      "home": "Club Always Ready",
+      "away": "CA Lanús",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-06T03:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.31,
+      "model_probability": 0.8335,
+      "model_probability_pct": 83.35,
+      "implied_probability_pct": 76.34,
+      "fair_odds": 1.2,
+      "edge_pp": 7.01,
+      "ev_pct": 9.19,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 62.85,
+      "score": 97.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.3% vs. probabilitate implicată 76.3%.",
+        "EV estimat 9.2% și edge 7.0 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 204243,
       "prediction_id": 3358,
       "home": "CD Castellón",
@@ -1933,6 +1963,34 @@
       ]
     },
     {
+      "event_id": 206658,
+      "prediction_id": 3598,
+      "home": "Atlas FC",
+      "away": "Cruz Azul",
+      "league": "Liga MX Clausura",
+      "event_date": "2026-05-03T06:15:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.32,
+      "model_probability": 0.8081,
+      "model_probability_pct": 80.81,
+      "implied_probability_pct": 75.76,
+      "fair_odds": 1.237,
+      "edge_pp": 5.05,
+      "ev_pct": 6.67,
+      "kelly_fraction": 0.0521,
+      "kelly_units_100": 5.21,
+      "confidence": 56.75,
+      "score": 93.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.8% vs. probabilitate implicată 75.8%.",
+        "EV estimat 6.7% și edge 5.1 puncte procentuale.",
+        "Miză Kelly fracțională 5.21% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 9418,
       "prediction_id": 3552,
       "home": "Independiente Santa Fe",
@@ -1986,34 +2044,6 @@
         "Probabilitate model 80.6% vs. probabilitate implicată 75.2%.",
         "EV estimat 7.2% și edge 5.4 puncte procentuale.",
         "Miză Kelly fracțională 5.42% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 8012,
-      "prediction_id": 3372,
-      "home": "Motor Lublin",
-      "away": "Lech Poznań",
-      "league": "Ekstraklasa",
-      "event_date": "2026-05-02T21:15:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.65,
-      "model_probability": 0.6885,
-      "model_probability_pct": 68.85,
-      "implied_probability_pct": 60.61,
-      "fair_odds": 1.452,
-      "edge_pp": 8.24,
-      "ev_pct": 13.6,
-      "kelly_fraction": 0.0523,
-      "kelly_units_100": 5.23,
-      "confidence": 60.08,
-      "score": 90.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 68.8% vs. probabilitate implicată 60.6%.",
-        "EV estimat 13.6% și edge 8.2 puncte procentuale.",
-        "Miză Kelly fracțională 5.23% din bancă, plafonată prudent."
       ]
     }
   ],
