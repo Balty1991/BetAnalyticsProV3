@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-02T18:12:19.776756",
+  "updated_at": "2026-05-02T18:38:49.683786",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 8657,
+  "n_rows": 8663,
   "n_folds": 2,
   "global_score": 74.3,
   "global_grade": "B",
@@ -12,9 +12,9 @@
       "label": "Victorie gazdă",
       "folds": 2,
       "avg_brier": 0.245,
-      "avg_log_loss": 0.683,
-      "avg_ece": 0.0128,
-      "avg_winrate": 0.4516,
+      "avg_log_loss": 0.6829,
+      "avg_ece": 0.0127,
+      "avg_winrate": 0.4515,
       "score": 75.5,
       "grade": "B",
       "trend": "stabil",
@@ -27,11 +27,11 @@
           "winrate": 0.4495
         },
         {
-          "n": 2451,
+          "n": 2450,
           "brier": 0.2461,
-          "log_loss": 0.6854,
-          "ece": 0.0145,
-          "winrate": 0.4537
+          "log_loss": 0.6853,
+          "ece": 0.0143,
+          "winrate": 0.4535
         }
       ]
     },
@@ -39,7 +39,7 @@
       "market": "draw",
       "label": "Egal",
       "folds": 2,
-      "avg_brier": 0.1872,
+      "avg_brier": 0.1874,
       "avg_log_loss": 0.5613,
       "avg_ece": 0.0047,
       "avg_winrate": 0.2518,
@@ -49,17 +49,17 @@
       "fold_details": [
         {
           "n": 2576,
-          "brier": 0.1894,
+          "brier": 0.1895,
           "log_loss": 0.5663,
-          "ece": 0.0011,
+          "ece": 0.0013,
           "winrate": 0.255
         },
         {
-          "n": 2451,
-          "brier": 0.1851,
+          "n": 2450,
+          "brier": 0.1852,
           "log_loss": 0.5563,
-          "ece": 0.0084,
-          "winrate": 0.2485
+          "ece": 0.0081,
+          "winrate": 0.2486
         }
       ]
     },
@@ -67,11 +67,11 @@
       "market": "away_win",
       "label": "Victorie oaspete",
       "folds": 2,
-      "avg_brier": 0.2055,
-      "avg_log_loss": 0.5998,
-      "avg_ece": 0.009,
-      "avg_winrate": 0.2966,
-      "score": 79.8,
+      "avg_brier": 0.2056,
+      "avg_log_loss": 0.5999,
+      "avg_ece": 0.0093,
+      "avg_winrate": 0.2967,
+      "score": 79.7,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
@@ -83,11 +83,11 @@
           "winrate": 0.2954
         },
         {
-          "n": 2451,
-          "brier": 0.2057,
-          "log_loss": 0.6002,
-          "ece": 0.0071,
-          "winrate": 0.2978
+          "n": 2450,
+          "brier": 0.2058,
+          "log_loss": 0.6003,
+          "ece": 0.0083,
+          "winrate": 0.298
         }
       ]
     },
@@ -96,9 +96,9 @@
       "label": "Peste 2.5G",
       "folds": 2,
       "avg_brier": 0.2425,
-      "avg_log_loss": 0.6781,
-      "avg_ece": 0.0105,
-      "avg_winrate": 0.5121,
+      "avg_log_loss": 0.6779,
+      "avg_ece": 0.0101,
+      "avg_winrate": 0.5125,
       "score": 76.2,
       "grade": "B",
       "trend": "stabil",
@@ -106,16 +106,16 @@
         {
           "n": 2576,
           "brier": 0.2415,
-          "log_loss": 0.6759,
-          "ece": 0.0121,
+          "log_loss": 0.6758,
+          "ece": 0.0119,
           "winrate": 0.5163
         },
         {
-          "n": 2451,
-          "brier": 0.2436,
-          "log_loss": 0.6802,
-          "ece": 0.0088,
-          "winrate": 0.508
+          "n": 2450,
+          "brier": 0.2435,
+          "log_loss": 0.68,
+          "ece": 0.0084,
+          "winrate": 0.5086
         }
       ]
     },
@@ -123,11 +123,11 @@
       "market": "under35",
       "label": "Sub 3.5G",
       "folds": 2,
-      "avg_brier": 0.1984,
-      "avg_log_loss": 0.5832,
-      "avg_ece": 0.0103,
-      "avg_winrate": 0.7134,
-      "score": 80.1,
+      "avg_brier": 0.1985,
+      "avg_log_loss": 0.5833,
+      "avg_ece": 0.01,
+      "avg_winrate": 0.7131,
+      "score": 80.2,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
@@ -135,15 +135,15 @@
           "n": 2576,
           "brier": 0.2011,
           "log_loss": 0.589,
-          "ece": 0.0137,
+          "ece": 0.0134,
           "winrate": 0.7046
         },
         {
-          "n": 2451,
-          "brier": 0.1957,
-          "log_loss": 0.5774,
-          "ece": 0.0068,
-          "winrate": 0.7222
+          "n": 2450,
+          "brier": 0.1958,
+          "log_loss": 0.5776,
+          "ece": 0.0067,
+          "winrate": 0.7216
         }
       ]
     },
@@ -152,9 +152,9 @@
       "label": "Ambele marchează",
       "folds": 2,
       "avg_brier": 0.2433,
-      "avg_log_loss": 0.6795,
+      "avg_log_loss": 0.6794,
       "avg_ece": 0.0087,
-      "avg_winrate": 0.5175,
+      "avg_winrate": 0.5176,
       "score": 76.5,
       "grade": "B",
       "trend": "stabil",
@@ -163,15 +163,15 @@
           "n": 2576,
           "brier": 0.2431,
           "log_loss": 0.6792,
-          "ece": 0.0114,
+          "ece": 0.0115,
           "winrate": 0.5206
         },
         {
-          "n": 2451,
-          "brier": 0.2435,
-          "log_loss": 0.6799,
-          "ece": 0.006,
-          "winrate": 0.5145
+          "n": 2450,
+          "brier": 0.2434,
+          "log_loss": 0.6797,
+          "ece": 0.0059,
+          "winrate": 0.5147
         }
       ]
     },
@@ -180,9 +180,9 @@
       "label": "Peste 1.5G",
       "folds": 2,
       "avg_brier": 0.284,
-      "avg_log_loss": 0.7618,
-      "avg_ece": 0.3029,
-      "avg_winrate": 0.7526,
+      "avg_log_loss": 0.7617,
+      "avg_ece": 0.3028,
+      "avg_winrate": 0.7525,
       "score": 50.0,
       "grade": "D",
       "trend": "stabil",
@@ -190,16 +190,16 @@
         {
           "n": 2576,
           "brier": 0.2816,
-          "log_loss": 0.7571,
-          "ece": 0.3047,
+          "log_loss": 0.757,
+          "ece": 0.3046,
           "winrate": 0.7589
         },
         {
-          "n": 2451,
+          "n": 2450,
           "brier": 0.2863,
           "log_loss": 0.7665,
-          "ece": 0.3011,
-          "winrate": 0.7462
+          "ece": 0.301,
+          "winrate": 0.7461
         }
       ]
     }
@@ -220,7 +220,7 @@
       "val_start": "2025-12-06",
       "val_end": "2026-03-06",
       "n_train": 3817,
-      "n_val": 2451
+      "n_val": 2450
     }
   ]
 }
