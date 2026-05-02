@@ -59,149 +59,31 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
 
-// Meciuri backend best_market restore hotfix — prevents legacy UI filters from hiding backend-validated picks.
+// Header status metrics hotfix only: keep match filters owned by app.js.
 (function(){
   'use strict';
-  if(window.__baMeciuriBackendHotfixV1)return;
-  window.__baMeciuriBackendHotfixV1=1;
-
-  function n(v){var x=Number(v); return isFinite(x)?x:0;}
-  function pct(v){var x=n(v); if(x>0&&x<=1)x*=100; return x;}
-  function normKey(k){
-    k=String(k||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-    if(k==='btts_yes'||k==='both_teams_to_score'||k==='gg')return'btts';
-    if(k==='over_15'||k==='over15')return'over15';
-    if(k==='over_25'||k==='over25')return'over25';
-    if(k==='over_35'||k==='over35')return'over35';
-    if(k==='under_25'||k==='under25')return'under25';
-    if(k==='under_35'||k==='under35')return'under35';
-    if(k==='home_win'||k==='homewin'||k==='1')return'homeWin';
-    if(k==='away_win'||k==='awaywin'||k==='2')return'awayWin';
-    if(k==='draw'||k==='x')return'draw';
-    if(k==='dc_1x'||k==='double_chance_1x'||k==='1x')return'dc1x';
-    if(k==='dc_x2'||k==='double_chance_x2'||k==='x2')return'dcx2';
-    if(k==='dc_12'||k==='double_chance_12'||k==='12')return'dc12';
-    return k;
-  }
-  function label(type,row){
-    var L={over15:'Over 1.5G',over25:'Over 2.5G',over35:'Over 3.5G',under25:'Under 2.5G',under35:'Under 3.5G',btts:'BTTS',homeWin:'Victorie gazdă',draw:'Egal',awayWin:'Victorie oaspeți',dc1x:'Șansă Dublă 1X',dcx2:'Șansă Dublă X2',dc12:'Șansă Dublă 12'};
-    return L[type]||String((row&&(row.label||row.market||row.market_key))||'Recomandare');
-  }
-  function verdict(tier){
-    var t=String(tier||'').toLowerCase();
-    if(t==='safe')return'safe';
-    if(t==='value')return'value';
-    return 'moderate';
-  }
-  function rawId(raw){
-    var e=raw&&raw.event||{};
-    return String((e&&e.id!=null?e.id:(raw&&(raw.event_id!=null?raw.event_id:raw.id)))||'');
-  }
-  function matchId(m){return String((m&&(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:m.id)))||'');}
-  function attachBackend(m,raw){
-    if(!m||!raw)return m;
-    if(!m.backendBestMarket)m.backendBestMarket=raw.best_market||null;
-    if(!m.backendRiskTier)m.backendRiskTier=raw.risk_tier||null;
-    if(!m.backendRationale)m.backendRationale=raw.rationale||'';
-    if(m.backendEvPct==null&&raw.ev_pct!=null)m.backendEvPct=n(raw.ev_pct);
-    if(m.backendKellyPct==null&&raw.kelly_pct!=null)m.backendKellyPct=n(raw.kelly_pct);
-    if(!m.backendMarketsEnriched)m.backendMarketsEnriched=raw.markets_enriched||null;
-    return m;
-  }
-  function buildBackendBet(m){
-    var row=m&&m.backendBestMarket;
-    if(!row||typeof row!=='object')return null;
-    var tier=String(m.backendRiskTier||row.risk_tier||'').toLowerCase();
-    if(tier==='avoid')return null;
-    var type=normKey(row.market_key||row.market||'');
-    var prob=pct(row.prob!=null?row.prob:(row.adjusted_prob!=null?row.adjusted_prob:row.bsd_prob));
-    var odds=n(row.odds||row.book_odds);
-    if(!type||!(prob>0)||!(odds>1.01))return null;
-    var ev=row.ev_pct!=null?n(row.ev_pct):(m.backendEvPct!=null?n(m.backendEvPct):null);
-    var edge=row.edge_pp!=null?n(row.edge_pp):(row.edgePct!=null?n(row.edgePct):null);
-    var score=n(row.score)||prob;
-    var kelly=row.kelly_pct!=null?n(row.kelly_pct):(m.backendKellyPct!=null?n(m.backendKellyPct):0);
-    var fair=row.fair_odds!=null?n(row.fair_odds):(prob>0?100/prob:0);
-    return {
-      type:type,label:label(type,row),prob:+prob.toFixed(2),apiProb:row.bsd_prob!=null?+pct(row.bsd_prob).toFixed(2):+prob.toFixed(2),
-      poissonProb:row.poisson_prob!=null?+pct(row.poisson_prob).toFixed(2):null,poissonAlert:!!row.poisson_alert,
-      odds:+odds.toFixed(3),baseOdds:+odds.toFixed(3),bestOdds:+odds.toFixed(3),oddsSource:'BACKEND',
-      value:ev!=null&&isFinite(ev)?+(ev/100).toFixed(4):((prob/100)*odds-1),adjProb:+prob.toFixed(2),
-      edgePct:edge!=null&&isFinite(edge)?+edge.toFixed(2):null,score:Math.round(score),fairOdds:fair>0?+fair.toFixed(3):null,
-      verdict:verdict(tier),kellyPct:isFinite(kelly)?+kelly.toFixed(3):0,sourceApi:true,sourceHeuristic:false,sourceBackend:true,backendPick:true,
-      rationale:row.rationale||m.backendRationale||''
-    };
-  }
-  function restoreMatch(m,rawMap){
-    if(!m)return false;
-    var rid=matchId(m);
-    if(rawMap&&rid&&rawMap[rid])attachBackend(m,rawMap[rid]);
-    if(m.analysisState==='ELIGIBLE'&&m.bestBet)return false;
-    var b=buildBackendBet(m);
-    if(!b)return false;
-    m.bestBet=b;
-    m.smartScore=Math.round(b.score||b.adjProb||0);
-    m.verdict=b.verdict||'moderate';
-    m.analysisState='ELIGIBLE';
-    m.why=b.rationale||m.backendRationale||'Selecție validată de backend best_market';
-    m.eligibleCandidates=[{bestBet:Object.assign({},b),ticketScore:m.smartScore,why:m.why}];
-    return true;
-  }
-  function rawMap(){
-    var arr=Array.isArray(window.__RAW_PREDICTIONS)?window.__RAW_PREDICTIONS:[];
-    var map={};
-    arr.forEach(function(r){var id=rawId(r); if(id)map[id]=r;});
-    return map;
-  }
-  function restoreAll(){
-    var list=Array.isArray(window.ALL_MATCHES)?window.ALL_MATCHES:[];
-    if(!list.length)return 0;
-    var map=rawMap(), changed=0;
-    list.forEach(function(m){if(restoreMatch(m,map))changed++;});
-    return changed;
-  }
-  function patchAnalyze(){
-    if(typeof window.analyzeMatch!=='function'||window.analyzeMatch.__baBackendHotfix)return false;
-    var old=window.analyzeMatch;
-    window.analyzeMatch=function(raw){var m=old.apply(this,arguments);return attachBackend(m,raw);};
-    window.analyzeMatch.__baBackendHotfix=true;
-    return true;
-  }
-  function patchSync(){
-    if(typeof window.syncRecommendationEngine!=='function'||window.syncRecommendationEngine.__baBackendHotfix)return false;
-    var old=window.syncRecommendationEngine;
-    window.syncRecommendationEngine=function(){var r=old.apply(this,arguments);restoreAll();return r;};
-    window.syncRecommendationEngine.__baBackendHotfix=true;
-    return true;
-  }
-  function patchMetrics(){
-    if(typeof window.getStatusDisplayMetrics!=='function'||window.getStatusDisplayMetrics.__baBackendHotfix)return false;
+  if(window.__baHeaderStatusMetricsHotfixV1)return;
+  window.__baHeaderStatusMetricsHotfixV1=1;
+  function n(v){var x=Number(v); return isFinite(x)?x:null;}
+  function install(){
+    if(typeof window.getStatusDisplayMetrics!=='function')return false;
+    if(window.getStatusDisplayMetrics.__baHeaderOnlyHotfix)return true;
     window.getStatusDisplayMetrics=function(){
       var matches=Array.isArray(window.ALL_MATCHES)?window.ALL_MATCHES:[];
       var totalLocal=matches.length;
       var eligibleLocal=matches.filter(function(m){return m&&m.analysisState==='ELIGIBLE';}).length;
       var meta=window.APP_META||{}, bs=meta.bsd_status||{}, hs=meta.header_sync||{};
-      var apiMl=bs.ml_predictions_upcoming!=null?n(bs.ml_predictions_upcoming):null;
-      var apiOdds=bs.with_odds!=null?n(bs.with_odds):null;
-      var syncMl=hs.upcoming_predictions_count!=null?n(hs.upcoming_predictions_count):null;
-      var syncOdds=hs.with_odds_upcoming_count!=null?n(hs.with_odds_upcoming_count):null;
-      var oddsValue=syncOdds!=null&&syncOdds>0?syncOdds:(apiOdds!=null&&apiOdds>0?apiOdds:eligibleLocal);
-      return {ml:apiMl!=null&&!isNaN(apiMl)?apiMl:(syncMl!=null&&!isNaN(syncMl)?syncMl:totalLocal),odds:oddsValue};
+      var apiMl=n(bs.ml_predictions_upcoming), apiOdds=n(bs.with_odds);
+      var syncMl=n(hs.upcoming_predictions_count), syncOdds=n(hs.with_odds_upcoming_count);
+      var mlValue=apiMl!=null?apiMl:(syncMl!=null?syncMl:totalLocal);
+      var oddsValue=(syncOdds!=null&&syncOdds>0)?syncOdds:((apiOdds!=null&&apiOdds>0)?apiOdds:eligibleLocal);
+      return {ml:mlValue,odds:oddsValue};
     };
-    window.getStatusDisplayMetrics.__baBackendHotfix=true;
+    window.getStatusDisplayMetrics.__baHeaderOnlyHotfix=true;
+    try{if(typeof window.updateHeaderStatus==='function')window.updateHeaderStatus();}catch(e){}
     return true;
   }
-  function rerenderIfNeeded(changed){
-    if(!changed)return;
-    try{if(typeof window.updateHeaderStatus==='function')window.updateHeaderStatus();}catch(e){}
-    try{if(typeof window.renderMatches==='function'&&((typeof window.getCurrentActiveTabName==='function'&&window.getCurrentActiveTabName()==='meciuri')||document.getElementById('tab-meciuri')&&document.getElementById('tab-meciuri').classList.contains('active')))window.renderMatches();}catch(e){}
-    try{if(typeof window.renderDashboard==='function'&&typeof window.getCurrentActiveTabName==='function'&&window.getCurrentActiveTabName()==='dashboard')window.renderDashboard();}catch(e){}
-  }
-  function boot(){
-    patchAnalyze();patchSync();patchMetrics();
-    var changed=restoreAll();
-    rerenderIfNeeded(changed);
-  }
+  function boot(){install();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   [200,600,1200,2500,5000].forEach(function(t){setTimeout(boot,t);});
 })();
