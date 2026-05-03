@@ -96,11 +96,6 @@ function calcSmartScoreV2(marketKey, modelProb, edgePP) {
 }
 
 // ─── No-vig + Edge ───────────────────────────────────────────────────────────
-/**
- * Calculează probabilitățile no-vig (elimină vig-ul bookmakerului).
- * @param  {number[]} oddsList - [odds1, odds2, ...] (valori > 1.01)
- * @returns {number[]} probabilități fair (sumă = 1), sau null per element invalid
- */
 function noVigProbs(oddsList) {
   const valid = oddsList.map(o => (o && o > 1.01) ? 1.0 / o : null);
   const sum   = valid.reduce((acc, v) => acc + (v ?? 0), 0);
@@ -108,38 +103,25 @@ function noVigProbs(oddsList) {
   return valid.map(v => v === null ? null : Math.round(v / sum * 1e6) / 1e6);
 }
 
-/**
- * Edge față de piață (no-vig).
- * @returns {number|null} edge în pp (pozitiv = avantaj față de bookmaker)
- */
 function calcEdgeVsNoVig(modelProb, noVigProb) {
   if (!modelProb || !noVigProb) return null;
-  return Math.round((modelProb - noVigProb) * 10000) / 100;  // în pp, 2 zecimale
+  return Math.round((modelProb - noVigProb) * 10000) / 100;
 }
 
-/**
- * Expected Value % = (P * (odds-1) - (1-P)) * 100
- * @returns {number|null} EV%, pozitiv = value bet
- */
 function calcEV(modelProb, decimalOdds) {
   if (!modelProb || !decimalOdds || decimalOdds < 1.01) return null;
   return Math.round((modelProb * (decimalOdds - 1) - (1 - modelProb)) * 10000) / 100;
 }
 
-/**
- * Kelly fractionat (Quarter Kelly).
- * @returns {number} % din bankroll (0-8%)
- */
 function calcKelly(modelProb, decimalOdds, fraction = 0.25) {
   if (!modelProb || !decimalOdds || decimalOdds < 1.01) return 0;
   const b = decimalOdds - 1;
   const q = 1 - modelProb;
   const k = (modelProb * b - q) / b;
   const capped = Math.max(0, Math.min(k, 0.08 / fraction));
-  return Math.round(capped * fraction * 10000) / 100;  // % bankroll
+  return Math.round(capped * fraction * 10000) / 100;
 }
 
-// ─── Semnal label ────────────────────────────────────────────────────────────
 function getSignalLabel(score) {
   if (score >= 85) return { label: 'STRONG BUY', color: '#1a7a3c', emoji: '🔥' };
   if (score >= 70) return { label: 'BUY',         color: '#28a745', emoji: '✅' };
@@ -148,51 +130,31 @@ function getSignalLabel(score) {
   return               { label: 'SKIP',         color: '#dc3545', emoji: '❌' };
 }
 
-// ─── EV Signals getter ───────────────────────────────────────────────────────
-/**
- * Returnează semnalele EV+ pre-calculate pentru azi.
- * Sortate descrescător după SmartBet Score.
- */
 function getEVSignals(minScore = 0, maxResults = 50) {
   const signals = window.__SBV2__?.evSignals?.signals ?? [];
-  return signals
-    .filter(s => (s.score ?? 0) >= minScore)
-    .slice(0, maxResults);
+  return signals.filter(s => (s.score ?? 0) >= minScore).slice(0, maxResults);
 }
 
-/**
- * Returnează SHAP top features pentru o piață.
- */
 function getSHAPFeatures(marketKey, topN = 10) {
   const shap = window.__SBV2__?.shapGlobal?.markets?.[marketKey];
   if (!shap) return [];
   return (shap.top_features ?? []).slice(0, topN);
 }
 
-/**
- * Returnează baseline-ul de ligă.
- */
 function getLeagueBaseline(leagueName) {
   return window.__SBV2__?.baselines?.[leagueName] ?? null;
 }
 
-// ─── Compatibilitate backward v1 ─────────────────────────────────────────────
-/**
- * Drop-in replacement pentru calcSmartScore v1.
- * Acceptă aceleași argumente dar folosește logica v2.
- */
 function calcSmartScore(marketKey, prob, odds, edgeVsBookmaker) {
-  // Calculăm no-vig dacă avem odds
   let edgePP = edgeVsBookmaker ?? 0;
   if (odds && prob) {
-    const nvArr = noVigProbs([odds, 1 / (1 - (1/odds - 0) + 0.02)]);  // aproximare
+    const nvArr = noVigProbs([odds, 1 / (1 - (1/odds - 0) + 0.02)]);
     const nvP   = nvArr[0];
     edgePP = nvP ? calcEdgeVsNoVig(prob, nvP) ?? 0 : 0;
   }
   return calcSmartScoreV2(marketKey, prob, edgePP);
 }
 
-// ─── Debug / info ────────────────────────────────────────────────────────────
 function printV2Status() {
   const meta = window.__SBV2__?.meta;
   if (!meta) { console.log('[SmartBet v2] Nu este încărcat.'); return; }
@@ -209,8 +171,6 @@ function printV2Status() {
   });
 }
 
-// ─── Auto-init ───────────────────────────────────────────────────────────────
-// Inițializare automată la DOMContentLoaded
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     loadSmartBetV2().then(() => {
@@ -221,7 +181,6 @@ if (typeof document !== 'undefined') {
   });
 }
 
-// Export pentru module systems (dacă există)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     loadSmartBetV2, calcSmartScoreV2, calcSmartScore,
@@ -232,7 +191,6 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 // BetAnalytics Pro - Over 1.5 recovery probe runtime
-// Recovery probe means: not disabled, but Over 1.5 must pass strict sample-building filters.
 (function(){
   'use strict';
   if(window.__baOver15RecoveryProbeV1) return;
@@ -311,4 +269,21 @@ if (typeof module !== 'undefined' && module.exports) {
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
   [100,300,700,1200,2500,5000,9000].forEach(function(t){ setTimeout(boot, t); });
+})();
+
+// BetAnalytics Pro - load CLV guidance badges on match cards
+(function(){
+  'use strict';
+  if(window.__baClvGuidanceLoaderV1) return;
+  window.__baClvGuidanceLoaderV1 = true;
+  function load(){
+    if(document.getElementById('ba-clv-card-guidance-runtime')) return;
+    var s = document.createElement('script');
+    s.id = 'ba-clv-card-guidance-runtime';
+    s.defer = true;
+    s.src = './assets/clv_card_guidance_runtime.js?v=' + Date.now();
+    document.head.appendChild(s);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
+  else load();
 })();
