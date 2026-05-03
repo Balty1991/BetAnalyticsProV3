@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta name="description" content="BetAnalytics Pro oferă dashboard mobil pentru analiză pariuri, tracking, bilete, SmartBet și istoric de performanță."/>
 <link rel="canonical" href="https://balty1991.github.io/BetAnalyticsProV3/index.html"/>
-<title>BetAnalytics Pro · PRO V21</title>
+<title>BetAnalytics Pro · Meciuri v18</title>
 <meta name="theme-color" content="#06080F"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -41,12 +41,12 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 .skip-link{position:absolute;left:12px;top:-44px;z-index:1000;background:#2BE5C5;color:#06080F;padding:10px 14px;border-radius:12px;font-weight:700;text-decoration:none}
 .skip-link:focus{top:12px}
 </style>
-<link rel="stylesheet" href="./assets/app.css?v=20260425aurora"/>
+<link rel="stylesheet" href="./assets/app.css?v=20260503m24"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
-<script src="./assets/performance-patch.js?v=20260427procc3"></script>
+<script src="./assets/performance-patch.js?v=20260503m24"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260429consensus2"></script>
+<script defer src="./assets/app.js?v=20260503m24"></script>
 <script defer src="./assets/pro_command_center.js?v=20260427procc3"></script>
 </head>
 <body>
@@ -718,42 +718,40 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     </div>
   </div>
   <div class="tab-content" id="tab-meciuri">
-    <div class="section mf-card" style="margin-bottom:12px">
-      <div class="mf-header">
-        <div class="mf-title-row">
-          <span class="mf-icon">⚽</span>
-          <span class="mf-title">Meciuri</span>
-          <span class="mf-count" id="filter-count">0</span>
+    <div class="section mx21-card" style="margin-bottom:10px" data-matches-controls="v21">
+      <div class="mx21-head">
+        <div class="mx21-title-wrap">
+          <div class="mx21-title-row"><span class="mx21-ball">⚽</span><span class="mx21-title">Meciuri</span></div>
         </div>
-        <div class="mf-mode-toggle">
-          <button class="mf-mode-btn active" data-mode="simple" onclick="setMatchCardMode('simple', this)">Simplu</button>
-          <button class="mf-mode-btn" data-mode="expert" onclick="setMatchCardMode('expert', this)">Expert</button>
-        </div>
+        <span class="mx21-count" id="filter-count">0 meciuri</span>
+        <button class="mx21-filter-btn" onclick="toggleMfAdvanced(this)" aria-expanded="false" type="button">Filtre</button>
       </div>
 
-      <div class="mf-chips-scroll">
-        <button class="mf-chip active" onclick="setFilter('all',this)">Toate</button>
-        <button class="mf-chip" onclick="setFilter('motor_validated',this)">🧠 Motor</button>
-        <button class="mf-chip" onclick="setFilter('safe',this)">⭐ Top</button>
-        <button class="mf-chip" onclick="setFilter('o15',this)">🔥 O1.5</button>
-        <button class="mf-chip" onclick="setFilter('o25',this)">📈 O2.5</button>
-        <button class="mf-chip" onclick="setFilter('btts',this)">🤝 BTTS</button>
-        <button class="mf-chip" onclick="setFilter('u35',this)">🧊 U3.5</button>
-        <button class="mf-chip" onclick="setFilter('value',this)">💰 Value</button>
-      </div>
-
-      <div class="mf-sort-row">
-        <select class="mf-select" id="sort-select" onchange="renderMatches()">
-          <option value="date" selected>🕒 Ora</option>
-          <option value="edge">📈 Edge</option>
-          <option value="prob">📊 Prob</option>
-          <option value="score">🧠 Score</option>
-          <option value="value">💰 Value</option>
+      <div class="mx21-control-row">
+        <div class="mx21-mode" role="group" aria-label="Mod card">
+          <button class="mx21-mode-btn active" data-mode="simple" onclick="setMatchCardMode('simple', this)" type="button">Simplu</button>
+          <button class="mx21-mode-btn" data-mode="expert" onclick="setMatchCardMode('expert', this)" type="button">Expert</button>
+        </div>
+        <select class="mx21-select" id="sort-select" onchange="renderMatches()" aria-label="Sortare meciuri">
+          <option value="date" selected>Ora</option>
+          <option value="edge">Edge</option>
+          <option value="prob">Prob</option>
+          <option value="score">Score</option>
+          <option value="value">Value</option>
         </select>
-        <button class="mf-advanced-toggle" onclick="toggleMfAdvanced(this)">⚙️ Filtre</button>
       </div>
 
-      <div class="mf-advanced" id="mf-advanced" style="display:none">
+      <div class="mx21-chiprail" aria-label="Categorii rapide">
+        <button class="mx21-chip active" onclick="setFilter('all',this)" type="button">Toate</button>
+        <button class="mx21-chip" onclick="setFilter('safe',this)" type="button">⭐ Top</button>
+        <button class="mx21-chip" onclick="setFilter('o15',this)" type="button">🔥 O1.5</button>
+        <button class="mx21-chip" onclick="setFilter('o25',this)" type="button">📈 O2.5</button>
+        <button class="mx21-chip" onclick="setFilter('btts',this)" type="button">🤝 BTTS</button>
+        <button class="mx21-chip" onclick="setFilter('u35',this)" type="button">🧊 U3.5</button>
+        <button class="mx21-chip" onclick="setFilter('value',this)" type="button">💰 Value</button>
+      </div>
+
+      <div class="mf-advanced mx21-advanced" id="mf-advanced" style="display:none">
 
       <div class="league-filter-wrap matches-filter-advanced">
         <div class="filter-field filter-field-wide">
@@ -825,7 +823,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
         </div>
       </div>
       </div><!-- /mf-advanced -->
-    </div><!-- /mf-card -->
+    </div><!-- /mx21-card -->
 
     <div class="help-panel" id="matches-help-panel" style="margin-top:0;margin-bottom:12px">
       <div class="help-head">
