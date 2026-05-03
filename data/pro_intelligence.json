@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-03T14:27:10.347137+00:00",
+  "updated_at": "2026-05-03T14:52:48.948878+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 67.5,
+  "overall_score": 65.8,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,37 +9,36 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 126,
-    "candidates_with_odds_and_probability": 108,
+    "pending_rows": 123,
+    "candidates_with_odds_and_probability": 106,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "safe": 6,
     "speculative": 82,
-    "balanced": 20
+    "safe": 5,
+    "balanced": 19
   },
   "market_distribution_top150": {
-    "Over 2.5G": 1,
     "Under 3.5G": 63,
-    "BTTS": 13,
+    "BTTS": 12,
     "Over 1.5G": 31
   },
   "league_distribution_top150": {
-    "Segunda División": 4,
     "Copa Sudamericana": 9,
     "Copa Libertadores": 11,
     "Bundesliga": 3,
     "J1 League": 8,
     "Parva Liga": 6,
-    "Eredivisie": 2,
+    "Eredivisie": 1,
     "Liga Portugal Betclic": 1,
     "Saudi Pro League": 3,
     "La Liga": 4,
     "Ligue 1": 5,
     "Superliga": 4,
+    "Segunda División": 3,
     "FA Cup": 1,
     "K League 1": 5,
     "Serie A": 4,
@@ -81,34 +80,6 @@
     "risk_tiers": "safe/value/balanced/speculative based on probability, edge, odds and confidence"
   },
   "top_ev": [
-    {
-      "event_id": 204245,
-      "prediction_id": 3415,
-      "home": "Real Racing Club",
-      "away": "Huesca",
-      "league": "Segunda División",
-      "event_date": "2026-05-03T15:00:00+03:00",
-      "market": "Over 2.5G",
-      "odds": 1.632,
-      "model_probability": 0.7822,
-      "model_probability_pct": 78.22,
-      "implied_probability_pct": 61.27,
-      "fair_odds": 1.278,
-      "edge_pp": 16.95,
-      "ev_pct": 27.66,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 64.79,
-      "score": 110.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 78.2% vs. probabilitate implicată 61.3%.",
-        "EV estimat 27.7% și edge 16.9 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
     {
       "event_id": 9304,
       "prediction_id": 3548,
@@ -670,34 +641,6 @@
       ]
     },
     {
-      "event_id": 3039,
-      "prediction_id": 3419,
-      "home": "PEC Zwolle",
-      "away": "Heracles Almelo",
-      "league": "Eredivisie",
-      "event_date": "2026-05-03T15:30:00+03:00",
-      "market": "BTTS",
-      "odds": 1.649,
-      "model_probability": 0.7035,
-      "model_probability_pct": 70.35,
-      "implied_probability_pct": 60.64,
-      "fair_odds": 1.421,
-      "edge_pp": 9.71,
-      "ev_pct": 16.01,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 57.4,
-      "score": 98.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 70.3% vs. probabilitate implicată 60.6%.",
-        "EV estimat 16.0% și edge 9.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 7683,
       "prediction_id": 3501,
       "home": "FC Rapid București",
@@ -918,6 +861,64 @@
       "rationale": [
         "Probabilitate model 83.3% vs. probabilitate implicată 75.2%.",
         "EV estimat 10.8% și edge 8.1 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    }
+  ],
+  "safest": [
+    {
+      "event_id": 204846,
+      "prediction_id": 3247,
+      "home": "Avispa Fukuoka",
+      "away": "Sanfrecce Hiroshima",
+      "league": "J1 League",
+      "event_date": "2026-04-29T08:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.37,
+      "model_probability": 0.8073,
+      "model_probability_pct": 80.73,
+      "implied_probability_pct": 72.99,
+      "fair_odds": 1.239,
+      "edge_pp": 7.74,
+      "ev_pct": 10.6,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 42.6,
+      "score": 96.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.7% vs. probabilitate implicată 73.0%.",
+        "EV estimat 10.6% și edge 7.7 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 202991,
+      "prediction_id": 3425,
+      "home": "Botev Plovdiv",
+      "away": "Lokomotiv Plovdiv",
+      "league": "Parva Liga",
+      "event_date": "2026-05-03T16:15:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.3,
+      "model_probability": 0.8381,
+      "model_probability_pct": 83.81,
+      "implied_probability_pct": 76.92,
+      "fair_odds": 1.193,
+      "edge_pp": 6.89,
+      "ev_pct": 8.95,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 62.02,
+      "score": 96.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.8% vs. probabilitate implicată 76.9%.",
+        "EV estimat 9.0% și edge 6.9 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -1486,34 +1487,6 @@
   ],
   "balanced": [
     {
-      "event_id": 204245,
-      "prediction_id": 3415,
-      "home": "Real Racing Club",
-      "away": "Huesca",
-      "league": "Segunda División",
-      "event_date": "2026-05-03T15:00:00+03:00",
-      "market": "Over 2.5G",
-      "odds": 1.632,
-      "model_probability": 0.7822,
-      "model_probability_pct": 78.22,
-      "implied_probability_pct": 61.27,
-      "fair_odds": 1.278,
-      "edge_pp": 16.95,
-      "ev_pct": 27.66,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 64.79,
-      "score": 110.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 78.2% vs. probabilitate implicată 61.3%.",
-        "EV estimat 27.7% și edge 16.9 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9414,
       "prediction_id": 3529,
       "home": "Club Always Ready",
@@ -1706,34 +1679,6 @@
       "rationale": [
         "Probabilitate model 83.5% vs. probabilitate implicată 75.0%.",
         "EV estimat 11.4% și edge 8.5 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 3039,
-      "prediction_id": 3419,
-      "home": "PEC Zwolle",
-      "away": "Heracles Almelo",
-      "league": "Eredivisie",
-      "event_date": "2026-05-03T15:30:00+03:00",
-      "market": "BTTS",
-      "odds": 1.649,
-      "model_probability": 0.7035,
-      "model_probability_pct": 70.35,
-      "implied_probability_pct": 60.64,
-      "fair_odds": 1.421,
-      "edge_pp": 9.71,
-      "ev_pct": 16.01,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 57.4,
-      "score": 98.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 70.3% vs. probabilitate implicată 60.6%.",
-        "EV estimat 16.0% și edge 9.7 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -2044,35 +1989,91 @@
         "EV estimat 2.4% și edge 1.9 puncte procentuale.",
         "Miză Kelly fracțională 2.09% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 2044,
+      "prediction_id": 3422,
+      "home": "Lille",
+      "away": "Le Havre",
+      "league": "Ligue 1",
+      "event_date": "2026-05-03T16:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.38,
+      "model_probability": 0.7542,
+      "model_probability_pct": 75.42,
+      "implied_probability_pct": 72.46,
+      "fair_odds": 1.326,
+      "edge_pp": 2.96,
+      "ev_pct": 4.08,
+      "kelly_fraction": 0.0268,
+      "kelly_units_100": 2.68,
+      "confidence": 53.21,
+      "score": 83.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 75.4% vs. probabilitate implicată 72.5%.",
+        "EV estimat 4.1% și edge 3.0 puncte procentuale.",
+        "Miză Kelly fracțională 2.68% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 205764,
+      "prediction_id": 3575,
+      "home": "Yunnan Yukun",
+      "away": "Zhejiang",
+      "league": "Chinese Super League",
+      "event_date": "2026-05-06T15:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.18,
+      "model_probability": 0.833,
+      "model_probability_pct": 83.3,
+      "implied_probability_pct": 84.75,
+      "fair_odds": 1.2,
+      "edge_pp": -1.45,
+      "ev_pct": -1.71,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 63.4,
+      "score": 83.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.3% vs. probabilitate implicată 84.7%.",
+        "EV estimat -1.7% și edge -1.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
     }
   ],
   "settled_market_performance": [
     {
-      "key": "BTTS",
-      "bets": 93,
-      "wins": 68,
-      "winrate": 73.12,
-      "profit_units": 12.57,
-      "roi_pct": 13.52,
-      "avg_odds": 1.548
+      "key": "Over 2.5G",
+      "bets": 14,
+      "wins": 11,
+      "winrate": 78.57,
+      "profit_units": 2.19,
+      "roi_pct": 15.62,
+      "avg_odds": 1.473
     },
     {
-      "key": "Over 2.5G",
-      "bets": 13,
-      "wins": 10,
-      "winrate": 76.92,
-      "profit_units": 1.56,
-      "roi_pct": 11.96,
-      "avg_odds": 1.461
+      "key": "BTTS",
+      "bets": 94,
+      "wins": 68,
+      "winrate": 72.34,
+      "profit_units": 11.57,
+      "roi_pct": 12.31,
+      "avg_odds": 1.549
     },
     {
       "key": "Under 3.5G",
-      "bets": 384,
-      "wins": 280,
-      "winrate": 72.92,
-      "profit_units": 2.02,
-      "roi_pct": 0.53,
-      "avg_odds": 1.39
+      "bets": 385,
+      "wins": 281,
+      "winrate": 72.99,
+      "profit_units": 2.67,
+      "roi_pct": 0.69,
+      "avg_odds": 1.391
     },
     {
       "key": "Over 1.5G",
