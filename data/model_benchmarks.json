@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-03T05:12:16.790132+00:00",
+  "updated_at": "2026-05-03T05:44:53.859186+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -112,9 +112,9 @@
       "poisson_simple": {
         "n": 2610,
         "credible": true,
-        "brier": 0.2668,
-        "log_loss": 0.7623,
-        "ece": 0.132,
+        "brier": 0.2666,
+        "log_loss": 0.7619,
+        "ece": 0.1317,
         "score": 51.2,
         "grade": "D",
         "n_bets": 1158,
@@ -127,9 +127,9 @@
       "poisson_dc": {
         "n": 2610,
         "credible": true,
-        "brier": 0.2681,
-        "log_loss": 0.7682,
-        "ece": 0.1365,
+        "brier": 0.2679,
+        "log_loss": 0.7678,
+        "ece": 0.1362,
         "score": 51.1,
         "grade": "D",
         "n_bets": 1130,
@@ -451,16 +451,16 @@
         "n": 2610,
         "credible": true,
         "brier": 0.2423,
-        "log_loss": 0.6775,
-        "ece": 0.0139,
+        "log_loss": 0.6776,
+        "ece": 0.0136,
         "score": 75.5,
         "grade": "B",
         "n_bets": 2610,
-        "roi_pct": 10.94,
-        "yield_pct": 10.94,
-        "max_drawdown": 40.64,
-        "profit": 285.47,
-        "winrate": 51.03
+        "roi_pct": 10.87,
+        "yield_pct": 10.87,
+        "max_drawdown": 40.62,
+        "profit": 283.698,
+        "winrate": 51.0
       },
       "team_form_blend": {
         "n": 2610,
@@ -470,12 +470,12 @@
         "ece": 0.0579,
         "score": 65.6,
         "grade": "C",
-        "n_bets": 1823,
-        "roi_pct": 10.59,
-        "yield_pct": 10.59,
-        "max_drawdown": 41.86,
-        "profit": 193.02,
-        "winrate": 50.47
+        "n_bets": 1824,
+        "roi_pct": 10.54,
+        "yield_pct": 10.54,
+        "max_drawdown": 41.85,
+        "profit": 192.215,
+        "winrate": 50.44
       },
       "poisson_simple": {
         "n": 2610,
@@ -548,10 +548,10 @@
         "score": 80.6,
         "grade": "B",
         "n_bets": 2610,
-        "roi_pct": 7.47,
-        "yield_pct": 7.47,
+        "roi_pct": 7.46,
+        "yield_pct": 7.46,
         "max_drawdown": 15.76,
-        "profit": 194.869,
+        "profit": 194.828,
         "winrate": 72.72
       },
       "team_form_blend": {
@@ -4664,14 +4664,14 @@
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 663,
+    "n_total": 664,
     "overall": {
-      "n": 663,
+      "n": 664,
       "n_wins": 473,
-      "winrate": 71.34,
-      "roi_pct": -0.94,
-      "profit": -6.242,
-      "avg_odds": 1.395,
+      "winrate": 71.23,
+      "roi_pct": -1.09,
+      "profit": -7.242,
+      "avg_odds": 1.394,
       "max_drawdown": 19.4,
       "avg_edge_pct": 8.64
     },
@@ -4707,14 +4707,14 @@
         "avg_edge_pct": 7.35
       },
       "under35": {
-        "n": 377,
+        "n": 378,
         "n_wins": 274,
-        "winrate": 72.68,
-        "roi_pct": 0.17,
-        "profit": 0.63,
-        "avg_odds": 1.391,
+        "winrate": 72.49,
+        "roi_pct": -0.1,
+        "profit": -0.37,
+        "avg_odds": 1.39,
         "max_drawdown": 15.36,
-        "avg_edge_pct": 9.03
+        "avg_edge_pct": 9.02
       }
     },
     "by_league": {
@@ -4739,14 +4739,14 @@
         "avg_edge_pct": 7.59
       },
       "Liga MX Clausura": {
-        "n": 32,
+        "n": 33,
         "n_wins": 24,
-        "winrate": 75.0,
-        "roi_pct": 12.19,
-        "profit": 3.9,
-        "avg_odds": 1.493,
+        "winrate": 72.73,
+        "roi_pct": 8.79,
+        "profit": 2.9,
+        "avg_odds": 1.485,
         "max_drawdown": 2.0,
-        "avg_edge_pct": 10.44
+        "avg_edge_pct": 10.27
       },
       "Brasileirão Serie A": {
         "n": 30,
@@ -5111,14 +5111,14 @@
     },
     "by_edge_bucket": {
       "0-5%": {
-        "n": 118,
+        "n": 119,
         "n_wins": 81,
-        "winrate": 68.64,
-        "roi_pct": -8.7,
-        "profit": -10.266,
-        "avg_odds": 1.355,
-        "max_drawdown": 14.75,
-        "avg_edge_pct": 3.73
+        "winrate": 68.07,
+        "roi_pct": -9.47,
+        "profit": -11.266,
+        "avg_odds": 1.354,
+        "max_drawdown": 15.08,
+        "avg_edge_pct": 3.74
       },
       "5-10%": {
         "n": 338,
@@ -5152,6 +5152,48 @@
       }
     },
     "by_market_bucket": {
+      "under35": {
+        "0-5%": {
+          "n": 63,
+          "n_wins": 43,
+          "winrate": 68.25,
+          "roi_pct": -9.78,
+          "profit": -6.16,
+          "avg_odds": 1.355,
+          "max_drawdown": 11.93,
+          "avg_edge_pct": 3.62
+        },
+        "5-10%": {
+          "n": 181,
+          "n_wins": 132,
+          "winrate": 72.93,
+          "roi_pct": -0.7,
+          "profit": -1.268,
+          "avg_odds": 1.376,
+          "max_drawdown": 10.22,
+          "avg_edge_pct": 7.3
+        },
+        "10-15%": {
+          "n": 95,
+          "n_wins": 66,
+          "winrate": 69.47,
+          "roi_pct": -2.14,
+          "profit": -2.029,
+          "avg_odds": 1.415,
+          "max_drawdown": 10.71,
+          "avg_edge_pct": 12.01
+        },
+        "15%+": {
+          "n": 39,
+          "n_wins": 33,
+          "winrate": 84.62,
+          "roi_pct": 23.3,
+          "profit": 9.087,
+          "avg_odds": 1.453,
+          "max_drawdown": 2.0,
+          "avg_edge_pct": 18.46
+        }
+      },
       "over15": {
         "0-5%": {
           "n": 40,
@@ -5236,48 +5278,6 @@
           "avg_edge_pct": 17.31
         }
       },
-      "under35": {
-        "0-5%": {
-          "n": 62,
-          "n_wins": 43,
-          "winrate": 69.35,
-          "roi_pct": -8.32,
-          "profit": -5.16,
-          "avg_odds": 1.357,
-          "max_drawdown": 11.23,
-          "avg_edge_pct": 3.6
-        },
-        "5-10%": {
-          "n": 181,
-          "n_wins": 132,
-          "winrate": 72.93,
-          "roi_pct": -0.7,
-          "profit": -1.268,
-          "avg_odds": 1.376,
-          "max_drawdown": 10.22,
-          "avg_edge_pct": 7.3
-        },
-        "10-15%": {
-          "n": 95,
-          "n_wins": 66,
-          "winrate": 69.47,
-          "roi_pct": -2.14,
-          "profit": -2.029,
-          "avg_odds": 1.415,
-          "max_drawdown": 10.71,
-          "avg_edge_pct": 12.01
-        },
-        "15%+": {
-          "n": 39,
-          "n_wins": 33,
-          "winrate": 84.62,
-          "roi_pct": 23.3,
-          "profit": 9.087,
-          "avg_odds": 1.453,
-          "max_drawdown": 2.0,
-          "avg_edge_pct": 18.46
-        }
-      },
       "over25": {
         "0-5%": {
           "n": 4,
@@ -5348,7 +5348,7 @@
           "prev_edge": 999.0,
           "new_edge": 15.0,
           "message": "over15: recovery probe activ, prag strict = 15.0%",
-          "timestamp": "2026-05-03T05:12:16.884677+00:00"
+          "timestamp": "2026-05-03T05:44:53.925071+00:00"
         }
       ]
     },
@@ -5384,7 +5384,7 @@
       "prev_edge": 999.0,
       "new_edge": 15.0,
       "message": "over15: recovery probe activ, prag strict = 15.0%",
-      "timestamp": "2026-05-03T05:12:16.884677+00:00"
+      "timestamp": "2026-05-03T05:44:53.925071+00:00"
     }
   ]
 }
