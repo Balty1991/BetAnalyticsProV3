@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-03T01:59:00.356180+00:00",
+  "updated_at": "2026-05-03T02:26:24.801633+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 67.1,
+  "overall_score": 67.0,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 793,
-    "pending_rows": 135,
-    "candidates_with_odds_and_probability": 117,
+    "pending_rows": 133,
+    "candidates_with_odds_and_probability": 116,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,13 +18,13 @@
   },
   "risk_distribution": {
     "safe": 5,
-    "speculative": 91,
+    "speculative": 90,
     "balanced": 21
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
     "Under 3.5G": 63,
-    "BTTS": 19,
+    "BTTS": 18,
     "Over 1.5G": 33
   },
   "league_distribution_top150": {
@@ -34,7 +34,6 @@
     "Bundesliga": 3,
     "J1 League": 7,
     "Liga Portugal Betclic": 1,
-    "MLS": 3,
     "Eredivisie": 4,
     "Parva Liga": 4,
     "Saudi Pro League": 3,
@@ -42,6 +41,7 @@
     "La Liga": 4,
     "K League 1": 5,
     "FA Cup": 1,
+    "MLS": 2,
     "Premier League": 4,
     "Serie A": 5,
     "Superliga": 4,
@@ -332,34 +332,6 @@
         "Probabilitate model 88.0% vs. probabilitate implicată 79.4%.",
         "EV estimat 10.8% și edge 8.6 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 5065,
-      "prediction_id": 3390,
-      "home": "Atlanta United",
-      "away": "CF Montréal",
-      "league": "MLS",
-      "event_date": "2026-05-03T02:30:00+03:00",
-      "market": "BTTS",
-      "odds": 1.65,
-      "model_probability": 0.6596,
-      "model_probability_pct": 65.96,
-      "implied_probability_pct": 60.61,
-      "fair_odds": 1.516,
-      "edge_pp": 5.35,
-      "ev_pct": 8.83,
-      "kelly_fraction": 0.034,
-      "kelly_units_100": 3.4,
-      "confidence": 42.52,
-      "score": 103.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 66.0% vs. probabilitate implicată 60.6%.",
-        "EV estimat 8.8% și edge 5.4 puncte procentuale.",
-        "Miză Kelly fracțională 3.40% din bancă, plafonată prudent."
       ]
     },
     {
@@ -919,6 +891,34 @@
       "rationale": [
         "Probabilitate model 76.5% vs. probabilitate implicată 69.0%.",
         "EV estimat 10.9% și edge 7.5 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 1741,
+      "prediction_id": 3426,
+      "home": "FC St. Pauli",
+      "away": "1. FSV Mainz 05",
+      "league": "Bundesliga",
+      "event_date": "2026-05-03T16:30:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.37,
+      "model_probability": 0.8199,
+      "model_probability_pct": 81.99,
+      "implied_probability_pct": 72.99,
+      "fair_odds": 1.22,
+      "edge_pp": 9.0,
+      "ev_pct": 12.33,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 53.04,
+      "score": 94.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 82.0% vs. probabilitate implicată 73.0%.",
+        "EV estimat 12.3% și edge 9.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -2050,12 +2050,12 @@
   "settled_market_performance": [
     {
       "key": "BTTS",
-      "bets": 89,
-      "wins": 65,
-      "winrate": 73.03,
-      "profit_units": 11.88,
-      "roi_pct": 13.35,
-      "avg_odds": 1.548
+      "bets": 90,
+      "wins": 66,
+      "winrate": 73.33,
+      "profit_units": 12.53,
+      "roi_pct": 13.92,
+      "avg_odds": 1.55
     },
     {
       "key": "Over 2.5G",
@@ -2068,11 +2068,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 375,
+      "bets": 376,
       "wins": 274,
-      "winrate": 73.07,
-      "profit_units": 2.63,
-      "roi_pct": 0.7,
+      "winrate": 72.87,
+      "profit_units": 1.63,
+      "roi_pct": 0.43,
       "avg_odds": 1.39
     },
     {

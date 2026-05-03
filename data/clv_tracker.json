@@ -1,28 +1,28 @@
 {
-  "updated_at": "2026-05-03T01:59:00.412309+00:00",
+  "updated_at": "2026-05-03T02:26:24.863862+00:00",
   "summary": {
-    "total_picks": 640,
-    "avg_clv_pct": -0.609,
+    "total_picks": 642,
+    "avg_clv_pct": -0.6127,
     "median_clv_pct": 0.0,
     "clv_positive_n": 111,
-    "clv_negative_n": 529,
-    "clv_positive_rate": 0.1734,
-    "avg_clv_wins": -0.3585,
-    "avg_clv_losses": -1.249,
-    "win_rate_pct": 71.88,
-    "roi_flat_pct": -0.1848,
+    "clv_negative_n": 531,
+    "clv_positive_rate": 0.1729,
+    "avg_clv_wins": -0.3656,
+    "avg_clv_losses": -1.2421,
+    "win_rate_pct": 71.81,
+    "roi_flat_pct": -0.2388,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1149
+    "std_clv_pct": 6.1066
   },
   "by_market": {
     "btts": {
-      "n": 87,
-      "avg_clv_pct": -2.2386,
-      "clv_positive_rate": 0.2644,
-      "win_rate_pct": 73.56,
-      "roi_flat_pct": 14.3471,
-      "avg_ev_at_pick": 3.0811
+      "n": 88,
+      "avg_clv_pct": -2.2582,
+      "clv_positive_rate": 0.2614,
+      "win_rate_pct": 73.86,
+      "roi_flat_pct": 14.9227,
+      "avg_ev_at_pick": 3.1015
     },
     "over15": {
       "n": 178,
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.8482
     },
     "under35": {
-      "n": 364,
-      "avg_clv_pct": -1.2226,
-      "clv_positive_rate": 0.1291,
-      "win_rate_pct": 73.35,
-      "roi_flat_pct": 1.1648,
-      "avg_ev_at_pick": 3.3278
+      "n": 365,
+      "avg_clv_pct": -1.2192,
+      "clv_positive_rate": 0.1288,
+      "win_rate_pct": 73.15,
+      "roi_flat_pct": 0.8877,
+      "avg_ev_at_pick": 3.3131
     }
   },
   "clv_buckets": {
@@ -63,16 +63,16 @@
       "avg_clv": 1.7567
     },
     "clv_neutral": {
-      "n": 326,
-      "win_rate": 70.55,
-      "roi_pct": -3.773,
-      "avg_clv": -0.0843
+      "n": 327,
+      "win_rate": 70.34,
+      "roi_pct": -4.0673,
+      "avg_clv": -0.084
     },
     "clv_mild_neg": {
-      "n": 138,
-      "win_rate": 74.64,
-      "roi_pct": 6.0826,
-      "avg_clv": -2.6544
+      "n": 139,
+      "win_rate": 74.82,
+      "roi_pct": 6.5065,
+      "avg_clv": -2.6614
     },
     "clv_strong_neg": {
       "n": 65,
@@ -82,40 +82,63 @@
     }
   },
   "rolling_30d": {
-    "n": 640,
-    "avg_clv_pct": -0.609,
-    "win_rate_pct": 71.88,
-    "roi_flat_pct": -0.1848,
+    "n": 642,
+    "avg_clv_pct": -0.6127,
+    "win_rate_pct": 71.81,
+    "roi_flat_pct": -0.2388,
     "days": 30
   },
   "rolling_90d": {
-    "n": 640,
-    "avg_clv_pct": -0.609,
-    "win_rate_pct": 71.88,
-    "roi_flat_pct": -0.1848,
+    "n": 642,
+    "avg_clv_pct": -0.6127,
+    "win_rate_pct": 71.81,
+    "roi_flat_pct": -0.2388,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 402,
-      "avg_clv": 0.6148,
-      "clv_positive_rate": 0.2239
+      "n": 403,
+      "avg_clv": 0.6043,
+      "clv_positive_rate": 0.2233
     },
     "ev_negative_picks": {
-      "n": 238,
-      "avg_clv": -2.676,
-      "clv_positive_rate": 0.0882
+      "n": 239,
+      "avg_clv": -2.6648,
+      "clv_positive_rate": 0.0879
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.61%) și ROI negativ (-0.18%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.61%) și ROI negativ (-0.24%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "5065",
+      "date": "2026-05-03",
+      "home": "Atlanta United",
+      "away": "CF Montréal",
+      "league": "MLS",
+      "market": "btts",
+      "picked_odds": 1.59,
+      "closing_odds": 1.65,
+      "picked_implied": 0.628931,
+      "closing_implied": 0.606061,
+      "clv_pct": -3.6364,
+      "clv_positive": false,
+      "ev_at_pick_pct": 4.8764,
+      "model_prob": 65.96,
+      "edge_pct": 10.36,
+      "score": 103,
+      "line_move_pct": 3.7736,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-03T02:08:01.159331+00:00",
+      "prediction_id": 3390
+    },
     {
       "event_id": "5063",
       "date": "2026-05-03",
@@ -255,6 +278,29 @@
       "prediction_id": 3393
     },
     {
+      "event_id": "7127",
+      "date": "2026-05-03",
+      "home": "Cruzeiro",
+      "away": "Atlético Mineiro",
+      "league": "Brasileirão Serie A",
+      "market": "under35",
+      "picked_odds": 1.27,
+      "closing_odds": 1.27,
+      "picked_implied": 0.787402,
+      "closing_implied": 0.787402,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -2.0576,
+      "model_prob": 77.12,
+      "edge_pct": 3.37,
+      "score": 80,
+      "line_move_pct": 0.0,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-05-03T02:08:01.159331+00:00",
+      "prediction_id": 3396
+    },
+    {
       "event_id": "5061",
       "date": "2026-05-02",
       "home": "Real Salt Lake",
@@ -262,19 +308,19 @@
       "league": "MLS",
       "market": "btts",
       "picked_odds": 1.49,
-      "closing_odds": 1.505,
+      "closing_odds": 1.51,
       "picked_implied": 0.671141,
-      "closing_implied": 0.664452,
-      "clv_pct": -0.9967,
+      "closing_implied": 0.662252,
+      "clv_pct": -1.3245,
       "clv_positive": false,
       "ev_at_pick_pct": 0.3962,
       "model_prob": 67.38,
-      "edge_pct": 5.02,
+      "edge_pct": 4.92,
       "score": 95,
-      "line_move_pct": 1.0067,
+      "line_move_pct": 1.3423,
       "won": false,
       "status": "lose",
-      "settled_at": "2026-05-02T23:16:32.172758+00:00",
+      "settled_at": "2026-05-02T23:44:18.179529+00:00",
       "prediction_id": 3384
     },
     {
@@ -366,7 +412,7 @@
       "line_move_pct": -1.3158,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-02T22:18:37.248746+00:00",
+      "settled_at": "2026-05-02T21:45:18.371121+00:00",
       "prediction_id": 3379
     },
     {
@@ -435,7 +481,7 @@
       "line_move_pct": -0.4954,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-02T22:18:37.248746+00:00",
+      "settled_at": "2026-05-02T21:45:18.371121+00:00",
       "prediction_id": 3383
     },
     {
