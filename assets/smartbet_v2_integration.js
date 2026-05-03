@@ -277,13 +277,14 @@ if (typeof module !== 'undefined' && module.exports) {
   if(window.__baClvGuidanceLoaderV1) return;
   window.__baClvGuidanceLoaderV1 = true;
   function load(){
-    if(document.getElementById('ba-clv-card-guidance-runtime')) return;
+    if(document.getElementById('ba-clv-card-guidance-runtime') || document.getElementById('ba-clv-card-guidance-runtime-direct')) return;
     var s = document.createElement('script');
     s.id = 'ba-clv-card-guidance-runtime';
     s.defer = true;
-    s.src = './assets/clv_card_guidance_runtime.js?v=' + Date.now();
+    s.src = './assets/clv_card_guidance_runtime.js?v=20260503clvguide3';
     document.head.appendChild(s);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
   else load();
 })();
+
