@@ -1,7 +1,7 @@
 // BetAnalyticsProV3 performance + runtime loader
 (function(){
   'use strict';
-  if(window.__baPerfV10)return; window.__baPerfV10=true;
+  if(window.__baPerfV21)return; window.__baPerfV21=true;
 
   var originalFetch=window.fetch&&window.fetch.bind(window);
   var dataRe=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
@@ -44,18 +44,18 @@
     setInterval(removeBadges,800);
   }
   function loadRuntimes(){
-    if(window.__baRuntimeLoaderV9)return; window.__baRuntimeLoaderV9=true;
+    if(window.__baRuntimeLoaderV21)return; window.__baRuntimeLoaderV21=true;
     loadScript('assets/logic_safety_patch.js?v=20260426logic1','logic-safety-patch-script');
     loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid8','hybrid-adaptive-runtime-script');
     loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
     loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
     loadScript('assets/api_history_label_runtime.js?v=20260428color2','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260428videoexact3','dashboard-history21-sync-script');
-    loadScript('assets/dashboard_motor_tracker_sync.js?v=20260430motortracker2','dashboard-motor-tracker-sync-script');
+    loadScript('assets/dashboard_motor_tracker_sync.js?v=20260503motortracker21','dashboard-motor-tracker-sync-script');
     loadScript('assets/performance_color_runtime.js?v=20260502filterfix1','performance-color-runtime-script');
     addLink('assets/pro_command_center.css?v=20260428weekstable','pro-command-center-css');
     loadScript('assets/pro_command_center.js?v=20260428weekstable','pro-command-center-script');
-    loadScript('assets/pro_intelligence_runtime.js?v=20260427clean2','pro-intelligence-runtime-script');
+    loadScript('assets/pro_intelligence_runtime.js?v=20260503m23','pro-intelligence-runtime-script');
   }
   function compactStatusText(){
     var el=document.getElementById('sb-text');if(!el||el.__baCompactBusy)return;

@@ -1,4 +1,4 @@
-// Dashboard Motor sync + cleanup + premium Meciuri controls.
+// Dashboard Motor sync. v21: no longer rewrites the Meciuri controls; index/app.css own that UI.
 (function(){
   'use strict';
   if(window.__baDashboardMotorTrackerSyncV8)return;
@@ -17,32 +17,10 @@
   function profitOf(r){var o=num((r&&r.odds)||(r&&r.displayOdds)||(r&&r.book_odds));return statusOf(r)==='win'?(o>1?o-1:0):-1}
 
   function addCss(){
-    if(document.getElementById('ba-cleanup-css-v8'))return;
-    var st=document.createElement('style');
-    st.id='ba-cleanup-css-v8';
-    st.textContent=[
-      '#ba-match-probar,#matches-help-panel,.ba-user-hidden,.ba-user-empty{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}',
-      '#tab-meciuri .ba-matches-controls{margin:0 0 18px!important;padding:16px!important;border-radius:28px!important;background:radial-gradient(ellipse at 0% 0%,rgba(43,229,197,.13),transparent 50%),radial-gradient(ellipse at 100% 100%,rgba(96,165,250,.09),transparent 50%),linear-gradient(180deg,rgba(14,22,44,.98) 0%,rgba(8,12,26,.98) 100%)!important;border:1px solid rgba(78,99,145,.48)!important;box-shadow:0 20px 52px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.05)!important;overflow:hidden!important}',
-      '#tab-meciuri .ba-match-head-premium{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:0 0 14px!important;padding:0 2px 13px!important;border-bottom:1px solid rgba(255,255,255,.07)!important}',
-      '#tab-meciuri .ba-match-title-premium{display:flex!important;align-items:center!important;gap:9px!important;font-size:18px!important;font-weight:950!important;letter-spacing:-.04em!important;color:#ecf5ff!important}',
-      '#tab-meciuri .ba-match-count-premium,#tab-meciuri .ba-matches-controls #filter-count{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:28px!important;padding:4px 12px!important;border-radius:999px!important;background:rgba(43,229,197,.12)!important;border:1px solid rgba(43,229,197,.32)!important;color:var(--acc)!important;font-size:11px!important;font-weight:950!important;font-family:var(--mono)!important;letter-spacing:.01em!important}',
-      '#tab-meciuri .ba-controls-premium{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}',
-      '#tab-meciuri .ba-mode-group{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;padding:5px!important;border-radius:22px!important;background:rgba(0,0,0,.28)!important;border:1px solid rgba(255,255,255,.08)!important}',
-      '#tab-meciuri .ba-mode-btn{min-height:46px!important;border-radius:17px!important;border:1px solid transparent!important;background:transparent!important;color:rgba(155,175,210,.75)!important;font-size:14px!important;font-weight:900!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;cursor:pointer!important;transition:all .2s ease!important;box-shadow:none!important}',
-      '#tab-meciuri .ba-mode-btn:hover:not(.active){color:rgba(220,235,255,.85)!important;background:rgba(255,255,255,.04)!important}',
-      '#tab-meciuri .ba-mode-btn.active,#tab-meciuri .ba-mode-btn[aria-selected="true"],#tab-meciuri .ba-mode-btn[aria-pressed="true"]{background:linear-gradient(135deg,rgba(43,229,197,.28) 0%,rgba(59,130,246,.18) 100%)!important;border-color:rgba(43,229,197,.52)!important;color:#62f6df!important;box-shadow:0 8px 22px rgba(43,229,197,.14),inset 0 1px 0 rgba(255,255,255,.09)!important}',
-      '#tab-meciuri .ba-market-group{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;padding:10px!important;border-radius:22px!important;background:rgba(0,0,0,.22)!important;border:1px solid rgba(255,255,255,.065)!important}',
-      '#tab-meciuri .ba-market-chip{min-height:48px!important;border-radius:16px!important;padding:0 8px!important;border:1px solid rgba(110,135,175,.28)!important;background:linear-gradient(180deg,rgba(255,255,255,.065) 0%,rgba(255,255,255,.025) 100%)!important;color:rgba(210,225,248,.85)!important;font-size:13px!important;font-weight:900!important;letter-spacing:-.01em!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;white-space:nowrap!important;cursor:pointer!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;transition:all .18s ease!important}',
-      '#tab-meciuri .ba-market-chip:hover:not(.active){border-color:rgba(43,229,197,.35)!important;color:#d4f0ff!important;background:linear-gradient(180deg,rgba(43,229,197,.07) 0%,rgba(43,229,197,.02) 100%)!important}',
-      '#tab-meciuri .ba-market-chip.active,#tab-meciuri .ba-market-chip[aria-selected="true"],#tab-meciuri .ba-market-chip[aria-pressed="true"]{background:linear-gradient(135deg,rgba(43,229,197,.26) 0%,rgba(59,130,246,.16) 100%)!important;border-color:rgba(43,229,197,.62)!important;color:#65f8e2!important;box-shadow:0 0 0 1px rgba(43,229,197,.12),0 10px 28px rgba(43,229,197,.13)!important}',
-      '#tab-meciuri .ba-tools-group{display:grid!important;grid-template-columns:minmax(0,1fr) 130px!important;gap:10px!important;align-items:center!important}',
-      '#tab-meciuri .ba-time-control,#tab-meciuri .ba-tools-group select,#tab-meciuri .ba-tools-group .sort-select{width:100%!important;min-height:50px!important;border-radius:18px!important;padding:0 16px!important;background:rgba(255,255,255,.05)!important;border:1px solid rgba(110,135,175,.28)!important;color:#d8e8ff!important;font-size:14px!important;font-weight:800!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important;appearance:auto!important}',
-      '#tab-meciuri .ba-filter-control{min-width:130px!important;min-height:50px!important;border-radius:18px!important;padding:0 16px!important;background:rgba(255,255,255,.05)!important;border:1px solid rgba(110,135,175,.28)!important;color:#d8e8ff!important;font-size:14px!important;font-weight:900!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;cursor:pointer!important;transition:all .18s ease!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important}',
-      '#tab-meciuri .ba-filter-control:hover{border-color:rgba(43,229,197,.4)!important;color:#fff!important;background:rgba(43,229,197,.06)!important}',
-      '#tab-meciuri .ba-matches-controls .matches-card-head,#tab-meciuri .ba-matches-controls .mf-header,#tab-meciuri .ba-matches-controls .mf-chips-scroll,#tab-meciuri .ba-matches-controls .mf-sort-row,#tab-meciuri .ba-matches-controls .matches-filter-toolbar,#tab-meciuri .ba-matches-controls .filter-bar{display:none!important}',
-      '@media(max-width:430px){#tab-meciuri .ba-matches-controls{padding:13px!important;border-radius:24px!important}#tab-meciuri .ba-match-title-premium{font-size:17px!important}#tab-meciuri .ba-market-group{gap:7px!important;padding:8px!important}#tab-meciuri .ba-market-chip{min-height:44px!important;font-size:12px!important;padding:0 6px!important}#tab-meciuri .ba-mode-btn{min-height:42px!important;font-size:13px!important}#tab-meciuri .ba-tools-group{grid-template-columns:1fr 116px!important}#tab-meciuri .ba-time-control,#tab-meciuri .ba-tools-group select{min-height:46px!important}#tab-meciuri .ba-filter-control{min-width:116px!important;min-height:46px!important}}'
-    ].join('\n');
-    document.head.appendChild(st);
+    // v21: legacy Meciuri premium CSS is intentionally not injected anymore.
+    // The page-level v21 controls in index.html/assets/app.css own the layout.
+    var old=document.getElementById('ba-cleanup-css-v8');
+    if(old&&old.parentNode)old.parentNode.removeChild(old);
   }
 
   function smartBetRows(){
@@ -159,7 +137,18 @@
     });
   }
 
-  function patch(){addCss();cleanupMeciuri();cleanupIstoric21();polishMeciuriControls();var s=trackerSummary();if(s)patchDashboard(s)}
+
+  function clearOldMeciuriPremiumControls(){
+    try{
+      var tab=document.getElementById('tab-meciuri'); if(!tab)return;
+      var st=document.getElementById('ba-cleanup-css-v8'); if(st&&st.parentNode)st.parentNode.removeChild(st);
+      [].slice.call(tab.querySelectorAll('.ba-match-head-premium,.ba-controls-premium')).forEach(function(el){ if(el&&el.parentNode)el.parentNode.removeChild(el); });
+      [].slice.call(tab.querySelectorAll('.ba-matches-controls')).forEach(function(el){ el.classList.remove('ba-matches-controls'); });
+      [].slice.call(tab.querySelectorAll('.ba-user-hidden,.ba-user-empty')).forEach(function(el){ el.classList.remove('ba-user-hidden','ba-user-empty'); });
+    }catch(e){}
+  }
+
+  function patch(){addCss();clearOldMeciuriPremiumControls();cleanupIstoric21();var s=trackerSummary();if(s)patchDashboard(s)}
   function boot(){patch();[100,350,800,1600,3200,5200,9000].forEach(function(t){setTimeout(patch,t)});setInterval(patch,600);try{new MutationObserver(function(){clearTimeout(window.__baMotorTrackerSyncT);window.__baMotorTrackerSyncT=setTimeout(patch,45)}).observe(document.body,{childList:true,subtree:true,characterData:true})}catch(e){}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
