@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-03T12:28:31.811336+00:00",
+  "updated_at": "2026-05-03T12:57:11.652788+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 68.8,
+  "overall_score": 68.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 134,
-    "candidates_with_odds_and_probability": 118,
+    "pending_rows": 131,
+    "candidates_with_odds_and_probability": 115,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,23 +18,23 @@
   },
   "risk_distribution": {
     "safe": 6,
-    "speculative": 91,
-    "balanced": 22
+    "speculative": 88,
+    "balanced": 21
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 68,
-    "BTTS": 14,
-    "Over 1.5G": 35
+    "Under 3.5G": 66,
+    "BTTS": 13,
+    "Over 1.5G": 34
   },
   "league_distribution_top150": {
     "Segunda División": 4,
     "Copa Sudamericana": 9,
     "Copa Libertadores": 11,
     "Bundesliga": 3,
-    "J1 League": 9,
-    "Parva Liga": 7,
-    "Eredivisie": 3,
+    "J1 League": 8,
+    "Parva Liga": 6,
+    "Eredivisie": 2,
     "Liga Portugal Betclic": 1,
     "Saudi Pro League": 3,
     "La Liga": 4,
@@ -42,7 +42,7 @@
     "Superliga": 4,
     "FA Cup": 1,
     "K League 1": 5,
-    "Serie A": 5,
+    "Serie A": 4,
     "Pro League": 4,
     "Allsvenskan": 6,
     "Brasileirão Serie B": 6,
@@ -1400,34 +1400,6 @@
       ]
     },
     {
-      "event_id": 202990,
-      "prediction_id": 3411,
-      "home": "Arda Kardzhali",
-      "away": "Cherno More Varna",
-      "league": "Parva Liga",
-      "event_date": "2026-05-03T13:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.182,
-      "model_probability": 0.8399,
-      "model_probability_pct": 83.99,
-      "implied_probability_pct": 84.6,
-      "fair_odds": 1.191,
-      "edge_pp": -0.61,
-      "ev_pct": -0.72,
-      "kelly_fraction": 0.0,
-      "kelly_units_100": 0.0,
-      "confidence": 47.56,
-      "score": 87.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.0% vs. probabilitate implicată 84.6%.",
-        "EV estimat -0.7% și edge -0.6 puncte procentuale.",
-        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 204850,
       "prediction_id": 3248,
       "home": "Nagoya Grampus",
@@ -1480,6 +1452,34 @@
       "rationale": [
         "Probabilitate model 83.8% vs. probabilitate implicată 76.9%.",
         "EV estimat 9.0% și edge 6.9 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9298,
+      "prediction_id": 3520,
+      "home": "Juventud de Las Piedras",
+      "away": "Atlético Mineiro",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-05-06T01:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.333,
+      "model_probability": 0.8354,
+      "model_probability_pct": 83.54,
+      "implied_probability_pct": 75.02,
+      "fair_odds": 1.197,
+      "edge_pp": 8.52,
+      "ev_pct": 11.36,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 57.42,
+      "score": 100.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.5% vs. probabilitate implicată 75.0%.",
+        "EV estimat 11.4% și edge 8.5 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -2049,12 +2049,12 @@
   "settled_market_performance": [
     {
       "key": "BTTS",
-      "bets": 92,
+      "bets": 93,
       "wins": 68,
-      "winrate": 73.91,
-      "profit_units": 13.57,
-      "roi_pct": 14.75,
-      "avg_odds": 1.549
+      "winrate": 73.12,
+      "profit_units": 12.57,
+      "roi_pct": 13.52,
+      "avg_odds": 1.548
     },
     {
       "key": "Over 2.5G",
@@ -2067,21 +2067,21 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 379,
-      "wins": 275,
-      "winrate": 72.56,
-      "profit_units": -0.16,
-      "roi_pct": -0.04,
-      "avg_odds": 1.39
+      "bets": 381,
+      "wins": 277,
+      "winrate": 72.7,
+      "profit_units": 0.4,
+      "roi_pct": 0.11,
+      "avg_odds": 1.389
     },
     {
       "key": "Over 1.5G",
-      "bets": 184,
+      "bets": 185,
       "wins": 124,
-      "winrate": 67.39,
-      "profit_units": -20.65,
-      "roi_pct": -11.22,
-      "avg_odds": 1.322
+      "winrate": 67.03,
+      "profit_units": -21.65,
+      "roi_pct": -11.7,
+      "avg_odds": 1.323
     }
   ],
   "settled_league_performance": [
@@ -2168,12 +2168,12 @@
     },
     {
       "key": "Parva Liga",
-      "bets": 26,
-      "wins": 23,
-      "winrate": 88.46,
-      "profit_units": 3.61,
-      "roi_pct": 13.9,
-      "avg_odds": 1.287
+      "bets": 27,
+      "wins": 24,
+      "winrate": 88.89,
+      "profit_units": 3.79,
+      "roi_pct": 14.06,
+      "avg_odds": 1.283
     },
     {
       "key": "Bundesliga",
