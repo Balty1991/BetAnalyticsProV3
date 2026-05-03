@@ -1,28 +1,49 @@
-// BetAnalytics Pro - CLV market guidance on Meciuri cards
-// V7: compact mobile guidance with readable wrapping. Non-filtering, non-blocking.
+// BetAnalytics Pro - CLV guidance on Meciuri cards
+// V7 rollback guard: restores the circled version (original card + small CLV context strip).
 (function(){
   'use strict';
-  if (window.__baClvCardGuidanceV7) return;
-  window.__baClvCardGuidanceV7 = true;
 
-  try {
-    var oldTab = document.getElementById('tab-meciuri') || document.body;
-    ['__baClvObserverV2','__baClvObserverV3'].forEach(function(k){
-      if (oldTab && oldTab[k] && typeof oldTab[k].disconnect === 'function') oldTab[k].disconnect();
-      if (oldTab) oldTab[k] = null;
-    });
-  } catch(e) {}
+  // Prevent old experimental compact-card runtimes from taking over the match card again.
+  window.__baMatchesUiUpgradeV1 = true;
+  window.__baMatchesUiUpgradeV2 = true;
+  window.__baMatchesUiUpgradeV3 = true;
+  window.__baCompactRecoV8 = true;
+
+  if (window.__baClvCardGuidanceV7Rollback) return;
+  window.__baClvCardGuidanceV7Rollback = true;
 
   var clvMap = null;
   var loading = false;
   var lastScan = 0;
   var scanTimer = null;
+  var cleanupRuns = 0;
 
   function cleanText(el){ return (el && (el.innerText || el.textContent) || '').replace(/\s+/g, ' ').trim(); }
   function isMeciuriActive(){
     var tab = document.getElementById('tab-meciuri');
     return !!(tab && tab.classList && tab.classList.contains('active'));
   }
+
+  function cleanupExperimentalCards(){
+    cleanupRuns += 1;
+    try {
+      document.body.classList.remove('ba-matches-upgrade','ba-simple-mode','ba-expert-mode','ba-compact-reco-on');
+      ['ba-matches-ui-upgrade-style','ba-matches-ui-upgrade-style-v2','ba-matches-ui-upgrade-style-v3','ba-compact-reco-style-v8','ba-emergency-mobile-card-css'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      });
+      document.querySelectorAll('.ba-card-compact,.ba-pro-reco-card').forEach(function(el){
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      });
+      document.querySelectorAll('.ba-reco-original-hidden,.ba-reco-side-hidden').forEach(function(el){
+        el.classList.remove('ba-reco-original-hidden','ba-reco-side-hidden');
+        el.style.display = '';
+        el.style.visibility = '';
+        el.style.opacity = '';
+      });
+    } catch(e) {}
+  }
+
   function marketKey(s){
     s = String(s || '').toLowerCase();
     if (/\bbtts\b|ambele\s+marcheaz/.test(s)) return 'btts';
@@ -153,6 +174,7 @@
     return out.slice(0, 24);
   }
   function scan(){
+    cleanupExperimentalCards();
     if (!clvMap || !isMeciuriActive()) return;
     var now = Date.now();
     if (now - lastScan < 700) return;
@@ -170,18 +192,19 @@
     scanTimer = setTimeout(function(){ scanTimer = null; load().then(scan); }, 250);
   }
   function hook(){
-    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV7) {
+    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV7Rollback) {
       var oldRender = window.renderMatches;
       window.renderMatches = function(){ var r = oldRender.apply(this, arguments); schedule(); setTimeout(schedule, 900); return r; };
-      window.renderMatches.__baClvGuidanceV7 = true;
+      window.renderMatches.__baClvGuidanceV7Rollback = true;
     }
-    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV7) {
+    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV7Rollback) {
       var oldSwitch = window.switchTab;
       window.switchTab = function(name){ var r = oldSwitch.apply(this, arguments); if (name === 'meciuri') { schedule(); setTimeout(schedule, 900); } return r; };
-      window.switchTab.__baClvGuidanceV7 = true;
+      window.switchTab.__baClvGuidanceV7Rollback = true;
     }
   }
-  function boot(){ hook(); if (isMeciuriActive()) { schedule(); setTimeout(schedule, 1200); } }
+  function boot(){ cleanupExperimentalCards(); hook(); if (isMeciuriActive()) { schedule(); setTimeout(schedule, 1200); } }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  [1200, 4000].forEach(function(t){ setTimeout(boot, t); });
+  [250, 800, 1200, 2400, 4000, 7000, 12000, 20000].forEach(function(t){ setTimeout(boot, t); });
+  var cleanupTimer = setInterval(function(){ cleanupExperimentalCards(); if (cleanupRuns > 50) clearInterval(cleanupTimer); }, 1000);
 })();
