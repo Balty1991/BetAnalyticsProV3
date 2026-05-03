@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-05-03T03:33:25.295410+00:00",
+  "updated_at": "2026-05-03T04:07:42.014371+00:00",
   "summary": {
-    "total_picks": 644,
-    "avg_clv_pct": -0.6037,
+    "total_picks": 645,
+    "avg_clv_pct": -0.6139,
     "median_clv_pct": 0.0,
     "clv_positive_n": 112,
-    "clv_negative_n": 532,
-    "clv_positive_rate": 0.1739,
+    "clv_negative_n": 533,
+    "clv_positive_rate": 0.1736,
     "avg_clv_wins": -0.3541,
-    "avg_clv_losses": -1.2421,
-    "win_rate_pct": 71.89,
-    "roi_flat_pct": -0.1075,
+    "avg_clv_losses": -1.2749,
+    "win_rate_pct": 71.78,
+    "roi_flat_pct": -0.2623,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1028
+    "std_clv_pct": 6.1036
   },
   "by_market": {
     "btts": {
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.8482
     },
     "under35": {
-      "n": 365,
-      "avg_clv_pct": -1.2192,
-      "clv_positive_rate": 0.1288,
-      "win_rate_pct": 73.15,
-      "roi_flat_pct": 0.8877,
-      "avg_ev_at_pick": 3.3131
+      "n": 366,
+      "avg_clv_pct": -1.2356,
+      "clv_positive_rate": 0.1284,
+      "win_rate_pct": 72.95,
+      "roi_flat_pct": 0.612,
+      "avg_ev_at_pick": 3.2999
     }
   },
   "clv_buckets": {
@@ -75,24 +75,24 @@
       "avg_clv": -2.6529
     },
     "clv_strong_neg": {
-      "n": 65,
-      "win_rate": 63.08,
-      "roi_pct": -5.4969,
-      "avg_clv": -10.0056
+      "n": 66,
+      "win_rate": 62.12,
+      "roi_pct": -6.9288,
+      "avg_clv": -9.9631
     }
   },
   "rolling_30d": {
-    "n": 644,
-    "avg_clv_pct": -0.6037,
-    "win_rate_pct": 71.89,
-    "roi_flat_pct": -0.1075,
+    "n": 645,
+    "avg_clv_pct": -0.6139,
+    "win_rate_pct": 71.78,
+    "roi_flat_pct": -0.2623,
     "days": 30
   },
   "rolling_90d": {
-    "n": 644,
-    "avg_clv_pct": -0.6037,
-    "win_rate_pct": 71.89,
-    "roi_flat_pct": -0.1075,
+    "n": 645,
+    "avg_clv_pct": -0.6139,
+    "win_rate_pct": 71.78,
+    "roi_flat_pct": -0.2623,
     "days": 90
   },
   "ev_correlation": {
@@ -102,15 +102,15 @@
       "clv_positive_rate": 0.2247
     },
     "ev_negative_picks": {
-      "n": 239,
-      "avg_clv": -2.6648,
-      "clv_positive_rate": 0.0879
+      "n": 240,
+      "avg_clv": -2.6837,
+      "clv_positive_rate": 0.0875
     },
     "divergence_warning": false
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.60%) și ROI negativ (-0.11%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "interpretation": "❌ CLV negativ (-0.61%) și ROI negativ (-0.26%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
     "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
@@ -136,7 +136,7 @@
       "line_move_pct": 1.4815,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-03T03:10:07.240369+00:00",
+      "settled_at": "2026-05-03T03:44:52.326313+00:00",
       "prediction_id": 3597
     },
     {
@@ -159,7 +159,7 @@
       "line_move_pct": -5.7051,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-03T03:10:07.240369+00:00",
+      "settled_at": "2026-05-03T03:44:52.326313+00:00",
       "prediction_id": 3397
     },
     {
@@ -299,6 +299,29 @@
       "status": "lose",
       "settled_at": "2026-05-03T01:40:33.127479+00:00",
       "prediction_id": 3389
+    },
+    {
+      "event_id": "5070",
+      "date": "2026-05-03",
+      "home": "San Diego FC",
+      "away": "Los Angeles FC",
+      "league": "MLS",
+      "market": "under35",
+      "picked_odds": 1.52,
+      "closing_odds": 1.638,
+      "picked_implied": 0.657895,
+      "closing_implied": 0.610501,
+      "clv_pct": -7.2039,
+      "clv_positive": false,
+      "ev_at_pick_pct": -1.5192,
+      "model_prob": 64.79,
+      "edge_pct": 7.4,
+      "score": 68,
+      "line_move_pct": 7.7632,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-05-03T03:44:52.326313+00:00",
+      "prediction_id": 3399
     },
     {
       "event_id": "5067",
