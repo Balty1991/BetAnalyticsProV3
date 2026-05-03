@@ -2,18 +2,18 @@
 // Non-filtering: only adds visual guidance from data/clv_tracker.json.
 (function(){
   'use strict';
-  if (window.__baClvCardGuidanceV1) return;
-  window.__baClvCardGuidanceV1 = true;
+  if (window.__baClvCardGuidanceV2) return;
+  window.__baClvCardGuidanceV2 = true;
 
   var clvMap = null;
   var loading = false;
 
   function marketKey(s){
     s = String(s || '').toLowerCase();
+    if (/\bbtts\b|ambele\s+marcheaz/.test(s)) return 'btts';
     if (/over\s*1[\.,]5|peste\s*1[\.,]5|\bo1[\.,]5|1[\.,]5g|over15/.test(s)) return 'over15';
     if (/over\s*2[\.,]5|peste\s*2[\.,]5|\bo2[\.,]5|2[\.,]5g|over25/.test(s)) return 'over25';
     if (/under\s*3[\.,]5|sub\s*3[\.,]5|\bu3[\.,]5|3[\.,]5g|under35/.test(s)) return 'under35';
-    if (/\bbtts\b|ambele\s+marcheaz/.test(s)) return 'btts';
     if (/home[_\s-]*win|victorie\s+gazd/.test(s)) return 'home_win';
     if (/away[_\s-]*win|victorie\s+oaspe/.test(s)) return 'away_win';
     if (/\bdraw\b|\begal\b/.test(s)) return 'draw';
@@ -35,7 +35,7 @@
   function load(){
     if (clvMap || loading) return Promise.resolve(clvMap || {});
     loading = true;
-    return fetch('./data/clv_tracker.json?v=' + Date.now())
+    return fetch('./data/clv_tracker.json?v=' + Date.now(), {cache:'no-store'})
       .then(function(r){ return r.ok ? r.json() : {}; })
       .then(function(d){ clvMap = buildMap(d || {}); return clvMap; })
       .catch(function(){ clvMap = {}; return clvMap; })
@@ -45,13 +45,14 @@
   function style(){
     if (document.getElementById('ba-clv-guidance-style')) return;
     var css = [
-      '.ba-clv-guidance{display:flex;gap:7px;align-items:flex-start;margin:8px 0;padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.1);font-size:11px;line-height:1.35;background:rgba(15,23,42,.72)}',
-      '.ba-clv-guidance b{font-size:11px;font-weight:800}.ba-clv-guidance small{display:block;font-size:10px;color:rgba(148,163,184,.95);margin-top:2px}',
-      '.ba-clv-good{border-color:rgba(34,197,94,.36);background:rgba(34,197,94,.08)}.ba-clv-good b{color:#22c55e}',
-      '.ba-clv-warn{border-color:rgba(249,115,22,.36);background:rgba(249,115,22,.09)}.ba-clv-warn b{color:#fb923c}',
-      '.ba-clv-caution{border-color:rgba(245,158,11,.36);background:rgba(245,158,11,.08)}.ba-clv-caution b{color:#f59e0b}',
-      '.ba-clv-bad{border-color:rgba(239,68,68,.38);background:rgba(239,68,68,.09)}.ba-clv-bad b{color:#ef4444}',
-      '.ba-clv-info{border-color:rgba(59,130,246,.32);background:rgba(59,130,246,.08)}.ba-clv-info b{color:#60a5fa}'
+      '.ba-clv-guidance{display:flex!important;gap:8px;align-items:flex-start;margin:10px 0!important;padding:9px 11px!important;border-radius:14px;border:1px solid rgba(255,255,255,.12);font-size:12px;line-height:1.35;background:rgba(15,23,42,.82);box-shadow:0 8px 20px rgba(0,0,0,.18)}',
+      '.ba-clv-guidance b{font-size:12px;font-weight:900}.ba-clv-guidance small{display:block;font-size:10px;color:rgba(190,202,220,.95);margin-top:2px}',
+      '.ba-clv-good{border-color:rgba(34,197,94,.42);background:rgba(34,197,94,.10)}.ba-clv-good b{color:#22c55e}',
+      '.ba-clv-warn{border-color:rgba(249,115,22,.44);background:rgba(249,115,22,.12)}.ba-clv-warn b{color:#fb923c}',
+      '.ba-clv-caution{border-color:rgba(245,158,11,.44);background:rgba(245,158,11,.11)}.ba-clv-caution b{color:#f59e0b}',
+      '.ba-clv-bad{border-color:rgba(239,68,68,.46);background:rgba(239,68,68,.12)}.ba-clv-bad b{color:#ef4444}',
+      '.ba-clv-info{border-color:rgba(59,130,246,.38);background:rgba(59,130,246,.10)}.ba-clv-info b{color:#60a5fa}',
+      '.ba-clv-floating-debug{position:fixed;left:10px;bottom:76px;z-index:9999;padding:7px 10px;border-radius:12px;background:rgba(15,23,42,.92);border:1px solid rgba(43,229,197,.35);color:#2BE5C5;font:11px monospace}'
     ].join('');
     var el = document.createElement('style');
     el.id = 'ba-clv-guidance-style';
@@ -76,16 +77,7 @@
     return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
   }
 
-  function goodCard(el){
-    if (!el || el.querySelector('.ba-clv-guidance')) return false;
-    var c = String(el.className || '').toLowerCase();
-    if (!(c.indexOf('card') >= 0 || c.indexOf('match') >= 0 || c.indexOf('pick') >= 0)) return false;
-    if (el.querySelectorAll('[class*=card],[class*=match-card]').length > 4) return false;
-    var t = (el.innerText || el.textContent || '').trim();
-    return t.length >= 45 && t.length < 3500 && /(edge|value|prob|cot|peste|sub|btts|ambele|over|under|xg)/i.test(t);
-  }
-
-  function add(el, row){
+  function makeBadge(row){
     var pair = label(row);
     var sev = 'ba-clv-' + (row.severity || 'info');
     var box = document.createElement('div');
@@ -93,38 +85,85 @@
     box.title = row.action || '';
     var adj = Number(row.edge_adjustment_pp || 0);
     box.innerHTML = '<div>' + pair[0] + '</div><div><b>' + pair[1] + '</b><small>CLV ' + pct(row.avg_clv_pct) + ' · ROI ' + pct(row.roi_flat_pct) + ' · N=' + (row.n || 0) + (adj > 0 ? ' · edge +' + adj.toFixed(1) + 'pp' : '') + '</small></div>';
-    var target = el.querySelector('.card-reco-badges,.badges,.tags,.chips');
-    if (target) target.appendChild(box);
-    else el.insertBefore(box, el.firstChild);
+    return box;
+  }
+
+  function add(el, row){
+    if (!el || !row || el.querySelector('.ba-clv-guidance')) return;
+    var box = makeBadge(row);
+    var target = el.querySelector('.card-reco-badges,.badges,.tags,.chips,[class*=badge],[class*=chip]');
+    if (target && target.parentNode) target.parentNode.insertBefore(box, target.nextSibling);
+    else {
+      var risk = Array.prototype.find.call(el.children || [], function(c){ return /RISC|PARIAZ|EVIT/.test(c.textContent || ''); });
+      if (risk && risk.parentNode === el) el.insertBefore(box, risk);
+      else el.insertBefore(box, el.firstChild);
+    }
+  }
+
+  function findRecoContainers(root){
+    var all = Array.prototype.slice.call(root.querySelectorAll('div,article,section,li'));
+    var list = [];
+    all.forEach(function(el){
+      if (!el || el.querySelector('.ba-clv-guidance')) return;
+      var t = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
+      if (t.length < 80 || t.length > 2600) return;
+      if (!/(RECOMANDARE PRINCIPALĂ|PRONOSTIC RECOMANDAT|RECOMANDARE PRINCIPALA|Pronostic recomandat|Probabilitate pronostic)/i.test(t)) return;
+      if (!/(BTTS|Over|Under|Peste|Sub|Ambele)/i.test(t)) return;
+      list.push({el:el, len:t.length, text:t});
+    });
+    list.sort(function(a,b){ return a.len - b.len; });
+    return list;
   }
 
   function scan(){
     if (!clvMap) return;
     style();
     var root = document.getElementById('tab-meciuri') || document.body;
-    var cards = root.querySelectorAll('.match-card,.ml-card,.pick-card,.event-card,.prediction-card,.card,[class*=match-card],[class*=pick-card],[class*=prediction-card]');
-    Array.prototype.forEach.call(cards, function(el){
-      if (!goodCard(el)) return;
-      var mk = marketKey((el.getAttribute('data-market') || '') + ' ' + (el.getAttribute('data-type') || '') + ' ' + (el.innerText || el.textContent || ''));
+
+    var boxes = findRecoContainers(root);
+    boxes.forEach(function(item){
+      var mk = marketKey(item.text);
       var row = clvMap[mk];
-      if (row) add(el, row);
+      if (row) add(item.el, row);
+    });
+
+    // Fallback: if a detailed card has the market title as a standalone heading, attach to the closest useful parent.
+    Array.prototype.forEach.call(root.querySelectorAll('*'), function(el){
+      if (el.querySelector && el.querySelector('.ba-clv-guidance')) return;
+      var t = (el.textContent || '').replace(/\s+/g,' ').trim();
+      if (!/^(BTTS|Over 1[\.,]5G?|Over 2[\.,]5G?|Under 3[\.,]5G?)$/i.test(t)) return;
+      var mk = marketKey(t), row = clvMap[mk];
+      if (!row) return;
+      var p = el.parentElement;
+      for (var i=0; p && i<5; i++, p=p.parentElement){
+        var pt = (p.innerText || p.textContent || '').replace(/\s+/g,' ').trim();
+        if (pt.length > 100 && pt.length < 2600 && /Edge|Value|Probabilitate|Cota|Cotă|RISC/i.test(pt)) { add(p,row); break; }
+      }
     });
   }
 
-  function run(){ load().then(function(){ scan(); setTimeout(scan, 300); setTimeout(scan, 1000); }); }
+  function run(){ load().then(function(){ scan(); setTimeout(scan, 200); setTimeout(scan, 800); setTimeout(scan, 1800); }); }
   function hook(){
-    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidance) {
+    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV2) {
       var oldRender = window.renderMatches;
       window.renderMatches = function(){ var r = oldRender.apply(this, arguments); run(); return r; };
-      window.renderMatches.__baClvGuidance = true;
+      window.renderMatches.__baClvGuidanceV2 = true;
     }
-    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidance) {
+    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV2) {
       var oldSwitch = window.switchTab;
       window.switchTab = function(name){ var r = oldSwitch.apply(this, arguments); if (name === 'meciuri') run(); return r; };
-      window.switchTab.__baClvGuidance = true;
+      window.switchTab.__baClvGuidanceV2 = true;
     }
   }
-  function boot(){ hook(); run(); var tab = document.getElementById('tab-meciuri'); if (tab && !tab.__baClvObserver) { var mo = new MutationObserver(run); mo.observe(tab,{childList:true,subtree:true}); tab.__baClvObserver = mo; } }
+  function boot(){
+    hook(); run();
+    var tab = document.getElementById('tab-meciuri') || document.body;
+    if (tab && !tab.__baClvObserverV2) {
+      var mo = new MutationObserver(function(){ run(); });
+      mo.observe(tab,{childList:true,subtree:true,characterData:true});
+      tab.__baClvObserverV2 = mo;
+    }
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  [500,1500,3000,6000,10000].forEach(function(t){ setTimeout(boot, t); });
+  [300,1000,2500,5000,9000,15000].forEach(function(t){ setTimeout(boot, t); });
 })();
