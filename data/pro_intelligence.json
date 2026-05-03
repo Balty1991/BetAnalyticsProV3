@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-03T16:21:06.155287+00:00",
+  "updated_at": "2026-05-03T16:52:45.496347+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 63.2,
+  "overall_score": 62.5,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,22 +9,22 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 114,
-    "candidates_with_odds_and_probability": 98,
+    "pending_rows": 107,
+    "candidates_with_odds_and_probability": 92,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 77,
+    "speculative": 73,
     "safe": 4,
-    "balanced": 17
+    "balanced": 15
   },
   "market_distribution_top150": {
-    "Under 3.5G": 59,
+    "Under 3.5G": 57,
     "BTTS": 12,
-    "Over 1.5G": 27
+    "Over 1.5G": 23
   },
   "league_distribution_top150": {
     "Copa Sudamericana": 9,
@@ -35,17 +35,17 @@
     "Eredivisie": 1,
     "Liga Portugal Betclic": 1,
     "Saudi Pro League": 3,
-    "La Liga": 4,
+    "La Liga": 3,
     "Ligue 1": 4,
     "Superliga": 4,
-    "Segunda División": 3,
+    "Segunda División": 2,
     "FA Cup": 1,
     "K League 1": 5,
-    "Allsvenskan": 4,
+    "Allsvenskan": 2,
     "Pro League": 2,
     "Brasileirão Serie B": 6,
     "Trendyol Super Lig": 4,
-    "Super League": 2,
+    "Super League": 1,
     "Brasileirão Serie A": 2,
     "Chinese Super League": 3,
     "Nigeria Premier Football League": 1,
@@ -54,9 +54,9 @@
     "Europa League": 2,
     "Ekstraklasa": 2,
     "Champions League": 1,
-    "Premier League": 2,
     "Scottish Premiership": 1,
-    "Stoiximan Super League": 1
+    "Stoiximan Super League": 1,
+    "Premier League": 1
   },
   "bankroll": {
     "default_bankroll_units": 100,
@@ -1961,34 +1961,6 @@
       ]
     },
     {
-      "event_id": 46348,
-      "prediction_id": 3432,
-      "home": "GAIS",
-      "away": "Örgryte IS",
-      "league": "Allsvenskan",
-      "event_date": "2026-05-03T17:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.505,
-      "model_probability": 0.6748,
-      "model_probability_pct": 67.48,
-      "implied_probability_pct": 66.45,
-      "fair_odds": 1.482,
-      "edge_pp": 1.03,
-      "ev_pct": 1.56,
-      "kelly_fraction": 0.0077,
-      "kelly_units_100": 0.77,
-      "confidence": 54.57,
-      "score": 81.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 67.5% vs. probabilitate implicată 66.4%.",
-        "EV estimat 1.6% și edge 1.0 puncte procentuale.",
-        "Miză Kelly fracțională 0.77% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 204248,
       "prediction_id": 3480,
       "home": "Las Palmas",
@@ -2017,30 +1989,30 @@
       ]
     },
     {
-      "event_id": 204246,
-      "prediction_id": 3430,
-      "home": "Sporting Gijón",
-      "away": "AD Ceuta",
-      "league": "Segunda División",
-      "event_date": "2026-05-03T17:15:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.27,
-      "model_probability": 0.778,
-      "model_probability_pct": 77.8,
-      "implied_probability_pct": 78.74,
-      "fair_odds": 1.285,
-      "edge_pp": -0.94,
-      "ev_pct": -1.19,
+      "event_id": 205062,
+      "prediction_id": 3512,
+      "home": "Gimcheon Sangmu FC",
+      "away": "Ulsan HD",
+      "league": "K League 1",
+      "event_date": "2026-05-05T10:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.333,
+      "model_probability": 0.7357,
+      "model_probability_pct": 73.57,
+      "implied_probability_pct": 75.02,
+      "fair_odds": 1.359,
+      "edge_pp": -1.45,
+      "ev_pct": -1.93,
       "kelly_fraction": 0.0,
       "kelly_units_100": 0.0,
-      "confidence": 76.56,
-      "score": 77.0,
+      "confidence": 53.78,
+      "score": 75.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 77.8% vs. probabilitate implicată 78.7%.",
-        "EV estimat -1.2% și edge -0.9 puncte procentuale.",
+        "Probabilitate model 73.6% vs. probabilitate implicată 75.0%.",
+        "EV estimat -1.9% și edge -1.4 puncte procentuale.",
         "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     }
@@ -2066,21 +2038,21 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 390,
-      "wins": 285,
-      "winrate": 73.08,
-      "profit_units": 3.05,
-      "roi_pct": 0.78,
-      "avg_odds": 1.39
+      "bets": 393,
+      "wins": 286,
+      "winrate": 72.77,
+      "profit_units": 1.68,
+      "roi_pct": 0.43,
+      "avg_odds": 1.392
     },
     {
       "key": "Over 1.5G",
-      "bets": 190,
-      "wins": 129,
-      "winrate": 67.89,
-      "profit_units": -19.98,
-      "roi_pct": -10.52,
-      "avg_odds": 1.323
+      "bets": 194,
+      "wins": 133,
+      "winrate": 68.56,
+      "profit_units": -18.53,
+      "roi_pct": -9.55,
+      "avg_odds": 1.324
     }
   ],
   "settled_league_performance": [
@@ -2139,6 +2111,15 @@
       "avg_odds": 1.445
     },
     {
+      "key": "Super League",
+      "bets": 11,
+      "wins": 9,
+      "winrate": 81.82,
+      "profit_units": 2.23,
+      "roi_pct": 20.25,
+      "avg_odds": 1.484
+    },
+    {
       "key": "Tunisian Ligue Professionnelle 1",
       "bets": 3,
       "wins": 3,
@@ -2155,15 +2136,6 @@
       "profit_units": 0.34,
       "roi_pct": 17.0,
       "avg_odds": 1.17
-    },
-    {
-      "key": "Super League",
-      "bets": 9,
-      "wins": 7,
-      "winrate": 77.78,
-      "profit_units": 1.37,
-      "roi_pct": 15.22,
-      "avg_odds": 1.497
     },
     {
       "key": "Copa Sudamericana",
