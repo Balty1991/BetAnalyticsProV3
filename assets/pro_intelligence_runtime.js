@@ -1,40 +1,92 @@
+// BetAnalyticsProV3 — Meciuri direct repo cleanup + compact layout
 (function(){
-'use strict';
-if(window.__baProIntelligenceRuntimeV22)return;window.__baProIntelligenceRuntimeV22=true;
-var DATA=null, view='top_ev', risk='all';
-var viewLabels={top_ev:'Top EV',safest:'Safe',balanced:'Balanced'};
-function $(id){return document.getElementById(id)}
-function esc(v){return String(v==null?'':v).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]})}
-function n(v,d){v=Number(v||0);return isFinite(v)?v.toFixed(d==null?0:d):'—'}
-function arr(x){return Array.isArray(x)?x:[]}
-function getData(){return fetch('data/pro_intelligence.json?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})}
-function fallbackData(){return{updated_at:new Date().toISOString(),overall_score:58,top_ev:[{home:'BetAnalytics',away:'Audit Pro',league:'System',market:'EV+',odds:1.85,model_probability_pct:64.2,ev_pct:18.8,edge_pp:10.1,kelly_units_100:4.1,risk_tier:'value',event_date:'live',rationale:['Runtime-ul PRO V22 funcționează.','Butonul a schimbat lista local, fără scroll forțat.','Formula activă: EV = p*(odds-1)-(1-p).']}],safest:[{home:'Safe',away:'Mode',league:'System',market:'Under 3.5G',odds:1.45,model_probability_pct:78.0,ev_pct:13.1,edge_pp:9.0,kelly_units_100:5.0,risk_tier:'safe',event_date:'live',rationale:['Lista Safe este separată de Top EV.','Profil conservator pentru bilete scurte.']}],balanced:[{home:'Balanced',away:'Mode',league:'System',market:'BTTS',odds:1.65,model_probability_pct:67.0,ev_pct:10.6,edge_pp:6.4,kelly_units_100:2.4,risk_tier:'balanced',event_date:'live',rationale:['Lista Balanced este separată de Top EV.','Profil echilibrat între probabilitate și cotă.']}],risk_distribution:{safe:1,value:1,balanced:1},market_distribution_top150:{'EV+':1,'Under 3.5G':1,BTTS:1},settled_market_performance:[],bankroll:{staking_model:'quarter_kelly_capped_6_percent',max_single_stake_units:6,daily_exposure_cap_units:12},formulas:{implied_probability:'1 / decimal_odds',edge_pp:'model_probability_pct - implied_probability_pct',expected_value:'p * (odds - 1) - (1 - p)',kelly_fractional:'quarter Kelly capped at 6%'}}}
-function data(){return DATA||fallbackData()}
-function shortlist(key){var d=data(), out=arr(d[key]);if(!out.length&&key==='balanced')out=arr(d.top_ev).filter(function(x){return x.risk_tier==='balanced'||x.risk_tier==='safe'});if(!out.length&&key==='safest')out=arr(d.top_ev).filter(function(x){return x.risk_tier==='safe'});if(!out.length)out=arr(d.top_ev);return out}
-function selectedList(){var out=shortlist(view);if(risk!=='all')out=out.filter(function(x){return x.risk_tier===risk});return out.slice(0,12)}
-function css(){if($('pro-intelligence-css-v22'))return;var s=document.createElement('style');s.id='pro-intelligence-css-v22';s.textContent=[
-'.pro-intel-shell,.ba-match-probar{margin:14px 0;padding:18px;border-radius:28px;border:1px solid rgba(96,165,250,.28);background:radial-gradient(circle at 10% 0,rgba(96,165,250,.20),transparent 35%),radial-gradient(circle at 100% 0,rgba(43,229,197,.16),transparent 35%),linear-gradient(135deg,rgba(15,23,42,.97),rgba(2,6,23,.95));box-shadow:0 26px 80px rgba(0,0,0,.38);overflow:hidden;position:relative}.pro-intel-shell:before,.ba-match-probar:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(#2BE5C5,#60A5FA,#A78BFA)}',
-'.pi-head,.bmp-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.pi-kicker,.bmp-kicker{font-size:10px;font-weight:950;letter-spacing:.14em;text-transform:uppercase;color:#60A5FA}.pi-title,.bmp-title{font-size:24px;font-weight:950;letter-spacing:-.06em;color:#F8FAFC}.pi-sub,.bmp-sub{margin-top:5px;max-width:840px;font-size:12px;line-height:1.55;color:#AAB7CA}.pi-score,.bmp-score{min-width:116px;text-align:center;padding:12px;border-radius:20px;border:1px solid rgba(43,229,197,.24);background:rgba(43,229,197,.08)}.pi-score b,.bmp-score b{display:block;font-size:30px;letter-spacing:-.08em;color:#2BE5C5}.pi-score span,.bmp-score span{font-size:10px;color:#AAB7CA;text-transform:uppercase;font-weight:900}',
-'.pi-toolbar,.bmp-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}.pi-tab,.pi-filter,.bmp-btn{position:relative;z-index:5;pointer-events:auto!important;touch-action:manipulation;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#E5EEF9;border-radius:999px;padding:10px 13px;font-size:12px;font-weight:950}.pi-tab.active,.pi-filter.active,.bmp-btn.primary{background:linear-gradient(135deg,#2BE5C5,#60A5FA);color:#041018;border-color:transparent;box-shadow:0 12px 30px rgba(43,229,197,.22)}.pi-tab:active,.pi-filter:active,.bmp-btn:active{transform:scale(.97)}',
-'.pi-grid,.bmp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.pi-pick,.bmp-pick{padding:12px;border-radius:20px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);position:relative;overflow:hidden}.pi-pick:before,.bmp-pick:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#2BE5C5,#60A5FA)}.pi-match,.bmp-match{font-size:13px;font-weight:950;color:#F8FAFC;line-height:1.25}.pi-meta,.bmp-meta{margin-top:5px;font-size:10px;color:#AAB7CA;font-family:ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pi-metrics,.bmp-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}.pi-metric,.bmp-metric{border-radius:12px;background:rgba(2,6,23,.40);border:1px solid rgba(255,255,255,.07);padding:7px}.pi-metric span,.bmp-metric span{display:block;font-size:9px;color:#AAB7CA;text-transform:uppercase;font-weight:900}.pi-metric b,.bmp-metric b{display:block;margin-top:3px;font-size:13px;color:#F8FAFC}',
-'.pi-risk,.bmp-risk{display:inline-flex;margin-top:9px;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:950;text-transform:uppercase;border:1px solid rgba(255,255,255,.12)}.pi-risk.safe,.bmp-risk.safe{color:#22C55E;background:rgba(34,197,94,.10)}.pi-risk.value,.bmp-risk.value{color:#2BE5C5;background:rgba(43,229,197,.10)}.pi-risk.balanced,.bmp-risk.balanced{color:#60A5FA;background:rgba(96,165,250,.10)}.pi-risk.speculative,.bmp-risk.speculative{color:#F59E0B;background:rgba(245,158,11,.10)}.pi-rationale{margin:8px 0 0;padding-left:16px;color:#AAB7CA;font-size:10px;line-height:1.45}',
-'.pi-side{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.pi-panel{padding:12px;border-radius:20px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04)}.pi-panel-title{font-size:12px;font-weight:950;color:#F8FAFC;margin-bottom:8px}.pi-list{display:grid;gap:7px}.pi-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#AAB7CA;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}.pi-row:last-child{border-bottom:0}.pi-row b{color:#F8FAFC}.pi-formulas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pi-formula{padding:10px;border-radius:16px;background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.14);font-size:10px;color:#AAB7CA}.pi-formula b{display:block;color:#F8FAFC;margin-bottom:4px}',
-'body.ba-pro-v22 .match-card,body.ba-pro-v22 .ml-card,body.ba-pro-v22 .top-pick-card{border-radius:26px!important;border:1px solid rgba(43,229,197,.22)!important;background:radial-gradient(circle at 0 0,rgba(43,229,197,.10),transparent 26%),linear-gradient(180deg,rgba(15,23,42,.94),rgba(2,6,23,.90))!important;box-shadow:0 20px 58px rgba(0,0,0,.36)!important;position:relative!important;overflow:hidden!important}body.ba-pro-v22 .match-card:before,body.ba-pro-v22 .ml-card:before,body.ba-pro-v22 .top-pick-card:before{content:"AI PRO";position:absolute;right:12px;top:10px;z-index:2;padding:5px 8px;border-radius:999px;background:linear-gradient(135deg,#2BE5C5,#60A5FA);color:#041018;font-size:9px;font-weight:950;letter-spacing:.08em}',
-'.ba-pro-toast{position:fixed;left:14px;right:14px;top:86px;z-index:99998;padding:12px 14px;border-radius:20px;background:linear-gradient(135deg,#2BE5C5,#60A5FA);color:#041018;font-weight:950;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.34)}@media(max-width:900px){.pi-grid,.bmp-grid{grid-template-columns:1fr}.pi-side{grid-template-columns:1fr}.pi-formulas{grid-template-columns:1fr}.pi-title,.bmp-title{font-size:20px}.pi-metrics,.bmp-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ba-match-probar{margin:10px 0 12px;padding:15px}.bmp-score{display:none}}'
-].join('\n');document.head.appendChild(s);document.body.classList.add('ba-pro-v22')}
-function shell(){css();var host=$('pro-command-center')||$('dashboard-stats')||$('tab-dashboard')||$('main-content')||document.body;var s=$('pro-intelligence-shell');if(s)return s;s=document.createElement('section');s.id='pro-intelligence-shell';s.className='pro-intel-shell';if(host.id==='pro-command-center')host.insertAdjacentElement('afterend',s);else if(host.parentNode)host.parentNode.insertBefore(s,host);else document.body.prepend(s);return s}
-function matchShell(){css();var tab=$('tab-meciuri')||document.querySelector('[id*="meciuri"]')||((document.querySelector('.matches-grid')||{}).parentElement)||$('main-content')||document.body;var s=$('ba-match-probar');if(s)return s;s=document.createElement('section');s.id='ba-match-probar';s.className='ba-match-probar';var anchor=tab.querySelector&&tab.querySelector('.matches-grid,.ml-grid,.section,.help-panel');if(tab.insertBefore)tab.insertBefore(s,anchor||tab.firstChild);else document.body.prepend(s);return s}
-function pickCard(x,cls){return '<article class="'+(cls||'pi-pick')+'"><div class="pi-match">'+esc(x.home)+' vs '+esc(x.away)+'</div><div class="pi-meta">'+esc(x.league)+' • '+esc(x.market)+' @ '+n(x.odds,2)+' • '+esc(x.event_date||'')+'</div><div class="pi-metrics"><div class="pi-metric"><span>Prob.</span><b>'+n(x.model_probability_pct,1)+'%</b></div><div class="pi-metric"><span>EV</span><b>'+n(x.ev_pct,1)+'%</b></div><div class="pi-metric"><span>Edge</span><b>'+n(x.edge_pp,1)+'pp</b></div><div class="pi-metric"><span>Kelly</span><b>'+n(x.kelly_units_100,2)+'u</b></div></div><span class="pi-risk '+esc(x.risk_tier)+'">'+esc(x.risk_tier)+'</span><ul class="pi-rationale">'+arr(x.rationale).slice(0,3).map(function(r){return '<li>'+esc(r)+'</li>'}).join('')+'</ul></article>'}
-function rows(obj){return Object.keys(obj||{}).sort(function(a,b){return obj[b]-obj[a]}).slice(0,8).map(function(k){return '<div class="pi-row"><span>'+esc(k)+'</span><b>'+esc(obj[k])+'</b></div>'}).join('')||'<div class="pi-row"><span>—</span><b>0</b></div>'}
-function perf(rowsIn){return arr(rowsIn).slice(0,8).map(function(r){return '<div class="pi-row"><span>'+esc(r.key)+'</span><b>'+n(r.roi_pct,1)+'% ROI · '+n(r.winrate,0)+'%</b></div>'}).join('')||'<div class="pi-row"><span>Fără date închise</span><b>—</b></div>'}
-function formulas(f){return Object.keys(f||{}).slice(0,6).map(function(k){return '<div class="pi-formula"><b>'+esc(k)+'</b>'+esc(f[k])+'</div>'}).join('')}
-function setView(v){view=v||'top_ev';risk='all';renderAll(false)}
-function renderDashboard(){var s=shell(), d=data(), picks=selectedList();s.innerHTML='<div class="pi-head"><div><div class="pi-kicker">PRO INTELLIGENCE · V22</div><div class="pi-title">Analyst Cockpit: '+esc(viewLabels[view]||view)+'</div><div class="pi-sub">Butoanele schimbă acum lista pe loc: Top EV, Safe și Balanced au conținut separat și stare activă vizibilă.</div></div><div class="pi-score"><b>'+n(d.overall_score,0)+'</b><span>scor sistem</span></div></div>'+toolbar('pi')+'<div class="pi-grid">'+(picks.length?picks.map(function(x){return pickCard(x,'pi-pick')}).join(''):'<div class="pi-panel">Nu există selecții pentru filtrul ales.</div>')+'</div><div class="pi-side"><div class="pi-panel"><div class="pi-panel-title">Distribuție risc</div><div class="pi-list">'+rows(d.risk_distribution)+'</div></div><div class="pi-panel"><div class="pi-panel-title">Piețe dominante</div><div class="pi-list">'+rows(d.market_distribution_top150)+'</div></div><div class="pi-panel"><div class="pi-panel-title">Performanță piețe</div><div class="pi-list">'+perf(d.settled_market_performance)+'</div></div><div class="pi-panel"><div class="pi-panel-title">Bankroll policy</div><div class="pi-list"><div class="pi-row"><span>Model miză</span><b>'+esc(d.bankroll&&d.bankroll.staking_model)+'</b></div><div class="pi-row"><span>Cap single</span><b>'+esc(d.bankroll&&d.bankroll.max_single_stake_units)+'u</b></div><div class="pi-row"><span>Cap zi</span><b>'+esc(d.bankroll&&d.bankroll.daily_exposure_cap_units)+'u</b></div></div></div></div><div class="pi-panel" style="margin-top:12px"><div class="pi-panel-title">Formule active</div><div class="pi-formulas">'+formulas(d.formulas)+'</div></div>'}
-function toolbar(kind){var cls=kind==='bmp'?'bmp':'pi';return '<div class="'+(cls==='bmp'?'bmp-actions':'pi-toolbar')+'"><button type="button" class="'+(cls==='bmp'?'bmp-btn':'pi-tab')+' '+(view==='top_ev'?'primary active':'')+'" data-ba-view="top_ev">Top EV</button><button type="button" class="'+(cls==='bmp'?'bmp-btn':'pi-tab')+' '+(view==='safest'?'primary active':'')+'" data-ba-view="safest">Safe</button><button type="button" class="'+(cls==='bmp'?'bmp-btn':'pi-tab')+' '+(view==='balanced'?'primary active':'')+'" data-ba-view="balanced">Balanced</button>'+(cls==='pi'?'<button type="button" class="pi-filter '+(risk==='all'?'active':'')+'" data-ba-risk="all">Toate</button><button type="button" class="pi-filter '+(risk==='safe'?'active':'')+'" data-ba-risk="safe">Safe</button><button type="button" class="pi-filter '+(risk==='value'?'active':'')+'" data-ba-risk="value">Value</button><button type="button" class="pi-filter '+(risk==='balanced'?'active':'')+'" data-ba-risk="balanced">Balanced</button>':'')+'</div>'}
-function renderMeciuri(){var s=matchShell(), d=data(), picks=shortlist(view).slice(0,3);s.innerHTML='<div class="bmp-head"><div><div class="bmp-kicker">MECIURI PRO · BUTOANE FIXATE</div><div class="bmp-title">'+esc(viewLabels[view]||view)+' peste lista de meciuri</div><div class="bmp-sub">Apasă Top EV, Safe sau Balanced: lista de mai jos se schimbă imediat, fără să te trimită în Dashboard.</div></div><div class="bmp-score"><b>'+n(d.overall_score,0)+'</b><span>scor sistem</span></div></div>'+toolbar('bmp')+'<div class="bmp-grid">'+(picks.length?picks.map(function(x){return pickCard(x,'bmp-pick')}).join(''):'<div class="bmp-pick"><div class="bmp-match">Nu există selecții pentru '+esc(viewLabels[view]||view)+'.</div></div>')+'</div>'}
-function renderAll(showToast){renderDashboard();renderMeciuri();if(showToast)toast('PRO V22: butoanele Top EV / Safe / Balanced sunt active')}
-function toast(msg){var old=$('ba-pro-v22-toast');if(old)old.remove();var t=document.createElement('div');t.id='ba-pro-v22-toast';t.className='ba-pro-toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){if(t&&t.parentNode)t.parentNode.removeChild(t)},2400)}
-document.addEventListener('click',function(ev){var v=ev.target.closest&&ev.target.closest('[data-ba-view]');if(v){ev.preventDefault();ev.stopPropagation();setView(v.getAttribute('data-ba-view'));toast('Filtru activ: '+(viewLabels[view]||view));return}var r=ev.target.closest&&ev.target.closest('[data-ba-risk]');if(r){ev.preventDefault();ev.stopPropagation();risk=r.getAttribute('data-ba-risk')||'all';renderDashboard();toast('Risc: '+risk)}});
-function start(){css();renderAll(false);getData().then(function(d){DATA=d||fallbackData();renderAll(true)});setTimeout(function(){renderAll(false)},1200);setInterval(function(){if(!$('ba-match-probar')||!$('pro-intelligence-shell'))renderAll(false)},3000)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+  'use strict';
+  if(window.__baMeciuriRepoCompactV28) return;
+  window.__baMeciuriRepoCompactV28 = true;
+
+  function $(id){ return document.getElementById(id); }
+  function removeNode(el){ if(el && el.parentNode) el.parentNode.removeChild(el); }
+  function norm(value){
+    try{ return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g,' ').trim().toLowerCase(); }
+    catch(e){ return String(value || '').replace(/\s+/g,' ').trim().toLowerCase(); }
+  }
+
+  function addStyle(){
+    if($('ba-meciuri-repo-compact-css-v28')) return;
+    var s = document.createElement('style');
+    s.id = 'ba-meciuri-repo-compact-css-v28';
+    s.textContent = [
+      '#ba-match-probar{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}',
+      '#ba-pro-v22-toast,.ba-pro-toast,#procc-floating-proof,.procc-floating-proof{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}',
+      '#tab-meciuri .ba-motor-chip-hidden,#tab-meciuri .ba-ticket-btn-hidden{display:none!important}',
+      '#tab-meciuri button[onclick*="motor_validated"]{display:none!important}',
+      '#tab-meciuri .m17-actions{grid-template-columns:1fr!important}',
+      '#tab-meciuri .m17-actions:empty{display:none!important}',
+
+      'body #tab-meciuri .mf-card{position:static!important;margin:12px 0 10px!important;padding:12px!important;border-radius:24px!important;overflow:hidden!important;background:radial-gradient(circle at 0 0,rgba(43,229,197,.12),transparent 36%),linear-gradient(180deg,rgba(13,22,38,.98),rgba(7,11,21,.98))!important;border:1px solid rgba(99,129,179,.24)!important;box-shadow:0 14px 36px rgba(0,0,0,.26)!important}',
+      'body #tab-meciuri .mf-card:before{display:none!important}',
+      'body #tab-meciuri .mf-header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:0 0 10px!important;padding:0 0 10px!important;border-bottom:1px solid rgba(255,255,255,.08)!important}',
+      'body #tab-meciuri .mf-title-row{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important}',
+      'body #tab-meciuri .mf-icon{width:34px!important;height:34px!important;font-size:18px!important;border-radius:14px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.09)!important}',
+      'body #tab-meciuri .mf-title{font-size:24px!important;line-height:1!important;font-weight:950!important;letter-spacing:-.05em!important;color:#f8fafc!important}',
+      'body #tab-meciuri .mf-count{margin-left:auto!important;min-height:34px!important;padding:0 13px!important;border-radius:999px!important;font-size:13px!important;font-weight:900!important;color:#67f5da!important;background:rgba(43,229,197,.10)!important;border:1px solid rgba(43,229,197,.32)!important;white-space:nowrap!important}',
+
+      'body #tab-meciuri .mf-mode-toggle{display:grid!important;grid-template-columns:1fr 1fr!important;gap:4px!important;width:100%!important;height:48px!important;margin:0 0 8px!important;padding:4px!important;border-radius:20px!important;background:rgba(2,6,23,.56)!important;border:1px solid rgba(255,255,255,.08)!important}',
+      'body #tab-meciuri .mf-mode-btn{height:40px!important;min-height:40px!important;padding:0 10px!important;border-radius:16px!important;font-size:14px!important;font-weight:900!important;color:rgba(203,213,225,.72)!important;background:transparent!important;border:0!important;box-shadow:none!important}',
+      'body #tab-meciuri .mf-mode-btn.active{color:#92fff0!important;background:linear-gradient(135deg,rgba(43,229,197,.28),rgba(59,130,246,.18))!important;border:1px solid rgba(43,229,197,.40)!important;box-shadow:0 8px 22px rgba(43,229,197,.12)!important}',
+
+      'body #tab-meciuri .mf-chips-scroll{display:flex!important;flex-wrap:nowrap!important;gap:8px!important;overflow-x:auto!important;overflow-y:hidden!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;margin:0 -4px 8px!important;padding:0 4px 4px!important;border:0!important;background:transparent!important}',
+      'body #tab-meciuri .mf-chips-scroll::-webkit-scrollbar{display:none!important}',
+      'body #tab-meciuri .mf-chip{flex:0 0 auto!important;min-width:0!important;height:36px!important;min-height:36px!important;padding:0 13px!important;border-radius:999px!important;font-size:12px!important;font-weight:900!important;white-space:nowrap!important;background:rgba(255,255,255,.055)!important;border:1px solid rgba(148,163,184,.16)!important;color:rgba(226,232,240,.86)!important;box-shadow:none!important}',
+      'body #tab-meciuri .mf-chip.active{color:#06111f!important;background:linear-gradient(135deg,#2be5c5,#60a5fa)!important;border-color:transparent!important;box-shadow:0 8px 20px rgba(43,229,197,.18)!important}',
+
+      'body #tab-meciuri .mf-sort-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important}',
+      'body #tab-meciuri .mf-select,body #tab-meciuri .mf-advanced-toggle{height:42px!important;min-height:42px!important;border-radius:17px!important;padding:0 14px!important;font-size:13px!important;font-weight:900!important;background:rgba(255,255,255,.055)!important;border:1px solid rgba(148,163,184,.16)!important;color:#e5eef9!important;box-shadow:none!important}',
+      'body #tab-meciuri .mf-select{width:100%!important}',
+      'body #tab-meciuri .mf-advanced-toggle{min-width:104px!important;white-space:nowrap!important}',
+      'body #tab-meciuri .mf-advanced{max-height:58vh!important;overflow:auto!important;border-radius:18px!important;margin-top:10px!important}',
+
+      '@media(max-width:768px){body #tab-meciuri .mf-card{padding:10px!important;border-radius:22px!important;margin:10px 0 8px!important}body #tab-meciuri .mf-header{margin-bottom:8px!important;padding-bottom:8px!important}body #tab-meciuri .mf-icon{width:31px!important;height:31px!important;font-size:16px!important;border-radius:13px!important}body #tab-meciuri .mf-title{font-size:22px!important}body #tab-meciuri .mf-count{min-height:31px!important;padding:0 11px!important;font-size:12px!important}body #tab-meciuri .mf-mode-toggle{height:43px!important;border-radius:18px!important;margin-bottom:8px!important}body #tab-meciuri .mf-mode-btn{height:35px!important;min-height:35px!important;font-size:13px!important;border-radius:14px!important}body #tab-meciuri .mf-chip{height:33px!important;min-height:33px!important;padding:0 11px!important;font-size:11.5px!important}body #tab-meciuri .mf-select,body #tab-meciuri .mf-advanced-toggle{height:39px!important;min-height:39px!important;font-size:12px!important;border-radius:16px!important}body #tab-meciuri .mf-advanced-toggle{min-width:96px!important}}',
+      '@media(max-width:420px){body #tab-meciuri .mf-title{font-size:20px!important}body #tab-meciuri .mf-count{font-size:11px!important;padding:0 10px!important}body #tab-meciuri .mf-sort-row{grid-template-columns:minmax(0,1fr) 92px!important}body #tab-meciuri .mf-advanced-toggle{min-width:92px!important;padding:0 8px!important}}'
+    ].join('\n');
+    document.head.appendChild(s);
+  }
+
+  function isMotorButton(btn){
+    var text = norm(btn && btn.textContent);
+    var onclick = String((btn && btn.getAttribute('onclick')) || '').toLowerCase();
+    return onclick.indexOf('motor_validated') >= 0 || text === 'motor' || text.indexOf(' motor') >= 0;
+  }
+
+  function isTicketButton(btn){
+    var text = norm(btn && btn.textContent);
+    var onclick = String((btn && btn.getAttribute('onclick')) || '').toLowerCase();
+    return onclick.indexOf('quickaddmatchtoticket') >= 0 || text.indexOf('adauga la bilet') >= 0 || text.indexOf('adauga pe bilet') >= 0;
+  }
+
+  function cleanupMeciuri(){
+    addStyle();
+    removeNode($('ba-match-probar'));
+    removeNode($('ba-pro-v22-toast'));
+    var tab = $('tab-meciuri');
+    if(!tab) return;
+    Array.prototype.slice.call(tab.querySelectorAll('button')).forEach(function(btn){
+      if(isMotorButton(btn) || isTicketButton(btn)) removeNode(btn);
+    });
+  }
+
+  function boot(){
+    cleanupMeciuri();
+    [50,120,250,500,900,1500,2600,4200,7000].forEach(function(ms){ setTimeout(cleanupMeciuri, ms); });
+    setInterval(cleanupMeciuri, 1000);
+    try{
+      new MutationObserver(function(){
+        clearTimeout(window.__baMeciuriRepoCompactTimer);
+        window.__baMeciuriRepoCompactTimer = setTimeout(cleanupMeciuri, 25);
+      }).observe(document.documentElement,{childList:true,subtree:true});
+    }catch(e){}
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
