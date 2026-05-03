@@ -1,12 +1,16 @@
-// BetAnalytics Pro - CLV guidance badges on Meciuri cards
+// BetAnalytics Pro - CLV market guidance on Meciuri cards
 // Non-filtering: only adds visual guidance from data/clv_tracker.json.
 (function(){
   'use strict';
-  if (window.__baClvCardGuidanceV2) return;
-  window.__baClvCardGuidanceV2 = true;
+  if (window.__baClvCardGuidanceV3) return;
+  window.__baClvCardGuidanceV3 = true;
 
   var clvMap = null;
   var loading = false;
+
+  function cleanText(el){
+    return (el && (el.innerText || el.textContent) || '').replace(/\s+/g, ' ').trim();
+  }
 
   function marketKey(s){
     s = String(s || '').toLowerCase();
@@ -18,6 +22,10 @@
     if (/away[_\s-]*win|victorie\s+oaspe/.test(s)) return 'away_win';
     if (/\bdraw\b|\begal\b/.test(s)) return 'draw';
     return String(s || '').trim();
+  }
+
+  function marketLabel(key){
+    return ({over15:'O1.5', over25:'O2.5', under35:'U3.5', btts:'BTTS', home_win:'Home', away_win:'Away', draw:'Draw'})[key] || String(key || '').toUpperCase();
   }
 
   function buildMap(data){
@@ -43,32 +51,23 @@
   }
 
   function style(){
-    if (document.getElementById('ba-clv-guidance-style')) return;
+    if (document.getElementById('ba-clv-guidance-style-v3')) return;
     var css = [
-      '.ba-clv-guidance{display:flex!important;gap:8px;align-items:flex-start;margin:10px 0!important;padding:9px 11px!important;border-radius:14px;border:1px solid rgba(255,255,255,.12);font-size:12px;line-height:1.35;background:rgba(15,23,42,.82);box-shadow:0 8px 20px rgba(0,0,0,.18)}',
-      '.ba-clv-guidance b{font-size:12px;font-weight:900}.ba-clv-guidance small{display:block;font-size:10px;color:rgba(190,202,220,.95);margin-top:2px}',
-      '.ba-clv-good{border-color:rgba(34,197,94,.42);background:rgba(34,197,94,.10)}.ba-clv-good b{color:#22c55e}',
-      '.ba-clv-warn{border-color:rgba(249,115,22,.44);background:rgba(249,115,22,.12)}.ba-clv-warn b{color:#fb923c}',
-      '.ba-clv-caution{border-color:rgba(245,158,11,.44);background:rgba(245,158,11,.11)}.ba-clv-caution b{color:#f59e0b}',
-      '.ba-clv-bad{border-color:rgba(239,68,68,.46);background:rgba(239,68,68,.12)}.ba-clv-bad b{color:#ef4444}',
-      '.ba-clv-info{border-color:rgba(59,130,246,.38);background:rgba(59,130,246,.10)}.ba-clv-info b{color:#60a5fa}',
-      '.ba-clv-floating-debug{position:fixed;left:10px;bottom:76px;z-index:9999;padding:7px 10px;border-radius:12px;background:rgba(15,23,42,.92);border:1px solid rgba(43,229,197,.35);color:#2BE5C5;font:11px monospace}'
+      '.ba-clv-guidance{display:block!important;margin:10px 0 12px!important;padding:10px 12px!important;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(11,18,32,.78);box-shadow:0 10px 24px rgba(0,0,0,.18);font-family:var(--font-sans,system-ui,sans-serif)}',
+      '.ba-clv-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.ba-clv-left{display:flex;align-items:center;gap:8px;min-width:0}.ba-clv-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:rgba(255,255,255,.08);font-size:13px;flex:0 0 auto}.ba-clv-title{font-size:13px;font-weight:900;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ba-clv-kicker{font:700 9px var(--mono,monospace);letter-spacing:.13em;text-transform:uppercase;color:rgba(148,163,184,.95)}',
+      '.ba-clv-pill{padding:4px 7px;border-radius:999px;font:800 10px var(--mono,monospace);background:rgba(255,255,255,.07);color:rgba(226,232,240,.9);white-space:nowrap}',
+      '.ba-clv-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:6px 0 7px}.ba-clv-metric{padding:6px 7px;border-radius:11px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.055)}.ba-clv-metric span{display:block;font:700 8px var(--mono,monospace);letter-spacing:.12em;text-transform:uppercase;color:rgba(148,163,184,.92);margin-bottom:2px}.ba-clv-metric b{display:block;font-size:12px;font-weight:900;color:#f8fafc}',
+      '.ba-clv-action{font-size:11px;line-height:1.35;color:rgba(203,213,225,.95);padding-top:6px;border-top:1px solid rgba(255,255,255,.07)}',
+      '.ba-clv-good{border-color:rgba(34,197,94,.42);background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(11,18,32,.78))}.ba-clv-good .ba-clv-title,.ba-clv-good .ba-clv-action b{color:#22c55e}',
+      '.ba-clv-warn{border-color:rgba(249,115,22,.44);background:linear-gradient(135deg,rgba(249,115,22,.13),rgba(11,18,32,.78))}.ba-clv-warn .ba-clv-title,.ba-clv-warn .ba-clv-action b{color:#fb923c}',
+      '.ba-clv-caution{border-color:rgba(245,158,11,.44);background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(11,18,32,.78))}.ba-clv-caution .ba-clv-title,.ba-clv-caution .ba-clv-action b{color:#f59e0b}',
+      '.ba-clv-bad{border-color:rgba(239,68,68,.46);background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(11,18,32,.78))}.ba-clv-bad .ba-clv-title,.ba-clv-bad .ba-clv-action b{color:#f87171}',
+      '.ba-clv-info{border-color:rgba(59,130,246,.38);background:linear-gradient(135deg,rgba(59,130,246,.11),rgba(11,18,32,.78))}.ba-clv-info .ba-clv-title,.ba-clv-info .ba-clv-action b{color:#60a5fa}'
     ].join('');
     var el = document.createElement('style');
-    el.id = 'ba-clv-guidance-style';
+    el.id = 'ba-clv-guidance-style-v3';
     el.textContent = css;
     document.head.appendChild(el);
-  }
-
-  function label(row){
-    var v = String(row.verdict || '');
-    if (v === 'PROFITABIL_CONFIRMAT') return ['🟢','CLV confirmat'];
-    if (v === 'CLV_BUN_ROI_SLAB') return ['🟠','Recovery strict'];
-    if (v === 'ROI_BUN_CLV_SLAB') return ['🟡','ROI bun, CLV slab'];
-    if (v === 'RECALIBRARE_NECESARA') return ['🔴','CLV slab'];
-    if (v === 'SAMPLE_MIC') return ['🔵','Sample mic'];
-    var sev = String(row.severity || 'info');
-    return [sev === 'good' ? '🟢' : sev === 'bad' ? '🔴' : sev === 'warn' ? '🟠' : sev === 'caution' ? '🟡' : '🔵', row.label || 'Ghid CLV'];
   }
 
   function pct(v){
@@ -77,27 +76,70 @@
     return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
   }
 
-  function makeBadge(row){
-    var pair = label(row);
-    var sev = 'ba-clv-' + (row.severity || 'info');
+  function profile(row){
+    var v = String(row.verdict || '');
+    if (v === 'PROFITABIL_CONFIRMAT') return {icon:'✓', title:'Piață CLV confirmată', sev:'good', action:'Semnal istoric sănătos. Stake normal, fără relaxare de prag.'};
+    if (v === 'CLV_BUN_ROI_SLAB') return {icon:'↻', title:'Piață în recovery', sev:'warn', action:'CLV bun, dar ROI slab. Joacă doar selecții foarte curate.'};
+    if (v === 'ROI_BUN_CLV_SLAB') return {icon:'!', title:'Profit neconfirmat de CLV', sev:'caution', action:'ROI bun, dar piața nu confirmă. Nu crește stake-ul.'};
+    if (v === 'RECALIBRARE_NECESARA') return {icon:'!', title:'Piață CLV slabă', sev:'bad', action:'Istoric fragil. Stake redus și cere edge mai mare.'};
+    if (v === 'SAMPLE_MIC') return {icon:'i', title:'Sample insuficient', sev:'info', action:'Prea puține pick-uri settle-ate. Nu trage concluzii ferme.'};
+    var sev = String(row.severity || 'info');
+    return {icon: sev === 'good' ? '✓' : sev === 'bad' ? '!' : sev === 'warn' ? '↻' : sev === 'caution' ? '!' : 'i', title: row.label || 'Ghid piață CLV', sev:sev, action: row.action || 'Indicator istoric de piață.'};
+  }
+
+  function makeBadge(row, mk){
+    var p = profile(row);
+    var sev = 'ba-clv-' + (p.sev || row.severity || 'info');
     var box = document.createElement('div');
     box.className = 'ba-clv-guidance ' + sev;
-    box.title = row.action || '';
+    box.title = row.action || p.action || '';
     var adj = Number(row.edge_adjustment_pp || 0);
-    box.innerHTML = '<div>' + pair[0] + '</div><div><b>' + pair[1] + '</b><small>CLV ' + pct(row.avg_clv_pct) + ' · ROI ' + pct(row.roi_flat_pct) + ' · N=' + (row.n || 0) + (adj > 0 ? ' · edge +' + adj.toFixed(1) + 'pp' : '') + '</small></div>';
+    var action = p.action || row.action || '';
+    if (adj > 0) action += ' Prag recomandat: edge +' + adj.toFixed(1) + 'pp.';
+    box.innerHTML = ''+
+      '<div class="ba-clv-head">'+
+        '<div class="ba-clv-left"><div class="ba-clv-ico">'+p.icon+'</div><div><div class="ba-clv-kicker">Indicator piață</div><div class="ba-clv-title">'+p.title+'</div></div></div>'+
+        '<div class="ba-clv-pill">'+marketLabel(mk)+'</div>'+
+      '</div>'+
+      '<div class="ba-clv-grid">'+
+        '<div class="ba-clv-metric"><span>CLV med</span><b>'+pct(row.avg_clv_pct)+'</b></div>'+
+        '<div class="ba-clv-metric"><span>ROI piață</span><b>'+pct(row.roi_flat_pct)+'</b></div>'+
+        '<div class="ba-clv-metric"><span>Sample</span><b>N='+(row.n || 0)+'</b></div>'+
+      '</div>'+
+      '<div class="ba-clv-action"><b>Ghid:</b> '+action+'</div>';
     return box;
   }
 
-  function add(el, row){
-    if (!el || !row || el.querySelector('.ba-clv-guidance')) return;
-    var box = makeBadge(row);
-    var target = el.querySelector('.card-reco-badges,.badges,.tags,.chips,[class*=badge],[class*=chip]');
-    if (target && target.parentNode) target.parentNode.insertBefore(box, target.nextSibling);
-    else {
-      var risk = Array.prototype.find.call(el.children || [], function(c){ return /RISC|PARIAZ|EVIT/.test(c.textContent || ''); });
-      if (risk && risk.parentNode === el) el.insertBefore(box, risk);
-      else el.insertBefore(box, el.firstChild);
+  function findMarketTitle(container, mk){
+    var re = mk === 'btts' ? /^(BTTS)$/i : mk === 'under35' ? /^Under\s*3[\.,]5G?$/i : mk === 'over25' ? /^Over\s*2[\.,]5G?$/i : mk === 'over15' ? /^Over\s*1[\.,]5G?$/i : null;
+    if (!re) return null;
+    var nodes = Array.prototype.slice.call(container.querySelectorAll('*'));
+    for (var i=0;i<nodes.length;i++){
+      var t = cleanText(nodes[i]);
+      if (!re.test(t)) continue;
+      var row = nodes[i].parentElement;
+      for (var j=0; row && j<3; j++, row=row.parentElement){
+        if (row.parentElement === container || (row.parentElement && container.contains(row.parentElement))) {
+          var rt = cleanText(row);
+          if (rt.length <= 180 && (rt.indexOf(t) >= 0)) return row;
+        }
+      }
+      return nodes[i];
     }
+    return null;
+  }
+
+  function add(container, row, mk){
+    if (!container || !row || container.querySelector('.ba-clv-guidance')) return;
+    var box = makeBadge(row, mk);
+    var anchor = findMarketTitle(container, mk);
+    if (anchor && anchor.parentNode && container.contains(anchor)) {
+      anchor.parentNode.insertBefore(box, anchor.nextSibling);
+      return;
+    }
+    var prob = Array.prototype.find.call(container.children || [], function(c){ return /PROBABILITATE PRONOSTIC|Probabilitate pronostic/i.test(cleanText(c)); });
+    if (prob && prob.parentNode === container) container.insertBefore(box, prob);
+    else container.insertBefore(box, container.firstChild);
   }
 
   function findRecoContainers(root){
@@ -105,7 +147,7 @@
     var list = [];
     all.forEach(function(el){
       if (!el || el.querySelector('.ba-clv-guidance')) return;
-      var t = (el.innerText || el.textContent || '').replace(/\s+/g,' ').trim();
+      var t = cleanText(el);
       if (t.length < 80 || t.length > 2600) return;
       if (!/(RECOMANDARE PRINCIPALĂ|PRONOSTIC RECOMANDAT|RECOMANDARE PRINCIPALA|Pronostic recomandat|Probabilitate pronostic)/i.test(t)) return;
       if (!/(BTTS|Over|Under|Peste|Sub|Ambele)/i.test(t)) return;
@@ -120,48 +162,46 @@
     style();
     var root = document.getElementById('tab-meciuri') || document.body;
 
-    var boxes = findRecoContainers(root);
-    boxes.forEach(function(item){
+    findRecoContainers(root).forEach(function(item){
       var mk = marketKey(item.text);
       var row = clvMap[mk];
-      if (row) add(item.el, row);
+      if (row) add(item.el, row, mk);
     });
 
-    // Fallback: if a detailed card has the market title as a standalone heading, attach to the closest useful parent.
     Array.prototype.forEach.call(root.querySelectorAll('*'), function(el){
       if (el.querySelector && el.querySelector('.ba-clv-guidance')) return;
-      var t = (el.textContent || '').replace(/\s+/g,' ').trim();
+      var t = cleanText(el);
       if (!/^(BTTS|Over 1[\.,]5G?|Over 2[\.,]5G?|Under 3[\.,]5G?)$/i.test(t)) return;
       var mk = marketKey(t), row = clvMap[mk];
       if (!row) return;
       var p = el.parentElement;
       for (var i=0; p && i<5; i++, p=p.parentElement){
-        var pt = (p.innerText || p.textContent || '').replace(/\s+/g,' ').trim();
-        if (pt.length > 100 && pt.length < 2600 && /Edge|Value|Probabilitate|Cota|Cotă|RISC/i.test(pt)) { add(p,row); break; }
+        var pt = cleanText(p);
+        if (pt.length > 100 && pt.length < 2600 && /Edge|Value|Probabilitate|Cota|Cotă|RISC|PARIAZ/i.test(pt)) { add(p,row,mk); break; }
       }
     });
   }
 
   function run(){ load().then(function(){ scan(); setTimeout(scan, 200); setTimeout(scan, 800); setTimeout(scan, 1800); }); }
   function hook(){
-    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV2) {
+    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV3) {
       var oldRender = window.renderMatches;
       window.renderMatches = function(){ var r = oldRender.apply(this, arguments); run(); return r; };
-      window.renderMatches.__baClvGuidanceV2 = true;
+      window.renderMatches.__baClvGuidanceV3 = true;
     }
-    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV2) {
+    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV3) {
       var oldSwitch = window.switchTab;
       window.switchTab = function(name){ var r = oldSwitch.apply(this, arguments); if (name === 'meciuri') run(); return r; };
-      window.switchTab.__baClvGuidanceV2 = true;
+      window.switchTab.__baClvGuidanceV3 = true;
     }
   }
   function boot(){
     hook(); run();
     var tab = document.getElementById('tab-meciuri') || document.body;
-    if (tab && !tab.__baClvObserverV2) {
+    if (tab && !tab.__baClvObserverV3) {
       var mo = new MutationObserver(function(){ run(); });
       mo.observe(tab,{childList:true,subtree:true,characterData:true});
-      tab.__baClvObserverV2 = mo;
+      tab.__baClvObserverV3 = mo;
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
