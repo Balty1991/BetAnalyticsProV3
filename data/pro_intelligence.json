@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-03T13:51:55.128651+00:00",
+  "updated_at": "2026-05-03T14:27:10.347137+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 68.1,
+  "overall_score": 67.5,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 129,
-    "candidates_with_odds_and_probability": 113,
+    "pending_rows": 126,
+    "candidates_with_odds_and_probability": 108,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,14 +18,14 @@
   },
   "risk_distribution": {
     "safe": 6,
-    "speculative": 86,
-    "balanced": 21
+    "speculative": 82,
+    "balanced": 20
   },
   "market_distribution_top150": {
-    "Over 2.5G": 2,
-    "Under 3.5G": 64,
+    "Over 2.5G": 1,
+    "Under 3.5G": 63,
     "BTTS": 13,
-    "Over 1.5G": 34
+    "Over 1.5G": 31
   },
   "league_distribution_top150": {
     "Segunda División": 4,
@@ -43,19 +43,19 @@
     "FA Cup": 1,
     "K League 1": 5,
     "Serie A": 4,
+    "Allsvenskan": 4,
     "Pro League": 3,
-    "Allsvenskan": 6,
     "Brasileirão Serie B": 6,
     "Trendyol Super Lig": 4,
-    "Super League": 3,
+    "Super League": 2,
     "Brasileirão Serie A": 2,
-    "Chinese Super League": 4,
+    "Chinese Super League": 3,
     "Nigeria Premier Football League": 1,
     "Liga MX Clausura": 1,
     "Europa League": 2,
     "Ekstraklasa": 2,
     "Champions League": 1,
-    "Premier League": 4,
+    "Premier League": 3,
     "Scottish Premiership": 1,
     "Stoiximan Super League": 3
   },
@@ -362,34 +362,6 @@
       ]
     },
     {
-      "event_id": 204867,
-      "prediction_id": 3536,
-      "home": "FC Tokyo",
-      "away": "JEF United Chiba",
-      "league": "J1 League",
-      "event_date": "2026-05-06T09:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.29,
-      "model_probability": 0.8926,
-      "model_probability_pct": 89.26,
-      "implied_probability_pct": 77.52,
-      "fair_odds": 1.12,
-      "edge_pp": 11.74,
-      "ev_pct": 15.15,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.02,
-      "score": 103.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 89.3% vs. probabilitate implicată 77.5%.",
-        "EV estimat 15.1% și edge 11.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9422,
       "prediction_id": 3582,
       "home": "Mirassol",
@@ -442,6 +414,34 @@
       "rationale": [
         "Probabilitate model 76.5% vs. probabilitate implicată 64.9%.",
         "EV estimat 17.7% și edge 11.5 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 204867,
+      "prediction_id": 3536,
+      "home": "FC Tokyo",
+      "away": "JEF United Chiba",
+      "league": "J1 League",
+      "event_date": "2026-05-06T09:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.29,
+      "model_probability": 0.8751,
+      "model_probability_pct": 87.51,
+      "implied_probability_pct": 77.52,
+      "fair_odds": 1.143,
+      "edge_pp": 9.99,
+      "ev_pct": 12.89,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 62.02,
+      "score": 102.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 87.5% vs. probabilitate implicată 77.5%.",
+        "EV estimat 12.9% și edge 10.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -538,12 +538,12 @@
       "event_date": "2026-05-04T19:10:00+03:00",
       "market": "Over 1.5G",
       "odds": 1.39,
-      "model_probability": 0.8439,
-      "model_probability_pct": 84.39,
+      "model_probability": 0.8273,
+      "model_probability_pct": 82.73,
       "implied_probability_pct": 71.94,
-      "fair_odds": 1.185,
-      "edge_pp": 12.45,
-      "ev_pct": 17.3,
+      "fair_odds": 1.209,
+      "edge_pp": 10.79,
+      "ev_pct": 14.99,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 43.96,
@@ -552,8 +552,8 @@
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 84.4% vs. probabilitate implicată 71.9%.",
-        "EV estimat 17.3% și edge 12.4 puncte procentuale.",
+        "Probabilitate model 82.7% vs. probabilitate implicată 71.9%.",
+        "EV estimat 15.0% și edge 10.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -866,34 +866,6 @@
       ]
     },
     {
-      "event_id": 205058,
-      "prediction_id": 3511,
-      "home": "Jeonbuk Hyundai Motors",
-      "away": "Gwangju FC",
-      "league": "K League 1",
-      "event_date": "2026-05-05T08:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.8494,
-      "model_probability_pct": 84.94,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.177,
-      "edge_pp": 9.75,
-      "ev_pct": 12.97,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.25,
-      "score": 96.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
-        "EV estimat 13.0% și edge 9.8 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 4800,
       "prediction_id": 3458,
       "home": "Al-Shabab",
@@ -920,37 +892,37 @@
         "EV estimat 12.4% și edge 7.7 puncte procentuale.",
         "Miză Kelly fracțională 5.15% din bancă, plafonată prudent."
       ]
-    }
-  ],
-  "safest": [
+    },
     {
-      "event_id": 204867,
-      "prediction_id": 3536,
-      "home": "FC Tokyo",
-      "away": "JEF United Chiba",
-      "league": "J1 League",
-      "event_date": "2026-05-06T09:00:00+03:00",
+      "event_id": 205058,
+      "prediction_id": 3511,
+      "home": "Jeonbuk Hyundai Motors",
+      "away": "Gwangju FC",
+      "league": "K League 1",
+      "event_date": "2026-05-05T08:00:00+03:00",
       "market": "Over 1.5G",
-      "odds": 1.29,
-      "model_probability": 0.8926,
-      "model_probability_pct": 89.26,
-      "implied_probability_pct": 77.52,
-      "fair_odds": 1.12,
-      "edge_pp": 11.74,
-      "ev_pct": 15.15,
+      "odds": 1.33,
+      "model_probability": 0.8328,
+      "model_probability_pct": 83.28,
+      "implied_probability_pct": 75.19,
+      "fair_odds": 1.201,
+      "edge_pp": 8.09,
+      "ev_pct": 10.76,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
-      "confidence": 62.02,
-      "score": 103.0,
+      "confidence": 62.25,
+      "score": 96.0,
       "risk_tier": "safe",
       "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 89.3% vs. probabilitate implicată 77.5%.",
-        "EV estimat 15.1% și edge 11.7 puncte procentuale.",
+        "Probabilitate model 83.3% vs. probabilitate implicată 75.2%.",
+        "EV estimat 10.8% și edge 8.1 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
-    },
+    }
+  ],
+  "safest": [
     {
       "event_id": 202994,
       "prediction_id": 3516,
@@ -1060,6 +1032,34 @@
       "rationale": [
         "Probabilitate model 87.7% vs. probabilitate implicată 80.6%.",
         "EV estimat 8.7% și edge 7.0 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 204867,
+      "prediction_id": 3536,
+      "home": "FC Tokyo",
+      "away": "JEF United Chiba",
+      "league": "J1 League",
+      "event_date": "2026-05-06T09:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.29,
+      "model_probability": 0.8751,
+      "model_probability_pct": 87.51,
+      "implied_probability_pct": 77.52,
+      "fair_odds": 1.143,
+      "edge_pp": 9.99,
+      "ev_pct": 12.89,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 62.02,
+      "score": 102.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 87.5% vs. probabilitate implicată 77.5%.",
+        "EV estimat 12.9% și edge 10.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1232,62 +1232,6 @@
       ]
     },
     {
-      "event_id": 205764,
-      "prediction_id": 3575,
-      "home": "Yunnan Yukun",
-      "away": "Zhejiang",
-      "league": "Chinese Super League",
-      "event_date": "2026-05-06T15:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.18,
-      "model_probability": 0.8497,
-      "model_probability_pct": 84.97,
-      "implied_probability_pct": 84.75,
-      "fair_odds": 1.177,
-      "edge_pp": 0.22,
-      "ev_pct": 0.26,
-      "kelly_fraction": 0.0037,
-      "kelly_units_100": 0.37,
-      "confidence": 63.4,
-      "score": 84.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 85.0% vs. probabilitate implicată 84.7%.",
-        "EV estimat 0.3% și edge 0.2 puncte procentuale.",
-        "Miză Kelly fracțională 0.37% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 205058,
-      "prediction_id": 3511,
-      "home": "Jeonbuk Hyundai Motors",
-      "away": "Gwangju FC",
-      "league": "K League 1",
-      "event_date": "2026-05-05T08:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.8494,
-      "model_probability_pct": 84.94,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.177,
-      "edge_pp": 9.75,
-      "ev_pct": 12.97,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.25,
-      "score": 96.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
-        "EV estimat 13.0% și edge 9.8 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9302,
       "prediction_id": 3527,
       "home": "Recoleta FC",
@@ -1316,34 +1260,6 @@
       ]
     },
     {
-      "event_id": 9143,
-      "prediction_id": 3468,
-      "home": "FCV Dender",
-      "away": "RAAL La Louvière",
-      "league": "Pro League",
-      "event_date": "2026-05-03T20:15:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.29,
-      "model_probability": 0.8472,
-      "model_probability_pct": 84.72,
-      "implied_probability_pct": 77.52,
-      "fair_odds": 1.18,
-      "edge_pp": 7.2,
-      "ev_pct": 9.29,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 48.1,
-      "score": 92.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.7% vs. probabilitate implicată 77.5%.",
-        "EV estimat 9.3% și edge 7.2 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9416,
       "prediction_id": 3549,
       "home": "Deportivo La Guaira",
@@ -1368,34 +1284,6 @@
       "rationale": [
         "Probabilitate model 84.5% vs. probabilitate implicată 75.2%.",
         "EV estimat 12.4% și edge 9.3 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 4796,
-      "prediction_id": 3495,
-      "home": "Al-Fayha",
-      "away": "Al-Riyadh",
-      "league": "Saudi Pro League",
-      "event_date": "2026-05-04T19:10:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.39,
-      "model_probability": 0.8439,
-      "model_probability_pct": 84.39,
-      "implied_probability_pct": 71.94,
-      "fair_odds": 1.185,
-      "edge_pp": 12.45,
-      "ev_pct": 17.3,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 43.96,
-      "score": 100.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.4% vs. probabilitate implicată 71.9%.",
-        "EV estimat 17.3% și edge 12.4 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1480,6 +1368,118 @@
       "rationale": [
         "Probabilitate model 83.5% vs. probabilitate implicată 75.0%.",
         "EV estimat 11.4% și edge 8.5 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9306,
+      "prediction_id": 3551,
+      "home": "Macará",
+      "away": "Tigre",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-05-07T03:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.24,
+      "model_probability": 0.8349,
+      "model_probability_pct": 83.49,
+      "implied_probability_pct": 80.65,
+      "fair_odds": 1.198,
+      "edge_pp": 2.84,
+      "ev_pct": 3.53,
+      "kelly_fraction": 0.0367,
+      "kelly_units_100": 3.67,
+      "confidence": 34.36,
+      "score": 92.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.5% vs. probabilitate implicată 80.6%.",
+        "EV estimat 3.5% și edge 2.8 puncte procentuale.",
+        "Miză Kelly fracțională 3.67% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9414,
+      "prediction_id": 3529,
+      "home": "Club Always Ready",
+      "away": "CA Lanús",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-06T03:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.41,
+      "model_probability": 0.8335,
+      "model_probability_pct": 83.35,
+      "implied_probability_pct": 70.92,
+      "fair_odds": 1.2,
+      "edge_pp": 12.43,
+      "ev_pct": 17.52,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 62.85,
+      "score": 109.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.3% vs. probabilitate implicată 70.9%.",
+        "EV estimat 17.5% și edge 12.4 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 205764,
+      "prediction_id": 3575,
+      "home": "Yunnan Yukun",
+      "away": "Zhejiang",
+      "league": "Chinese Super League",
+      "event_date": "2026-05-06T15:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.18,
+      "model_probability": 0.833,
+      "model_probability_pct": 83.3,
+      "implied_probability_pct": 84.75,
+      "fair_odds": 1.2,
+      "edge_pp": -1.45,
+      "ev_pct": -1.71,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 63.4,
+      "score": 83.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.3% vs. probabilitate implicată 84.7%.",
+        "EV estimat -1.7% și edge -1.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 205058,
+      "prediction_id": 3511,
+      "home": "Jeonbuk Hyundai Motors",
+      "away": "Gwangju FC",
+      "league": "K League 1",
+      "event_date": "2026-05-05T08:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.33,
+      "model_probability": 0.8328,
+      "model_probability_pct": 83.28,
+      "implied_probability_pct": 75.19,
+      "fair_odds": 1.201,
+      "edge_pp": 8.09,
+      "ev_pct": 10.76,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 62.25,
+      "score": 96.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.3% vs. probabilitate implicată 75.2%.",
+        "EV estimat 10.8% și edge 8.1 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -1634,22 +1634,22 @@
       "event_date": "2026-05-06T09:00:00+03:00",
       "market": "Over 1.5G",
       "odds": 1.29,
-      "model_probability": 0.8926,
-      "model_probability_pct": 89.26,
+      "model_probability": 0.8751,
+      "model_probability_pct": 87.51,
       "implied_probability_pct": 77.52,
-      "fair_odds": 1.12,
-      "edge_pp": 11.74,
-      "ev_pct": 15.15,
+      "fair_odds": 1.143,
+      "edge_pp": 9.99,
+      "ev_pct": 12.89,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 62.02,
-      "score": 103.0,
+      "score": 102.0,
       "risk_tier": "safe",
       "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 89.3% vs. probabilitate implicată 77.5%.",
-        "EV estimat 15.1% și edge 11.7 puncte procentuale.",
+        "Probabilitate model 87.5% vs. probabilitate implicată 77.5%.",
+        "EV estimat 12.9% și edge 10.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1774,12 +1774,12 @@
       "event_date": "2026-05-05T08:00:00+03:00",
       "market": "Over 1.5G",
       "odds": 1.33,
-      "model_probability": 0.8494,
-      "model_probability_pct": 84.94,
+      "model_probability": 0.8328,
+      "model_probability_pct": 83.28,
       "implied_probability_pct": 75.19,
-      "fair_odds": 1.177,
-      "edge_pp": 9.75,
-      "ev_pct": 12.97,
+      "fair_odds": 1.201,
+      "edge_pp": 8.09,
+      "ev_pct": 10.76,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 62.25,
@@ -1788,8 +1788,8 @@
       "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
-        "EV estimat 13.0% și edge 9.8 puncte procentuale.",
+        "Probabilitate model 83.3% vs. probabilitate implicată 75.2%.",
+        "EV estimat 10.8% și edge 8.1 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1886,23 +1886,23 @@
       "event_date": "2026-05-06T03:00:00+03:00",
       "market": "Over 1.5G",
       "odds": 1.31,
-      "model_probability": 0.8309,
-      "model_probability_pct": 83.09,
+      "model_probability": 0.8146,
+      "model_probability_pct": 81.46,
       "implied_probability_pct": 76.34,
-      "fair_odds": 1.204,
-      "edge_pp": 6.75,
-      "ev_pct": 8.85,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
+      "fair_odds": 1.228,
+      "edge_pp": 5.12,
+      "ev_pct": 6.71,
+      "kelly_fraction": 0.0541,
+      "kelly_units_100": 5.41,
       "confidence": 55.95,
       "score": 92.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 83.1% vs. probabilitate implicată 76.3%.",
-        "EV estimat 8.8% și edge 6.8 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+        "Probabilitate model 81.5% vs. probabilitate implicată 76.3%.",
+        "EV estimat 6.7% și edge 5.1 puncte procentuale.",
+        "Miză Kelly fracțională 5.41% din bancă, plafonată prudent."
       ]
     },
     {
@@ -2058,29 +2058,29 @@
     },
     {
       "key": "Over 2.5G",
-      "bets": 12,
-      "wins": 9,
-      "winrate": 75.0,
-      "profit_units": 1.0,
-      "roi_pct": 8.38,
-      "avg_odds": 1.454
+      "bets": 13,
+      "wins": 10,
+      "winrate": 76.92,
+      "profit_units": 1.56,
+      "roi_pct": 11.96,
+      "avg_odds": 1.461
     },
     {
       "key": "Under 3.5G",
-      "bets": 383,
-      "wins": 279,
-      "winrate": 72.85,
-      "profit_units": 1.44,
-      "roi_pct": 0.38,
+      "bets": 384,
+      "wins": 280,
+      "winrate": 72.92,
+      "profit_units": 2.02,
+      "roi_pct": 0.53,
       "avg_odds": 1.39
     },
     {
       "key": "Over 1.5G",
-      "bets": 185,
-      "wins": 124,
-      "winrate": 67.03,
-      "profit_units": -21.65,
-      "roi_pct": -11.7,
+      "bets": 186,
+      "wins": 125,
+      "winrate": 67.2,
+      "profit_units": -21.32,
+      "roi_pct": -11.46,
       "avg_odds": 1.323
     }
   ],
@@ -2158,6 +2158,15 @@
       "avg_odds": 1.17
     },
     {
+      "key": "Super League",
+      "bets": 9,
+      "wins": 7,
+      "winrate": 77.78,
+      "profit_units": 1.37,
+      "roi_pct": 15.22,
+      "avg_odds": 1.497
+    },
+    {
       "key": "Copa Sudamericana",
       "bets": 27,
       "wins": 24,
@@ -2183,15 +2192,6 @@
       "profit_units": 3.31,
       "roi_pct": 12.25,
       "avg_odds": 1.4
-    },
-    {
-      "key": "Pro League",
-      "bets": 29,
-      "wins": 23,
-      "winrate": 79.31,
-      "profit_units": 3.31,
-      "roi_pct": 11.41,
-      "avg_odds": 1.424
     }
   ],
   "recommendations": [
