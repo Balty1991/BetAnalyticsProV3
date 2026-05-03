@@ -1,9 +1,9 @@
 // BetAnalytics Pro - CLV market guidance on Meciuri cards
-// V6: ultra-compact mobile guidance. Non-filtering, non-blocking.
+// V7: compact mobile guidance with readable wrapping. Non-filtering, non-blocking.
 (function(){
   'use strict';
-  if (window.__baClvCardGuidanceV6) return;
-  window.__baClvCardGuidanceV6 = true;
+  if (window.__baClvCardGuidanceV7) return;
+  window.__baClvCardGuidanceV7 = true;
 
   try {
     var oldTab = document.getElementById('tab-meciuri') || document.body;
@@ -56,20 +56,20 @@
   }
 
   function style(){
-    if (document.getElementById('ba-clv-guidance-style-v6')) return;
+    if (document.getElementById('ba-clv-guidance-style-v7')) return;
     var css = [
       '.ba-clv-guidance{display:block!important;margin:7px 0 9px!important;padding:8px 9px!important;border-radius:13px;border:1px solid rgba(255,255,255,.10);background:rgba(12,18,31,.78);box-shadow:0 6px 14px rgba(0,0,0,.13);font-family:var(--font-sans,system-ui,sans-serif);pointer-events:none}',
-      '.ba-clv-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}.ba-clv-main{min-width:0;flex:1}.ba-clv-title{font-size:12px;line-height:1.18;font-weight:900;color:#f8fafc;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ba-clv-sub{margin-top:3px;font-size:10px;line-height:1.25;color:rgba(203,213,225,.86);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ba-clv-side{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:0 0 auto}',
-      '.ba-clv-chip{display:inline-flex;align-items:center;justify-content:center;min-width:42px;padding:3px 6px;border-radius:999px;font:900 9px var(--mono,monospace);letter-spacing:.02em;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);color:#e5edf9;white-space:nowrap}.ba-clv-market{font:900 9px var(--mono,monospace);letter-spacing:.08em;color:rgba(148,163,184,.98)}',
-      '.ba-clv-meta{display:flex;gap:6px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06);font:800 9px var(--mono,monospace);color:rgba(203,213,225,.88);white-space:nowrap;overflow:hidden}.ba-clv-meta span{display:inline-flex;align-items:center;gap:2px}.ba-clv-meta b{font-weight:900;color:#f8fafc}',
+      '.ba-clv-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}.ba-clv-title{font-size:12px;line-height:1.22;font-weight:900;color:#f8fafc;letter-spacing:-.01em;min-width:0;flex:1}.ba-clv-chip{display:inline-flex;align-items:center;justify-content:center;padding:3px 7px;border-radius:999px;font:900 9px var(--mono,monospace);letter-spacing:.02em;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);color:#e5edf9;white-space:nowrap;flex:0 0 auto}',
+      '.ba-clv-context{font-size:10px;line-height:1.28;color:rgba(203,213,225,.88);margin-bottom:5px}.ba-clv-context b{font-weight:900;color:#f8fafc}',
+      '.ba-clv-meta{display:flex;flex-wrap:wrap;gap:4px 7px;align-items:center;padding-top:5px;border-top:1px solid rgba(255,255,255,.06);font:800 9px var(--mono,monospace);color:rgba(203,213,225,.90)}.ba-clv-meta span{display:inline-flex;align-items:center;gap:2px}.ba-clv-meta b{font-weight:900;color:#f8fafc}',
       '.ba-clv-good{border-color:rgba(34,197,94,.28);background:linear-gradient(135deg,rgba(34,197,94,.09),rgba(12,18,31,.78))}.ba-clv-good .ba-clv-chip{color:#86efac;border-color:rgba(34,197,94,.24);background:rgba(34,197,94,.11)}',
       '.ba-clv-warn{border-color:rgba(249,115,22,.30);background:linear-gradient(135deg,rgba(249,115,22,.10),rgba(12,18,31,.78))}.ba-clv-warn .ba-clv-chip{color:#fdba74;border-color:rgba(249,115,22,.25);background:rgba(249,115,22,.12)}',
       '.ba-clv-caution{border-color:rgba(245,158,11,.30);background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(12,18,31,.78))}.ba-clv-caution .ba-clv-chip{color:#fde68a;border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.12)}',
       '.ba-clv-bad{border-color:rgba(239,68,68,.30);background:linear-gradient(135deg,rgba(239,68,68,.09),rgba(12,18,31,.78))}.ba-clv-bad .ba-clv-chip{color:#fca5a5;border-color:rgba(239,68,68,.24);background:rgba(239,68,68,.10)}',
       '.ba-clv-info{border-color:rgba(59,130,246,.26);background:linear-gradient(135deg,rgba(59,130,246,.09),rgba(12,18,31,.78))}.ba-clv-info .ba-clv-chip{color:#93c5fd;border-color:rgba(59,130,246,.22);background:rgba(59,130,246,.10)}',
-      '@media(max-width:420px){.ba-clv-title{font-size:11.5px}.ba-clv-sub{font-size:9.5px}.ba-clv-meta{gap:5px;font-size:8.5px}.ba-clv-chip{min-width:38px;padding:3px 5px}}'
+      '@media(max-width:420px){.ba-clv-title{font-size:11.5px}.ba-clv-context{font-size:9.5px}.ba-clv-meta{font-size:8.5px;gap:3px 6px}.ba-clv-chip{padding:3px 6px;font-size:8.5px}}'
     ].join('');
-    var el = document.createElement('style'); el.id = 'ba-clv-guidance-style-v6'; el.textContent = css; document.head.appendChild(el);
+    var el = document.createElement('style'); el.id = 'ba-clv-guidance-style-v7'; el.textContent = css; document.head.appendChild(el);
   }
 
   function pickState(container){
@@ -93,10 +93,10 @@
     if (pick.kind === 'bet' && (prof.sev === 'caution' || prof.sev === 'warn')) return 'PARIAZĂ · miză moderată';
     if (pick.kind === 'bet' && prof.sev === 'bad') return 'PARIAZĂ · stake redus';
     if (pick.kind === 'risk' && prof.sev === 'good') return 'RISC · piața ajută';
-    if (pick.kind === 'risk' && prof.sev === 'bad') return 'RISC · mai bine skip/stake mic';
+    if (pick.kind === 'risk' && prof.sev === 'bad') return 'RISC · skip/stake mic';
     if (pick.kind === 'risk') return 'RISC · stake mic';
     if (pick.kind === 'avoid') return 'EVITĂ · context secundar';
-    return 'Context piață · ' + prof.label;
+    return 'Ghid miză · ' + prof.label;
   }
   function subFor(pick, prof){
     if (pick.kind === 'bet' && prof.sev === 'bad') return 'Pick valid, dar CLV cere prudență.';
@@ -104,24 +104,22 @@
     if (pick.kind === 'risk' && (prof.sev === 'bad' || prof.sev === 'caution' || prof.sev === 'warn')) return 'Pick + piață cer disciplină.';
     if (pick.kind === 'risk') return 'Pick la limită; verifică stake-ul.';
     if (pick.kind === 'avoid') return 'CLV nu schimbă verdictul.';
-    return 'CLV este context de miză, nu anulare pick.';
+    return 'Context de miză, nu anulare pick.';
   }
 
   function makeBadge(row, mk, pick){
     var prof = profile(row);
     var adj = Number(row.edge_adjustment_pp || 0);
-    var meta = 'CLV <b>' + pct(row.avg_clv_pct) + '</b> · ROI <b>' + pct(row.roi_flat_pct) + '</b> · N=<b>' + (row.n || 0) + '</b>' + (adj > 0 ? ' · edge ' + pp(adj) : '');
+    var meta = '<span>CLV <b>' + pct(row.avg_clv_pct) + '</b></span><span>ROI <b>' + pct(row.roi_flat_pct) + '</b></span><span>N=<b>' + (row.n || 0) + '</b></span>' + (adj > 0 ? '<span>edge <b>' + pp(adj) + '</b></span>' : '');
     var box = document.createElement('div');
     box.className = 'ba-clv-guidance ba-clv-' + prof.sev;
     box.innerHTML = ''+
-      '<div class="ba-clv-row">'+
-        '<div class="ba-clv-main">'+
-          '<div class="ba-clv-title">'+titleFor(pick, prof)+'</div>'+
-          '<div class="ba-clv-sub">'+subFor(pick, prof)+'</div>'+
-        '</div>'+
-        '<div class="ba-clv-side"><span class="ba-clv-chip">'+pick.label+'</span><span class="ba-clv-market">'+marketLabel(mk)+' · '+prof.label+'</span></div>'+
+      '<div class="ba-clv-top">'+
+        '<div class="ba-clv-title">'+titleFor(pick, prof)+'</div>'+
+        '<span class="ba-clv-chip">'+pick.label+'</span>'+
       '</div>'+
-      '<div class="ba-clv-meta"><span>'+meta+'</span></div>';
+      '<div class="ba-clv-context"><b>'+marketLabel(mk)+'</b> · '+prof.label+' · '+subFor(pick, prof)+'</div>'+
+      '<div class="ba-clv-meta">'+meta+'</div>';
     return box;
   }
   function findRecoHeader(container){
@@ -172,15 +170,15 @@
     scanTimer = setTimeout(function(){ scanTimer = null; load().then(scan); }, 250);
   }
   function hook(){
-    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV6) {
+    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV7) {
       var oldRender = window.renderMatches;
       window.renderMatches = function(){ var r = oldRender.apply(this, arguments); schedule(); setTimeout(schedule, 900); return r; };
-      window.renderMatches.__baClvGuidanceV6 = true;
+      window.renderMatches.__baClvGuidanceV7 = true;
     }
-    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV6) {
+    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV7) {
       var oldSwitch = window.switchTab;
       window.switchTab = function(name){ var r = oldSwitch.apply(this, arguments); if (name === 'meciuri') { schedule(); setTimeout(schedule, 900); } return r; };
-      window.switchTab.__baClvGuidanceV6 = true;
+      window.switchTab.__baClvGuidanceV7 = true;
     }
   }
   function boot(){ hook(); if (isMeciuriActive()) { schedule(); setTimeout(schedule, 1200); } }
