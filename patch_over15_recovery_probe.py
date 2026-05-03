@@ -56,8 +56,9 @@ def over15_probe_n(payload: Dict[str, Any]) -> int:
 def should_patch(over15_threshold: Dict[str, Any]) -> bool:
     if not over15_threshold:
         return True
+    # Keep refreshing already-active probe metadata so the UI never shows undefined.
     if over15_threshold.get("probe_mode") is True:
-        return False
+        return True
     return bool(over15_threshold.get("disabled")) or over15_threshold.get("basis") == "none_profitable"
 
 
@@ -93,10 +94,12 @@ def main() -> None:
 
     previous = thresholds.get("over15", {}) if isinstance(thresholds.get("over15", {}), dict) else {}
     if not should_patch(previous):
-        print("Over15 recovery probe: already active or market has a valid profitable threshold")
+        print("Over15 recovery probe: market has a valid profitable threshold")
         return
 
-    prev_edge = previous.get("min_edge", 999.0)
+    prev_edge = previous.get("prev_edge")
+    if prev_edge is None:
+        prev_edge = previous.get("min_edge", 999.0)
     now = datetime.now(timezone.utc).isoformat()
     change = {
         "market": "over15",
@@ -107,6 +110,9 @@ def main() -> None:
         "timestamp": now,
     }
 
+    # Important for the current UI: it reads prev_edge/new_edge directly from
+    # dynamic_thresholds.over15 when changed=true. Keep these top-level fields
+    # present so the dashboard does not render `undefined%`.
     thresholds["over15"] = {
         "min_edge": PROBE_EDGE,
         "disabled": False,
@@ -119,6 +125,7 @@ def main() -> None:
         "recovery_from": "none_profitable",
         "recovery_note": "Piața nu se închide definitiv; permite doar probe Over 1.5 foarte stricte ca să adune eșantion nou.",
         "prev_edge": prev_edge,
+        "new_edge": PROBE_EDGE,
         "changed": True,
         "recent_changes": [change],
     }
