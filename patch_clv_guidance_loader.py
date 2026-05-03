@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Ensure the CLV card guidance runtime is loaded by the frontend.
+"""Ensure CLV guidance badges are loaded by the frontend.
 
-The app already loads assets/smartbet_v2_integration.js. This patch appends a
-small loader to that file so assets/clv_card_guidance_runtime.js is fetched on
-GitHub Pages without editing the large index.html/app.js directly.
+This patch is intentionally idempotent and touches both:
+- index.html: direct script include with a fresh version query, so CDN/PWA cache is busted.
+- assets/smartbet_v2_integration.js: fallback dynamic loader.
 """
 from pathlib import Path
 
-TARGET = Path("assets/smartbet_v2_integration.js")
-MARKER = "__baClvGuidanceLoaderV1"
+SMARTBET = Path("assets/smartbet_v2_integration.js")
+INDEX = Path("index.html")
+RUNTIME_SRC = "./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"
+LOADER_MARKER = "__baClvGuidanceLoaderV1"
+INDEX_MARKER = "ba-clv-card-guidance-runtime-direct"
+
 SNIPPET = """
 
 // BetAnalytics Pro - load CLV guidance badges on match cards
@@ -17,11 +21,11 @@ SNIPPET = """
   if(window.__baClvGuidanceLoaderV1) return;
   window.__baClvGuidanceLoaderV1 = true;
   function load(){
-    if(document.getElementById('ba-clv-card-guidance-runtime')) return;
+    if(document.getElementById('ba-clv-card-guidance-runtime') || document.getElementById('ba-clv-card-guidance-runtime-direct')) return;
     var s = document.createElement('script');
     s.id = 'ba-clv-card-guidance-runtime';
     s.defer = true;
-    s.src = './assets/clv_card_guidance_runtime.js?v=' + Date.now();
+    s.src = './assets/clv_card_guidance_runtime.js?v=20260503clvguide3';
     document.head.appendChild(s);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load);
@@ -30,16 +34,59 @@ SNIPPET = """
 """
 
 
+def patch_smartbet() -> bool:
+    if not SMARTBET.exists():
+        print(f"[CLV-GUIDE] Missing {SMARTBET}")
+        return False
+    txt = SMARTBET.read_text(encoding="utf-8")
+    if LOADER_MARKER in txt and "20260503clvguide3" in txt:
+        print("[CLV-GUIDE] SmartBet loader already current")
+        return False
+    if LOADER_MARKER in txt:
+        start = txt.find("// BetAnalytics Pro - load CLV guidance badges on match cards")
+        if start >= 0:
+            txt = txt[:start].rstrip()
+    SMARTBET.write_text(txt.rstrip() + SNIPPET + "\n", encoding="utf-8")
+    print("[CLV-GUIDE] SmartBet fallback loader updated")
+    return True
+
+
+def patch_index() -> bool:
+    if not INDEX.exists():
+        print(f"[CLV-GUIDE] Missing {INDEX}")
+        return False
+    txt = INDEX.read_text(encoding="utf-8")
+    script = f'<script defer id="{INDEX_MARKER}" src="{RUNTIME_SRC}"></script>'
+
+    if INDEX_MARKER in txt:
+        import re
+        new = re.sub(
+            r'<script[^>]+id=["\']ba-clv-card-guidance-runtime-direct["\'][^>]*></script>',
+            script,
+            txt,
+            count=1,
+        )
+        if new != txt:
+            INDEX.write_text(new, encoding="utf-8")
+            print("[CLV-GUIDE] index.html direct script version refreshed")
+            return True
+        print("[CLV-GUIDE] index.html direct script already current")
+        return False
+
+    anchor = '<script defer src="./assets/app.js?v=20260429consensus2"></script>'
+    if anchor in txt:
+        txt = txt.replace(anchor, script + "\n" + anchor, 1)
+    else:
+        txt = txt.replace("</head>", script + "\n</head>", 1)
+    INDEX.write_text(txt, encoding="utf-8")
+    print("[CLV-GUIDE] index.html direct script added")
+    return True
+
+
 def main():
-    if not TARGET.exists():
-        print(f"[CLV-GUIDE] Missing {TARGET}")
-        return
-    txt = TARGET.read_text(encoding="utf-8")
-    if MARKER in txt:
-        print("[CLV-GUIDE] Loader already present")
-        return
-    TARGET.write_text(txt.rstrip() + SNIPPET + "\n", encoding="utf-8")
-    print("[CLV-GUIDE] Loader appended")
+    changed = patch_smartbet() or patch_index()
+    if not changed:
+        print("[CLV-GUIDE] No changes needed")
 
 
 if __name__ == "__main__":
