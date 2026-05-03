@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-03T01:02:30.646263+00:00",
+  "updated_at": "2026-05-03T01:32:53.139788+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -4660,7 +4660,7 @@
       "under35": "league_baseline",
       "btts": "league_baseline"
     },
-    "rps_winner": "team_form_blend",
+    "rps_winner": "league_baseline",
     "n_leagues": 0
   },
   "real_backtest": {
@@ -5111,14 +5111,14 @@
     },
     "by_edge_bucket": {
       "0-5%": {
-        "n": 112,
+        "n": 111,
         "n_wins": 79,
-        "winrate": 70.54,
-        "roi_pct": -6.19,
-        "profit": -6.936,
-        "avg_odds": 1.357,
+        "winrate": 71.17,
+        "roi_pct": -5.35,
+        "profit": -5.936,
+        "avg_odds": 1.356,
         "max_drawdown": 11.74,
-        "avg_edge_pct": 3.74
+        "avg_edge_pct": 3.73
       },
       "5-10%": {
         "n": 337,
@@ -5196,24 +5196,24 @@
       },
       "btts": {
         "0-5%": {
-          "n": 12,
+          "n": 11,
           "n_wins": 7,
-          "winrate": 58.33,
-          "roi_pct": -11.05,
-          "profit": -1.326,
-          "avg_odds": 1.534,
+          "winrate": 63.64,
+          "roi_pct": -2.96,
+          "profit": -0.326,
+          "avg_odds": 1.536,
           "max_drawdown": 2.74,
-          "avg_edge_pct": 4.19
+          "avg_edge_pct": 4.12
         },
         "5-10%": {
-          "n": 44,
+          "n": 45,
           "n_wins": 31,
-          "winrate": 70.45,
-          "roi_pct": 8.92,
-          "profit": 3.925,
-          "avg_odds": 1.547,
+          "winrate": 68.89,
+          "roi_pct": 6.5,
+          "profit": 2.925,
+          "avg_odds": 1.546,
           "max_drawdown": 3.3,
-          "avg_edge_pct": 7.43
+          "avg_edge_pct": 7.37
         },
         "10-15%": {
           "n": 26,
@@ -5348,7 +5348,7 @@
           "prev_edge": 999.0,
           "new_edge": 15.0,
           "message": "over15: recovery probe activ, prag strict = 15.0%",
-          "timestamp": "2026-05-03T01:02:30.739278+00:00"
+          "timestamp": "2026-05-03T01:32:53.221034+00:00"
         }
       ]
     },
@@ -5372,18 +5372,9 @@
       "bootstrap_min_edge": null,
       "bootstrap_n": 39,
       "bootstrap_target_n": 20,
-      "prev_edge": 5.0,
-      "changed": true,
-      "recent_changes": [
-        {
-          "market": "under35",
-          "type": "threshold_change",
-          "prev_edge": 5.0,
-          "new_edge": 15.0,
-          "message": "under35: prag ridicat 5.0% -> 15.0% (ROI +23.3%)",
-          "timestamp": "2026-05-03T01:02:30.645825+00:00"
-        }
-      ]
+      "prev_edge": 15.0,
+      "changed": false,
+      "recent_changes": []
     }
   },
   "threshold_history": [
@@ -5393,7 +5384,7 @@
       "prev_edge": 999.0,
       "new_edge": 15.0,
       "message": "over15: recovery probe activ, prag strict = 15.0%",
-      "timestamp": "2026-05-03T01:02:30.739278+00:00"
+      "timestamp": "2026-05-03T01:32:53.221034+00:00"
     }
   ]
 }
