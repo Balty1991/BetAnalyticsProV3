@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-05-03T01:32:53.344196+00:00",
+  "updated_at": "2026-05-03T01:59:00.412309+00:00",
   "summary": {
-    "total_picks": 636,
-    "avg_clv_pct": -0.6164,
+    "total_picks": 640,
+    "avg_clv_pct": -0.609,
     "median_clv_pct": 0.0,
-    "clv_positive_n": 110,
-    "clv_negative_n": 526,
-    "clv_positive_rate": 0.173,
-    "avg_clv_wins": -0.3643,
-    "avg_clv_losses": -1.2702,
-    "win_rate_pct": 72.17,
-    "roi_flat_pct": 0.2385,
+    "clv_positive_n": 111,
+    "clv_negative_n": 529,
+    "clv_positive_rate": 0.1734,
+    "avg_clv_wins": -0.3585,
+    "avg_clv_losses": -1.249,
+    "win_rate_pct": 71.88,
+    "roi_flat_pct": -0.1848,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.1329
+    "std_clv_pct": 6.1149
   },
   "by_market": {
     "btts": {
@@ -25,12 +25,12 @@
       "avg_ev_at_pick": 3.0811
     },
     "over15": {
-      "n": 177,
-      "avg_clv_pct": 1.6375,
-      "clv_positive_rate": 0.226,
-      "win_rate_pct": 67.8,
-      "roi_flat_pct": -10.6836,
-      "avg_ev_at_pick": 3.8063
+      "n": 178,
+      "avg_clv_pct": 1.6283,
+      "clv_positive_rate": 0.2247,
+      "win_rate_pct": 67.42,
+      "roi_flat_pct": -11.1854,
+      "avg_ev_at_pick": 3.7693
     },
     "over25": {
       "n": 11,
@@ -41,12 +41,12 @@
       "avg_ev_at_pick": -0.8482
     },
     "under35": {
-      "n": 361,
-      "avg_clv_pct": -1.2391,
-      "clv_positive_rate": 0.1274,
-      "win_rate_pct": 73.68,
-      "roi_flat_pct": 1.6454,
-      "avg_ev_at_pick": 3.3736
+      "n": 364,
+      "avg_clv_pct": -1.2226,
+      "clv_positive_rate": 0.1291,
+      "win_rate_pct": 73.35,
+      "roi_flat_pct": 1.1648,
+      "avg_ev_at_pick": 3.3278
     }
   },
   "clv_buckets": {
@@ -57,16 +57,16 @@
       "avg_clv": 20.8986
     },
     "clv_mild_pos": {
-      "n": 86,
-      "win_rate": 79.07,
-      "roi_pct": 9.3581,
-      "avg_clv": 1.7503
+      "n": 87,
+      "win_rate": 79.31,
+      "roi_pct": 9.5954,
+      "avg_clv": 1.7567
     },
     "clv_neutral": {
-      "n": 323,
-      "win_rate": 71.21,
-      "roi_pct": -2.8793,
-      "avg_clv": -0.085
+      "n": 326,
+      "win_rate": 70.55,
+      "roi_pct": -3.773,
+      "avg_clv": -0.0843
     },
     "clv_mild_neg": {
       "n": 138,
@@ -82,40 +82,86 @@
     }
   },
   "rolling_30d": {
-    "n": 636,
-    "avg_clv_pct": -0.6164,
-    "win_rate_pct": 72.17,
-    "roi_flat_pct": 0.2385,
+    "n": 640,
+    "avg_clv_pct": -0.609,
+    "win_rate_pct": 71.88,
+    "roi_flat_pct": -0.1848,
     "days": 30
   },
   "rolling_90d": {
-    "n": 636,
-    "avg_clv_pct": -0.6164,
-    "win_rate_pct": 72.17,
-    "roi_flat_pct": 0.2385,
+    "n": 640,
+    "avg_clv_pct": -0.609,
+    "win_rate_pct": 71.88,
+    "roi_flat_pct": -0.1848,
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 401,
-      "avg_clv": 0.6106,
-      "clv_positive_rate": 0.2219
+      "n": 402,
+      "avg_clv": 0.6148,
+      "clv_positive_rate": 0.2239
     },
     "ev_negative_picks": {
-      "n": 236,
-      "avg_clv": -2.7021,
-      "clv_positive_rate": 0.089
+      "n": 238,
+      "avg_clv": -2.676,
+      "clv_positive_rate": 0.0882
     },
     "divergence_warning": false
   },
   "diagnosis": {
-    "signal": "CLV_NEGATIVE_ROI_POSITIVE",
-    "interpretation": "🎲 ROI pozitiv (0.24%) dar CLV negativ (-0.62%). Rezultatele pot fi noroc, nu edge real. Modelul NU bate closing line în medie.",
-    "action": "Revizuiește modelul. ROI-ul pozitiv nu este sustenabil la CLV negativ.",
+    "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
+    "interpretation": "❌ CLV negativ (-0.61%) și ROI negativ (-0.18%). Modelul nu bate piața. Edge-ul calculat nu se reflectă în cotele reale.",
+    "action": "Auditează logica EV și sursele de probabilitate. Modelul necesită recalibrare.",
     "confidence": "high",
     "rolling_trend": "stabil"
   },
   "picks": [
+    {
+      "event_id": "5063",
+      "date": "2026-05-03",
+      "home": "Philadelphia Union",
+      "away": "Nashville SC",
+      "league": "MLS",
+      "market": "under35",
+      "picked_odds": 1.33,
+      "closing_odds": 1.3,
+      "picked_implied": 0.75188,
+      "closing_implied": 0.769231,
+      "clv_pct": 2.3077,
+      "clv_positive": true,
+      "ev_at_pick_pct": 0.7741,
+      "model_prob": 75.77,
+      "edge_pct": 3.61,
+      "score": 79,
+      "line_move_pct": -2.2556,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-03T01:40:33.127479+00:00",
+      "prediction_id": 3392
+    },
+    {
+      "event_id": "9919",
+      "date": "2026-05-03",
+      "home": "Fortaleza",
+      "away": "Goiás",
+      "league": "Brasileirão Serie B",
+      "market": "under35",
+      "picked_odds": 1.222,
+      "closing_odds": 1.222,
+      "picked_implied": 0.818331,
+      "closing_implied": 0.818331,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -3.1687,
+      "model_prob": 79.24,
+      "edge_pct": 3.69,
+      "score": 82,
+      "line_move_pct": 0.0,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-05-03T01:40:33.127479+00:00",
+      "prediction_id": 3395
+    },
     {
       "event_id": "7133",
       "date": "2026-05-03",
@@ -161,6 +207,52 @@
       "status": "win",
       "settled_at": "2026-05-03T00:40:26.908644+00:00",
       "prediction_id": 3385
+    },
+    {
+      "event_id": "5064",
+      "date": "2026-05-03",
+      "home": "Columbus Crew",
+      "away": "Minnesota United",
+      "league": "MLS",
+      "market": "under35",
+      "picked_odds": 1.48,
+      "closing_odds": 1.48,
+      "picked_implied": 0.675676,
+      "closing_implied": 0.675676,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -4.1552,
+      "model_prob": 64.76,
+      "edge_pct": 3.56,
+      "score": 60,
+      "line_move_pct": 0.0,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-05-03T01:40:33.127479+00:00",
+      "prediction_id": 3389
+    },
+    {
+      "event_id": "5067",
+      "date": "2026-05-03",
+      "home": "New England Revolution",
+      "away": "Charlotte FC",
+      "league": "MLS",
+      "market": "over15",
+      "picked_odds": 1.25,
+      "closing_odds": 1.25,
+      "picked_implied": 0.8,
+      "closing_implied": 0.8,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": -2.775,
+      "model_prob": 77.78,
+      "edge_pct": 2.95,
+      "score": 75,
+      "line_move_pct": 0.0,
+      "won": false,
+      "status": "lose",
+      "settled_at": "2026-05-03T01:40:33.127479+00:00",
+      "prediction_id": 3393
     },
     {
       "event_id": "5061",
@@ -251,7 +343,7 @@
       "line_move_pct": 0.974,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-02T21:17:14.356632+00:00",
+      "settled_at": "2026-05-02T20:51:14.216667+00:00",
       "prediction_id": 3374
     },
     {
@@ -320,7 +412,7 @@
       "line_move_pct": 3.6496,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-02T21:17:14.356632+00:00",
+      "settled_at": "2026-05-02T20:51:14.216667+00:00",
       "prediction_id": 3375
     },
     {
@@ -366,7 +458,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-02T21:17:14.356632+00:00",
+      "settled_at": "2026-05-02T20:51:14.216667+00:00",
       "prediction_id": 3596
     },
     {
@@ -389,7 +481,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-02T21:17:14.356632+00:00",
+      "settled_at": "2026-05-02T20:51:14.216667+00:00",
       "prediction_id": 3372
     },
     {
