@@ -129,7 +129,7 @@
   var SUPP={over15:1,over25:1,btts:1,under35:1,under25:1};
   var DC_MKTS={dc1x:1,dcx2:1,dc12:1};
 
-  var STORE_KEY='bet_matches_visible_history_v2_old_ui_reset_20260504';
+  var STORE_KEY='bet_matches_visible_history_v3_exact_visible_20260504';
   var STORE_PATH='./data/matches_visible_history.json';
   var STORE={version:'v1-visible-matches-history',scope:'matches_tab_visible_predictions_only',rows:[]};
   var STORE_LOADING=false, STORE_LOADED=false;
@@ -194,7 +194,7 @@
     if(local){ STORE=mergeStorePayloads(STORE,local); STORE_LOADED=true; }
     if(STORE_LOADING) return;
     STORE_LOADING=true;
-    fetch(STORE_PATH+'?v=20260504oldhiststore1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
+    fetch(STORE_PATH+'?v=20260504exactvisible1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
       STORE=mergeStorePayloads(j,loadLocalStore()); STORE_LOADED=true; STORE_LOADING=false; saveLocalStore(); _settledCache=null; _last=''; render();
     }).catch(function(){ STORE_LOADING=false; STORE_LOADED=true; });
   }
@@ -219,16 +219,28 @@
      DATE — PENDING (ALL_MATCHES, logica EXACTA Meciuri)
   ═══════════════════════════════════════════════════════════════════ */
 
-  // Verifica daca meciul are tipul t in bestBet SAU in eligibleCandidates
+  // Verifică dacă meciul are tipul t în bestBet SAU în eligibleCandidates.
   function matchHasEligType(m,t){
-    if(!m.bestBet)return false;
+    if(!m||!m.bestBet)return false;
     if(m.bestBet.type===t)return true;
     return Array.isArray(m.eligibleCandidates)&&m.eligibleCandidates.some(function(c){
-      return c.bestBet&&c.bestBet.type===t;
+      return c&&c.bestBet&&c.bestBet.type===t;
     });
   }
 
-  // Filtru per categorie — identic cu renderMatches() din app.js
+  function getCandidateBet(m,type){
+    if(!m)return null;
+    var b=m.bestBet||null;
+    if(!type) return b;
+    if(b&&b.type===type) return b;
+    if(Array.isArray(m.eligibleCandidates)){
+      var cand=m.eligibleCandidates.find(function(c){ return c&&c.bestBet&&c.bestBet.type===type; });
+      if(cand&&cand.bestBet) return cand.bestBet;
+    }
+    return null;
+  }
+
+  // Filtru per categorie — oglindește filtrarea din Meciuri, inclusiv blocările Motor.
   function matchInCat(m,catKey){
     if(!m||m.analysisState!=='ELIGIBLE'||!m.bestBet)return false;
     var b=m.bestBet;
@@ -243,43 +255,47 @@
     return false;
   }
 
-  // Returneaza randuri pending pentru o categorie specifica (din ALL_MATCHES)
+  function isBlockedByMotor(m,bet,lookup){
+    try{
+      if(typeof window.getSmartBetStatusForMatch==='function'){
+        var meta=window.getSmartBetStatusForMatch(m,bet||m.bestBet||null,lookup||{});
+        return meta&&meta.state==='blocked';
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function smartLookup(){
+    try{ return typeof window.getSmartBetAnalysisLookup==='function' ? window.getSmartBetAnalysisLookup() : {}; }
+    catch(e){ return {}; }
+  }
+
+  // Returnează EXACT rândurile pending vizibile pentru categoria din Meciuri.
+  // Important: nu mai păstrăm pending ascunse/filtrate; altfel Top/Value nu bat cu numărul din Meciuri.
   function getPendingForCat(catKey){
     if(!window.ALL_MATCHES||!window.ALL_MATCHES.length)return[];
     var isDisp=typeof window.isMatchStillDisplayable==='function'
       ?window.isMatchStillDisplayable:function(){return true;};
+    var lookup=smartLookup();
+    var typeMap={o15:'over15',o25:'over25',btts:'btts',u35:'under35'};
+    var wantedType=typeMap[catKey]||null;
 
     return (window.ALL_MATCHES||[]).filter(function(m){
       if(!isDisp(m))return false;
-      return matchInCat(m,catKey);
+      if(!matchInCat(m,catKey))return false;
+      var activeBet=getCandidateBet(m,wantedType)||m.bestBet||null;
+      if(!activeBet)return false;
+      if(isBlockedByMotor(m,activeBet,lookup))return false;
+      return true;
     }).map(function(m){
-      var b=m.bestBet||{};
-      // Pentru categorii de piata, gaseste candidatul potrivit daca bestBet nu e tipul dorit
-      var mktKey=b.type||'';
-      var mktLabel=b.label||'';
-      var mktOdds=nv(b.odds);
-      var mktProb=nv(b.adjProb);
-      var mktEdge=nv(b.edgePct);
-
-      var typeMap={o15:'over15',o25:'over25',btts:'btts',u35:'under35'};
-      var wantedType=typeMap[catKey];
-      if(wantedType&&mktKey!==wantedType&&Array.isArray(m.eligibleCandidates)){
-        var cand=m.eligibleCandidates.find(function(c){return c.bestBet&&c.bestBet.type===wantedType;});
-        if(cand&&cand.bestBet){
-          mktKey=cand.bestBet.type||mktKey;
-          mktLabel=cand.bestBet.label||mktLabel;
-          mktOdds=nv(cand.bestBet.odds)||mktOdds;
-          mktProb=nv(cand.bestBet.adjProb)||mktProb;
-          mktEdge=nv(cand.bestBet.edgePct)||mktEdge;
-        }
-      }
+      var b=getCandidateBet(m,wantedType)||m.bestBet||{};
       return{
         _st:'pending',source:'live',
-        event_id:m.eventId!=null?m.eventId:m.id,
+        event_id:m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:m.id),
         home:m.home,away:m.away,league:m.league,
         event_date:m.date||m.event_date,
-        market_key:mktKey,market:mktLabel,
-        odds:mktOdds,adjusted_prob:mktProb,edge_pct:mktEdge,
+        market_key:b.type||'',market:b.label||'',
+        odds:nv(b.odds),adjusted_prob:nv(b.adjProb),edge_pct:nv(b.edgePct),
         value:nv(b.value),verdict:m.verdict||'',
         score:nv(m.smartScore),riskTier:m.riskTier||''
       };
@@ -299,24 +315,39 @@
   function syncStoreFromLive(){
     if(Date.now()-_syncTs<1000) return;
     _syncTs=Date.now();
-    var map={};
-    storedRows().forEach(function(r){ if(r&&r.event_id!=null&&r.market_key) map[rowKey(r)]=r; });
-    CATS.filter(function(c){return c.key!=='all';}).forEach(function(cat){
+
+    var oldMap={};
+    storedRows().forEach(function(r){
+      if(r&&r.event_id!=null&&r.market_key) oldMap[rowKey(r)]=normalizeStored(r);
+    });
+
+    // Păstrăm doar predicțiile deja validate/închise.
+    // Pending se reconstruiește de fiecare dată din lista vizibilă reală din Meciuri.
+    var nextMap={};
+    Object.keys(oldMap).forEach(function(k){
+      var r=normalizeStored(oldMap[k]);
+      if(r._st==='win'||r._st==='lose') nextMap[k]=r;
+    });
+
+    CATS.forEach(function(cat){
       getPendingForCat(cat.key).forEach(function(r){
         if(!r||r.event_id==null||!r.market_key) return;
-        var k=rowKey(r), old=map[k]||{};
-        var cats=Array.isArray(old.eligible_categories)?old.eligible_categories.slice():[];
+        var k=rowKey(r), old=oldMap[k]||{}, existing=nextMap[k]||{};
+        var oldSettled=normalizeStored(old)._st;
+        var cats=Array.isArray(existing.eligible_categories)?existing.eligible_categories.slice():
+                 (Array.isArray(old.eligible_categories)?old.eligible_categories.slice():[]);
         if(cats.indexOf(cat.key)<0) cats.push(cat.key);
         var nowIso=new Date().toISOString();
-        map[k]=normalizeStored(Object.assign({},old,r,{
-          source:'store',stored_from:'matches_tab',eligible_categories:cats,
+        nextMap[k]=normalizeStored(Object.assign({},old,r,{
+          source:'store',stored_from:'matches_tab_exact_visible',eligible_categories:cats,
           tracking_started_at:old.tracking_started_at||nowIso,
           first_seen_at:old.first_seen_at||nowIso,last_seen_at:nowIso,
-          status:(old.status&&old.status!=='pending')?old.status:'pending'
+          status:(oldSettled==='win'||oldSettled==='lose')?oldSettled:'pending'
         }));
       });
     });
-    STORE.rows=Object.keys(map).map(function(k){return normalizeStored(map[k]);});
+
+    STORE.rows=Object.keys(nextMap).map(function(k){return normalizeStored(nextMap[k]);});
     _settledCache=null;
     saveLocalStore();
   }
