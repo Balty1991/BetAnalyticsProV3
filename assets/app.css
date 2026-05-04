@@ -7141,3 +7141,7 @@ button[onclick*="resetFilter"]:hover {
   .analysis-detail-shell .match-inline-summary{gap:3px 6px!important}
   .analysis-detail-shell .match-inline-summary > span:not(:last-child)::after{margin-left:4px}
 }
+
+/* Hide duplicated badges inside Rezumat rapid */
+.analysis-detail-summary-section .card-reco-badge,
+.analysis-detail-summary-section .source-chip{display:none!important;}
