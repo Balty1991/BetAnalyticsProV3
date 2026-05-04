@@ -6653,34 +6653,32 @@ function renderMatches(){
         }).join(' ');
       }
       var homeFS = formDots(m.homeFormStr);
-      var awayFS = formDots(m.awayFormStr);
-      var formRow = (m.homeFormStr || m.awayFormStr)
-        ? '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">'
-            +'<div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Formă gazde</div><div style="font-size:12px;letter-spacing:2px">'+homeFS+'</div></div>'
-            +'<div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Formă oaspeți</div><div style="font-size:12px;letter-spacing:2px">'+awayFS+'</div></div>'
-            +'</div>' : '';
-      var h2hRow = m.h2hLabel
-        ? '<div style="font-size:11px;color:var(--muted);margin-top:5px">⚔️ '+htmlEsc(m.h2hLabel)+'</div>' : '';
-      var coachRow = (m.homeCoachName || m.awayCoachName)
-        ? '<div style="font-size:11px;color:var(--muted);margin-top:4px">🧠 '
+      var awayFS = formDots(m.awayFormStr);      var formHomeInline = homeFS
+        ? '<div class="ml5-inline-form"><span class="ml5-inline-label">Gazde</span><span class="ml5-inline-seq">'+homeFS+'</span></div>' : '';
+      var formAwayInline = awayFS
+        ? '<div class="ml5-inline-form"><span class="ml5-inline-label">Oaspeți</span><span class="ml5-inline-seq">'+awayFS+'</span></div>' : '';
+      var h2hMeta = m.h2hLabel
+        ? '<span class="ml5-inline-meta-item">⚔️ '+htmlEsc(m.h2hLabel)+'</span>' : '';
+      var coachMeta = (m.homeCoachName || m.awayCoachName)
+        ? '<span class="ml5-inline-meta-item">🧠 '
             +(m.homeCoachName ? htmlEsc(m.homeCoachName) : '?')+' vs '
             +(m.awayCoachName ? htmlEsc(m.awayCoachName) : '?')
-            +'</div>' : '';
+            +'</span>' : '';
       var factPills = '';
       if(b && b.ml5Factors){
         var fmap5 = {formFactor:'Formă',h2hFactor:'H2H',absenceFactor:'Absențe',tactFactor:'Tactici',refFactor:'Arbitru'};
         Object.keys(fmap5).forEach(function(k){
           var v = Number(b.ml5Factors[k]||1);
           if(Math.abs(v-1) < 0.006) return;
-          var col = v>1?'#22c55e':'#ef4444';
-          factPills += '<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.06);color:'+col+';font-weight:700">'+(v>1?'↑':'↓')+' '+fmap5[k]+'</span>';
+          factPills += '<span class="ml5-inline-pill ' + (v > 1 ? 'up' : 'down') + '">'+(v>1?'↑':'↓')+' '+fmap5[k]+'</span>';
         });
       }
-      if(formRow||h2hRow||coachRow||factPills){
-        ml5ContextBlock = '<div style="margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.18)">'
-          +'<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#a78bfa;margin-bottom:6px">🔬 Context ML5</div>'
-          +formRow+h2hRow+coachRow
-          +(factPills?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'+factPills+'</div>':'')
+      if(formHomeInline||formAwayInline||h2hMeta||coachMeta||factPills){
+        ml5ContextBlock = '<div class="ml5-inline-card">'
+          +'<div class="ml5-inline-title">🔬 Context ML5</div>'
+          +((formHomeInline || formAwayInline) ? '<div class="ml5-inline-forms">'+formHomeInline+formAwayInline+'</div>' : '')
+          +((h2hMeta || coachMeta) ? '<div class="ml5-inline-meta">'+h2hMeta+coachMeta+'</div>' : '')
+          +(factPills?'<div class="ml5-inline-pills">'+factPills+'</div>':'')
           +'</div>';
       }
     }
