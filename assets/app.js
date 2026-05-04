@@ -6632,28 +6632,52 @@ function renderMatches(){
         '</div>';
       }
     }
+    function cleanWhyText(raw){
+      raw = String(raw || '').trim();
+      // Unele surse trimit separatorii ca entități HTML, nu ca bullet real.
+      raw = raw
+        .replace(/&bull;|&#8226;|&#x2022;/gi, ' • ')
+        .replace(/&middot;|&#183;|&#xB7;/gi, ' • ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      var seen = {};
+      var parts = raw
+        .split(/\s*(?:•|·|\||;|\/{2,})\s*/g)
+        .map(function(x){
+          return String(x || '')
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        })
+        .filter(function(x){
+          if(!x) return false;
+
+          // Cheie normalizată agresiv: păstrează aceeași informație doar o dată.
+          var k = x.toLowerCase()
+            .replace(/[.,:!?]+$/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          // Pentru mesajele de recovery, vrem o singură apariție per piață.
+          var rec = k.match(/^recovery\s+probe\s+([a-z0-9.]+)/i);
+          if(rec) k = 'recovery probe ' + rec[1];
+
+          if(seen[k]) return false;
+          seen[k] = true;
+          return true;
+        });
+
+      return parts.slice(0, 3).join(' • ');
+    }
     function oneLineWhyText(){
       var raw = (m.why && String(m.why).trim())
         ? String(m.why).trim()
         : ((m.rationale && String(m.rationale).trim())
             ? String(m.rationale).trim()
             : buildRecommendationReasons(m, b).slice(0, 2).join(' • '));
-      // Curățare: unele recovery-uri vin duplicate: "Recovery probe O1.5 • Recovery probe O1.5 ..."
-      var seen = {};
-      var parts = raw
-        .split(/\s*[•|;]+\s*/g)
-        .map(function(x){ return String(x || '').replace(/\s+/g, ' ').trim(); })
-        .filter(function(x){
-          if(!x) return false;
-          var k = x.toLowerCase()
-            .replace(/[.,:!?]+$/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-          if(seen[k]) return false;
-          seen[k] = true;
-          return true;
-        });
-      return parts.slice(0, 3).join(' • ');
+      return cleanWhyText(raw);
     }
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + oneLineWhyText() + '</div>') : '';
     var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
@@ -13925,3 +13949,63 @@ document.addEventListener('DOMContentLoaded', function(){
   }, 500);
   setTimeout(function(){ clearInterval(checkInterval); }, 8000);
 });
+
+/* BA_REASON_DEDUPE_HARD */
+
+(function(){
+  if(window.__baWhyDedupeHard) return;
+  window.__baWhyDedupeHard = true;
+
+  function cleanReason(raw){
+    raw = String(raw || '')
+      .replace(/^De ce:\s*/i, '')
+      .replace(/&bull;|&#8226;|&#x2022;/gi, ' • ')
+      .replace(/&middot;|&#183;|&#xB7;/gi, ' • ')
+      .replace(/\u00a0/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    var seen = {};
+    return raw.split(/\s*(?:•|·|\||;|\/{2,})\s*/g)
+      .map(function(x){ return String(x || '').replace(/\s+/g, ' ').trim(); })
+      .filter(function(x){
+        if(!x) return false;
+        var k = x.toLowerCase().replace(/[.,:!?]+$/g, '').replace(/\s+/g, ' ').trim();
+        var rec = k.match(/^recovery\s+probe\s+([a-z0-9.]+)/i);
+        if(rec) k = 'recovery probe ' + rec[1];
+        if(seen[k]) return false;
+        seen[k] = true;
+        return true;
+      })
+      .slice(0, 3)
+      .join(' • ');
+  }
+
+  function apply(){
+    document.querySelectorAll('.match-why').forEach(function(el){
+      var strong = el.querySelector('strong');
+      var full = el.textContent || '';
+      var cleaned = cleanReason(full);
+      if(!cleaned) return;
+      if(strong){
+        el.innerHTML = '<strong>De ce:</strong> ' + cleaned;
+      }else{
+        el.textContent = cleaned;
+      }
+    });
+  }
+
+  var raf = 0;
+  function schedule(){
+    if(raf) return;
+    raf = requestAnimationFrame(function(){ raf = 0; apply(); });
+  }
+
+  document.addEventListener('DOMContentLoaded', schedule);
+  window.addEventListener('load', schedule);
+  document.addEventListener('click', function(){ setTimeout(schedule, 60); }, true);
+  try{
+    new MutationObserver(schedule).observe(document.body, {childList:true, subtree:true, characterData:true});
+  }catch(e){}
+})();
+
