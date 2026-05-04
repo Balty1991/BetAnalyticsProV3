@@ -6875,6 +6875,13 @@ function renderMatches(){
 
   // ── Paginare progresivă ────────────────────────────────────
   MATCHES_FILTERED_CACHE = filtered;
+  try {
+    if (typeof window.baCaptureVisibleMatchesForHistory === 'function') {
+      window.baCaptureVisibleMatchesForHistory(CURRENT_FILTER, filtered);
+    }
+  } catch(e) {
+    console.warn('[History visible capture] failed', e);
+  }
   MATCHES_RENDERED_COUNT = 0;
 
   // Deconectează observerul anterior dacă există

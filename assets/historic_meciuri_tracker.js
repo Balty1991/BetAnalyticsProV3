@@ -129,21 +129,40 @@
   var SUPP={over15:1,over25:1,btts:1,under35:1,under25:1};
   var DC_MKTS={dc1x:1,dcx2:1,dc12:1};
 
-  var STORE_KEY='bet_matches_visible_history_v3_exact_visible_20260504';
+  var STORE_KEY='bet_matches_visible_history_v5_one_match_per_category_20260504';
   var STORE_PATH='./data/matches_visible_history.json';
-  var STORE={version:'v1-visible-matches-history',scope:'matches_tab_visible_predictions_only',rows:[]};
+  var STORE={
+    version:'v2-rendered-matches-history',
+    scope:'exact_rendered_matches_tab_snapshot_by_category',
+    rows:[]
+  };
   var STORE_LOADING=false, STORE_LOADED=false;
+  var VALID_CAT={all:1,safe:1,o15:1,o25:1,btts:1,u35:1,value:1};
 
-  function rowKey(r){ return String((r&&r.event_id)!=null?r.event_id:'')+'::'+String((r&&r.market_key)||''); }
+  function normalizeCatKey(k){
+    k=String(k||'all').trim();
+    if(k==='top') k='safe';
+    if(k==='over15') k='o15';
+    if(k==='over25') k='o25';
+    if(k==='under35') k='u35';
+    return VALID_CAT[k]?k:null;
+  }
+  function rowCat(r){ return normalizeCatKey((r&&r.history_category)||(r&&r.category)||(r&&r.cat)||'') || 'all'; }
+  function rowKey(r){
+    // O categorie din Istoric trebuie să reflecte cardurile vizibile din Meciuri:
+    // un singur rând per meci/categorie. Nu mai includem market_key în cheie,
+    // ca același meci să nu apară dublat în Top/Value dacă are mai multe piețe eligibile.
+    return rowCat(r)+'::'+String((r&&r.event_id)!=null?r.event_id:'');
+  }
   function normalizeStorePayload(x){
     if(!x||typeof x!=='object') x={};
     var rows=Array.isArray(x.rows)?x.rows:[];
     return {
-      version:'v1-visible-matches-history',
-      scope:'matches_tab_visible_predictions_only',
+      version:'v2-rendered-matches-history',
+      scope:'exact_rendered_matches_tab_snapshot_by_category',
       reset_at:x.reset_at||'2026-05-04T00:00:00Z',
       updated_at:x.updated_at||null,
-      rows:rows.filter(function(r){return r&&r.event_id!=null&&r.market_key;})
+      rows:rows.filter(function(r){return r&&r.event_id!=null&&r.market_key&&normalizeCatKey(r.history_category||r.category||r.cat);})
     };
   }
   function loadLocalStore(){
@@ -174,6 +193,7 @@
   }
   function normalizeStored(r){
     r=Object.assign({},r||{});
+    r.history_category=normalizeCatKey(r.history_category||r.category||r.cat)||'all';
     r.source='store';
     var sc=scoreForRow(r);
     if(sc){ r.home_score=sc.home_score; r.away_score=sc.away_score; }
@@ -182,9 +202,14 @@
   }
   function mergeStorePayloads(filePayload, localPayload){
     var out=normalizeStorePayload(filePayload||{}), map={};
-    out.rows.forEach(function(r){ map[rowKey(r)]=r; });
+    out.rows.forEach(function(r){ r=normalizeStored(r); map[rowKey(r)]=r; });
     if(localPayload&&Array.isArray(localPayload.rows)){
-      localPayload.rows.forEach(function(r){ if(r&&r.event_id!=null&&r.market_key) map[rowKey(r)]=Object.assign({},map[rowKey(r)]||{},r); });
+      localPayload.rows.forEach(function(r){
+        if(r&&r.event_id!=null&&r.market_key&&normalizeCatKey(r.history_category||r.category||r.cat)){
+          r=normalizeStored(r);
+          map[rowKey(r)]=Object.assign({},map[rowKey(r)]||{},r);
+        }
+      });
     }
     out.rows=Object.keys(map).map(function(k){return normalizeStored(map[k]);});
     return out;
@@ -194,167 +219,90 @@
     if(local){ STORE=mergeStorePayloads(STORE,local); STORE_LOADED=true; }
     if(STORE_LOADING) return;
     STORE_LOADING=true;
-    fetch(STORE_PATH+'?v=20260504exactvisible1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
+    fetch(STORE_PATH+'?v=20260504onematchcat1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
       STORE=mergeStorePayloads(j,loadLocalStore()); STORE_LOADED=true; STORE_LOADING=false; saveLocalStore(); _settledCache=null; _last=''; render();
     }).catch(function(){ STORE_LOADING=false; STORE_LOADED=true; });
   }
   function storedRows(){ return (STORE.rows||[]).map(normalizeStored); }
-  function storedRowMatchesCat(r,key){
-    if(key==='all') return true;
-    var cats=r.eligible_categories;
-    if(Array.isArray(cats)&&cats.indexOf(key)>=0) return true;
-    var mk=String(r.market_key||'');
-    if(key==='safe') return String(r.verdict||'').toLowerCase()==='safe'||r.riskTier==='Safe'||r.risk_tier==='Safe'||nv(r.score)>=80;
-    if(key==='o15') return mk==='over15';
-    if(key==='o25') return mk==='over25';
-    if(key==='btts') return mk==='btts';
-    if(key==='u35') return mk==='under35';
-    if(key==='value') return r.riskTier==='Value'||r.risk_tier==='Value'||(nv(r.value)>=0.08&&nv(r.edge_pct)>=3);
-    return false;
-  }
+  function storedRowMatchesCat(r,key){ return rowCat(r)===normalizeCatKey(key); }
   function getSettled(){ return storedRows().filter(function(r){return r._st==='win'||r._st==='lose';}); }
   function settledRowMatchesCat(r,key){ return storedRowMatchesCat(r,key); }
 
-  /* ════════════════════════════════════════════════════════════════════
-     DATE — PENDING (ALL_MATCHES, logica EXACTA Meciuri)
-  ═══════════════════════════════════════════════════════════════════ */
-
-  // Verifică dacă meciul are tipul t în bestBet SAU în eligibleCandidates.
-  function matchHasEligType(m,t){
-    if(!m||!m.bestBet)return false;
-    if(m.bestBet.type===t)return true;
-    return Array.isArray(m.eligibleCandidates)&&m.eligibleCandidates.some(function(c){
-      return c&&c.bestBet&&c.bestBet.type===t;
+  function getCandidateBet(m){
+    return m && (m.bestBet || m.rawBestBet || null);
+  }
+  function matchToHistoryRow(catKey,m){
+    var b=getCandidateBet(m)||{};
+    if(!m||!b||!b.type) return null;
+    return normalizeStored({
+      _st:'pending',status:'pending',source:'store',
+      stored_from:'matches_tab_rendered_exact',
+      history_category:catKey,
+      event_id:m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:m.id),
+      home:m.home,away:m.away,league:m.league,
+      event_date:m.date||m.event_date,
+      market_key:b.type||'',market:b.label||'',
+      odds:nv(b.odds),adjusted_prob:nv(b.adjProb),edge_pct:nv(b.edgePct),
+      value:nv(b.value),verdict:m.verdict||'',
+      score:nv(m.smartScore),riskTier:m.riskTier||'',
+      first_seen_at:new Date().toISOString(),
+      last_seen_at:new Date().toISOString()
     });
   }
+  function captureRenderedMatches(catKey,matches){
+    catKey=normalizeCatKey(catKey);
+    if(!catKey || !Array.isArray(matches)) return;
+    var oldMap={}, nextMap={}, nowIso=new Date().toISOString();
 
-  function getCandidateBet(m,type){
-    if(!m)return null;
-    var b=m.bestBet||null;
-    if(!type) return b;
-    if(b&&b.type===type) return b;
-    if(Array.isArray(m.eligibleCandidates)){
-      var cand=m.eligibleCandidates.find(function(c){ return c&&c.bestBet&&c.bestBet.type===type; });
-      if(cand&&cand.bestBet) return cand.bestBet;
-    }
-    return null;
-  }
-
-  // Filtru per categorie — oglindește filtrarea din Meciuri, inclusiv blocările Motor.
-  function matchInCat(m,catKey){
-    if(!m||m.analysisState!=='ELIGIBLE'||!m.bestBet)return false;
-    var b=m.bestBet;
-    if(DC_MKTS[b.type||''])return false;
-    if(catKey==='all')   return true;
-    if(catKey==='safe')  return m.verdict==='safe'||m.riskTier==='Safe';
-    if(catKey==='o15')   return matchHasEligType(m,'over15');
-    if(catKey==='o25')   return matchHasEligType(m,'over25');
-    if(catKey==='btts')  return matchHasEligType(m,'btts');
-    if(catKey==='u35')   return matchHasEligType(m,'under35');
-    if(catKey==='value') return m.riskTier==='Value'||(nv(b.value)>=0.08&&nv(b.edgePct)>=3);
-    return false;
-  }
-
-  function isBlockedByMotor(m,bet,lookup){
-    try{
-      if(typeof window.getSmartBetStatusForMatch==='function'){
-        var meta=window.getSmartBetStatusForMatch(m,bet||m.bestBet||null,lookup||{});
-        return meta&&meta.state==='blocked';
-      }
-    }catch(e){}
-    return false;
-  }
-
-  function smartLookup(){
-    try{ return typeof window.getSmartBetAnalysisLookup==='function' ? window.getSmartBetAnalysisLookup() : {}; }
-    catch(e){ return {}; }
-  }
-
-  // Returnează EXACT rândurile pending vizibile pentru categoria din Meciuri.
-  // Important: nu mai păstrăm pending ascunse/filtrate; altfel Top/Value nu bat cu numărul din Meciuri.
-  function getPendingForCat(catKey){
-    if(!window.ALL_MATCHES||!window.ALL_MATCHES.length)return[];
-    var isDisp=typeof window.isMatchStillDisplayable==='function'
-      ?window.isMatchStillDisplayable:function(){return true;};
-    var lookup=smartLookup();
-    var typeMap={o15:'over15',o25:'over25',btts:'btts',u35:'under35'};
-    var wantedType=typeMap[catKey]||null;
-
-    return (window.ALL_MATCHES||[]).filter(function(m){
-      if(!isDisp(m))return false;
-      if(!matchInCat(m,catKey))return false;
-      var activeBet=getCandidateBet(m,wantedType)||m.bestBet||null;
-      if(!activeBet)return false;
-      if(isBlockedByMotor(m,activeBet,lookup))return false;
-      return true;
-    }).map(function(m){
-      var b=getCandidateBet(m,wantedType)||m.bestBet||{};
-      return{
-        _st:'pending',source:'live',
-        event_id:m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:m.id),
-        home:m.home,away:m.away,league:m.league,
-        event_date:m.date||m.event_date,
-        market_key:b.type||'',market:b.label||'',
-        odds:nv(b.odds),adjusted_prob:nv(b.adjProb),edge_pct:nv(b.edgePct),
-        value:nv(b.value),verdict:m.verdict||'',
-        score:nv(m.smartScore),riskTier:m.riskTier||''
-      };
+    storedRows().forEach(function(r){
+      if(!r||r.event_id==null||!r.market_key) return;
+      oldMap[rowKey(r)]=r;
+      // păstrăm settled pentru toate categoriile
+      if(r._st==='win'||r._st==='lose') nextMap[rowKey(r)]=r;
+      // păstrăm pending pentru celelalte categorii; categoria curentă se înlocuiește exact
+      else if(rowCat(r)!==catKey) nextMap[rowKey(r)]=r;
     });
+
+    var seenInThisCategory={};
+    matches.forEach(function(m){
+      var row=matchToHistoryRow(catKey,m);
+      if(!row||row.event_id==null||!row.market_key) return;
+      var eventKey=String(row.event_id);
+      if(seenInThisCategory[eventKey]) return;
+      seenInThisCategory[eventKey]=true;
+      var k=rowKey(row), old=oldMap[k]||{};
+      var oldSt=normalizeStored(old)._st;
+      row.first_seen_at=old.first_seen_at||nowIso;
+      row.tracking_started_at=old.tracking_started_at||nowIso;
+      row.last_seen_at=nowIso;
+      row.status=(oldSt==='win'||oldSt==='lose')?oldSt:'pending';
+      nextMap[k]=normalizeStored(Object.assign({},old,row));
+    });
+
+    STORE.rows=Object.keys(nextMap).map(function(k){return normalizeStored(nextMap[k]);});
+    _settledCache=null;
+    saveLocalStore();
+    try{ window.BA_MATCHES_VISIBLE_HISTORY_STORE=STORE; }catch(e){}
+    if(S.view!=='drilldown') { _last=''; render(); }
   }
+  window.baCaptureVisibleMatchesForHistory=captureRenderedMatches;
 
   /* ════════════════════════════════════════════════════════════════════
-     ROWS FOR CATEGORY  (settled + pending corecte, dedup)
+     ROWS FOR CATEGORY
+     Sursa pentru pending NU mai este ALL_MATCHES.
+     Pending vine strict din snapshot-ul exact capturat de renderMatches().
   ═══════════════════════════════════════════════════════════════════ */
   var _settledCache=null, _settledTs=0;
   function getCachedSettled(){
     if(_settledCache&&Date.now()-_settledTs<10000)return _settledCache;
     _settledCache=getSettled(); _settledTs=Date.now(); return _settledCache;
   }
-
-  var _syncTs=0;
   function syncStoreFromLive(){
-    if(Date.now()-_syncTs<1000) return;
-    _syncTs=Date.now();
-
-    var oldMap={};
-    storedRows().forEach(function(r){
-      if(r&&r.event_id!=null&&r.market_key) oldMap[rowKey(r)]=normalizeStored(r);
-    });
-
-    // Păstrăm doar predicțiile deja validate/închise.
-    // Pending se reconstruiește de fiecare dată din lista vizibilă reală din Meciuri.
-    var nextMap={};
-    Object.keys(oldMap).forEach(function(k){
-      var r=normalizeStored(oldMap[k]);
-      if(r._st==='win'||r._st==='lose') nextMap[k]=r;
-    });
-
-    CATS.forEach(function(cat){
-      getPendingForCat(cat.key).forEach(function(r){
-        if(!r||r.event_id==null||!r.market_key) return;
-        var k=rowKey(r), old=oldMap[k]||{}, existing=nextMap[k]||{};
-        var oldSettled=normalizeStored(old)._st;
-        var cats=Array.isArray(existing.eligible_categories)?existing.eligible_categories.slice():
-                 (Array.isArray(old.eligible_categories)?old.eligible_categories.slice():[]);
-        if(cats.indexOf(cat.key)<0) cats.push(cat.key);
-        var nowIso=new Date().toISOString();
-        nextMap[k]=normalizeStored(Object.assign({},old,r,{
-          source:'store',stored_from:'matches_tab_exact_visible',eligible_categories:cats,
-          tracking_started_at:old.tracking_started_at||nowIso,
-          first_seen_at:old.first_seen_at||nowIso,last_seen_at:nowIso,
-          status:(oldSettled==='win'||oldSettled==='lose')?oldSettled:'pending'
-        }));
-      });
-    });
-
-    STORE.rows=Object.keys(nextMap).map(function(k){return normalizeStored(nextMap[k]);});
-    _settledCache=null;
-    saveLocalStore();
+    // no-op intenționat: nu reconstruim din ALL_MATCHES ca să nu adăugăm meciuri filtrate/ascunse.
   }
-
   function getRowsForCat(catKey){
-    syncStoreFromLive();
-    return storedRows().filter(function(r){ return inPeriod(r)&&storedRowMatchesCat(r,catKey); });
+    var key=normalizeCatKey(catKey)||'all';
+    return storedRows().filter(function(r){ return inPeriod(r)&&storedRowMatchesCat(r,key); });
   }
 
   /* ════════════════════════════════════════════════════════════════════
