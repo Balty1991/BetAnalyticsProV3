@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-04T20:23:16.713391+00:00",
+  "updated_at": "2026-05-04T20:51:13.391567+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 57.4,
+  "overall_score": 57.1,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,22 +9,22 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 58,
-    "candidates_with_odds_and_probability": 51,
+    "pending_rows": 56,
+    "candidates_with_odds_and_probability": 49,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 38,
+    "speculative": 36,
     "safe": 4,
     "balanced": 9
   },
   "market_distribution_top150": {
     "Under 3.5G": 31,
     "Over 1.5G": 16,
-    "BTTS": 4
+    "BTTS": 2
   },
   "league_distribution_top150": {
     "Copa Sudamericana": 9,
@@ -40,7 +40,6 @@
     "Chinese Super League": 4,
     "Europa League": 2,
     "Champions League": 1,
-    "Saudi Pro League": 1,
     "Premier League": 1
   },
   "bankroll": {
@@ -542,34 +541,6 @@
       ]
     },
     {
-      "event_id": 204249,
-      "prediction_id": 3504,
-      "home": "Almería",
-      "away": "Mirandés",
-      "league": "Segunda División",
-      "event_date": "2026-05-04T21:30:00+03:00",
-      "market": "BTTS",
-      "odds": 1.632,
-      "model_probability": 0.6856,
-      "model_probability_pct": 68.56,
-      "implied_probability_pct": 61.27,
-      "fair_odds": 1.459,
-      "edge_pp": 7.29,
-      "ev_pct": 11.89,
-      "kelly_fraction": 0.047,
-      "kelly_units_100": 4.7,
-      "confidence": 51.43,
-      "score": 96.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 68.6% vs. probabilitate implicată 61.3%.",
-        "EV estimat 11.9% și edge 7.3 puncte procentuale.",
-        "Miză Kelly fracțională 4.70% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 204846,
       "prediction_id": 3247,
       "home": "Avispa Fukuoka",
@@ -903,6 +874,34 @@
         "Probabilitate model 78.7% vs. probabilitate implicată 76.3%.",
         "EV estimat 3.1% și edge 2.4 puncte procentuale.",
         "Miză Kelly fracțională 2.52% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9308,
+      "prediction_id": 3554,
+      "home": "Botafogo",
+      "away": "Racing Club",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-05-07T03:30:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.36,
+      "model_probability": 0.7867,
+      "model_probability_pct": 78.67,
+      "implied_probability_pct": 73.53,
+      "fair_odds": 1.271,
+      "edge_pp": 5.14,
+      "ev_pct": 6.99,
+      "kelly_fraction": 0.0486,
+      "kelly_units_100": 4.86,
+      "confidence": 45.91,
+      "score": 72.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 78.7% vs. probabilitate implicată 73.5%.",
+        "EV estimat 7.0% și edge 5.1 puncte procentuale.",
+        "Miză Kelly fracțională 4.86% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1846,12 +1845,12 @@
     },
     {
       "key": "BTTS",
-      "bets": 102,
-      "wins": 74,
-      "winrate": 72.55,
-      "profit_units": 13.09,
-      "roi_pct": 12.83,
-      "avg_odds": 1.552
+      "bets": 104,
+      "wins": 75,
+      "winrate": 72.12,
+      "profit_units": 12.72,
+      "roi_pct": 12.23,
+      "avg_odds": 1.553
     },
     {
       "key": "Under 3.5G",
