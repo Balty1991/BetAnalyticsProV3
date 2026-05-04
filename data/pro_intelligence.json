@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-04T19:46:16.707875+00:00",
+  "updated_at": "2026-05-04T20:23:16.713391+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 57.5,
+  "overall_score": 57.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,20 +9,20 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 59,
-    "candidates_with_odds_and_probability": 52,
+    "pending_rows": 58,
+    "candidates_with_odds_and_probability": 51,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 39,
+    "speculative": 38,
     "safe": 4,
     "balanced": 9
   },
   "market_distribution_top150": {
-    "Under 3.5G": 32,
+    "Under 3.5G": 31,
     "Over 1.5G": 16,
     "BTTS": 4
   },
@@ -31,9 +31,9 @@
     "Copa Libertadores": 11,
     "J1 League": 8,
     "Parva Liga": 4,
-    "Superliga": 1,
     "FA Cup": 1,
     "K League 1": 5,
+    "Segunda División": 1,
     "La Liga": 1,
     "Brasileirão Serie B": 1,
     "Super League": 1,
@@ -458,34 +458,6 @@
       ]
     },
     {
-      "event_id": 7683,
-      "prediction_id": 3501,
-      "home": "FC Rapid București",
-      "away": "CFR 1907 Cluj",
-      "league": "Superliga",
-      "event_date": "2026-05-04T20:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.35,
-      "model_probability": 0.8235,
-      "model_probability_pct": 82.35,
-      "implied_probability_pct": 74.07,
-      "fair_odds": 1.214,
-      "edge_pp": 8.28,
-      "ev_pct": 11.17,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 41.61,
-      "score": 98.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 82.3% vs. probabilitate implicată 74.1%.",
-        "EV estimat 11.2% și edge 8.3 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9311,
       "prediction_id": 3579,
       "home": "O'Higgins",
@@ -903,6 +875,34 @@
         "Probabilitate model 65.3% vs. probabilitate implicată 61.8%.",
         "EV estimat 5.6% și edge 3.4 puncte procentuale.",
         "Miză Kelly fracțională 2.26% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 202970,
+      "prediction_id": 3519,
+      "home": "Arsenal",
+      "away": "Atlético Madrid",
+      "league": "Champions League",
+      "event_date": "2026-05-05T22:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.31,
+      "model_probability": 0.7872,
+      "model_probability_pct": 78.72,
+      "implied_probability_pct": 76.34,
+      "fair_odds": 1.27,
+      "edge_pp": 2.38,
+      "ev_pct": 3.12,
+      "kelly_fraction": 0.0252,
+      "kelly_units_100": 2.52,
+      "confidence": 45.26,
+      "score": 80.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 78.7% vs. probabilitate implicată 76.3%.",
+        "EV estimat 3.1% și edge 2.4 puncte procentuale.",
+        "Miză Kelly fracțională 2.52% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1855,11 +1855,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 424,
-      "wins": 307,
-      "winrate": 72.41,
-      "profit_units": -1.12,
-      "roi_pct": -0.26,
+      "bets": 425,
+      "wins": 308,
+      "winrate": 72.47,
+      "profit_units": -0.77,
+      "roi_pct": -0.18,
       "avg_odds": 1.389
     },
     {
