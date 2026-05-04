@@ -7683,3 +7683,27 @@ button[onclick*="resetFilter"]:hover {
   .analysis-detail-expert-support-frame .analysis-detail-reasons-section .reason-list{gap:5px!important}
   .analysis-detail-expert-support-frame .analysis-detail-reasons-section .reason-pill{padding:7px 8px!important;font-size:9.5px!important}
 }
+
+/* ===== Anti-flicker hotfix 2026-05-04 =====
+   Meciuri is re-rendered by several runtime guards. Re-running entrance/progress
+   animations on identical data produced the visible "palpait" from the video. */
+#tab-meciuri.active,
+#tab-meciuri.active .match-card,
+#tab-meciuri.active .match-card-v16,
+#tab-meciuri.active .match-card-m17,
+#tab-meciuri.active .date-group,
+#tab-meciuri.active .matches-grid {
+  animation: none !important;
+}
+#tab-meciuri .mc-conf-bar-fill,
+#tab-meciuri .m17-ml-bar span,
+#tab-meciuri .live-bar-home,
+#tab-meciuri .live-bar-away {
+  transition: none !important;
+}
+#tab-meciuri .match-card,
+#tab-meciuri .match-card-v16,
+#tab-meciuri .match-card-m17 {
+  content-visibility: visible !important;
+  contain-intrinsic-size: auto !important;
+}

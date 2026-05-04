@@ -4907,7 +4907,8 @@ function ensureTabData(name){
 }
 
 function doRefresh(isManual){
-  showLoader('Incarcare date actualizate...');
+  var shouldShowLoader = !!isManual || !LAZY_DATA_READY.predictions;
+  if(shouldShowLoader) showLoader('Incarcare date actualizate...');
 
   LAZY_DATA_PROMISES = {};
   LAZY_DATA_READY.events = false;
@@ -4992,7 +4993,7 @@ function doRefresh(isManual){
       else if(meta && meta.api_token) API_TOKEN = meta.api_token;
 
       renderAll();
-      hideLoader();
+      if(shouldShowLoader) hideLoader();
 
       var statusTime = getStatusDisplayTime();
       var statusMetrics = getStatusDisplayMetrics();
@@ -5003,7 +5004,7 @@ function doRefresh(isManual){
       );
     });
   }).catch(function(err){
-    hideLoader();
+    if(shouldShowLoader) hideLoader();
     toast('Eroare la incarcarea datelor', 'err');
     console.error(err);
   });
@@ -6903,8 +6904,36 @@ function renderMatches(){
     return slice.map(renderCard).join('');
   }
 
-  // Render primul batch
+  // Render primul batch.
+  // Guard anti-flicker: runtime-urile pot chema renderMatches() de mai multe ori cu aceleași date.
+  // Dacă semnătura vizibilă este identică, nu rescriem DOM-ul; astfel nu repornim animațiile
+  // cardurilor și nu resetăm poziția/observerul de scroll.
   var firstBatch = buildBatchHtml(0, MATCHES_PAGE_SIZE);
+  var firstVisibleSig = MATCHES_FILTERED_CACHE.slice(0, MATCHES_PAGE_SIZE).map(function(m){
+    var bb = m && (m.bestBet || m.rawBestBet || {});
+    return [
+      getMatchCardKey(m),
+      m && (m.analysisState || ''),
+      m && (m.riskTier || ''),
+      m && (m.verdict || ''),
+      bb && (bb.type || bb.label || ''),
+      bb && Number(bb.odds || 0),
+      bb && Number(bb.adjProb || bb.prob || 0),
+      bb && Number(bb.edgePct || 0),
+      bb && Number(bb.value || 0),
+      m && Number(m.smartScore || 0)
+    ].join('~');
+  }).join('|');
+  var renderSig = [
+    sort, CURRENT_FILTER, MATCH_CARD_MODE, MATCH_FOCUS_KEY || '', leagueF || '', dateF || '', marketF || '', verdictF || '', proMode || '',
+    minProb, minEdge, kickoffF || '', tierF || '', minScore, MATCHES_FILTERED_CACHE.length, firstVisibleSig
+  ].join('::');
+  if(container.getAttribute('data-ba-render-sig') === renderSig && container.childElementCount){
+    renderTicketQuickPeek();
+    if(typeof renderDashboardMonitor === 'function') renderDashboardMonitor();
+    return;
+  }
+  container.setAttribute('data-ba-render-sig', renderSig);
   if(sort === 'date'){
     container.innerHTML = firstBatch;
   } else {
