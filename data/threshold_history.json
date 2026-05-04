@@ -1,14 +1,6 @@
 [
   {
     "market": "over15",
-    "type": "recovery_probe",
-    "prev_edge": 999.0,
-    "new_edge": 15.0,
-    "message": "over15: recovery probe activ, prag strict = 15.0%",
-    "timestamp": "2026-05-03T03:33:25.178149+00:00"
-  },
-  {
-    "market": "over15",
     "type": "disabled",
     "prev_edge": 15.0,
     "new_edge": 999.0,
@@ -397,6 +389,14 @@
     "prev_edge": 15.0,
     "new_edge": 999.0,
     "message": "over15: dezactivat (niciun bucket profitabil)",
-    "timestamp": "2026-05-04T18:25:25.039025+00:00"
+    "timestamp": "2026-05-04T17:47:25.228956+00:00"
+  },
+  {
+    "market": "over15",
+    "type": "threshold_change",
+    "prev_edge": 15.0,
+    "new_edge": 10.0,
+    "message": "over15: prag coborat 15.0% -> 10.0% (ROI +0.4%)",
+    "timestamp": "2026-05-04T19:06:53.239752+00:00"
   }
 ]

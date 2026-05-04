@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-04T18:25:25.176632+00:00",
+  "updated_at": "2026-05-04T19:06:53.389512+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 58.2,
+  "overall_score": 57.9,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,21 +9,21 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 65,
-    "candidates_with_odds_and_probability": 58,
+    "pending_rows": 62,
+    "candidates_with_odds_and_probability": 55,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 44,
+    "speculative": 42,
     "safe": 4,
-    "balanced": 10
+    "balanced": 9
   },
   "market_distribution_top150": {
-    "Under 3.5G": 36,
-    "Over 1.5G": 17,
+    "Under 3.5G": 34,
+    "Over 1.5G": 16,
     "BTTS": 5
   },
   "league_distribution_top150": {
@@ -31,21 +31,19 @@
     "Copa Libertadores": 11,
     "J1 League": 8,
     "Parva Liga": 4,
-    "Saudi Pro League": 2,
     "Superliga": 1,
-    "Segunda División": 1,
     "FA Cup": 1,
     "K League 1": 5,
+    "Segunda División": 1,
     "Allsvenskan": 2,
     "La Liga": 1,
     "Brasileirão Serie B": 1,
     "Super League": 1,
     "Chinese Super League": 4,
-    "Serie A": 1,
     "Europa League": 2,
     "Champions League": 1,
+    "Saudi Pro League": 1,
     "Ekstraklasa": 1,
-    "Scottish Premiership": 1,
     "Premier League": 1
   },
   "bankroll": {
@@ -407,34 +405,6 @@
       ]
     },
     {
-      "event_id": 4796,
-      "prediction_id": 3495,
-      "home": "Al-Fayha",
-      "away": "Al-Riyadh",
-      "league": "Saudi Pro League",
-      "event_date": "2026-05-04T19:10:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.39,
-      "model_probability": 0.8439,
-      "model_probability_pct": 84.39,
-      "implied_probability_pct": 71.94,
-      "fair_odds": 1.185,
-      "edge_pp": 12.45,
-      "ev_pct": 17.3,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 43.96,
-      "score": 100.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.4% vs. probabilitate implicată 71.9%.",
-        "EV estimat 17.3% și edge 12.4 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9416,
       "prediction_id": 3549,
       "home": "Deportivo La Guaira",
@@ -547,34 +517,6 @@
       ]
     },
     {
-      "event_id": 204249,
-      "prediction_id": 3504,
-      "home": "Almería",
-      "away": "Mirandés",
-      "league": "Segunda División",
-      "event_date": "2026-05-04T21:30:00+03:00",
-      "market": "BTTS",
-      "odds": 1.632,
-      "model_probability": 0.6996,
-      "model_probability_pct": 69.96,
-      "implied_probability_pct": 61.27,
-      "fair_odds": 1.429,
-      "edge_pp": 8.69,
-      "ev_pct": 14.17,
-      "kelly_fraction": 0.0561,
-      "kelly_units_100": 5.61,
-      "confidence": 51.43,
-      "score": 97.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 70.0% vs. probabilitate implicată 61.3%.",
-        "EV estimat 14.2% și edge 8.7 puncte procentuale.",
-        "Miză Kelly fracțională 5.61% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 203199,
       "prediction_id": 2992,
       "home": "FC Blau Weiss Linz",
@@ -628,6 +570,34 @@
         "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
         "EV estimat 13.0% și edge 9.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 204249,
+      "prediction_id": 3504,
+      "home": "Almería",
+      "away": "Mirandés",
+      "league": "Segunda División",
+      "event_date": "2026-05-04T21:30:00+03:00",
+      "market": "BTTS",
+      "odds": 1.632,
+      "model_probability": 0.6856,
+      "model_probability_pct": 68.56,
+      "implied_probability_pct": 61.27,
+      "fair_odds": 1.459,
+      "edge_pp": 7.29,
+      "ev_pct": 11.89,
+      "kelly_fraction": 0.047,
+      "kelly_units_100": 4.7,
+      "confidence": 51.43,
+      "score": 96.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 68.6% vs. probabilitate implicată 61.3%.",
+        "EV estimat 11.9% și edge 7.3 puncte procentuale.",
+        "Miză Kelly fracțională 4.70% din bancă, plafonată prudent."
       ]
     },
     {
@@ -908,6 +878,34 @@
         "Probabilitate model 79.8% vs. probabilitate implicată 76.9%.",
         "EV estimat 3.7% și edge 2.9 puncte procentuale.",
         "Miză Kelly fracțională 3.11% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 204860,
+      "prediction_id": 3403,
+      "home": "Cerezo Osaka",
+      "away": "Avispa Fukuoka",
+      "league": "J1 League",
+      "event_date": "2026-05-03T09:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.33,
+      "model_probability": 0.7765,
+      "model_probability_pct": 77.65,
+      "implied_probability_pct": 75.19,
+      "fair_odds": 1.288,
+      "edge_pp": 2.46,
+      "ev_pct": 3.27,
+      "kelly_fraction": 0.0248,
+      "kelly_units_100": 2.48,
+      "confidence": 39.04,
+      "score": 87.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 77.7% vs. probabilitate implicată 75.2%.",
+        "EV estimat 3.3% și edge 2.5 puncte procentuale.",
+        "Miză Kelly fracțională 2.48% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1333,34 +1331,6 @@
       ]
     },
     {
-      "event_id": 4796,
-      "prediction_id": 3495,
-      "home": "Al-Fayha",
-      "away": "Al-Riyadh",
-      "league": "Saudi Pro League",
-      "event_date": "2026-05-04T19:10:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.39,
-      "model_probability": 0.8439,
-      "model_probability_pct": 84.39,
-      "implied_probability_pct": 71.94,
-      "fair_odds": 1.185,
-      "edge_pp": 12.45,
-      "ev_pct": 17.3,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 43.96,
-      "score": 100.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.4% vs. probabilitate implicată 71.9%.",
-        "EV estimat 17.3% și edge 12.4 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 204850,
       "prediction_id": 3248,
       "home": "Nagoya Grampus",
@@ -1469,6 +1439,34 @@
       "rationale": [
         "Probabilitate model 83.3% vs. probabilitate implicată 70.9%.",
         "EV estimat 17.5% și edge 12.4 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9413,
+      "prediction_id": 3526,
+      "home": "Universidad Central",
+      "away": "Independiente del Valle",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-06T03:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.31,
+      "model_probability": 0.8309,
+      "model_probability_pct": 83.09,
+      "implied_probability_pct": 76.34,
+      "fair_odds": 1.204,
+      "edge_pp": 6.75,
+      "ev_pct": 8.85,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 55.95,
+      "score": 92.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.1% vs. probabilitate implicată 76.3%.",
+        "EV estimat 8.8% și edge 6.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -1783,34 +1781,6 @@
       ]
     },
     {
-      "event_id": 1420,
-      "prediction_id": 3496,
-      "home": "Cremonese",
-      "away": "Lazio",
-      "league": "Serie A",
-      "event_date": "2026-05-04T19:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.286,
-      "model_probability": 0.7962,
-      "model_probability_pct": 79.62,
-      "implied_probability_pct": 77.76,
-      "fair_odds": 1.256,
-      "edge_pp": 1.86,
-      "ev_pct": 2.39,
-      "kelly_fraction": 0.0209,
-      "kelly_units_100": 2.09,
-      "confidence": 55.84,
-      "score": 85.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.6% vs. probabilitate implicată 77.8%.",
-        "EV estimat 2.4% și edge 1.9 puncte procentuale.",
-        "Miză Kelly fracțională 2.09% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 205764,
       "prediction_id": 3575,
       "home": "Yunnan Yukun",
@@ -1888,21 +1858,21 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 420,
-      "wins": 305,
-      "winrate": 72.62,
-      "profit_units": 0.15,
-      "roi_pct": 0.03,
+      "bets": 422,
+      "wins": 307,
+      "winrate": 72.75,
+      "profit_units": 0.88,
+      "roi_pct": 0.21,
       "avg_odds": 1.389
     },
     {
       "key": "Over 1.5G",
-      "bets": 202,
-      "wins": 139,
-      "winrate": 68.81,
-      "profit_units": -18.44,
-      "roi_pct": -9.13,
-      "avg_odds": 1.325
+      "bets": 203,
+      "wins": 140,
+      "winrate": 68.97,
+      "profit_units": -18.05,
+      "roi_pct": -8.89,
+      "avg_odds": 1.326
     }
   ],
   "settled_league_performance": [
