@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-04T20:51:13.391567+00:00",
+  "updated_at": "2026-05-04T21:22:10.414732+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 57.1,
+  "overall_score": 56.9,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,21 +9,21 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 56,
-    "candidates_with_odds_and_probability": 49,
+    "pending_rows": 54,
+    "candidates_with_odds_and_probability": 47,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 36,
+    "speculative": 34,
     "safe": 4,
     "balanced": 9
   },
   "market_distribution_top150": {
-    "Under 3.5G": 31,
-    "Over 1.5G": 16,
+    "Under 3.5G": 30,
+    "Over 1.5G": 15,
     "BTTS": 2
   },
   "league_distribution_top150": {
@@ -33,14 +33,11 @@
     "Parva Liga": 4,
     "FA Cup": 1,
     "K League 1": 5,
-    "Segunda División": 1,
-    "La Liga": 1,
     "Brasileirão Serie B": 1,
     "Super League": 1,
     "Chinese Super League": 4,
     "Europa League": 2,
-    "Champions League": 1,
-    "Premier League": 1
+    "Champions League": 1
   },
   "bankroll": {
     "default_bankroll_units": 100,
@@ -681,34 +678,6 @@
       ]
     },
     {
-      "event_id": 1028,
-      "prediction_id": 3507,
-      "home": "Sevilla",
-      "away": "Real Sociedad",
-      "league": "La Liga",
-      "event_date": "2026-05-04T22:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.8251,
-      "model_probability_pct": 82.51,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.212,
-      "edge_pp": 7.32,
-      "ev_pct": 9.74,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 39.83,
-      "score": 91.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 82.5% vs. probabilitate implicată 75.2%.",
-        "EV estimat 9.7% și edge 7.3 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9923,
       "prediction_id": 3509,
       "home": "Vila Nova FC",
@@ -902,6 +871,34 @@
         "Probabilitate model 78.7% vs. probabilitate implicată 73.5%.",
         "EV estimat 7.0% și edge 5.1 puncte procentuale.",
         "Miză Kelly fracțională 4.86% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 205063,
+      "prediction_id": 3515,
+      "home": "FC Seoul",
+      "away": "FC Anyang",
+      "league": "K League 1",
+      "event_date": "2026-05-05T13:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.37,
+      "model_probability": 0.7516,
+      "model_probability_pct": 75.16,
+      "implied_probability_pct": 72.99,
+      "fair_odds": 1.33,
+      "edge_pp": 2.17,
+      "ev_pct": 2.97,
+      "kelly_fraction": 0.0201,
+      "kelly_units_100": 2.01,
+      "confidence": 50.73,
+      "score": 67.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 75.2% vs. probabilitate implicată 73.0%.",
+        "EV estimat 3.0% și edge 2.2 puncte procentuale.",
+        "Miză Kelly fracțională 2.01% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1854,20 +1851,20 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 425,
+      "bets": 426,
       "wins": 308,
-      "winrate": 72.47,
-      "profit_units": -0.77,
-      "roi_pct": -0.18,
+      "winrate": 72.3,
+      "profit_units": -1.77,
+      "roi_pct": -0.42,
       "avg_odds": 1.389
     },
     {
       "key": "Over 1.5G",
-      "bets": 203,
+      "bets": 204,
       "wins": 140,
-      "winrate": 68.97,
-      "profit_units": -18.05,
-      "roi_pct": -8.89,
+      "winrate": 68.63,
+      "profit_units": -19.05,
+      "roi_pct": -9.34,
       "avg_odds": 1.326
     }
   ],
