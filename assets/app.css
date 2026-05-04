@@ -6445,3 +6445,84 @@ button[onclick*="resetFilter"]:hover {
   #tab-meciuri .mx21-mode-btn { font-size: 8.8px !important; padding: 0 5px !important; }
   #tab-meciuri .mx21-select { font-size: 8.8px !important; padding-left: 7px !important; padding-right: 20px !important; background-position: right 7px center !important; }
 }
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  MECIURI v21.1 — compact quick filters on phones         ║
+   ║  Keep every chip visible in one row after verdict filter  ║
+   ╚══════════════════════════════════════════════════════════╝ */
+@media (max-width: 430px) {
+  #tab-meciuri .mx21-card {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  #tab-meciuri .mx21-control-row {
+    grid-template-columns: minmax(0,1fr) 84px 66px !important;
+    gap: 4px !important;
+  }
+  #tab-meciuri .mx21-mode {
+    height: 29px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+  }
+  #tab-meciuri .mx21-mode-btn {
+    height: 23px !important;
+    padding: 0 5px !important;
+    font-size: 8.6px !important;
+    letter-spacing: -.02em !important;
+  }
+  #tab-meciuri .mx21-select {
+    height: 29px !important;
+    min-height: 29px !important;
+    padding-left: 6px !important;
+    padding-right: 18px !important;
+    border-radius: 12px !important;
+    font-size: 8.4px !important;
+    letter-spacing: -.04em !important;
+    background-position: right 6px center !important;
+    background-size: 8px 5px !important;
+  }
+  #tab-meciuri .mx21-chiprail {
+    overflow: visible !important;
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0,1fr)) !important;
+    gap: 3px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 2px !important;
+    scrollbar-width: none !important;
+  }
+  #tab-meciuri .mx21-chip {
+    flex: initial !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 27px !important;
+    padding: 0 2px !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    letter-spacing: -.055em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+  }
+}
+
+@media (max-width: 360px) {
+  #tab-meciuri .mx21-control-row {
+    grid-template-columns: minmax(0,1fr) 78px 60px !important;
+    gap: 3px !important;
+  }
+  #tab-meciuri .mx21-select,
+  #tab-meciuri .mx21-mode-btn {
+    font-size: 7.8px !important;
+  }
+  #tab-meciuri .mx21-chiprail {
+    gap: 2px !important;
+  }
+  #tab-meciuri .mx21-chip {
+    min-height: 26px !important;
+    font-size: 7.4px !important;
+    padding: 0 1px !important;
+  }
+}
