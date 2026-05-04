@@ -6733,10 +6733,13 @@ function renderMatches(){
     '</div>';
 
     // SIMPLU: fara grila metrica tehnica, fara badges — doar esentialul
-    var simpleDetails = '<div class="analysis-detail-shell simple">'+
-      detailHero+
+    var simpleOverviewFrame = '<div class="analysis-detail-overview-frame">'+
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
+    '</div>';
+    var simpleDetails = '<div class="analysis-detail-shell simple">'+
+      detailHero+
+      simpleOverviewFrame+
       (b ? buildAnalysisSection('', getVerdictBlock(m,b), 'analysis-detail-verdict-section') : '')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+

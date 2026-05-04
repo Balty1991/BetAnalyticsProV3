@@ -7145,3 +7145,51 @@ button[onclick*="resetFilter"]:hover {
 /* Hide duplicated badges inside Rezumat rapid */
 .analysis-detail-summary-section .card-reco-badge,
 .analysis-detail-summary-section .source-chip{display:none!important;}
+
+/* ===== Detalii analiză: grupare grafică pentru overview ===== */
+.analysis-detail-overview-frame{
+  position:relative;
+  display:grid;
+  gap:8px;
+  padding:10px;
+  border-radius:18px;
+  border:1px solid rgba(245,158,11,.22);
+  background:linear-gradient(180deg, rgba(23,31,54,.70), rgba(12,18,32,.86));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.12);
+}
+.analysis-detail-overview-frame::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+}
+.analysis-detail-overview-frame > .ba-clv-guidance.ba-clv-details{
+  margin:0!important;
+}
+.analysis-detail-overview-frame .analysis-detail-section{
+  background:rgba(255,255,255,.02)!important;
+  border-color:rgba(255,255,255,.06)!important;
+  box-shadow:none!important;
+}
+.analysis-detail-overview-frame .analysis-detail-chips-section{
+  background:rgba(255,255,255,.018)!important;
+}
+.analysis-detail-overview-frame .analysis-detail-summary-section{
+  background:rgba(255,255,255,.024)!important;
+}
+.analysis-detail-overview-frame .analysis-detail-title{
+  color:rgba(203,213,225,.72)!important;
+}
+.analysis-detail-shell.simple > .analysis-detail-overview-frame + .analysis-detail-section{
+  margin-top:2px;
+}
+@media(max-width:768px){
+  .analysis-detail-overview-frame{
+    gap:7px;
+    padding:8px;
+    border-radius:16px;
+  }
+  .analysis-detail-overview-frame::before{border-radius:16px;}
+}

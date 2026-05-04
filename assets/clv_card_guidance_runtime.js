@@ -170,6 +170,11 @@
     if (!container || !row || container.querySelector('.ba-clv-guidance')) return;
     var box = makeBadge(row, mk, pickState(container));
     if (container.classList && container.classList.contains('analysis-detail-shell')) {
+      var overview = container.querySelector(':scope > .analysis-detail-overview-frame');
+      if (overview) {
+        overview.insertBefore(box, overview.firstChild);
+        return;
+      }
       var hero = container.querySelector(':scope > .analysis-detail-hero');
       if (hero && hero.parentNode === container) hero.insertAdjacentElement('afterend', box);
       else container.insertBefore(box, container.firstChild);
