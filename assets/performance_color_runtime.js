@@ -1,12 +1,10 @@
 // BetAnalytics Pro runtime fixes: performance colors + header metrics + Meciuri filter scope + reason dedupe.
 (function(){
   'use strict';
-  if(window.__baRuntimeFixes20260504CompactWhy)return;
-  window.__baRuntimeFixes20260504CompactWhy=1;
-
+  if(window.__baRuntimeFixes20260504Final)return;
+  window.__baRuntimeFixes20260504Final=1;
   var G=(typeof globalThis!=='undefined')?globalThis:window;
   var GREEN='#34d399', RED='#fb7185', YELLOW='#f59e0b', MUTED='var(--muted,#8b98ad)', TEXT='var(--txt,#f8fafc)';
-
   function n(v){var x=Number(v);return isFinite(x)?x:null;}
   function num(txt){var m=String(txt||'').replace(',', '.').match(/[-+]?\d+(?:\.\d+)?/);return m?Number(m[0]):0;}
   function cSign(v){return v>0?GREEN:(v<0?RED:TEXT);}
@@ -15,8 +13,7 @@
 
   function addCss(){
     if(document.getElementById('ba-runtime-fixes-css'))return;
-    var s=document.createElement('style');
-    s.id='ba-runtime-fixes-css';
+    var s=document.createElement('style');s.id='ba-runtime-fixes-css';
     s.textContent='.ba-win-text{color:'+GREEN+'!important;font-weight:900!important}.ba-loss-text{color:'+RED+'!important;font-weight:900!important}.ba-pending-text{color:'+YELLOW+'!important;font-weight:900!important}.ba-closed-text{color:var(--txt,#f8fafc)!important;font-weight:800!important}.dashboard-v16-stat-v{font-variant-numeric:tabular-nums!important}.dash-cat-table td{transition:color .18s ease,box-shadow .18s ease!important}';
     document.head.appendChild(s);
   }
@@ -42,8 +39,7 @@
       var cells=row.children;if(!cells||cells.length<5)return;
       var roi=num(cells[1].textContent), wr=num(cells[2].textContent), pend=num(cells[4].textContent);
       set(cells[0],cSign(roi));set(cells[1],cSign(roi));set(cells[2],cWin(wr));
-      cells[3].style.setProperty('color',TEXT,'important');
-      cells[4].style.setProperty('color',pend>0?YELLOW:MUTED,'important');
+      cells[3].style.setProperty('color',TEXT,'important');cells[4].style.setProperty('color',pend>0?YELLOW:MUTED,'important');
     });
   }
 
@@ -80,7 +76,7 @@
     return true;
   }
 
-  function normalizeReason(raw){
+  function cleanReasonText(raw){
     raw=String(raw||'')
       .replace(/<[^>]*>/g,' ')
       .replace(/&bull;|&#8226;|&#x2022;/gi,' • ')
@@ -93,67 +89,41 @@
       .trim();
 
     var out=[], seen={};
-    raw.split(/\s*(?:•|·|\||;|,)\s*/g).forEach(function(part){
-      part=String(part||'').replace(/^De\s*ce[:\s]*/i,'').replace(/\s+/g,' ').trim();
-      if(!part)return;
-      var key=part.toLowerCase().replace(/[.,:!?]+$/g,'').replace(/\s+/g,' ').trim();
-      var rec=key.match(/recovery\s+probe\s+([a-z0-9.]+)/i);
-      if(rec)key='recovery probe '+rec[1];
-      if(seen[key])return;
-      seen[key]=1;
-      out.push(part);
+    raw.split(/\s*(?:•|·|\||;|,)\s*/g).forEach(function(x){
+      x=String(x||'').replace(/^De\s*ce[:\s]*/i,'').replace(/\s+/g,' ').trim();
+      if(!x)return;
+      var k=x.toLowerCase().replace(/[.,:!?]+$/g,'').replace(/\s+/g,' ').trim();
+      var rec=k.match(/recovery\s+probe\s+([a-z0-9.]+)/i);
+      if(rec) k='recovery probe '+rec[1];
+      if(seen[k])return;
+      seen[k]=true;
+      out.push(x);
     });
     return out.slice(0,3).join(' • ');
   }
 
-  function cleanTextNode(node){
-    var raw=node.nodeValue||'';
-    if(!/recovery\s+probe/i.test(raw))return;
-    var cleaned=normalizeReason(raw);
-    if(cleaned&&raw.replace(/\s+/g,' ').trim()!==cleaned)node.nodeValue=cleaned;
-  }
-
-  function dedupeCompactAndDetailReasons(){
-    document.querySelectorAll('.match-why,.card-why,.why-box,.why,.reason,.reasons').forEach(function(el){
+  function dedupeWhyText(){
+    document.querySelectorAll('.match-why').forEach(function(el){
       var full=el.textContent||'';
       if(!/recovery\s+probe/i.test(full)&&full.indexOf('•')<0)return;
-      var cleaned=normalizeReason(full);
+      var cleaned=cleanReasonText(full);
       if(!cleaned)return;
-      if(/^\s*De\s*ce/i.test(full))el.innerHTML='<strong>De ce:</strong> '+cleaned;
-      else el.textContent=cleaned;
-    });
-
-    // Cardul mic nu are mereu clasa .match-why; curățăm text-node-ul din fiecare card de meci.
-    document.querySelectorAll('.match-card,.match-card-pro,.fixture-card,[class*="match-card"],[class*="fixture-card"]').forEach(function(card){
-      if(!/recovery\s+probe/i.test(card.textContent||''))return;
-      try{
-        var walker=document.createTreeWalker(card,NodeFilter.SHOW_TEXT,null);
-        var nodes=[];
-        while(walker.nextNode())nodes.push(walker.currentNode);
-        nodes.forEach(cleanTextNode);
-      }catch(e){}
+      el.innerHTML='<strong>De ce:</strong> '+cleaned;
     });
   }
 
   function installWhyDedupe(){
     var raf=0;
-    function schedule(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;dedupeCompactAndDetailReasons();});}
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule);else schedule();
+    function schedule(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;dedupeWhyText();});}
+    document.addEventListener('DOMContentLoaded',schedule);
     window.addEventListener('load',schedule);
     document.addEventListener('click',function(){setTimeout(schedule,40);},true);
     document.addEventListener('change',function(){setTimeout(schedule,40);},true);
     try{new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});}catch(e){}
-    var n=0,t=setInterval(function(){dedupeCompactAndDetailReasons();n++;if(n>=60)clearInterval(t);},250);
+    var n=0,t=setInterval(function(){dedupeWhyText();n++;if(n>=40)clearInterval(t);},350);
   }
 
-  function boot(){
-    colorPerformance();
-    installHeaderFix();
-    installMarketScopeFix();
-    installWhyDedupe();
-    dedupeCompactAndDetailReasons();
-  }
-
+  function boot(){colorPerformance();installHeaderFix();installMarketScopeFix();installWhyDedupe();dedupeWhyText();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   [100,300,700,1200,2500,5000,9000].forEach(function(t){setTimeout(boot,t);});
   setInterval(colorPerformance,1200);
