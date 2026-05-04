@@ -6725,7 +6725,6 @@ function renderMatches(){
       (b ? buildAnalysisSection('', getVerdictBlock(m,b), 'analysis-detail-verdict-section') : '')+
       buildAnalysisSection('Indicatori cheie', analysisMetricCards, 'analysis-detail-metrics-section')+
       buildAnalysisSection('Context rapid', xgMiniGrid + simpleMetrics, 'analysis-detail-quick-section')+
-      buildAnalysisSection('Sursă cote', oddsCompareBlock, 'analysis-detail-odds-section')+
       buildAnalysisSection('Probabilități model', hybridBlock, 'analysis-detail-model-section')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
@@ -6739,7 +6738,6 @@ function renderMatches(){
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
       (b ? buildAnalysisSection('', getVerdictBlock(m,b), 'analysis-detail-verdict-section') : '')+
-      buildAnalysisSection('Sursă cote', oddsCompareBlock, 'analysis-detail-odds-section')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+

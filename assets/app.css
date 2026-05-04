@@ -6884,3 +6884,197 @@ button[onclick*="resetFilter"]:hover {
     padding-left: 16px;
   }
 }
+
+/* ===== Detalii analiză ultra compact mobile v1 ===== */
+.analysis-detail-shell{
+  gap:7px!important;
+}
+.analysis-detail-hero,
+.analysis-detail-section{
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.analysis-detail-hero{
+  padding:9px 10px!important;
+}
+.analysis-detail-kicker,
+.analysis-detail-title{
+  font-size:8.5px!important;
+  line-height:1!important;
+  letter-spacing:.06em!important;
+}
+.analysis-detail-pick-row{
+  margin-top:5px!important;
+  gap:8px!important;
+  align-items:center!important;
+}
+.analysis-detail-pick{
+  font-size:16px!important;
+  line-height:1.1!important;
+}
+.analysis-detail-odd{
+  font-size:10px!important;
+  padding:4px 8px!important;
+}
+.analysis-detail-hero > div[style*="margin-top:10px"],
+.analysis-detail-hero > div[style*="margin-top:12px"]{
+  margin-top:7px!important;
+  padding:8px 10px!important;
+  border-radius:12px!important;
+}
+.analysis-detail-hero div[style*="font-size:24px"],
+.analysis-detail-hero div[style*="font-size:28px"]{
+  font-size:20px!important;
+  margin-top:2px!important;
+}
+.analysis-detail-hero div[style*="font-size:18px"],
+.analysis-detail-hero div[style*="font-size:20px"]{
+  font-size:16px!important;
+  margin-top:2px!important;
+}
+.analysis-detail-section > .analysis-detail-title{
+  padding:8px 10px 0!important;
+}
+.analysis-detail-body{
+  padding:8px 10px!important;
+}
+.analysis-detail-chips-section{
+  background:rgba(255,255,255,.018)!important;
+  border-color:rgba(255,255,255,.055)!important;
+}
+.analysis-detail-chips-section > .analysis-detail-body{
+  padding:7px 9px!important;
+}
+.analysis-detail-chip-row{
+  display:flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  flex-wrap:wrap!important;
+}
+.analysis-detail-chip-row .source-chip,
+.analysis-detail-chip-row .card-reco-badge{
+  font-size:9px!important;
+  padding:3px 7px!important;
+  line-height:1.1!important;
+  margin:0!important;
+}
+.analysis-detail-summary-section .analysis-detail-body{
+  padding:8px!important;
+}
+.analysis-detail-shell .match-inline-summary{
+  padding:7px 9px!important;
+  font-size:10px!important;
+  line-height:1.35!important;
+}
+.analysis-detail-shell .match-inline-row{
+  margin-top:6px!important;
+  gap:6px!important;
+}
+.analysis-detail-shell .match-inline-chip{
+  font-size:9px!important;
+  padding:5px 8px!important;
+}
+.analysis-detail-odds-section{
+  display:none!important;
+}
+.analysis-detail-why-section .analysis-detail-body,
+.analysis-detail-why-section .match-why{
+  padding:8px 10px!important;
+  font-size:10px!important;
+  line-height:1.35!important;
+}
+.verdict-panel{
+  border-radius:13px!important;
+}
+.verdict-panel-head{
+  padding:8px 10px!important;
+  align-items:center!important;
+}
+.verdict-panel-title{
+  font-size:15px!important;
+  line-height:1.05!important;
+}
+.verdict-panel-sub{
+  font-size:10px!important;
+  line-height:1.1!important;
+}
+.verdict-panel-body{
+  padding:3px 10px 7px!important;
+}
+.verdict-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:6px!important;
+  padding:4px 0!important;
+}
+.verdict-row-left,
+.verdict-row-right{
+  display:flex!important;
+  align-items:center!important;
+}
+.verdict-row-left{
+  gap:6px!important;
+}
+.verdict-row-right{
+  justify-content:flex-end!important;
+  gap:5px!important;
+  padding-left:0!important;
+  flex-wrap:nowrap!important;
+  width:auto!important;
+}
+.verdict-dot{
+  width:6px!important;
+  height:6px!important;
+}
+.verdict-label,
+.verdict-value,
+.verdict-note{
+  font-size:10.5px!important;
+  line-height:1.12!important;
+}
+.verdict-value{
+  font-weight:900!important;
+}
+.ba-clv-guidance.ba-clv-details{
+  margin:0!important;
+  padding:5px 7px!important;
+  border-radius:11px!important;
+}
+
+@media(max-width:768px){
+  .analysis-detail-shell{gap:7px!important}
+  .analysis-detail-hero{padding:8px 10px!important}
+  .analysis-detail-pick{font-size:15px!important}
+  .analysis-detail-odd{font-size:9.5px!important;padding:4px 7px!important}
+  .analysis-detail-body{padding:7px 9px!important}
+  .analysis-detail-section > .analysis-detail-title{padding:7px 9px 0!important}
+  .analysis-detail-hero > div[style*="margin-top:10px"],
+  .analysis-detail-hero > div[style*="margin-top:12px"]{margin-top:6px!important;padding:7px 9px!important}
+  .analysis-detail-hero div[style*="font-size:24px"],
+  .analysis-detail-hero div[style*="font-size:28px"]{font-size:19px!important}
+  .analysis-detail-hero div[style*="font-size:18px"],
+  .analysis-detail-hero div[style*="font-size:20px"]{font-size:15px!important}
+  .analysis-detail-chip-row{gap:4px!important}
+  .analysis-detail-chip-row .source-chip,
+  .analysis-detail-chip-row .card-reco-badge{font-size:8.5px!important;padding:3px 6px!important}
+  .verdict-panel-head{padding:7px 9px!important;align-items:center!important}
+  .verdict-panel-title{font-size:14px!important}
+  .verdict-panel-sub{font-size:9px!important}
+  .verdict-panel-body{padding:2px 9px 6px!important}
+  .verdict-row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    flex-direction:unset!important;
+    align-items:center!important;
+    gap:5px!important;
+    padding:4px 0!important;
+  }
+  .verdict-row-right{
+    width:auto!important;
+    justify-content:flex-end!important;
+    padding-left:0!important;
+    gap:4px!important;
+  }
+  .verdict-label,.verdict-value,.verdict-note{font-size:10px!important}
+}

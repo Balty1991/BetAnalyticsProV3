@@ -1,5 +1,5 @@
 // BetAnalytics Pro - CLV guidance on Meciuri cards
-// V9 details only: CLV guidance is compact and shown only inside Detalii analiză.
+// V10 ultra compact: CLV guidance stays inside Detalii analiză, compressed for mobile.
 (function(){
   'use strict';
 
@@ -9,8 +9,8 @@
   window.__baMatchesUiUpgradeV3 = true;
   window.__baCompactRecoV8 = true;
 
-  if (window.__baClvCardGuidanceV9DetailsOnly) return;
-  window.__baClvCardGuidanceV9DetailsOnly = true;
+  if (window.__baClvCardGuidanceV10DetailsUltraCompact) return;
+  window.__baClvCardGuidanceV10DetailsUltraCompact = true;
 
   var clvMap = null;
   var loading = false;
@@ -77,9 +77,9 @@
   }
 
   function style(){
-    if (document.getElementById('ba-clv-guidance-style-v8')) return;
+    if (document.getElementById('ba-clv-guidance-style-v10')) return;
     var css = [
-      '.ba-clv-guidance{display:block!important;margin:0!important;padding:7px 9px!important;border-radius:13px;border:1px solid rgba(255,255,255,.10);background:rgba(12,18,31,.70);box-shadow:0 6px 14px rgba(0,0,0,.10);font-family:var(--font-sans,system-ui,sans-serif);pointer-events:none}',
+      '.ba-clv-guidance{display:block!important;margin:0!important;padding:5px 7px!important;border-radius:11px;border:1px solid rgba(255,255,255,.10);background:rgba(12,18,31,.66);box-shadow:none;font-family:var(--font-sans,system-ui,sans-serif);pointer-events:none}',
       '.analysis-detail-shell>.ba-clv-guidance{margin:0!important}.m16-extra>.ba-clv-guidance,.m17-extra>.ba-clv-guidance{margin:0 0 8px!important}',
       '.ba-clv-top{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:3px}.ba-clv-title{font-size:11px;line-height:1.18;font-weight:900;color:#f8fafc;letter-spacing:-.01em;min-width:0;flex:1}.ba-clv-chip{display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:999px;font:900 8.5px var(--mono,monospace);letter-spacing:.02em;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);color:#e5edf9;white-space:nowrap;flex:0 0 auto}',
       '.ba-clv-context{font-size:9.5px;line-height:1.22;color:rgba(203,213,225,.88);margin-bottom:4px}.ba-clv-context b{font-weight:900;color:#f8fafc}',
@@ -91,7 +91,7 @@
       '.ba-clv-info{border-color:rgba(59,130,246,.26);background:linear-gradient(135deg,rgba(59,130,246,.09),rgba(12,18,31,.78))}.ba-clv-info .ba-clv-chip{color:#93c5fd;border-color:rgba(59,130,246,.22);background:rgba(59,130,246,.10)}',
       '@media(max-width:420px){.ba-clv-title{font-size:10.5px}.ba-clv-context{font-size:9px}.ba-clv-meta{font-size:8px;gap:3px 5px}.ba-clv-chip{padding:2px 6px;font-size:8px}}'
     ].join('');
-    var el = document.createElement('style'); el.id = 'ba-clv-guidance-style-v8'; el.textContent = css; document.head.appendChild(el);
+    var el = document.createElement('style'); el.id = 'ba-clv-guidance-style-v10'; el.textContent = css; document.head.appendChild(el);
   }
 
   function pickState(container){
@@ -219,15 +219,15 @@
     scanTimer = setTimeout(function(){ scanTimer = null; load().then(scan); }, 250);
   }
   function hook(){
-    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV9DetailsOnly) {
+    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV10DetailsUltraCompact) {
       var oldRender = window.renderMatches;
       window.renderMatches = function(){ var r = oldRender.apply(this, arguments); schedule(); setTimeout(schedule, 900); return r; };
-      window.renderMatches.__baClvGuidanceV9DetailsOnly = true;
+      window.renderMatches.__baClvGuidanceV10DetailsUltraCompact = true;
     }
-    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV9DetailsOnly) {
+    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV10DetailsUltraCompact) {
       var oldSwitch = window.switchTab;
       window.switchTab = function(name){ var r = oldSwitch.apply(this, arguments); if (name === 'meciuri') { schedule(); setTimeout(schedule, 900); } return r; };
-      window.switchTab.__baClvGuidanceV9DetailsOnly = true;
+      window.switchTab.__baClvGuidanceV10DetailsUltraCompact = true;
     }
     if (typeof window.toggleMatchAnalysisDetails === 'function' && !window.toggleMatchAnalysisDetails.__baClvGuidanceV9DetailsOnly) {
       var oldToggle = window.toggleMatchAnalysisDetails;
