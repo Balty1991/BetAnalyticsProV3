@@ -1,5 +1,5 @@
 // BetAnalytics Pro - CLV guidance on Meciuri cards
-// V7 rollback guard: restores the circled version (original card + small CLV context strip).
+// V8 clean details: CLV guidance stays outside expanded analysis details.
 (function(){
   'use strict';
 
@@ -9,8 +9,8 @@
   window.__baMatchesUiUpgradeV3 = true;
   window.__baCompactRecoV8 = true;
 
-  if (window.__baClvCardGuidanceV7Rollback) return;
-  window.__baClvCardGuidanceV7Rollback = true;
+  if (window.__baClvCardGuidanceV8CleanDetails) return;
+  window.__baClvCardGuidanceV8CleanDetails = true;
 
   var clvMap = null;
   var loading = false;
@@ -77,7 +77,7 @@
   }
 
   function style(){
-    if (document.getElementById('ba-clv-guidance-style-v7')) return;
+    if (document.getElementById('ba-clv-guidance-style-v8')) return;
     var css = [
       '.ba-clv-guidance{display:block!important;margin:7px 0 9px!important;padding:8px 9px!important;border-radius:13px;border:1px solid rgba(255,255,255,.10);background:rgba(12,18,31,.78);box-shadow:0 6px 14px rgba(0,0,0,.13);font-family:var(--font-sans,system-ui,sans-serif);pointer-events:none}',
       '.ba-clv-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}.ba-clv-title{font-size:12px;line-height:1.22;font-weight:900;color:#f8fafc;letter-spacing:-.01em;min-width:0;flex:1}.ba-clv-chip{display:inline-flex;align-items:center;justify-content:center;padding:3px 7px;border-radius:999px;font:900 9px var(--mono,monospace);letter-spacing:.02em;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);color:#e5edf9;white-space:nowrap;flex:0 0 auto}',
@@ -90,7 +90,7 @@
       '.ba-clv-info{border-color:rgba(59,130,246,.26);background:linear-gradient(135deg,rgba(59,130,246,.09),rgba(12,18,31,.78))}.ba-clv-info .ba-clv-chip{color:#93c5fd;border-color:rgba(59,130,246,.22);background:rgba(59,130,246,.10)}',
       '@media(max-width:420px){.ba-clv-title{font-size:11.5px}.ba-clv-context{font-size:9.5px}.ba-clv-meta{font-size:8.5px;gap:3px 6px}.ba-clv-chip{padding:3px 6px;font-size:8.5px}}'
     ].join('');
-    var el = document.createElement('style'); el.id = 'ba-clv-guidance-style-v7'; el.textContent = css; document.head.appendChild(el);
+    var el = document.createElement('style'); el.id = 'ba-clv-guidance-style-v8'; el.textContent = css; document.head.appendChild(el);
   }
 
   function pickState(container){
@@ -159,11 +159,21 @@
       container.insertBefore(box, container.firstChild);
     }
   }
+  function isInsideExpandedDetails(el){
+    return !!(el && el.closest && el.closest('.m16-extra,.m17-extra,.analysis-detail-shell,.analysis-detail-hero,.analysis-detail-section'));
+  }
   function findRecoContainers(root){
+    // Only inject guidance in the visible recommendation block, never in Detalii analiză.
+    var direct = Array.prototype.slice.call(root.querySelectorAll('.m17-reco,.m16-reco,.card-reco-main')).filter(function(el){
+      if (!el || isInsideExpandedDetails(el) || el.querySelector('.ba-clv-guidance')) return false;
+      var t = cleanText(el);
+      return /(RECOMANDARE|PRONOSTIC RECOMANDAT|Probabilitate pronostic)/i.test(t) && /(BTTS|Over|Under|Peste|Sub|Ambele|O1\.5|O2\.5|U3\.5)/i.test(t);
+    }).map(function(el){ return {el:el, len:cleanText(el).length, text:cleanText(el)}; });
+    if (direct.length) return direct.slice(0,24);
     var nodes = Array.prototype.slice.call(root.querySelectorAll('div,article,section,li'));
     var out = [];
     nodes.forEach(function(el){
-      if (!el || el.querySelector('.ba-clv-guidance')) return;
+      if (!el || isInsideExpandedDetails(el) || el.querySelector('.ba-clv-guidance')) return;
       var t = cleanText(el);
       if (t.length < 80 || t.length > 1600) return;
       if (!/(RECOMANDARE PRINCIPALĂ|PRONOSTIC RECOMANDAT|RECOMANDARE PRINCIPALA|Probabilitate pronostic)/i.test(t)) return;
@@ -192,15 +202,15 @@
     scanTimer = setTimeout(function(){ scanTimer = null; load().then(scan); }, 250);
   }
   function hook(){
-    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV7Rollback) {
+    if (typeof window.renderMatches === 'function' && !window.renderMatches.__baClvGuidanceV8CleanDetails) {
       var oldRender = window.renderMatches;
       window.renderMatches = function(){ var r = oldRender.apply(this, arguments); schedule(); setTimeout(schedule, 900); return r; };
-      window.renderMatches.__baClvGuidanceV7Rollback = true;
+      window.renderMatches.__baClvGuidanceV8CleanDetails = true;
     }
-    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV7Rollback) {
+    if (typeof window.switchTab === 'function' && !window.switchTab.__baClvGuidanceV8CleanDetails) {
       var oldSwitch = window.switchTab;
       window.switchTab = function(name){ var r = oldSwitch.apply(this, arguments); if (name === 'meciuri') { schedule(); setTimeout(schedule, 900); } return r; };
-      window.switchTab.__baClvGuidanceV7Rollback = true;
+      window.switchTab.__baClvGuidanceV8CleanDetails = true;
     }
   }
   function boot(){ cleanupExperimentalCards(); hook(); if (isMeciuriActive()) { schedule(); setTimeout(schedule, 1200); } }

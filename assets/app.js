@@ -916,9 +916,9 @@ function resolveVisualMeta(row){
     home: pickDefined(row && row.home, linked.home, '—'),
     away: pickDefined(row && row.away, linked.away, '—'),
     league: pickDefined(row && row.league, linked.league, '—'),
-    homeApiId: pickDefined(row && row.homeApiId, row && row.home_api_id, row && row.home_team_api_id, linked.homeApiId, linked.home_api_id),
-    awayApiId: pickDefined(row && row.awayApiId, row && row.away_api_id, row && row.away_team_api_id, linked.awayApiId, linked.away_api_id),
-    leagueApiId: pickDefined(row && row.leagueApiId, row && row.league_api_id, row && row.leagueId, linked.leagueApiId, linked.league_api_id)
+    homeApiId: pickDefined(row && row.homeApiId, row && row.home_api_id, row && row.home_team_api_id, row && row.home_team_id, linked.homeApiId, linked.home_api_id),
+    awayApiId: pickDefined(row && row.awayApiId, row && row.away_api_id, row && row.away_team_api_id, row && row.away_team_id, linked.awayApiId, linked.away_api_id),
+    leagueApiId: pickDefined(row && row.leagueApiId, row && row.league_api_id, row && row.leagueId, row && row.league_id, linked.leagueApiId, linked.league_api_id)
   };
 }
 function renderEventIdentity(row, options){
@@ -1555,6 +1555,14 @@ function getVerdictPill(match, bet) {
   return '<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:' + v.bg + ';border:1px solid ' + v.border + ';font-size:12px;font-weight:800;color:' + v.color + '">' + v.label + '</div>';
 }
 
+function buildAnalysisSection(title, content, extraClass) {
+  if (!content) return '';
+  return '<section class="analysis-detail-section' + (extraClass ? ' ' + extraClass : '') + '">' +
+    (title ? '<div class="analysis-detail-title">' + title + '</div>' : '') +
+    '<div class="analysis-detail-body">' + content + '</div>' +
+  '</section>';
+}
+
 function getVerdictBlock(match, bet) {
   var v = getBetVerdict(match, bet);
   if (!v) return '';
@@ -1563,31 +1571,35 @@ function getVerdictBlock(match, bet) {
   var adjProb = Number((bet || {}).adjProb || 0);
   var value   = Number((bet || {}).value   || 0);
   var rows = [
-    { label:'Edge (1/5)',     ok: edgePct >= 10, val: (edgePct>=0?'+':'') + edgePct.toFixed(1) + 'pp',  note: edgePct >= 10 ? '>= 10pp \u2713' : edgePct >= 8 ? 'limita' : '< 8pp \u2717' },
-    { label:'Value',         ok: value  >= 0.05, val: (value>=0?'+':'') + (value*100).toFixed(1) + '%', note: value >= 0.05 ? '>= 5% \u2713' : '< 5% \u2717' },
-    { label:'Probabilitate', ok: adjProb>= 75,  val: adjProb.toFixed(1) + '%',                          note: adjProb >= 75 ? '>= 75% \u2713' : '< 75%' },
-    { label:'BT piata',      ok: bd && bd.mktRoi !== null && bd.mktRoi >= 0,
-      val:  bd && bd.mktRoi  !== null ? (bd.mktRoi>=0?'+':'')  + bd.mktRoi.toFixed(1)  + '%' : 'N/A',
-      note: bd && bd.mktRoi  !== null && bd.mktRoi  >= 0 ? 'profitabil \u2713' : 'negativ \u2717' },
-    { label:'BT edge bucket',ok: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3,
+    { label:'Edge', ok: edgePct >= 10, val: (edgePct>=0?'+':'') + edgePct.toFixed(1) + 'pp',  note: edgePct >= 10 ? '>= 10pp' : edgePct >= 8 ? 'la limită' : '< 8pp' },
+    { label:'Value', ok: value  >= 0.05, val: (value>=0?'+':'') + (value*100).toFixed(1) + '%', note: value >= 0.05 ? '>= 5%' : '< 5%' },
+    { label:'Probabilitate', ok: adjProb>= 75,  val: adjProb.toFixed(1) + '%', note: adjProb >= 75 ? '>= 75%' : '< 75%' },
+    { label:'BT piață', ok: bd && bd.mktRoi !== null && bd.mktRoi >= 0,
+      val:  bd && bd.mktRoi !== null ? (bd.mktRoi>=0?'+':'')  + bd.mktRoi.toFixed(1)  + '%' : 'N/A',
+      note: bd && bd.mktRoi  !== null && bd.mktRoi  >= 0 ? 'profitabil' : 'negativ' },
+    { label:'BT edge bucket', ok: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3,
       val:  bd && bd.bucketRoi !== null ? (bd.bucketRoi>=0?'+':'') + bd.bucketRoi.toFixed(1) + '%' : 'N/A',
-      note: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3 ? '>= 3% \u2713' : bd && bd.bucketRoi !== null && bd.bucketRoi >= 0 ? 'marginala' : 'negativ \u2717' },
+      note: bd && bd.bucketRoi !== null && bd.bucketRoi >= 3 ? '>= 3%' : bd && bd.bucketRoi !== null && bd.bucketRoi >= 0 ? 'marginală' : 'negativ' },
     { label:'Motor', ok: !benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct),
-      val:'', note: !benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct) ? 'OK \u2713' : 'conflict \u2717' }
+      val:'', note: !benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct) ? 'OK' : 'conflict' }
   ];
+  var stateClass = v.state === 'bet' ? 'bet' : (v.state === 'risk' ? 'risk' : 'avoid');
   var rowsHtml = rows.map(function(r) {
-    var c   = r.ok ? '#22c55e' : '#ef4444';
-    var dot = '<span style="width:7px;height:7px;border-radius:50%;background:' + c + ';display:inline-block;flex-shrink:0"></span>';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">' +
-      '<div style="display:flex;align-items:center;gap:7px;color:rgba(255,255,255,.55);font-size:12px">' + dot + r.label + '</div>' +
-      '<div style="font-size:12px;color:rgba(255,255,255,.75)">' + (r.val ? '<span style="font-weight:700;margin-right:6px">' + r.val + '</span>' : '') +
-      '<span style="color:' + c + '">' + r.note + '</span></div></div>';
+    return '<div class="verdict-row ' + (r.ok ? 'ok' : 'bad') + '">' +
+      '<div class="verdict-row-left"><span class="verdict-dot"></span><span class="verdict-label">' + r.label + '</span></div>' +
+      '<div class="verdict-row-right">' +
+        (r.val ? '<span class="verdict-value">' + r.val + '</span>' : '') +
+        '<span class="verdict-note">' + r.note + (r.ok ? ' ✓' : ' ✕') + '</span>' +
+      '</div>' +
+    '</div>';
   }).join('');
-  return '<div style="margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid ' + v.border + '">' +
-    '<div style="padding:10px 14px;background:' + v.bg + ';display:flex;align-items:center;justify-content:space-between">' +
-      '<div style="font-size:16px;font-weight:900;color:' + v.color + '">' + v.label + '</div>' +
-      '<div style="font-size:11px;color:rgba(255,255,255,.5)">' + v.sub + '</div></div>' +
-    '<div style="padding:4px 14px 8px;background:rgba(0,0,0,.15)">' + rowsHtml + '</div></div>';
+  return '<div class="verdict-panel ' + stateClass + '">' +
+    '<div class="verdict-panel-head">' +
+      '<div class="verdict-panel-title">' + v.label + '</div>' +
+      '<div class="verdict-panel-sub">' + v.sub + '</div>' +
+    '</div>' +
+    '<div class="verdict-panel-body">' + rowsHtml + '</div>' +
+  '</div>';
 }
 
 
@@ -6195,6 +6207,7 @@ function openDashboardStream(type){
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
+  if($('match-verdict-filter')) $('match-verdict-filter').value = 'all';
   if($('match-pro-mode')) $('match-pro-mode').value = (type === 'pro_active' ? 'pro' : 'all');
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
@@ -6224,6 +6237,7 @@ function resetMatchFilters(){
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
+  if($('match-verdict-filter')) $('match-verdict-filter').value = 'all';
   if($('match-pro-mode')) $('match-pro-mode').value = 'all';
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
@@ -6377,6 +6391,7 @@ function renderMatches(){
   var leagueF = $('league-filter') ? $('league-filter').value : '';
   var dateF = $('match-date-filter') ? $('match-date-filter').value : 'all';
   var marketF = $('match-market-filter') ? $('match-market-filter').value : '';
+  var verdictF = $('match-verdict-filter') ? $('match-verdict-filter').value : 'all';
   var proMode = $('match-pro-mode') ? $('match-pro-mode').value : 'all';
   var minProb = $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0;
   var minEdge = $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0;
@@ -6395,6 +6410,26 @@ function renderMatches(){
     if(r && r.event_id != null && r.event_id !== '') _motorEidSet[String(r.event_id)] = true;
     if(r && r.eventId != null && r.eventId !== '') _motorEidSet[String(r.eventId)] = true;
   });
+
+  var filterTypeMap = {
+    'o15':['over15'], 'o25':['over25'], 'u35':['under35'], 'btts':['btts'],
+    'dc':['dc1x','dcx2','dc12']
+  };
+  var marketLabelMap = {
+    'Over 1.5G':'over15','Over 2.5G':'over25','Under 3.5G':'under35','BTTS':'btts',
+    'Șansă Dublă 1X':'dc1x','Șansă Dublă X2':'dcx2','Șansă Dublă 12':'dc12'
+  };
+  function getActiveMarketBet(match, fallbackBet){
+    var wanted = filterTypeMap[CURRENT_FILTER] || null;
+    if(marketF && marketLabelMap[marketF]) wanted = [marketLabelMap[marketF]];
+    if(!wanted || !wanted.length) return fallbackBet || null;
+    if(fallbackBet && wanted.indexOf(fallbackBet.type) >= 0) return fallbackBet;
+    if(Array.isArray(match.eligibleCandidates)){
+      var found = match.eligibleCandidates.find(function(c){ return c && c.bestBet && wanted.indexOf(c.bestBet.type) >= 0; });
+      if(found && found.bestBet) return found.bestBet;
+    }
+    return fallbackBet || null;
+  }
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
@@ -6471,6 +6506,11 @@ function renderMatches(){
       }
       if(!matchesMarket) return false;
     }
+    if(verdictF && verdictF !== 'all'){
+      var verdictBet = getActiveMarketBet(m, b);
+      var verdictMeta = verdictBet ? getBetVerdict(m, verdictBet) : null;
+      if(!verdictMeta || verdictMeta.state !== verdictF) return false;
+    }
     if(proMode === 'pro' && !(m.leagueTier !== 'avoid' && (b.adjProb || 0) >= 72 && (b.edgePct || -999) >= 1.5 && (b.value || 0) >= 0.01)) return false;
     if((b.adjProb || 0) < minProb) return false;
     if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
@@ -6485,16 +6525,8 @@ function renderMatches(){
 
   // Swap bestBet cu candidatul matchat de filtru, daca filtrul cere un tip specific
   // (altfel cardul arata bestBet original, chiar daca user a cerut Over 1.5)
-  var filterTypeMap = {
-    'o15':['over15'], 'o25':['over25'], 'u35':['under35'], 'btts':['btts'],
-    'dc':['dc1x','dcx2','dc12']
-  };
   var wantedTypes = filterTypeMap[CURRENT_FILTER];
   // Also handle market dropdown
-  var marketLabelMap = {
-    'Over 1.5G':'over15','Over 2.5G':'over25','Under 3.5G':'under35','BTTS':'btts',
-    'Șansă Dublă 1X':'dc1x','Șansă Dublă X2':'dcx2','Șansă Dublă 12':'dc12'
-  };
   if(marketF && marketLabelMap[marketF]) wantedTypes = [marketLabelMap[marketF]];
 
   if(wantedTypes && wantedTypes.length){
@@ -6672,47 +6704,46 @@ function renderMatches(){
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
     var simpleSummary = b ? ('<div class="match-inline-summary">Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong> • Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong>'+(Number(b.kellyPct||0)>0?' • Kelly <strong>'+Number(b.kellyPct||0).toFixed(1)+'%</strong>':'')+(m.riskTier&&m.riskTier!=='Avoid'?' • <span style="color:'+(m.riskTier==='Safe'?'var(--grn)':m.riskTier==='Value'?'var(--yel)':'var(--acc)')+';font-weight:700">'+m.riskTier+'</span>':'')+(bestMarketLine ? (' • <span style="color:var(--grn)">'+bestMarketLine+'</span>') : '')+(motorBadge ? ' • ' + motorBadge : '')+'</div>'+(b ? getBenchmarkRow(b.type || b.marketKey || '', Number(b.edgePct||0)) : '')) : '';
-    var expertDetails = analysisMetricCards +
+    var detailHero = '<div class="analysis-detail-hero">'+
+      '<div class="analysis-detail-kicker">Analiză recomandare</div>'+
+      '<div class="analysis-detail-pick-row">'+
+        '<div class="analysis-detail-pick">'+recLabel+'</div>'+
+        (recOdd ? '<div class="analysis-detail-odd">@ '+recOdd+'</div>' : '')+
+      '</div>'+
       predictionProbabilityHtml+
-      '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
-        '<div class="ticket-mini"><div class="v">'+Number(m.xgHome || 0).toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
-        '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
-        '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
-      '</div>'+
-      '<div class="card-reco-main">'+
-        '<div class="card-reco-head">'+
-          '<div class="card-reco-title">Pronostic recomandat</div>'+
-          (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
-        '</div>'+
-        '<div class="card-reco-pick">'+recLabel+'</div>'+
-        predictionProbabilityHtml+
-        '<div class="card-reco-badges">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>'+
-        hybridBlock+
-        oddsCompareBlock+
-        altMarketsHtml+
-      '</div>'+
-      (b ? getVerdictBlock(m,b) : '')+
-      compactWhy+
-      ml5ContextBlock+
-      (reasons ? '<div class="reason-list">'+reasons+'</div>' : '');
+    '</div>';
+    var expertBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>';
+    var simpleBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+motorBadge+ageBadge+'</div>';
+    var xgMiniGrid = '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
+      '<div class="ticket-mini"><div class="v">'+Number(m.xgHome || 0).toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
+      '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
+      '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
+    '</div>';
+    var expertDetails = '<div class="analysis-detail-shell expert">'+
+      detailHero+
+      buildAnalysisSection('', expertBadgeRow, 'analysis-detail-chips-section')+
+      (b ? buildAnalysisSection('', getVerdictBlock(m,b), 'analysis-detail-verdict-section') : '')+
+      buildAnalysisSection('Indicatori cheie', analysisMetricCards, 'analysis-detail-metrics-section')+
+      buildAnalysisSection('Context rapid', xgMiniGrid + simpleMetrics, 'analysis-detail-quick-section')+
+      buildAnalysisSection('Sursă cote', oddsCompareBlock, 'analysis-detail-odds-section')+
+      buildAnalysisSection('Probabilități model', hybridBlock, 'analysis-detail-model-section')+
+      buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
+      buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
+      buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      (reasons ? buildAnalysisSection('Semnale cheie', '<div class="reason-list">'+reasons+'</div>', 'analysis-detail-reasons-section') : '')+
+    '</div>';
 
     // SIMPLU: fara grila metrica tehnica, fara badges — doar esentialul
-    var simpleDetails = '<div class="card-reco-main">'+
-        '<div class="card-reco-head">'+
-          '<div class="card-reco-title">Pronostic recomandat</div>'+
-          (recOdd ? '<div class="card-reco-odd">@ '+recOdd+'</div>' : '')+
-        '</div>'+
-        '<div class="card-reco-pick">'+recLabel+'</div>'+
-        predictionProbabilityHtml+
-        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+sourceBadge+oddsSourceBadge+'</div>'+
-        oddsCompareBlock+
-        simpleSummary+
-        (b ? getVerdictBlock(m,b) : '')+
-        simpleMetrics+
-        altMarketsHtml+
-      '</div>'+
-      (compactWhy ? compactWhy : '')+
-      ml5ContextBlock;
+    var simpleDetails = '<div class="analysis-detail-shell simple">'+
+      detailHero+
+      buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
+      buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
+      (b ? buildAnalysisSection('', getVerdictBlock(m,b), 'analysis-detail-verdict-section') : '')+
+      buildAnalysisSection('Sursă cote', oddsCompareBlock, 'analysis-detail-odds-section')+
+      buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
+      buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
+      buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+    '</div>';
     var detailBlock = MATCH_CARD_MODE === 'expert' ? expertDetails : simpleDetails;
     var key = getMatchCardKey(m);
     var homeProb = Math.max(0, Number(m.probHome || 0));

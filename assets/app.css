@@ -6580,3 +6580,307 @@ button[onclick*="resetFilter"]:hover {
     font-size: 8px !important;
   }
 }
+
+/* ===== Detail analysis cleanup: cleaner expanded card ===== */
+.m17-extra.m16-extra.open {
+  display: block !important;
+  padding-top: 10px !important;
+}
+
+.analysis-detail-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.analysis-detail-hero,
+.analysis-detail-section {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(15,24,42,.96), rgba(11,18,32,.98));
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+}
+
+.analysis-detail-hero {
+  padding: 14px;
+  border-color: rgba(84,119,255,.18);
+  background: linear-gradient(180deg, rgba(22,33,58,.98), rgba(13,21,38,.98));
+}
+
+.analysis-detail-kicker,
+.analysis-detail-title {
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.analysis-detail-pick-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.analysis-detail-pick {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 900;
+  color: var(--txt);
+  letter-spacing: -.02em;
+}
+
+.analysis-detail-odd {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(59,130,246,.10);
+  border: 1px solid rgba(59,130,246,.20);
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--acc);
+  font-family: var(--mono);
+}
+
+.analysis-detail-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analysis-detail-body {
+  padding: 12px;
+}
+
+.analysis-detail-section > .analysis-detail-title {
+  padding: 12px 12px 0;
+}
+
+.analysis-detail-section.analysis-detail-chips-section > .analysis-detail-body {
+  padding-top: 12px;
+}
+
+.analysis-detail-shell .match-inline-summary {
+  margin-top: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--txt);
+}
+
+.analysis-detail-shell .match-inline-row {
+  margin-top: 10px;
+}
+
+.analysis-detail-shell .match-inline-chip {
+  background: rgba(255,255,255,.045);
+  border-color: rgba(255,255,255,.08);
+}
+
+.analysis-detail-shell .ticket-mini-grid,
+.analysis-detail-shell .analysis-metric-grid {
+  margin-top: 0 !important;
+}
+
+.analysis-detail-shell .analysis-metric-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.analysis-detail-shell .analysis-metric {
+  min-height: 84px;
+}
+
+.analysis-detail-shell .analysis-help-row {
+  margin-top: 10px;
+}
+
+.analysis-detail-shell .odds-source-block,
+.analysis-detail-shell .hybrid-prob-block,
+.analysis-detail-shell .match-why,
+.analysis-detail-shell .reason-list {
+  margin-top: 0 !important;
+}
+
+.analysis-detail-shell .odds-source-block,
+.analysis-detail-shell .hybrid-prob-block,
+.analysis-detail-shell .match-why {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.07);
+}
+
+.analysis-detail-shell .reason-list {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analysis-detail-shell .reason-pill {
+  background: rgba(255,255,255,.05);
+  border-color: rgba(255,255,255,.08);
+}
+
+.verdict-panel {
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.025);
+}
+
+.verdict-panel.bet {
+  border-color: rgba(34,197,94,.28);
+}
+.verdict-panel.risk {
+  border-color: rgba(245,158,11,.28);
+}
+.verdict-panel.avoid {
+  border-color: rgba(239,68,68,.26);
+}
+
+.verdict-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.verdict-panel.bet .verdict-panel-head {
+  background: rgba(34,197,94,.10);
+}
+.verdict-panel.risk .verdict-panel-head {
+  background: rgba(245,158,11,.10);
+}
+.verdict-panel.avoid .verdict-panel-head {
+  background: rgba(239,68,68,.10);
+}
+
+.verdict-panel-title {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+.verdict-panel.bet .verdict-panel-title { color: var(--grn); }
+.verdict-panel.risk .verdict-panel-title { color: var(--yel); }
+.verdict-panel.avoid .verdict-panel-title { color: var(--red); }
+
+.verdict-panel-sub {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.verdict-panel-body {
+  padding: 6px 14px 10px;
+}
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.verdict-row:last-child {
+  border-bottom: none;
+}
+
+.verdict-row-left,
+.verdict-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.verdict-row-left {
+  min-width: 0;
+}
+.verdict-row-right {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.verdict-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+.verdict-row.ok .verdict-dot { background: var(--grn); }
+.verdict-row.bad .verdict-dot { background: var(--red); }
+.verdict-label {
+  font-size: 12px;
+  color: rgba(255,255,255,.78);
+}
+.verdict-value {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--txt);
+}
+.verdict-note {
+  font-size: 12px;
+  font-weight: 700;
+}
+.verdict-row.ok .verdict-note { color: var(--grn); }
+.verdict-row.bad .verdict-note { color: var(--red); }
+
+@media (max-width: 768px) {
+  .analysis-detail-shell {
+    gap: 10px;
+  }
+  .analysis-detail-hero,
+  .analysis-detail-section {
+    border-radius: 16px;
+  }
+  .analysis-detail-hero,
+  .analysis-detail-body,
+  .analysis-detail-section > .analysis-detail-title {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .analysis-detail-hero {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .analysis-detail-pick {
+    font-size: 16px;
+  }
+  .analysis-detail-odd {
+    font-size: 11px;
+    padding: 5px 9px;
+  }
+  .analysis-detail-shell .analysis-metric-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .analysis-detail-shell .analysis-metric {
+    min-height: auto;
+    padding: 9px;
+  }
+  .verdict-panel-head {
+    padding: 11px 12px;
+    align-items: flex-start;
+  }
+  .verdict-panel-title {
+    font-size: 16px;
+  }
+  .verdict-panel-sub {
+    font-size: 10px;
+  }
+  .verdict-panel-body {
+    padding: 4px 12px 8px;
+  }
+  .verdict-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+  }
+  .verdict-row-right {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: 16px;
+  }
+}
