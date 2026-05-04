@@ -7193,3 +7193,117 @@ button[onclick*="resetFilter"]:hover {
   }
   .analysis-detail-overview-frame::before{border-radius:16px;}
 }
+
+/* ===== Compact lower detail stack: Piete eligibile / De ce / Context ML5 ===== */
+.analysis-detail-lower-frame{
+  position:relative;
+  display:grid;
+  gap:8px;
+  padding:10px;
+  border-radius:18px;
+  border:1px solid rgba(59,130,246,.18);
+  background:linear-gradient(180deg, rgba(18,27,46,.68), rgba(9,16,29,.88));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 8px 18px rgba(0,0,0,.10);
+}
+.analysis-detail-lower-frame::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+}
+.analysis-detail-lower-frame .analysis-detail-section{
+  margin:0 !important;
+  border-radius:14px;
+  background:rgba(255,255,255,.018)!important;
+  border-color:rgba(255,255,255,.055)!important;
+  box-shadow:none!important;
+}
+.analysis-detail-lower-frame .analysis-detail-title{
+  padding:9px 10px 0;
+  font-size:9px;
+  letter-spacing:.09em;
+  color:rgba(203,213,225,.70)!important;
+}
+.analysis-detail-lower-frame .analysis-detail-body{
+  padding:9px 10px 10px;
+}
+
+/* compact alternate markets */
+.analysis-detail-lower-frame .analysis-detail-alt-section .analysis-detail-body > div{
+  margin-top:0!important;
+  padding-top:0!important;
+  border-top:none!important;
+}
+.analysis-detail-lower-frame .analysis-detail-alt-section .analysis-detail-body > div > div:first-child{
+  display:none!important;
+}
+.analysis-detail-lower-frame .analysis-detail-alt-section .analysis-detail-body > div > div:last-child{
+  gap:5px!important;
+}
+.analysis-detail-lower-frame .analysis-detail-alt-section .analysis-detail-body > div > div:last-child > span{
+  padding:4px 8px!important;
+  font-size:10px!important;
+  gap:5px!important;
+}
+
+/* compact de ce */
+.analysis-detail-lower-frame .analysis-detail-why-section .analysis-detail-body,
+.analysis-detail-lower-frame .analysis-detail-why-section .match-why{
+  padding:0!important;
+  margin:0!important;
+  background:transparent!important;
+  border:none!important;
+}
+.analysis-detail-lower-frame .analysis-detail-why-section .match-why{
+  font-size:10.5px!important;
+  line-height:1.45!important;
+}
+.analysis-detail-lower-frame .analysis-detail-why-section .match-why strong{
+  font-size:11px!important;
+}
+
+/* compact ML5 */
+.analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div{
+  margin-top:0!important;
+  padding:8px 10px!important;
+  border-radius:12px!important;
+  background:rgba(139,92,246,.05)!important;
+  border-color:rgba(139,92,246,.15)!important;
+}
+.analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div > div:first-child{
+  font-size:8.5px!important;
+  margin-bottom:4px!important;
+}
+.analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div > div:not(:first-child){
+  font-size:10px!important;
+  line-height:1.35!important;
+  margin-top:3px!important;
+}
+.analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div > div:last-child{
+  gap:4px!important;
+  margin-top:5px!important;
+}
+.analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div > div:last-child > span{
+  padding:4px 8px!important;
+  font-size:10px!important;
+  border-radius:10px!important;
+}
+
+@media (max-width: 768px){
+  .analysis-detail-lower-frame{
+    gap:7px;
+    padding:8px;
+    border-radius:16px;
+  }
+  .analysis-detail-lower-frame::before{border-radius:16px;}
+  .analysis-detail-lower-frame .analysis-detail-section{border-radius:12px;}
+  .analysis-detail-lower-frame .analysis-detail-title{padding:8px 9px 0;}
+  .analysis-detail-lower-frame .analysis-detail-body{padding:8px 9px 9px;}
+  .analysis-detail-lower-frame .analysis-detail-alt-section .analysis-detail-body > div > div:last-child > span{font-size:9.5px!important;}
+  .analysis-detail-lower-frame .analysis-detail-why-section .match-why{font-size:10px!important;}
+  .analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div{padding:7px 9px!important;}
+  .analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div > div:not(:first-child){font-size:9.5px!important;}
+  .analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > div > div:last-child > span{font-size:9px!important;}
+}

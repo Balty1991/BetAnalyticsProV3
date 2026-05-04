@@ -6719,6 +6719,11 @@ function renderMatches(){
       '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
     '</div>';
+    var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock) ? '<div class="analysis-detail-lower-frame">'+
+      buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
+      buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
+      buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+    '</div>' : '';
     var expertDetails = '<div class="analysis-detail-shell expert">'+
       detailHero+
       buildAnalysisSection('', expertBadgeRow, 'analysis-detail-chips-section')+
@@ -6726,9 +6731,7 @@ function renderMatches(){
       buildAnalysisSection('Indicatori cheie', analysisMetricCards, 'analysis-detail-metrics-section')+
       buildAnalysisSection('Context rapid', xgMiniGrid + simpleMetrics, 'analysis-detail-quick-section')+
       buildAnalysisSection('Probabilități model', hybridBlock, 'analysis-detail-model-section')+
-      buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
-      buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
-      buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      detailLowerFrame+
       (reasons ? buildAnalysisSection('Semnale cheie', '<div class="reason-list">'+reasons+'</div>', 'analysis-detail-reasons-section') : '')+
     '</div>';
 
@@ -6737,13 +6740,16 @@ function renderMatches(){
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
     '</div>';
+    var simpleLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock) ? '<div class="analysis-detail-lower-frame">'+
+      buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
+      buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
+      buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+    '</div>' : '';
     var simpleDetails = '<div class="analysis-detail-shell simple">'+
       detailHero+
       simpleOverviewFrame+
       (b ? buildAnalysisSection('', getVerdictBlock(m,b), 'analysis-detail-verdict-section') : '')+
-      buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
-      buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
-      buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      simpleLowerFrame+
     '</div>';
     var detailBlock = MATCH_CARD_MODE === 'expert' ? expertDetails : simpleDetails;
     var key = getMatchCardKey(m);
