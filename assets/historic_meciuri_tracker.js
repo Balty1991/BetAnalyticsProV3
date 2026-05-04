@@ -129,7 +129,7 @@
   var SUPP={over15:1,over25:1,btts:1,under35:1,under25:1};
   var DC_MKTS={dc1x:1,dcx2:1,dc12:1};
 
-  var STORE_KEY='bet_matches_visible_history_v5_one_match_per_category_20260504';
+  var STORE_KEY='bet_matches_visible_history_v4_exact_rendered_snapshot_20260504';
   var STORE_PATH='./data/matches_visible_history.json';
   var STORE={
     version:'v2-rendered-matches-history',
@@ -149,10 +149,7 @@
   }
   function rowCat(r){ return normalizeCatKey((r&&r.history_category)||(r&&r.category)||(r&&r.cat)||'') || 'all'; }
   function rowKey(r){
-    // O categorie din Istoric trebuie să reflecte cardurile vizibile din Meciuri:
-    // un singur rând per meci/categorie. Nu mai includem market_key în cheie,
-    // ca același meci să nu apară dublat în Top/Value dacă are mai multe piețe eligibile.
-    return rowCat(r)+'::'+String((r&&r.event_id)!=null?r.event_id:'');
+    return rowCat(r)+'::'+String((r&&r.event_id)!=null?r.event_id:'')+'::'+String((r&&r.market_key)||'');
   }
   function normalizeStorePayload(x){
     if(!x||typeof x!=='object') x={};
@@ -219,7 +216,7 @@
     if(local){ STORE=mergeStorePayloads(STORE,local); STORE_LOADED=true; }
     if(STORE_LOADING) return;
     STORE_LOADING=true;
-    fetch(STORE_PATH+'?v=20260504onematchcat1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
+    fetch(STORE_PATH+'?v=20260504exactrendered2',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
       STORE=mergeStorePayloads(j,loadLocalStore()); STORE_LOADED=true; STORE_LOADING=false; saveLocalStore(); _settledCache=null; _last=''; render();
     }).catch(function(){ STORE_LOADING=false; STORE_LOADED=true; });
   }
@@ -263,13 +260,9 @@
       else if(rowCat(r)!==catKey) nextMap[rowKey(r)]=r;
     });
 
-    var seenInThisCategory={};
     matches.forEach(function(m){
       var row=matchToHistoryRow(catKey,m);
       if(!row||row.event_id==null||!row.market_key) return;
-      var eventKey=String(row.event_id);
-      if(seenInThisCategory[eventKey]) return;
-      seenInThisCategory[eventKey]=true;
       var k=rowKey(row), old=oldMap[k]||{};
       var oldSt=normalizeStored(old)._st;
       row.first_seen_at=old.first_seen_at||nowIso;
