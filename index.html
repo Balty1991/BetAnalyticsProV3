@@ -35,18 +35,20 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 .lsr-dot{opacity:.3;font-size:10px}
 .btn-refresh-ico{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border-radius:12px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.3);color:var(--acc);cursor:pointer;flex-shrink:0}
 .btn-refresh-ico:active{opacity:.75}
+.btn-refresh-ico.is-refreshing svg{animation:baHeaderRefreshSpin .7s linear infinite}
+@keyframes baHeaderRefreshSpin{to{transform:rotate(360deg)}}
 .container,.main,.app-shell{max-width:1500px;margin:0 auto;width:100%}
 .section,.panel,.card,.tab-content{background:#0E1424;border:1px solid var(--brd);border-radius:20px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .skip-link{position:absolute;left:12px;top:-44px;z-index:1000;background:#2BE5C5;color:#06080F;padding:10px 14px;border-radius:12px;font-weight:700;text-decoration:none}
 .skip-link:focus{top:12px}
 </style>
-<link rel="stylesheet" href="./assets/app.css?v=20260504whycompact1"/>
+<link rel="stylesheet" href="./assets/app.css?v=20260504fastrefresh1"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
 <script src="./assets/performance-patch.js?v=20260503m24"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
-<script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260504uniform1"></script>
+<script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260504fastrefresh1"></script>
+<script defer src="./assets/app.js?v=20260504fastrefresh1"></script>
 <script defer src="./assets/pro_command_center.js?v=20260427procc3"></script>
 </head>
 <body>
