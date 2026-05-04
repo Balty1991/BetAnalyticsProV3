@@ -6685,22 +6685,39 @@ function renderMatches(){
     var predictionProbabilityHtml = b ? ('<div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,rgba(16,185,129,.10),rgba(59,130,246,.10));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:24px;font-weight:900;line-height:1;color:var(--txt);margin-top:4px">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--muted)">Cotă'+oddsInlineTag+'</div><div style="font-size:18px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var m16ProbabilityHtml = b ? ('<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(59,130,246,.12));border:1px solid rgba(16,185,129,.18)"><div><div style="font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Probabilitate pronostic</div><div style="font-size:28px;font-weight:900;line-height:1;margin-top:6px;color:var(--txt)">'+fmtPct(Number(b.adjProb || 0))+'</div></div><div style="text-align:right">'+(motorBadge || '')+'<div style="font-size:10px;color:var(--muted);margin-top:'+(motorBadge ? '8' : '0')+'px">Cotă'+oddsInlineTag+'</div><div style="font-size:20px;font-weight:900;color:var(--acc);margin-top:4px">'+(recOdd ? '@ ' + recOdd : '—')+'</div></div></div>') : '';
     var fairOdds = b && Number(b.adjProb || 0) > 0 ? (100 / Number(b.adjProb || 0)).toFixed(2) : '—';
-    var analysisMetricCards = b ? ('<div class="analysis-metric-grid">'+
-      '<div class="analysis-metric prob"><div class="analysis-metric-k">Probabilitate</div><div class="analysis-metric-v">'+fmtPct(Number(b.adjProb || 0))+'</div><div class="analysis-metric-sub">estimarea finală folosită</div></div>'+
-      '<div class="analysis-metric edge"><div class="analysis-metric-k">Edge</div><div class="analysis-metric-v">'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</div><div class="analysis-metric-sub">diferență față de piață</div></div>'+
-      '<div class="analysis-metric value"><div class="analysis-metric-k">Value</div><div class="analysis-metric-v">'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</div><div class="analysis-metric-sub">valoare estimată</div></div>'+
-      '<div class="analysis-metric warn"><div class="analysis-metric-k">Fair odds</div><div class="analysis-metric-v">'+fairOdds+'</div><div class="analysis-metric-sub">cota teoretică</div></div>'+
-      '<div class="analysis-metric"><div class="analysis-metric-k">Confidence</div><div class="analysis-metric-v">'+Number(m.confidence || 0).toFixed(0)+'%</div><div class="analysis-metric-sub">încredere model</div></div>'+
-      '<div class="analysis-metric"><div class="analysis-metric-k">xG total</div><div class="analysis-metric-v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="analysis-metric-sub">context ofensiv estimat</div></div>'+
-      '<div class="analysis-metric"><div class="analysis-metric-k">Kelly %</div><div class="analysis-metric-v" style="color:'+(Number(b.kellyPct||0)>0?'var(--grn)':'var(--muted)')+'">'+Number(b.kellyPct||0).toFixed(1)+'%</div><div class="analysis-metric-sub">fracție recomandată</div></div>'+
-      (m.riskTier ? '<div class="analysis-metric '+(m.riskTier==="Safe"?'prob':m.riskTier==="Value"?'value':m.riskTier==="Balanced"?'edge':'warn')+'"><div class="analysis-metric-k">Risk Tier</div><div class="analysis-metric-v">'+m.riskTier+'</div><div class="analysis-metric-sub">clasificare risc</div></div>' : '')+
-      (bestMarketLine ? '<div class="analysis-metric value"><div class="analysis-metric-k">Best market</div><div class="analysis-metric-v">'+Number(b.odds || 0).toFixed(2)+'</div><div class="analysis-metric-sub">'+bestMarketLine+'</div></div>' : '')+
-    '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
+    var compactRow = function(label, value, extraClass){
+      return '<div class="analysis-compact-row'+(extraClass ? ' '+extraClass : '')+'"><span class="analysis-compact-label">'+label+'</span><span class="analysis-compact-value">'+value+'</span></div>';
+    };
+    var analysisMetricCards = b ? ('<div class="analysis-compact-list analysis-compact-list-metrics">'+
+      compactRow('Probabilitate', fmtPct(Number(b.adjProb || 0)), 'accent-prob')+
+      compactRow('Edge', (Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp', 'accent-edge')+
+      compactRow('Value', (Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%', 'accent-value')+
+      compactRow('Fair odds', fairOdds, 'accent-warn')+
+      compactRow('Confidence', Number(m.confidence || 0).toFixed(0)+'%')+
+      compactRow('xG total', Number(m.xgTotal || 0).toFixed(2))+
+      compactRow('Kelly %', Number(b.kellyPct||0).toFixed(1)+'%', Number(b.kellyPct||0) > 0 ? 'accent-prob' : '')+
+      (m.riskTier ? compactRow('Risk tier', m.riskTier, 'accent-edge') : '')+
+    '</div>') : '';
     var simpleMetrics = '<div class="match-inline-row">'+
       '<span class="match-inline-chip">xG total '+Number(m.xgTotal || 0).toFixed(2)+'</span>'+
       '<span class="match-inline-chip">Confidence '+Number(m.confidence || 0).toFixed(0)+'%</span>'+
       (m.mostLikelyScore ? '<span class="match-inline-chip">Scor '+m.mostLikelyScore+'</span>' : '')+
       '</div>';
+    var expertQuickContext = '<div class="analysis-compact-list analysis-compact-list-context">'+
+      compactRow('xG gazde', Number(m.xgHome || 0).toFixed(2), 'compact-mini')+
+      compactRow('xG oaspeți', Number(m.xgAway || 0).toFixed(2), 'compact-mini')+
+      compactRow('xG total', Number(m.xgTotal || 0).toFixed(2), 'wide accent-edge')+
+      compactRow('Confidence', Number(m.confidence || 0).toFixed(0)+'%', 'compact-mini')+
+      (m.mostLikelyScore ? compactRow('Scor', m.mostLikelyScore, 'compact-mini') : '')+
+    '</div>';
+    var expertModelSummary = b && b.probabilityEngine === 'hybrid' ? ('<div class="analysis-compact-model">'+
+      '<div class="analysis-compact-model-head"><span class="analysis-compact-model-title">Poisson vs API</span><span class="analysis-compact-model-chip">Hybrid model active</span></div>'+
+      '<div class="analysis-compact-list analysis-compact-list-model">'+
+        compactRow('API', Number(b.apiProb || 0).toFixed(1)+'%', 'compact-mini')+
+        compactRow('Poisson', Number(b.poissonProb || 0).toFixed(1)+'%', 'compact-mini')+
+        compactRow('Hybrid', Number(b.prob || 0).toFixed(1)+'%', 'compact-mini accent-prob')+
+        compactRow('Δ API vs P', (Number(b.poissonDelta || 0) >= 0 ? '+' : '')+Number(b.poissonDelta || 0).toFixed(1)+'pp', Number(b.poissonDelta || 0) >= 0 ? 'compact-mini accent-prob' : 'compact-mini accent-warn')+
+      '</div></div>') : '';
     var simpleSummary = b ? ('<div class="match-inline-summary"><span>Edge <strong>'+(Number(b.edgePct || 0) >= 0 ? '+' : '')+Number(b.edgePct || 0).toFixed(1)+'pp</strong></span><span>Value <strong>'+(Number(b.value || 0) >= 0 ? '+' : '')+(Number(b.value || 0) * 100).toFixed(1)+'%</strong></span>'+(Number(b.kellyPct||0)>0?'<span>Kelly <strong>'+Number(b.kellyPct||0).toFixed(1)+'%</strong></span>':'')+(m.riskTier&&m.riskTier!=='Avoid'?'<span class="summary-risk-tier" style="color:'+(m.riskTier==='Safe'?'var(--grn)':m.riskTier==='Value'?'var(--yel)':'var(--acc)')+'">'+m.riskTier+'</span>':'')+'</div>'+(b ? getBenchmarkRow(b.type || b.marketKey || '', Number(b.edgePct||0)) : '')) : '';
     var detailHero = '<div class="analysis-detail-hero">'+
       '<div class="analysis-detail-kicker">Analiză recomandare</div>'+
@@ -6724,10 +6741,10 @@ function renderMatches(){
     '</div>' : '';
     var expertInsightFrame = '<div class="analysis-detail-expert-overview-frame">'+
       buildAnalysisSection('Indicatori cheie', analysisMetricCards, 'analysis-detail-metrics-section')+
-      buildAnalysisSection('Context rapid', xgMiniGrid + simpleMetrics, 'analysis-detail-quick-section')+
+      buildAnalysisSection('Context rapid', expertQuickContext, 'analysis-detail-quick-section')+
     '</div>';
     var expertSupportFrame = (hybridBlock || reasons) ? '<div class="analysis-detail-expert-support-frame">'+
-      (hybridBlock ? buildAnalysisSection('Probabilități model', hybridBlock, 'analysis-detail-model-section') : '')+
+      (expertModelSummary ? buildAnalysisSection('Probabilități model', expertModelSummary, 'analysis-detail-model-section') : '')+
       (reasons ? buildAnalysisSection('Semnale cheie', '<div class="reason-list">'+reasons+'</div>', 'analysis-detail-reasons-section') : '')+
     '</div>' : '';
     var expertDetails = '<div class="analysis-detail-shell expert">'+
