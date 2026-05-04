@@ -129,7 +129,7 @@
   var SUPP={over15:1,over25:1,btts:1,under35:1,under25:1};
   var DC_MKTS={dc1x:1,dcx2:1,dc12:1};
 
-  var STORE_KEY='bet_matches_visible_history_v5_one_match_per_category_20260504';
+  var STORE_KEY='bet_matches_visible_history_v6_autocat_20260504';
   var STORE_PATH='./data/matches_visible_history.json';
   var STORE={
     version:'v2-rendered-matches-history',
@@ -219,7 +219,7 @@
     if(local){ STORE=mergeStorePayloads(STORE,local); STORE_LOADED=true; }
     if(STORE_LOADING) return;
     STORE_LOADING=true;
-    fetch(STORE_PATH+'?v=20260504onematchcat1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
+    fetch(STORE_PATH+'?v=20260504autocat1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
       STORE=mergeStorePayloads(j,loadLocalStore()); STORE_LOADED=true; STORE_LOADING=false; saveLocalStore(); _settledCache=null; _last=''; render();
     }).catch(function(){ STORE_LOADING=false; STORE_LOADED=true; });
   }
@@ -231,8 +231,41 @@
   function getCandidateBet(m){
     return m && (m.bestBet || m.rawBestBet || null);
   }
-  function matchToHistoryRow(catKey,m){
+  function candidateForCategory(catKey,m){
+    var wanted={o15:'over15',o25:'over25',btts:'btts',u35:'under35'}[normalizeCatKey(catKey)||''];
+    var b=getCandidateBet(m)||null;
+    if(!wanted) return b;
+    if(b&&b.type===wanted) return b;
+    if(Array.isArray(m&&m.eligibleCandidates)){
+      for(var i=0;i<m.eligibleCandidates.length;i++){
+        var c=m.eligibleCandidates[i]||{};
+        if(c.bestBet&&c.bestBet.type===wanted) return c.bestBet;
+      }
+    }
+    return b;
+  }
+  function matchHasEligibleType(m,t){
+    if(!m) return false;
+    var b=getCandidateBet(m);
+    if(b&&b.type===t) return true;
+    return Array.isArray(m.eligibleCandidates)&&m.eligibleCandidates.some(function(c){return c&&c.bestBet&&c.bestBet.type===t;});
+  }
+  function matchBelongsToHistoryCat(catKey,m){
+    catKey=normalizeCatKey(catKey)||'all';
+    if(!m) return false;
     var b=getCandidateBet(m)||{};
+    if(catKey==='all') return true;
+    if(catKey==='safe') return m.verdict==='safe'||m.riskTier==='Safe';
+    if(catKey==='o15') return matchHasEligibleType(m,'over15');
+    if(catKey==='o25') return matchHasEligibleType(m,'over25');
+    if(catKey==='btts') return matchHasEligibleType(m,'btts');
+    if(catKey==='u35') return matchHasEligibleType(m,'under35');
+    if(catKey==='value') return m.riskTier==='Value'||(nv(b.value)>=0.08&&nv(b.edgePct)>=3);
+    return false;
+  }
+  function matchToHistoryRow(catKey,m){
+    catKey=normalizeCatKey(catKey)||'all';
+    var b=candidateForCategory(catKey,m)||{};
     if(!m||!b||!b.type) return null;
     return normalizeStored({
       _st:'pending',status:'pending',source:'store',
@@ -243,8 +276,8 @@
       event_date:m.date||m.event_date,
       market_key:b.type||'',market:b.label||'',
       odds:nv(b.odds),adjusted_prob:nv(b.adjProb),edge_pct:nv(b.edgePct),
-      value:nv(b.value),verdict:m.verdict||'',
-      score:nv(m.smartScore),riskTier:m.riskTier||'',
+      value:nv(b.value),verdict:b.verdict||m.verdict||'',
+      score:nv(m.smartScore||b.score),riskTier:b.riskTier||m.riskTier||'',
       first_seen_at:new Date().toISOString(),
       last_seen_at:new Date().toISOString()
     });
@@ -253,30 +286,47 @@
     catKey=normalizeCatKey(catKey);
     if(!catKey || !Array.isArray(matches)) return;
     var oldMap={}, nextMap={}, nowIso=new Date().toISOString();
+    var replaceCats={};
+    replaceCats[catKey]=true;
+
+    // Când Meciuri este pe "Toate", reconstruim și categoriile din aceleași carduri vizibile.
+    // Astfel Istoric arată imediat Top/O1.5/O2.5/BTTS/U3.5/Value fără să intri pe fiecare filtru.
+    if(catKey==='all'){
+      Object.keys(VALID_CAT).forEach(function(k){ replaceCats[k]=true; });
+    }
 
     storedRows().forEach(function(r){
       if(!r||r.event_id==null||!r.market_key) return;
       oldMap[rowKey(r)]=r;
-      // păstrăm settled pentru toate categoriile
       if(r._st==='win'||r._st==='lose') nextMap[rowKey(r)]=r;
-      // păstrăm pending pentru celelalte categorii; categoria curentă se înlocuiește exact
-      else if(rowCat(r)!==catKey) nextMap[rowKey(r)]=r;
+      else if(!replaceCats[rowCat(r)]) nextMap[rowKey(r)]=r;
     });
 
-    var seenInThisCategory={};
-    matches.forEach(function(m){
-      var row=matchToHistoryRow(catKey,m);
+    function addRowForCat(k,m,seenByCat){
+      if(!matchBelongsToHistoryCat(k,m)) return;
+      var row=matchToHistoryRow(k,m);
       if(!row||row.event_id==null||!row.market_key) return;
+      if(!seenByCat[k]) seenByCat[k]={};
       var eventKey=String(row.event_id);
-      if(seenInThisCategory[eventKey]) return;
-      seenInThisCategory[eventKey]=true;
-      var k=rowKey(row), old=oldMap[k]||{};
+      if(seenByCat[k][eventKey]) return;
+      seenByCat[k][eventKey]=true;
+
+      var rk=rowKey(row), old=oldMap[rk]||{};
       var oldSt=normalizeStored(old)._st;
       row.first_seen_at=old.first_seen_at||nowIso;
       row.tracking_started_at=old.tracking_started_at||nowIso;
       row.last_seen_at=nowIso;
       row.status=(oldSt==='win'||oldSt==='lose')?oldSt:'pending';
-      nextMap[k]=normalizeStored(Object.assign({},old,row));
+      nextMap[rk]=normalizeStored(Object.assign({},old,row));
+    }
+
+    var seenByCat={};
+    matches.forEach(function(m){
+      if(catKey==='all'){
+        Object.keys(VALID_CAT).forEach(function(k){ addRowForCat(k,m,seenByCat); });
+      }else{
+        addRowForCat(catKey,m,seenByCat);
+      }
     });
 
     STORE.rows=Object.keys(nextMap).map(function(k){return normalizeStored(nextMap[k]);});
