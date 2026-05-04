@@ -4906,8 +4906,94 @@ function ensureTabData(name){
   return Promise.all(keys.map(loadLazyDataset));
 }
 
+var BA_REFRESH_RUNNING = false;
+var BA_SOFT_REFRESH_RUNNING = false;
+var BA_LAST_SOFT_REFRESH_TS = 0;
+var BA_MIN_SOFT_REFRESH_GAP_MS = 3500;
+
+function setHeaderRefreshBusy(busy){
+  var btn = $('btn-refresh');
+  if(!btn) return;
+  btn.classList.toggle('is-refreshing', !!busy);
+  btn.disabled = !!busy;
+  btn.setAttribute('aria-busy', busy ? 'true' : 'false');
+}
+
+function updateHeaderStatusOnly(){
+  var timeStr = getStatusDisplayTime();
+  if(!timeStr){
+    var now = new Date();
+    timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  }
+  var metrics = getStatusDisplayMetrics();
+  var rawMl = metrics.ml;
+  var rawOdds = metrics.odds;
+  var safe = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && (m.verdict === 'safe' || m.riskTier === 'Safe'); }).length;
+  var saCount = (SIGNAL_AUDIT && SIGNAL_AUDIT.count) ? String(SIGNAL_AUDIT.count) : '0';
+  var saCountLabel = saCount + (saCount === '1' ? ' semnal top' : ' semnale top');
+  var enrichCount = Object.keys(ENRICHED_EVENT_CACHE || {}).length;
+  var enrichSuffix = enrichCount > 0 ? (' — 🔬 ML5 ' + enrichCount) : (ENRICHMENT_BATCH_RUNNING ? ' — 🔬 ML5 …' : '');
+  if($('hq-ml')) $('hq-ml').textContent = rawMl;
+  if($('hq-odds')) $('hq-odds').textContent = rawOdds;
+  if($('hq-time')) $('hq-time').textContent = timeStr;
+  if($('hq-safe')) $('hq-safe').textContent = safe;
+  if($('sb-text')) $('sb-text').innerHTML = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr+enrichSuffix+getDataFreshnessHtml();
+}
+
+function doSoftRefresh(){
+  var now = Date.now();
+  if(BA_SOFT_REFRESH_RUNNING){
+    toast('Verificarea rulează deja.', 'warn');
+    return Promise.resolve(false);
+  }
+  if(now - BA_LAST_SOFT_REFRESH_TS < BA_MIN_SOFT_REFRESH_GAP_MS){
+    updateHeaderStatusOnly();
+    toast('Datele sunt deja verificate.', 'ok');
+    return Promise.resolve(true);
+  }
+  BA_LAST_SOFT_REFRESH_TS = now;
+  BA_SOFT_REFRESH_RUNNING = true;
+  setHeaderRefreshBusy(true);
+  toast('Verific rapid datele...', 'ok');
+
+  // Refresh manual rapid: nu mai blocăm aplicația cu loader și nu mai reanalizăm toate meciurile.
+  // Luăm doar fișiere mici de status; lista de meciuri rămâne instant pe ecran.
+  return Promise.all([
+    getJsonFresh('/data/meta.json', APP_META || {}),
+    getJsonFresh('/data/build_status.json', BUILD_STATUS || {}),
+    getJsonFresh('/data/model_benchmarks.json', MODEL_BENCHMARKS || {})
+  ]).then(function(results){
+    APP_META = results[0] || APP_META || {};
+    BUILD_STATUS = results[1] || BUILD_STATUS || {};
+    MODEL_BENCHMARKS = results[2] || MODEL_BENCHMARKS || {};
+    updateHeaderStatusOnly();
+    try { if(document.getElementById('perf-verdict-content')) renderPerformantaVerdict(); } catch(e){}
+    toast('Actualizat rapid — fără reîncărcare completă.', 'ok');
+    return true;
+  }).catch(function(err){
+    console.warn('[SoftRefresh] failed', err);
+    updateHeaderStatusOnly();
+    toast('Nu am putut verifica online, păstrez datele de pe ecran.', 'warn');
+    return false;
+  }).finally(function(){
+    BA_SOFT_REFRESH_RUNNING = false;
+    setHeaderRefreshBusy(false);
+  });
+}
+
 function doRefresh(isManual){
-  showLoader('Incarcare date actualizate...');
+  // Dacă aplicația este deja încărcată, butonul din header face doar refresh rapid.
+  // Full refresh-ul rămâne pentru boot/auto-sync, nu la fiecare tap manual.
+  if(isManual && ALL_MATCHES && ALL_MATCHES.length){
+    return doSoftRefresh();
+  }
+  if(BA_REFRESH_RUNNING){
+    if(isManual) toast('Încă se încarcă datele. Așteaptă câteva secunde.', 'warn');
+    return Promise.resolve(false);
+  }
+  BA_REFRESH_RUNNING = true;
+  setHeaderRefreshBusy(!!isManual);
+  showLoader(isManual ? 'Sincronizare completă...' : 'Incarcare date actualizate...');
 
   LAZY_DATA_PROMISES = {};
   LAZY_DATA_READY.events = false;
@@ -4915,10 +5001,10 @@ function doRefresh(isManual){
   LAZY_DATA_READY.historyEngine = false;
   LAZY_DATA_READY.recommendationJournal = false;
 
-  // Manual refresh (buton) = forțăm re-descărcarea; auto-refresh = folosim cache-ul dacă e valid
-  var fetch9 = isManual ? getJsonFresh : getJson;
+  // După boot, refresh-ul manual nu mai sparge cache-ul tuturor fișierelor mari.
+  var fetch9 = getJson;
 
-  Promise.all([
+  return Promise.all([
     fetch9('/data/predictions.json', []),
     fetch9('/data/meta.json', {}),
     fetch9('/data/leagues.json', []),
@@ -5006,6 +5092,9 @@ function doRefresh(isManual){
     hideLoader();
     toast('Eroare la incarcarea datelor', 'err');
     console.error(err);
+  }).finally(function(){
+    BA_REFRESH_RUNNING = false;
+    setHeaderRefreshBusy(false);
   });
 }
 
