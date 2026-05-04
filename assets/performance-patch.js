@@ -46,9 +46,9 @@
   function loadRuntimes(){
     if(window.__baRuntimeLoaderV21)return; window.__baRuntimeLoaderV21=true;
     loadScript('assets/logic_safety_patch.js?v=20260426logic1','logic-safety-patch-script');
-    loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid8','hybrid-adaptive-runtime-script');
-    loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
-    loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
+    loadScript('assets/hybrid_adaptive_runtime.js?v=20260504refreshfix3','hybrid-adaptive-runtime-script');
+    loadScript('assets/prediction_history_runtime.js?v=20260504refreshfix3','prediction-history-runtime-script');
+    loadScript('assets/adaptive_restore_runtime.js?v=20260504refreshfix3','adaptive-restore-runtime-script');
     loadScript('assets/api_history_label_runtime.js?v=20260428color2','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260428videoexact3','dashboard-history21-sync-script');
     loadScript('assets/dashboard_motor_tracker_sync.js?v=20260503motortracker21','dashboard-motor-tracker-sync-script');
@@ -68,6 +68,35 @@
   function installToastFilter(){if(typeof window.toast!=='function'||window.toast.__baFilterInstalled)return;var old=window.toast;window.toast=function(msg,type){var t=String(msg||'');if(t.indexOf('API sync:')===0||t.indexOf('ML5')>=0||isBadgeText(t))return;return old.apply(this,arguments)};window.toast.__baFilterInstalled=true}
   function prefetch(){['data/meta.json','data/predictions.json','data/leagues.json','data/backtest.json','data/model_quality.json','data/pro_intelligence.json','data/ev_signals_v2.json'].forEach(function(f){try{originalFetch&&originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
 
+  function installManualRefreshShield(){
+    if(window.__baManualRefreshShieldInstalled)return; window.__baManualRefreshShieldInstalled=true;
+    function getBtnTarget(e){try{return e&&e.target&&e.target.closest&&e.target.closest('#btn-refresh')}catch(_){return null}}
+    function shortBusy(btn){
+      try{
+        if(!btn)return;
+        btn.classList.add('is-refreshing');
+        btn.setAttribute('aria-busy','true');
+        clearTimeout(btn.__baManualRefreshBusyT);
+        btn.__baManualRefreshBusyT=setTimeout(function(){btn.classList.remove('is-refreshing');btn.setAttribute('aria-busy','false')},650);
+      }catch(_){ }
+    }
+    document.addEventListener('click',function(e){
+      var btn=getBtnTarget(e); if(!btn)return;
+      e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation();
+      window.__BA_MANUAL_SOFT_REFRESH_UNTIL=Date.now()+2500;
+      shortBusy(btn);
+      try{
+        if(typeof window.baSoftRefreshOnly==='function') window.baSoftRefreshOnly();
+        else if(typeof window.doSoftRefresh==='function') window.doSoftRefresh();
+        else {
+          var h=document.getElementById('hq-time');
+          if(h){var d=new Date();h.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+        }
+      }catch(err){console.warn('[ManualRefreshShield] soft refresh failed',err)}
+    },true);
+  }
+
+  installManualRefreshShield();
   addStyle('ba-perf-css','.dash-yday-strip{display:none!important}.match-card,.top-pick-card,.ml-card,.bilet-card,.ticket-card,.bankroll-card,.visual-card,.history-table-wrapper{content-visibility:auto;contain-intrinsic-size:1px 260px}.matches-grid,.top-picks-grid,.ml-grid,.focus-grid,.visual-grid{contain:layout style paint}@media(max-width:900px){.header-quick-stats{display:none!important}#btn-refresh{min-width:52px!important;border-radius:18px!important}}');
   installBadgeCleaner();
   installO25HistoryHotfix();

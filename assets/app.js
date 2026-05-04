@@ -4860,8 +4860,8 @@ function ensureFullHistoryAssets(){
   if(FULL_HISTORY_ASSETS_PROMISE) return FULL_HISTORY_ASSETS_PROMISE;
   showLoader('Se încarcă istoricul extins...');
   FULL_HISTORY_ASSETS_PROMISE = loadScriptSequentially([
-    './assets/full-history.js?v=20260418',
-    './assets/full-history-hotfix.js?v=20260420hotfix2'
+    './assets/full-history.js?v=20260504refreshfix3',
+    './assets/full-history-hotfix.js?v=20260504refreshfix3'
   ]).then(function(){
     LAZY_DATA_READY.fullHistoryAssets = true;
     return true;
@@ -4910,6 +4910,7 @@ var BA_REFRESH_RUNNING = false;
 var BA_SOFT_REFRESH_RUNNING = false;
 var BA_LAST_SOFT_REFRESH_TS = 0;
 var BA_MIN_SOFT_REFRESH_GAP_MS = 3500;
+var BA_MANUAL_SOFT_REFRESH_FLAG_MS = 1600;
 
 function setHeaderRefreshBusy(busy){
   var btn = $('btn-refresh');
@@ -4959,6 +4960,7 @@ function getJsonFastStatus(path, fallback, timeoutMs){
 }
 
 function doSoftRefresh(){
+  window.__BA_MANUAL_SOFT_REFRESH_UNTIL = Date.now() + BA_MANUAL_SOFT_REFRESH_FLAG_MS;
   var now = Date.now();
   if(BA_SOFT_REFRESH_RUNNING){
     updateHeaderStatusOnly();
@@ -4999,6 +5001,10 @@ function doSoftRefresh(){
     }, 350);
   });
 }
+
+
+window.baSoftRefreshOnly = doSoftRefresh;
+window.doSoftRefresh = doSoftRefresh;
 
 function doRefresh(isManual){
   // Orice apăsare manuală pe buton este doar soft refresh instant.
@@ -13428,8 +13434,8 @@ window.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ v
 
 /* ===== Inline script block 2 ===== */
 window.__FULL_HISTORY_LAZY_ASSETS__ = [
-    './assets/full-history.js?v=20260418',
-    './assets/full-history-hotfix.js?v=20260420hotfix2'
+    './assets/full-history.js?v=20260504refreshfix3',
+    './assets/full-history-hotfix.js?v=20260504refreshfix3'
   ];
 
 /* ===== Inline script block 3 ===== */

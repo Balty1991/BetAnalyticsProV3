@@ -111,11 +111,8 @@
     setTimeout(function(){ run(false); }, 1500);
     setTimeout(function(){ run(false); }, 3500);
     setInterval(function(){ run(false); }, 7000);
-    var btn = document.getElementById('btn-refresh');
-    if(btn && !btn.__adaptiveRestoreHook){
-      btn.__adaptiveRestoreHook = true;
-      btn.addEventListener('click', function(){ setTimeout(function(){ run(true); }, 1600); });
-    }
+    // Manual refresh-ul din header nu trebuie să reîncarce AI memory/adaptive_predictions.
+    // Pentru reload complet se poate apela explicit window.restoreAdaptiveTopPicks(true).
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

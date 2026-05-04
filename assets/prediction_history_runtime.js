@@ -291,11 +291,8 @@
     // (cotele se schimba, AI Memory se actualizeaza, etc.). sanitizePayload
     // ia mereu pool-ul live proaspat din getSmartBetAnalysis().
     setInterval(function(){ if(window.PREDICTION_TYPE_HISTORY) render(window.PREDICTION_TYPE_HISTORY); }, 3000);
-    var btn = document.getElementById('btn-refresh');
-    if(btn && !btn.__predictionHistoryHook){
-      btn.__predictionHistoryHook = true;
-      btn.addEventListener('click', function(){ setTimeout(function(){ load(true); }, 1500); });
-    }
+    // Manual refresh-ul din header rămâne instant. Nu atașăm reload de history pe același buton.
+    // Pentru refresh complet al acestui bloc există window.refreshPredictionTypeHistory().
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

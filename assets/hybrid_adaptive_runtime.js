@@ -210,11 +210,8 @@
     setTimeout(function(){ load(false); },1200);
     setTimeout(function(){ load(false); },3000);
     setInterval(function(){ load(false); },7000);
-    var btn = document.getElementById('btn-refresh');
-    if(btn && !btn.__hybridAdaptiveHook){
-      btn.__hybridAdaptiveHook = true;
-      btn.addEventListener('click', function(){ setTimeout(function(){ load(true); }, 1200); });
-    }
+    // Manual refresh-ul din header rămâne instant; nu atașăm reload hybrid pe același buton.
+    // Pentru reload complet există window.refreshHybridAdaptiveEngine().
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
