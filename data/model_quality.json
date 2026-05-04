@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-05-04T02:26:55.705470+00:00",
+  "updated_at": "2026-05-04T02:57:03.592560+00:00",
   "quality_score": 70.2,
   "quality_grade": "C",
   "coverage": {
-    "predictions": 216,
+    "predictions": 309,
     "ev_signals": 0,
     "log_total": 802,
     "log_closed": 734,
@@ -12,7 +12,7 @@
   "freshness": {
     "age_hours": 0.3,
     "color": "green",
-    "label": "0.4h"
+    "label": "0.3h"
   },
   "markets": [
     {
@@ -77,14 +77,14 @@
     }
   ],
   "backtest": {
-    "roi_pct": 6.05,
-    "winrate": 73.33,
+    "roi_pct": 10.28,
+    "winrate": 76.67,
     "n_bets": 30,
-    "avg_odds": 1.458,
-    "avg_edge": 12.08
+    "avg_odds": 1.447,
+    "avg_edge": 12.05
   },
   "recommendations": [
-    "Backtest ROI global: +6.0% — semnal pozitiv."
+    "Backtest ROI global: +10.3% — semnal pozitiv."
   ],
   "wfv": {
     "global_score": 74.6,
@@ -264,8 +264,8 @@
         "market": "over15",
         "label": "Peste 1.5G",
         "folds": 2,
-        "avg_brier": 0.2843,
-        "avg_log_loss": 0.7626,
+        "avg_brier": 0.2844,
+        "avg_log_loss": 0.7627,
         "avg_ece": 0.3034,
         "avg_winrate": 0.7527,
         "score": 50.0,
@@ -292,7 +292,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-04T02:26:55.606271"
+    "updated_at": "2026-05-04T02:57:03.497837"
   },
   "ui_cards": [
     {
@@ -309,7 +309,7 @@
     },
     {
       "label": "ROI backtest",
-      "value": 6.0,
+      "value": 10.3,
       "suffix": "%",
       "tone": "good"
     },
