@@ -6540,7 +6540,7 @@ function renderMatches(){
       var clone = Object.assign({}, m, {
         bestBet: Object.assign({}, matching.bestBet),
         smartScore: matching.ticketScore || matching.bestBet.score || m.smartScore,
-        why: matching.why || m.why,
+        why: compactReasonText(matching.why || m.why, 3),
         verdict: matching.bestBet.verdict || m.verdict
       });
       return clone;
@@ -6631,7 +6631,7 @@ function renderMatches(){
         '</div>';
       }
     }
-    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
+    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + compactReasonText(((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')), 3) + '</div>') : '';
     var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
     var _btEdgeBad = b ? benchmarkEdgeIsBad(b.type || b.marketKey || '', Number(b.edgePct || 0)) : false;
     var motorBadge = motorMeta && motorMeta.state === 'validated' && !_btEdgeBad
@@ -6802,7 +6802,7 @@ function renderMatches(){
     var kickoffTimeLabel = kickoffParts.timeLabel || '—';
     var trend = Number(m.smartScore || 0) >= 88 ? '↑↑' : (Number(m.smartScore || 0) >= 75 ? '↑' : '→');
     var valueDetected = b && Number(b.value || 0) > 0.02;
-    var shortWhy = ((m.why && String(m.why).trim()) ? String(m.why).trim() : buildRecommendationReasons(m, b || {}).slice(0,2).join(' • '));
+    var shortWhy = compactReasonText(((m.why && String(m.why).trim()) ? String(m.why).trim() : buildRecommendationReasons(m, b || {}).slice(0,2).join(' • ')), 3);
     var infoLine = 'Scor probabil ' + (m.mostLikelyScore || '—') + ' • xG ' + Number(m.xgTotal || 0).toFixed(2) + ' • ' + (shortWhy || 'context statistic activ');
     var m17AdjProb = b ? Number(b.adjProb || 0) : 0;
     var m17Edge = b && b.edgePct != null ? Number(b.edgePct || 0) : null;
@@ -6986,10 +6986,41 @@ function clamp(v, min, max){
 
 function uniqueReasons(arr){
   var out = [];
+  var seen = {};
   (arr || []).forEach(function(x){
-    if(x && out.indexOf(x) === -1) out.push(x);
+    if(!x) return;
+    var raw = String(x).trim();
+    if(!raw) return;
+    var key = normalizeReasonKey(raw);
+    if(!seen[key]){
+      seen[key] = true;
+      out.push(raw);
+    }
   });
   return out;
+}
+
+function normalizeReasonKey(txt){
+  return String(txt || '')
+    .toLowerCase()
+    .replace(/[…]+/g, '')
+    .replace(/[✓✔✕✖x]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[•,;|]+$/g, '')
+    .trim();
+}
+
+function compactReasonText(txt, maxItems){
+  var raw = String(txt || '').trim();
+  if(!raw) return '';
+  var limit = Math.max(1, Number(maxItems || 3));
+  var parts = raw
+    .replace(/\s*\.\.\.\s*$/g, '')
+    .split(/\s*[•|]\s*/)
+    .map(function(x){ return String(x || '').trim(); })
+    .filter(Boolean);
+  if(!parts.length) parts = [raw];
+  return uniqueReasons(parts).slice(0, limit).join(' • ');
 }
 
 function computeConservativeCombinedProb(picks){
@@ -7287,7 +7318,7 @@ function buildMarketCandidate(m, type){
     }),
     ticketScore: Math.round(baseScore),
     ticketRisk: risk,
-    why: uniqueReasons(reasons).slice(0, 3).join(' • '),
+    why: compactReasonText(uniqueReasons(reasons).slice(0, 3).join(' • '), 3),
     proEligible: (m.leagueTier !== 'avoid') && (b.adjProb >= 72) && ((b.edgePct || 0) >= 1.5) && ((b.value || 0) >= 0.01)
   });
 }
@@ -10252,7 +10283,7 @@ function renderCota2TicketCard(learning){
   ticket.picks.forEach(function(match){
     var bet = match.bestBet || match;
     var reasonsArr = buildRecommendationReasons(match, bet);
-    var shortWhy = (match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • ');
+    var shortWhy = compactReasonText((match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • '), 3);
     var marketStat = learning.marketStats[cota2MarketKey(match)];
     var learnText = marketStat ? ('Learn ' + (Number(marketStat.learnScore || 0) >= 0 ? '+' : '') + Number(marketStat.learnScore || 0).toFixed(1)) : 'Learn n/a';
     html += '<div class="bilet-row" style="display:block">'+
@@ -11467,7 +11498,7 @@ function renderBilete(){
   picks.forEach(function(match){
     var bet = match.bestBet || match;
     var reasonsArr = buildRecommendationReasons(match, bet);
-    var shortWhy = (match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • ');
+    var shortWhy = compactReasonText((match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • '), 3);
     var hybridBlock = bet && bet.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:bet.apiProb, poissonProb:bet.poissonProb, hybridProb:bet.prob, delta:bet.poissonDelta }) : '';
     html += '<div class="bilet-row" style="display:block">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+
