@@ -7078,3 +7078,66 @@ button[onclick*="resetFilter"]:hover {
   }
   .verdict-label,.verdict-value,.verdict-note{font-size:10px!important}
 }
+
+
+/* ===== Detalii analiză: CLV + rezumat fără suprapuneri v2 ===== */
+.ba-clv-guidance.ba-clv-details{
+  padding:4px 6px!important;
+  border-radius:10px!important;
+}
+.ba-clv-details .ba-clv-top{
+  gap:6px!important;
+  margin-bottom:2px!important;
+}
+.ba-clv-details .ba-clv-title{
+  font-size:9.5px!important;
+  line-height:1.12!important;
+  letter-spacing:-.01em!important;
+}
+.ba-clv-details .ba-clv-chip{
+  font-size:7.5px!important;
+  padding:1.5px 5px!important;
+}
+.ba-clv-details .ba-clv-context{
+  font-size:8.5px!important;
+  line-height:1.15!important;
+  margin-bottom:3px!important;
+}
+.ba-clv-details .ba-clv-meta{
+  font-size:7.8px!important;
+  line-height:1.12!important;
+  gap:2px 5px!important;
+  padding-top:3px!important;
+}
+.analysis-detail-shell .match-inline-summary{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:4px 8px!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+.analysis-detail-shell .match-inline-summary > span{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  white-space:nowrap!important;
+}
+.analysis-detail-shell .match-inline-summary > span:not(:last-child)::after{
+  content:'•';
+  margin-left:5px;
+  color:rgba(148,163,184,.75);
+  font-weight:900;
+}
+.analysis-detail-shell .match-inline-summary .summary-risk-tier{
+  font-weight:800!important;
+}
+@media(max-width:420px){
+  .ba-clv-details .ba-clv-title{font-size:9px!important}
+  .ba-clv-details .ba-clv-context{font-size:8px!important}
+  .ba-clv-details .ba-clv-meta{font-size:7.4px!important;gap:2px 4px!important}
+  .ba-clv-details .ba-clv-chip{font-size:7px!important;padding:1.5px 5px!important}
+  .analysis-detail-shell .match-inline-summary{gap:3px 6px!important}
+  .analysis-detail-shell .match-inline-summary > span:not(:last-child)::after{margin-left:4px}
+}

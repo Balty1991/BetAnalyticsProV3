@@ -79,17 +79,17 @@
   function style(){
     if (document.getElementById('ba-clv-guidance-style-v10')) return;
     var css = [
-      '.ba-clv-guidance{display:block!important;margin:0!important;padding:5px 7px!important;border-radius:11px;border:1px solid rgba(255,255,255,.10);background:rgba(12,18,31,.66);box-shadow:none;font-family:var(--font-sans,system-ui,sans-serif);pointer-events:none}',
+      '.ba-clv-guidance{display:block!important;margin:0!important;padding:4px 6px!important;border-radius:10px;border:1px solid rgba(255,255,255,.10);background:rgba(12,18,31,.66);box-shadow:none;font-family:var(--font-sans,system-ui,sans-serif);pointer-events:none}',
       '.analysis-detail-shell>.ba-clv-guidance{margin:0!important}.m16-extra>.ba-clv-guidance,.m17-extra>.ba-clv-guidance{margin:0 0 8px!important}',
-      '.ba-clv-top{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:3px}.ba-clv-title{font-size:11px;line-height:1.18;font-weight:900;color:#f8fafc;letter-spacing:-.01em;min-width:0;flex:1}.ba-clv-chip{display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:999px;font:900 8.5px var(--mono,monospace);letter-spacing:.02em;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);color:#e5edf9;white-space:nowrap;flex:0 0 auto}',
-      '.ba-clv-context{font-size:9.5px;line-height:1.22;color:rgba(203,213,225,.88);margin-bottom:4px}.ba-clv-context b{font-weight:900;color:#f8fafc}',
-      '.ba-clv-meta{display:flex;flex-wrap:wrap;gap:3px 6px;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.06);font:800 8.5px var(--mono,monospace);color:rgba(203,213,225,.90)}.ba-clv-meta span{display:inline-flex;align-items:center;gap:2px}.ba-clv-meta b{font-weight:900;color:#f8fafc}',
+      '.ba-clv-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px}.ba-clv-title{font-size:9.5px;line-height:1.12;font-weight:900;color:#f8fafc;letter-spacing:-.01em;min-width:0;flex:1}.ba-clv-chip{display:inline-flex;align-items:center;justify-content:center;padding:1.5px 5px;border-radius:999px;font:900 7.5px var(--mono,monospace);letter-spacing:.02em;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);color:#e5edf9;white-space:nowrap;flex:0 0 auto}',
+      '.ba-clv-context{font-size:8.5px;line-height:1.15;color:rgba(203,213,225,.88);margin-bottom:3px}.ba-clv-context b{font-weight:900;color:#f8fafc}',
+      '.ba-clv-meta{display:flex;flex-wrap:wrap;gap:2px 5px;align-items:center;padding-top:3px;border-top:1px solid rgba(255,255,255,.06);font:800 7.8px var(--mono,monospace);color:rgba(203,213,225,.90)}.ba-clv-meta span{display:inline-flex;align-items:center;gap:2px}.ba-clv-meta b{font-weight:900;color:#f8fafc}',
       '.ba-clv-good{border-color:rgba(34,197,94,.28);background:linear-gradient(135deg,rgba(34,197,94,.09),rgba(12,18,31,.78))}.ba-clv-good .ba-clv-chip{color:#86efac;border-color:rgba(34,197,94,.24);background:rgba(34,197,94,.11)}',
       '.ba-clv-warn{border-color:rgba(249,115,22,.30);background:linear-gradient(135deg,rgba(249,115,22,.10),rgba(12,18,31,.78))}.ba-clv-warn .ba-clv-chip{color:#fdba74;border-color:rgba(249,115,22,.25);background:rgba(249,115,22,.12)}',
       '.ba-clv-caution{border-color:rgba(245,158,11,.30);background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(12,18,31,.78))}.ba-clv-caution .ba-clv-chip{color:#fde68a;border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.12)}',
       '.ba-clv-bad{border-color:rgba(239,68,68,.30);background:linear-gradient(135deg,rgba(239,68,68,.09),rgba(12,18,31,.78))}.ba-clv-bad .ba-clv-chip{color:#fca5a5;border-color:rgba(239,68,68,.24);background:rgba(239,68,68,.10)}',
       '.ba-clv-info{border-color:rgba(59,130,246,.26);background:linear-gradient(135deg,rgba(59,130,246,.09),rgba(12,18,31,.78))}.ba-clv-info .ba-clv-chip{color:#93c5fd;border-color:rgba(59,130,246,.22);background:rgba(59,130,246,.10)}',
-      '@media(max-width:420px){.ba-clv-title{font-size:10.5px}.ba-clv-context{font-size:9px}.ba-clv-meta{font-size:8px;gap:3px 5px}.ba-clv-chip{padding:2px 6px;font-size:8px}}'
+      '@media(max-width:420px){.ba-clv-title{font-size:9px}.ba-clv-context{font-size:8px}.ba-clv-meta{font-size:7.4px;gap:2px 4px}.ba-clv-chip{padding:1.5px 5px;font-size:7px}}'
     ].join('');
     var el = document.createElement('style'); el.id = 'ba-clv-guidance-style-v10'; el.textContent = css; document.head.appendChild(el);
   }
