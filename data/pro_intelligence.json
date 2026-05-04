@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-04T15:14:46.064595+00:00",
+  "updated_at": "2026-05-04T16:24:32.256225+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 58.2,
+  "overall_score": 58.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -10,21 +10,21 @@
   "data_quality": {
     "recommendation_rows": 802,
     "pending_rows": 67,
-    "candidates_with_odds_and_probability": 58,
+    "candidates_with_odds_and_probability": 59,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 44,
+    "speculative": 45,
     "safe": 4,
     "balanced": 10
   },
   "market_distribution_top150": {
     "Under 3.5G": 36,
     "Over 1.5G": 18,
-    "BTTS": 4
+    "BTTS": 5
   },
   "league_distribution_top150": {
     "Copa Sudamericana": 9,
@@ -33,9 +33,9 @@
     "Parva Liga": 4,
     "Saudi Pro League": 2,
     "Superliga": 2,
+    "Segunda División": 1,
     "FA Cup": 1,
     "K League 1": 5,
-    "Segunda División": 1,
     "Allsvenskan": 2,
     "La Liga": 1,
     "Brasileirão Serie B": 1,
@@ -44,6 +44,7 @@
     "Serie A": 1,
     "Europa League": 2,
     "Champions League": 1,
+    "Ekstraklasa": 1,
     "Scottish Premiership": 1,
     "Premier League": 1
   },
@@ -546,6 +547,34 @@
       ]
     },
     {
+      "event_id": 204249,
+      "prediction_id": 3504,
+      "home": "Almería",
+      "away": "Mirandés",
+      "league": "Segunda División",
+      "event_date": "2026-05-04T21:30:00+03:00",
+      "market": "BTTS",
+      "odds": 1.632,
+      "model_probability": 0.6996,
+      "model_probability_pct": 69.96,
+      "implied_probability_pct": 61.27,
+      "fair_odds": 1.429,
+      "edge_pp": 8.69,
+      "ev_pct": 14.17,
+      "kelly_fraction": 0.0561,
+      "kelly_units_100": 5.61,
+      "confidence": 51.43,
+      "score": 97.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 70.0% vs. probabilitate implicată 61.3%.",
+        "EV estimat 14.2% și edge 8.7 puncte procentuale.",
+        "Miză Kelly fracțională 5.61% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 203199,
       "prediction_id": 2992,
       "home": "FC Blau Weiss Linz",
@@ -599,34 +628,6 @@
         "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
         "EV estimat 13.0% și edge 9.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 204249,
-      "prediction_id": 3504,
-      "home": "Almería",
-      "away": "Mirandés",
-      "league": "Segunda División",
-      "event_date": "2026-05-04T21:30:00+03:00",
-      "market": "BTTS",
-      "odds": 1.632,
-      "model_probability": 0.6856,
-      "model_probability_pct": 68.56,
-      "implied_probability_pct": 61.27,
-      "fair_odds": 1.459,
-      "edge_pp": 7.29,
-      "ev_pct": 11.89,
-      "kelly_fraction": 0.047,
-      "kelly_units_100": 4.7,
-      "confidence": 51.43,
-      "score": 96.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 68.6% vs. probabilitate implicată 61.3%.",
-        "EV estimat 11.9% și edge 7.3 puncte procentuale.",
-        "Miză Kelly fracțională 4.70% din bancă, plafonată prudent."
       ]
     },
     {

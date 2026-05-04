@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-04T15:14:23.988569+00:00",
+  "updated_at": "2026-05-04T16:24:09.726619+00:00",
   "quality_score": 70.3,
   "quality_grade": "C",
   "coverage": {
@@ -10,9 +10,9 @@
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.33,
+    "age_hours": 0.44,
     "color": "green",
-    "label": "0.3h"
+    "label": "0.4h"
   },
   "markets": [
     {
@@ -77,14 +77,14 @@
     }
   ],
   "backtest": {
-    "roi_pct": 10.28,
-    "winrate": 76.67,
-    "n_bets": 30,
-    "avg_odds": 1.447,
-    "avg_edge": 12.05
+    "roi_pct": 7.85,
+    "winrate": 74.19,
+    "n_bets": 31,
+    "avg_odds": 1.463,
+    "avg_edge": 12.04
   },
   "recommendations": [
-    "Backtest ROI global: +10.3% — semnal pozitiv."
+    "Backtest ROI global: +7.8% — semnal pozitiv."
   ],
   "wfv": {
     "global_score": 74.6,
@@ -126,7 +126,7 @@
         "folds": 2,
         "avg_brier": 0.1877,
         "avg_log_loss": 0.5622,
-        "avg_ece": 0.0045,
+        "avg_ece": 0.0044,
         "avg_winrate": 0.2525,
         "score": 82.3,
         "grade": "B",
@@ -143,7 +143,7 @@
             "n": 2450,
             "brier": 0.1856,
             "log_loss": 0.5573,
-            "ece": 0.0079,
+            "ece": 0.0078,
             "winrate": 0.2494
           }
         ]
@@ -153,8 +153,8 @@
         "label": "Victorie oaspete",
         "folds": 2,
         "avg_brier": 0.2055,
-        "avg_log_loss": 0.5999,
-        "avg_ece": 0.0058,
+        "avg_log_loss": 0.5998,
+        "avg_ece": 0.0059,
         "avg_winrate": 0.2965,
         "score": 80.4,
         "grade": "B",
@@ -170,8 +170,8 @@
           {
             "n": 2450,
             "brier": 0.2057,
-            "log_loss": 0.6003,
-            "ece": 0.0037,
+            "log_loss": 0.6002,
+            "ece": 0.0039,
             "winrate": 0.298
           }
         ]
@@ -190,16 +190,16 @@
         "fold_details": [
           {
             "n": 2575,
-            "brier": 0.2415,
+            "brier": 0.2414,
             "log_loss": 0.6757,
-            "ece": 0.0122,
+            "ece": 0.0121,
             "winrate": 0.5161
           },
           {
             "n": 2450,
             "brier": 0.2436,
             "log_loss": 0.6802,
-            "ece": 0.009,
+            "ece": 0.0091,
             "winrate": 0.509
           }
         ]
@@ -210,7 +210,7 @@
         "folds": 2,
         "avg_brier": 0.1985,
         "avg_log_loss": 0.5834,
-        "avg_ece": 0.0102,
+        "avg_ece": 0.01,
         "avg_winrate": 0.713,
         "score": 80.2,
         "grade": "B",
@@ -220,14 +220,14 @@
             "n": 2575,
             "brier": 0.201,
             "log_loss": 0.5888,
-            "ece": 0.0128,
+            "ece": 0.0127,
             "winrate": 0.7049
           },
           {
             "n": 2450,
             "brier": 0.1959,
             "log_loss": 0.578,
-            "ece": 0.0076,
+            "ece": 0.0074,
             "winrate": 0.7212
           }
         ]
@@ -265,7 +265,7 @@
         "label": "Peste 1.5G",
         "folds": 2,
         "avg_brier": 0.2844,
-        "avg_log_loss": 0.7627,
+        "avg_log_loss": 0.7628,
         "avg_ece": 0.3034,
         "avg_winrate": 0.7527,
         "score": 50.0,
@@ -275,15 +275,15 @@
           {
             "n": 2575,
             "brier": 0.2821,
-            "log_loss": 0.7579,
-            "ece": 0.3051,
+            "log_loss": 0.758,
+            "ece": 0.3052,
             "winrate": 0.7588
           },
           {
             "n": 2450,
-            "brier": 0.2867,
-            "log_loss": 0.7674,
-            "ece": 0.3016,
+            "brier": 0.2868,
+            "log_loss": 0.7675,
+            "ece": 0.3017,
             "winrate": 0.7465
           }
         ]
@@ -292,7 +292,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-04T15:14:23.881117"
+    "updated_at": "2026-05-04T16:24:09.615013"
   },
   "ui_cards": [
     {
@@ -309,7 +309,7 @@
     },
     {
       "label": "ROI backtest",
-      "value": 10.3,
+      "value": 7.8,
       "suffix": "%",
       "tone": "good"
     },
