@@ -6190,6 +6190,7 @@ function openDashboardStream(type){
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
+  if($('match-verdict-filter')) $('match-verdict-filter').value = 'all';
   if($('match-pro-mode')) $('match-pro-mode').value = (type === 'pro_active' ? 'pro' : 'all');
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
@@ -6219,6 +6220,7 @@ function resetMatchFilters(){
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
+  if($('match-verdict-filter')) $('match-verdict-filter').value = 'all';
   if($('match-pro-mode')) $('match-pro-mode').value = 'all';
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
@@ -6362,6 +6364,7 @@ function renderMatches(){
   var leagueF = $('league-filter') ? $('league-filter').value : '';
   var dateF = $('match-date-filter') ? $('match-date-filter').value : 'all';
   var marketF = $('match-market-filter') ? $('match-market-filter').value : '';
+  var verdictF = $('match-verdict-filter') ? $('match-verdict-filter').value : 'all';
   var proMode = $('match-pro-mode') ? $('match-pro-mode').value : 'all';
   var minProb = $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0;
   var minEdge = $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0;
@@ -6380,6 +6383,26 @@ function renderMatches(){
     if(r && r.event_id != null && r.event_id !== '') _motorEidSet[String(r.event_id)] = true;
     if(r && r.eventId != null && r.eventId !== '') _motorEidSet[String(r.eventId)] = true;
   });
+
+  var filterTypeMap = {
+    'o15':['over15'], 'o25':['over25'], 'u35':['under35'], 'btts':['btts'],
+    'dc':['dc1x','dcx2','dc12']
+  };
+  var marketLabelMap = {
+    'Over 1.5G':'over15','Over 2.5G':'over25','Under 3.5G':'under35','BTTS':'btts',
+    'Șansă Dublă 1X':'dc1x','Șansă Dublă X2':'dcx2','Șansă Dublă 12':'dc12'
+  };
+  function getActiveMarketBet(match, fallbackBet){
+    var wanted = filterTypeMap[CURRENT_FILTER] || null;
+    if(marketF && marketLabelMap[marketF]) wanted = [marketLabelMap[marketF]];
+    if(!wanted || !wanted.length) return fallbackBet || null;
+    if(fallbackBet && wanted.indexOf(fallbackBet.type) >= 0) return fallbackBet;
+    if(Array.isArray(match.eligibleCandidates)){
+      var found = match.eligibleCandidates.find(function(c){ return c && c.bestBet && wanted.indexOf(c.bestBet.type) >= 0; });
+      if(found && found.bestBet) return found.bestBet;
+    }
+    return fallbackBet || null;
+  }
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
@@ -6456,6 +6479,11 @@ function renderMatches(){
       }
       if(!matchesMarket) return false;
     }
+    if(verdictF && verdictF !== 'all'){
+      var verdictBet = getActiveMarketBet(m, b);
+      var verdictMeta = verdictBet ? getBetVerdict(m, verdictBet) : null;
+      if(!verdictMeta || verdictMeta.state !== verdictF) return false;
+    }
     if(proMode === 'pro' && !(m.leagueTier !== 'avoid' && (b.adjProb || 0) >= 72 && (b.edgePct || -999) >= 1.5 && (b.value || 0) >= 0.01)) return false;
     if((b.adjProb || 0) < minProb) return false;
     if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
@@ -6470,16 +6498,8 @@ function renderMatches(){
 
   // Swap bestBet cu candidatul matchat de filtru, daca filtrul cere un tip specific
   // (altfel cardul arata bestBet original, chiar daca user a cerut Over 1.5)
-  var filterTypeMap = {
-    'o15':['over15'], 'o25':['over25'], 'u35':['under35'], 'btts':['btts'],
-    'dc':['dc1x','dcx2','dc12']
-  };
   var wantedTypes = filterTypeMap[CURRENT_FILTER];
   // Also handle market dropdown
-  var marketLabelMap = {
-    'Over 1.5G':'over15','Over 2.5G':'over25','Under 3.5G':'under35','BTTS':'btts',
-    'Șansă Dublă 1X':'dc1x','Șansă Dublă X2':'dcx2','Șansă Dublă 12':'dc12'
-  };
   if(marketF && marketLabelMap[marketF]) wantedTypes = [marketLabelMap[marketF]];
 
   if(wantedTypes && wantedTypes.length){

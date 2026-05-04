@@ -6320,8 +6320,8 @@ button[onclick*="resetFilter"]:hover {
 }
 #tab-meciuri .mx21-control-row {
   display: grid !important;
-  grid-template-columns: minmax(0,1fr) 96px !important;
-  gap: 7px !important;
+  grid-template-columns: minmax(0,1fr) 94px 78px !important;
+  gap: 6px !important;
   margin-bottom: 7px !important;
 }
 #tab-meciuri .mx21-mode {
@@ -6382,6 +6382,9 @@ button[onclick*="resetFilter"]:hover {
   font-family: var(--font-sans) !important;
 }
 #tab-meciuri .mx21-select option { background: #0E1424 !important; color: #F0F4FB !important; }
+#tab-meciuri .mx21-verdict-select {
+  color: rgba(223,236,252,.94) !important;
+}
 #tab-meciuri .mx21-chiprail {
   display: flex !important;
   flex-wrap: nowrap !important;
@@ -6435,8 +6438,10 @@ button[onclick*="resetFilter"]:hover {
   background: rgba(0,0,0,.14) !important;
 }
 @media (max-width:380px){
-  #tab-meciuri .mx21-control-row { grid-template-columns: minmax(0,1fr) 88px !important; }
+  #tab-meciuri .mx21-control-row { grid-template-columns: minmax(0,1fr) 86px 72px !important; gap: 5px !important; }
   #tab-meciuri .mx21-count { display: none !important; }
   #tab-meciuri .mx21-filter-btn { padding: 0 10px !important; }
   #tab-meciuri .mx21-title { font-size: 17px !important; }
+  #tab-meciuri .mx21-mode-btn { font-size: 8.8px !important; padding: 0 5px !important; }
+  #tab-meciuri .mx21-select { font-size: 8.8px !important; padding-left: 7px !important; padding-right: 20px !important; background-position: right 7px center !important; }
 }
