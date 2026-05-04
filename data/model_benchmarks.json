@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-04T03:29:11.220711+00:00",
+  "updated_at": "2026-05-04T03:53:52.253628+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -4664,13 +4664,13 @@
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 734,
+    "n_total": 735,
     "overall": {
-      "n": 734,
-      "n_wins": 526,
-      "winrate": 71.66,
-      "roi_pct": -0.47,
-      "profit": -3.484,
+      "n": 735,
+      "n_wins": 527,
+      "winrate": 71.7,
+      "roi_pct": -0.41,
+      "profit": -3.004,
       "avg_odds": 1.395,
       "max_drawdown": 19.4,
       "avg_edge_pct": 8.51
@@ -4707,12 +4707,12 @@
         "avg_edge_pct": 8.13
       },
       "under35": {
-        "n": 418,
-        "n_wins": 304,
-        "winrate": 72.73,
-        "roi_pct": 0.16,
-        "profit": 0.666,
-        "avg_odds": 1.388,
+        "n": 419,
+        "n_wins": 305,
+        "winrate": 72.79,
+        "roi_pct": 0.27,
+        "profit": 1.146,
+        "avg_odds": 1.389,
         "max_drawdown": 15.36,
         "avg_edge_pct": 8.84
       }
@@ -4738,6 +4738,16 @@
         "max_drawdown": 7.75,
         "avg_edge_pct": 7.59
       },
+      "Liga MX Clausura": {
+        "n": 35,
+        "n_wins": 25,
+        "winrate": 71.43,
+        "roi_pct": 6.8,
+        "profit": 2.38,
+        "avg_odds": 1.481,
+        "max_drawdown": 2.63,
+        "avg_edge_pct": 9.97
+      },
       "Brasileirão Serie A": {
         "n": 34,
         "n_wins": 24,
@@ -4747,16 +4757,6 @@
         "avg_odds": 1.308,
         "max_drawdown": 7.66,
         "avg_edge_pct": 6.43
-      },
-      "Liga MX Clausura": {
-        "n": 34,
-        "n_wins": 24,
-        "winrate": 70.59,
-        "roi_pct": 5.59,
-        "profit": 1.9,
-        "avg_odds": 1.481,
-        "max_drawdown": 2.63,
-        "avg_edge_pct": 10.04
       },
       "Serie A": {
         "n": 34,
@@ -5131,11 +5131,11 @@
         "avg_edge_pct": 3.69
       },
       "5-10%": {
-        "n": 371,
-        "n_wins": 264,
-        "winrate": 71.16,
-        "roi_pct": -2.56,
-        "profit": -9.492,
+        "n": 372,
+        "n_wins": 265,
+        "winrate": 71.24,
+        "roi_pct": -2.42,
+        "profit": -9.012,
         "avg_odds": 1.38,
         "max_drawdown": 18.86,
         "avg_edge_pct": 7.28
@@ -5174,12 +5174,12 @@
           "avg_edge_pct": 3.57
         },
         "5-10%": {
-          "n": 200,
-          "n_wins": 147,
-          "winrate": 73.5,
-          "roi_pct": -0.19,
-          "profit": -0.389,
-          "avg_odds": 1.371,
+          "n": 201,
+          "n_wins": 148,
+          "winrate": 73.63,
+          "roi_pct": 0.05,
+          "profit": 0.091,
+          "avg_odds": 1.372,
           "max_drawdown": 10.22,
           "avg_edge_pct": 7.27
         },
@@ -5369,7 +5369,7 @@
           "prev_edge": 15.0,
           "new_edge": 15.0,
           "message": "over15: recovery probe activ, prag strict = 15.0%",
-          "timestamp": "2026-05-04T03:29:11.309445+00:00"
+          "timestamp": "2026-05-04T03:53:52.330503+00:00"
         }
       ]
     },
@@ -5386,16 +5386,25 @@
       "recent_changes": []
     },
     "under35": {
-      "min_edge": 15.0,
+      "min_edge": 5.0,
       "disabled": false,
-      "basis": "15%+",
-      "roi_at_threshold": 21.04,
+      "basis": "5-10%",
+      "roi_at_threshold": 0.05,
       "bootstrap_min_edge": null,
-      "bootstrap_n": 41,
+      "bootstrap_n": 201,
       "bootstrap_target_n": 20,
       "prev_edge": 15.0,
-      "changed": false,
-      "recent_changes": []
+      "changed": true,
+      "recent_changes": [
+        {
+          "market": "under35",
+          "type": "threshold_change",
+          "prev_edge": 15.0,
+          "new_edge": 5.0,
+          "message": "under35: prag coborat 15.0% -> 5.0% (ROI +0.1%)",
+          "timestamp": "2026-05-04T03:53:52.253040+00:00"
+        }
+      ]
     }
   },
   "threshold_history": [
@@ -5405,7 +5414,7 @@
       "prev_edge": 15.0,
       "new_edge": 15.0,
       "message": "over15: recovery probe activ, prag strict = 15.0%",
-      "timestamp": "2026-05-04T03:29:11.309445+00:00"
+      "timestamp": "2026-05-04T03:53:52.330503+00:00"
     }
   ]
 }
