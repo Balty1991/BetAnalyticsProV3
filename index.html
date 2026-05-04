@@ -41,12 +41,12 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 .skip-link{position:absolute;left:12px;top:-44px;z-index:1000;background:#2BE5C5;color:#06080F;padding:10px 14px;border-radius:12px;font-weight:700;text-decoration:none}
 .skip-link:focus{top:12px}
 </style>
-<link rel="stylesheet" href="./assets/app.css?v=20260503m24"/>
+<link rel="stylesheet" href="./assets/app.css?v=20260504verdict1"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
 <script src="./assets/performance-patch.js?v=20260503m24"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260503m24"></script>
+<script defer src="./assets/app.js?v=20260504verdict1"></script>
 <script defer src="./assets/pro_command_center.js?v=20260427procc3"></script>
 </head>
 <body>
@@ -732,6 +732,12 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
           <button class="mx21-mode-btn active" data-mode="simple" onclick="setMatchCardMode('simple', this)" type="button">Simplu</button>
           <button class="mx21-mode-btn" data-mode="expert" onclick="setMatchCardMode('expert', this)" type="button">Expert</button>
         </div>
+        <select class="mx21-select mx21-verdict-select" id="match-verdict-filter" onchange="renderMatches()" aria-label="Filtru verdict predicții">
+          <option value="all" selected>Verdict</option>
+          <option value="bet">✅ Pariază</option>
+          <option value="risk">⚠️ Risc</option>
+          <option value="avoid">❌ Evită</option>
+        </select>
         <select class="mx21-select" id="sort-select" onchange="renderMatches()" aria-label="Sortare meciuri">
           <option value="date" selected>Ora</option>
           <option value="edge">Edge</option>
