@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════════
 // Historic Meciuri Tracker  —  BetAnalytics Pro V21+
 //
-// Istoric curat: sursa de adevar este data/matches_visible_history.json
-// + predicțiile vizibile în tab-ul Meciuri. Nu mai consumă RECOMMENDATION_LOG.
+// UI rămâne formatul vechi. Sursa istorică este data/matches_visible_history.json
+// + localStorage, populată doar din predicțiile vizibile în tab-ul Meciuri.
 //
-// Pending = din ALL_MATCHES (logica exactă Meciuri, per categorie)
-// Settled = din fișierul dedicat + scoruri disponibile în ALL_EVENTS/ALL_MATCHES
+// Settled = din stocarea dedicată matches_visible_history
+// Pending = din ALL_MATCHES (logica exacta Meciuri, per categorie)
 // ═══════════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
@@ -61,85 +61,6 @@
   function getCat(k){ return CATS.find(function(c){return c.key===k;})||CATS[0]; }
   function pad2(x){ return String(x).padStart(2,'0'); }
   function fmtDM(d){ return pad2(d.getDate())+'/'+pad2(d.getMonth()+1); }
-
-
-  /* ────────────────────────────────────────────────────────────────────
-     STORAGE DEDICAT ISTORIC MECIURI
-     - golit la versiunea curentă
-     - se populează doar din predicțiile vizibile în tab-ul Meciuri
-  ──────────────────────────────────────────────────────────────────── */
-  var STORE_KEY='bet_matches_visible_history_v1_reset_20260504';
-  var STORE_PATH='./data/matches_visible_history.json';
-  var STORE={version:'v1-visible-matches-history',scope:'matches_tab_visible_predictions_only',rows:[]};
-  var STORE_LOADED=false, STORE_LOADING=false;
-  function rowKey(r){ return String((r&&r.event_id)!=null?r.event_id:'')+'::'+String((r&&r.market_key)||''); }
-  function normalizeStorePayload(x){
-    if(!x||typeof x!=='object') x={};
-    var rows=Array.isArray(x.rows)?x.rows:[];
-    return {version:'v1-visible-matches-history',scope:'matches_tab_visible_predictions_only',reset_at:x.reset_at||'2026-05-04T00:00:00Z',updated_at:x.updated_at||null,rows:rows.filter(function(r){return r&&r.event_id!=null&&r.market_key;})};
-  }
-  function loadLocalStore(){
-    try{ var raw=localStorage.getItem(STORE_KEY); return raw?normalizeStorePayload(JSON.parse(raw)):null; }catch(e){ return null; }
-  }
-  function saveLocalStore(){
-    try{ STORE.updated_at=new Date().toISOString(); localStorage.setItem(STORE_KEY,JSON.stringify(STORE)); }catch(e){}
-  }
-  function mergeStorePayloads(filePayload, localPayload){
-    var out=normalizeStorePayload(filePayload||{}), map={};
-    out.rows.forEach(function(r){ map[rowKey(r)]=r; });
-    if(localPayload&&Array.isArray(localPayload.rows)){
-      localPayload.rows.forEach(function(r){ if(r&&r.event_id!=null&&r.market_key) map[rowKey(r)]=Object.assign({},map[rowKey(r)]||{},r); });
-    }
-    out.rows=Object.keys(map).map(function(k){ return normalizeStored(map[k]); });
-    return out;
-  }
-  function loadStore(){
-    var local=loadLocalStore();
-    if(local){ STORE=mergeStorePayloads(STORE,local); STORE_LOADED=true; }
-    if(STORE_LOADING) return;
-    STORE_LOADING=true;
-    fetch(STORE_PATH+'?v=20260504historyclean1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
-      STORE=mergeStorePayloads(j,loadLocalStore()); STORE_LOADED=true; STORE_LOADING=false; saveLocalStore(); _last=''; render();
-    }).catch(function(){ STORE_LOADING=false; STORE_LOADED=true; });
-  }
-  function scoreForRow(r){
-    var eid=String(r&&r.event_id||'');
-    var ev=(window.ALL_EVENTS||[]).find(function(e){return String(e.id||e.event_id||e.eventId||'')===eid;});
-    if(!ev) ev=(window.ALL_MATCHES||[]).find(function(m){return String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:m.id))===eid;});
-    var hs=(r&&r.home_score!=null)?r.home_score:(ev&&(ev.home_score!=null?ev.home_score:(ev.homeScore!=null?ev.homeScore:null)));
-    var aw=(r&&r.away_score!=null)?r.away_score:(ev&&(ev.away_score!=null?ev.away_score:(ev.awayScore!=null?ev.awayScore:null)));
-    if(hs!=null&&aw!=null) return {home_score:nv(hs),away_score:nv(aw)};
-    return null;
-  }
-  function normalizeStored(r){
-    r=Object.assign({},r||{});
-    r.source='store';
-    var sc=scoreForRow(r);
-    if(sc){ r.home_score=sc.home_score; r.away_score=sc.away_score; }
-    var st=String(r.status||r.result||r._st||'').toLowerCase().trim();
-    if((st==='win'||st==='won'||r.won===true)) st='win';
-    else if((st==='lose'||st==='loss'||st==='lost'||r.won===false)) st='lose';
-    else if(sc&&r.market_key&&typeof window.evaluateMarketOutcome==='function'){
-      var ev=window.evaluateMarketOutcome(r.market_key,nv(sc.home_score),nv(sc.away_score));
-      st=ev==='win'?'win':(ev==='loss'?'lose':'pending');
-    }else st='pending';
-    r._st=st; r.status=st;
-    return r;
-  }
-  function storedRows(){ return (STORE.rows||[]).map(normalizeStored); }
-  function storedRowMatchesCat(r,key){
-    if(key==='all') return true;
-    var cats=r.eligible_categories;
-    if(Array.isArray(cats)&&cats.indexOf(key)>=0) return true;
-    var mk=String(r.market_key||'');
-    if(key==='safe') return String(r.verdict||'').toLowerCase()==='safe'||r.riskTier==='Safe'||nv(r.score)>=80;
-    if(key==='o15') return mk==='over15';
-    if(key==='o25') return mk==='over25';
-    if(key==='btts') return mk==='btts';
-    if(key==='u35') return mk==='under35';
-    if(key==='value') return r.riskTier==='Value'||(nv(r.value)>=0.08&&nv(r.edge_pct)>=3);
-    return false;
-  }
 
   /* ────────────────────────────────────────────────────────────────────
      CALENDAR WEEK HELPERS  (Luni = prima zi a saptamanii)
@@ -203,12 +124,94 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════
-     DATE — SETTLED (fișier dedicat: data/matches_visible_history.json)
+     DATE — SETTLED (stocare dedicată: data/matches_visible_history.json)
   ═══════════════════════════════════════════════════════════════════ */
   var SUPP={over15:1,over25:1,btts:1,under35:1,under25:1};
   var DC_MKTS={dc1x:1,dcx2:1,dc12:1};
 
-  function normSt(r){ return normalizeStored(r)._st; }
+  var STORE_KEY='bet_matches_visible_history_v2_old_ui_reset_20260504';
+  var STORE_PATH='./data/matches_visible_history.json';
+  var STORE={version:'v1-visible-matches-history',scope:'matches_tab_visible_predictions_only',rows:[]};
+  var STORE_LOADING=false, STORE_LOADED=false;
+
+  function rowKey(r){ return String((r&&r.event_id)!=null?r.event_id:'')+'::'+String((r&&r.market_key)||''); }
+  function normalizeStorePayload(x){
+    if(!x||typeof x!=='object') x={};
+    var rows=Array.isArray(x.rows)?x.rows:[];
+    return {
+      version:'v1-visible-matches-history',
+      scope:'matches_tab_visible_predictions_only',
+      reset_at:x.reset_at||'2026-05-04T00:00:00Z',
+      updated_at:x.updated_at||null,
+      rows:rows.filter(function(r){return r&&r.event_id!=null&&r.market_key;})
+    };
+  }
+  function loadLocalStore(){
+    try{ var raw=localStorage.getItem(STORE_KEY); return raw?normalizeStorePayload(JSON.parse(raw)):null; }catch(e){ return null; }
+  }
+  function saveLocalStore(){
+    try{ STORE.updated_at=new Date().toISOString(); localStorage.setItem(STORE_KEY,JSON.stringify(STORE)); }catch(e){}
+  }
+  function scoreForRow(r){
+    var eid=String(r&&r.event_id||'');
+    var ev=(window.ALL_EVENTS||[]).find(function(e){return String(e.id||e.event_id||e.eventId||'')===eid;});
+    if(!ev) ev=(window.ALL_MATCHES||[]).find(function(m){return String(m.eventId!=null?m.eventId:(m.event_id!=null?m.event_id:m.id))===eid;});
+    var hs=(r&&r.home_score!=null)?r.home_score:(ev&&(ev.home_score!=null?ev.home_score:(ev.homeScore!=null?ev.homeScore:null)));
+    var aw=(r&&r.away_score!=null)?r.away_score:(ev&&(ev.away_score!=null?ev.away_score:(ev.awayScore!=null?ev.awayScore:null)));
+    if(hs!=null&&aw!=null) return {home_score:nv(hs),away_score:nv(aw)};
+    return null;
+  }
+  function normSt(r){
+    var st=String(r.status||r.result||r._st||'').toLowerCase().trim();
+    if(st==='win'||st==='won'||r.won===true) return 'win';
+    if(st==='lose'||st==='loss'||st==='lost'||r.won===false) return 'lose';
+    var sc=scoreForRow(r);
+    if(sc&&r.market_key&&typeof window.evaluateMarketOutcome==='function'){
+      var ev=window.evaluateMarketOutcome(r.market_key,nv(sc.home_score),nv(sc.away_score));
+      if(ev==='win')return'win';if(ev==='loss')return'lose';
+    }
+    return 'pending';
+  }
+  function normalizeStored(r){
+    r=Object.assign({},r||{});
+    r.source='store';
+    var sc=scoreForRow(r);
+    if(sc){ r.home_score=sc.home_score; r.away_score=sc.away_score; }
+    r._st=normSt(r); r.status=r._st;
+    return r;
+  }
+  function mergeStorePayloads(filePayload, localPayload){
+    var out=normalizeStorePayload(filePayload||{}), map={};
+    out.rows.forEach(function(r){ map[rowKey(r)]=r; });
+    if(localPayload&&Array.isArray(localPayload.rows)){
+      localPayload.rows.forEach(function(r){ if(r&&r.event_id!=null&&r.market_key) map[rowKey(r)]=Object.assign({},map[rowKey(r)]||{},r); });
+    }
+    out.rows=Object.keys(map).map(function(k){return normalizeStored(map[k]);});
+    return out;
+  }
+  function loadStore(){
+    var local=loadLocalStore();
+    if(local){ STORE=mergeStorePayloads(STORE,local); STORE_LOADED=true; }
+    if(STORE_LOADING) return;
+    STORE_LOADING=true;
+    fetch(STORE_PATH+'?v=20260504oldhiststore1',{cache:'no-cache'}).then(function(r){return r&&r.ok?r.json():null;}).then(function(j){
+      STORE=mergeStorePayloads(j,loadLocalStore()); STORE_LOADED=true; STORE_LOADING=false; saveLocalStore(); _settledCache=null; _last=''; render();
+    }).catch(function(){ STORE_LOADING=false; STORE_LOADED=true; });
+  }
+  function storedRows(){ return (STORE.rows||[]).map(normalizeStored); }
+  function storedRowMatchesCat(r,key){
+    if(key==='all') return true;
+    var cats=r.eligible_categories;
+    if(Array.isArray(cats)&&cats.indexOf(key)>=0) return true;
+    var mk=String(r.market_key||'');
+    if(key==='safe') return String(r.verdict||'').toLowerCase()==='safe'||r.riskTier==='Safe'||r.risk_tier==='Safe'||nv(r.score)>=80;
+    if(key==='o15') return mk==='over15';
+    if(key==='o25') return mk==='over25';
+    if(key==='btts') return mk==='btts';
+    if(key==='u35') return mk==='under35';
+    if(key==='value') return r.riskTier==='Value'||r.risk_tier==='Value'||(nv(r.value)>=0.08&&nv(r.edge_pct)>=3);
+    return false;
+  }
   function getSettled(){ return storedRows().filter(function(r){return r._st==='win'||r._st==='lose';}); }
   function settledRowMatchesCat(r,key){ return storedRowMatchesCat(r,key); }
 
@@ -284,8 +287,14 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════
-     ROWS FOR CATEGORY — doar stocare dedicată + sincronizare din Meciuri
+     ROWS FOR CATEGORY  (settled + pending corecte, dedup)
   ═══════════════════════════════════════════════════════════════════ */
+  var _settledCache=null, _settledTs=0;
+  function getCachedSettled(){
+    if(_settledCache&&Date.now()-_settledTs<10000)return _settledCache;
+    _settledCache=getSettled(); _settledTs=Date.now(); return _settledCache;
+  }
+
   var _syncTs=0;
   function syncStoreFromLive(){
     if(Date.now()-_syncTs<1000) return;
@@ -308,6 +317,7 @@
       });
     });
     STORE.rows=Object.keys(map).map(function(k){return normalizeStored(map[k]);});
+    _settledCache=null;
     saveLocalStore();
   }
 
@@ -644,7 +654,7 @@
     }else{
       html='<div class="bh-wrap">'+
         renderPeriodBar()+
-        '<div class="bh-note">\uD83D\uDCCC Date din recomandarile reale ale motorului \u2014 identice cu filtrele din Meciuri.</div>'+
+        '<div class="bh-note">\uD83D\uDCCC Date stocate din predicțiile vizibile în Meciuri.</div>'+
         renderSummary()+
         renderGrid()+
       '</div>';
@@ -674,9 +684,8 @@
       var r=document.getElementById('history21-root');
       if(r&&r.scrollIntoView)r.scrollIntoView({behavior:'smooth',block:'start'});
     },
-    back:function(){S.view='grid';S.cat=null;_last='';render();},
     sync:function(){syncStoreFromLive();_last='';render();},
-    store:function(){return STORE;}
+    back:function(){S.view='grid';S.cat=null;_last='';render();}
   };
 
   /* ════════════════════════════════════════════════════════════════════
