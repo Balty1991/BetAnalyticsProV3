@@ -6632,7 +6632,30 @@ function renderMatches(){
         '</div>';
       }
     }
-    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
+    function oneLineWhyText(){
+      var raw = (m.why && String(m.why).trim())
+        ? String(m.why).trim()
+        : ((m.rationale && String(m.rationale).trim())
+            ? String(m.rationale).trim()
+            : buildRecommendationReasons(m, b).slice(0, 2).join(' • '));
+      // Curățare: unele recovery-uri vin duplicate: "Recovery probe O1.5 • Recovery probe O1.5 ..."
+      var seen = {};
+      var parts = raw
+        .split(/\s*[•|;]+\s*/g)
+        .map(function(x){ return String(x || '').replace(/\s+/g, ' ').trim(); })
+        .filter(function(x){
+          if(!x) return false;
+          var k = x.toLowerCase()
+            .replace(/[.,:!?]+$/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if(seen[k]) return false;
+          seen[k] = true;
+          return true;
+        });
+      return parts.slice(0, 3).join(' • ');
+    }
+    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + oneLineWhyText() + '</div>') : '';
     var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
     var _btEdgeBad = b ? benchmarkEdgeIsBad(b.type || b.marketKey || '', Number(b.edgePct || 0)) : false;
     var motorBadge = motorMeta && motorMeta.state === 'validated' && !_btEdgeBad
