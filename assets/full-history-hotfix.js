@@ -369,9 +369,8 @@ function boot(){
     }
     if(typeof W.doRefresh==='function'&&!W.__fhHotfixRefresh){
       const old=W.doRefresh;
-      W.doRefresh=async function(isManual){
+      W.doRefresh=async function(){
         const out=await old.apply(this,arguments);
-        if(isManual || W.__BA_SOFT_REFRESH_ACTIVE) return out;
         setTimeout(run,0);
         setTimeout(run,400);
         setTimeout(run,1000);

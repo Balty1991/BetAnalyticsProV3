@@ -110,9 +110,12 @@
     run(false);
     setTimeout(function(){ run(false); }, 1500);
     setTimeout(function(){ run(false); }, 3500);
-    setInterval(function(){ if(!window.__BA_SOFT_REFRESH_ACTIVE) run(false); }, 120000);
-    // Manual refresh nu mai reîncarcă Adaptive Restore; rulează doar periodic, lent.
-
+    setInterval(function(){ run(false); }, 7000);
+    var btn = document.getElementById('btn-refresh');
+    if(btn && !btn.__adaptiveRestoreHook){
+      btn.__adaptiveRestoreHook = true;
+      btn.addEventListener('click', function(){ setTimeout(function(){ run(true); }, 1600); });
+    }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

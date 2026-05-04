@@ -316,11 +316,7 @@ function boot(){
   if(typeof W.doRefresh==='function'&&!W.__fhFixRefresh){
     const old=W.doRefresh;
     W.doRefresh=async function(){
-      const isManual = arguments && arguments[0] === true;
       const r=await old.apply(this,arguments);
-      if(isManual || Date.now() < Number(W.__BA_MANUAL_SOFT_REFRESH_UNTIL||0)){
-        return r;
-      }
       await load();
       rerender();
       return r;

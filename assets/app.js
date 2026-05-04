@@ -4906,108 +4906,8 @@ function ensureTabData(name){
   return Promise.all(keys.map(loadLazyDataset));
 }
 
-var BA_REFRESH_RUNNING = false;
-var BA_SOFT_REFRESH_RUNNING = false;
-var BA_LAST_SOFT_REFRESH_TS = 0;
-var BA_MIN_SOFT_REFRESH_GAP_MS = 3500;
-var BA_LAST_MANUAL_REFRESH_AT = 0;
-try { window.__BA_SOFT_REFRESH_ACTIVE = false; } catch(e){}
-
-function setHeaderRefreshBusy(busy){
-  var btn = $('btn-refresh');
-  if(!btn) return;
-  btn.classList.toggle('is-refreshing', !!busy);
-  btn.disabled = !!busy;
-  btn.setAttribute('aria-busy', busy ? 'true' : 'false');
-}
-
-function updateHeaderStatusOnly(){
-  var timeStr = getStatusDisplayTime();
-  if(!timeStr){
-    var now = new Date();
-    timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  }
-  var metrics = getStatusDisplayMetrics();
-  var rawMl = metrics.ml;
-  var rawOdds = metrics.odds;
-  var safe = ALL_MATCHES.filter(function(m){ return m.analysisState === 'ELIGIBLE' && (m.verdict === 'safe' || m.riskTier === 'Safe'); }).length;
-  var saCount = (SIGNAL_AUDIT && SIGNAL_AUDIT.count) ? String(SIGNAL_AUDIT.count) : '0';
-  var saCountLabel = saCount + (saCount === '1' ? ' semnal top' : ' semnale top');
-  var enrichCount = Object.keys(ENRICHED_EVENT_CACHE || {}).length;
-  var enrichSuffix = enrichCount > 0 ? (' — 🔬 ML5 ' + enrichCount) : (ENRICHMENT_BATCH_RUNNING ? ' — 🔬 ML5 …' : '');
-  if($('hq-ml')) $('hq-ml').textContent = rawMl;
-  if($('hq-odds')) $('hq-odds').textContent = rawOdds;
-  if($('hq-time')) $('hq-time').textContent = timeStr;
-  if($('hq-safe')) $('hq-safe').textContent = safe;
-  if($('sb-text')) $('sb-text').innerHTML = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr+enrichSuffix+getDataFreshnessHtml();
-}
-
-function getJsonFastStatus(path, fallback, timeoutMs){
-  timeoutMs = timeoutMs || 900;
-  var url = getBase() + path + '?t=' + Date.now();
-  if(typeof AbortController === 'undefined'){
-    return getJson(path, fallback).catch(function(){ return fallback; });
-  }
-  var controller = new AbortController();
-  var timer = setTimeout(function(){ try{ controller.abort(); }catch(e){} }, timeoutMs);
-  return fetch(url, { cache:'no-store', signal:controller.signal })
-    .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(function(data){
-      _JSON_MEM_CACHE[path] = { ts: Date.now(), data:data };
-      return data;
-    })
-    .catch(function(){ return fallback; })
-    .finally(function(){ clearTimeout(timer); });
-}
-
-function doSoftRefresh(){
-  var now = Date.now();
-  BA_LAST_MANUAL_REFRESH_AT = now;
-  try { window.__BA_SOFT_REFRESH_ACTIVE = true; window.__BA_MANUAL_REFRESH_GUARD_UNTIL = now + 2500; } catch(e){}
-
-  if(BA_SOFT_REFRESH_RUNNING || (now - BA_LAST_SOFT_REFRESH_TS < BA_MIN_SOFT_REFRESH_GAP_MS)){
-    updateHeaderStatusOnly();
-    return Promise.resolve(true);
-  }
-
-  BA_LAST_SOFT_REFRESH_TS = now;
-  BA_SOFT_REFRESH_RUNNING = true;
-  setHeaderRefreshBusy(true);
-  updateHeaderStatusOnly();
-
-  // Refresh manual = doar UI refresh local. Fără fetch, fără no-store, fără pipeline.
-  // Datele grele se încarcă la boot / auto-sync; butonul nu mai ține browserul 10-15 secunde.
-  try {
-    var active = getCurrentActiveTabName ? getCurrentActiveTabName() : '';
-    if(active === 'dashboard') renderDashboardVisuals();
-    else if(active === 'meciuri') updateHeaderStatusOnly();
-    else if(active === 'performanta' && document.getElementById('perf-verdict-content')) renderPerformantaVerdict();
-  } catch(e){}
-
-  return new Promise(function(resolve){
-    setTimeout(function(){
-      BA_SOFT_REFRESH_RUNNING = false;
-      try { window.__BA_SOFT_REFRESH_ACTIVE = false; } catch(e){}
-      setHeaderRefreshBusy(false);
-      updateHeaderStatusOnly();
-      resolve(true);
-    }, 420);
-  });
-}
-
 function doRefresh(isManual){
-  // Orice apăsare manuală pe buton este doar soft refresh instant.
-  // Nu mai declanșează niciodată sync complet, nici dacă boot-ul încă procesează.
-  if(isManual){
-    return doSoftRefresh();
-  }
-  if(BA_REFRESH_RUNNING){
-    if(isManual) toast('Încă se încarcă datele. Așteaptă câteva secunde.', 'warn');
-    return Promise.resolve(false);
-  }
-  BA_REFRESH_RUNNING = true;
-  setHeaderRefreshBusy(!!isManual);
-  showLoader(isManual ? 'Sincronizare completă...' : 'Incarcare date actualizate...');
+  showLoader('Incarcare date actualizate...');
 
   LAZY_DATA_PROMISES = {};
   LAZY_DATA_READY.events = false;
@@ -5015,10 +4915,10 @@ function doRefresh(isManual){
   LAZY_DATA_READY.historyEngine = false;
   LAZY_DATA_READY.recommendationJournal = false;
 
-  // După boot, refresh-ul manual nu mai sparge cache-ul tuturor fișierelor mari.
-  var fetch9 = getJson;
+  // Manual refresh (buton) = forțăm re-descărcarea; auto-refresh = folosim cache-ul dacă e valid
+  var fetch9 = isManual ? getJsonFresh : getJson;
 
-  return Promise.all([
+  Promise.all([
     fetch9('/data/predictions.json', []),
     fetch9('/data/meta.json', {}),
     fetch9('/data/leagues.json', []),
@@ -5106,9 +5006,6 @@ function doRefresh(isManual){
     hideLoader();
     toast('Eroare la incarcarea datelor', 'err');
     console.error(err);
-  }).finally(function(){
-    BA_REFRESH_RUNNING = false;
-    setHeaderRefreshBusy(false);
   });
 }
 
@@ -6643,7 +6540,7 @@ function renderMatches(){
       var clone = Object.assign({}, m, {
         bestBet: Object.assign({}, matching.bestBet),
         smartScore: matching.ticketScore || matching.bestBet.score || m.smartScore,
-        why: compactReasonText(matching.why || m.why, 3),
+        why: matching.why || m.why,
         verdict: matching.bestBet.verdict || m.verdict
       });
       return clone;
@@ -6734,7 +6631,7 @@ function renderMatches(){
         '</div>';
       }
     }
-    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + compactReasonText(((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')), 3) + '</div>') : '';
+    var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
     var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
     var _btEdgeBad = b ? benchmarkEdgeIsBad(b.type || b.marketKey || '', Number(b.edgePct || 0)) : false;
     var motorBadge = motorMeta && motorMeta.state === 'validated' && !_btEdgeBad
@@ -6905,7 +6802,7 @@ function renderMatches(){
     var kickoffTimeLabel = kickoffParts.timeLabel || '—';
     var trend = Number(m.smartScore || 0) >= 88 ? '↑↑' : (Number(m.smartScore || 0) >= 75 ? '↑' : '→');
     var valueDetected = b && Number(b.value || 0) > 0.02;
-    var shortWhy = compactReasonText(((m.why && String(m.why).trim()) ? String(m.why).trim() : buildRecommendationReasons(m, b || {}).slice(0,2).join(' • ')), 3);
+    var shortWhy = ((m.why && String(m.why).trim()) ? String(m.why).trim() : buildRecommendationReasons(m, b || {}).slice(0,2).join(' • '));
     var infoLine = 'Scor probabil ' + (m.mostLikelyScore || '—') + ' • xG ' + Number(m.xgTotal || 0).toFixed(2) + ' • ' + (shortWhy || 'context statistic activ');
     var m17AdjProb = b ? Number(b.adjProb || 0) : 0;
     var m17Edge = b && b.edgePct != null ? Number(b.edgePct || 0) : null;
@@ -7089,41 +6986,10 @@ function clamp(v, min, max){
 
 function uniqueReasons(arr){
   var out = [];
-  var seen = {};
   (arr || []).forEach(function(x){
-    if(!x) return;
-    var raw = String(x).trim();
-    if(!raw) return;
-    var key = normalizeReasonKey(raw);
-    if(!seen[key]){
-      seen[key] = true;
-      out.push(raw);
-    }
+    if(x && out.indexOf(x) === -1) out.push(x);
   });
   return out;
-}
-
-function normalizeReasonKey(txt){
-  return String(txt || '')
-    .toLowerCase()
-    .replace(/[…]+/g, '')
-    .replace(/[✓✔✕✖x]+$/g, '')
-    .replace(/\s+/g, ' ')
-    .replace(/[•,;|]+$/g, '')
-    .trim();
-}
-
-function compactReasonText(txt, maxItems){
-  var raw = String(txt || '').trim();
-  if(!raw) return '';
-  var limit = Math.max(1, Number(maxItems || 3));
-  var parts = raw
-    .replace(/\s*\.\.\.\s*$/g, '')
-    .split(/\s*[•|]\s*/)
-    .map(function(x){ return String(x || '').trim(); })
-    .filter(Boolean);
-  if(!parts.length) parts = [raw];
-  return uniqueReasons(parts).slice(0, limit).join(' • ');
 }
 
 function computeConservativeCombinedProb(picks){
@@ -7421,7 +7287,7 @@ function buildMarketCandidate(m, type){
     }),
     ticketScore: Math.round(baseScore),
     ticketRisk: risk,
-    why: compactReasonText(uniqueReasons(reasons).slice(0, 3).join(' • '), 3),
+    why: uniqueReasons(reasons).slice(0, 3).join(' • '),
     proEligible: (m.leagueTier !== 'avoid') && (b.adjProb >= 72) && ((b.edgePct || 0) >= 1.5) && ((b.value || 0) >= 0.01)
   });
 }
@@ -10386,7 +10252,7 @@ function renderCota2TicketCard(learning){
   ticket.picks.forEach(function(match){
     var bet = match.bestBet || match;
     var reasonsArr = buildRecommendationReasons(match, bet);
-    var shortWhy = compactReasonText((match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • '), 3);
+    var shortWhy = (match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • ');
     var marketStat = learning.marketStats[cota2MarketKey(match)];
     var learnText = marketStat ? ('Learn ' + (Number(marketStat.learnScore || 0) >= 0 ? '+' : '') + Number(marketStat.learnScore || 0).toFixed(1)) : 'Learn n/a';
     html += '<div class="bilet-row" style="display:block">'+
@@ -10819,9 +10685,6 @@ function getDataFreshnessHtml(){
   return ' <span style="color:'+color+';font-weight:700" title="Ultima actualizare date">● '+label+'</span>';
 }
 function getStatusDisplayTime(){
-  if(BA_LAST_MANUAL_REFRESH_AT && (Date.now() - BA_LAST_MANUAL_REFRESH_AT) < 60000){
-    return new Date(BA_LAST_MANUAL_REFRESH_AT).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
-  }
   var raw = (APP_META && APP_META.bsd_status && APP_META.bsd_status.fetched_at) || (APP_META && APP_META.updated_at) || null;
   if(!raw) return '';
   var dt = new Date(raw);
@@ -11604,7 +11467,7 @@ function renderBilete(){
   picks.forEach(function(match){
     var bet = match.bestBet || match;
     var reasonsArr = buildRecommendationReasons(match, bet);
-    var shortWhy = compactReasonText((match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • '), 3);
+    var shortWhy = (match.why && String(match.why).trim()) ? match.why : reasonsArr.slice(0, 2).join(' • ');
     var hybridBlock = bet && bet.probabilityEngine === 'hybrid' ? renderHybridProbabilityBlock({ apiProb:bet.apiProb, poissonProb:bet.poissonProb, hybridProb:bet.prob, delta:bet.poissonDelta }) : '';
     html += '<div class="bilet-row" style="display:block">'+
       '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">'+

@@ -37,7 +37,7 @@ async function loadSmartBetV2() {
 
   const results = await Promise.allSettled(
     files.map(([, path]) =>
-      fetch(`${base}${path}?v=20260504refreshdeep1`, { cache: 'default' })
+      fetch(`${base}${path}?v=${Date.now()}`)
         .then(r => r.ok ? r.json() : null)
         .catch(() => null)
     )

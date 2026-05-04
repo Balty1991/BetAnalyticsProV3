@@ -285,14 +285,17 @@
 
   function boot(){
     load(false);
-    setTimeout(function(){ load(false); }, 2200);
-    // fără reload forțat după boot
+    setTimeout(function(){ load(true); }, 1800);
+    setTimeout(function(){ load(true); }, 4200);
     // Re-randam la 5s ca sa surprindem schimbarile in pool-ul live SmartBet
     // (cotele se schimba, AI Memory se actualizeaza, etc.). sanitizePayload
     // ia mereu pool-ul live proaspat din getSmartBetAnalysis().
     setInterval(function(){ if(window.PREDICTION_TYPE_HISTORY) render(window.PREDICTION_TYPE_HISTORY); }, 3000);
-    // Manual refresh nu mai reîncarcă Prediction History.
-
+    var btn = document.getElementById('btn-refresh');
+    if(btn && !btn.__predictionHistoryHook){
+      btn.__predictionHistoryHook = true;
+      btn.addEventListener('click', function(){ setTimeout(function(){ load(true); }, 1500); });
+    }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

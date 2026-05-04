@@ -209,9 +209,12 @@
     load(false);
     setTimeout(function(){ load(false); },1200);
     setTimeout(function(){ load(false); },3000);
-    setInterval(function(){ if(!window.__BA_SOFT_REFRESH_ACTIVE) load(false); },120000);
-    // Manual refresh nu mai reîncarcă Hybrid Adaptive; rulează doar periodic, lent.
-
+    setInterval(function(){ load(false); },7000);
+    var btn = document.getElementById('btn-refresh');
+    if(btn && !btn.__hybridAdaptiveHook){
+      btn.__hybridAdaptiveHook = true;
+      btn.addEventListener('click', function(){ setTimeout(function(){ load(true); }, 1200); });
+    }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

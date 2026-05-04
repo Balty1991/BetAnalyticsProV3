@@ -16,48 +16,10 @@
   function cached(c){return new Response(c.body,{status:c.status,statusText:c.statusText,headers:c.headers})}
   function store(key,res){try{if(!res||!res.ok)return Promise.resolve(res);return res.clone().text().then(function(body){mem[key]={time:Date.now(),body:body,status:res.status,statusText:res.statusText,headers:headers(res.headers)};return res}).catch(function(){return res})}catch(e){return Promise.resolve(res)}}
 
-
-  function cleanupLegacyServiceWorkers(){
-    try{
-      if('serviceWorker' in navigator){
-        navigator.serviceWorker.getRegistrations().then(function(regs){
-          regs.forEach(function(r){ try{ r.unregister(); }catch(e){} });
-        }).catch(function(){});
-      }
-      if(window.caches && caches.keys){
-        caches.keys().then(function(keys){
-          keys.filter(function(k){ return /^ba-|BetAnalytics|betanalytics/i.test(k); }).forEach(function(k){ try{ caches.delete(k); }catch(e){} });
-        }).catch(function(){});
-      }
-    }catch(e){}
-  }
-  function installManualRefreshShield(){
-    if(window.__baManualRefreshShieldV2)return; window.__baManualRefreshShieldV2=true;
-    function finish(btn){setTimeout(function(){try{window.__BA_SOFT_REFRESH_ACTIVE=false; if(btn){btn.classList.remove('is-refreshing');btn.disabled=false;btn.removeAttribute('aria-busy');}}catch(e){}},520)}
-    function handler(ev){
-      var btn=ev.target&&ev.target.closest&&ev.target.closest('#btn-refresh');
-      if(!btn)return;
-      ev.preventDefault(); ev.stopPropagation(); if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();
-      try{btn.onclick=null;btn.removeAttribute('onclick')}catch(e){}
-      try{window.__BA_SOFT_REFRESH_ACTIVE=true;window.__BA_MANUAL_REFRESH_GUARD_UNTIL=Date.now()+3000;btn.classList.add('is-refreshing');btn.disabled=true;btn.setAttribute('aria-busy','true')}catch(e){}
-      try{
-        var p=typeof window.doSoftRefresh==='function'?window.doSoftRefresh():(typeof window.updateHeaderStatusOnly==='function'?Promise.resolve(window.updateHeaderStatusOnly()):Promise.resolve(true));
-        Promise.resolve(p).finally(function(){finish(btn)});
-      }catch(e){finish(btn)}
-      return false;
-    }
-    document.addEventListener('click',handler,true);
-    document.addEventListener('pointerup',function(ev){var btn=ev.target&&ev.target.closest&&ev.target.closest('#btn-refresh'); if(btn){try{btn.onclick=null;btn.removeAttribute('onclick')}catch(e){}}},true);
-    function strip(){var btn=document.getElementById('btn-refresh'); if(btn){try{btn.onclick=null;btn.removeAttribute('onclick');btn.setAttribute('type','button');btn.setAttribute('data-ba-soft-refresh','1')}catch(e){}}}
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',strip); else strip();
-    setTimeout(strip,500); setTimeout(strip,1500); setTimeout(strip,4000);
-  }
-
   if(originalFetch){
     window.fetch=function(input,init){
       if(!isData(input,init))return originalFetch(input,init);
       var key=keyOf(input),c=mem[key];
-      if(Date.now() < (window.__BA_MANUAL_REFRESH_GUARD_UNTIL||0) && c)return Promise.resolve(cached(c));
       if(bypassDataCache(input,init))return originalFetch(input,init).then(function(r){return store(key,r)});
       if(c&&Date.now()-c.time<ttl){originalFetch(input,init).then(function(r){return store(key,r)}).catch(function(){});return Promise.resolve(cached(c))}
       if(inflight[key])return inflight[key].then(function(r){return r.clone()});
@@ -84,15 +46,16 @@
   function loadRuntimes(){
     if(window.__baRuntimeLoaderV21)return; window.__baRuntimeLoaderV21=true;
     loadScript('assets/logic_safety_patch.js?v=20260426logic1','logic-safety-patch-script');
-    loadScript('assets/hybrid_adaptive_runtime.js?v=20260504refreshdeep1','hybrid-adaptive-runtime-script');
-    loadScript('assets/prediction_history_runtime.js?v=20260504refreshdeep1','prediction-history-runtime-script');
-    loadScript('assets/adaptive_restore_runtime.js?v=20260504refreshdeep1','adaptive-restore-runtime-script');
+    loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid8','hybrid-adaptive-runtime-script');
+    loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
+    loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');
     loadScript('assets/api_history_label_runtime.js?v=20260428color2','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260428videoexact3','dashboard-history21-sync-script');
     loadScript('assets/dashboard_motor_tracker_sync.js?v=20260503motortracker21','dashboard-motor-tracker-sync-script');
     loadScript('assets/performance_color_runtime.js?v=20260502filterfix1','performance-color-runtime-script');
-    // pro_command_center este deja inclus în index.html; nu îl dublăm aici.
-    loadScript('assets/pro_intelligence_runtime.js?v=20260504refreshdeep1','pro-intelligence-runtime-script');
+    addLink('assets/pro_command_center.css?v=20260428weekstable','pro-command-center-css');
+    loadScript('assets/pro_command_center.js?v=20260428weekstable','pro-command-center-script');
+    loadScript('assets/pro_intelligence_runtime.js?v=20260503m23','pro-intelligence-runtime-script');
   }
   function compactStatusText(){
     var el=document.getElementById('sb-text');if(!el||el.__baCompactBusy)return;
@@ -103,14 +66,12 @@
   }
   function watchHeader(){compactStatusText();var el=document.getElementById('sb-text');if(!el||el.__baStatusObserver)return;el.__baStatusObserver=true;try{new MutationObserver(function(){setTimeout(compactStatusText,0)}).observe(el,{childList:true,characterData:true,subtree:true})}catch(e){}setInterval(compactStatusText,2500)}
   function installToastFilter(){if(typeof window.toast!=='function'||window.toast.__baFilterInstalled)return;var old=window.toast;window.toast=function(msg,type){var t=String(msg||'');if(t.indexOf('API sync:')===0||t.indexOf('ML5')>=0||isBadgeText(t))return;return old.apply(this,arguments)};window.toast.__baFilterInstalled=true}
-  function prefetch(){ /* dezactivat: genera trafic inutil și bara de loading în browser */ }
+  function prefetch(){['data/meta.json','data/predictions.json','data/leagues.json','data/backtest.json','data/model_quality.json','data/pro_intelligence.json','data/ev_signals_v2.json'].forEach(function(f){try{originalFetch&&originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
 
   addStyle('ba-perf-css','.dash-yday-strip{display:none!important}.match-card,.top-pick-card,.ml-card,.bilet-card,.ticket-card,.bankroll-card,.visual-card,.history-table-wrapper{content-visibility:auto;contain-intrinsic-size:1px 260px}.matches-grid,.top-picks-grid,.ml-grid,.focus-grid,.visual-grid{contain:layout style paint}@media(max-width:900px){.header-quick-stats{display:none!important}#btn-refresh{min-width:52px!important;border-radius:18px!important}}');
-  cleanupLegacyServiceWorkers();
-  installManualRefreshShield();
   installBadgeCleaner();
   installO25HistoryHotfix();
-  if(window.requestIdleCallback) requestIdleCallback(loadRuntimes,{timeout:6000}); else setTimeout(loadRuntimes,3500);
+  loadRuntimes();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){watchHeader();installToastFilter();prefetch();removeBadges()});else{watchHeader();installToastFilter();prefetch();removeBadges()}
   setTimeout(installToastFilter,1200);
   setTimeout(removeBadges,1600);
