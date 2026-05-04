@@ -1,15 +1,15 @@
-// BetAnalytics Pro runtime fixes: performance colors + header metrics + Meciuri filter scope.
+// BetAnalytics Pro runtime fixes: performance colors + header metrics + Meciuri filter scope + reason dedupe.
 (function(){
   'use strict';
-  if(window.__baRuntimeFixes20260502)return;
-  window.__baRuntimeFixes20260502=1;
+  if(window.__baRuntimeFixes20260504Final)return;
+  window.__baRuntimeFixes20260504Final=1;
   var G=(typeof globalThis!=='undefined')?globalThis:window;
   var GREEN='#34d399', RED='#fb7185', YELLOW='#f59e0b', MUTED='var(--muted,#8b98ad)', TEXT='var(--txt,#f8fafc)';
   function n(v){var x=Number(v);return isFinite(x)?x:null;}
   function num(txt){var m=String(txt||'').replace(',', '.').match(/[-+]?\d+(?:\.\d+)?/);return m?Number(m[0]):0;}
   function cSign(v){return v>0?GREEN:(v<0?RED:TEXT);}
   function cWin(v){return v>=65?GREEN:(v>=50?YELLOW:RED);}
-  function set(el,color){if(!el)return;el.style.setProperty('color',color,'important');}
+  function set(el,color){if(el)el.style.setProperty('color',color,'important');}
 
   function addCss(){
     if(document.getElementById('ba-runtime-fixes-css'))return;
@@ -84,34 +84,35 @@
       .replace(/&nbsp;/gi,' ')
       .replace(/\u00a0/g,' ')
       .replace(/\s+/g,' ')
+      .trim()
+      .replace(/^De\s*ce[:\s]*/i,'')
       .trim();
-    raw=raw.replace(/^De\s*ce[:\s]*/i,'').trim();
-    raw=raw.replace(/(Recovery\s+probe\s+[A-Za-z0-9.]+)(?:\s*(?:•|·|\||;|,)?\s*\1)+/gi,'$1');
-    var seen={};
-    return raw.split(/\s*(?:•|·|\||;|,)\s*/g).map(function(x){return String(x||'').replace(/^De\s*ce[:\s]*/i,'').replace(/\s+/g,' ').trim();}).filter(function(x){
-      if(!x)return false;
+
+    var out=[], seen={};
+    raw.split(/\s*(?:•|·|\||;|,)\s*/g).forEach(function(x){
+      x=String(x||'').replace(/^De\s*ce[:\s]*/i,'').replace(/\s+/g,' ').trim();
+      if(!x)return;
       var k=x.toLowerCase().replace(/[.,:!?]+$/g,'').replace(/\s+/g,' ').trim();
-      var rec=k.match(/^(?:de\s*ce\s*)?recovery\s+probe\s+([a-z0-9.]+)/i);
-      if(rec)k='recovery probe '+rec[1];
-      if(seen[k])return false;
+      var rec=k.match(/recovery\s+probe\s+([a-z0-9.]+)/i);
+      if(rec) k='recovery probe '+rec[1];
+      if(seen[k])return;
       seen[k]=true;
-      return true;
-    }).slice(0,3).join(' • ');
+      out.push(x);
+    });
+    return out.slice(0,3).join(' • ');
   }
+
   function dedupeWhyText(){
     document.querySelectorAll('.match-why').forEach(function(el){
       var full=el.textContent||'';
       if(!/recovery\s+probe/i.test(full)&&full.indexOf('•')<0)return;
       var cleaned=cleanReasonText(full);
       if(!cleaned)return;
-      var current=full.replace(/^De\s*ce[:\s]*/i,'').replace(/\s+/g,' ').trim();
-      if(current===cleaned)return;
       el.innerHTML='<strong>De ce:</strong> '+cleaned;
     });
   }
+
   function installWhyDedupe(){
-    if(G.__baWhyDedupeRuntime)return;
-    G.__baWhyDedupeRuntime=1;
     var raf=0;
     function schedule(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;dedupeWhyText();});}
     document.addEventListener('DOMContentLoaded',schedule);
@@ -119,7 +120,7 @@
     document.addEventListener('click',function(){setTimeout(schedule,40);},true);
     document.addEventListener('change',function(){setTimeout(schedule,40);},true);
     try{new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});}catch(e){}
-    var n=0,t=setInterval(function(){dedupeWhyText();n++;if(n>=30)clearInterval(t);},500);
+    var n=0,t=setInterval(function(){dedupeWhyText();n++;if(n>=40)clearInterval(t);},350);
   }
 
   function boot(){colorPerformance();installHeaderFix();installMarketScopeFix();installWhyDedupe();dedupeWhyText();}
