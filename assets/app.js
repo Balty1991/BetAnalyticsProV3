@@ -41,6 +41,7 @@ var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings')
 var COTA2_SETTINGS = sanitizeCota2Settings(JSON.parse(localStorage.getItem('bet_cota2_settings') || '{}'));
 var COTA2_TICKET = JSON.parse(localStorage.getItem('bet_cota2_latest') || 'null');
 var API_TOKEN = ''; // setat din meta.json sau localStorage
+var MATCHES_VISIBLE_HISTORY = { version:'v1-visible-matches-history', rows:[] };
 // ============================================================
 // MOTOR MULTI-FACTOR v1 — cache global pentru enrichment live
 // ============================================================
@@ -1140,9 +1141,10 @@ function prefetchNonCriticalTabData(){
   if(NONCRITICAL_PREFETCH_STARTED) return;
   NONCRITICAL_PREFETCH_STARTED = true;
   scheduleIdleTask(function(){
-    loadLazyDataset('recommendationLog').then(function(){
+    loadLazyDataset('matchesHistory').then(function(){
       if(isTabActive('istoric21')) renderHistory21();
-    }).catch(function(err){ console.warn('[Prefetch] recommendationLog failed', err); });
+    }).catch(function(err){ console.warn('[Prefetch] matchesHistory failed', err); });
+    loadLazyDataset('events').catch(function(err){ console.warn('[Prefetch] events failed', err); });
   }, 2200);
   scheduleIdleTask(function(){
     loadLazyDataset('historyEngine').catch(function(err){ console.warn('[Prefetch] historyEngine failed', err); });
@@ -4530,6 +4532,7 @@ var LAZY_DATA_READY = {
   trainingSummary:false,
   events:false,
   recommendationLog:false,
+  matchesHistory:false,
   historyEngine:false,
   recommendationJournal:false,
   archiveSummary:false,
@@ -4788,6 +4791,10 @@ function applyLazyDataset(key, data){
     ALL_EVENTS = normalizeResultList(data);
     return;
   }
+  if(key === 'matchesHistory'){
+    MATCHES_VISIBLE_HISTORY = data && typeof data === 'object' ? data : { version:'v1-visible-matches-history', rows:[] };
+    return;
+  }
   if(key === 'recommendationLog'){
     RECOMMENDATION_LOG = normalizeResultList(data);
     writeDatasetCache('recommendationLog', RECOMMENDATION_LOG);
@@ -4815,6 +4822,7 @@ function loadLazyDataset(key){
   var cfg = {
     events:{ path:'/data/events.json', fallback:[] },
     recommendationLog:{ path:'/data/recommendation_log.json', fallback:[] },
+    matchesHistory:{ path:'/data/matches_visible_history.json', fallback:{version:'v1-visible-matches-history',rows:[]} },
     historyEngine:{ path:'/data/history_engine.json', fallback:[] },
     recommendationJournal:{ path:'/data/recommendation_journal.json', fallback:[] }
   }[key];
@@ -4901,7 +4909,7 @@ function ensureTabData(name){
   if(name === 'tracking') keys = ['events', 'recommendationLog'];
   else if(name === 'charts') keys = ['recommendationLog', 'historyEngine'];
   else if(name === 'smartbet') keys = ['recommendationLog', 'historyEngine', 'recommendationJournal'];
-  else if(name === 'istoric21') keys = ['recommendationLog'];
+  else if(name === 'istoric21') keys = ['matchesHistory', 'events'];
   if(!keys.length) return Promise.resolve(false);
   return Promise.all(keys.map(loadLazyDataset));
 }
@@ -4913,6 +4921,7 @@ function doRefresh(isManual){
   LAZY_DATA_PROMISES = {};
   LAZY_DATA_READY.events = false;
   LAZY_DATA_READY.recommendationLog = false;
+  LAZY_DATA_READY.matchesHistory = false;
   LAZY_DATA_READY.historyEngine = false;
   LAZY_DATA_READY.recommendationJournal = false;
 
@@ -9508,27 +9517,24 @@ function getHistory21RowKey(row){
 }
 
 function getHistory21SettledRows(cutoff){
-  var supported = {};
-  (BET_TYPES || []).forEach(function(b){
-    supported[b.label] = true;
-    supported[b.key] = true;
-  });
-  return (RECOMMENDATION_LOG || []).filter(function(r){
+  var payload = MATCHES_VISIBLE_HISTORY && Array.isArray(MATCHES_VISIBLE_HISTORY.rows) ? MATCHES_VISIBLE_HISTORY.rows : [];
+  return payload.filter(function(r){
     if(!r) return false;
     var marketType = r.market_key || inferMarketTypeFromLabel(r.market || '');
-    if(!(supported[r.market] || supported[marketType])) return false;
-    var loggedAt = new Date(r.logged_at || r.prediction_created_at || 0);
+    if(!marketType) return false;
+    var loggedAt = new Date(r.event_date || r.date || r.logged_at || r.prediction_created_at || 0);
     if(!isFinite(loggedAt.getTime()) || loggedAt < cutoff) return false;
     return getHistory21Status(r) !== 'pending';
   }).map(function(r){
     return Object.assign({}, r, {
-      source: 'log',
+      source: 'store',
       status: getHistory21Status(r),
       market_key: r.market_key || inferMarketTypeFromLabel(r.market || ''),
       event_id: r.event_id != null ? r.event_id : null
     });
   });
 }
+
 
 
 
@@ -11706,9 +11712,10 @@ function getHistory21CardVisual(summaryRow){
   };
 }
 function renderHistory21(){
+  if(window.batH && typeof window.batH.sync === 'function'){ try{ window.batH.sync(); return; }catch(e){} }
   var root = $('history21-root');
   if(!root) return;
-  if((LAZY_DATA_PROMISES.recommendationLog || !LAZY_DATA_READY.recommendationLog) && !(RECOMMENDATION_LOG || []).length){
+  if((LAZY_DATA_PROMISES.matchesHistory || !LAZY_DATA_READY.matchesHistory) && !(MATCHES_VISIBLE_HISTORY && Array.isArray(MATCHES_VISIBLE_HISTORY.rows))){
     root.innerHTML = '<div class="history21-shell-placeholder"><div class="history21-shell-grid"><div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div><div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div><div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div></div><div class="history21-shell-detail"><div class="boot-skeleton-title skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div><div class="boot-skeleton-line short skeleton-shimmer"></div><div class="empty-state" style="margin-top:12px">Se încarcă istoricul real pe 21 zile...</div></div></div>';
     return;
   }
@@ -11782,8 +11789,8 @@ function renderHistory21(){
     var adj = Number(r.adjusted_prob || 0);
     var eventName = getHistoryEventName(r);
     var scoreText = (r.home_score != null && r.away_score != null) ? ('Scor ' + r.home_score + '-' + r.away_score) : (r.source === 'matches' ? 'Live din secțiunea Meciuri' : 'Meci neînchis');
-    var sourceChip = r.source === 'log'
-      ? '<span style="font-size:10px;color:var(--pur);border:1px solid rgba(168,85,247,.22);padding:2px 7px;border-radius:999px;background:rgba(168,85,247,.10)">ISTORIC FIX</span>'
+    var sourceChip = r.source === 'store'
+      ? '<span style="font-size:10px;color:var(--pur);border:1px solid rgba(168,85,247,.22);padding:2px 7px;border-radius:999px;background:rgba(168,85,247,.10)">STOCAT MECIURI</span>'
       : '<span style="font-size:10px;color:var(--acc);border:1px solid rgba(59,130,246,.22);padding:2px 7px;border-radius:999px;background:rgba(59,130,246,.10)">LIVE MECIURI</span>';
     var metaLine = r.source === 'log'
       ? ((r.event_date ? ('Meci ' + fmtDateTime(r.event_date) + ' • ') : '') + 'Logat ' + fmtDateTime(r.logged_at || r.prediction_created_at) + ' • ' + (r.market || '—') + ' @ ' + Number(r.odds || 0).toFixed(2))

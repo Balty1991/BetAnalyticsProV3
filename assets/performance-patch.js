@@ -78,6 +78,8 @@
 
   // Hotfix Istoric: adaugă categoria O2.5 din aceleași surse ca tabul Meciuri.
   function installO25HistoryHotfix(){
+    // O2.5 este nativ în historic_meciuri_tracker.js; nu mai citim RECOMMENDATION_LOG aici.
+    return;
     if(window.__baO25HistoryHotfix)return; window.__baO25HistoryHotfix=true;
     var MS=['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'], DR=['Dum','Lun','Mar','Mie','Joi','Vin','Sam'];
     function nv(v){return Number(v)||0}
