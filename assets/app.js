@@ -4940,51 +4940,70 @@ function updateHeaderStatusOnly(){
   if($('sb-text')) $('sb-text').innerHTML = rawMl+' ML predictions — '+rawOdds+' cu cote — '+saCountLabel+' — ora '+timeStr+enrichSuffix+getDataFreshnessHtml();
 }
 
+function getJsonFastStatus(path, fallback, timeoutMs){
+  timeoutMs = timeoutMs || 900;
+  var url = getBase() + path + '?t=' + Date.now();
+  if(typeof AbortController === 'undefined'){
+    return getJson(path, fallback).catch(function(){ return fallback; });
+  }
+  var controller = new AbortController();
+  var timer = setTimeout(function(){ try{ controller.abort(); }catch(e){} }, timeoutMs);
+  return fetch(url, { cache:'no-store', signal:controller.signal })
+    .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(data){
+      _JSON_MEM_CACHE[path] = { ts: Date.now(), data:data };
+      return data;
+    })
+    .catch(function(){ return fallback; })
+    .finally(function(){ clearTimeout(timer); });
+}
+
 function doSoftRefresh(){
   var now = Date.now();
   if(BA_SOFT_REFRESH_RUNNING){
-    toast('Verificarea rulează deja.', 'warn');
+    updateHeaderStatusOnly();
     return Promise.resolve(false);
   }
   if(now - BA_LAST_SOFT_REFRESH_TS < BA_MIN_SOFT_REFRESH_GAP_MS){
     updateHeaderStatusOnly();
-    toast('Datele sunt deja verificate.', 'ok');
     return Promise.resolve(true);
   }
+
   BA_LAST_SOFT_REFRESH_TS = now;
   BA_SOFT_REFRESH_RUNNING = true;
   setHeaderRefreshBusy(true);
-  toast('Verific rapid datele...', 'ok');
+  updateHeaderStatusOnly();
 
-  // Refresh manual rapid: nu mai blocăm aplicația cu loader și nu mai reanalizăm toate meciurile.
-  // Luăm doar fișiere mici de status; lista de meciuri rămâne instant pe ecran.
+  // Refresh manual instant: NU pornește loader, NU reanalizează meciuri, NU reîncarcă fișiere mari.
+  // Verifică doar 2-3 fișiere mici cu timeout scurt; dacă serverul răspunde greu, UI-ul rămâne rapid.
   return Promise.all([
-    getJsonFresh('/data/meta.json', APP_META || {}),
-    getJsonFresh('/data/build_status.json', BUILD_STATUS || {}),
-    getJsonFresh('/data/model_benchmarks.json', MODEL_BENCHMARKS || {})
+    getJsonFastStatus('/data/meta.json', APP_META || {}, 900),
+    getJsonFastStatus('/data/build_status.json', BUILD_STATUS || {}, 900),
+    getJsonFastStatus('/data/model_benchmarks.json', MODEL_BENCHMARKS || {}, 900)
   ]).then(function(results){
     APP_META = results[0] || APP_META || {};
     BUILD_STATUS = results[1] || BUILD_STATUS || {};
     MODEL_BENCHMARKS = results[2] || MODEL_BENCHMARKS || {};
     updateHeaderStatusOnly();
     try { if(document.getElementById('perf-verdict-content')) renderPerformantaVerdict(); } catch(e){}
-    toast('Actualizat rapid — fără reîncărcare completă.', 'ok');
     return true;
   }).catch(function(err){
     console.warn('[SoftRefresh] failed', err);
     updateHeaderStatusOnly();
-    toast('Nu am putut verifica online, păstrez datele de pe ecran.', 'warn');
     return false;
   }).finally(function(){
-    BA_SOFT_REFRESH_RUNNING = false;
-    setHeaderRefreshBusy(false);
+    // spinner scurt, controlat; niciodată 10-15 secunde
+    setTimeout(function(){
+      BA_SOFT_REFRESH_RUNNING = false;
+      setHeaderRefreshBusy(false);
+    }, 350);
   });
 }
 
 function doRefresh(isManual){
-  // Dacă aplicația este deja încărcată, butonul din header face doar refresh rapid.
-  // Full refresh-ul rămâne pentru boot/auto-sync, nu la fiecare tap manual.
-  if(isManual && ALL_MATCHES && ALL_MATCHES.length){
+  // Orice apăsare manuală pe buton este doar soft refresh instant.
+  // Nu mai declanșează niciodată sync complet, nici dacă boot-ul încă procesează.
+  if(isManual){
     return doSoftRefresh();
   }
   if(BA_REFRESH_RUNNING){
