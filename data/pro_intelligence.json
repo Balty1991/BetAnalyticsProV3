@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-04T19:06:53.389512+00:00",
+  "updated_at": "2026-05-04T19:46:16.707875+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 57.9,
+  "overall_score": 57.5,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,22 +9,22 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 62,
-    "candidates_with_odds_and_probability": 55,
+    "pending_rows": 59,
+    "candidates_with_odds_and_probability": 52,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 42,
+    "speculative": 39,
     "safe": 4,
     "balanced": 9
   },
   "market_distribution_top150": {
-    "Under 3.5G": 34,
+    "Under 3.5G": 32,
     "Over 1.5G": 16,
-    "BTTS": 5
+    "BTTS": 4
   },
   "league_distribution_top150": {
     "Copa Sudamericana": 9,
@@ -34,8 +34,6 @@
     "Superliga": 1,
     "FA Cup": 1,
     "K League 1": 5,
-    "Segunda División": 1,
-    "Allsvenskan": 2,
     "La Liga": 1,
     "Brasileirão Serie B": 1,
     "Super League": 1,
@@ -43,7 +41,6 @@
     "Europa League": 2,
     "Champions League": 1,
     "Saudi Pro League": 1,
-    "Ekstraklasa": 1,
     "Premier League": 1
   },
   "bankroll": {
@@ -685,34 +682,6 @@
       ]
     },
     {
-      "event_id": 46350,
-      "prediction_id": 3500,
-      "home": "Djurgårdens IF",
-      "away": "IFK Göteborg",
-      "league": "Allsvenskan",
-      "event_date": "2026-05-04T20:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.37,
-      "model_probability": 0.7777,
-      "model_probability_pct": 77.77,
-      "implied_probability_pct": 72.99,
-      "fair_odds": 1.286,
-      "edge_pp": 4.78,
-      "ev_pct": 6.54,
-      "kelly_fraction": 0.0442,
-      "kelly_units_100": 4.42,
-      "confidence": 34.57,
-      "score": 92.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 77.8% vs. probabilitate implicată 73.0%.",
-        "EV estimat 6.5% și edge 4.8 puncte procentuale.",
-        "Miză Kelly fracțională 4.42% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9420,
       "prediction_id": 3557,
       "home": "Universidad Católica",
@@ -906,6 +875,34 @@
         "Probabilitate model 77.7% vs. probabilitate implicată 75.2%.",
         "EV estimat 3.3% și edge 2.5 puncte procentuale.",
         "Miză Kelly fracțională 2.48% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 204849,
+      "prediction_id": 3249,
+      "home": "Kyoto Sanga FC",
+      "away": "Gamba Osaka",
+      "league": "J1 League",
+      "event_date": "2026-04-29T09:00:00+03:00",
+      "market": "BTTS",
+      "odds": 1.617,
+      "model_probability": 0.6529,
+      "model_probability_pct": 65.29,
+      "implied_probability_pct": 61.84,
+      "fair_odds": 1.532,
+      "edge_pp": 3.45,
+      "ev_pct": 5.57,
+      "kelly_fraction": 0.0226,
+      "kelly_units_100": 2.26,
+      "confidence": 44.14,
+      "score": 85.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 65.3% vs. probabilitate implicată 61.8%.",
+        "EV estimat 5.6% și edge 3.4 puncte procentuale.",
+        "Miză Kelly fracțională 2.26% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1849,20 +1846,20 @@
     },
     {
       "key": "BTTS",
-      "bets": 101,
-      "wins": 73,
-      "winrate": 72.28,
-      "profit_units": 12.51,
-      "roi_pct": 12.38,
+      "bets": 102,
+      "wins": 74,
+      "winrate": 72.55,
+      "profit_units": 13.09,
+      "roi_pct": 12.83,
       "avg_odds": 1.552
     },
     {
       "key": "Under 3.5G",
-      "bets": 422,
+      "bets": 424,
       "wins": 307,
-      "winrate": 72.75,
-      "profit_units": 0.88,
-      "roi_pct": 0.21,
+      "winrate": 72.41,
+      "profit_units": -1.12,
+      "roi_pct": -0.26,
       "avg_odds": 1.389
     },
     {
