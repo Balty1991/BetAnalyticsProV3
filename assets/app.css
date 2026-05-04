@@ -6526,3 +6526,57 @@ button[onclick*="resetFilter"]:hover {
     padding: 0 1px !important;
   }
 }
+
+/* ===== Match cards: API logos only + explicit kickoff date/time ===== */
+.m17-league-logo {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+}
+.m17-league-logo img {
+  width: 15px !important;
+  height: 15px !important;
+  object-fit: contain !important;
+}
+.m17-time {
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  text-align: right !important;
+}
+.m17-time .m17-date {
+  display: block !important;
+  color: var(--c-muted) !important;
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+}
+.m17-time .m17-hour {
+  display: block !important;
+  color: var(--c-text) !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+.m17-time .m17-countdown {
+  margin-top: 1px !important;
+}
+
+@media (max-width: 768px) {
+  .m17-time { gap: 1px !important; }
+  .m17-time .m17-date {
+    display: block !important;
+    font-size: 8px !important;
+  }
+  .m17-time .m17-hour {
+    font-size: 11px !important;
+  }
+  .m17-time .m17-countdown {
+    padding: 2px 6px !important;
+    font-size: 8px !important;
+  }
+}

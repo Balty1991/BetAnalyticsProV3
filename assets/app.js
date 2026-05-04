@@ -846,13 +846,18 @@ function teamInitials(name){
   if(parts.length === 1) return parts[0].substring(0,2).toUpperCase();
   return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
 }
-function logoImgHtml(url, alt, size, extraClass){
+function logoImgHtml(url, alt, size, extraClass, options){
   var fs = Math.max(8, Math.round(size * 0.38));
   var initials = teamInitials(alt);
   var cls = String(extraClass || '').trim();
   var clsAttr = cls ? (' ' + cls) : '';
+  var opts = options || {};
+  var noFallback = !!opts.noFallback;
   var fallback = '<span class="'+cls+'" style="width:'+size+'px;height:'+size+'px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);font-size:'+fs+'px;font-weight:800;color:var(--muted);font-family:var(--mono);flex-shrink:0">'+initials+'</span>';
-  if(!url) return fallback;
+  if(!url) return noFallback ? '' : fallback;
+  if(noFallback){
+    return '<img src="'+url+'" alt="'+alt+'" width="'+size+'" height="'+size+'" class="mc-team-logo'+clsAttr+'" style="flex-shrink:0" onerror="this.remove()" loading="lazy"/>';
+  }
   return '<img src="'+url+'" alt="'+alt+'" width="'+size+'" height="'+size+'" class="mc-team-logo'+clsAttr+'" style="flex-shrink:0" onerror="this.outerHTML=\''+fallback.replace(/'/g,"\\'")+'\'" loading="lazy"/>';
 }
 function htmlEsc(v){
@@ -924,9 +929,9 @@ function renderEventIdentity(row, options){
   var secondaryHtml = opts.secondaryHtml || '';
   var scoreBadgeHtml = opts.scoreBadgeHtml || '';
   var showLeague = opts.showLeague !== false;
-  var homeLogo = logoImgHtml(teamLogoUrl(meta.homeApiId), meta.home, logoSize, 'event-inline-logo');
-  var awayLogo = logoImgHtml(teamLogoUrl(meta.awayApiId), meta.away, logoSize, 'event-inline-logo');
-  var leagueLogo = showLeague ? logoImgHtml(leagueLogoUrl(meta.leagueApiId), meta.league, leagueSize, 'event-inline-logo event-inline-league-logo') : '';
+  var homeLogo = logoImgHtml(teamLogoUrl(meta.homeApiId), meta.home, logoSize, 'event-inline-logo', { noFallback:true });
+  var awayLogo = logoImgHtml(teamLogoUrl(meta.awayApiId), meta.away, logoSize, 'event-inline-logo', { noFallback:true });
+  var leagueLogo = showLeague ? logoImgHtml(leagueLogoUrl(meta.leagueApiId), meta.league, leagueSize, 'event-inline-logo event-inline-league-logo', { noFallback:true }) : '';
   var leagueHtml = showLeague ? ('<span class="event-inline-league">'+leagueLogo+'<span>'+htmlEsc(meta.league || '—')+'</span></span>') : '';
   var subLine = (leagueHtml || secondaryHtml) ? ('<div class="event-inline-sub">'+leagueHtml+(secondaryHtml ? '<span class="event-inline-secondary">'+secondaryHtml+'</span>' : '')+'</div>') : '';
   return '<div class="event-inline-stack">'+
@@ -942,7 +947,7 @@ function renderEventIdentity(row, options){
 function renderLeagueBadge(row, size){
   var meta = resolveVisualMeta(row || {});
   var iconSize = Number(size || 12);
-  return '<span class="event-inline-league">'+logoImgHtml(leagueLogoUrl(meta.leagueApiId), meta.league, iconSize, 'event-inline-logo event-inline-league-logo')+'<span>'+htmlEsc(meta.league || '—')+'</span></span>';
+  return '<span class="event-inline-league">'+logoImgHtml(leagueLogoUrl(meta.leagueApiId), meta.league, iconSize, 'event-inline-logo event-inline-league-logo', { noFallback:true })+'<span>'+htmlEsc(meta.league || '—')+'</span></span>';
 }
 
 // ============================================================
@@ -4303,9 +4308,9 @@ function analyzeMatch(raw){
     winner: false,
     fav: !!raw.favorite_recommend
   };
-  var homeApiId = e.home_team_obj ? e.home_team_obj.api_id : null;
-  var awayApiId = e.away_team_obj ? e.away_team_obj.api_id : null;
-  var leagueApiId = e.league ? e.league.api_id : null;
+  var homeApiId = e.home_team_obj ? (e.home_team_obj.api_id || e.home_team_obj.id || null) : null;
+  var awayApiId = e.away_team_obj ? (e.away_team_obj.api_id || e.away_team_obj.id || null) : null;
+  var leagueApiId = e.league ? (e.league.api_id || e.league.id || null) : null;
 
   var leagueTierInfo = getLeagueTierInfo(e.league ? e.league.name : '');
   return {
@@ -6190,7 +6195,6 @@ function openDashboardStream(type){
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
-  if($('match-verdict-filter')) $('match-verdict-filter').value = 'all';
   if($('match-pro-mode')) $('match-pro-mode').value = (type === 'pro_active' ? 'pro' : 'all');
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
@@ -6220,7 +6224,6 @@ function resetMatchFilters(){
   if($('league-filter')) $('league-filter').value = '';
   if($('match-date-filter')) $('match-date-filter').value = 'all';
   if($('match-market-filter')) $('match-market-filter').value = '';
-  if($('match-verdict-filter')) $('match-verdict-filter').value = 'all';
   if($('match-pro-mode')) $('match-pro-mode').value = 'all';
   if($('match-min-prob')) $('match-min-prob').value = 0;
   if($('match-min-edge')) $('match-min-edge').value = 0;
@@ -6302,6 +6305,16 @@ function getMatchKickoffLabel(m){
   if(!isFinite(d.getTime())) return String(raw);
   return d.toLocaleDateString('ro-RO') + ' • ' + d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
 }
+function getMatchKickoffParts(m){
+  var raw = m && (m.event_date || m.eventDate || m.date || m.starts_at || m.kickoff || m.start_time || null);
+  if(!raw) return { dateLabel:'Data indisponibilă', timeLabel:'—' };
+  var d = new Date(raw);
+  if(!isFinite(d.getTime())) return { dateLabel:String(raw), timeLabel:'—' };
+  return {
+    dateLabel: d.toLocaleDateString('ro-RO', { weekday:'short', day:'2-digit', month:'2-digit' }).replace(/^./, function(ch){ return String(ch || '').toUpperCase(); }),
+    timeLabel: d.toLocaleTimeString('ro-RO', { hour:'2-digit', minute:'2-digit' })
+  };
+}
 function getMatchKickoffCountdown(m){
   var raw = m && (m.event_date || m.eventDate || m.date || m.starts_at || m.kickoff || m.start_time || null);
   if(!raw) return 'fără countdown';
@@ -6364,7 +6377,6 @@ function renderMatches(){
   var leagueF = $('league-filter') ? $('league-filter').value : '';
   var dateF = $('match-date-filter') ? $('match-date-filter').value : 'all';
   var marketF = $('match-market-filter') ? $('match-market-filter').value : '';
-  var verdictF = $('match-verdict-filter') ? $('match-verdict-filter').value : 'all';
   var proMode = $('match-pro-mode') ? $('match-pro-mode').value : 'all';
   var minProb = $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0;
   var minEdge = $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0;
@@ -6383,26 +6395,6 @@ function renderMatches(){
     if(r && r.event_id != null && r.event_id !== '') _motorEidSet[String(r.event_id)] = true;
     if(r && r.eventId != null && r.eventId !== '') _motorEidSet[String(r.eventId)] = true;
   });
-
-  var filterTypeMap = {
-    'o15':['over15'], 'o25':['over25'], 'u35':['under35'], 'btts':['btts'],
-    'dc':['dc1x','dcx2','dc12']
-  };
-  var marketLabelMap = {
-    'Over 1.5G':'over15','Over 2.5G':'over25','Under 3.5G':'under35','BTTS':'btts',
-    'Șansă Dublă 1X':'dc1x','Șansă Dublă X2':'dcx2','Șansă Dublă 12':'dc12'
-  };
-  function getActiveMarketBet(match, fallbackBet){
-    var wanted = filterTypeMap[CURRENT_FILTER] || null;
-    if(marketF && marketLabelMap[marketF]) wanted = [marketLabelMap[marketF]];
-    if(!wanted || !wanted.length) return fallbackBet || null;
-    if(fallbackBet && wanted.indexOf(fallbackBet.type) >= 0) return fallbackBet;
-    if(Array.isArray(match.eligibleCandidates)){
-      var found = match.eligibleCandidates.find(function(c){ return c && c.bestBet && wanted.indexOf(c.bestBet.type) >= 0; });
-      if(found && found.bestBet) return found.bestBet;
-    }
-    return fallbackBet || null;
-  }
 
   var filtered = ALL_MATCHES.filter(function(m){
     var b = m.bestBet || null;
@@ -6479,11 +6471,6 @@ function renderMatches(){
       }
       if(!matchesMarket) return false;
     }
-    if(verdictF && verdictF !== 'all'){
-      var verdictBet = getActiveMarketBet(m, b);
-      var verdictMeta = verdictBet ? getBetVerdict(m, verdictBet) : null;
-      if(!verdictMeta || verdictMeta.state !== verdictF) return false;
-    }
     if(proMode === 'pro' && !(m.leagueTier !== 'avoid' && (b.adjProb || 0) >= 72 && (b.edgePct || -999) >= 1.5 && (b.value || 0) >= 0.01)) return false;
     if((b.adjProb || 0) < minProb) return false;
     if((b.edgePct != null ? b.edgePct : -999) < minEdge) return false;
@@ -6498,8 +6485,16 @@ function renderMatches(){
 
   // Swap bestBet cu candidatul matchat de filtru, daca filtrul cere un tip specific
   // (altfel cardul arata bestBet original, chiar daca user a cerut Over 1.5)
+  var filterTypeMap = {
+    'o15':['over15'], 'o25':['over25'], 'u35':['under35'], 'btts':['btts'],
+    'dc':['dc1x','dcx2','dc12']
+  };
   var wantedTypes = filterTypeMap[CURRENT_FILTER];
   // Also handle market dropdown
+  var marketLabelMap = {
+    'Over 1.5G':'over15','Over 2.5G':'over25','Under 3.5G':'under35','BTTS':'btts',
+    'Șansă Dublă 1X':'dc1x','Șansă Dublă X2':'dcx2','Șansă Dublă 12':'dc12'
+  };
   if(marketF && marketLabelMap[marketF]) wantedTypes = [marketLabelMap[marketF]];
 
   if(wantedTypes && wantedTypes.length){
@@ -6555,9 +6550,12 @@ function renderMatches(){
     var motorMeta = m._motorMeta || getSmartBetStatusForMatch(m, b, smartBetLookup);
     var state = getAnalysisStateMeta(m.analysisState);
     var verdictClass = m.analysisState === 'ELIGIBLE' ? m.verdict : 'avoid';
-    var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 38);
-    var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 38);
-    var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14) : '';
+    var hLogo = logoImgHtml(teamLogoUrl(m.homeApiId), m.home, 38, '', { noFallback:true });
+    var aLogo = logoImgHtml(teamLogoUrl(m.awayApiId), m.away, 38, '', { noFallback:true });
+    var leagueLogo = m.leagueApiId ? logoImgHtml(leagueLogoUrl(m.leagueApiId), m.league, 14, '', { noFallback:true }) : '';
+    var hLogoWrap = hLogo ? '<div class="m17-logo">'+hLogo+'</div>' : '';
+    var aLogoWrap = aLogo ? '<div class="m17-logo">'+aLogo+'</div>' : '';
+    var leagueLogoWrap = leagueLogo ? '<span class="m17-league-logo">'+leagueLogo+'</span>' : '';
     var reasons = b ? buildRecommendationReasons(m, b).map(function(r){ return '<span class="reason-pill">'+r+'</span>'; }).join('') : '';
     var recLabel = b ? b.label : 'Fără recomandare activă';
     var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
@@ -6740,6 +6738,9 @@ function renderMatches(){
     '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
     var kickoffLabel = getMatchKickoffLabel(m);
     var countdown = getMatchKickoffCountdown(m);
+    var kickoffParts = getMatchKickoffParts(m);
+    var kickoffDateLabel = kickoffParts.dateLabel || kickoffLabel;
+    var kickoffTimeLabel = kickoffParts.timeLabel || '—';
     var trend = Number(m.smartScore || 0) >= 88 ? '↑↑' : (Number(m.smartScore || 0) >= 75 ? '↑' : '→');
     var valueDetected = b && Number(b.value || 0) > 0.02;
     var shortWhy = ((m.why && String(m.why).trim()) ? String(m.why).trim() : buildRecommendationReasons(m, b || {}).slice(0,2).join(' • '));
@@ -6783,17 +6784,17 @@ function renderMatches(){
 
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 match-card-m17 '+verdictClass+' '+m17RiskClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
       '<div class="m17-topline">'+
-        '<div class="m17-league">'+(leagueLogo || '')+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
-        '<div class="m17-time"><span>'+htmlEsc(kickoffLabel)+'</span><b>'+htmlEsc(countdown)+'</b></div>'+
+        '<div class="m17-league">'+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
+        '<div class="m17-time"><span class="m17-date">'+htmlEsc(kickoffDateLabel)+'</span><strong class="m17-hour">'+htmlEsc(kickoffTimeLabel)+'</strong><b class="m17-countdown">'+htmlEsc(countdown)+'</b></div>'+
       '</div>'+
       '<div class="m17-meta-row">'+
         '<span class="m17-country">🌍 '+htmlEsc(m.country || '—')+'</span>'+
         '<span class="m17-pill m17-state">'+htmlEsc(state.label || 'Analiză')+'</span>'+m17ScorePill+m17CalibPill+
       '</div>'+
       '<div class="m17-teams">'+
-        '<div class="m17-team home"><div class="m17-logo">'+hLogo+'</div><div class="m17-team-copy"><div class="m17-team-name">'+htmlEsc(m.home || '—')+'</div><div class="m17-team-prob">'+homeProb.toFixed(0)+'%</div></div></div>'+
+        '<div class="m17-team home">'+hLogoWrap+'<div class="m17-team-copy"><div class="m17-team-name">'+htmlEsc(m.home || '—')+'</div><div class="m17-team-prob">'+homeProb.toFixed(0)+'%</div></div></div>'+
         '<div class="m17-vs">VS</div>'+
-        '<div class="m17-team away"><div class="m17-logo">'+aLogo+'</div><div class="m17-team-copy"><div class="m17-team-name">'+htmlEsc(m.away || '—')+'</div><div class="m17-team-prob">'+awayProb.toFixed(0)+'%</div></div></div>'+ 
+        '<div class="m17-team away">'+aLogoWrap+'<div class="m17-team-copy"><div class="m17-team-name">'+htmlEsc(m.away || '—')+'</div><div class="m17-team-prob">'+awayProb.toFixed(0)+'%</div></div></div>'+ 
         '<div class="m17-ml-bar" aria-label="Probabilități 1X2"><span class="home" style="width:'+homeProb.toFixed(1)+'%"></span><span class="draw" style="width:'+drawProb.toFixed(1)+'%"></span><span class="away" style="width:'+awayProb.toFixed(1)+'%"></span></div>'+
         '<div class="m17-ml-note"><span>1: '+homeProb.toFixed(0)+'%</span><span>X: '+drawProb.toFixed(0)+'%</span><span>2: '+awayProb.toFixed(0)+'%</span></div>'+ 
       '</div>'+ 
