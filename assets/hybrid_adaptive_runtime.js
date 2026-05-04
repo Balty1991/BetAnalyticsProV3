@@ -209,9 +209,9 @@
     load(false);
     setTimeout(function(){ load(false); },1200);
     setTimeout(function(){ load(false); },3000);
-    setInterval(function(){ load(false); },7000);
-    // Manual refresh-ul din header rămâne instant; nu atașăm reload hybrid pe același buton.
-    // Pentru reload complet există window.refreshHybridAdaptiveEngine().
+    setInterval(function(){ if(!window.__BA_SOFT_REFRESH_ACTIVE) load(false); },120000);
+    // Manual refresh nu mai reîncarcă Hybrid Adaptive; rulează doar periodic, lent.
+
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

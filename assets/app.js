@@ -4860,8 +4860,8 @@ function ensureFullHistoryAssets(){
   if(FULL_HISTORY_ASSETS_PROMISE) return FULL_HISTORY_ASSETS_PROMISE;
   showLoader('Se încarcă istoricul extins...');
   FULL_HISTORY_ASSETS_PROMISE = loadScriptSequentially([
-    './assets/full-history.js?v=20260504refreshfix3',
-    './assets/full-history-hotfix.js?v=20260504refreshfix3'
+    './assets/full-history.js?v=20260418',
+    './assets/full-history-hotfix.js?v=20260420hotfix2'
   ]).then(function(){
     LAZY_DATA_READY.fullHistoryAssets = true;
     return true;
@@ -4910,7 +4910,8 @@ var BA_REFRESH_RUNNING = false;
 var BA_SOFT_REFRESH_RUNNING = false;
 var BA_LAST_SOFT_REFRESH_TS = 0;
 var BA_MIN_SOFT_REFRESH_GAP_MS = 3500;
-var BA_MANUAL_SOFT_REFRESH_FLAG_MS = 1600;
+var BA_LAST_MANUAL_REFRESH_AT = 0;
+try { window.__BA_SOFT_REFRESH_ACTIVE = false; } catch(e){}
 
 function setHeaderRefreshBusy(busy){
   var btn = $('btn-refresh');
@@ -4960,13 +4961,11 @@ function getJsonFastStatus(path, fallback, timeoutMs){
 }
 
 function doSoftRefresh(){
-  window.__BA_MANUAL_SOFT_REFRESH_UNTIL = Date.now() + BA_MANUAL_SOFT_REFRESH_FLAG_MS;
   var now = Date.now();
-  if(BA_SOFT_REFRESH_RUNNING){
-    updateHeaderStatusOnly();
-    return Promise.resolve(false);
-  }
-  if(now - BA_LAST_SOFT_REFRESH_TS < BA_MIN_SOFT_REFRESH_GAP_MS){
+  BA_LAST_MANUAL_REFRESH_AT = now;
+  try { window.__BA_SOFT_REFRESH_ACTIVE = true; window.__BA_MANUAL_REFRESH_GUARD_UNTIL = now + 2500; } catch(e){}
+
+  if(BA_SOFT_REFRESH_RUNNING || (now - BA_LAST_SOFT_REFRESH_TS < BA_MIN_SOFT_REFRESH_GAP_MS)){
     updateHeaderStatusOnly();
     return Promise.resolve(true);
   }
@@ -4976,35 +4975,25 @@ function doSoftRefresh(){
   setHeaderRefreshBusy(true);
   updateHeaderStatusOnly();
 
-  // Refresh manual instant: NU pornește loader, NU reanalizează meciuri, NU reîncarcă fișiere mari.
-  // Verifică doar 2-3 fișiere mici cu timeout scurt; dacă serverul răspunde greu, UI-ul rămâne rapid.
-  return Promise.all([
-    getJsonFastStatus('/data/meta.json', APP_META || {}, 900),
-    getJsonFastStatus('/data/build_status.json', BUILD_STATUS || {}, 900),
-    getJsonFastStatus('/data/model_benchmarks.json', MODEL_BENCHMARKS || {}, 900)
-  ]).then(function(results){
-    APP_META = results[0] || APP_META || {};
-    BUILD_STATUS = results[1] || BUILD_STATUS || {};
-    MODEL_BENCHMARKS = results[2] || MODEL_BENCHMARKS || {};
-    updateHeaderStatusOnly();
-    try { if(document.getElementById('perf-verdict-content')) renderPerformantaVerdict(); } catch(e){}
-    return true;
-  }).catch(function(err){
-    console.warn('[SoftRefresh] failed', err);
-    updateHeaderStatusOnly();
-    return false;
-  }).finally(function(){
-    // spinner scurt, controlat; niciodată 10-15 secunde
+  // Refresh manual = doar UI refresh local. Fără fetch, fără no-store, fără pipeline.
+  // Datele grele se încarcă la boot / auto-sync; butonul nu mai ține browserul 10-15 secunde.
+  try {
+    var active = getCurrentActiveTabName ? getCurrentActiveTabName() : '';
+    if(active === 'dashboard') renderDashboardVisuals();
+    else if(active === 'meciuri') updateHeaderStatusOnly();
+    else if(active === 'performanta' && document.getElementById('perf-verdict-content')) renderPerformantaVerdict();
+  } catch(e){}
+
+  return new Promise(function(resolve){
     setTimeout(function(){
       BA_SOFT_REFRESH_RUNNING = false;
+      try { window.__BA_SOFT_REFRESH_ACTIVE = false; } catch(e){}
       setHeaderRefreshBusy(false);
-    }, 350);
+      updateHeaderStatusOnly();
+      resolve(true);
+    }, 420);
   });
 }
-
-
-window.baSoftRefreshOnly = doSoftRefresh;
-window.doSoftRefresh = doSoftRefresh;
 
 function doRefresh(isManual){
   // Orice apăsare manuală pe buton este doar soft refresh instant.
@@ -10830,6 +10819,9 @@ function getDataFreshnessHtml(){
   return ' <span style="color:'+color+';font-weight:700" title="Ultima actualizare date">● '+label+'</span>';
 }
 function getStatusDisplayTime(){
+  if(BA_LAST_MANUAL_REFRESH_AT && (Date.now() - BA_LAST_MANUAL_REFRESH_AT) < 60000){
+    return new Date(BA_LAST_MANUAL_REFRESH_AT).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+  }
   var raw = (APP_META && APP_META.bsd_status && APP_META.bsd_status.fetched_at) || (APP_META && APP_META.updated_at) || null;
   if(!raw) return '';
   var dt = new Date(raw);
@@ -13434,8 +13426,8 @@ window.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ v
 
 /* ===== Inline script block 2 ===== */
 window.__FULL_HISTORY_LAZY_ASSETS__ = [
-    './assets/full-history.js?v=20260504refreshfix3',
-    './assets/full-history-hotfix.js?v=20260504refreshfix3'
+    './assets/full-history.js?v=20260418',
+    './assets/full-history-hotfix.js?v=20260420hotfix2'
   ];
 
 /* ===== Inline script block 3 ===== */

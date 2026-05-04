@@ -110,9 +110,9 @@
     run(false);
     setTimeout(function(){ run(false); }, 1500);
     setTimeout(function(){ run(false); }, 3500);
-    setInterval(function(){ run(false); }, 7000);
-    // Manual refresh-ul din header nu trebuie să reîncarce AI memory/adaptive_predictions.
-    // Pentru reload complet se poate apela explicit window.restoreAdaptiveTopPicks(true).
+    setInterval(function(){ if(!window.__BA_SOFT_REFRESH_ACTIVE) run(false); }, 120000);
+    // Manual refresh nu mai reîncarcă Adaptive Restore; rulează doar periodic, lent.
+
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

@@ -69,7 +69,7 @@
   function load(){
     if (clvMap || loading) return Promise.resolve(clvMap || {});
     loading = true;
-    return fetch('./data/clv_tracker.json?fresh=' + Date.now(), {cache:'no-store'})
+    return fetch('./data/clv_tracker.json?v=20260504refreshdeep1', {cache:'default'})
       .then(function(r){ return r.ok ? r.json() : {}; })
       .then(function(d){ clvMap = buildMap(d || {}); return clvMap; })
       .catch(function(){ clvMap = {}; return clvMap; })

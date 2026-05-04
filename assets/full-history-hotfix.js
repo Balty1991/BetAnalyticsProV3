@@ -369,12 +369,9 @@ function boot(){
     }
     if(typeof W.doRefresh==='function'&&!W.__fhHotfixRefresh){
       const old=W.doRefresh;
-      W.doRefresh=async function(){
-        const isManual = arguments && arguments[0] === true;
+      W.doRefresh=async function(isManual){
         const out=await old.apply(this,arguments);
-        if(isManual || Date.now() < Number(W.__BA_MANUAL_SOFT_REFRESH_UNTIL||0)){
-          return out;
-        }
+        if(isManual || W.__BA_SOFT_REFRESH_ACTIVE) return out;
         setTimeout(run,0);
         setTimeout(run,400);
         setTimeout(run,1000);
@@ -385,8 +382,7 @@ function boot(){
       };
       W.__fhHotfixRefresh=1;
     }
-    let __fhHotfixMoT=null;
-    const mo=new MutationObserver(()=>{ clearTimeout(__fhHotfixMoT); __fhHotfixMoT=setTimeout(run,120); });
+    const mo=new MutationObserver(()=>run());
     mo.observe(document.body,{childList:true,subtree:true});
   });
 }

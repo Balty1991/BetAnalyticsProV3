@@ -35,7 +35,7 @@
     var panel = document.getElementById("tab-clv");
     if (!panel) return;
 
-    fetch(CLV_DATA_URL + "?v=" + Date.now())
+    fetch(CLV_DATA_URL + "?v=20260504refreshdeep1", {cache:'default'})
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
