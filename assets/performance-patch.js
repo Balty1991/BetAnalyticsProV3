@@ -37,16 +37,17 @@
     document.querySelectorAll('.ba-pro-toast,.procc-floating-proof,#ba-pro-v22-toast,#procc-floating-proof').forEach(function(el){if(el&&el.parentNode)el.parentNode.removeChild(el)});
     document.querySelectorAll('body *').forEach(function(el){var txt=(el.textContent||'').replace(/\s+/g,' ').trim();if(txt.length&&txt.length<180&&isBadgeText(txt)&&el.parentNode)el.parentNode.removeChild(el)});
   }
-  function removeThemeSwitch(){
+  function removeThemeSwitchOnce(){
     try{localStorage.removeItem('ba-theme-mode-v1')}catch(e){}
     try{document.documentElement.removeAttribute('data-theme')}catch(e){}
     document.querySelectorAll('#ba-theme-toggle,.ba-theme-toggle,#ba-theme-switch-css,#ba-light-grey-css,#ba-light-grey-polish-css').forEach(function(el){if(el&&el.parentNode)el.parentNode.removeChild(el)});
   }
   function installThemeSwitchKiller(){
-    addStyle('ba-theme-switch-killer-css','#ba-theme-toggle,.ba-theme-toggle{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}html[data-theme="light"]{color-scheme:dark!important}');
-    removeThemeSwitch();
-    try{new MutationObserver(removeThemeSwitch).observe(document.documentElement,{childList:true,subtree:true,attributes:true})}catch(e){}
-    setInterval(removeThemeSwitch,600);
+    // Keep this lightweight: no MutationObserver / no interval. The aggressive cleaner caused startup hang on mobile.
+    addStyle('ba-theme-switch-killer-css','#ba-theme-toggle,.ba-theme-toggle{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}');
+    removeThemeSwitchOnce();
+    setTimeout(removeThemeSwitchOnce,300);
+    setTimeout(removeThemeSwitchOnce,1500);
   }
   function installBadgeCleaner(){
     addStyle('ba-remove-pro-badges-css','#ba-pro-v22-toast,.ba-pro-toast,#procc-floating-proof,.procc-floating-proof{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}');
@@ -56,7 +57,7 @@
   }
   function loadRuntimes(){
     if(window.__baRuntimeLoaderV21)return; window.__baRuntimeLoaderV21=true;
-    loadScript('assets/theme_switch_runtime.js?v=20260505disabled1','theme-switch-disabled-script');
+    loadScript('assets/theme_switch_runtime.js?v=20260505disabled2','theme-switch-disabled-script');
     loadScript('assets/logic_safety_patch.js?v=20260426logic1','logic-safety-patch-script');
     loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid8','hybrid-adaptive-runtime-script');
     loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');
@@ -85,11 +86,9 @@
   installBadgeCleaner();
   installO25HistoryHotfix();
   loadRuntimes();
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){watchHeader();installToastFilter();prefetch();removeBadges();removeThemeSwitch()});else{watchHeader();installToastFilter();prefetch();removeBadges();removeThemeSwitch()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){watchHeader();installToastFilter();prefetch();removeBadges();removeThemeSwitchOnce()});else{watchHeader();installToastFilter();prefetch();removeBadges();removeThemeSwitchOnce()}
   setTimeout(installToastFilter,1200);
   setTimeout(removeBadges,1600);
-  setTimeout(removeThemeSwitch,100);
-  setTimeout(removeThemeSwitch,1000);
 
   function installO25HistoryHotfix(){ return; }
 })();
