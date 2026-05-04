@@ -6722,15 +6722,21 @@ function renderMatches(){
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
     '</div>' : '';
+    var expertInsightFrame = '<div class="analysis-detail-expert-overview-frame">'+
+      buildAnalysisSection('Indicatori cheie', analysisMetricCards, 'analysis-detail-metrics-section')+
+      buildAnalysisSection('Context rapid', xgMiniGrid + simpleMetrics, 'analysis-detail-quick-section')+
+    '</div>';
+    var expertSupportFrame = (hybridBlock || reasons) ? '<div class="analysis-detail-expert-support-frame">'+
+      (hybridBlock ? buildAnalysisSection('Probabilități model', hybridBlock, 'analysis-detail-model-section') : '')+
+      (reasons ? buildAnalysisSection('Semnale cheie', '<div class="reason-list">'+reasons+'</div>', 'analysis-detail-reasons-section') : '')+
+    '</div>' : '';
     var expertDetails = '<div class="analysis-detail-shell expert">'+
       detailHero+
       buildAnalysisSection('', expertBadgeRow, 'analysis-detail-chips-section')+
       (b ? buildAnalysisSection('', getVerdictBlock(m,b), 'analysis-detail-verdict-section') : '')+
-      buildAnalysisSection('Indicatori cheie', analysisMetricCards, 'analysis-detail-metrics-section')+
-      buildAnalysisSection('Context rapid', xgMiniGrid + simpleMetrics, 'analysis-detail-quick-section')+
-      buildAnalysisSection('Probabilități model', hybridBlock, 'analysis-detail-model-section')+
+      expertInsightFrame+
+      expertSupportFrame+
       detailLowerFrame+
-      (reasons ? buildAnalysisSection('Semnale cheie', '<div class="reason-list">'+reasons+'</div>', 'analysis-detail-reasons-section') : '')+
     '</div>';
 
     // SIMPLU: fara grila metrica tehnica, fara badges — doar esentialul

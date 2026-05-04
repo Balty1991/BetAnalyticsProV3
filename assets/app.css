@@ -7400,3 +7400,185 @@ button[onclick*="resetFilter"]:hover {
   .ml5-inline-pill{font-size:9px;padding:2px 6px;}
   .analysis-detail-lower-frame .analysis-detail-ml5-section .analysis-detail-body > .ml5-inline-card{padding:6px 8px!important;}
 }
+
+/* ===== Expert mode compact frames ===== */
+.analysis-detail-expert-overview-frame,
+.analysis-detail-expert-support-frame{
+  position:relative;
+  display:grid;
+  gap:8px;
+  padding:9px;
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(18,27,46,.66), rgba(9,16,29,.86));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035), 0 8px 18px rgba(0,0,0,.10);
+}
+.analysis-detail-expert-overview-frame{
+  border:1px solid rgba(99,102,241,.18);
+}
+.analysis-detail-expert-support-frame{
+  border:1px solid rgba(59,130,246,.16);
+}
+.analysis-detail-expert-overview-frame::before,
+.analysis-detail-expert-support-frame::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:18px;
+  pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+}
+.analysis-detail-expert-overview-frame .analysis-detail-section,
+.analysis-detail-expert-support-frame .analysis-detail-section{
+  margin:0!important;
+  border-radius:14px!important;
+  background:rgba(255,255,255,.018)!important;
+  border-color:rgba(255,255,255,.055)!important;
+  box-shadow:none!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-title,
+.analysis-detail-expert-support-frame .analysis-detail-title{
+  padding:8px 10px 0!important;
+  font-size:8.5px!important;
+  letter-spacing:.09em!important;
+  color:rgba(203,213,225,.72)!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-body,
+.analysis-detail-expert-support-frame .analysis-detail-body{
+  padding:8px 10px 10px!important;
+}
+
+/* indicatori cheie compact */
+.analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric{
+  min-height:64px!important;
+  padding:8px 9px!important;
+  border-radius:12px!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric-k{
+  font-size:9px!important;
+  line-height:1!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric-v{
+  margin-top:4px!important;
+  font-size:13px!important;
+  line-height:1.06!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric-sub{
+  display:none!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-help-row{
+  display:none!important;
+}
+
+/* context rapid compact */
+.analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini-grid.ticket-mini-grid-premium{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:6px!important;
+  margin:0 0 6px!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini-grid.ticket-mini-grid-premium .ticket-mini{
+  padding:7px 6px!important;
+  border-radius:12px!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini .v{
+  font-size:13px!important;
+  line-height:1.06!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini .l{
+  font-size:8.5px!important;
+  margin-top:2px!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-quick-section .match-inline-row{
+  margin-top:0!important;
+  gap:6px!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-quick-section .match-inline-chip{
+  padding:5px 8px!important;
+  font-size:10px!important;
+  line-height:1.15!important;
+}
+.analysis-detail-expert-overview-frame .analysis-detail-quick-section .match-inline-chip:first-child{
+  display:none!important;
+}
+
+/* probabilitati model compact */
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-block{
+  padding:8px 9px!important;
+  border-radius:13px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-head{
+  margin-bottom:6px!important;
+  gap:6px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-title{
+  font-size:9px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-live{
+  padding:3px 7px!important;
+  font-size:9px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-grid{
+  gap:6px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-item{
+  padding:7px 5px!important;
+  border-radius:11px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-value{
+  font-size:12px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-label{
+  margin-top:3px!important;
+  font-size:8px!important;
+}
+
+/* semnale cheie compact */
+.analysis-detail-expert-support-frame .analysis-detail-reasons-section .reason-list{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px!important;
+}
+.analysis-detail-expert-support-frame .analysis-detail-reasons-section .reason-pill{
+  margin:0!important;
+  min-height:0!important;
+  padding:7px 9px!important;
+  border-radius:12px!important;
+  font-size:10px!important;
+  line-height:1.18!important;
+}
+
+@media(max-width:768px){
+  .analysis-detail-expert-overview-frame,
+  .analysis-detail-expert-support-frame{
+    gap:7px;
+    padding:8px;
+    border-radius:16px;
+  }
+  .analysis-detail-expert-overview-frame::before,
+  .analysis-detail-expert-support-frame::before{border-radius:16px;}
+  .analysis-detail-expert-overview-frame .analysis-detail-section,
+  .analysis-detail-expert-support-frame .analysis-detail-section{border-radius:12px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-title,
+  .analysis-detail-expert-support-frame .analysis-detail-title{padding:7px 9px 0!important;font-size:8px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-body,
+  .analysis-detail-expert-support-frame .analysis-detail-body{padding:7px 9px 9px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric-grid{gap:5px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric{min-height:60px!important;padding:7px 8px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric-k{font-size:8.5px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-metrics-section .analysis-metric-v{font-size:12px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini-grid.ticket-mini-grid-premium{gap:5px!important;margin-bottom:5px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini-grid.ticket-mini-grid-premium .ticket-mini{padding:6px 5px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini .v{font-size:12px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-quick-section .ticket-mini .l{font-size:8px!important;}
+  .analysis-detail-expert-overview-frame .analysis-detail-quick-section .match-inline-chip{padding:4px 7px!important;font-size:9.5px!important;}
+  .analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-block{padding:7px 8px!important;}
+  .analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-grid{gap:5px!important;}
+  .analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-item{padding:6px 4px!important;}
+  .analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-value{font-size:11.5px!important;}
+  .analysis-detail-expert-support-frame .analysis-detail-model-section .hybrid-prob-label{font-size:7.8px!important;}
+  .analysis-detail-expert-support-frame .analysis-detail-reasons-section .reason-list{gap:5px!important;}
+  .analysis-detail-expert-support-frame .analysis-detail-reasons-section .reason-pill{padding:6px 8px!important;font-size:9.5px!important;}
+}
