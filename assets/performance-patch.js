@@ -52,7 +52,7 @@
     loadScript('assets/api_history_label_runtime.js?v=20260428color2','api-history-label-runtime-script');
     loadScript('assets/dashboard_history21_sync.js?v=20260428videoexact3','dashboard-history21-sync-script');
     loadScript('assets/dashboard_motor_tracker_sync.js?v=20260503motortracker21','dashboard-motor-tracker-sync-script');
-    loadScript('assets/performance_color_runtime.js?v=20260504lightpolish2','performance-color-runtime-script');
+    loadScript('assets/performance_color_runtime.js?v=20260504lightpolish3','performance-color-runtime-script');
     addLink('assets/pro_command_center.css?v=20260428weekstable','pro-command-center-css');
     loadScript('assets/pro_command_center.js?v=20260428weekstable','pro-command-center-script');
     loadScript('assets/pro_intelligence_runtime.js?v=20260503m23','pro-intelligence-runtime-script');
@@ -76,9 +76,5 @@
   setTimeout(installToastFilter,1200);
   setTimeout(removeBadges,1600);
 
-  // Hotfix Istoric: adaugă categoria O2.5 din aceleași surse ca tabul Meciuri.
-  function installO25HistoryHotfix(){
-    // O2.5 este inclus nativ în historic_meciuri_tracker.js și folosește matches_visible_history.json.
-    return;
-  }
+  function installO25HistoryHotfix(){ return; }
 })();
