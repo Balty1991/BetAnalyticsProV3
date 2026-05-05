@@ -1,0 +1,51 @@
+/* BetAnalytics Pro — mobile browser Desktop site mode fix
+   Keeps the navigation visible when Brave/Chrome uses a wide desktop viewport on a phone. */
+@media (min-width:701px) and (max-width:1180px){
+  html,body{overflow-x:hidden!important;}
+  .header{position:sticky!important;top:0!important;z-index:320!important;}
+  .tabs{
+    display:flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    position:relative!important;
+    z-index:310!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:10px 12px!important;
+    gap:8px!important;
+    overflow-x:auto!important;
+    scrollbar-width:none!important;
+    border-top:1px solid rgba(43,229,197,.10)!important;
+    border-bottom:1px solid rgba(164,180,205,.14)!important;
+    background:linear-gradient(180deg,rgba(5,10,18,.96),rgba(5,10,18,.88))!important;
+    backdrop-filter:blur(18px) saturate(130%)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(130%)!important;
+  }
+  .tabs::-webkit-scrollbar{display:none!important;}
+  .tab{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:0 0 auto!important;
+    min-height:44px!important;
+    padding:9px 18px!important;
+    border-radius:999px!important;
+    font-size:14px!important;
+    line-height:1!important;
+    color:rgba(225,234,247,.78)!important;
+    border:1px solid rgba(164,180,205,.16)!important;
+    border-bottom:1px solid rgba(164,180,205,.16)!important;
+    background:linear-gradient(180deg,rgba(16,28,42,.88),rgba(7,13,23,.92))!important;
+    white-space:nowrap!important;
+  }
+  .tab.active{
+    color:#dffff8!important;
+    border-color:rgba(43,229,197,.58)!important;
+    background:radial-gradient(circle at 50% 0,rgba(43,229,197,.32),rgba(13,27,38,.92) 62%)!important;
+    box-shadow:0 0 22px rgba(43,229,197,.18)!important;
+  }
+  .mobile-nav,.bottom-nav,.nav-bottom,[class*="mobile-nav"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+  .main{width:100%!important;max-width:none!important;margin:0!important;padding:16px 12px 34px!important;}
+  .tab-content.active{display:block!important;}
+}
