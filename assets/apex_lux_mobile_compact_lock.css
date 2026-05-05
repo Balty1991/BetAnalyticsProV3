@@ -1,0 +1,89 @@
+/* BetAnalytics Pro — compact mobile resolution lock
+   Goal: keep the Xiaomi/mobile layout density from the approved screenshot:
+   compact header, Meciuri title/count/filter on one row, all 7 chips visible, no horizontal swipe. */
+@media(max-width:700px){
+  :root{--ba-mobile-nav-gap:106px}
+  .header{padding:13px 20px 15px!important}
+  .header-inner{padding:0!important;align-items:center!important;gap:12px!important}
+  .logo-title{font-size:26px!important;line-height:1!important;letter-spacing:-.045em!important}
+  .logo-sub{margin-top:6px!important;font-size:10px!important;letter-spacing:.22em!important}
+  .logo-sync-row{margin-top:9px!important;gap:8px!important;font-size:12px!important;line-height:1.15!important}
+  .logo-sync-row b,#hq-ml,#hq-odds{font-size:18px!important;line-height:1!important}
+  .sb-dot.live{width:10px!important;height:10px!important;box-shadow:0 0 0 5px rgba(43,229,197,.13),0 0 20px rgba(43,229,197,.66)!important}
+  .btn-refresh-ico,#btn-refresh{width:56px!important;height:56px!important;min-width:56px!important;border-radius:21px!important}
+  .btn-refresh-ico svg,#btn-refresh svg{width:23px!important;height:23px!important}
+  .main{padding:14px 18px calc(var(--ba-mobile-nav-gap) + 34px)!important}
+
+  #tab-meciuri .mx21-card{padding:15px 13px 14px!important;border-radius:26px!important;margin:0 0 16px!important;overflow:hidden!important}
+  #tab-meciuri .mx21-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;align-items:center!important;gap:6px!important;margin:0 0 12px!important;padding:0 0 12px!important;border-bottom:1px solid rgba(214,228,255,.10)!important;flex-wrap:nowrap!important}
+  #tab-meciuri .mx21-title-row{display:flex!important;align-items:center!important;gap:8px!important;min-width:0!important;overflow:hidden!important;white-space:nowrap!important}
+  #tab-meciuri .mx21-ball{width:36px!important;height:36px!important;min-width:36px!important;font-size:19px!important}
+  #tab-meciuri .mx21-title{font-size:25px!important;line-height:1!important;letter-spacing:-.052em!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important}
+  #tab-meciuri .mx21-count,#tab-meciuri .mx21-filter-btn{height:36px!important;padding:0 9px!important;font-size:12px!important;font-weight:850!important;flex:0 0 auto!important;white-space:nowrap!important;letter-spacing:.01em!important}
+  #tab-meciuri .mx21-filter-btn::before{font-size:14px!important;margin-right:5px!important}
+
+  #tab-meciuri .mx21-control-row{display:grid!important;grid-template-columns:minmax(0,1.16fr) minmax(78px,.70fr) minmax(58px,.52fr)!important;gap:6px!important;margin:0 0 11px!important}
+  #tab-meciuri .mx21-mode{height:42px!important;padding:3px!important}
+  #tab-meciuri .mx21-mode-btn{height:34px!important;font-size:12.5px!important;padding:0 4px!important}
+  #tab-meciuri .mx21-select{height:42px!important;font-size:12.5px!important;padding-left:9px!important;padding-right:25px!important;border-radius:15px!important;background-position:right 10px center!important}
+
+  #tab-meciuri .mx21-chiprail{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important;overflow:visible!important;padding:0!important;margin:0!important;width:100%!important;scrollbar-width:none!important}
+  #tab-meciuri .mx21-chiprail::-webkit-scrollbar{display:none!important}
+  #tab-meciuri .mx21-chip{min-width:0!important;width:100%!important;min-height:38px!important;padding:0 2px!important;font-size:10.5px!important;letter-spacing:-.065em!important;line-height:1!important;flex:initial!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:1px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
+
+  #tab-meciuri .date-group{margin:18px 0 22px!important}
+  #tab-meciuri .date-label{font-size:13px!important;letter-spacing:.16em!important;margin:0 0 14px!important}
+  #tab-meciuri .matches-grid{gap:18px!important}
+
+  .match-card-m17{padding:18px 14px 16px!important;border-radius:25px!important;gap:12px!important;min-height:auto!important}
+  .match-card-m17::before{height:3px!important}
+  .m17-topline{padding:12px 12px!important;border-radius:18px!important}
+  .m17-league{font-size:16px!important;gap:8px!important}
+  .m17-league-logo{width:32px!important;height:32px!important;min-width:32px!important}
+  .m17-league-logo img,.m17-league img{max-width:29px!important;max-height:29px!important}
+  .m17-time .m17-date{font-size:10px!important;letter-spacing:.10em!important}
+  .m17-time .m17-hour{font-size:21px!important;line-height:1!important}
+  .m17-time .m17-countdown{font-size:11px!important;padding:5px 9px!important}
+  .m17-meta-row{gap:8px!important;padding:0 2px!important}
+  .m17-country{font-size:14px!important}
+  .m17-pill{min-height:27px!important;font-size:11px!important;padding:5px 9px!important}
+  .m17-teams{grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr)!important;gap:7px!important;padding:0 2px 2px!important}
+  .m17-logo{width:40px!important;height:40px!important;flex-basis:40px!important;min-width:40px!important}
+  .m17-logo img{max-width:35px!important;max-height:35px!important}
+  .m17-team-name{font-size:16px!important;line-height:1.1!important;letter-spacing:-.035em!important}
+  .m17-team-prob{font-size:12px!important;margin-top:4px!important}
+  .m17-vs{width:34px!important;height:34px!important;font-size:13px!important}
+  .m17-ml-bar{height:7px!important;margin-top:9px!important}
+  .m17-ml-note{font-size:12px!important;gap:14px!important;margin-top:7px!important}
+  .m17-reco{padding:15px 12px 13px!important;border-radius:20px!important}
+  .m17-reco-kicker{font-size:12px!important;letter-spacing:.17em!important}
+  .m17-pick{font-size:22px!important;line-height:1.1!important}
+  .m17-odd{font-size:20px!important;padding:8px 12px!important;border-radius:14px!important}
+  .m17-metric-strip{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important;margin-top:13px!important}
+  .m17-metric{padding:9px 4px!important;border-radius:14px!important}
+  .m17-metric span{font-size:9px!important;letter-spacing:.08em!important}
+  .m17-metric strong{font-size:14px!important}
+  .m17-pill-row{gap:7px!important;margin-top:11px!important;flex-wrap:wrap!important}
+  .m17-why{padding:12px 14px!important;border-radius:17px!important}
+  .m17-why span{font-size:10px!important;letter-spacing:.18em!important}
+  .m17-why strong{font-size:13px!important;line-height:1.4!important}
+  .m17-btn{min-height:45px!important;font-size:15px!important}
+
+  .mobile-nav{left:18px!important;right:18px!important;bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;border-radius:24px!important}
+  .mobile-nav-btn{min-height:56px!important;border-radius:20px!important}
+}
+@media(max-width:380px){
+  .main{padding-left:17px!important;padding-right:17px!important}
+  #tab-meciuri .mx21-card{padding-left:12px!important;padding-right:12px!important}
+  #tab-meciuri .mx21-head{gap:5px!important}
+  #tab-meciuri .mx21-title{font-size:22px!important}
+  #tab-meciuri .mx21-ball{width:34px!important;height:34px!important;min-width:34px!important;font-size:17px!important}
+  #tab-meciuri .mx21-count,#tab-meciuri .mx21-filter-btn{height:34px!important;font-size:11px!important;padding:0 7px!important}
+  #tab-meciuri .mx21-control-row{grid-template-columns:minmax(0,1.12fr) minmax(72px,.70fr) minmax(54px,.52fr)!important;gap:5px!important}
+  #tab-meciuri .mx21-mode-btn{font-size:11.5px!important}
+  #tab-meciuri .mx21-select{font-size:11.5px!important;padding-left:7px!important;padding-right:22px!important}
+  #tab-meciuri .mx21-chiprail{gap:3px!important}
+  #tab-meciuri .mx21-chip{min-height:36px!important;font-size:9.5px!important;padding:0 1px!important;letter-spacing:-.08em!important}
+  .m17-team-name{font-size:15px!important}
+  .m17-metric strong{font-size:13px!important}
+}
