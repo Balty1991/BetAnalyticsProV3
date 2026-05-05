@@ -1,0 +1,91 @@
+/* BetAnalytics Pro — final resolution/spacing retouch
+   Matches the approved reference density more closely: shorter header, lower nav, visible filters, better team room. */
+@media(max-width:700px){
+  .header{padding:10px 20px 12px!important}
+  .header-inner{gap:10px!important}
+  .logo-title{font-size:24px!important;line-height:.98!important;letter-spacing:-.043em!important}
+  .logo-sub{margin-top:5px!important;font-size:9.5px!important;letter-spacing:.21em!important}
+  .logo-sync-row{margin-top:8px!important;gap:7px!important;font-size:11px!important;line-height:1.1!important}
+  .logo-sync-row b,#hq-ml,#hq-odds{font-size:17px!important;line-height:1!important}
+  .sb-dot.live{width:9px!important;height:9px!important;box-shadow:0 0 0 5px rgba(43,229,197,.12),0 0 18px rgba(43,229,197,.62)!important}
+  .btn-refresh-ico,#btn-refresh{width:52px!important;height:52px!important;min-width:52px!important;border-radius:20px!important}
+  .btn-refresh-ico svg,#btn-refresh svg{width:22px!important;height:22px!important}
+  .main{padding:12px 18px 118px!important}
+
+  #tab-meciuri .mx21-card{padding:12px 13px 13px!important;border-radius:25px!important;margin-bottom:14px!important}
+  #tab-meciuri .mx21-head{grid-template-columns:minmax(0,1fr) auto auto!important;gap:6px!important;margin-bottom:10px!important;padding-bottom:10px!important}
+  #tab-meciuri .mx21-title-row{gap:7px!important}
+  #tab-meciuri .mx21-ball{width:34px!important;height:34px!important;min-width:34px!important;font-size:18px!important}
+  #tab-meciuri .mx21-title{font-size:24px!important;line-height:1!important;letter-spacing:-.052em!important}
+  #tab-meciuri .mx21-count,#tab-meciuri .mx21-filter-btn{height:34px!important;padding:0 9px!important;font-size:11.5px!important}
+  #tab-meciuri .mx21-filter-btn::before{font-size:13px!important;margin-right:5px!important}
+
+  #tab-meciuri .mx21-control-row{grid-template-columns:minmax(0,1.18fr) minmax(78px,.70fr) minmax(58px,.52fr)!important;gap:6px!important;margin-bottom:10px!important}
+  #tab-meciuri .mx21-mode{height:39px!important;padding:3px!important}
+  #tab-meciuri .mx21-mode-btn{height:31px!important;font-size:12px!important;padding:0 4px!important}
+  #tab-meciuri .mx21-select{height:39px!important;font-size:12px!important;padding-left:9px!important;padding-right:24px!important;border-radius:14px!important;background-position:right 9px center!important}
+
+  #tab-meciuri .mx21-chiprail{grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important;overflow:visible!important;padding:0!important;margin:0!important}
+  #tab-meciuri .mx21-chip{min-height:35px!important;padding:0 2px!important;font-size:10px!important;letter-spacing:-.07em!important;line-height:1!important;gap:0!important}
+
+  #tab-meciuri .date-group{margin:16px 0 20px!important}
+  #tab-meciuri .date-label{font-size:12.5px!important;letter-spacing:.16em!important;margin-bottom:12px!important}
+  #tab-meciuri .matches-grid{gap:18px!important}
+
+  .match-card-m17{padding:18px 14px 16px!important;border-radius:25px!important;gap:12px!important}
+  .m17-topline{padding:12px 12px!important;border-radius:18px!important}
+  .m17-league{font-size:17px!important;gap:8px!important}
+  .m17-league-logo{width:32px!important;height:32px!important;min-width:32px!important}
+  .m17-time .m17-date{font-size:10px!important;letter-spacing:.10em!important}
+  .m17-time .m17-hour{font-size:22px!important;line-height:1!important}
+  .m17-time .m17-countdown{font-size:11px!important;padding:5px 9px!important}
+  .m17-meta-row{gap:8px!important;padding:0 2px!important}
+  .m17-country{font-size:14px!important}
+  .m17-pill{min-height:27px!important;font-size:11px!important;padding:5px 9px!important}
+  .m17-teams{grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr)!important;gap:6px!important;padding:0!important}
+  .m17-team{gap:7px!important;min-width:0!important;align-items:center!important}
+  .m17-team.away{align-items:center!important}
+  .m17-logo{width:36px!important;height:36px!important;flex-basis:36px!important;min-width:36px!important}
+  .m17-logo img{max-width:32px!important;max-height:32px!important}
+  .m17-team-main{min-width:0!important;max-width:100%!important}
+  .m17-team-name{font-size:17px!important;line-height:1.08!important;letter-spacing:-.04em!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;display:block!important;max-width:none!important}
+  .m17-team-prob{font-size:12px!important;margin-top:4px!important}
+  .m17-vs{width:32px!important;height:32px!important;font-size:13px!important}
+  .m17-ml-bar{height:7px!important;margin-top:9px!important}
+  .m17-ml-note{font-size:12px!important;gap:14px!important;margin-top:7px!important}
+  .m17-reco{padding:15px 12px 13px!important;border-radius:20px!important}
+  .m17-reco-kicker{font-size:12px!important;letter-spacing:.17em!important}
+  .m17-pick{font-size:22px!important;line-height:1.1!important}
+  .m17-odd{font-size:20px!important;padding:8px 12px!important;border-radius:14px!important}
+  .m17-metric-strip{gap:7px!important;margin-top:13px!important}
+  .m17-metric{padding:9px 4px!important;border-radius:14px!important}
+  .m17-metric span{font-size:9px!important;letter-spacing:.08em!important}
+  .m17-metric strong{font-size:14px!important}
+  .m17-pill-row{gap:7px!important;margin-top:11px!important;flex-wrap:wrap!important}
+  .m17-why{padding:12px 14px!important;border-radius:17px!important}
+  .m17-why span{font-size:10px!important;letter-spacing:.18em!important}
+  .m17-why strong{font-size:13px!important;line-height:1.4!important}
+  .m17-btn{min-height:45px!important;font-size:15px!important}
+
+  .mobile-nav{left:18px!important;right:18px!important;bottom:calc(6px + env(safe-area-inset-bottom,0px))!important;border-radius:23px!important}
+  .mobile-nav-btn{min-height:52px!important;border-radius:19px!important}
+}
+@media(max-width:380px){
+  .header{padding:9px 18px 11px!important}
+  .logo-title{font-size:22px!important}
+  .logo-sync-row b,#hq-ml,#hq-odds{font-size:16px!important}
+  .btn-refresh-ico,#btn-refresh{width:50px!important;height:50px!important;min-width:50px!important}
+  .main{padding-left:16px!important;padding-right:16px!important}
+  #tab-meciuri .mx21-card{padding-left:11px!important;padding-right:11px!important}
+  #tab-meciuri .mx21-head{gap:5px!important}
+  #tab-meciuri .mx21-title{font-size:22px!important}
+  #tab-meciuri .mx21-ball{width:32px!important;height:32px!important;min-width:32px!important;font-size:16px!important}
+  #tab-meciuri .mx21-count,#tab-meciuri .mx21-filter-btn{height:32px!important;font-size:10.5px!important;padding:0 6px!important}
+  #tab-meciuri .mx21-control-row{grid-template-columns:minmax(0,1.12fr) minmax(72px,.70fr) minmax(54px,.52fr)!important;gap:5px!important}
+  #tab-meciuri .mx21-mode-btn{font-size:11px!important}
+  #tab-meciuri .mx21-select{font-size:11px!important;padding-left:7px!important;padding-right:21px!important}
+  #tab-meciuri .mx21-chiprail{gap:3px!important}
+  #tab-meciuri .mx21-chip{min-height:34px!important;font-size:9px!important;padding:0 1px!important;letter-spacing:-.08em!important}
+  .m17-team-name{font-size:15px!important}
+  .m17-metric strong{font-size:13px!important}
+}
