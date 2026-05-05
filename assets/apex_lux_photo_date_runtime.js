@@ -1,5 +1,5 @@
 /* BetAnalytics Pro — PHOTO EXACT date header runtime
-   Converts the Meciuri date separator to the reference calendar badge + uppercase label. */
+   Converts the Meciuri date separator to one reference calendar badge + uppercase label. */
 (function(){
   'use strict';
   var scheduled = false;
@@ -12,24 +12,37 @@
 
   function normalizeDateText(value){
     return String(value || '')
+      .replace(/[\u{1F4C5}\u{1F4C6}]\uFE0F?/gu, '')
       .replace(/^\s*📅\s*/u, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
 
+  function getSourceText(label){
+    var textNode = label && label.querySelector ? label.querySelector('.date-label-text') : null;
+    return normalizeDateText(
+      label.getAttribute('data-photo-date-original') ||
+      (textNode ? textNode.textContent : '') ||
+      label.textContent
+    );
+  }
+
   function badgeParts(label){
-    var parts = normalizeDateText(label).split(/\s+/).filter(Boolean);
-    var day = '—';
+    var clean = normalizeDateText(label);
+    var parts = clean.split(/\s+/).filter(Boolean);
+    var day = '';
     var month = '';
+
     for(var i=0;i<parts.length;i++){
       if(/^\d{1,2}$/.test(parts[i])){ day = parts[i]; break; }
     }
     for(var j=parts.length-1;j>=0;j--){
       if(!/^\d{1,2}$/.test(parts[j])){ month = parts[j]; break; }
     }
+
     return {
-      day: day,
-      month: (month || 'DAT').slice(0,3).toUpperCase()
+      day: day || '—',
+      month: (month || 'DAT').replace(/[^\p{L}]/gu, '').slice(0,3).toUpperCase() || 'DAT'
     };
   }
 
@@ -41,12 +54,17 @@
   }
 
   function convertOne(label){
-    if(!label || label.classList.contains('date-label-photo')) return;
-    var clean = normalizeDateText(label.getAttribute('data-photo-date-original') || label.textContent);
+    if(!label) return;
+    var clean = getSourceText(label);
     if(!clean) return;
+
     label.setAttribute('data-photo-date-original', clean);
     label.classList.add('date-label-photo');
-    label.innerHTML = render(clean);
+
+    if(label.getAttribute('data-photo-rendered') !== clean){
+      label.innerHTML = render(clean);
+      label.setAttribute('data-photo-rendered', clean);
+    }
   }
 
   function apply(){
@@ -68,5 +86,5 @@
   }
 
   var observer = new MutationObserver(schedule);
-  observer.observe(document.documentElement || document.body, { childList:true, subtree:true });
+  observer.observe(document.documentElement || document.body, { childList:true, subtree:true, characterData:true });
 })();
