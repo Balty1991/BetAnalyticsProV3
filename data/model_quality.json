@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-05-05T00:28:26.938459+00:00",
-  "quality_score": 69.8,
+  "updated_at": "2026-05-05T00:55:47.212058+00:00",
+  "quality_score": 70.0,
   "quality_grade": "C",
   "coverage": {
-    "predictions": 310,
+    "predictions": 285,
     "ev_signals": 0,
     "log_total": 802,
-    "log_closed": 748,
+    "log_closed": 749,
     "markets_audited": 4
   },
   "freshness": {
@@ -33,16 +33,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 204,
+      "n": 205,
       "credible": true,
-      "brier": 0.2218,
-      "log_loss": 0.6425,
-      "ece": 0.0895,
+      "brier": 0.221,
+      "log_loss": 0.6406,
+      "ece": 0.088,
       "calib_label": "acceptabil",
-      "winrate": 68.63,
-      "roi_pct": -9.34,
-      "n_wins": 140,
-      "score": 61.5,
+      "winrate": 68.78,
+      "roi_pct": -9.09,
+      "n_wins": 141,
+      "score": 61.9,
       "grade": "C"
     },
     {
@@ -66,7 +66,7 @@
       "n": 426,
       "credible": true,
       "brier": 0.1947,
-      "log_loss": 0.5762,
+      "log_loss": 0.5763,
       "ece": 0.0331,
       "calib_label": "excelent",
       "winrate": 72.3,
@@ -77,11 +77,11 @@
     }
   ],
   "backtest": {
-    "roi_pct": 6.72,
-    "winrate": 74.19,
-    "n_bets": 31,
-    "avg_odds": 1.452,
-    "avg_edge": 11.98
+    "roi_pct": 7.83,
+    "winrate": 75.0,
+    "n_bets": 32,
+    "avg_odds": 1.451,
+    "avg_edge": 11.97
   },
   "recommendations": [
     "Backtest ROI global: +6.7% — semnal pozitiv."
@@ -292,18 +292,18 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-05T00:28:26.822938"
+    "updated_at": "2026-05-05T00:55:47.116176"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 69.8,
+      "value": 70.0,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 748,
+      "value": 749,
       "suffix": " finalizate",
       "tone": "good"
     },
