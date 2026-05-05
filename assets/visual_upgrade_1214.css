@@ -1,0 +1,37 @@
+/* Rollback guard for failed 12:14 experiment.
+   This file stays only to neutralize any browser-cached import that still asks for
+   visual_upgrade_1214.css?v=20260505v1214. */
+.logo-title::before,.logo-title::after{content:none!important;display:none!important;}
+.logo-title{
+  position:static!important;
+  display:block!important;
+  gap:0!important;
+  font-size:clamp(25px,5vw,38px)!important;
+  line-height:1.02!important;
+  font-weight:950!important;
+  letter-spacing:-.055em!important;
+  background:linear-gradient(90deg,#fff 0%,#fff 70%,#2be5c5 100%)!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  color:transparent!important;
+  -webkit-text-fill-color:transparent!important;
+  text-shadow:none!important;
+  white-space:nowrap!important;
+  max-width:calc(100vw - 116px)!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.header-inner{min-height:auto!important;max-width:1500px!important;margin:0 auto!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;padding:0!important;}
+.header{padding:14px 20px 18px!important;}
+.logo-sub{margin-top:7px!important;font-size:11px!important;letter-spacing:.24em!important;}
+.logo-sync-row{margin-top:12px!important;gap:10px!important;font-size:13px!important;}
+.logo-sync-row b,#hq-ml,#hq-odds{font-size:18px!important;}
+.logo-sync-row .sb-dot,.sb-dot.live{width:11px!important;height:11px!important;}
+.btn-refresh-ico,#btn-refresh{width:72px!important;height:72px!important;border-radius:27px!important;}
+.btn-refresh-ico svg,#btn-refresh svg{width:25px!important;height:25px!important;}
+.main,.container,.app-shell{max-width:1500px!important;width:100%!important;margin:0 auto!important;}
+@media(max-width:700px){
+  .header{padding:20px 22px 24px!important;}
+  .logo-title{font-size:28px!important;max-width:calc(100vw - 118px)!important;}
+  .btn-refresh-ico,#btn-refresh{width:64px!important;height:64px!important;border-radius:25px!important;}
+}
