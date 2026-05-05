@@ -1,8 +1,8 @@
 // BetAnalytics Pro runtime fixes: performance colors + header metrics + Meciuri filter scope.
 (function(){
   'use strict';
-  if(window.__baRuntimeFixes20260505ApiSync2)return;
-  window.__baRuntimeFixes20260505ApiSync2=1;
+  if(window.__baRuntimeFixes20260505ApiStatusSource)return;
+  window.__baRuntimeFixes20260505ApiStatusSource=1;
   var G=(typeof globalThis!=='undefined')?globalThis:window;
   var GREEN='#34d399', RED='#fb7185', YELLOW='#f59e0b', MUTED='var(--muted,#8b98ad)', TEXT='var(--txt,#f8fafc)';
   function n(v){var x=Number(v);return isFinite(x)?x:null;}
@@ -51,10 +51,9 @@
   }
   function pickSyncTimestamp(){
     var meta=G.APP_META||{}, build=G.BUILD_STATUS||{}, bs=meta.bsd_status||{};
-    return meta.updated_at||build.updated_at||bs.fetched_at||meta.started_at||'';
+    return bs.fetched_at||meta.updated_at||build.updated_at||meta.started_at||'';
   }
   function installHeaderFix(){
-    if(typeof G.getStatusDisplayMetrics!=='function')return false;
     G.getStatusDisplayMetrics=function(){
       var matches=Array.isArray(G.ALL_MATCHES)?G.ALL_MATCHES:[];
       var totalLocal=matches.length;
@@ -62,8 +61,8 @@
       var meta=G.APP_META||{}, bs=meta.bsd_status||{}, hs=meta.header_sync||{};
       var apiMl=n(bs.ml_predictions_upcoming), apiOdds=n(bs.with_odds), syncMl=n(hs.upcoming_predictions_count), syncOdds=n(hs.with_odds_upcoming_count);
       return {
-        ml: syncMl!=null ? syncMl : (apiMl!=null ? apiMl : totalLocal),
-        odds: syncOdds!=null ? syncOdds : (eligibleLocal || (apiOdds!=null ? apiOdds : 0))
+        ml: apiMl!=null ? apiMl : (syncMl!=null ? syncMl : totalLocal),
+        odds: apiOdds!=null ? apiOdds : (syncOdds!=null ? syncOdds : eligibleLocal)
       };
     };
     G.getStatusDisplayMetrics.__baHeaderOnlyHotfix=true;
@@ -78,10 +77,12 @@
       var metrics=G.getStatusDisplayMetrics()||{};
       var time=typeof G.getStatusDisplayTime==='function'?G.getStatusDisplayTime():'';
       var ml=document.getElementById('hq-ml'), odds=document.getElementById('hq-odds'), hqt=document.getElementById('hq-time'), sb=document.getElementById('sb-text');
-      if(ml)ml.textContent=Number(metrics.ml||0);
-      if(odds)odds.textContent=Number(metrics.odds||0);
+      var mlValue=Number(metrics.ml||0);
+      var oddsValue=metrics.odds==null?0:Number(metrics.odds);
+      if(ml)ml.textContent=mlValue;
+      if(odds)odds.textContent=oddsValue;
       if(hqt)hqt.textContent=time?'⏱ '+time:'';
-      if(sb)sb.innerHTML=Number(metrics.ml||0)+' ML predictions — '+Number(metrics.odds||0)+' cu cote — ora '+(time||'—');
+      if(sb)sb.innerHTML=mlValue+' ML predictions — '+oddsValue+' cu cote — ora '+(time||'—');
     }catch(e){}
   }
 
