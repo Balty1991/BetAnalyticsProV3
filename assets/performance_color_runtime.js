@@ -52,7 +52,10 @@
       var eligibleLocal=matches.filter(function(m){return m&&m.analysisState==='ELIGIBLE';}).length;
       var meta=G.APP_META||{}, bs=meta.bsd_status||{}, hs=meta.header_sync||{};
       var apiMl=n(bs.ml_predictions_upcoming), apiOdds=n(bs.with_odds), syncMl=n(hs.upcoming_predictions_count), syncOdds=n(hs.with_odds_upcoming_count);
-      return {ml:apiMl!=null?apiMl:(syncMl!=null?syncMl:totalLocal), odds:(syncOdds!=null&&syncOdds>0)?syncOdds:((apiOdds!=null&&apiOdds>0)?apiOdds:eligibleLocal)};
+      return {
+        ml: syncMl!=null ? syncMl : (apiMl!=null ? apiMl : totalLocal),
+        odds: syncOdds!=null ? syncOdds : (eligibleLocal || (apiOdds!=null ? apiOdds : 0))
+      };
     };
     G.getStatusDisplayMetrics.__baHeaderOnlyHotfix=true;
     try{if(typeof G.updateHeaderStatus==='function')G.updateHeaderStatus();}catch(e){}
