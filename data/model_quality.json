@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-05T00:55:47.212058+00:00",
+  "updated_at": "2026-05-05T01:27:08.531995+00:00",
   "quality_score": 70.0,
   "quality_grade": "C",
   "coverage": {
@@ -10,7 +10,7 @@
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.39,
+    "age_hours": 0.36,
     "color": "green",
     "label": "0.4h"
   },
@@ -77,17 +77,17 @@
     }
   ],
   "backtest": {
-    "roi_pct": 7.83,
-    "winrate": 75.0,
-    "n_bets": 32,
-    "avg_odds": 1.451,
-    "avg_edge": 11.97
+    "roi_pct": 10.78,
+    "winrate": 76.67,
+    "n_bets": 30,
+    "avg_odds": 1.452,
+    "avg_edge": 12.13
   },
   "recommendations": [
-    "Backtest ROI global: +6.7% — semnal pozitiv."
+    "Backtest ROI global: +10.8% — semnal pozitiv."
   ],
   "wfv": {
-    "global_score": 74.5,
+    "global_score": 74.4,
     "global_grade": "B",
     "n_folds": 2,
     "source": "baseline_league_rates",
@@ -97,25 +97,25 @@
         "label": "Victorie gazdă",
         "folds": 2,
         "avg_brier": 0.245,
-        "avg_log_loss": 0.683,
+        "avg_log_loss": 0.6831,
         "avg_ece": 0.012,
-        "avg_winrate": 0.451,
+        "avg_winrate": 0.4511,
         "score": 75.6,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
           {
-            "n": 2575,
-            "brier": 0.2439,
-            "log_loss": 0.6809,
+            "n": 2576,
+            "brier": 0.244,
+            "log_loss": 0.681,
             "ece": 0.0102,
-            "winrate": 0.4493
+            "winrate": 0.4495
           },
           {
-            "n": 2449,
+            "n": 2445,
             "brier": 0.246,
-            "log_loss": 0.6852,
-            "ece": 0.0137,
+            "log_loss": 0.6851,
+            "ece": 0.0139,
             "winrate": 0.4528
           }
         ]
@@ -124,27 +124,27 @@
         "market": "draw",
         "label": "Egal",
         "folds": 2,
-        "avg_brier": 0.1878,
-        "avg_log_loss": 0.5625,
-        "avg_ece": 0.0046,
-        "avg_winrate": 0.2527,
-        "score": 82.3,
+        "avg_brier": 0.1877,
+        "avg_log_loss": 0.5622,
+        "avg_ece": 0.0048,
+        "avg_winrate": 0.2525,
+        "score": 82.2,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
           {
-            "n": 2575,
+            "n": 2576,
             "brier": 0.1899,
-            "log_loss": 0.5674,
-            "ece": 0.0012,
-            "winrate": 0.2559
+            "log_loss": 0.5673,
+            "ece": 0.0013,
+            "winrate": 0.2558
           },
           {
-            "n": 2449,
-            "brier": 0.1857,
-            "log_loss": 0.5575,
-            "ece": 0.0081,
-            "winrate": 0.2495
+            "n": 2445,
+            "brier": 0.1855,
+            "log_loss": 0.557,
+            "ece": 0.0083,
+            "winrate": 0.2491
           }
         ]
       },
@@ -152,27 +152,27 @@
         "market": "away_win",
         "label": "Victorie oaspete",
         "folds": 2,
-        "avg_brier": 0.2054,
-        "avg_log_loss": 0.5996,
-        "avg_ece": 0.0088,
-        "avg_winrate": 0.2963,
-        "score": 79.8,
+        "avg_brier": 0.2055,
+        "avg_log_loss": 0.5998,
+        "avg_ece": 0.0085,
+        "avg_winrate": 0.2964,
+        "score": 79.9,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
           {
-            "n": 2575,
+            "n": 2576,
             "brier": 0.2052,
-            "log_loss": 0.5993,
-            "ece": 0.0106,
-            "winrate": 0.2948
+            "log_loss": 0.5992,
+            "ece": 0.0103,
+            "winrate": 0.2946
           },
           {
-            "n": 2449,
-            "brier": 0.2056,
-            "log_loss": 0.5999,
-            "ece": 0.0069,
-            "winrate": 0.2977
+            "n": 2445,
+            "brier": 0.2058,
+            "log_loss": 0.6003,
+            "ece": 0.0067,
+            "winrate": 0.2982
           }
         ]
       },
@@ -181,26 +181,26 @@
         "label": "Peste 2.5G",
         "folds": 2,
         "avg_brier": 0.2426,
-        "avg_log_loss": 0.6781,
+        "avg_log_loss": 0.6782,
         "avg_ece": 0.0107,
-        "avg_winrate": 0.5121,
+        "avg_winrate": 0.5118,
         "score": 76.1,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
           {
-            "n": 2575,
-            "brier": 0.2414,
-            "log_loss": 0.6757,
-            "ece": 0.012,
-            "winrate": 0.5161
+            "n": 2576,
+            "brier": 0.2415,
+            "log_loss": 0.6758,
+            "ece": 0.0119,
+            "winrate": 0.5159
           },
           {
-            "n": 2449,
+            "n": 2445,
             "brier": 0.2438,
             "log_loss": 0.6805,
-            "ece": 0.0094,
-            "winrate": 0.508
+            "ece": 0.0096,
+            "winrate": 0.5076
           }
         ]
       },
@@ -208,25 +208,25 @@
         "market": "under35",
         "label": "Sub 3.5G",
         "folds": 2,
-        "avg_brier": 0.1983,
-        "avg_log_loss": 0.583,
+        "avg_brier": 0.1984,
+        "avg_log_loss": 0.5831,
         "avg_ece": 0.01,
-        "avg_winrate": 0.7136,
+        "avg_winrate": 0.7137,
         "score": 80.2,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
           {
-            "n": 2575,
+            "n": 2576,
             "brier": 0.201,
             "log_loss": 0.5887,
-            "ece": 0.0126,
-            "winrate": 0.7049
+            "ece": 0.0125,
+            "winrate": 0.705
           },
           {
-            "n": 2449,
-            "brier": 0.1956,
-            "log_loss": 0.5772,
+            "n": 2445,
+            "brier": 0.1957,
+            "log_loss": 0.5774,
             "ece": 0.0074,
             "winrate": 0.7223
           }
@@ -237,26 +237,26 @@
         "label": "Ambele marchează",
         "folds": 2,
         "avg_brier": 0.2433,
-        "avg_log_loss": 0.6795,
-        "avg_ece": 0.0052,
-        "avg_winrate": 0.5172,
-        "score": 77.2,
+        "avg_log_loss": 0.6796,
+        "avg_ece": 0.0055,
+        "avg_winrate": 0.5168,
+        "score": 77.1,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
           {
-            "n": 2575,
+            "n": 2576,
             "brier": 0.2431,
             "log_loss": 0.6792,
             "ece": 0.0066,
-            "winrate": 0.52
+            "winrate": 0.5198
           },
           {
-            "n": 2449,
+            "n": 2445,
             "brier": 0.2435,
-            "log_loss": 0.6799,
-            "ece": 0.0039,
-            "winrate": 0.5145
+            "log_loss": 0.68,
+            "ece": 0.0044,
+            "winrate": 0.5137
           }
         ]
       },
@@ -265,26 +265,26 @@
         "label": "Peste 1.5G",
         "folds": 2,
         "avg_brier": 0.2843,
-        "avg_log_loss": 0.7624,
-        "avg_ece": 0.303,
-        "avg_winrate": 0.7524,
+        "avg_log_loss": 0.7626,
+        "avg_ece": 0.3028,
+        "avg_winrate": 0.752,
         "score": 50.0,
         "grade": "D",
         "trend": "stabil",
         "fold_details": [
           {
-            "n": 2575,
+            "n": 2576,
             "brier": 0.282,
-            "log_loss": 0.7577,
-            "ece": 0.305,
-            "winrate": 0.7588
+            "log_loss": 0.7579,
+            "ece": 0.3048,
+            "winrate": 0.7585
           },
           {
-            "n": 2449,
+            "n": 2445,
             "brier": 0.2866,
-            "log_loss": 0.7671,
-            "ece": 0.301,
-            "winrate": 0.746
+            "log_loss": 0.7672,
+            "ece": 0.3007,
+            "winrate": 0.7456
           }
         ]
       }
@@ -292,7 +292,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-05T00:55:47.116176"
+    "updated_at": "2026-05-05T01:27:08.431434"
   },
   "ui_cards": [
     {
@@ -309,7 +309,7 @@
     },
     {
       "label": "ROI backtest",
-      "value": 6.7,
+      "value": 10.8,
       "suffix": "%",
       "tone": "good"
     },
