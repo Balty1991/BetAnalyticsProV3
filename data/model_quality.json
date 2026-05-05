@@ -1,12 +1,12 @@
 {
-  "updated_at": "2026-05-05T09:35:30.323215+00:00",
-  "quality_score": 70.2,
+  "updated_at": "2026-05-05T10:02:13.420703+00:00",
+  "quality_score": 70.3,
   "quality_grade": "C",
   "coverage": {
-    "predictions": 300,
+    "predictions": 299,
     "ev_signals": 0,
     "log_total": 802,
-    "log_closed": 751,
+    "log_closed": 753,
     "markets_audited": 4
   },
   "freshness": {
@@ -63,28 +63,28 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 427,
+      "n": 429,
       "credible": true,
-      "brier": 0.1943,
-      "log_loss": 0.5753,
-      "ece": 0.0326,
+      "brier": 0.1937,
+      "log_loss": 0.574,
+      "ece": 0.0313,
       "calib_label": "excelent",
-      "winrate": 72.37,
-      "roi_pct": -0.36,
-      "n_wins": 309,
-      "score": 75.9,
+      "winrate": 72.49,
+      "roi_pct": -0.21,
+      "n_wins": 311,
+      "score": 76.2,
       "grade": "B"
     }
   ],
   "backtest": {
-    "roi_pct": 9.63,
-    "winrate": 75.76,
-    "n_bets": 33,
-    "avg_odds": 1.458,
-    "avg_edge": 12.07
+    "roi_pct": 10.14,
+    "winrate": 76.47,
+    "n_bets": 34,
+    "avg_odds": 1.452,
+    "avg_edge": 11.98
   },
   "recommendations": [
-    "Backtest ROI global: +9.6% — semnal pozitiv."
+    "Backtest ROI global: +10.1% — semnal pozitiv."
   ],
   "wfv": {
     "global_score": 74.4,
@@ -292,24 +292,24 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-05T09:35:30.235565"
+    "updated_at": "2026-05-05T10:02:13.322719"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.2,
+      "value": 70.3,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 751,
+      "value": 753,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": 9.6,
+      "value": 10.1,
       "suffix": "%",
       "tone": "good"
     },
