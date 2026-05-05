@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-05T06:47:45.185503+00:00",
+  "updated_at": "2026-05-05T07:15:05.970351+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -5399,18 +5399,9 @@
       "bootstrap_n": 14,
       "bootstrap_target_n": 20,
       "cap_warning": true,
-      "prev_edge": 15.0,
-      "changed": true,
-      "recent_changes": [
-        {
-          "market": "over15",
-          "type": "threshold_change",
-          "prev_edge": 15.0,
-          "new_edge": 10.0,
-          "message": "over15: prag coborat 15.0% -> 10.0% (ROI +0.4%)",
-          "timestamp": "2026-05-05T06:47:45.184841+00:00"
-        }
-      ]
+      "prev_edge": 10.0,
+      "changed": false,
+      "recent_changes": []
     },
     "over25": {
       "min_edge": 5.0,
@@ -5432,18 +5423,9 @@
       "bootstrap_min_edge": null,
       "bootstrap_n": 41,
       "bootstrap_target_n": 20,
-      "prev_edge": 5.0,
-      "changed": true,
-      "recent_changes": [
-        {
-          "market": "under35",
-          "type": "threshold_change",
-          "prev_edge": 5.0,
-          "new_edge": 15.0,
-          "message": "under35: prag ridicat 5.0% -> 15.0% (ROI +21.0%)",
-          "timestamp": "2026-05-05T06:47:45.184862+00:00"
-        }
-      ]
+      "prev_edge": 15.0,
+      "changed": false,
+      "recent_changes": []
     }
   },
   "threshold_history": []
