@@ -1,8 +1,8 @@
 // BetAnalytics Pro runtime fixes: performance colors + header metrics + Meciuri filter scope.
 (function(){
   'use strict';
-  if(window.__baRuntimeFixes20260502)return;
-  window.__baRuntimeFixes20260502=1;
+  if(window.__baRuntimeFixes20260505ApiSync2)return;
+  window.__baRuntimeFixes20260505ApiSync2=1;
   var G=(typeof globalThis!=='undefined')?globalThis:window;
   var GREEN='#34d399', RED='#fb7185', YELLOW='#f59e0b', MUTED='var(--muted,#8b98ad)', TEXT='var(--txt,#f8fafc)';
   function n(v){var x=Number(v);return isFinite(x)?x:null;}
@@ -43,9 +43,18 @@
     });
   }
 
+  function fmtSyncTime(raw){
+    if(!raw)return '';
+    var dt=new Date(raw);
+    if(!isFinite(dt.getTime()))return '';
+    return dt.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+  }
+  function pickSyncTimestamp(){
+    var meta=G.APP_META||{}, build=G.BUILD_STATUS||{}, bs=meta.bsd_status||{};
+    return meta.updated_at||build.updated_at||bs.fetched_at||meta.started_at||'';
+  }
   function installHeaderFix(){
     if(typeof G.getStatusDisplayMetrics!=='function')return false;
-    if(G.getStatusDisplayMetrics.__baHeaderOnlyHotfix)return true;
     G.getStatusDisplayMetrics=function(){
       var matches=Array.isArray(G.ALL_MATCHES)?G.ALL_MATCHES:[];
       var totalLocal=matches.length;
@@ -58,8 +67,22 @@
       };
     };
     G.getStatusDisplayMetrics.__baHeaderOnlyHotfix=true;
-    try{if(typeof G.updateHeaderStatus==='function')G.updateHeaderStatus();}catch(e){}
+    G.getStatusDisplayTime=function(){return fmtSyncTime(pickSyncTimestamp());};
+    G.getStatusDisplayTime.__baTimeSourceHotfix=true;
+    refreshHeaderDom();
     return true;
+  }
+  function refreshHeaderDom(){
+    try{
+      if(typeof G.getStatusDisplayMetrics!=='function')return;
+      var metrics=G.getStatusDisplayMetrics()||{};
+      var time=typeof G.getStatusDisplayTime==='function'?G.getStatusDisplayTime():'';
+      var ml=document.getElementById('hq-ml'), odds=document.getElementById('hq-odds'), hqt=document.getElementById('hq-time'), sb=document.getElementById('sb-text');
+      if(ml)ml.textContent=Number(metrics.ml||0);
+      if(odds)odds.textContent=Number(metrics.odds||0);
+      if(hqt)hqt.textContent=time?'⏱ '+time:'';
+      if(sb)sb.innerHTML=Number(metrics.ml||0)+' ML predictions — '+Number(metrics.odds||0)+' cu cote — ora '+(time||'—');
+    }catch(e){}
   }
 
   function installMarketScopeFix(){
@@ -79,8 +102,8 @@
     return true;
   }
 
-  function boot(){colorPerformance();installHeaderFix();installMarketScopeFix();}
+  function boot(){colorPerformance();installHeaderFix();installMarketScopeFix();refreshHeaderDom();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   [100,300,700,1200,2500,5000,9000].forEach(function(t){setTimeout(boot,t);});
-  setInterval(colorPerformance,1200);
+  setInterval(function(){colorPerformance();refreshHeaderDom();},1200);
 })();
