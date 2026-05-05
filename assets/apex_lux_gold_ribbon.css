@@ -1,0 +1,61 @@
+/* BetAnalytics Pro — premium gold ribbon on match cards
+   Adds the visible luxury gold line from the approved reference. */
+.match-card-m17{
+  position:relative!important;
+  overflow:hidden!important;
+}
+.match-card-m17::before{
+  content:""!important;
+  position:absolute!important;
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  height:4px!important;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,
+    rgba(132,84,22,.88) 0%,
+    rgba(202,145,43,.96) 10%,
+    rgba(245,188,70,1) 24%,
+    rgba(255,246,198,1) 39%,
+    rgba(247,193,79,1) 57%,
+    rgba(214,154,47,.98) 76%,
+    rgba(123,78,22,.90) 100%)!important;
+  box-shadow:
+    0 0 8px rgba(255,231,166,.35),
+    0 0 18px rgba(245,188,70,.24),
+    0 0 36px rgba(245,188,70,.12),
+    inset 0 1px 0 rgba(255,255,255,.24)!important;
+  pointer-events:none!important;
+  z-index:6!important;
+  opacity:1!important;
+}
+.match-card-m17::after{
+  content:""!important;
+  position:absolute!important;
+  top:-9px!important;
+  left:6%!important;
+  width:58%!important;
+  height:30px!important;
+  border-radius:999px!important;
+  background:radial-gradient(ellipse at center,
+    rgba(255,249,219,.38) 0%,
+    rgba(255,219,129,.20) 38%,
+    rgba(255,219,129,0) 74%)!important;
+  filter:blur(8px)!important;
+  pointer-events:none!important;
+  z-index:5!important;
+}
+.m17-topline{
+  position:relative!important;
+  margin-top:4px!important;
+  background:linear-gradient(180deg,rgba(15,26,48,.95),rgba(8,16,30,.91))!important;
+  border:1px solid rgba(255,255,255,.075)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.065),
+    0 9px 22px rgba(0,0,0,.18)!important;
+}
+@media(max-width:900px){
+  .match-card-m17::before{height:4px!important}
+  .match-card-m17::after{top:-8px!important;left:7%!important;width:58%!important;height:27px!important;filter:blur(8px)!important}
+  .m17-topline{margin-top:4px!important}
+}
