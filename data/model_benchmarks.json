@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-05T06:20:27.675293+00:00",
+  "updated_at": "2026-05-05T06:47:45.185503+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -4738,16 +4738,6 @@
         "max_drawdown": 7.75,
         "avg_edge_pct": 7.59
       },
-      "Serie A": {
-        "n": 35,
-        "n_wins": 24,
-        "winrate": 68.57,
-        "roi_pct": -2.78,
-        "profit": -0.974,
-        "avg_odds": 1.424,
-        "max_drawdown": 4.26,
-        "avg_edge_pct": 7.13
-      },
       "Premier League": {
         "n": 35,
         "n_wins": 21,
@@ -4757,6 +4747,16 @@
         "avg_odds": 1.408,
         "max_drawdown": 7.04,
         "avg_edge_pct": 5.51
+      },
+      "Serie A": {
+        "n": 35,
+        "n_wins": 24,
+        "winrate": 68.57,
+        "roi_pct": -2.78,
+        "profit": -0.974,
+        "avg_odds": 1.424,
+        "max_drawdown": 4.26,
+        "avg_edge_pct": 7.13
       },
       "Liga MX Clausura": {
         "n": 35,
@@ -4915,7 +4915,7 @@
         "roi_pct": -4.43,
         "profit": -0.798,
         "avg_odds": 1.477,
-        "max_drawdown": 2.86,
+        "max_drawdown": 2.77,
         "avg_edge_pct": 10.16
       },
       "Eredivisie": {
@@ -5127,7 +5127,7 @@
         "roi_pct": -9.08,
         "profit": -13.081,
         "avg_odds": 1.358,
-        "max_drawdown": 17.34,
+        "max_drawdown": 16.89,
         "avg_edge_pct": 3.69
       },
       "5-10%": {
@@ -5162,6 +5162,48 @@
       }
     },
     "by_market_bucket": {
+      "over15": {
+        "0-5%": {
+          "n": 48,
+          "n_wins": 34,
+          "winrate": 70.83,
+          "roi_pct": -8.25,
+          "profit": -3.96,
+          "avg_odds": 1.303,
+          "max_drawdown": 5.99,
+          "avg_edge_pct": 3.78
+        },
+        "5-10%": {
+          "n": 116,
+          "n_wins": 79,
+          "winrate": 68.1,
+          "roi_pct": -10.88,
+          "profit": -12.62,
+          "avg_odds": 1.318,
+          "max_drawdown": 16.81,
+          "avg_edge_pct": 7.25
+        },
+        "10-15%": {
+          "n": 27,
+          "n_wins": 18,
+          "winrate": 66.67,
+          "roi_pct": -7.82,
+          "profit": -2.112,
+          "avg_odds": 1.368,
+          "max_drawdown": 3.52,
+          "avg_edge_pct": 11.64
+        },
+        "15%+": {
+          "n": 14,
+          "n_wins": 10,
+          "winrate": 71.43,
+          "roi_pct": 0.43,
+          "profit": 0.06,
+          "avg_odds": 1.391,
+          "max_drawdown": 1.6,
+          "avg_edge_pct": 16.81
+        }
+      },
       "btts": {
         "0-5%": {
           "n": 13,
@@ -5212,7 +5254,7 @@
           "roi_pct": -10.74,
           "profit": -8.485,
           "avg_odds": 1.36,
-          "max_drawdown": 14.7,
+          "max_drawdown": 14.25,
           "avg_edge_pct": 3.58
         },
         "5-10%": {
@@ -5366,7 +5408,7 @@
           "prev_edge": 15.0,
           "new_edge": 10.0,
           "message": "over15: prag coborat 15.0% -> 10.0% (ROI +0.4%)",
-          "timestamp": "2026-05-05T06:20:27.674533+00:00"
+          "timestamp": "2026-05-05T06:47:45.184841+00:00"
         }
       ]
     },
@@ -5399,7 +5441,7 @@
           "prev_edge": 5.0,
           "new_edge": 15.0,
           "message": "under35: prag ridicat 5.0% -> 15.0% (ROI +21.0%)",
-          "timestamp": "2026-05-05T06:20:27.674560+00:00"
+          "timestamp": "2026-05-05T06:47:45.184862+00:00"
         }
       ]
     }
