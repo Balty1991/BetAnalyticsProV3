@@ -1,13 +1,67 @@
-/* BetAnalytics Pro — ultra-slim premium gold ribbon on match cards
-   High-specificity layer: removes the thick amber cap and leaves a fine luxury gold hairline. */
+/* BetAnalytics Pro — state-aware slim ribbon on match cards
+   Keeps the line ultra-slim, but restores the original state colors:
+   safe = green/cyan, moderate/value/balanced = gold, avoid = red. */
 #tab-meciuri .match-card-m17,
 .match-card-m17{
+  --m17-ribbon-line:linear-gradient(90deg,
+    rgba(129,83,25,0) 0%,
+    rgba(180,126,40,.82) 10%,
+    rgba(235,179,68,.98) 27%,
+    rgba(255,244,196,1) 43%,
+    rgba(239,182,70,.96) 61%,
+    rgba(177,121,38,.78) 84%,
+    rgba(129,83,25,0) 100%);
+  --m17-ribbon-glow-a:rgba(255,247,219,.16);
+  --m17-ribbon-glow-b:rgba(255,220,135,.08);
+  --m17-ribbon-shadow:0 0 4px rgba(255,230,160,.22),0 0 10px rgba(241,188,76,.10);
+  --m17-frame:rgba(247,185,85,.22);
   position:relative!important;
   overflow:hidden!important;
-  border-color:rgba(247,185,85,.24)!important;
+  border-color:var(--m17-frame)!important;
   box-shadow:
     0 24px 58px rgba(0,0,0,.46),
     0 0 0 1px rgba(255,255,255,.035) inset!important;
+}
+#tab-meciuri .match-card-m17.safe,
+.match-card-m17.safe{
+  --m17-accent:#2dd491!important;
+  --m17-accent-soft:rgba(45,212,145,.13)!important;
+  --m17-ribbon-line:linear-gradient(90deg,
+    rgba(28,120,88,0) 0%,
+    rgba(37,190,142,.84) 12%,
+    rgba(43,229,197,.98) 30%,
+    rgba(197,255,238,1) 44%,
+    rgba(43,229,197,.96) 61%,
+    rgba(37,190,142,.80) 84%,
+    rgba(28,120,88,0) 100%);
+  --m17-ribbon-glow-a:rgba(201,255,240,.18);
+  --m17-ribbon-glow-b:rgba(43,229,197,.11);
+  --m17-ribbon-shadow:0 0 4px rgba(201,255,240,.20),0 0 12px rgba(43,229,197,.16);
+  --m17-frame:rgba(43,229,197,.28);
+}
+#tab-meciuri .match-card-m17.value,
+#tab-meciuri .match-card-m17.balanced,
+#tab-meciuri .match-card-m17.moderate,
+.match-card-m17.value,
+.match-card-m17.balanced,
+.match-card-m17.moderate{
+  --m17-accent:#f5a742!important;
+  --m17-accent-soft:rgba(245,167,66,.12)!important;
+}
+#tab-meciuri .match-card-m17.avoid,
+.match-card-m17.avoid{
+  --m17-accent:#f25975!important;
+  --m17-accent-soft:rgba(242,89,117,.12)!important;
+  --m17-ribbon-line:linear-gradient(90deg,
+    rgba(130,45,58,0) 0%,
+    rgba(220,72,96,.78) 16%,
+    rgba(255,124,143,.94) 42%,
+    rgba(220,72,96,.78) 74%,
+    rgba(130,45,58,0) 100%);
+  --m17-ribbon-glow-a:rgba(255,180,190,.14);
+  --m17-ribbon-glow-b:rgba(242,89,117,.08);
+  --m17-ribbon-shadow:0 0 4px rgba(255,180,190,.18),0 0 10px rgba(242,89,117,.10);
+  --m17-frame:rgba(242,89,117,.24);
 }
 #tab-meciuri .match-card-m17::before,
 .match-card-m17::before{
@@ -18,17 +72,8 @@
   right:14px!important;
   height:1px!important;
   border-radius:999px!important;
-  background:linear-gradient(90deg,
-    rgba(129,83,25,0) 0%,
-    rgba(180,126,40,.82) 10%,
-    rgba(235,179,68,.98) 27%,
-    rgba(255,244,196,1) 43%,
-    rgba(239,182,70,.96) 61%,
-    rgba(177,121,38,.78) 84%,
-    rgba(129,83,25,0) 100%)!important;
-  box-shadow:
-    0 0 4px rgba(255,230,160,.22),
-    0 0 10px rgba(241,188,76,.10)!important;
+  background:var(--m17-ribbon-line)!important;
+  box-shadow:var(--m17-ribbon-shadow)!important;
   pointer-events:none!important;
   z-index:8!important;
   opacity:1!important;
@@ -43,8 +88,8 @@
   height:10px!important;
   border-radius:999px!important;
   background:radial-gradient(ellipse at center,
-    rgba(255,247,219,.16) 0%,
-    rgba(255,220,135,.08) 46%,
+    var(--m17-ribbon-glow-a) 0%,
+    var(--m17-ribbon-glow-b) 46%,
     rgba(255,220,135,0) 78%)!important;
   filter:blur(5px)!important;
   pointer-events:none!important;
@@ -63,11 +108,27 @@
     inset 0 1px 0 rgba(255,255,255,.05),
     0 7px 15px rgba(0,0,0,.14)!important;
 }
+#tab-meciuri .match-card-m17.safe .m17-pill.m17-state,
+.match-card-m17.safe .m17-pill.m17-state{
+  color:#2dd491!important;
+  border-color:rgba(43,229,197,.34)!important;
+  background:rgba(43,229,197,.10)!important;
+}
+#tab-meciuri .match-card-m17.value .m17-pill.m17-state,
+#tab-meciuri .match-card-m17.balanced .m17-pill.m17-state,
+#tab-meciuri .match-card-m17.moderate .m17-pill.m17-state,
+.match-card-m17.value .m17-pill.m17-state,
+.match-card-m17.balanced .m17-pill.m17-state,
+.match-card-m17.moderate .m17-pill.m17-state{
+  color:#f5a742!important;
+  border-color:rgba(245,167,66,.34)!important;
+  background:rgba(245,167,66,.10)!important;
+}
 @media(max-width:900px){
   #tab-meciuri .match-card-m17,
   .match-card-m17{
     padding-top:7px!important;
-    border-color:rgba(247,185,85,.22)!important;
+    border-color:var(--m17-frame)!important;
   }
   #tab-meciuri .match-card-m17::before,
   .match-card-m17::before{
