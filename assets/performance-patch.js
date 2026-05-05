@@ -53,7 +53,8 @@
     loadScript('assets/dashboard_history21_sync.js?v=20260428videoexact3','dashboard-history21-sync-script');
     loadScript('assets/dashboard_motor_tracker_sync.js?v=20260503motortracker21','dashboard-motor-tracker-sync-script');
     loadScript('assets/performance_color_runtime.js?v=20260505filterrestore1','performance-color-runtime-script');
-    loadScript('assets/meciuri_filter_repair_runtime.js?v=20260505filterrepair1','meciuri-filter-repair-runtime-script');
+    loadScript('assets/meciuri_filter_repair_runtime.js?v=20260505filterrepair2','meciuri-filter-repair-runtime-script');
+    loadScript('assets/meciuri_filter_scope_runtime.js?v=20260505scope1','meciuri-filter-scope-runtime-script');
     addLink('assets/pro_command_center.css?v=20260428weekstable','pro-command-center-css');
     loadScript('assets/pro_command_center.js?v=20260428weekstable','pro-command-center-script');
     loadScript('assets/pro_intelligence_runtime.js?v=20260503m23','pro-intelligence-runtime-script');
