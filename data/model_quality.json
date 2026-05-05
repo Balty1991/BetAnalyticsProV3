@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-05-05T07:14:43.916536+00:00",
-  "quality_score": 70.0,
+  "updated_at": "2026-05-05T07:41:24.759035+00:00",
+  "quality_score": 70.2,
   "quality_grade": "C",
   "coverage": {
     "predictions": 300,
     "ev_signals": 0,
     "log_total": 802,
-    "log_closed": 749,
+    "log_closed": 751,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.31,
+    "age_hours": 0.3,
     "color": "green",
     "label": "0.3h"
   },
@@ -33,16 +33,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 205,
+      "n": 206,
       "credible": true,
-      "brier": 0.221,
-      "log_loss": 0.6406,
-      "ece": 0.088,
+      "brier": 0.22,
+      "log_loss": 0.6382,
+      "ece": 0.0869,
       "calib_label": "acceptabil",
-      "winrate": 68.78,
-      "roi_pct": -9.09,
-      "n_wins": 141,
-      "score": 61.9,
+      "winrate": 68.93,
+      "roi_pct": -8.88,
+      "n_wins": 142,
+      "score": 62.3,
       "grade": "C"
     },
     {
@@ -63,28 +63,28 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 426,
+      "n": 427,
       "credible": true,
-      "brier": 0.1947,
-      "log_loss": 0.5762,
-      "ece": 0.0331,
+      "brier": 0.1943,
+      "log_loss": 0.5753,
+      "ece": 0.0326,
       "calib_label": "excelent",
-      "winrate": 72.3,
-      "roi_pct": -0.42,
-      "n_wins": 308,
-      "score": 75.7,
+      "winrate": 72.37,
+      "roi_pct": -0.36,
+      "n_wins": 309,
+      "score": 75.9,
       "grade": "B"
     }
   ],
   "backtest": {
-    "roi_pct": 8.92,
-    "winrate": 75.0,
-    "n_bets": 32,
-    "avg_odds": 1.462,
-    "avg_edge": 12.02
+    "roi_pct": 9.63,
+    "winrate": 75.76,
+    "n_bets": 33,
+    "avg_odds": 1.458,
+    "avg_edge": 12.07
   },
   "recommendations": [
-    "Backtest ROI global: +8.9% — semnal pozitiv."
+    "Backtest ROI global: +9.6% — semnal pozitiv."
   ],
   "wfv": {
     "global_score": 74.4,
@@ -292,24 +292,24 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-05T07:14:43.819499"
+    "updated_at": "2026-05-05T07:41:24.662506"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.0,
+      "value": 70.2,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 749,
+      "value": 751,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": 8.9,
+      "value": 9.6,
       "suffix": "%",
       "tone": "good"
     },

@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-05T07:15:06.103392+00:00",
+  "updated_at": "2026-05-05T07:41:46.925860+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 56.8,
+  "overall_score": 55.0,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,21 +9,21 @@
   },
   "data_quality": {
     "recommendation_rows": 802,
-    "pending_rows": 53,
-    "candidates_with_odds_and_probability": 46,
-    "top_ev_count": 29,
+    "pending_rows": 51,
+    "candidates_with_odds_and_probability": 44,
+    "top_ev_count": 28,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 33,
-    "safe": 4,
+    "speculative": 32,
+    "safe": 3,
     "balanced": 9
   },
   "market_distribution_top150": {
-    "Under 3.5G": 30,
-    "Over 1.5G": 14,
+    "Under 3.5G": 29,
+    "Over 1.5G": 13,
     "BTTS": 2
   },
   "league_distribution_top150": {
@@ -32,11 +32,11 @@
     "J1 League": 8,
     "Parva Liga": 4,
     "FA Cup": 1,
-    "K League 1": 5,
     "Super League": 1,
     "Chinese Super League": 4,
     "Europa League": 2,
-    "Champions League": 1
+    "Champions League": 1,
+    "K League 1": 3
   },
   "bankroll": {
     "default_bankroll_units": 100,
@@ -505,34 +505,6 @@
       "rationale": [
         "Probabilitate model 80.0% vs. probabilitate implicată 73.5%.",
         "EV estimat 8.9% și edge 6.5 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 205058,
-      "prediction_id": 3511,
-      "home": "Jeonbuk Hyundai Motors",
-      "away": "Gwangju FC",
-      "league": "K League 1",
-      "event_date": "2026-05-05T08:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.8494,
-      "model_probability_pct": 84.94,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.177,
-      "edge_pp": 9.75,
-      "ev_pct": 12.97,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.25,
-      "score": 96.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
-        "EV estimat 13.0% și edge 9.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1211,34 +1183,6 @@
       ]
     },
     {
-      "event_id": 205058,
-      "prediction_id": 3511,
-      "home": "Jeonbuk Hyundai Motors",
-      "away": "Gwangju FC",
-      "league": "K League 1",
-      "event_date": "2026-05-05T08:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.8494,
-      "model_probability_pct": 84.94,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.177,
-      "edge_pp": 9.75,
-      "ev_pct": 12.97,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.25,
-      "score": 96.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
-        "EV estimat 13.0% și edge 9.8 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9302,
       "prediction_id": 3527,
       "home": "Recoleta FC",
@@ -1433,6 +1377,34 @@
         "EV estimat 8.8% și edge 6.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 9415,
+      "prediction_id": 3546,
+      "home": "Cusco FC",
+      "away": "Estudiantes de La Plata",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-07T01:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.21,
+      "model_probability": 0.8307,
+      "model_probability_pct": 83.07,
+      "implied_probability_pct": 82.64,
+      "fair_odds": 1.204,
+      "edge_pp": 0.43,
+      "ev_pct": 0.51,
+      "kelly_fraction": 0.0061,
+      "kelly_units_100": 0.61,
+      "confidence": 45.05,
+      "score": 88.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.1% vs. probabilitate implicată 82.6%.",
+        "EV estimat 0.5% și edge 0.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.61% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1601,34 +1573,6 @@
       "rationale": [
         "Probabilitate model 83.5% vs. probabilitate implicată 75.0%.",
         "EV estimat 11.4% și edge 8.5 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 205058,
-      "prediction_id": 3511,
-      "home": "Jeonbuk Hyundai Motors",
-      "away": "Gwangju FC",
-      "league": "K League 1",
-      "event_date": "2026-05-05T08:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.33,
-      "model_probability": 0.8494,
-      "model_probability_pct": 84.94,
-      "implied_probability_pct": 75.19,
-      "fair_odds": 1.177,
-      "edge_pp": 9.75,
-      "ev_pct": 12.97,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.25,
-      "score": 96.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 84.9% vs. probabilitate implicată 75.2%.",
-        "EV estimat 13.0% și edge 9.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1822,20 +1766,20 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 426,
-      "wins": 308,
-      "winrate": 72.3,
-      "profit_units": -1.77,
-      "roi_pct": -0.42,
+      "bets": 427,
+      "wins": 309,
+      "winrate": 72.37,
+      "profit_units": -1.55,
+      "roi_pct": -0.36,
       "avg_odds": 1.389
     },
     {
       "key": "Over 1.5G",
-      "bets": 205,
-      "wins": 141,
-      "winrate": 68.78,
-      "profit_units": -18.63,
-      "roi_pct": -9.09,
+      "bets": 206,
+      "wins": 142,
+      "winrate": 68.93,
+      "profit_units": -18.3,
+      "roi_pct": -8.88,
       "avg_odds": 1.326
     }
   ],
