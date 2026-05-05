@@ -1,0 +1,75 @@
+/* BetAnalytics Pro — mobile stability pass
+   Keeps the Apex Lux look, but prevents Xiaomi/browser overlap and oversized controls. */
+@media(max-width:700px){
+  .header{padding:14px 20px 16px!important}
+  .logo-title{font-size:27px!important;letter-spacing:-.045em!important}
+  .logo-sub{margin-top:6px!important;font-size:10px!important;letter-spacing:.22em!important}
+  .logo-sync-row{margin-top:10px!important;gap:8px!important;font-size:12px!important}
+  .logo-sync-row b,#hq-ml,#hq-odds{font-size:18px!important}
+  .btn-refresh-ico,#btn-refresh{width:56px!important;height:56px!important;min-width:56px!important;border-radius:21px!important}
+  .btn-refresh-ico svg,#btn-refresh svg{width:23px!important;height:23px!important}
+  .main{padding:14px 18px 132px!important}
+
+  #tab-meciuri .mx21-card{padding:16px 14px 15px!important;border-radius:26px!important;margin-bottom:16px!important;overflow:hidden!important}
+  #tab-meciuri .mx21-head{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important;margin-bottom:13px!important;padding-bottom:13px!important}
+  #tab-meciuri .mx21-title-row{display:flex!important;align-items:center!important;gap:9px!important;flex:1 1 132px!important;min-width:132px!important;max-width:100%!important;overflow:hidden!important}
+  #tab-meciuri .mx21-ball{width:38px!important;height:38px!important;min-width:38px!important;font-size:20px!important}
+  #tab-meciuri .mx21-title{font-size:27px!important;line-height:1!important;letter-spacing:-.052em!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important}
+  #tab-meciuri .mx21-count,#tab-meciuri .mx21-filter-btn{height:38px!important;padding:0 12px!important;font-size:13px!important;flex:0 0 auto!important}
+  #tab-meciuri .mx21-filter-btn::before{font-size:15px!important;margin-right:6px!important}
+
+  #tab-meciuri .mx21-control-row{display:grid!important;grid-template-columns:minmax(0,1.18fr) minmax(82px,.70fr) minmax(64px,.52fr)!important;gap:7px!important;margin-bottom:12px!important}
+  #tab-meciuri .mx21-mode{height:43px!important;padding:3px!important}
+  #tab-meciuri .mx21-mode-btn{height:35px!important;font-size:13px!important}
+  #tab-meciuri .mx21-select{height:43px!important;font-size:13px!important;padding-left:10px!important;padding-right:28px!important;border-radius:15px!important;background-position:right 11px center!important}
+
+  #tab-meciuri .mx21-chiprail{display:flex!important;gap:7px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:0 2px 5px!important;margin:0 -2px!important;scrollbar-width:none!important}
+  #tab-meciuri .mx21-chiprail::-webkit-scrollbar{display:none!important}
+  #tab-meciuri .mx21-chip{min-height:39px!important;width:auto!important;min-width:max-content!important;padding:0 12px!important;font-size:12px!important;letter-spacing:-.025em!important;flex:0 0 auto!important;overflow:visible!important;text-overflow:clip!important}
+
+  #tab-meciuri .date-group{margin:18px 0 22px!important}
+  #tab-meciuri .date-label{font-size:13px!important;letter-spacing:.16em!important;margin-bottom:14px!important}
+
+  .match-card-m17{padding:18px 14px 16px!important;border-radius:25px!important;gap:12px!important}
+  .m17-topline{padding:12px 12px!important;border-radius:18px!important}
+  .m17-league{font-size:16px!important;gap:8px!important}
+  .m17-league-logo{width:32px!important;height:32px!important}
+  .m17-time .m17-date{font-size:10px!important}
+  .m17-time .m17-hour{font-size:21px!important}
+  .m17-time .m17-countdown{font-size:11px!important;padding:5px 9px!important}
+  .m17-country{font-size:14px!important}
+  .m17-pill{min-height:27px!important;font-size:11px!important;padding:5px 9px!important}
+  .m17-teams{grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr)!important;gap:7px!important;padding:0 2px 2px!important}
+  .m17-logo{width:40px!important;height:40px!important;flex-basis:40px!important}
+  .m17-logo img{max-width:35px!important;max-height:35px!important}
+  .m17-team-name{font-size:16px!important;line-height:1.1!important;letter-spacing:-.035em!important}
+  .m17-team-prob{font-size:12px!important;margin-top:4px!important}
+  .m17-vs{width:34px!important;height:34px!important;font-size:13px!important}
+  .m17-ml-bar{height:7px!important;margin-top:9px!important}
+  .m17-ml-note{font-size:12px!important;gap:14px!important;margin-top:7px!important}
+  .m17-reco{padding:15px 12px 13px!important;border-radius:20px!important}
+  .m17-reco-kicker{font-size:12px!important;letter-spacing:.17em!important}
+  .m17-pick{font-size:22px!important;line-height:1.1!important}
+  .m17-odd{font-size:20px!important;padding:8px 12px!important;border-radius:14px!important}
+  .m17-metric-strip{gap:7px!important;margin-top:13px!important}
+  .m17-metric{padding:9px 4px!important;border-radius:14px!important}
+  .m17-metric span{font-size:9px!important;letter-spacing:.08em!important}
+  .m17-metric strong{font-size:14px!important}
+  .m17-pill-row{gap:7px!important;margin-top:11px!important}
+  .m17-why{padding:12px 14px!important;border-radius:17px!important}
+  .m17-why span{font-size:10px!important;letter-spacing:.18em!important}
+  .m17-why strong{font-size:13px!important;line-height:1.4!important}
+  .m17-btn{min-height:45px!important;font-size:15px!important}
+
+  .mobile-nav{left:18px!important;right:18px!important;bottom:calc(10px + env(safe-area-inset-bottom,0px))!important;border-radius:24px!important}
+  .mobile-nav-btn{min-height:56px!important;border-radius:20px!important}
+}
+@media(max-width:380px){
+  #tab-meciuri .mx21-title-row{flex-basis:120px!important;min-width:120px!important}
+  #tab-meciuri .mx21-title{font-size:24px!important}
+  #tab-meciuri .mx21-count,#tab-meciuri .mx21-filter-btn{height:36px!important;font-size:12px!important;padding:0 9px!important}
+  #tab-meciuri .mx21-control-row{grid-template-columns:1fr!important}
+  #tab-meciuri .mx21-select{width:100%!important}
+  .m17-team-name{font-size:15px!important}
+  .m17-metric strong{font-size:13px!important}
+}
