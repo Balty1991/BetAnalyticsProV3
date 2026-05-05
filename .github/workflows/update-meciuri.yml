@@ -1,0 +1,92 @@
+name: Update Meciuri
+
+on:
+  schedule:
+    # Rulează la fiecare 30 de minute. Orele sunt UTC.
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.run-fetch'
+      - 'fetch_data.py'
+      - '.github/workflows/update-meciuri.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-meciuri-live-data
+  cancel-in-progress: true
+
+jobs:
+  update-meciuri:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Fetch latest matches and predictions
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python fetch_data.py
+
+      - name: Enrich predictions if script exists
+        run: |
+          if [ -f enrich_predictions.py ]; then
+            python enrich_predictions.py
+          fi
+
+      - name: Refresh recent events index if script exists
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          if [ -f build_api_events_index.py ]; then
+            python build_api_events_index.py
+          fi
+
+      - name: Verify data files
+        run: |
+          test -f data/predictions.json
+          test -f data/events.json
+          test -f data/meta.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for f in ['data/predictions.json', 'data/events.json', 'data/meta.json']:
+              data = json.loads(Path(f).read_text(encoding='utf-8'))
+              print(f, 'OK', type(data).__name__)
+          PY
+
+      - name: Commit updated matches
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/
+
+          if git diff --staged --quiet; then
+            echo "No match changes detected."
+            exit 0
+          fi
+
+          git commit -m "Auto-update meciuri $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase -X theirs origin main || {
+            git rebase --abort || true
+            git pull --rebase origin main
+          }
+          git push origin HEAD:main
