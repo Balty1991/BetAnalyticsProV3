@@ -1526,20 +1526,38 @@ function getBetVerdict(match, bet) {
   if (btBad) {
     return { state:'avoid', label:'\u274c EVITA', sub:'Edge bucket neprofitabil', bg:'rgba(239,68,68,.13)', border:'rgba(239,68,68,.35)', color:'#ef4444', score:0 };
   }
-  // 5 semnale reale (fara !btBad care e intotdeauna true)
-  var signals = 0;
-  if (edgePct >= 10)  signals++;   // edge solid
-  if (value  >= 0.05) signals++;   // value >= 5%
-  if (adjProb >= 75)  signals++;   // probabilitate ridicata
-  if (btMktOk)        signals++;   // piata profitabila istoric
-  if (bucketOk)       signals++;   // edge bucket profitabil >= 3%
 
-  // PARIAZA: 4+ semnale din 5 SAU 3+ cu edge bun
+  // ─── Praguri adaptive per piată ─────────────────────────────────────────────
+  // Piețele low-odds (under35, over15) au în mod normal edge 4-8pp și value 0.5-2%
+  // — pragurile fixe de 10pp / 5% erau calibrate pentru piețe high-odds și generau
+  //   EVITA artificial pe selecții tehnic corecte.
+  var edgeSig, valueSig, edgeBonusSig;
+  if (mkey === 'under35') {
+    edgeSig = 6;   valueSig = 0.01;  edgeBonusSig = 8;   // sub 1.30, value 1% e realist
+  } else if (mkey === 'over15') {
+    edgeSig = 7;   valueSig = 0.02;  edgeBonusSig = 9;
+  } else if (mkey === 'over25') {
+    edgeSig = 8;   valueSig = 0.03;  edgeBonusSig = 11;
+  } else if (mkey === 'btts') {
+    edgeSig = 7;   valueSig = 0.03;  edgeBonusSig = 10;
+  } else {
+    edgeSig = 9;   valueSig = 0.04;  edgeBonusSig = 12;  // homeWin / awayWin / draw
+  }
+
+  // 5 semnale market-adaptive
+  var signals = 0;
+  if (edgePct >= edgeSig)  signals++;   // S1: edge suficient per piată
+  if (value  >= valueSig)  signals++;   // S2: value pozitiv per piată
+  if (adjProb >= 75)       signals++;   // S3: probabilitate ridicată
+  if (btMktOk)             signals++;   // S4: piată profitabilă istoric
+  if (bucketOk)            signals++;   // S5: edge bucket profitabil >= 3%
+
+  // PARIAZA: 4+ semnale SAU 3+ cu edge puternic
   if (signals >= 4) {
     return { state:'bet', label:'\u2705 PARIAZA', sub:'Semnale pozitive (' + signals + '/5)', bg:'rgba(16,185,129,.13)', border:'rgba(16,185,129,.35)', color:'#22c55e', score:signals };
   }
-  if (signals >= 3 && edgePct >= 10) {
-    return { state:'bet', label:'\u2705 PARIAZA', sub:signals + '/5 semnale + edge bun', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.25)', color:'#22c55e', score:signals };
+  if (signals >= 3 && edgePct >= edgeBonusSig) {
+    return { state:'bet', label:'\u2705 PARIAZA', sub:signals + '/5 semnale + edge solid', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.25)', color:'#22c55e', score:signals };
   }
   // RISC: 2-3 semnale mixte
   if (signals >= 2) {
@@ -6569,7 +6587,18 @@ function renderMatches(){
   filtered.sort(function(a,b){
     var aBet = a.bestBet || a.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
     var bBet = b.bestBet || b.rawBestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
-    if(sort === 'score') return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
+    if(sort === 'score'){
+      // Verdict priority: PARIAZA(4-5) > RISC(2-3) > EVITA(0-1) > fara verdict
+      var aV = a.bestBet ? getBetVerdict(a, a.bestBet) : null;
+      var bV = b.bestBet ? getBetVerdict(b, b.bestBet) : null;
+      var aVS = aV ? aV.score : -1;
+      var bVS = bV ? bV.score : -1;
+      // Grupeaza: bet(4-5)=2, risk(2-3)=1, avoid/no(0-1)=0
+      var aGrp = aVS >= 4 ? 2 : aVS >= 2 ? 1 : 0;
+      var bGrp = bVS >= 4 ? 2 : bVS >= 2 ? 1 : 0;
+      if(bGrp !== aGrp) return bGrp - aGrp;
+      return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
+    }
     if(sort === 'value') return (bBet.value||0) - (aBet.value||0);
     if(sort === 'prob') return (bBet.adjProb||0) - (aBet.adjProb||0);
     if(sort === 'edge') return (bBet.edgePct||0) - (aBet.edgePct||0);
@@ -6847,6 +6876,9 @@ function renderMatches(){
     var m17ScorePill = m.mostLikelyScore ? '<span class="m17-pill">⚽ '+htmlEsc(m.mostLikelyScore)+'</span>' : '';
     var m17V2Pill = m.v2Recommended ? '<span class="m17-pill" style="background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.35);font-weight:700">⚡ V2</span>' : '';
     var m17ConsensusPill = m17ConsensusText ? '<span class="m17-pill m17-consensus '+m17MarketClass+'">'+htmlEsc(m17ConsensusText)+'</span>' : '';
+    // Verdict PARIAZA/RISC/EVITA vizibil pe card (elimina contradictia cu detaliile)
+    var _cardVerdict = b ? getBetVerdict(m, b) : null;
+    var m17VerdictPill = _cardVerdict ? '<span class="m17-pill" style="background:'+_cardVerdict.bg+';color:'+_cardVerdict.color+';border:1px solid '+_cardVerdict.border+';font-weight:800;font-size:10px">'+_cardVerdict.label+'</span>' : '';
     var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+motorBadge+catboostBadge+ml5Badge+ageBadge+'</div>' : '';
     var m17Metrics = b ? ('<div class="m17-metric-strip">'+
       '<div class="m17-metric '+m17ProbClass+'"><span>Prob.</span><strong>'+fmtPct(m17AdjProb)+'</strong></div>'+
@@ -6877,7 +6909,7 @@ function renderMatches(){
       '<div class="m17-reco">'+
         '<div class="m17-reco-head"><div><div class="m17-reco-kicker">🎯 Recomandare</div><div class="m17-pick">'+htmlEsc(recLabel)+'</div></div><div class="m17-odd">'+(recOdd ? '@ '+recOdd : '—')+'</div></div>'+ 
         m17Metrics+
-        '<div class="m17-pill-row"><span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>'+m17KellyPill+m17ConsensusPill+m17V2Pill+'</div>'+ 
+        '<div class="m17-pill-row"><span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>'+m17KellyPill+m17VerdictPill+m17ConsensusPill+m17V2Pill+'</div>'+ 
         m17SourceRow+
         m17MarketLine+
       '</div>'+ 
