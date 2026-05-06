@@ -33,15 +33,21 @@ import requests
 from datetime import datetime, timedelta
 
 # ─── Config ───────────────────────────────────────────────────
-API_BASE    = "https://sports.bzzoiro.com/api"
-TOKEN       = os.environ.get("BSD_TOKEN", "")
-DELAY       = float(os.environ.get("DELAY_MS", "200")) / 1000
-MAX_EVENTS  = int(os.environ.get("MAX_EVENTS", "100"))
-OUT_PATH    = os.environ.get("OUTPUT_PATH", "data/enriched.json")
+API_BASE      = "https://sports.bzzoiro.com/api"
+V2_BASE       = "https://sports.bzzoiro.com/api/v2"
+TOKEN         = os.environ.get("BSD_TOKEN", "")
+DELAY         = float(os.environ.get("DELAY_MS", "200")) / 1000
+MAX_EVENTS    = int(os.environ.get("MAX_EVENTS", "100"))
+OUT_PATH      = os.environ.get("OUTPUT_PATH", "data/enriched.json")
+# V2_ENRICHMENT=false dezactivează fetch-urile v2 (util la debug)
+V2_ENRICHMENT = os.environ.get("V2_ENRICHMENT", "true").lower() != "false"
 
 HEADERS     = {"Authorization": f"Token {TOKEN}"}
 SESSION     = requests.Session()
 SESSION.headers.update(HEADERS)
+
+# Cache in-memory pentru manager stats (aceeași echipă apare în multiple meciuri)
+_MGR_CACHE: dict = {}
 
 # ─── Helpers ──────────────────────────────────────────────────
 def get(url, params=None, timeout=20):
@@ -60,6 +66,68 @@ def get(url, params=None, timeout=20):
             print(f"  [err] {e}")
             time.sleep(1)
     return None
+
+
+# ─── V2 Fetch helpers ─────────────────────────────────────────
+
+def fetch_referee_v2(referee_id: int) -> dict | None:
+    """Fetch statistici per-meci arbitru din v2 (avg_goals, avg_yellow, avg_fouls)."""
+    if not referee_id or not V2_ENRICHMENT:
+        return None
+    data = get(f"{V2_BASE}/referees/{referee_id}/")
+    if not data:
+        return None
+    return {
+        "avg_goals_per_match":  data.get("avg_goals_per_match"),
+        "avg_yellow_per_match": data.get("avg_yellow_per_match"),
+        "avg_red_per_match":    data.get("avg_red_per_match"),
+        "avg_fouls_per_match":  data.get("avg_fouls_per_match"),
+        "matches":              data.get("matches"),
+    }
+
+
+def fetch_manager_v2(team_id: int) -> dict | None:
+    """Fetch statistici antrenor curent din v2 (over25%, btts%, cs%, possession)."""
+    if not team_id or not V2_ENRICHMENT:
+        return None
+    key = int(team_id)
+    if key in _MGR_CACHE:
+        return _MGR_CACHE[key]
+    data = get(f"{V2_BASE}/managers/?team_id={team_id}&limit=1")
+    results = (data or {}).get("results") or []
+    if not results:
+        _MGR_CACHE[key] = None
+        return None
+    mgr = results[0]
+    result = {
+        "over25_pct":      mgr.get("over_25_pct"),
+        "btts_pct":        mgr.get("btts_pct"),
+        "clean_sheet_pct": mgr.get("clean_sheet_pct"),
+        "avg_possession":  mgr.get("avg_possession"),
+        "win_pct":         mgr.get("win_pct"),
+        "matches_total":   mgr.get("matches_total"),
+    }
+    _MGR_CACHE[key] = result
+    return result
+
+
+def fetch_event_context_v2(event_id: int) -> dict | None:
+    """Fetch context meci din v2: derby, teren neutru, vreme, teren, deplasare."""
+    if not event_id or not V2_ENRICHMENT:
+        return None
+    data = get(f"{V2_BASE}/events/{event_id}/")
+    if not data:
+        return None
+    weather = data.get("weather") or {}
+    return {
+        "is_local_derby":     bool(data.get("is_local_derby") or False),
+        "is_neutral_ground":  bool(data.get("is_neutral_ground") or False),
+        "travel_distance_km": data.get("travel_distance_km"),
+        "weather_code":       weather.get("code"),
+        "weather_desc":       weather.get("description"),
+        "pitch_condition":    data.get("pitch_condition"),
+        "attendance":         data.get("attendance"),
+    }
 
 
 # ─── Fetch predicții ──────────────────────────────────────────
@@ -114,8 +182,8 @@ def extract_ml5_fields(detail):
         ]
         return {k: h2h[k] for k in keep if k in h2h}
 
-    def slim_coach(coach):
-        """Păstrează profilul tactic al antrenorului."""
+    def slim_coach(coach, mgr_v2=None):
+        """Păstrează profilul tactic al antrenorului + stats v2 dacă sunt disponibile."""
         if not coach:
             return None
         keep = [
@@ -123,16 +191,43 @@ def extract_ml5_fields(detail):
             "pressing_intensity", "defensive_line",
             "top_styles", "preferred_formation"
         ]
-        return {k: coach[k] for k in keep if k in coach}
+        result = {k: coach[k] for k in keep if k in coach}
+        # Adaugă statistici reale din v2 (over25%, btts%, cs%, possession)
+        if mgr_v2:
+            result["over25_pct"]      = mgr_v2.get("over25_pct")
+            result["btts_pct"]        = mgr_v2.get("btts_pct")
+            result["clean_sheet_pct"] = mgr_v2.get("clean_sheet_pct")
+            result["avg_possession"]  = mgr_v2.get("avg_possession")
+            result["win_pct"]         = mgr_v2.get("win_pct")
+        return result
+
+    def slim_referee(referee, ref_v2=None):
+        """Arbitru cu stats per-meci din v2."""
+        if not referee:
+            return None
+        result = {k: referee.get(k) for k in
+                  ["id", "name", "country", "nationality_a3", "birthdate",
+                   "yellowCards", "redCards", "career_games",
+                   "career_yellow_cards", "career_red_cards"]
+                  if k in referee}
+        # Adaugă statistici per-meci din v2 (activează calcRefFactor)
+        if ref_v2:
+            result["avg_goals_per_match"]  = ref_v2.get("avg_goals_per_match")
+            result["avg_yellow_per_match"] = ref_v2.get("avg_yellow_per_match")
+            result["avg_red_per_match"]    = ref_v2.get("avg_red_per_match")
+            result["avg_fouls_per_match"]  = ref_v2.get("avg_fouls_per_match")
+            result["matches"]              = ref_v2.get("matches")
+        return result
 
     return {
         "home_form":           slim_form(detail.get("home_form")),
         "away_form":           slim_form(detail.get("away_form")),
         "head_to_head":        slim_h2h(detail.get("head_to_head")),
-        "home_coach":          slim_coach(detail.get("home_coach")),
-        "away_coach":          slim_coach(detail.get("away_coach")),
+        "home_coach":          slim_coach(detail.get("home_coach"), mgr_v2=detail.get("_home_mgr_v2")),
+        "away_coach":          slim_coach(detail.get("away_coach"), mgr_v2=detail.get("_away_mgr_v2")),
         "unavailable_players": detail.get("unavailable_players"),
-        "referee":             detail.get("referee"),
+        "referee":             slim_referee(detail.get("referee"), ref_v2=detail.get("_ref_v2")),
+        "match_context":       detail.get("_context_v2"),   # derby/vreme/deplasare/teren
     }
 
 
@@ -188,17 +283,57 @@ def main():
         detail = get(url)
 
         if detail:
+            # ── V2 enrichment (non-blocking — erorile nu opresc procesarea) ──
+            if V2_ENRICHMENT:
+                # Arbitru: stats per-meci (avg_goals, avg_yellow)
+                ref_id = (detail.get("referee") or {}).get("id")
+                ref_v2 = None
+                if ref_id:
+                    time.sleep(DELAY * 0.5)
+                    ref_v2 = fetch_referee_v2(ref_id)
+
+                # Antrenori: stats reale (over25%, btts%, cs%)
+                home_obj = event.get("home_team_obj") or {}
+                away_obj = event.get("away_team_obj") or {}
+                home_tid = home_obj.get("api_id") or home_obj.get("id")
+                away_tid = away_obj.get("api_id") or away_obj.get("id")
+                home_mgr_v2 = None
+                away_mgr_v2 = None
+                if home_tid:
+                    time.sleep(DELAY * 0.5)
+                    home_mgr_v2 = fetch_manager_v2(home_tid)
+                if away_tid:
+                    time.sleep(DELAY * 0.5)
+                    away_mgr_v2 = fetch_manager_v2(away_tid)
+
+                # Context meci: derby, vreme, deplasare, teren
+                time.sleep(DELAY * 0.5)
+                context_v2 = fetch_event_context_v2(event_id)
+
+                # Injectăm datele v2 în detail ca câmpuri private
+                detail["_ref_v2"]       = ref_v2
+                detail["_home_mgr_v2"]  = home_mgr_v2
+                detail["_away_mgr_v2"]  = away_mgr_v2
+                detail["_context_v2"]   = context_v2
+
             ml5_data = extract_ml5_fields(detail)
             if ml5_data:
                 enriched[str(event_id)] = ml5_data
                 # Log formă dacă e disponibilă
-                hf = ml5_data.get("home_form") or {}
-                af = ml5_data.get("away_form") or {}
+                hf  = ml5_data.get("home_form") or {}
+                af  = ml5_data.get("away_form") or {}
                 hfs = hf.get("form_string", "")[-5:] if hf else ""
                 afs = af.get("form_string", "")[-5:] if af else ""
                 h2h = ml5_data.get("head_to_head") or {}
                 h2hn = h2h.get("total_matches", 0)
-                print(f"  [{i+1:3d}] ✓ {home} vs {away}  |  form: {hfs}/{afs}  |  H2H: {h2hn}m")
+                ctx = ml5_data.get("match_context") or {}
+                ctx_tag = ""
+                if ctx.get("is_local_derby"):     ctx_tag += " 🔥derby"
+                if ctx.get("weather_code") == 3:  ctx_tag += " 🌧ploaie"
+                if ctx.get("weather_code") == 4:  ctx_tag += " ❄ninsoare"
+                td = ctx.get("travel_distance_km")
+                if td and td > 2000:              ctx_tag += f" ✈{td}km"
+                print(f"  [{i+1:3d}] ✓ {home} vs {away}  |  form: {hfs}/{afs}  |  H2H: {h2hn}m{ctx_tag}")
             else:
                 print(f"  [{i+1:3d}] ⚠ {home} vs {away}  — detail gol")
                 errors += 1
