@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-06T18:38:46.023314+00:00",
+  "updated_at": "2026-05-06T19:06:39.229267+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 51.0,
+  "overall_score": 51.1,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -10,25 +10,25 @@
   "data_quality": {
     "recommendation_rows": 885,
     "pending_rows": 95,
-    "candidates_with_odds_and_probability": 56,
+    "candidates_with_odds_and_probability": 57,
     "top_ev_count": 20,
     "has_backtest": true,
     "has_training_summary": true,
-    "baseline_leagues": 27
+    "baseline_leagues": 26
   },
   "risk_distribution": {
-    "speculative": 44,
+    "speculative": 45,
     "balanced": 12
   },
   "market_distribution_top150": {
     "Over 1.5G": 25,
-    "Under 3.5G": 18,
+    "Under 3.5G": 19,
     "BTTS": 10,
     "Over 2.5G": 3
   },
   "league_distribution_top150": {
     "Bundesliga": 4,
-    "Copa Libertadores": 2,
+    "Copa Libertadores": 3,
     "Segunda División": 5,
     "Parva Liga": 3,
     "Copa Sudamericana": 4,
@@ -1085,6 +1085,34 @@
       ]
     },
     {
+      "event_id": 9420,
+      "prediction_id": 3557,
+      "home": "Universidad Católica",
+      "away": "Cruzeiro",
+      "league": "Copa Libertadores",
+      "event_date": "2026-05-07T05:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.26,
+      "model_probability": 0.8037,
+      "model_probability_pct": 80.37,
+      "implied_probability_pct": 79.37,
+      "fair_odds": 1.244,
+      "edge_pp": 1.0,
+      "ev_pct": 1.27,
+      "kelly_fraction": 0.0122,
+      "kelly_units_100": 1.22,
+      "confidence": 51.12,
+      "score": 92.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.4% vs. probabilitate implicată 79.4%.",
+        "EV estimat 1.3% și edge 1.0 puncte procentuale.",
+        "Miză Kelly fracțională 1.22% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 7137,
       "prediction_id": 3695,
       "home": "Coritiba",
@@ -1166,34 +1194,6 @@
         "Probabilitate model 80.0% vs. probabilitate implicată 79.4%.",
         "EV estimat 0.7% și edge 0.6 puncte procentuale.",
         "Miză Kelly fracțională 0.72% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 46354,
-      "prediction_id": 3604,
-      "home": "IF Elfsborg",
-      "away": "IF Brommapojkarna",
-      "league": "Allsvenskan",
-      "event_date": "2026-05-08T20:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.28,
-      "model_probability": 0.794,
-      "model_probability_pct": 79.4,
-      "implied_probability_pct": 78.12,
-      "fair_odds": 1.259,
-      "edge_pp": 1.28,
-      "ev_pct": 1.63,
-      "kelly_fraction": 0.0146,
-      "kelly_units_100": 1.46,
-      "confidence": 39.86,
-      "score": 85.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.4% vs. probabilitate implicată 78.1%.",
-        "EV estimat 1.6% și edge 1.3 puncte procentuale.",
-        "Miză Kelly fracțională 1.46% din bancă, plafonată prudent."
       ]
     }
   ],
