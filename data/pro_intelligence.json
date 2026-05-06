@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-06T06:54:42.471449+00:00",
+  "updated_at": "2026-05-06T07:26:52.933984+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 58.8,
+  "overall_score": 58.5,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,21 +9,21 @@
   },
   "data_quality": {
     "recommendation_rows": 881,
-    "pending_rows": 104,
-    "candidates_with_odds_and_probability": 86,
+    "pending_rows": 102,
+    "candidates_with_odds_and_probability": 84,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 26
   },
   "risk_distribution": {
-    "speculative": 70,
+    "speculative": 68,
     "balanced": 14,
     "safe": 2
   },
   "market_distribution_top150": {
     "Over 1.5G": 32,
-    "Under 3.5G": 42,
+    "Under 3.5G": 40,
     "BTTS": 9,
     "Over 2.5G": 3
   },
@@ -33,7 +33,7 @@
     "Copa Sudamericana": 8,
     "Copa Libertadores": 8,
     "Segunda División": 5,
-    "J1 League": 8,
+    "J1 League": 6,
     "Brasileirão Serie A": 1,
     "FA Cup": 1,
     "Trendyol Super Lig": 5,
@@ -666,34 +666,6 @@
       ]
     },
     {
-      "event_id": 204863,
-      "prediction_id": 3531,
-      "home": "Shimizu S-Pulse",
-      "away": "Cerezo Osaka",
-      "league": "J1 League",
-      "event_date": "2026-05-06T07:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.408,
-      "model_probability": 0.7794,
-      "model_probability_pct": 77.94,
-      "implied_probability_pct": 71.02,
-      "fair_odds": 1.283,
-      "edge_pp": 6.92,
-      "ev_pct": 9.74,
-      "kelly_fraction": 0.0597,
-      "kelly_units_100": 5.97,
-      "confidence": 40.54,
-      "score": 91.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 77.9% vs. probabilitate implicată 71.0%.",
-        "EV estimat 9.7% și edge 6.9 puncte procentuale.",
-        "Miză Kelly fracțională 5.97% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 9420,
       "prediction_id": 3557,
       "home": "Universidad Católica",
@@ -915,6 +887,34 @@
         "Probabilitate model 77.4% vs. probabilitate implicată 75.2%.",
         "EV estimat 3.0% și edge 2.2 puncte procentuale.",
         "Miză Kelly fracțională 2.25% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 46353,
+      "prediction_id": 3638,
+      "home": "Västerås SK",
+      "away": "GAIS",
+      "league": "Allsvenskan",
+      "event_date": "2026-05-09T16:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.28,
+      "model_probability": 0.8079,
+      "model_probability_pct": 80.79,
+      "implied_probability_pct": 78.12,
+      "fair_odds": 1.238,
+      "edge_pp": 2.67,
+      "ev_pct": 3.41,
+      "kelly_fraction": 0.0305,
+      "kelly_units_100": 3.05,
+      "confidence": 53.74,
+      "score": 86.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.8% vs. probabilitate implicată 78.1%.",
+        "EV estimat 3.4% și edge 2.7 puncte procentuale.",
+        "Miză Kelly fracțională 3.05% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1951,11 +1951,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 444,
-      "wins": 321,
-      "winrate": 72.3,
-      "profit_units": -3.01,
-      "roi_pct": -0.68,
+      "bets": 446,
+      "wins": 323,
+      "winrate": 72.42,
+      "profit_units": -2.2,
+      "roi_pct": -0.49,
       "avg_odds": 1.385
     },
     {
