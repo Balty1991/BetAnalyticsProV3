@@ -1,0 +1,175 @@
+/* Motor Unificat — Baza de Învățare + subcategory detail framing. */
+
+/* Make every multi-button subcategory area look like one framed control block. */
+#tab-smartbet div:has(> button:nth-of-type(3)),
+#tab-smartbet div:has(> a:nth-of-type(3)){
+  position:relative!important;
+  margin:14px 12px 18px!important;
+  padding:14px 12px!important;
+  border-radius:24px!important;
+  border:1px solid rgba(103,232,249,.18)!important;
+  background:
+    radial-gradient(ellipse at 12% 0%,rgba(43,229,197,.12),rgba(43,229,197,0) 42%),
+    linear-gradient(180deg,rgba(9,18,31,.92),rgba(5,11,20,.92))!important;
+  box-shadow:0 22px 48px rgba(0,0,0,.28),0 0 24px rgba(43,229,197,.07),inset 0 1px 0 rgba(255,255,255,.035)!important;
+  overflow:hidden!important;
+}
+#tab-smartbet div:has(> button:nth-of-type(3))::before,
+#tab-smartbet div:has(> a:nth-of-type(3))::before{
+  content:""!important;
+  position:absolute!important;
+  left:18px!important;
+  right:18px!important;
+  top:0!important;
+  height:1px!important;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,rgba(43,229,197,0),rgba(43,229,197,.52),rgba(255,247,224,.58),rgba(43,229,197,0))!important;
+  box-shadow:0 0 10px rgba(43,229,197,.18)!important;
+  pointer-events:none!important;
+}
+#tab-smartbet div:has(> button:nth-of-type(3)) > button,
+#tab-smartbet div:has(> a:nth-of-type(3)) > a,
+#tab-smartbet div:has(> a:nth-of-type(3)) > button{
+  min-height:46px!important;
+  padding:11px 16px!important;
+  border-radius:17px!important;
+  background:linear-gradient(180deg,rgba(15,24,39,.82),rgba(9,16,28,.88))!important;
+  border:1px solid rgba(148,163,184,.16)!important;
+  color:#91a3bf!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  text-decoration:none!important;
+  white-space:nowrap!important;
+}
+#tab-smartbet div:has(> button:nth-of-type(3)) > button.active,
+#tab-smartbet div:has(> button:nth-of-type(3)) > button.on,
+#tab-smartbet div:has(> button:nth-of-type(3)) > button[aria-selected="true"],
+#tab-smartbet div:has(> a:nth-of-type(3)) > a.active,
+#tab-smartbet div:has(> a:nth-of-type(3)) > a.on,
+#tab-smartbet div:has(> a:nth-of-type(3)) > a[aria-current="page"],
+#tab-smartbet div:has(> a:nth-of-type(3)) > a[aria-selected="true"]{
+  background:linear-gradient(180deg,rgba(43,229,197,.18),rgba(43,229,197,.06))!important;
+  border-color:rgba(43,229,197,.55)!important;
+  color:#53f3d3!important;
+  box-shadow:0 0 18px rgba(43,229,197,.14),inset 0 1px 0 rgba(255,255,255,.05)!important;
+}
+
+/* Header card for Baza de Învățare / sub-pages. */
+#tab-smartbet div:has(> h2),
+#tab-smartbet div:has(> h3){
+  position:relative!important;
+  border-radius:24px!important;
+  background:
+    linear-gradient(90deg,rgba(43,229,197,0),rgba(43,229,197,.44),rgba(255,247,224,.58),rgba(96,165,250,.38),rgba(43,229,197,0)) 50% 0/88% 2px no-repeat,
+    radial-gradient(ellipse at 16% 0%,rgba(43,229,197,.11),rgba(43,229,197,0) 40%),
+    linear-gradient(180deg,rgba(9,17,30,.96),rgba(5,10,18,.96))!important;
+  border:1px solid rgba(103,232,249,.18)!important;
+  border-top-color:rgba(103,232,249,.46)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 18px 44px rgba(0,0,0,.28),0 0 26px rgba(43,229,197,.07)!important;
+  overflow:hidden!important;
+}
+#tab-smartbet div:has(> h2) h2,
+#tab-smartbet div:has(> h3) h3,
+#tab-smartbet div:has(> h2) strong,
+#tab-smartbet div:has(> h3) strong{
+  color:#f8fbff!important;
+  font-weight:950!important;
+  letter-spacing:-.03em!important;
+}
+#tab-smartbet div:has(> h2) p,
+#tab-smartbet div:has(> h3) p,
+#tab-smartbet div:has(> h2) span,
+#tab-smartbet div:has(> h3) span{
+  color:#9fb2cf!important;
+  line-height:1.56!important;
+  white-space:normal!important;
+  overflow-wrap:break-word!important;
+}
+
+/* Learning base cards: journal / API / AI model / impact. */
+#tab-smartbet div:has(> div > h3),
+#tab-smartbet div:has(> div > strong),
+#tab-smartbet div:has(> h3) + div,
+#tab-smartbet div:has(> h2) + div{
+  border-radius:24px!important;
+  border:1px solid rgba(103,232,249,.18)!important;
+  background:
+    linear-gradient(90deg,rgba(103,232,249,0),rgba(103,232,249,.30),rgba(255,247,224,.40),rgba(103,232,249,0)) 50% 0/82% 1px no-repeat,
+    radial-gradient(ellipse at 0% 0%,rgba(43,229,197,.08),rgba(43,229,197,0) 46%),
+    linear-gradient(180deg,rgba(9,17,30,.98),rgba(5,10,18,.98))!important;
+  box-shadow:0 16px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+
+/* Keep the colored learning cards premium but less flat. */
+#tab-smartbet div[style*="rgba(16,185,129"],
+#tab-smartbet div[style*="rgba(59,130,246"],
+#tab-smartbet div[style*="rgba(245,158,11"],
+#tab-smartbet div[style*="rgba(168,85,247"]{
+  position:relative!important;
+  border-radius:24px!important;
+  border-top-color:rgba(255,247,224,.32)!important;
+  box-shadow:0 20px 44px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.045)!important;
+  overflow:hidden!important;
+}
+#tab-smartbet div[style*="rgba(16,185,129"]::before,
+#tab-smartbet div[style*="rgba(59,130,246"]::before,
+#tab-smartbet div[style*="rgba(245,158,11"]::before,
+#tab-smartbet div[style*="rgba(168,85,247"]::before{
+  content:""!important;
+  position:absolute!important;
+  left:22px!important;
+  right:22px!important;
+  top:0!important;
+  height:1px!important;
+  border-radius:999px!important;
+  background:linear-gradient(90deg,rgba(43,229,197,0),rgba(43,229,197,.45),rgba(255,247,224,.58),rgba(43,229,197,0))!important;
+  box-shadow:0 0 10px rgba(43,229,197,.16)!important;
+  pointer-events:none!important;
+}
+
+/* Impact mini-grid: force clean framed chips. */
+#tab-smartbet div:has(> div:nth-child(6)):has(strong),
+#tab-smartbet div:has(> div:nth-child(6)):has(span){
+  border-radius:24px!important;
+  border:1px solid rgba(103,232,249,.16)!important;
+  background:linear-gradient(180deg,rgba(9,17,30,.96),rgba(5,10,18,.96))!important;
+  box-shadow:0 18px 42px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+#tab-smartbet div:has(> div:nth-child(6)) > div{
+  border-radius:16px!important;
+  background:linear-gradient(180deg,rgba(15,24,39,.88),rgba(8,15,27,.94))!important;
+  border:1px solid rgba(148,163,184,.14)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+
+/* Bottom subcategory links get their own framed box. */
+#tab-smartbet div:has(> button):has(> button + button),
+#tab-smartbet div:has(> a):has(> a + a){
+  position:relative!important;
+}
+#tab-smartbet div:has(> button):has(> button + button) > button,
+#tab-smartbet div:has(> a):has(> a + a) > a{
+  color:#c9d7ec!important;
+}
+
+@media(max-width:700px){
+  #tab-smartbet div:has(> button:nth-of-type(3)),
+  #tab-smartbet div:has(> a:nth-of-type(3)){
+    margin:12px 8px 16px!important;
+    padding:12px!important;
+    border-radius:22px!important;
+    gap:8px!important;
+  }
+  #tab-smartbet div:has(> button:nth-of-type(3)) > button,
+  #tab-smartbet div:has(> a:nth-of-type(3)) > a,
+  #tab-smartbet div:has(> a:nth-of-type(3)) > button{
+    min-height:44px!important;
+    padding:10px 12px!important;
+    font-size:12px!important;
+  }
+}
