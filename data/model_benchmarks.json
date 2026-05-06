@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-06T05:57:51.477426+00:00",
+  "updated_at": "2026-05-06T06:27:58.597907+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -4664,13 +4664,13 @@
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 776,
+    "n_total": 777,
     "overall": {
-      "n": 776,
-      "n_wins": 555,
-      "winrate": 71.52,
-      "roi_pct": -0.77,
-      "profit": -5.962,
+      "n": 777,
+      "n_wins": 556,
+      "winrate": 71.56,
+      "roi_pct": -0.71,
+      "profit": -5.542,
       "avg_odds": 1.394,
       "max_drawdown": 19.01,
       "avg_edge_pct": 8.54
@@ -4687,14 +4687,14 @@
         "avg_edge_pct": 9.0
       },
       "over15": {
-        "n": 213,
-        "n_wins": 147,
-        "winrate": 69.01,
-        "roi_pct": -8.67,
-        "profit": -18.472,
-        "avg_odds": 1.327,
+        "n": 214,
+        "n_wins": 148,
+        "winrate": 69.16,
+        "roi_pct": -8.44,
+        "profit": -18.052,
+        "avg_odds": 1.328,
         "max_drawdown": 22.15,
-        "avg_edge_pct": 7.77
+        "avg_edge_pct": 7.8
       },
       "over25": {
         "n": 14,
@@ -4888,6 +4888,16 @@
         "max_drawdown": 1.64,
         "avg_edge_pct": 9.02
       },
+      "J1 League": {
+        "n": 23,
+        "n_wins": 18,
+        "winrate": 78.26,
+        "roi_pct": 8.97,
+        "profit": 2.064,
+        "avg_odds": 1.373,
+        "max_drawdown": 3.13,
+        "avg_edge_pct": 9.17
+      },
       "Superliga": {
         "n": 22,
         "n_wins": 15,
@@ -4897,16 +4907,6 @@
         "avg_odds": 1.309,
         "max_drawdown": 5.39,
         "avg_edge_pct": 9.02
-      },
-      "J1 League": {
-        "n": 22,
-        "n_wins": 17,
-        "winrate": 77.27,
-        "roi_pct": 7.47,
-        "profit": 1.644,
-        "avg_odds": 1.371,
-        "max_drawdown": 3.13,
-        "avg_edge_pct": 8.98
       },
       "Liga Portugal Betclic": {
         "n": 20,
@@ -5141,14 +5141,14 @@
         "avg_edge_pct": 7.27
       },
       "10-15%": {
-        "n": 170,
-        "n_wins": 122,
-        "winrate": 71.76,
-        "roi_pct": 3.75,
-        "profit": 6.372,
+        "n": 171,
+        "n_wins": 123,
+        "winrate": 71.93,
+        "roi_pct": 3.97,
+        "profit": 6.792,
         "avg_odds": 1.44,
         "max_drawdown": 5.03,
-        "avg_edge_pct": 11.94
+        "avg_edge_pct": 11.95
       },
       "15%+": {
         "n": 68,
@@ -5162,6 +5162,48 @@
       }
     },
     "by_market_bucket": {
+      "over15": {
+        "0-5%": {
+          "n": 49,
+          "n_wins": 35,
+          "winrate": 71.43,
+          "roi_pct": -7.37,
+          "profit": -3.61,
+          "avg_odds": 1.304,
+          "max_drawdown": 5.99,
+          "avg_edge_pct": 3.75
+        },
+        "5-10%": {
+          "n": 118,
+          "n_wins": 79,
+          "winrate": 66.95,
+          "roi_pct": -12.39,
+          "profit": -14.62,
+          "avg_odds": 1.318,
+          "max_drawdown": 16.81,
+          "avg_edge_pct": 7.21
+        },
+        "10-15%": {
+          "n": 31,
+          "n_wins": 22,
+          "winrate": 70.97,
+          "roi_pct": -2.2,
+          "profit": -0.682,
+          "avg_odds": 1.367,
+          "max_drawdown": 3.43,
+          "avg_edge_pct": 11.74
+        },
+        "15%+": {
+          "n": 16,
+          "n_wins": 12,
+          "winrate": 75.0,
+          "roi_pct": 5.37,
+          "profit": 0.86,
+          "avg_odds": 1.392,
+          "max_drawdown": 1.6,
+          "avg_edge_pct": 16.85
+        }
+      },
       "under35": {
         "0-5%": {
           "n": 83,
@@ -5202,48 +5244,6 @@
           "avg_odds": 1.453,
           "max_drawdown": 2.0,
           "avg_edge_pct": 18.36
-        }
-      },
-      "over15": {
-        "0-5%": {
-          "n": 49,
-          "n_wins": 35,
-          "winrate": 71.43,
-          "roi_pct": -7.37,
-          "profit": -3.61,
-          "avg_odds": 1.304,
-          "max_drawdown": 5.99,
-          "avg_edge_pct": 3.75
-        },
-        "5-10%": {
-          "n": 118,
-          "n_wins": 79,
-          "winrate": 66.95,
-          "roi_pct": -12.39,
-          "profit": -14.62,
-          "avg_odds": 1.318,
-          "max_drawdown": 16.81,
-          "avg_edge_pct": 7.21
-        },
-        "10-15%": {
-          "n": 30,
-          "n_wins": 21,
-          "winrate": 70.0,
-          "roi_pct": -3.67,
-          "profit": -1.102,
-          "avg_odds": 1.365,
-          "max_drawdown": 3.43,
-          "avg_edge_pct": 11.68
-        },
-        "15%+": {
-          "n": 16,
-          "n_wins": 12,
-          "winrate": 75.0,
-          "roi_pct": 5.37,
-          "profit": 0.86,
-          "avg_odds": 1.392,
-          "max_drawdown": 1.6,
-          "avg_edge_pct": 16.85
         }
       },
       "btts": {
