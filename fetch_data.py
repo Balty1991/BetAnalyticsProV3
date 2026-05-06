@@ -21,6 +21,7 @@ from typing import Dict, Any, List, Optional
 
 TOKEN = os.environ.get("BSD_TOKEN", "").strip()
 API_BASE = "https://sports.bzzoiro.com"
+V2_BASE = "https://sports.bzzoiro.com/api/v2"  # BSD API v2 — endpoints noi (managers, standings xGd, predictions filter)
 HEADERS = {"Authorization": f"Token {TOKEN}"}
 TZ = "Europe/Bucharest"
 DATA_DIR = "data"
@@ -746,6 +747,7 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         "away_api_id": (event.get("away_team_obj") or {}).get("api_id"),
         "league_api_id": (event.get("league") or {}).get("api_id"),
         "most_likely_score": row.get("most_likely_score"),
+        "v2_recommended": bool(row.get("v2_recommended")),
     }
 
 
@@ -767,6 +769,11 @@ def qualifies_for_strategy(candidate, strategy_cfg):
     eff_min_adj  = strategy_cfg["min_adj"]  + adj_delta
     eff_min_edge = strategy_cfg["min_edge"] + edge_delta
     eff_min_conf = strategy_cfg["min_conf"] + conf_delta
+
+    # ─── Relaxare 2pp pentru picks confirmate de v2 API (recommended + min_confidence) ──
+    # v2 a filtrat deja pe confidence ≥ 0.68 + cel puțin o recomandare activă
+    if candidate.get("v2_recommended"):
+        eff_min_conf = max(strategy_cfg["min_conf"] - 4.0, eff_min_conf - 2.0)
 
     if candidate["adj_prob"] < eff_min_adj:
         return False
@@ -1947,6 +1954,9 @@ def build_ui_live_candidate(row, market_key):
     if odds > 2.20:
         ticket_score -= 8.0
 
+    # ─── V2 API bonus: manager stats + standings xGd ──────────────────────────
+    ticket_score += v2_score_adjustment(row, market_key)
+
     return {
         "market": market["label"],
         "market_key": market_key,
@@ -1987,6 +1997,17 @@ def build_ui_live_candidate(row, market_key):
             else "Balanced" if verdict_from_metrics(adj, value, confidence, edge_pct or 0) == "value"
             else "Avoid"
         ),
+        # ─── V2 signals ───────────────────────────────────────────────────────
+        "v2_recommended": bool(row.get("v2_recommended")),
+        "home_mgr_over25_pct": row.get("home_mgr_over25_pct"),
+        "away_mgr_over25_pct": row.get("away_mgr_over25_pct"),
+        "home_mgr_btts_pct": row.get("home_mgr_btts_pct"),
+        "away_mgr_btts_pct": row.get("away_mgr_btts_pct"),
+        "home_mgr_cs_pct": row.get("home_mgr_cs_pct"),
+        "away_mgr_cs_pct": row.get("away_mgr_cs_pct"),
+        "home_xgd": row.get("home_xgd"),
+        "away_xgd": row.get("away_xgd"),
+        "xgd_diff": row.get("xgd_diff"),
     }
 
 
@@ -2578,6 +2599,223 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
     }
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# BSD API v2 — Integrare selectivă: recommendations filter, manager stats, xGd
+# v1 rămâne sursa principală; v2 furnizează semnale adiționale non-blocking.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def fetch_v2_recommended_event_ids(today_str, future_str):
+    """
+    Fetch event IDs pe care v2 API le consideră recomandate (confidence ≥ 0.68 +
+    cel puțin un flag *_recommend=True). Folosit pentru relaxare 2pp în qualifies.
+    Returnează set() la eroare (non-blocking).
+    """
+    recommended_ids = set()
+    try:
+        url = (
+            f"{V2_BASE}/predictions/?status=upcoming"
+            f"&min_confidence=0.68&recommended=true&limit=200"
+            f"&date_from={today_str}&date_to={future_str}"
+        )
+        seen = set()
+        next_url = url
+        while next_url and next_url not in seen and len(recommended_ids) < 500:
+            seen.add(next_url)
+            r = requests.get(next_url, headers=HEADERS, timeout=20)
+            if r.status_code != 200:
+                break
+            data = r.json()
+            for item in (data.get("results") or []):
+                ev_id = (item.get("event") or {}).get("id")
+                if ev_id:
+                    recommended_ids.add(int(ev_id))
+            next_url = data.get("next") or None
+        print(f"[V2] Recommended event IDs: {len(recommended_ids)}")
+    except Exception as e:
+        print(f"[V2] fetch_v2_recommended_event_ids failed (non-fatal): {e}")
+    return recommended_ids
+
+
+def fetch_manager_stats_for_teams(team_api_ids):
+    """
+    Fetch statistici antrenor curent per echipă din v2 API:
+      over_25_pct, btts_pct, clean_sheet_pct, avg_possession.
+    Returnează {team_api_id: dict} — valori lipsă → None în dict.
+    Cap la 50 echipe pentru a limita numărul de request-uri.
+    """
+    manager_map = {}
+    if not team_api_ids:
+        return manager_map
+    ids_to_fetch = list(team_api_ids)[:50]
+    fetched = 0
+    for team_id in ids_to_fetch:
+        try:
+            r = requests.get(
+                f"{V2_BASE}/managers/?team_id={team_id}&limit=1",
+                headers=HEADERS, timeout=12
+            )
+            if r.status_code != 200:
+                continue
+            results = (r.json().get("results") or [])
+            if not results:
+                continue
+            mgr = results[0]
+            manager_map[int(team_id)] = {
+                "over25_pct":       float(mgr.get("over_25_pct")       or 0.0),
+                "btts_pct":         float(mgr.get("btts_pct")           or 0.0),
+                "clean_sheet_pct":  float(mgr.get("clean_sheet_pct")    or 0.0),
+                "avg_possession":   float(mgr.get("avg_possession")     or 0.0),
+                "name":             mgr.get("short_name") or mgr.get("name") or "",
+            }
+            fetched += 1
+        except Exception as e:
+            print(f"[V2] Manager fetch failed team {team_id} (non-fatal): {e}")
+    print(f"[V2] Manager stats: {fetched}/{len(ids_to_fetch)} teams")
+    return manager_map
+
+
+def fetch_standings_xgd_map(league_api_ids):
+    """
+    Fetch clasament cu xGd per ligă din v2 API.
+    Returnează {(league_id, team_id): xgd_float}.
+    xgd > 0 = echipa creează mai mult xG decât primește → indicator de putere.
+    """
+    xgd_map = {}
+    if not league_api_ids:
+        return xgd_map
+    fetched_leagues = 0
+    for league_id in league_api_ids:
+        try:
+            r = requests.get(
+                f"{V2_BASE}/leagues/{league_id}/standings/",
+                headers=HEADERS, timeout=12
+            )
+            if r.status_code != 200:
+                continue
+            data = r.json()
+            rows = data.get("standings") or []
+            # suport și format grouped (cupe cu grupe)
+            if not rows and data.get("groups"):
+                for group_rows in data["groups"].values():
+                    rows.extend(group_rows if isinstance(group_rows, list) else [])
+            for row in rows:
+                team_id = row.get("team_id")
+                xgd = row.get("xgd")
+                xg_games = int(row.get("xg_games") or 0)
+                # ignorăm echipele cu sub 3 meciuri cu date xG (sample prea mic)
+                if team_id is not None and xgd is not None and xg_games >= 3:
+                    xgd_map[(int(league_id), int(team_id))] = float(xgd)
+            fetched_leagues += 1
+        except Exception as e:
+            print(f"[V2] Standings xGd failed league {league_id} (non-fatal): {e}")
+    print(f"[V2] Standings xGd: {fetched_leagues}/{len(league_api_ids)} ligi, {len(xgd_map)} entități team")
+    return xgd_map
+
+
+def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map):
+    """
+    Adaugă pe fiecare prediction row câmpuri derivate din v2:
+      v2_recommended, home/away_mgr_*, home/away_xgd, xgd_diff.
+    Graceful: câmpuri lipsă rămân None, nu aruncă excepții.
+    """
+    if not predictions:
+        return predictions
+    enriched_count = 0
+    for row in predictions:
+        event = row.get("event") or {}
+        event_id = event.get("id")
+
+        # Flag v2 recommended
+        row["v2_recommended"] = bool(event_id and int(event_id) in v2_recommended_ids)
+
+        # Team IDs pentru manager lookup
+        home_obj = event.get("home_team_obj") or {}
+        away_obj = event.get("away_team_obj") or {}
+        home_tid = home_obj.get("api_id") or home_obj.get("id")
+        away_tid = away_obj.get("api_id") or away_obj.get("id")
+
+        home_mgr = manager_map.get(int(home_tid)) if home_tid else None
+        away_mgr = manager_map.get(int(away_tid)) if away_tid else None
+
+        row["home_mgr_over25_pct"]  = home_mgr.get("over25_pct")       if home_mgr else None
+        row["away_mgr_over25_pct"]  = away_mgr.get("over25_pct")       if away_mgr else None
+        row["home_mgr_btts_pct"]    = home_mgr.get("btts_pct")         if home_mgr else None
+        row["away_mgr_btts_pct"]    = away_mgr.get("btts_pct")         if away_mgr else None
+        row["home_mgr_cs_pct"]      = home_mgr.get("clean_sheet_pct")  if home_mgr else None
+        row["away_mgr_cs_pct"]      = away_mgr.get("clean_sheet_pct")  if away_mgr else None
+
+        # Standings xGd
+        league_id = (event.get("league") or {}).get("api_id")
+        home_xgd = xgd_map.get((int(league_id), int(home_tid))) if (league_id and home_tid) else None
+        away_xgd = xgd_map.get((int(league_id), int(away_tid))) if (league_id and away_tid) else None
+
+        row["home_xgd"] = home_xgd
+        row["away_xgd"] = away_xgd
+        row["xgd_diff"] = (
+            round(float(home_xgd) - float(away_xgd), 3)
+            if (home_xgd is not None and away_xgd is not None) else None
+        )
+
+        if home_mgr or away_mgr or home_xgd is not None:
+            enriched_count += 1
+
+    print(f"[V2] Enriched {enriched_count}/{len(predictions)} predictions cu semnale v2")
+    return predictions
+
+
+def v2_score_adjustment(row, market_key):
+    """
+    Delta scor bazat pe semnale v2 API (manager stats + standings xGd).
+    Returnează float adăugat la ticket_score în build_ui_live_candidate.
+    Toate valorile None → delta 0 (graceful degradation).
+    """
+    delta = 0.0
+
+    # Bonus dublă confirmare: v1 engine + v2 API recomandă același pick
+    if row.get("v2_recommended"):
+        delta += 1.5
+
+    home_o25 = float(row.get("home_mgr_over25_pct") or 0.0)
+    away_o25 = float(row.get("away_mgr_over25_pct") or 0.0)
+    home_btts = float(row.get("home_mgr_btts_pct") or 0.0)
+    away_btts = float(row.get("away_mgr_btts_pct") or 0.0)
+    home_cs  = float(row.get("home_mgr_cs_pct") or 0.0)
+    away_cs  = float(row.get("away_mgr_cs_pct") or 0.0)
+    xgd_diff = row.get("xgd_diff")  # pozitiv = avantaj echipă gazdă
+
+    if market_key == "over25":
+        # Ambii antrenori produc statistici over 2.5 ridicate
+        if home_o25 >= 60 and away_o25 >= 55:
+            delta += 2.5
+        elif home_o25 >= 55 or away_o25 >= 60:
+            delta += 1.0
+    elif market_key == "over15":
+        if home_o25 >= 55 and away_o25 >= 50:
+            delta += 1.5
+    elif market_key == "btts":
+        # Ambii antrenori cu BTTS % ridicat = meci deschis
+        if home_btts >= 55 and away_btts >= 55:
+            delta += 2.0
+        elif home_btts >= 50 and away_btts >= 50:
+            delta += 1.0
+    elif market_key == "under35":
+        # Antrenori defensivi (clean sheet ridicat) → sub 3.5 mai probabil
+        if home_cs >= 35 and away_cs >= 35:
+            delta += 2.0
+        elif home_cs >= 40 or away_cs >= 40:
+            delta += 1.0
+    elif market_key == "homeWin":
+        # xGd favorabil echipei gazdă din clasament
+        if xgd_diff is not None and xgd_diff >= 0.3:
+            delta += min(2.0, xgd_diff * 2.0)
+    elif market_key == "awayWin":
+        # xGd favorabil echipei oaspete
+        if xgd_diff is not None and xgd_diff <= -0.3:
+            delta += min(2.0, abs(xgd_diff) * 2.0)
+
+    return round(delta, 2)
+
+
 def main():
     ensure_token()
     started_at = datetime.now(timezone.utc)
@@ -2602,6 +2840,43 @@ def main():
 
     print("\n[2.5/6] Enriching predictions with best odds from market compare...")
     predictions, events, market_compare_stats = enrich_predictions_with_market_odds(predictions, events)
+
+    print("\n[2.7/6] Fetching v2 signals (recommendations, manager stats, standings xGd)...")
+    try:
+        # 1. Event IDs recomandate de v2 (confidence ≥ 0.68 + recommended=true)
+        v2_recommended_ids = fetch_v2_recommended_event_ids(today, future)
+
+        # 2. Manager stats — doar echipele din predicțiile upcoming
+        upcoming_team_ids = set()
+        upcoming_league_ids = set()
+        for pred in predictions:
+            ev = pred.get("event") or {}
+            if ev.get("status") != "notstarted":
+                continue
+            home_obj = ev.get("home_team_obj") or {}
+            away_obj = ev.get("away_team_obj") or {}
+            lg = ev.get("league") or {}
+            if home_obj.get("api_id"): upcoming_team_ids.add(int(home_obj["api_id"]))
+            if away_obj.get("api_id"): upcoming_team_ids.add(int(away_obj["api_id"]))
+            if lg.get("api_id"):       upcoming_league_ids.add(int(lg["api_id"]))
+
+        manager_map = fetch_manager_stats_for_teams(upcoming_team_ids)
+
+        # 3. Standings xGd per ligă
+        xgd_map = fetch_standings_xgd_map(upcoming_league_ids)
+
+        # 4. Enrichment pe predictions
+        predictions = enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map)
+
+        v2_stats = {
+            "v2_recommended_count":   len(v2_recommended_ids),
+            "manager_teams_fetched":  len(manager_map),
+            "xgd_entries":            len(xgd_map),
+            "enriched_leagues":       len(upcoming_league_ids),
+        }
+    except Exception as e:
+        print(f"[V2] Enrichment v2 eșuat complet (non-fatal, continuăm cu v1): {e}")
+        v2_stats = {"error": str(e)}
 
     print("\n[3/6] Fetching BSD status metrics...")
     status_metrics = fetch_status_metrics()
@@ -2684,7 +2959,7 @@ def main():
         "backtest_engine_bets": backtest["engine_bets"],
         "backtest_engine_roi": backtest["engine_roi"],
         "status": "ok",
-        "version": "v16.1-strategic-upgrade",
+        "version": "v16.2-v2-signals",
         "timezone": TZ,
         "source": "bsd_api_light",
         "refresh_static": refresh_static,
@@ -2702,6 +2977,7 @@ def main():
         "data_health": data_health,
         "header_sync": header_sync,
         "bsd_status": status_metrics,
+        "v2_signals": v2_stats,
         "upcoming_preprocess": upcoming_prep,
         "historical_preprocess": historical_prep,
     }
