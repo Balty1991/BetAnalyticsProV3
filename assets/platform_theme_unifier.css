@@ -1,0 +1,229 @@
+/* Platform Theme Unifier — applies the same dark/cyan premium theme across remaining screens. */
+:root{
+  --ba-ui-bg:#050b14;
+  --ba-ui-panel:#09111f;
+  --ba-ui-panel-2:#0f1827;
+  --ba-ui-text:#f8fbff;
+  --ba-ui-muted:#9fb2cf;
+  --ba-ui-soft:#c7d5ea;
+  --ba-ui-cyan:#53f3d3;
+  --ba-ui-blue:#67e8f9;
+  --ba-ui-gold:#f4bd5b;
+  --ba-ui-green:#4ade80;
+  --ba-ui-red:#fb7185;
+  --ba-ui-line:linear-gradient(90deg,rgba(43,229,197,0),rgba(43,229,197,.62),rgba(255,247,224,.72),rgba(96,165,250,.48),rgba(43,229,197,0));
+}
+
+/* Main tab surfaces. Meciuri cards keep their dedicated photo-exact rules. */
+.main .tab-content:not(#tab-meciuri),
+#tab-dashboard,
+#tab-more,
+#tab-smartbet,
+#tab-ml5,
+#tab-clv,
+#tab-cota2,
+#tab-istoric21{
+  color:var(--ba-ui-text)!important;
+  background:
+    radial-gradient(ellipse at 50% -10%,rgba(43,229,197,.08),transparent 42%),
+    linear-gradient(180deg,rgba(4,11,19,.98),rgba(3,8,15,.995))!important;
+  border-color:rgba(43,229,197,.20)!important;
+  box-shadow:0 20px 56px rgba(0,0,0,.44),0 0 36px rgba(43,229,197,.08)!important;
+}
+
+.main .tab-content:not(#tab-meciuri)::before{
+  content:""!important;
+  position:absolute!important;
+  top:0!important;
+  left:22px!important;
+  right:22px!important;
+  height:2px!important;
+  border-radius:999px!important;
+  background:var(--ba-ui-line)!important;
+  box-shadow:0 0 12px rgba(43,229,197,.24)!important;
+  pointer-events:none!important;
+  z-index:2!important;
+}
+
+/* Universal premium cards/panels left behind by older screens. */
+.main .tab-content:not(#tab-meciuri) :is(.card,.panel,.section,.visual-card,.stat-card,.kpi-card,.metric-card,.summary-card,.engine-card,.smartbet-card,.memory-card,.ai-card,.clv-card,.corr-box,.rbox,.picks-wrap,.box),
+.main .tab-content:not(#tab-meciuri) [class*="card"],
+.main .tab-content:not(#tab-meciuri) [class*="panel"],
+.main .tab-content:not(#tab-meciuri) [class*="tile"],
+.main .tab-content:not(#tab-meciuri) [class*="metric"],
+.main .tab-content:not(#tab-meciuri) [class*="summary"],
+.main .tab-content:not(#tab-meciuri) [class*="quality"],
+.main .tab-content:not(#tab-meciuri) [class*="tracker"],
+.main .tab-content:not(#tab-meciuri) [class*="training"]{
+  border-radius:23px!important;
+  background:
+    linear-gradient(90deg,rgba(103,232,249,0),rgba(103,232,249,.26),rgba(255,247,224,.36),rgba(103,232,249,0)) 50% 0/84% 1px no-repeat,
+    radial-gradient(ellipse at 0% 0%,rgba(43,229,197,.075),rgba(43,229,197,0) 46%),
+    linear-gradient(180deg,rgba(9,17,30,.98),rgba(5,10,18,.985))!important;
+  border:1px solid rgba(148,163,184,.13)!important;
+  box-shadow:0 16px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+
+/* Catch inline-style cards used by generated sections such as learning base/API/training. */
+#tab-smartbet div[style*="background"],
+#tab-clv div[style*="background"],
+#tab-ml5 div[style*="background"],
+#tab-cota2 div[style*="background"],
+#tab-more div[style*="background"]{
+  border-color:rgba(103,232,249,.16)!important;
+}
+#tab-smartbet div[style*="rgba(255,255,255"],
+#tab-smartbet div[style*="rgba(6,8,15"],
+#tab-smartbet div[style*="rgba(14,20,36"],
+#tab-smartbet div[style*="#0E1424"],
+#tab-smartbet div[style*="#161d2e"],
+#tab-clv div[style*="rgba(255,255,255"],
+#tab-clv div[style*="#0E1424"],
+#tab-more div[style*="rgba(255,255,255"],
+#tab-more div[style*="#0E1424"]{
+  background:linear-gradient(180deg,rgba(9,17,30,.98),rgba(5,10,18,.985))!important;
+  border-color:rgba(148,163,184,.13)!important;
+  box-shadow:0 14px 30px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+
+/* Header/intro blocks. */
+.main .tab-content:not(#tab-meciuri) :is(.visual-card-head,.section-head,.panel-head,.card-head,.clv-header),
+.main .tab-content:not(#tab-meciuri) div:has(> h1),
+.main .tab-content:not(#tab-meciuri) div:has(> h2:first-child),
+.main .tab-content:not(#tab-meciuri) div:has(> h3:first-child){
+  border-radius:24px!important;
+  background:
+    linear-gradient(90deg,rgba(43,229,197,0),rgba(43,229,197,.42),rgba(255,247,224,.58),rgba(96,165,250,.36),rgba(43,229,197,0)) 50% 0/88% 2px no-repeat,
+    radial-gradient(ellipse at 16% 0%,rgba(43,229,197,.11),rgba(43,229,197,0) 40%),
+    linear-gradient(180deg,rgba(9,17,30,.96),rgba(5,10,18,.96))!important;
+  border:1px solid rgba(103,232,249,.18)!important;
+  border-top-color:rgba(103,232,249,.46)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 18px 44px rgba(0,0,0,.28),0 0 26px rgba(43,229,197,.07)!important;
+  overflow:hidden!important;
+}
+
+.main .tab-content:not(#tab-meciuri) :is(h1,h2,h3,h4,.visual-card-title,.sec-title,.panel-title,.card-title,.clv-title){
+  color:var(--ba-ui-text)!important;
+  font-weight:950!important;
+  letter-spacing:-.035em!important;
+}
+.main .tab-content:not(#tab-meciuri) :is(p,.visual-card-sub,.muted,.sub,.note,.meta,.desc,[class*="sub"],[class*="meta"],[class*="note"]){
+  color:var(--ba-ui-muted)!important;
+  line-height:1.56!important;
+}
+.main .tab-content:not(#tab-meciuri) *{
+  max-width:100%;
+}
+
+/* Buttons, chips, filters and subcategory selectors across all remaining screens. */
+.main .tab-content:not(#tab-meciuri) :is(.filter-bar,.tab-row,.subtabs,.smartbet-tabs,.sb-tabs,.sbv2-tabs,.engine-tabs,.ai-memory-tabs,.unified-tabs,.p-filters),
+.main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)),
+.main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)){
+  position:relative!important;
+  border-radius:24px!important;
+  border:1px solid rgba(103,232,249,.18)!important;
+  background:
+    radial-gradient(ellipse at 12% 0%,rgba(43,229,197,.12),rgba(43,229,197,0) 42%),
+    linear-gradient(180deg,rgba(9,18,31,.92),rgba(5,11,20,.92))!important;
+  box-shadow:0 22px 48px rgba(0,0,0,.28),0 0 24px rgba(43,229,197,.07),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+.main .tab-content:not(#tab-meciuri) :is(button,a.btn,.filter-btn,.chip,.pill,.tag,.procc-btn,.clv-sel),
+.main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)) > button,
+.main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)) > a{
+  border-radius:16px!important;
+  background:linear-gradient(180deg,rgba(15,24,39,.86),rgba(8,15,27,.94))!important;
+  border:1px solid rgba(148,163,184,.16)!important;
+  color:#cbd8ea!important;
+  font-weight:850!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+  text-decoration:none!important;
+}
+.main .tab-content:not(#tab-meciuri) :is(button.active,button.on,button[aria-selected="true"],a.active,a.on,a[aria-current="page"],.filter-btn.active,.chip.active,.pill.active){
+  background:linear-gradient(180deg,rgba(43,229,197,.20),rgba(43,229,197,.07))!important;
+  border-color:rgba(43,229,197,.58)!important;
+  color:var(--ba-ui-cyan)!important;
+  box-shadow:0 0 18px rgba(43,229,197,.15),inset 0 1px 0 rgba(255,255,255,.05)!important;
+}
+
+/* SmartBet specific: keep top category buttons visible on mobile and make subcategory links a framed group. */
+#tab-smartbet :is(.smartbet-tabs,.sb-tabs,.sbv2-tabs,.engine-tabs,.ai-memory-tabs,.unified-tabs,.filter-bar,.subtabs,.tab-row),
+#tab-smartbet div:has(> button:nth-of-type(3)),
+#tab-smartbet div:has(> a:nth-of-type(3)){
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-width:none!important;
+  scroll-padding-left:12px!important;
+}
+#tab-smartbet :is(.smartbet-tabs,.sb-tabs,.sbv2-tabs,.engine-tabs,.ai-memory-tabs,.unified-tabs,.filter-bar,.subtabs,.tab-row)::-webkit-scrollbar,
+#tab-smartbet div:has(> button:nth-of-type(3))::-webkit-scrollbar,
+#tab-smartbet div:has(> a:nth-of-type(3))::-webkit-scrollbar{display:none!important;}
+#tab-smartbet :is(.smartbet-tabs,.sb-tabs,.sbv2-tabs,.engine-tabs,.ai-memory-tabs,.unified-tabs,.filter-bar,.subtabs,.tab-row) > button,
+#tab-smartbet div:has(> button:nth-of-type(3)) > button,
+#tab-smartbet div:has(> a:nth-of-type(3)) > a{
+  flex:0 0 auto!important;
+  min-width:max-content!important;
+  max-width:none!important;
+  white-space:nowrap!important;
+}
+
+/* Bottom learning-base shortcuts. */
+#tab-smartbet div:has(> a):has(> a + a),
+#tab-smartbet div:has(> button):has(> button + button){
+  padding:16px 14px!important;
+  border-radius:24px!important;
+  border:1px solid rgba(103,232,249,.18)!important;
+  background:
+    radial-gradient(ellipse at 12% 0%,rgba(43,229,197,.13),rgba(43,229,197,0) 42%),
+    linear-gradient(180deg,rgba(9,18,31,.94),rgba(5,11,20,.94))!important;
+  box-shadow:0 22px 48px rgba(0,0,0,.30),0 0 28px rgba(43,229,197,.09)!important;
+}
+#tab-smartbet div:has(> a):has(> a + a) > a,
+#tab-smartbet div:has(> button):has(> button + button) > button{
+  min-height:48px!important;
+  padding:12px 16px!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,rgba(15,24,39,.92),rgba(8,15,27,.96))!important;
+  border:1px solid rgba(148,163,184,.18)!important;
+  color:#d5e2f6!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 8px 18px rgba(0,0,0,.18)!important;
+}
+
+/* Tables and rows left in older sections. */
+.main .tab-content:not(#tab-meciuri) table{border-collapse:separate!important;border-spacing:0 8px!important;}
+.main .tab-content:not(#tab-meciuri) tbody tr{background:linear-gradient(180deg,rgba(9,17,30,.98),rgba(5,10,18,.98))!important;box-shadow:0 10px 24px rgba(0,0,0,.22)!important;}
+.main .tab-content:not(#tab-meciuri) td{border-top:1px solid rgba(148,163,184,.10)!important;border-bottom:1px solid rgba(148,163,184,.10)!important;color:#dce7f7!important;}
+.main .tab-content:not(#tab-meciuri) th{color:#8fa0bb!important;border-bottom-color:rgba(148,163,184,.12)!important;}
+
+/* Consistent value colors. */
+.main .tab-content:not(#tab-meciuri) :is(.pos,.positive,.good,.win,[class*="green"]){color:var(--ba-ui-green)!important;}
+.main .tab-content:not(#tab-meciuri) :is(.neg,.negative,.bad,.loss,[class*="red"]){color:var(--ba-ui-red)!important;}
+.main .tab-content:not(#tab-meciuri) :is(.warn,.warning,[class*="yellow"],[class*="gold"]){color:var(--ba-ui-gold)!important;}
+
+@media(max-width:700px){
+  .main .tab-content:not(#tab-meciuri){border-radius:24px!important;}
+  .main .tab-content:not(#tab-meciuri) :is(.filter-bar,.tab-row,.subtabs,.smartbet-tabs,.sb-tabs,.sbv2-tabs,.engine-tabs,.ai-memory-tabs,.unified-tabs,.p-filters),
+  .main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)),
+  .main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)){
+    margin-left:8px!important;
+    margin-right:8px!important;
+    padding:12px!important;
+    border-radius:22px!important;
+  }
+  .main .tab-content:not(#tab-meciuri) :is(button,a.btn,.filter-btn,.chip,.pill,.tag,.procc-btn,.clv-sel),
+  .main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)) > button,
+  .main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)) > a{
+    min-height:42px!important;
+    padding:10px 12px!important;
+    font-size:12px!important;
+  }
+  #tab-smartbet div:has(> a):has(> a + a),
+  #tab-smartbet div:has(> button):has(> button + button){
+    margin-left:8px!important;
+    margin-right:8px!important;
+    padding:14px 12px!important;
+  }
+}
