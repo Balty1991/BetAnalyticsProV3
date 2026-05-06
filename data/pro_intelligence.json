@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-06T07:26:52.933984+00:00",
+  "updated_at": "2026-05-06T08:00:06.121435+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 58.5,
+  "overall_score": 58.6,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,22 +9,22 @@
   },
   "data_quality": {
     "recommendation_rows": 881,
-    "pending_rows": 102,
-    "candidates_with_odds_and_probability": 84,
+    "pending_rows": 101,
+    "candidates_with_odds_and_probability": 85,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 26
   },
   "risk_distribution": {
-    "speculative": 68,
-    "balanced": 14,
+    "speculative": 70,
+    "balanced": 13,
     "safe": 2
   },
   "market_distribution_top150": {
-    "Over 1.5G": 32,
-    "Under 3.5G": 40,
-    "BTTS": 9,
+    "Over 1.5G": 31,
+    "Under 3.5G": 41,
+    "BTTS": 10,
     "Over 2.5G": 3
   },
   "league_distribution_top150": {
@@ -33,18 +33,18 @@
     "Copa Sudamericana": 8,
     "Copa Libertadores": 8,
     "Segunda División": 5,
-    "J1 League": 6,
+    "J1 League": 5,
     "Brasileirão Serie A": 1,
-    "FA Cup": 1,
-    "Trendyol Super Lig": 5,
     "Ekstraklasa": 3,
+    "FA Cup": 1,
+    "Trendyol Super Lig": 6,
     "Pro League": 2,
     "Superliga": 2,
-    "Super League": 2,
+    "Super League": 3,
     "Stoiximan Super League": 2,
     "Allsvenskan": 3,
-    "Chinese Super League": 4,
     "MLS": 2,
+    "Chinese Super League": 4,
     "Europa League": 2,
     "Premier League": 3,
     "La Liga": 3,
@@ -198,23 +198,23 @@
       "event_date": "2026-05-09T16:30:00+03:00",
       "market": "BTTS",
       "odds": 1.52,
-      "model_probability": 0.6877,
-      "model_probability_pct": 68.77,
+      "model_probability": 0.7018,
+      "model_probability_pct": 70.18,
       "implied_probability_pct": 65.79,
-      "fair_odds": 1.454,
-      "edge_pp": 2.98,
-      "ev_pct": 4.53,
-      "kelly_fraction": 0.0218,
-      "kelly_units_100": 2.18,
+      "fair_odds": 1.425,
+      "edge_pp": 4.39,
+      "ev_pct": 6.67,
+      "kelly_fraction": 0.0321,
+      "kelly_units_100": 3.21,
       "confidence": 57.25,
       "score": 105.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 68.8% vs. probabilitate implicată 65.8%.",
-        "EV estimat 4.5% și edge 3.0 puncte procentuale.",
-        "Miză Kelly fracțională 2.18% din bancă, plafonată prudent."
+        "Probabilitate model 70.2% vs. probabilitate implicată 65.8%.",
+        "EV estimat 6.7% și edge 4.4 puncte procentuale.",
+        "Miză Kelly fracțională 3.21% din bancă, plafonată prudent."
       ]
     },
     {
@@ -386,6 +386,34 @@
       ]
     },
     {
+      "event_id": 204251,
+      "prediction_id": 3635,
+      "home": "AD Ceuta",
+      "away": "CD Castellón",
+      "league": "Segunda División",
+      "event_date": "2026-05-09T15:00:00+03:00",
+      "market": "BTTS",
+      "odds": 1.61,
+      "model_probability": 0.6992,
+      "model_probability_pct": 69.92,
+      "implied_probability_pct": 62.11,
+      "fair_odds": 1.43,
+      "edge_pp": 7.81,
+      "ev_pct": 12.57,
+      "kelly_fraction": 0.0515,
+      "kelly_units_100": 5.15,
+      "confidence": 40.6,
+      "score": 98.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 69.9% vs. probabilitate implicată 62.1%.",
+        "EV estimat 12.6% și edge 7.8 puncte procentuale.",
+        "Miză Kelly fracțională 5.15% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 7137,
       "prediction_id": 3695,
       "home": "Coritiba",
@@ -414,31 +442,31 @@
       ]
     },
     {
-      "event_id": 204251,
-      "prediction_id": 3635,
-      "home": "AD Ceuta",
-      "away": "CD Castellón",
-      "league": "Segunda División",
-      "event_date": "2026-05-09T15:00:00+03:00",
-      "market": "BTTS",
-      "odds": 1.61,
-      "model_probability": 0.6852,
-      "model_probability_pct": 68.52,
-      "implied_probability_pct": 62.11,
-      "fair_odds": 1.459,
-      "edge_pp": 6.41,
-      "ev_pct": 10.32,
-      "kelly_fraction": 0.0423,
-      "kelly_units_100": 4.23,
-      "confidence": 40.6,
+      "event_id": 8020,
+      "prediction_id": 3662,
+      "home": "Jagiellonia Białystok",
+      "away": "Pogoń Szczecin",
+      "league": "Ekstraklasa",
+      "event_date": "2026-05-09T18:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.5,
+      "model_probability": 0.7586,
+      "model_probability_pct": 75.86,
+      "implied_probability_pct": 66.67,
+      "fair_odds": 1.318,
+      "edge_pp": 9.19,
+      "ev_pct": 13.79,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 44.05,
       "score": 97.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 68.5% vs. probabilitate implicată 62.1%.",
-        "EV estimat 10.3% și edge 6.4 puncte procentuale.",
-        "Miză Kelly fracțională 4.23% din bancă, plafonată prudent."
+        "Probabilitate model 75.9% vs. probabilitate implicată 66.7%.",
+        "EV estimat 13.8% și edge 9.2 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -523,34 +551,6 @@
         "Probabilitate model 78.0% vs. probabilitate implicată 69.3%.",
         "EV estimat 12.6% și edge 8.7 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 8020,
-      "prediction_id": 3662,
-      "home": "Jagiellonia Białystok",
-      "away": "Pogoń Szczecin",
-      "league": "Ekstraklasa",
-      "event_date": "2026-05-09T18:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.5,
-      "model_probability": 0.7434,
-      "model_probability_pct": 74.34,
-      "implied_probability_pct": 66.67,
-      "fair_odds": 1.345,
-      "edge_pp": 7.67,
-      "ev_pct": 11.51,
-      "kelly_fraction": 0.0576,
-      "kelly_units_100": 5.76,
-      "confidence": 44.05,
-      "score": 96.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 74.3% vs. probabilitate implicată 66.7%.",
-        "EV estimat 11.5% și edge 7.7 puncte procentuale.",
-        "Miză Kelly fracțională 5.76% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1490,23 +1490,23 @@
       "event_date": "2026-05-09T16:30:00+03:00",
       "market": "BTTS",
       "odds": 1.52,
-      "model_probability": 0.6877,
-      "model_probability_pct": 68.77,
+      "model_probability": 0.7018,
+      "model_probability_pct": 70.18,
       "implied_probability_pct": 65.79,
-      "fair_odds": 1.454,
-      "edge_pp": 2.98,
-      "ev_pct": 4.53,
-      "kelly_fraction": 0.0218,
-      "kelly_units_100": 2.18,
+      "fair_odds": 1.425,
+      "edge_pp": 4.39,
+      "ev_pct": 6.67,
+      "kelly_fraction": 0.0321,
+      "kelly_units_100": 3.21,
       "confidence": 57.25,
       "score": 105.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 68.8% vs. probabilitate implicată 65.8%.",
-        "EV estimat 4.5% și edge 3.0 puncte procentuale.",
-        "Miză Kelly fracțională 2.18% din bancă, plafonată prudent."
+        "Probabilitate model 70.2% vs. probabilitate implicată 65.8%.",
+        "EV estimat 6.7% și edge 4.4 puncte procentuale.",
+        "Miză Kelly fracțională 3.21% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1818,34 +1818,6 @@
       ]
     },
     {
-      "event_id": 204865,
-      "prediction_id": 3533,
-      "home": "Avispa Fukuoka",
-      "away": "Kyoto Sanga FC",
-      "league": "J1 League",
-      "event_date": "2026-05-06T08:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.425,
-      "model_probability": 0.7748,
-      "model_probability_pct": 77.48,
-      "implied_probability_pct": 70.18,
-      "fair_odds": 1.291,
-      "edge_pp": 7.3,
-      "ev_pct": 10.41,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 55.15,
-      "score": 75.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 77.5% vs. probabilitate implicată 70.2%.",
-        "EV estimat 10.4% și edge 7.3 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 205764,
       "prediction_id": 3575,
       "home": "Yunnan Yukun",
@@ -1910,23 +1882,23 @@
       "event_date": "2026-05-10T01:00:00+03:00",
       "market": "Over 1.5G",
       "odds": 1.48,
-      "model_probability": 0.6768,
-      "model_probability_pct": 67.68,
+      "model_probability": 0.6906,
+      "model_probability_pct": 69.06,
       "implied_probability_pct": 67.57,
-      "fair_odds": 1.478,
-      "edge_pp": 0.11,
-      "ev_pct": 0.17,
-      "kelly_fraction": 0.0009,
-      "kelly_units_100": 0.09,
+      "fair_odds": 1.448,
+      "edge_pp": 1.49,
+      "ev_pct": 2.21,
+      "kelly_fraction": 0.0115,
+      "kelly_units_100": 1.15,
       "confidence": 53.85,
       "score": 65.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 67.7% vs. probabilitate implicată 67.6%.",
-        "EV estimat 0.2% și edge 0.1 puncte procentuale.",
-        "Miză Kelly fracțională 0.09% din bancă, plafonată prudent."
+        "Probabilitate model 69.1% vs. probabilitate implicată 67.6%.",
+        "EV estimat 2.2% și edge 1.5 puncte procentuale.",
+        "Miză Kelly fracțională 1.15% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1960,11 +1932,11 @@
     },
     {
       "key": "Over 1.5G",
-      "bets": 214,
-      "wins": 148,
-      "winrate": 69.16,
-      "profit_units": -18.05,
-      "roi_pct": -8.44,
+      "bets": 215,
+      "wins": 149,
+      "winrate": 69.3,
+      "profit_units": -17.63,
+      "roi_pct": -8.2,
       "avg_odds": 1.328
     }
   ],
@@ -2060,6 +2032,15 @@
       "avg_odds": 1.422
     },
     {
+      "key": "J1 League",
+      "bets": 26,
+      "wins": 21,
+      "winrate": 80.77,
+      "profit_units": 3.3,
+      "roi_pct": 12.68,
+      "avg_odds": 1.378
+    },
+    {
       "key": "Copa Sudamericana",
       "bets": 31,
       "wins": 27,
@@ -2067,15 +2048,6 @@
       "profit_units": 3.93,
       "roi_pct": 12.66,
       "avg_odds": 1.305
-    },
-    {
-      "key": "Ekstraklasa",
-      "bets": 30,
-      "wins": 24,
-      "winrate": 80.0,
-      "profit_units": 3.52,
-      "roi_pct": 11.73,
-      "avg_odds": 1.392
     }
   ],
   "recommendations": [

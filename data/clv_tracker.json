@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-05-06T07:26:53.066983+00:00",
+  "updated_at": "2026-05-06T08:00:06.239170+00:00",
   "summary": {
-    "total_picks": 761,
-    "avg_clv_pct": -0.6294,
+    "total_picks": 762,
+    "avg_clv_pct": -0.6285,
     "median_clv_pct": 0.0,
     "clv_positive_n": 130,
-    "clv_negative_n": 631,
-    "clv_positive_rate": 0.1708,
-    "avg_clv_wins": -0.3942,
+    "clv_negative_n": 632,
+    "clv_positive_rate": 0.1706,
+    "avg_clv_wins": -0.3935,
     "avg_clv_losses": -1.2343,
-    "win_rate_pct": 72.01,
-    "roi_flat_pct": -0.5866,
-    "roi_flat_at_picked_odds_pct": -0.5866,
-    "roi_flat_closing_proxy_pct": -0.0242,
+    "win_rate_pct": 72.05,
+    "roi_flat_pct": -0.5301,
+    "roi_flat_at_picked_odds_pct": -0.5301,
+    "roi_flat_closing_proxy_pct": 0.0316,
     "roi_basis": "picked_odds",
     "roi_note": "ROI este calculat la cota luată / opening_odds, nu la closing proxy.",
-    "ev_positive_n": 485,
+    "ev_positive_n": 486,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 5.8675
+    "std_clv_pct": 5.8637
   },
   "by_market": {
     "btts": {
@@ -41,15 +41,15 @@
       "confidence": "high"
     },
     "over15": {
-      "n": 210,
-      "avg_clv_pct": 1.3754,
+      "n": 211,
+      "avg_clv_pct": 1.3689,
       "median_clv_pct": 0.0,
-      "clv_positive_rate": 0.2,
-      "win_rate_pct": 69.52,
-      "roi_flat_pct": -6.5143,
-      "roi_flat_at_picked_odds_pct": -6.5143,
-      "roi_flat_closing_proxy_pct": -7.9581,
-      "avg_ev_at_pick": 4.1701,
+      "clv_positive_rate": 0.1991,
+      "win_rate_pct": 69.67,
+      "roi_flat_pct": -6.282,
+      "roi_flat_at_picked_odds_pct": -6.282,
+      "roi_flat_closing_proxy_pct": -7.719,
+      "avg_ev_at_pick": 4.1997,
       "roi_basis": "picked_odds",
       "verdict": "CLV_BUN_ROI_SLAB",
       "label": "Bate piața, dar nu convertește",
@@ -114,11 +114,11 @@
       "avg_clv": 1.6935
     },
     "clv_neutral": {
-      "n": 389,
-      "win_rate": 71.21,
-      "roi_pct": -3.1907,
+      "n": 390,
+      "win_rate": 71.28,
+      "roi_pct": -3.0736,
       "roi_basis": "picked_odds",
-      "avg_clv": -0.1039
+      "avg_clv": -0.1037
     },
     "clv_mild_neg": {
       "n": 168,
@@ -136,27 +136,27 @@
     }
   },
   "rolling_30d": {
-    "n": 761,
-    "avg_clv_pct": -0.6294,
-    "win_rate_pct": 72.01,
-    "roi_flat_pct": -0.5866,
+    "n": 762,
+    "avg_clv_pct": -0.6285,
+    "win_rate_pct": 72.05,
+    "roi_flat_pct": -0.5301,
     "roi_basis": "picked_odds",
     "days": 30
   },
   "rolling_90d": {
-    "n": 761,
-    "avg_clv_pct": -0.6294,
-    "win_rate_pct": 72.01,
-    "roi_flat_pct": -0.5866,
+    "n": 762,
+    "avg_clv_pct": -0.6285,
+    "win_rate_pct": 72.05,
+    "roi_flat_pct": -0.5301,
     "roi_basis": "picked_odds",
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 485,
-      "avg_clv": 0.4724,
-      "clv_positive_rate": 0.2206,
-      "roi_flat_pct": 3.3021
+      "n": 486,
+      "avg_clv": 0.4714,
+      "clv_positive_rate": 0.2202,
+      "roi_flat_pct": 3.3827
     },
     "ev_negative_picks": {
       "n": 276,
@@ -169,7 +169,7 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.63%) și ROI negativ (-0.59%) la cota luată. Edge-ul calculat nu bate piața suficient.",
+    "interpretation": "❌ CLV negativ (-0.63%) și ROI negativ (-0.53%) la cota luată. Edge-ul calculat nu bate piața suficient.",
     "action": "Ridică pragurile de edge și auditează probabilitățile pe piețele slabe.",
     "confidence": "high",
     "rolling_trend": "stabil",
@@ -202,10 +202,36 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-06T07:04:18.455925+00:00",
+      "settled_at": "2026-05-06T07:38:06.752289+00:00",
       "prediction_id": 3534,
       "profit_at_pick": 0.4,
       "profit_at_closing_proxy": 0.4,
+      "roi_basis": "picked_odds"
+    },
+    {
+      "event_id": "204865",
+      "date": "2026-05-06",
+      "home": "Avispa Fukuoka",
+      "away": "Kyoto Sanga FC",
+      "league": "J1 League",
+      "market": "over15",
+      "picked_odds": 1.425,
+      "closing_odds": 1.425,
+      "picked_implied": 0.701754,
+      "closing_implied": 0.701754,
+      "clv_pct": 0.0,
+      "clv_positive": false,
+      "ev_at_pick_pct": 10.409,
+      "model_prob": 77.48,
+      "edge_pct": 10.0,
+      "score": 75,
+      "line_move_pct": 0.0,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-06T07:38:06.752289+00:00",
+      "prediction_id": 3533,
+      "profit_at_pick": 0.425,
+      "profit_at_closing_proxy": 0.425,
       "roi_basis": "picked_odds"
     },
     {
@@ -228,7 +254,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-06T06:36:33.802414+00:00",
+      "settled_at": "2026-05-06T06:07:37.239474+00:00",
       "prediction_id": 3532,
       "profit_at_pick": 0.42,
       "profit_at_closing_proxy": 0.42,
@@ -254,7 +280,7 @@
       "line_move_pct": 0.0,
       "won": true,
       "status": "win",
-      "settled_at": "2026-05-06T07:04:18.455925+00:00",
+      "settled_at": "2026-05-06T07:38:06.752289+00:00",
       "prediction_id": 3531,
       "profit_at_pick": 0.408,
       "profit_at_closing_proxy": 0.408,
@@ -19986,15 +20012,15 @@
     },
     {
       "market": "over15",
-      "n": 210,
+      "n": 211,
       "verdict": "CLV_BUN_ROI_SLAB",
       "label": "Bate piața, dar nu convertește",
       "severity": "warn",
       "action": "Ține piața în recovery strict; cere probabilitate/edge mai mare până ROI revine pozitiv.",
       "stake_policy": "recovery_strict",
       "edge_adjustment_pp": 2.0,
-      "avg_clv_pct": 1.3754,
-      "roi_flat_pct": -6.5143,
+      "avg_clv_pct": 1.3689,
+      "roi_flat_pct": -6.282,
       "confidence": "high"
     },
     {
