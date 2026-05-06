@@ -21,7 +21,8 @@ Utilizare:
 Variabile de mediu:
   BSD_TOKEN   — token-ul API BSD (obligatoriu)
   DELAY_MS    — delay între request-uri în ms (default: 200)
-  MAX_EVENTS  — număr maxim de meciuri de enrichat (default: 100)
+  MAX_EVENTS  — număr maxim de meciuri de enrichat (default: 350)
+  LOOKAHEAD_DAYS — orizont meciuri în zile (default: 30)
   OUTPUT_PATH — calea fișierului de ieșire (default: data/enriched.json)
 """
 
@@ -36,7 +37,8 @@ from datetime import datetime, timedelta
 API_BASE    = "https://sports.bzzoiro.com/api"
 TOKEN       = os.environ.get("BSD_TOKEN", "")
 DELAY       = float(os.environ.get("DELAY_MS", "200")) / 1000
-MAX_EVENTS  = int(os.environ.get("MAX_EVENTS", "100"))
+MAX_EVENTS  = int(os.environ.get("MAX_EVENTS", "350"))
+LOOKAHEAD_DAYS = int(os.environ.get("LOOKAHEAD_DAYS", "30"))
 OUT_PATH    = os.environ.get("OUTPUT_PATH", "data/enriched.json")
 
 HEADERS     = {"Authorization": f"Token {TOKEN}"}
@@ -66,9 +68,10 @@ def get(url, params=None, timeout=20):
 def fetch_predictions():
     """Fetch predicții upcoming din /api/predictions/."""
     url = f"{API_BASE}/predictions/"
-    # Obținem meciurile din next 7 zile
+    # Obținem meciurile din următoarele LOOKAHEAD_DAYS zile,
+    # ca să aliniem cache-ul ML5 cu totalul de meciuri afișat în aplicație.
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    week  = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+    week  = (datetime.utcnow() + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
     data  = get(url, params={
         "status": "notstarted",
         "date_from": today,
@@ -146,6 +149,7 @@ def main():
     print(f"[{datetime.utcnow().isoformat()}Z] fetch_enriched.py pornit")
     print(f"  API_BASE   : {API_BASE}")
     print(f"  MAX_EVENTS : {MAX_EVENTS}")
+    print(f"  LOOKAHEAD  : {LOOKAHEAD_DAYS} zile")
     print(f"  DELAY      : {DELAY*1000:.0f}ms")
     print(f"  OUTPUT     : {OUT_PATH}")
 
@@ -212,6 +216,7 @@ def main():
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "duration_s":   round(time.time() - ts_start, 1),
         "count":        len(enriched),
+        "total_predictions": len(preds),
         "errors":       errors,
         "coverage_pct": round(len(enriched) * 100 / max(1, len(preds)), 1),
         "data":         enriched
