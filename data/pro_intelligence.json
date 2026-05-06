@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-06T12:23:00.755831+00:00",
+  "updated_at": "2026-05-06T12:55:13.206090+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 52.5,
+  "overall_score": 52.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -10,18 +10,18 @@
   "data_quality": {
     "recommendation_rows": 884,
     "pending_rows": 99,
-    "candidates_with_odds_and_probability": 60,
+    "candidates_with_odds_and_probability": 59,
     "top_ev_count": 21,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 46,
+    "speculative": 45,
     "balanced": 14
   },
   "market_distribution_top150": {
-    "Over 1.5G": 27,
+    "Over 1.5G": 26,
     "Under 3.5G": 19,
     "BTTS": 10,
     "Over 2.5G": 4
@@ -40,7 +40,6 @@
     "Premier League": 2,
     "Super League": 3,
     "Allsvenskan": 3,
-    "Chinese Super League": 3,
     "MLS": 2,
     "La Liga": 3,
     "Saudi Pro League": 1,
@@ -841,24 +840,24 @@
       "league": "Parva Liga",
       "event_date": "2026-05-06T20:00:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.22,
+      "odds": 1.18,
       "model_probability": 0.8332,
       "model_probability_pct": 83.32,
-      "implied_probability_pct": 81.97,
+      "implied_probability_pct": 84.75,
       "fair_odds": 1.2,
-      "edge_pp": 1.35,
-      "ev_pct": 1.65,
-      "kelly_fraction": 0.0188,
-      "kelly_units_100": 1.88,
+      "edge_pp": -1.43,
+      "ev_pct": -1.68,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
       "confidence": 54.11,
-      "score": 101.0,
+      "score": 96.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 83.3% vs. probabilitate implicată 82.0%.",
-        "EV estimat 1.7% și edge 1.4 puncte procentuale.",
-        "Miză Kelly fracțională 1.88% din bancă, plafonată prudent."
+        "Probabilitate model 83.3% vs. probabilitate implicată 84.7%.",
+        "EV estimat -1.7% și edge -1.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1086,34 +1085,6 @@
       ]
     },
     {
-      "event_id": 205763,
-      "prediction_id": 3574,
-      "home": "Shanghai Port",
-      "away": "Shenzhen Peng City",
-      "league": "Chinese Super League",
-      "event_date": "2026-05-06T14:35:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.22,
-      "model_probability": 0.8134,
-      "model_probability_pct": 81.34,
-      "implied_probability_pct": 81.97,
-      "fair_odds": 1.229,
-      "edge_pp": -0.63,
-      "ev_pct": -0.77,
-      "kelly_fraction": 0.0,
-      "kelly_units_100": 0.0,
-      "confidence": 44.89,
-      "score": 87.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 81.3% vs. probabilitate implicată 82.0%.",
-        "EV estimat -0.8% și edge -0.6 puncte procentuale.",
-        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 46353,
       "prediction_id": 3638,
       "home": "Västerås SK",
@@ -1284,34 +1255,6 @@
       ]
     },
     {
-      "event_id": 202996,
-      "prediction_id": 3543,
-      "home": "FK Spartak Varna",
-      "away": "FK Dobrudzha Dobrich",
-      "league": "Parva Liga",
-      "event_date": "2026-05-06T20:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.22,
-      "model_probability": 0.8332,
-      "model_probability_pct": 83.32,
-      "implied_probability_pct": 81.97,
-      "fair_odds": 1.2,
-      "edge_pp": 1.35,
-      "ev_pct": 1.65,
-      "kelly_fraction": 0.0188,
-      "kelly_units_100": 1.88,
-      "confidence": 54.11,
-      "score": 101.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.3% vs. probabilitate implicată 82.0%.",
-        "EV estimat 1.7% și edge 1.4 puncte procentuale.",
-        "Miză Kelly fracțională 1.88% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 204253,
       "prediction_id": 3660,
       "home": "Burgos Club de Fútbol",
@@ -1365,6 +1308,34 @@
         "Probabilitate model 82.2% vs. probabilitate implicată 79.4%.",
         "EV estimat 3.5% și edge 2.8 puncte procentuale.",
         "Miză Kelly fracțională 3.39% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 202996,
+      "prediction_id": 3543,
+      "home": "FK Spartak Varna",
+      "away": "FK Dobrudzha Dobrich",
+      "league": "Parva Liga",
+      "event_date": "2026-05-06T20:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.18,
+      "model_probability": 0.8332,
+      "model_probability_pct": 83.32,
+      "implied_probability_pct": 84.75,
+      "fair_odds": 1.2,
+      "edge_pp": -1.43,
+      "ev_pct": -1.68,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 54.11,
+      "score": 96.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.3% vs. probabilitate implicată 84.7%.",
+        "EV estimat -1.7% și edge -1.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     },
     {
