@@ -21,8 +21,7 @@ Utilizare:
 Variabile de mediu:
   BSD_TOKEN   — token-ul API BSD (obligatoriu)
   DELAY_MS    — delay între request-uri în ms (default: 200)
-  MAX_EVENTS  — număr maxim de meciuri de enrichat (default: 350)
-  LOOKAHEAD_DAYS — orizont meciuri în zile (default: 30)
+  MAX_EVENTS  — număr maxim de meciuri de enrichat (default: 100)
   OUTPUT_PATH — calea fișierului de ieșire (default: data/enriched.json)
 """
 
@@ -37,8 +36,7 @@ from datetime import datetime, timedelta
 API_BASE    = "https://sports.bzzoiro.com/api"
 TOKEN       = os.environ.get("BSD_TOKEN", "")
 DELAY       = float(os.environ.get("DELAY_MS", "200")) / 1000
-MAX_EVENTS  = int(os.environ.get("MAX_EVENTS", "350"))
-LOOKAHEAD_DAYS = int(os.environ.get("LOOKAHEAD_DAYS", "30"))
+MAX_EVENTS  = int(os.environ.get("MAX_EVENTS", "100"))
 OUT_PATH    = os.environ.get("OUTPUT_PATH", "data/enriched.json")
 
 HEADERS     = {"Authorization": f"Token {TOKEN}"}
@@ -64,84 +62,23 @@ def get(url, params=None, timeout=20):
     return None
 
 
-def prediction_key(pred):
-    """Cheie stabilă pentru deduplicarea predicțiilor paginated."""
-    event = pred.get("event", {}) if isinstance(pred, dict) else {}
-    return event.get("id") or pred.get("id")
-
-
 # ─── Fetch predicții ──────────────────────────────────────────
 def fetch_predictions():
-    """Fetch predicții upcoming din /api/predictions/, cu paginare.
-
-    API-ul întoarce frecvent doar 50 rezultate pe pagină chiar dacă trimitem
-    limit mai mare. De aceea iterăm prin next/page până la MAX_EVENTS.
-    """
+    """Fetch predicții upcoming din /api/predictions/."""
     url = f"{API_BASE}/predictions/"
+    # Obținem meciurile din next 7 zile
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    date_to = (datetime.utcnow() + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
-    base_params = {
+    week  = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
+    data  = get(url, params={
         "status": "notstarted",
         "date_from": today,
-        "date_to": date_to,
-        "limit": min(MAX_EVENTS, 100)
-    }
-
-    all_preds = []
-    seen = set()
-    next_url = None
-    page = 1
-    max_pages = max(1, (MAX_EVENTS // 25) + 10)
-
-    while len(all_preds) < MAX_EVENTS and page <= max_pages:
-        if next_url:
-            data = get(next_url)
-        else:
-            params = dict(base_params)
-            params["page"] = page
-            data = get(url, params=params)
-
-        if not data:
-            break
-
-        if isinstance(data, dict):
-            results = data.get("results", [])
-            next_url = data.get("next")
-            count = data.get("count")
-        else:
-            results = data if isinstance(data, list) else []
-            next_url = None
-            count = None
-
-        if not isinstance(results, list) or not results:
-            break
-
-        added = 0
-        for pred in results:
-            if not isinstance(pred, dict):
-                continue
-            key = prediction_key(pred)
-            if key and key in seen:
-                continue
-            if key:
-                seen.add(key)
-            all_preds.append(pred)
-            added += 1
-            if len(all_preds) >= MAX_EVENTS:
-                break
-
-        print(f"  pagină {page}: {len(results)} rezultate, +{added}, total {len(all_preds)}" + (f" / count {count}" if count else ""))
-
-        if not next_url:
-            # Unele API-uri nu trimit next, dar acceptă page=N. Continuăm cât timp
-            # pagina curentă a adus rezultate noi; oprim dacă se repetă/goalește.
-            if added == 0:
-                break
-            page += 1
-        else:
-            page += 1
-
-    return all_preds[:MAX_EVENTS]
+        "date_to": week,
+        "limit": MAX_EVENTS
+    })
+    if not data:
+        return []
+    results = data.get("results", data) if isinstance(data, dict) else data
+    return results if isinstance(results, list) else []
 
 
 # ─── Extrage câmpurile ML5 dintr-un event detail ─────────────
@@ -209,7 +146,6 @@ def main():
     print(f"[{datetime.utcnow().isoformat()}Z] fetch_enriched.py pornit")
     print(f"  API_BASE   : {API_BASE}")
     print(f"  MAX_EVENTS : {MAX_EVENTS}")
-    print(f"  LOOKAHEAD  : {LOOKAHEAD_DAYS} zile")
     print(f"  DELAY      : {DELAY*1000:.0f}ms")
     print(f"  OUTPUT     : {OUT_PATH}")
 
@@ -276,7 +212,6 @@ def main():
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "duration_s":   round(time.time() - ts_start, 1),
         "count":        len(enriched),
-        "total_predictions": len(preds),
         "errors":       errors,
         "coverage_pct": round(len(enriched) * 100 / max(1, len(preds)), 1),
         "data":         enriched
