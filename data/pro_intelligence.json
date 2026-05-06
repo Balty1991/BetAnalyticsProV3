@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-06T14:05:00.548872+00:00",
+  "updated_at": "2026-05-06T14:41:06.539411+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 52.2,
+  "overall_score": 52.0,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 884,
-    "pending_rows": 96,
-    "candidates_with_odds_and_probability": 58,
+    "pending_rows": 95,
+    "candidates_with_odds_and_probability": 56,
     "top_ev_count": 21,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,17 +18,17 @@
   },
   "risk_distribution": {
     "speculative": 44,
-    "balanced": 14
+    "balanced": 12
   },
   "market_distribution_top150": {
     "Over 1.5G": 25,
-    "Under 3.5G": 19,
+    "Under 3.5G": 18,
     "BTTS": 10,
-    "Over 2.5G": 4
+    "Over 2.5G": 3
   },
   "league_distribution_top150": {
     "Bundesliga": 4,
-    "Parva Liga": 5,
+    "Parva Liga": 4,
     "Copa Libertadores": 2,
     "Copa Sudamericana": 4,
     "Segunda División": 5,
@@ -40,7 +40,6 @@
     "Premier League": 2,
     "Super League": 3,
     "Allsvenskan": 3,
-    "Chinese Super League": 2,
     "MLS": 2,
     "La Liga": 3,
     "Saudi Pro League": 1,
@@ -834,34 +833,6 @@
       ]
     },
     {
-      "event_id": 202996,
-      "prediction_id": 3543,
-      "home": "FK Spartak Varna",
-      "away": "FK Dobrudzha Dobrich",
-      "league": "Parva Liga",
-      "event_date": "2026-05-06T20:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.18,
-      "model_probability": 0.8332,
-      "model_probability_pct": 83.32,
-      "implied_probability_pct": 84.75,
-      "fair_odds": 1.2,
-      "edge_pp": -1.43,
-      "ev_pct": -1.68,
-      "kelly_fraction": 0.0,
-      "kelly_units_100": 0.0,
-      "confidence": 54.11,
-      "score": 96.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.3% vs. probabilitate implicată 84.7%.",
-        "EV estimat -1.7% și edge -1.4 puncte procentuale.",
-        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 4804,
       "prediction_id": 3664,
       "home": "Al-Khaleej",
@@ -1224,6 +1195,34 @@
         "EV estimat 8.9% și edge 6.5 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 3355,
+      "prediction_id": 3677,
+      "home": "Başakşehir FK",
+      "away": "Samsunspor",
+      "league": "Trendyol Super Lig",
+      "event_date": "2026-05-09T20:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.26,
+      "model_probability": 0.7996,
+      "model_probability_pct": 79.96,
+      "implied_probability_pct": 79.37,
+      "fair_odds": 1.251,
+      "edge_pp": 0.59,
+      "ev_pct": 0.75,
+      "kelly_fraction": 0.0072,
+      "kelly_units_100": 0.72,
+      "confidence": 43.06,
+      "score": 79.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.0% vs. probabilitate implicată 79.4%.",
+        "EV estimat 0.7% și edge 0.6 puncte procentuale.",
+        "Miză Kelly fracțională 0.72% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1337,34 +1336,6 @@
         "Probabilitate model 82.2% vs. probabilitate implicată 79.4%.",
         "EV estimat 3.5% și edge 2.8 puncte procentuale.",
         "Miză Kelly fracțională 3.39% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 202996,
-      "prediction_id": 3543,
-      "home": "FK Spartak Varna",
-      "away": "FK Dobrudzha Dobrich",
-      "league": "Parva Liga",
-      "event_date": "2026-05-06T20:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.18,
-      "model_probability": 0.8332,
-      "model_probability_pct": 83.32,
-      "implied_probability_pct": 84.75,
-      "fair_odds": 1.2,
-      "edge_pp": -1.43,
-      "ev_pct": -1.68,
-      "kelly_fraction": 0.0,
-      "kelly_units_100": 0.0,
-      "confidence": 54.11,
-      "score": 96.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.3% vs. probabilitate implicată 84.7%.",
-        "EV estimat -1.7% și edge -1.4 puncte procentuale.",
-        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1536,34 +1507,6 @@
       ]
     },
     {
-      "event_id": 205764,
-      "prediction_id": 3575,
-      "home": "Yunnan Yukun",
-      "away": "Zhejiang",
-      "league": "Chinese Super League",
-      "event_date": "2026-05-06T15:00:00+03:00",
-      "market": "Over 2.5G",
-      "odds": 1.512,
-      "model_probability": 0.6522,
-      "model_probability_pct": 65.22,
-      "implied_probability_pct": 66.14,
-      "fair_odds": 1.533,
-      "edge_pp": -0.92,
-      "ev_pct": -1.39,
-      "kelly_fraction": 0.0,
-      "kelly_units_100": 0.0,
-      "confidence": 63.4,
-      "score": 75.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 65.2% vs. probabilitate implicată 66.1%.",
-        "EV estimat -1.4% și edge -0.9 puncte procentuale.",
-        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 206670,
       "prediction_id": 3715,
       "home": "Middlesbrough",
@@ -1623,12 +1566,12 @@
   "settled_market_performance": [
     {
       "key": "Over 2.5G",
-      "bets": 14,
-      "wins": 11,
-      "winrate": 78.57,
-      "profit_units": 2.19,
-      "roi_pct": 15.62,
-      "avg_odds": 1.473
+      "bets": 15,
+      "wins": 12,
+      "winrate": 80.0,
+      "profit_units": 2.7,
+      "roi_pct": 17.99,
+      "avg_odds": 1.476
     },
     {
       "key": "BTTS",
@@ -1742,12 +1685,12 @@
     },
     {
       "key": "Chinese Super League",
-      "bets": 13,
-      "wins": 11,
-      "winrate": 84.62,
-      "profit_units": 1.83,
-      "roi_pct": 14.07,
-      "avg_odds": 1.36
+      "bets": 14,
+      "wins": 12,
+      "winrate": 85.71,
+      "profit_units": 2.34,
+      "roi_pct": 16.72,
+      "avg_odds": 1.371
     },
     {
       "key": "Pro League",
@@ -1757,15 +1700,6 @@
       "profit_units": 4.5,
       "roi_pct": 14.06,
       "avg_odds": 1.422
-    },
-    {
-      "key": "Chinese Super League",
-      "bets": 11,
-      "wins": 9,
-      "winrate": 81.82,
-      "profit_units": 1.45,
-      "roi_pct": 13.17,
-      "avg_odds": 1.391
     },
     {
       "key": "Copa Sudamericana",

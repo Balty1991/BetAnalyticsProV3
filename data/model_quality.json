@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-05-06T14:04:39.728017+00:00",
+  "updated_at": "2026-05-06T14:40:44.337128+00:00",
   "quality_score": 70.5,
   "quality_grade": "C",
   "coverage": {
-    "predictions": 319,
+    "predictions": 318,
     "ev_signals": 0,
     "log_total": 884,
-    "log_closed": 788,
+    "log_closed": 789,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.42,
+    "age_hours": 0.39,
     "color": "green",
     "label": "0.4h"
   },
@@ -48,16 +48,16 @@
     {
       "market": "over25",
       "label": "Peste 2.5G",
-      "n": 14,
+      "n": 15,
       "credible": false,
-      "brier": 0.1663,
-      "log_loss": 0.5142,
-      "ece": 0.0706,
-      "calib_label": "bun",
-      "winrate": 78.57,
-      "roi_pct": 15.62,
-      "n_wins": 11,
-      "score": 70.4,
+      "brier": 0.1633,
+      "log_loss": 0.5084,
+      "ece": 0.0891,
+      "calib_label": "acceptabil",
+      "winrate": 80.0,
+      "roi_pct": 17.99,
+      "n_wins": 12,
+      "score": 66.9,
       "grade": "C"
     },
     {
@@ -77,14 +77,14 @@
     }
   ],
   "backtest": {
-    "roi_pct": 10.96,
-    "winrate": 78.05,
-    "n_bets": 41,
-    "avg_odds": 1.432,
-    "avg_edge": 12.42
+    "roi_pct": 9.98,
+    "winrate": 77.5,
+    "n_bets": 40,
+    "avg_odds": 1.431,
+    "avg_edge": 12.75
   },
   "recommendations": [
-    "Backtest ROI global: +11.0% — semnal pozitiv."
+    "Backtest ROI global: +10.0% — semnal pozitiv."
   ],
   "wfv": {
     "global_score": 74.4,
@@ -292,7 +292,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-06T14:04:39.599525"
+    "updated_at": "2026-05-06T14:40:44.217432"
   },
   "ui_cards": [
     {
@@ -303,13 +303,13 @@
     },
     {
       "label": "Meciuri analizate",
-      "value": 788,
+      "value": 789,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": 11.0,
+      "value": 10.0,
       "suffix": "%",
       "tone": "good"
     },
