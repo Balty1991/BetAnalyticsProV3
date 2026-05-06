@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-05-06T12:54:52.514513+00:00",
-  "quality_score": 70.2,
+  "updated_at": "2026-05-06T13:32:44.262981+00:00",
+  "quality_score": 70.3,
   "quality_grade": "C",
   "coverage": {
     "predictions": 319,
     "ev_signals": 0,
     "log_total": 884,
-    "log_closed": 785,
+    "log_closed": 786,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.35,
+    "age_hours": 0.42,
     "color": "green",
     "label": "0.4h"
   },
@@ -33,16 +33,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 219,
+      "n": 220,
       "credible": true,
-      "brier": 0.2173,
-      "log_loss": 0.6318,
-      "ece": 0.0842,
+      "brier": 0.2165,
+      "log_loss": 0.6302,
+      "ece": 0.0827,
       "calib_label": "acceptabil",
-      "winrate": 69.41,
-      "roi_pct": -8.09,
-      "n_wins": 152,
-      "score": 63.1,
+      "winrate": 69.55,
+      "roi_pct": -7.91,
+      "n_wins": 153,
+      "score": 63.4,
       "grade": "C"
     },
     {
@@ -77,14 +77,14 @@
     }
   ],
   "backtest": {
-    "roi_pct": 9.98,
-    "winrate": 77.5,
-    "n_bets": 40,
-    "avg_odds": 1.431,
-    "avg_edge": 12.75
+    "roi_pct": 10.96,
+    "winrate": 78.05,
+    "n_bets": 41,
+    "avg_odds": 1.432,
+    "avg_edge": 12.42
   },
   "recommendations": [
-    "Backtest ROI global: +10.0% — semnal pozitiv."
+    "Backtest ROI global: +11.0% — semnal pozitiv."
   ],
   "wfv": {
     "global_score": 74.4,
@@ -292,24 +292,24 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-06T12:54:52.388608"
+    "updated_at": "2026-05-06T13:32:44.142449"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.2,
+      "value": 70.3,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 785,
+      "value": 786,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": 10.0,
+      "value": 11.0,
       "suffix": "%",
       "tone": "good"
     },
