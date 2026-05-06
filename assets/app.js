@@ -2053,6 +2053,25 @@ function calcTactFactor(homeCoach, awayCoach, marketKey){
     factor = 1.0 + aAttack * 0.05 - hDefense * 0.04 + (aPress - 5) * 0.008;
   }
 
+  // Supliment v2: statistici reale antrenori (over25_pct, btts_pct, clean_sheet_pct)
+  var hO25 = Number((homeCoach && homeCoach.over25_pct)      || 0);
+  var aO25 = Number((awayCoach && awayCoach.over25_pct)      || 0);
+  var hB   = Number((homeCoach && homeCoach.btts_pct)        || 0);
+  var aB   = Number((awayCoach && awayCoach.btts_pct)        || 0);
+  var hCs  = Number((homeCoach && homeCoach.clean_sheet_pct) || 0);
+  var aCs  = Number((awayCoach && awayCoach.clean_sheet_pct) || 0);
+  if(hO25 > 0 && aO25 > 0){
+    var avgO25 = (hO25 + aO25) / 2;
+    if(mk==='over25') factor += Math.max(-0.05, Math.min(0.06, (avgO25 - 55) * 0.003));
+    else if(mk==='under35'||mk==='under25') factor += Math.max(-0.04, Math.min(0.04, (50 - avgO25) * 0.002));
+  }
+  if(hB > 0 && aB > 0 && mk==='btts'){
+    factor += Math.max(-0.05, Math.min(0.07, ((hB + aB) / 2 - 50) * 0.003));
+  }
+  if((mk==='under35'||mk==='under25') && (hCs > 30 || aCs > 30)){
+    factor += Math.min(0.04, (Math.max(hCs, aCs) - 30) * 0.001);
+  }
+
   return Math.max(0.83, Math.min(1.17, +factor.toFixed(4)));
 }
 
@@ -2061,9 +2080,64 @@ function calcTactFactor(homeCoach, awayCoach, marketKey){
 // Post-meci (yellowCards/redCards pe meciul curent): penalizare Over dacă cartonașe puține
 function calcRefFactor(referee, marketKey){
   if(!referee) return 1.0;
-  // referee.yellowCards și referee.redCards sunt datele din MECIUL CURENT (disponibile live/finished)
-  // Pentru pre-meci nu avem stats istorice în response — returnăm 1.0 cu posibilitate de extindere
-  return 1.0;
+  var avgGoals  = Number(referee.avg_goals_per_match  || 0);
+  var avgYellow = Number(referee.avg_yellow_per_match || 0);
+  var matches   = Number(referee.matches || 0);
+  if(!avgGoals || matches < 20) return 1.0;
+  var goalDelta = avgGoals - 2.5;
+  var factor = 1.0;
+  var mk = marketKey;
+  if(mk==='over25'||mk==='over15'){
+    factor = 1.0 + Math.max(-0.08, Math.min(0.10, goalDelta * 0.055));
+  } else if(mk==='under35'||mk==='under25'){
+    factor = 1.0 - Math.max(-0.08, Math.min(0.10, goalDelta * 0.055));
+  } else if(mk==='btts'){
+    factor = 1.0 + Math.max(-0.05, Math.min(0.08, goalDelta * 0.04));
+  } else if(mk==='homeWin'||mk==='awayWin'){
+    if(avgYellow > 4.5) factor = 1.0 - 0.02;
+  }
+  return Math.max(0.88, Math.min(1.12, +factor.toFixed(4)));
+}
+
+// --- LAYER 3b: CONTEXT FACTOR (derby, vreme, deplasare, teren) ---
+function calcContextFactor(context, marketKey){
+  if(!context) return 1.0;
+  var factor = 1.0;
+  var mk = marketKey;
+  if(context.is_local_derby){
+    if(mk==='over25'||mk==='over15') factor -= 0.05;
+    else if(mk==='under25'||mk==='under35') factor += 0.04;
+    else if(mk==='homeWin'||mk==='awayWin') factor -= 0.03;
+  }
+  if(context.is_neutral_ground){ if(mk==='homeWin') factor -= 0.06; }
+  var wCode = Number(context.weather_code || 0);
+  if(wCode===3){
+    if(mk==='over25') factor -= 0.05;
+    else if(mk==='over15') factor -= 0.03;
+    else if(mk==='under25'||mk==='under35') factor += 0.04;
+  } else if(wCode===4){
+    if(mk==='over25') factor -= 0.08; else if(mk==='over15') factor -= 0.05;
+    else if(mk==='under25'||mk==='under35') factor += 0.06;
+  } else if(wCode===5){
+    if(mk==='over25'||mk==='over15') factor -= 0.10;
+    else if(mk==='under25'||mk==='under35') factor += 0.08;
+  }
+  var pitch = Number(context.pitch_condition || 1);
+  if(pitch >= 2){
+    var pp = (pitch - 1) * 0.025;
+    if(mk==='over25') factor -= pp;
+    else if(mk==='over15') factor -= pp * 0.6;
+    else if(mk==='under25'||mk==='under35') factor += pp * 0.8;
+  }
+  var travel = Number(context.travel_distance_km || 0);
+  if(travel > 4000){
+    if(mk==='homeWin') factor += 0.05; else if(mk==='awayWin') factor -= 0.05;
+    else if(mk==='under35') factor += 0.02;
+  } else if(travel > 2000){
+    if(mk==='homeWin') factor += 0.03; else if(mk==='awayWin') factor -= 0.03;
+    else if(mk==='under35') factor += 0.01;
+  }
+  return Math.max(0.85, Math.min(1.15, +factor.toFixed(4)));
 }
 
 // --- LAYER 4: MARKET AGREEMENT SCORE ---
@@ -2095,15 +2169,16 @@ function calcFinalProbML5(mlProb, enrichedDetail, marketKey, noVigProb){
   var hCoach   = enrichedDetail.home_coach  || null;
   var aCoach   = enrichedDetail.away_coach  || null;
   var referee  = enrichedDetail.referee     || null;
+  var context  = enrichedDetail.match_context || null;
 
   var formF  = calcFormFactor(homeForm, awayForm, marketKey);
   var h2hF   = calcH2HFactor(h2h, marketKey);
   var absF   = calcAbsenceFactorV2(upPlayers, marketKey);
   var tactF  = calcTactFactor(hCoach, aCoach, marketKey);
   var refF   = calcRefFactor(referee, marketKey);
+  var ctxF   = calcContextFactor(context, marketKey);
 
-  // Combinare multiplicativă cu dampening: nu lăsăm factorii să devanseze ±25%
-  var combined = formF * h2hF * absF * tactF * refF;
+  var combined = formF * h2hF * absF * tactF * refF * ctxF;
   combined = Math.max(0.75, Math.min(1.25, combined));
 
   // Agreement score Layer 4
@@ -2126,6 +2201,7 @@ function calcFinalProbML5(mlProb, enrichedDetail, marketKey, noVigProb){
       absenceFactor: absF,
       tactFactor   : tactF,
       refFactor    : refF,
+      ctxFactor    : ctxF,
       combined     : +combined.toFixed(4)
     },
     agreementScore: agreementScore
@@ -2240,7 +2316,13 @@ function applyEnrichmentToMatch(m, raw, enrichedDetail){
     homeCoachName : hc ? (hc.short_name || hc.name || '') : '',
     awayCoachName : ac ? (ac.short_name || ac.name || '') : '',
     homeCoachStyles: hc && hc.top_styles ? hc.top_styles : [],
-    awayCoachStyles: ac && ac.top_styles ? ac.top_styles : []
+    awayCoachStyles: ac && ac.top_styles ? ac.top_styles : [],
+    matchContext  : enrichedDetail.match_context || null,
+    isDerby       : !!((enrichedDetail.match_context || {}).is_local_derby),
+    weatherCode   : (enrichedDetail.match_context || {}).weather_code || 0,
+    weatherDesc   : (enrichedDetail.match_context || {}).weather_desc || '',
+    travelDistKm  : (enrichedDetail.match_context || {}).travel_distance_km || 0,
+    pitchCondition: (enrichedDetail.match_context || {}).pitch_condition || 1
   });
 }
 
@@ -4451,6 +4533,16 @@ function analyzeMatch(raw){
     catboostScore  : raw.catboost_score != null ? Number(raw.catboost_score) : null,
     catboostEvPct  : raw.catboost_ev_pct != null ? Number(raw.catboost_ev_pct) : null,
     catboostKellyPct: raw.catboost_kelly_pct != null ? Number(raw.catboost_kelly_pct) : null,
+    v2Recommended  : !!raw.v2_recommended,
+    xgdDiff        : raw.xgd_diff        != null ? Number(raw.xgd_diff)          : null,
+    homeXgd        : raw.home_xgd        != null ? Number(raw.home_xgd)          : null,
+    awayXgd        : raw.away_xgd        != null ? Number(raw.away_xgd)          : null,
+    homeMgrO25     : raw.home_mgr_over25_pct != null ? Number(raw.home_mgr_over25_pct) : null,
+    awayMgrO25     : raw.away_mgr_over25_pct != null ? Number(raw.away_mgr_over25_pct) : null,
+    homeMgrBtts    : raw.home_mgr_btts_pct  != null ? Number(raw.home_mgr_btts_pct)   : null,
+    awayMgrBtts    : raw.away_mgr_btts_pct  != null ? Number(raw.away_mgr_btts_pct)   : null,
+    homeMgrCs      : raw.home_mgr_cs_pct    != null ? Number(raw.home_mgr_cs_pct)     : null,
+    awayMgrCs      : raw.away_mgr_cs_pct    != null ? Number(raw.away_mgr_cs_pct)     : null,
     // ─── BSD API v2 signals ───────────────────────────────────────────────────
     v2Recommended  : !!raw.v2_recommended,
     xgdDiff        : raw.xgd_diff        != null ? Number(raw.xgd_diff)          : null,
@@ -5409,7 +5501,7 @@ function renderSignalAudit(){
           '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff) >= 0.2 ? 'var(--grn)' : Number(r.xgd_diff) <= -0.2 ? 'var(--red)' : 'var(--muted)')+'">xGd '+(Number(r.xgd_diff) >= 0 ? '+' : '')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
+      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff) >= 0.2 ? 'var(--grn)' : Number(r.xgd_diff) <= -0.2 ? 'var(--red)' : 'var(--muted)')+'">xGd '+(Number(r.xgd_diff) >= 0 ? '+' : '')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff)>=0.2?'var(--grn)':Number(r.xgd_diff)<=-0.2?'var(--red)':'var(--muted)')+'">'+(Number(r.xgd_diff)>=0?'+':'')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
       hybridBlock+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
@@ -6707,7 +6799,7 @@ function renderMatches(){
             +'</span>' : '';
       var factPills = '';
       if(b && b.ml5Factors){
-        var fmap5 = {formFactor:'Formă',h2hFactor:'H2H',absenceFactor:'Absențe',tactFactor:'Tactici',refFactor:'Arbitru'};
+        var fmap5 = {formFactor:'Formă',h2hFactor:'H2H',absenceFactor:'Absențe',tactFactor:'Tactici',refFactor:'Arbitru',ctxFactor:'Context'};
         Object.keys(fmap5).forEach(function(k){
           var v = Number(b.ml5Factors[k]||1);
           if(Math.abs(v-1) < 0.006) return;
@@ -6715,10 +6807,26 @@ function renderMatches(){
         });
       }
       if(formHomeInline||formAwayInline||h2hMeta||coachMeta||factPills){
+        var _refMeta = '', _ctxMeta = '';
+        if(m.isEnriched){
+          var _eRef = (ENRICHED_EVENT_CACHE[String(m.eventId)] || {}).referee || null;
+          if(_eRef && _eRef.avg_goals_per_match != null){
+            var _rg = Number(_eRef.avg_goals_per_match).toFixed(1);
+            var _ry = _eRef.avg_yellow_per_match != null ? ' · '+Number(_eRef.avg_yellow_per_match).toFixed(1)+'G/m' : '';
+            var _rc = Number(_rg)>=3.0?'#f59e0b':Number(_rg)<=2.0?'#60a5fa':'var(--muted)';
+            _refMeta = '<span class="ml5-inline-meta-item" style="color:'+_rc+'">Arb: '+htmlEsc(_eRef.name||'')+' '+_rg+'g/m'+_ry+'</span>';
+          }
+        }
+        if(m.isDerby) _ctxMeta += '<span class="ml5-inline-meta-item" style="color:#f59e0b">Derby local</span>';
+        if(m.weatherCode===3) _ctxMeta += '<span class="ml5-inline-meta-item" style="color:#60a5fa">Ploaie</span>';
+        if(m.weatherCode===4) _ctxMeta += '<span class="ml5-inline-meta-item" style="color:#93c5fd">Ninsoare</span>';
+        if(m.travelDistKm>2000) _ctxMeta += '<span class="ml5-inline-meta-item" style="color:#a78bfa">'+Math.round(m.travelDistKm)+'km</span>';
+        if(m.pitchCondition>=2) _ctxMeta += '<span class="ml5-inline-meta-item" style="color:#6b7280">Teren degradat</span>';
         ml5ContextBlock = '<div class="ml5-inline-card">'
           +'<div class="ml5-inline-title">🔬 Context ML5</div>'
           +((formHomeInline || formAwayInline) ? '<div class="ml5-inline-forms">'+formHomeInline+formAwayInline+'</div>' : '')
           +((h2hMeta || coachMeta) ? '<div class="ml5-inline-meta">'+h2hMeta+coachMeta+'</div>' : '')
+          +((_refMeta||_ctxMeta) ? '<div class="ml5-inline-meta">'+_refMeta+_ctxMeta+'</div>' : '')
           +(factPills?'<div class="ml5-inline-pills">'+factPills+'</div>':'')
           +'</div>';
       }
@@ -6839,6 +6947,10 @@ function renderMatches(){
       (m.homeMgrO25 != null ? '<div class="analysis-metric '+(m.homeMgrO25 >= 60 ? 'prob' : 'edge')+'"><div class="analysis-metric-k">Antrenor gazdă O2.5</div><div class="analysis-metric-v">'+m.homeMgrO25.toFixed(0)+'%</div><div class="analysis-metric-sub">% meciuri over 2.5</div></div>' : '')+
       (m.awayMgrO25 != null ? '<div class="analysis-metric '+(m.awayMgrO25 >= 60 ? 'prob' : 'edge')+'"><div class="analysis-metric-k">Antrenor oaspeți O2.5</div><div class="analysis-metric-v">'+m.awayMgrO25.toFixed(0)+'%</div><div class="analysis-metric-sub">% meciuri over 2.5</div></div>' : '')+
       (m.homeMgrBtts != null || m.awayMgrBtts != null ? '<div class="analysis-metric '+(( (m.homeMgrBtts||0) >= 55 && (m.awayMgrBtts||0) >= 55 ) ? 'prob' : 'edge')+'"><div class="analysis-metric-k">BTTS antrenori</div><div class="analysis-metric-v">'+(m.homeMgrBtts != null ? m.homeMgrBtts.toFixed(0)+'%' : '—')+' / '+(m.awayMgrBtts != null ? m.awayMgrBtts.toFixed(0)+'%' : '—')+'</div><div class="analysis-metric-sub">% BTTS gazdă / oaspeți</div></div>' : '')+
+      (m.xgdDiff != null ? '<div class="analysis-metric '+(m.xgdDiff >= 0.2 ? 'prob' : m.xgdDiff <= -0.2 ? 'warn' : 'edge')+'"><div class="analysis-metric-k">xGd diff</div><div class="analysis-metric-v">'+(m.xgdDiff >= 0 ? '+' : '')+m.xgdDiff.toFixed(2)+'</div><div class="analysis-metric-sub">'+(m.xgdDiff >= 0.2 ? 'gazdă mai puternică' : m.xgdDiff <= -0.2 ? 'oaspeți mai puternici' : 'echilibrat')+'</div></div>' : '')+
+      (m.homeMgrO25 != null ? '<div class="analysis-metric '+(m.homeMgrO25 >= 60 ? 'prob' : 'edge')+'"><div class="analysis-metric-k">Antrenor gazdă O2.5</div><div class="analysis-metric-v">'+m.homeMgrO25.toFixed(0)+'%</div><div class="analysis-metric-sub">% meciuri over 2.5</div></div>' : '')+
+      (m.awayMgrO25 != null ? '<div class="analysis-metric '+(m.awayMgrO25 >= 60 ? 'prob' : 'edge')+'"><div class="analysis-metric-k">Antrenor oaspeți O2.5</div><div class="analysis-metric-v">'+m.awayMgrO25.toFixed(0)+'%</div><div class="analysis-metric-sub">% meciuri over 2.5</div></div>' : '')+
+      (m.homeMgrBtts != null || m.awayMgrBtts != null ? '<div class="analysis-metric '+(( (m.homeMgrBtts||0) >= 55 && (m.awayMgrBtts||0) >= 55 ) ? 'prob' : 'edge')+'"><div class="analysis-metric-k">BTTS antrenori</div><div class="analysis-metric-v">'+(m.homeMgrBtts != null ? m.homeMgrBtts.toFixed(0)+'%' : '—')+' / '+(m.awayMgrBtts != null ? m.awayMgrBtts.toFixed(0)+'%' : '—')+'</div><div class="analysis-metric-sub">% BTTS gazdă / oaspeți</div></div>' : '')+
     '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
     var kickoffLabel = getMatchKickoffLabel(m);
     var countdown = getMatchKickoffCountdown(m);
@@ -6875,10 +6987,16 @@ function renderMatches(){
     }
     var m17ScorePill = m.mostLikelyScore ? '<span class="m17-pill">⚽ '+htmlEsc(m.mostLikelyScore)+'</span>' : '';
     var m17V2Pill = m.v2Recommended ? '<span class="m17-pill" style="background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.35);font-weight:700">⚡ V2</span>' : '';
-    var m17ConsensusPill = m17ConsensusText ? '<span class="m17-pill m17-consensus '+m17MarketClass+'">'+htmlEsc(m17ConsensusText)+'</span>' : '';
-    // Verdict PARIAZA/RISC/EVITA vizibil pe card (elimina contradictia cu detaliile)
+    // Context v2: derby, vreme, deplasare
+    var m17ContextPills = '';
+    if(m.isDerby) m17ContextPills += '<span class="m17-pill" style="color:#f59e0b;border-color:rgba(245,158,11,.3)">Derby</span>';
+    if(m.weatherCode===3) m17ContextPills += '<span class="m17-pill" style="color:#60a5fa;border-color:rgba(96,165,250,.3)">Ploaie</span>';
+    if(m.weatherCode===4) m17ContextPills += '<span class="m17-pill" style="color:#93c5fd;border-color:rgba(147,197,253,.3)">Ninsoare</span>';
+    if(m.travelDistKm>2000) m17ContextPills += '<span class="m17-pill" style="color:#a78bfa;border-color:rgba(167,139,250,.3)">'+Math.round(m.travelDistKm/100)/10+'k km</span>';
+    if(m.pitchCondition>=2) m17ContextPills += '<span class="m17-pill" style="color:#6b7280;border-color:rgba(107,114,128,.3)">Teren</span>';
     var _cardVerdict = b ? getBetVerdict(m, b) : null;
     var m17VerdictPill = _cardVerdict ? '<span class="m17-pill" style="background:'+_cardVerdict.bg+';color:'+_cardVerdict.color+';border:1px solid '+_cardVerdict.border+';font-weight:800;font-size:10px">'+_cardVerdict.label+'</span>' : '';
+    // Verdict PARIAZA/RISC/EVITA vizibil pe card (elimina contradictia cu detaliile)
     var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+motorBadge+catboostBadge+ml5Badge+ageBadge+'</div>' : '';
     var m17Metrics = b ? ('<div class="m17-metric-strip">'+
       '<div class="m17-metric '+m17ProbClass+'"><span>Prob.</span><strong>'+fmtPct(m17AdjProb)+'</strong></div>'+
@@ -6897,7 +7015,7 @@ function renderMatches(){
       '</div>'+
       '<div class="m17-meta-row">'+
         '<span class="m17-country">🌍 '+htmlEsc(m.country || '—')+'</span>'+
-        '<span class="m17-pill m17-state">'+htmlEsc(state.label || 'Analiză')+'</span>'+m17ScorePill+m17CalibPill+
+        '<span class="m17-pill m17-state">'+htmlEsc(state.label || 'Analiză')+'</span>'+m17ScorePill+m17CalibPill+m17ContextPills+
       '</div>'+
       '<div class="m17-teams">'+
         '<div class="m17-team home">'+hLogoWrap+'<div class="m17-team-copy"><div class="m17-team-name">'+htmlEsc(m.home || '—')+'</div><div class="m17-team-prob">'+homeProb.toFixed(0)+'%</div></div></div>'+
@@ -6909,7 +7027,7 @@ function renderMatches(){
       '<div class="m17-reco">'+
         '<div class="m17-reco-head"><div><div class="m17-reco-kicker">🎯 Recomandare</div><div class="m17-pick">'+htmlEsc(recLabel)+'</div></div><div class="m17-odd">'+(recOdd ? '@ '+recOdd : '—')+'</div></div>'+ 
         m17Metrics+
-        '<div class="m17-pill-row"><span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>'+m17KellyPill+m17VerdictPill+m17ConsensusPill+m17V2Pill+'</div>'+ 
+        '<div class="m17-pill-row"><span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>'+m17KellyPill+m17VerdictPill+m17ConsensusPill+m17ContextPills+m17V2Pill+'</div>'+ 
         m17SourceRow+
         m17MarketLine+
       '</div>'+ 
