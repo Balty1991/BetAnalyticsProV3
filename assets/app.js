@@ -4432,7 +4432,18 @@ function analyzeMatch(raw){
     catboostMarket : raw.catboost_market || null,
     catboostScore  : raw.catboost_score != null ? Number(raw.catboost_score) : null,
     catboostEvPct  : raw.catboost_ev_pct != null ? Number(raw.catboost_ev_pct) : null,
-    catboostKellyPct: raw.catboost_kelly_pct != null ? Number(raw.catboost_kelly_pct) : null
+    catboostKellyPct: raw.catboost_kelly_pct != null ? Number(raw.catboost_kelly_pct) : null,
+    // ─── BSD API v2 signals ───────────────────────────────────────────────────
+    v2Recommended  : !!raw.v2_recommended,
+    xgdDiff        : raw.xgd_diff        != null ? Number(raw.xgd_diff)          : null,
+    homeXgd        : raw.home_xgd        != null ? Number(raw.home_xgd)          : null,
+    awayXgd        : raw.away_xgd        != null ? Number(raw.away_xgd)          : null,
+    homeMgrO25     : raw.home_mgr_over25_pct != null ? Number(raw.home_mgr_over25_pct) : null,
+    awayMgrO25     : raw.away_mgr_over25_pct != null ? Number(raw.away_mgr_over25_pct) : null,
+    homeMgrBtts    : raw.home_mgr_btts_pct  != null ? Number(raw.home_mgr_btts_pct)   : null,
+    awayMgrBtts    : raw.away_mgr_btts_pct  != null ? Number(raw.away_mgr_btts_pct)   : null,
+    homeMgrCs      : raw.home_mgr_cs_pct    != null ? Number(raw.home_mgr_cs_pct)     : null,
+    awayMgrCs      : raw.away_mgr_cs_pct    != null ? Number(raw.away_mgr_cs_pct)     : null
   };
 }
 
@@ -5373,14 +5384,14 @@ function renderSignalAudit(){
             '<span class="audit-row-rank">#'+(idx+1)+'</span>'+
             '<div class="audit-row-teams">'+renderEventIdentity({ home:r.home, away:r.away, league:r.league, event_id:r.event_id, prediction_id:r.prediction_id, event_date:r.event_date, home_api_id:r.home_api_id, away_api_id:r.away_api_id, league_api_id:r.league_api_id }, { logoSize:16, leagueSize:12, showLeague:false })+'</div>'+
           '</div>'+
-          '<div class="audit-row-meta">'+renderLeagueBadge({ league:r.league, event_id:r.event_id, prediction_id:r.prediction_id, event_date:r.event_date, league_api_id:r.league_api_id }, 12)+' • '+evDate+' • model '+(r.v2_signal ? '<span style="color:var(--grn);font-weight:800">⚡v2</span>' : (r.model_version || '—'))+'</div>'+
+          '<div class="audit-row-meta">'+renderLeagueBadge({ league:r.league, event_id:r.event_id, prediction_id:r.prediction_id, event_date:r.event_date, league_api_id:r.league_api_id }, 12)+' • '+evDate+' • model '+((r.v2_signal || r.v2_recommended) ? '<span style="color:#10b981;font-weight:800">⚡V2</span>' : (r.model_version || '—'))+'</div>'+
         '</div>'+
         '<div class="audit-pick-box">'+
           '<div class="audit-pick-label">Pronostic</div>'+
           '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
+      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff) >= 0.2 ? 'var(--grn)' : Number(r.xgd_diff) <= -0.2 ? 'var(--red)' : 'var(--muted)')+'">xGd '+(Number(r.xgd_diff) >= 0 ? '+' : '')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
       hybridBlock+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
@@ -6795,6 +6806,10 @@ function renderMatches(){
       '<div class="analysis-metric"><div class="analysis-metric-k">Kelly %</div><div class="analysis-metric-v" style="color:'+(Number(b.kellyPct||0)>0?'var(--grn)':'var(--muted)')+'">'+Number(b.kellyPct||0).toFixed(1)+'%</div><div class="analysis-metric-sub">fracție recomandată</div></div>'+
       (m.riskTier ? '<div class="analysis-metric '+(m.riskTier==="Safe"?'prob':m.riskTier==="Value"?'value':m.riskTier==="Balanced"?'edge':'warn')+'"><div class="analysis-metric-k">Risk Tier</div><div class="analysis-metric-v">'+m.riskTier+'</div><div class="analysis-metric-sub">clasificare risc</div></div>' : '')+
       (bestMarketLine ? '<div class="analysis-metric value"><div class="analysis-metric-k">Best market</div><div class="analysis-metric-v">'+Number(b.odds || 0).toFixed(2)+'</div><div class="analysis-metric-sub">'+bestMarketLine+'</div></div>' : '')+
+      (m.xgdDiff != null ? '<div class="analysis-metric '+(m.xgdDiff >= 0.2 ? 'prob' : m.xgdDiff <= -0.2 ? 'warn' : 'edge')+'"><div class="analysis-metric-k">xGd diff</div><div class="analysis-metric-v">'+(m.xgdDiff >= 0 ? '+' : '')+m.xgdDiff.toFixed(2)+'</div><div class="analysis-metric-sub">'+(m.xgdDiff >= 0.2 ? 'gazdă mai puternică' : m.xgdDiff <= -0.2 ? 'oaspeți mai puternici' : 'echilibrat')+'</div></div>' : '')+
+      (m.homeMgrO25 != null ? '<div class="analysis-metric '+(m.homeMgrO25 >= 60 ? 'prob' : 'edge')+'"><div class="analysis-metric-k">Antrenor gazdă O2.5</div><div class="analysis-metric-v">'+m.homeMgrO25.toFixed(0)+'%</div><div class="analysis-metric-sub">% meciuri over 2.5</div></div>' : '')+
+      (m.awayMgrO25 != null ? '<div class="analysis-metric '+(m.awayMgrO25 >= 60 ? 'prob' : 'edge')+'"><div class="analysis-metric-k">Antrenor oaspeți O2.5</div><div class="analysis-metric-v">'+m.awayMgrO25.toFixed(0)+'%</div><div class="analysis-metric-sub">% meciuri over 2.5</div></div>' : '')+
+      (m.homeMgrBtts != null || m.awayMgrBtts != null ? '<div class="analysis-metric '+(( (m.homeMgrBtts||0) >= 55 && (m.awayMgrBtts||0) >= 55 ) ? 'prob' : 'edge')+'"><div class="analysis-metric-k">BTTS antrenori</div><div class="analysis-metric-v">'+(m.homeMgrBtts != null ? m.homeMgrBtts.toFixed(0)+'%' : '—')+' / '+(m.awayMgrBtts != null ? m.awayMgrBtts.toFixed(0)+'%' : '—')+'</div><div class="analysis-metric-sub">% BTTS gazdă / oaspeți</div></div>' : '')+
     '</div><div class="analysis-help-row"><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'edge\')">Edge</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'value\')">Value</button><button class="help-chip" onclick="showInlineHelp(\'matches-help-output\',\'fair_odds\')">Fair odds</button></div>') : '';
     var kickoffLabel = getMatchKickoffLabel(m);
     var countdown = getMatchKickoffCountdown(m);
@@ -6830,6 +6845,7 @@ function renderMatches(){
       m17CalibPill = '<span class="m17-pill m17-calib">'+htmlEsc(calibTxt)+'</span>';
     }
     var m17ScorePill = m.mostLikelyScore ? '<span class="m17-pill">⚽ '+htmlEsc(m.mostLikelyScore)+'</span>' : '';
+    var m17V2Pill = m.v2Recommended ? '<span class="m17-pill" style="background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.35);font-weight:700">⚡ V2</span>' : '';
     var m17ConsensusPill = m17ConsensusText ? '<span class="m17-pill m17-consensus '+m17MarketClass+'">'+htmlEsc(m17ConsensusText)+'</span>' : '';
     var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+motorBadge+catboostBadge+ml5Badge+ageBadge+'</div>' : '';
     var m17Metrics = b ? ('<div class="m17-metric-strip">'+
@@ -6861,7 +6877,7 @@ function renderMatches(){
       '<div class="m17-reco">'+
         '<div class="m17-reco-head"><div><div class="m17-reco-kicker">🎯 Recomandare</div><div class="m17-pick">'+htmlEsc(recLabel)+'</div></div><div class="m17-odd">'+(recOdd ? '@ '+recOdd : '—')+'</div></div>'+ 
         m17Metrics+
-        '<div class="m17-pill-row"><span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>'+m17KellyPill+m17ConsensusPill+'</div>'+ 
+        '<div class="m17-pill-row"><span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>'+m17KellyPill+m17ConsensusPill+m17V2Pill+'</div>'+ 
         m17SourceRow+
         m17MarketLine+
       '</div>'+ 
