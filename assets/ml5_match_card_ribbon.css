@@ -1,10 +1,15 @@
-/* ML5 event card ribbon — same visual language as Meciuri cards. */
+/* ML5 event card ribbon — same visual language as Meciuri cards.
+   Applied as real background layers + pseudo fallback so every event receives it. */
 #tab-ml5 #ml5-root div[style*="background:#161d2e"]{
   position:relative!important;
-  margin-bottom:28px!important;
+  margin-bottom:30px!important;
   padding-top:18px!important;
-  border-color:rgba(103,232,249,.26)!important;
-  border-top-color:rgba(103,232,249,.62)!important;
+  border-color:rgba(103,232,249,.28)!important;
+  border-top-color:rgba(103,232,249,.68)!important;
+  background:
+    linear-gradient(90deg,rgba(103,232,249,0) 0%,rgba(103,232,249,.64) 18%,rgba(255,247,224,.96) 46%,rgba(192,132,252,.58) 70%,rgba(103,232,249,0) 100%) 50% 0/86% 2px no-repeat,
+    radial-gradient(ellipse at center,rgba(255,249,225,.24) 0%,rgba(103,232,249,.14) 42%,rgba(103,232,249,0) 78%) 18% -6px/46% 18px no-repeat,
+    linear-gradient(180deg,rgba(10,18,31,.98),rgba(7,13,24,.98))!important;
   box-shadow:
     0 24px 54px rgba(0,0,0,.42),
     0 0 0 1px rgba(255,255,255,.035) inset,
@@ -12,7 +17,7 @@
   overflow:hidden!important;
 }
 
-/* Thin glowing top stripe on every ML5 event card */
+/* Pseudo fallback: keeps a visible stripe even if another override changes background layers. */
 #tab-ml5 #ml5-root div[style*="background:#161d2e"]::before{
   content:""!important;
   position:absolute!important;
@@ -21,20 +26,12 @@
   right:24px!important;
   height:2px!important;
   border-radius:999px!important;
-  background:linear-gradient(
-    90deg,
-    rgba(103,232,249,0) 0%,
-    rgba(103,232,249,.62) 18%,
-    rgba(255,247,224,.95) 46%,
-    rgba(192,132,252,.58) 70%,
-    rgba(103,232,249,0) 100%
-  )!important;
+  background:linear-gradient(90deg,rgba(103,232,249,0) 0%,rgba(103,232,249,.64) 18%,rgba(255,247,224,.96) 46%,rgba(192,132,252,.58) 70%,rgba(103,232,249,0) 100%)!important;
   box-shadow:0 0 8px rgba(103,232,249,.40),0 0 18px rgba(192,132,252,.22)!important;
   z-index:4!important;
   pointer-events:none!important;
 }
 
-/* Soft shine/glint just under the line */
 #tab-ml5 #ml5-root div[style*="background:#161d2e"]::after{
   content:""!important;
   position:absolute!important;
@@ -43,41 +40,43 @@
   width:42%!important;
   height:16px!important;
   border-radius:999px!important;
-  background:radial-gradient(
-    ellipse at center,
-    rgba(255,249,225,.25) 0%,
-    rgba(103,232,249,.15) 42%,
-    rgba(103,232,249,0) 78%
-  )!important;
+  background:radial-gradient(ellipse at center,rgba(255,249,225,.25) 0%,rgba(103,232,249,.15) 42%,rgba(103,232,249,0) 78%)!important;
   filter:blur(5px)!important;
   opacity:.92!important;
   z-index:3!important;
   pointer-events:none!important;
 }
 
-/* Make the separation obvious even when cards are long */
+/* Clear gap between all event cards. */
 #tab-ml5 #ml5-root div[style*="background:#161d2e"] + div[style*="background:#161d2e"]{
-  margin-top:30px!important;
+  margin-top:34px!important;
 }
 
-/* Small teal marker before each card, like the date separators in Meciuri */
+/* Extra divider strip in the gap before every card except the first. */
+#tab-ml5 #ml5-root div[style*="background:#161d2e"] + div[style*="background:#161d2e"] > div:first-child{
+  position:relative!important;
+}
 #tab-ml5 #ml5-root div[style*="background:#161d2e"] + div[style*="background:#161d2e"] > div:first-child::before{
   content:""!important;
   position:absolute!important;
-  top:-18px!important;
-  left:2px!important;
-  width:34px!important;
+  top:-30px!important;
+  left:0!important;
+  right:0!important;
   height:1px!important;
   border-radius:999px!important;
-  background:linear-gradient(90deg,rgba(43,229,197,.95),rgba(43,229,197,0))!important;
-  box-shadow:0 0 10px rgba(43,229,197,.38)!important;
+  background:linear-gradient(90deg,rgba(43,229,197,0) 0%,rgba(43,229,197,.42) 20%,rgba(255,247,224,.62) 50%,rgba(43,229,197,.42) 80%,rgba(43,229,197,0) 100%)!important;
+  box-shadow:0 0 12px rgba(43,229,197,.24)!important;
   pointer-events:none!important;
 }
 
 @media(max-width:700px){
   #tab-ml5 #ml5-root div[style*="background:#161d2e"]{
-    margin-bottom:30px!important;
-    padding-top:17px!important;
+    margin-bottom:32px!important;
+    padding-top:18px!important;
+    background:
+      linear-gradient(90deg,rgba(103,232,249,0) 0%,rgba(103,232,249,.68) 18%,rgba(255,247,224,.96) 46%,rgba(192,132,252,.58) 70%,rgba(103,232,249,0) 100%) 50% 0/88% 2px no-repeat,
+      radial-gradient(ellipse at center,rgba(255,249,225,.24) 0%,rgba(103,232,249,.14) 42%,rgba(103,232,249,0) 78%) 18% -6px/48% 18px no-repeat,
+      linear-gradient(180deg,rgba(10,18,31,.98),rgba(7,13,24,.98))!important;
   }
   #tab-ml5 #ml5-root div[style*="background:#161d2e"]::before{
     left:18px!important;
@@ -85,6 +84,6 @@
     height:2px!important;
   }
   #tab-ml5 #ml5-root div[style*="background:#161d2e"] + div[style*="background:#161d2e"]{
-    margin-top:32px!important;
+    margin-top:36px!important;
   }
 }
