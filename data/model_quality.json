@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-05-06T09:03:08.510509+00:00",
-  "quality_score": 70.2,
+  "updated_at": "2026-05-06T09:31:44.054788+00:00",
+  "quality_score": 70.4,
   "quality_grade": "C",
   "coverage": {
     "predictions": 319,
     "ev_signals": 0,
     "log_total": 883,
-    "log_closed": 781,
+    "log_closed": 783,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.3,
+    "age_hours": 0.32,
     "color": "green",
     "label": "0.3h"
   },
@@ -33,16 +33,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 216,
+      "n": 218,
       "credible": true,
-      "brier": 0.2166,
-      "log_loss": 0.6299,
-      "ece": 0.0831,
+      "brier": 0.2149,
+      "log_loss": 0.626,
+      "ece": 0.0807,
       "calib_label": "acceptabil",
-      "winrate": 69.44,
-      "roi_pct": -8.04,
-      "n_wins": 150,
-      "score": 63.3,
+      "winrate": 69.72,
+      "roi_pct": -7.67,
+      "n_wins": 152,
+      "score": 64.0,
       "grade": "C"
     },
     {
@@ -77,17 +77,17 @@
     }
   ],
   "backtest": {
-    "roi_pct": 12.33,
-    "winrate": 78.95,
-    "n_bets": 38,
-    "avg_odds": 1.429,
-    "avg_edge": 12.38
+    "roi_pct": 13.61,
+    "winrate": 80.0,
+    "n_bets": 40,
+    "avg_odds": 1.427,
+    "avg_edge": 12.46
   },
   "recommendations": [
-    "Backtest ROI global: +12.3% — semnal pozitiv."
+    "Backtest ROI global: +13.6% — semnal pozitiv."
   ],
   "wfv": {
-    "global_score": 73.2,
+    "global_score": 74.5,
     "global_grade": "B",
     "n_folds": 5,
     "source": "baseline_league_rates",
@@ -439,24 +439,24 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.294 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-06T09:03:08.389066"
+    "updated_at": "2026-05-06T09:31:43.933731"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.2,
+      "value": 70.4,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 781,
+      "value": 783,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": 12.3,
+      "value": 13.6,
       "suffix": "%",
       "tone": "good"
     },
