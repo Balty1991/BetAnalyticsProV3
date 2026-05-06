@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-05-06T03:01:52.348015",
+  "updated_at": "2026-05-06T03:30:21.277226",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 8525,
+  "n_rows": 8812,
   "n_folds": 2,
-  "global_score": 74.4,
+  "global_score": 74.5,
   "global_grade": "B",
   "markets": [
     {
@@ -83,11 +83,11 @@
           "winrate": 0.2934
         },
         {
-          "n": 2345,
-          "brier": 0.2062,
-          "log_loss": 0.6012,
-          "ece": 0.0042,
-          "winrate": 0.2998
+          "n": 2451,
+          "brier": 0.2057,
+          "log_loss": 0.6001,
+          "ece": 0.0067,
+          "winrate": 0.2978
         }
       ]
     },
@@ -95,11 +95,11 @@
       "market": "over25",
       "label": "Peste 2.5G",
       "folds": 2,
-      "avg_brier": 0.243,
-      "avg_log_loss": 0.6789,
-      "avg_ece": 0.0112,
-      "avg_winrate": 0.5078,
-      "score": 76.0,
+      "avg_brier": 0.2427,
+      "avg_log_loss": 0.6783,
+      "avg_ece": 0.0106,
+      "avg_winrate": 0.5124,
+      "score": 76.1,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
@@ -111,11 +111,11 @@
           "winrate": 0.5127
         },
         {
-          "n": 2345,
-          "brier": 0.2442,
-          "log_loss": 0.6813,
-          "ece": 0.0099,
-          "winrate": 0.5028
+          "n": 2451,
+          "brier": 0.2437,
+          "log_loss": 0.6803,
+          "ece": 0.0095,
+          "winrate": 0.5084
         }
       ]
     },
@@ -139,11 +139,11 @@
           "winrate": 0.7078
         },
         {
-          "n": 2345,
-          "brier": 0.1939,
-          "log_loss": 0.5736,
-          "ece": 0.0076,
-          "winrate": 0.7275
+          "n": 2451,
+          "brier": 0.196,
+          "log_loss": 0.5781,
+          "ece": 0.0073,
+          "winrate": 0.7213
         }
       ]
     },
@@ -195,17 +195,17 @@
           "winrate": 0.7565
         },
         {
-          "n": 2345,
-          "brier": 0.2859,
-          "log_loss": 0.7657,
-          "ece": 0.2959,
-          "winrate": 0.7416
+          "n": 2451,
+          "brier": 0.2866,
+          "log_loss": 0.7672,
+          "ece": 0.3008,
+          "winrate": 0.7458
         }
       ]
     }
   ],
   "warnings": [
-    "Peste 1.5G: ECE mediu 0.299 — calibrare slabă consistent."
+    "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
   ],
   "fold_windows": [
     {

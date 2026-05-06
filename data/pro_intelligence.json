@@ -1,30 +1,30 @@
 {
-  "updated_at": "2026-05-06T03:02:14.259033+00:00",
+  "updated_at": "2026-05-06T03:30:42.681480+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 59.1,
+  "overall_score": 59.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 877,
-    "pending_rows": 101,
-    "candidates_with_odds_and_probability": 89,
+    "recommendation_rows": 879,
+    "pending_rows": 103,
+    "candidates_with_odds_and_probability": 91,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
-    "baseline_leagues": 26
+    "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 73,
-    "balanced": 14,
+    "speculative": 74,
+    "balanced": 15,
     "safe": 2
   },
   "market_distribution_top150": {
-    "Under 3.5G": 44,
+    "Under 3.5G": 45,
     "BTTS": 10,
-    "Over 1.5G": 33,
+    "Over 1.5G": 34,
     "Over 2.5G": 2
   },
   "league_distribution_top150": {
@@ -39,7 +39,7 @@
     "Brasileirão Serie A": 1,
     "Trendyol Super Lig": 6,
     "La Liga": 4,
-    "Pro League": 2,
+    "Pro League": 3,
     "Superliga": 2,
     "Super League": 3,
     "Allsvenskan": 4,
@@ -48,7 +48,7 @@
     "Chinese Super League": 5,
     "MLS": 2,
     "Europa League": 2,
-    "Scottish Premiership": 2,
+    "Scottish Premiership": 3,
     "Premier League": 2,
     "Championship": 2,
     "Serie A": 3,
@@ -1814,6 +1814,34 @@
         "Probabilitate model 81.8% vs. probabilitate implicată 81.3%.",
         "EV estimat 0.6% și edge 0.5 puncte procentuale.",
         "Miză Kelly fracțională 0.67% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 9151,
+      "prediction_id": 3655,
+      "home": "SV Zulte Waregem",
+      "away": "FCV Dender",
+      "league": "Pro League",
+      "event_date": "2026-05-09T17:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.23,
+      "model_probability": 0.8081,
+      "model_probability_pct": 80.81,
+      "implied_probability_pct": 81.3,
+      "fair_odds": 1.237,
+      "edge_pp": -0.49,
+      "ev_pct": -0.6,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 55.76,
+      "score": 81.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.8% vs. probabilitate implicată 81.3%.",
+        "EV estimat -0.6% și edge -0.5 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     },
     {
