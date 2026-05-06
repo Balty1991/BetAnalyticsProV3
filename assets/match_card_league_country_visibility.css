@@ -1,0 +1,179 @@
+/* Match cards — make league and country readable in the photo-exact header. */
+#tab-meciuri .match-card-m17 .m17-topline,
+.match-card-m17 .m17-topline{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(112px,auto)!important;
+  grid-template-areas:"league time"!important;
+  align-items:center!important;
+  column-gap:10px!important;
+  min-height:72px!important;
+  padding:11px 13px!important;
+}
+
+#tab-meciuri .match-card-m17 .m17-league,
+.match-card-m17 .m17-league{
+  grid-area:league!important;
+  min-width:0!important;
+  width:100%!important;
+  max-width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  color:rgba(248,251,255,.95)!important;
+  font-size:17px!important;
+  font-weight:950!important;
+  line-height:1.12!important;
+  letter-spacing:-.035em!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  word-break:normal!important;
+  overflow-wrap:anywhere!important;
+}
+
+#tab-meciuri .match-card-m17 .m17-league > :not(.m17-league-logo):not(img),
+.match-card-m17 .m17-league > :not(.m17-league-logo):not(img){
+  min-width:0!important;
+  max-width:100%!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  line-clamp:2!important;
+}
+
+#tab-meciuri .match-card-m17 .m17-league-logo,
+.match-card-m17 .m17-league-logo{
+  flex:0 0 34px!important;
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+}
+
+#tab-meciuri .match-card-m17 .m17-time,
+.match-card-m17 .m17-time{
+  grid-area:time!important;
+  min-width:112px!important;
+  max-width:132px!important;
+  width:max-content!important;
+  justify-self:end!important;
+  align-self:center!important;
+  text-align:right!important;
+  z-index:2!important;
+}
+
+#tab-meciuri .match-card-m17 .m17-time .m17-countdown,
+.match-card-m17 .m17-time .m17-countdown{
+  max-width:132px!important;
+  white-space:normal!important;
+  text-align:center!important;
+  line-height:1.15!important;
+  padding:5px 9px!important;
+}
+
+/* Country row must be visible and visually separated from the betting badges. */
+#tab-meciuri .match-card-m17 .m17-country,
+.match-card-m17 .m17-country,
+#tab-meciuri .match-card-m17 [class*="country"],
+.match-card-m17 [class*="country"]{
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  width:100%!important;
+  min-height:24px!important;
+  margin:1px 0 2px!important;
+  color:#dce8fb!important;
+  font-size:15px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+
+#tab-meciuri .match-card-m17 .m17-country-row,
+.match-card-m17 .m17-country-row,
+#tab-meciuri .match-card-m17 .m17-meta-row,
+.match-card-m17 .m17-meta-row{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:9px!important;
+  flex-wrap:wrap!important;
+}
+
+#tab-meciuri .match-card-m17 .m17-country::first-letter,
+.match-card-m17 .m17-country::first-letter{
+  color:#67e8f9!important;
+}
+
+@media(max-width:700px){
+  #tab-meciuri .match-card-m17 .m17-topline,
+  .match-card-m17 .m17-topline{
+    grid-template-columns:minmax(0,1fr) minmax(104px,auto)!important;
+    min-height:76px!important;
+    padding:11px 12px!important;
+    column-gap:8px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-league,
+  .match-card-m17 .m17-league{
+    font-size:16px!important;
+    line-height:1.14!important;
+    gap:9px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-league-logo,
+  .match-card-m17 .m17-league-logo{
+    flex-basis:33px!important;
+    width:33px!important;
+    height:33px!important;
+    min-width:33px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-time,
+  .match-card-m17 .m17-time{
+    min-width:104px!important;
+    max-width:118px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-time .m17-hour,
+  .match-card-m17 .m17-time .m17-hour{
+    font-size:22px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-time .m17-countdown,
+  .match-card-m17 .m17-time .m17-countdown{
+    max-width:118px!important;
+    font-size:10px!important;
+    padding:5px 8px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-country,
+  .match-card-m17 .m17-country,
+  #tab-meciuri .match-card-m17 [class*="country"],
+  .match-card-m17 [class*="country"]{
+    font-size:14px!important;
+    min-height:23px!important;
+  }
+}
+
+@media(max-width:380px){
+  #tab-meciuri .match-card-m17 .m17-topline,
+  .match-card-m17 .m17-topline{
+    grid-template-columns:minmax(0,1fr) 98px!important;
+    column-gap:7px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-league,
+  .match-card-m17 .m17-league{
+    font-size:15px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-time,
+  .match-card-m17 .m17-time{
+    min-width:98px!important;
+    max-width:104px!important;
+  }
+  #tab-meciuri .match-card-m17 .m17-time .m17-hour,
+  .match-card-m17 .m17-time .m17-hour{
+    font-size:20px!important;
+  }
+}
