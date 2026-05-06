@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-06T13:33:06.536405+00:00",
+  "updated_at": "2026-05-06T14:05:00.548872+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 52.4,
+  "overall_score": 52.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,19 +9,19 @@
   },
   "data_quality": {
     "recommendation_rows": 884,
-    "pending_rows": 98,
-    "candidates_with_odds_and_probability": 59,
+    "pending_rows": 96,
+    "candidates_with_odds_and_probability": 58,
     "top_ev_count": 21,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 45,
+    "speculative": 44,
     "balanced": 14
   },
   "market_distribution_top150": {
-    "Over 1.5G": 26,
+    "Over 1.5G": 25,
     "Under 3.5G": 19,
     "BTTS": 10,
     "Over 2.5G": 4
@@ -46,6 +46,7 @@
     "Saudi Pro League": 1,
     "Scottish Premiership": 2,
     "Eredivisie": 1,
+    "Chinese Super League": 1,
     "Championship": 2,
     "Serie A": 3,
     "Europa League": 1,
@@ -1195,6 +1196,34 @@
         "EV estimat -0.5% și edge -0.4 puncte procentuale.",
         "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 203199,
+      "prediction_id": 2992,
+      "home": "FC Blau Weiss Linz",
+      "away": "SCR Altach",
+      "league": "FA Cup",
+      "event_date": "2026-04-24T20:30:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.36,
+      "model_probability": 0.8005,
+      "model_probability_pct": 80.05,
+      "implied_probability_pct": 73.53,
+      "fair_odds": 1.249,
+      "edge_pp": 6.52,
+      "ev_pct": 8.87,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 42.86,
+      "score": 97.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.0% vs. probabilitate implicată 73.5%.",
+        "EV estimat 8.9% și edge 6.5 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1486,24 +1515,24 @@
       "league": "Eredivisie",
       "event_date": "2026-05-06T19:45:00+03:00",
       "market": "Over 2.5G",
-      "odds": 1.49,
+      "odds": 1.48,
       "model_probability": 0.6714,
       "model_probability_pct": 67.14,
-      "implied_probability_pct": 67.11,
+      "implied_probability_pct": 67.57,
       "fair_odds": 1.489,
-      "edge_pp": 0.03,
-      "ev_pct": 0.04,
-      "kelly_fraction": 0.0002,
-      "kelly_units_100": 0.02,
+      "edge_pp": -0.43,
+      "ev_pct": -0.63,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
       "confidence": 60.25,
-      "score": 79.0,
+      "score": 78.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 67.1% vs. probabilitate implicată 67.1%.",
-        "EV estimat 0.0% și edge 0.0 puncte procentuale.",
-        "Miză Kelly fracțională 0.02% din bancă, plafonată prudent."
+        "Probabilitate model 67.1% vs. probabilitate implicată 67.6%.",
+        "EV estimat -0.6% și edge -0.4 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1621,12 +1650,12 @@
     },
     {
       "key": "Over 1.5G",
-      "bets": 220,
-      "wins": 153,
-      "winrate": 69.55,
-      "profit_units": -17.41,
-      "roi_pct": -7.91,
-      "avg_odds": 1.327
+      "bets": 222,
+      "wins": 155,
+      "winrate": 69.82,
+      "profit_units": -17.03,
+      "roi_pct": -7.67,
+      "avg_odds": 1.326
     }
   ],
   "settled_league_performance": [
@@ -1710,6 +1739,15 @@
       "profit_units": 0.34,
       "roi_pct": 17.0,
       "avg_odds": 1.17
+    },
+    {
+      "key": "Chinese Super League",
+      "bets": 13,
+      "wins": 11,
+      "winrate": 84.62,
+      "profit_units": 1.83,
+      "roi_pct": 14.07,
+      "avg_odds": 1.36
     },
     {
       "key": "Pro League",
