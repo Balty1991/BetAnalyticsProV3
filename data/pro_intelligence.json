@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-06T08:00:06.121435+00:00",
+  "updated_at": "2026-05-06T08:36:39.027228+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 58.6,
+  "overall_score": 57.0,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,20 +9,20 @@
   },
   "data_quality": {
     "recommendation_rows": 881,
-    "pending_rows": 101,
-    "candidates_with_odds_and_probability": 85,
+    "pending_rows": 100,
+    "candidates_with_odds_and_probability": 84,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
-    "baseline_leagues": 26
+    "baseline_leagues": 27
   },
   "risk_distribution": {
     "speculative": 70,
     "balanced": 13,
-    "safe": 2
+    "safe": 1
   },
   "market_distribution_top150": {
-    "Over 1.5G": 31,
+    "Over 1.5G": 30,
     "Under 3.5G": 41,
     "BTTS": 10,
     "Over 2.5G": 3
@@ -33,7 +33,6 @@
     "Copa Sudamericana": 8,
     "Copa Libertadores": 8,
     "Segunda División": 5,
-    "J1 League": 5,
     "Brasileirão Serie A": 1,
     "Ekstraklasa": 3,
     "FA Cup": 1,
@@ -41,6 +40,7 @@
     "Pro League": 2,
     "Superliga": 2,
     "Super League": 3,
+    "J1 League": 4,
     "Stoiximan Super League": 2,
     "Allsvenskan": 3,
     "MLS": 2,
@@ -270,34 +270,6 @@
       "rationale": [
         "Probabilitate model 87.7% vs. probabilitate implicată 80.0%.",
         "EV estimat 9.6% și edge 7.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 204867,
-      "prediction_id": 3536,
-      "home": "FC Tokyo",
-      "away": "JEF United Chiba",
-      "league": "J1 League",
-      "event_date": "2026-05-06T09:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.26,
-      "model_probability": 0.8926,
-      "model_probability_pct": 89.26,
-      "implied_probability_pct": 79.37,
-      "fair_odds": 1.12,
-      "edge_pp": 9.89,
-      "ev_pct": 12.47,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.02,
-      "score": 101.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 89.3% vs. probabilitate implicată 79.4%.",
-        "EV estimat 12.5% și edge 9.9 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -916,37 +888,37 @@
         "EV estimat 3.4% și edge 2.7 puncte procentuale.",
         "Miză Kelly fracțională 3.05% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 1034,
+      "prediction_id": 3634,
+      "home": "Elche",
+      "away": "Deportivo Alavés",
+      "league": "La Liga",
+      "event_date": "2026-05-09T15:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.27,
+      "model_probability": 0.8079,
+      "model_probability_pct": 80.79,
+      "implied_probability_pct": 78.74,
+      "fair_odds": 1.238,
+      "edge_pp": 2.05,
+      "ev_pct": 2.6,
+      "kelly_fraction": 0.0241,
+      "kelly_units_100": 2.41,
+      "confidence": 43.2,
+      "score": 83.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.8% vs. probabilitate implicată 78.7%.",
+        "EV estimat 2.6% și edge 2.0 puncte procentuale.",
+        "Miză Kelly fracțională 2.41% din bancă, plafonată prudent."
+      ]
     }
   ],
   "safest": [
-    {
-      "event_id": 204867,
-      "prediction_id": 3536,
-      "home": "FC Tokyo",
-      "away": "JEF United Chiba",
-      "league": "J1 League",
-      "event_date": "2026-05-06T09:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.26,
-      "model_probability": 0.8926,
-      "model_probability_pct": 89.26,
-      "implied_probability_pct": 79.37,
-      "fair_odds": 1.12,
-      "edge_pp": 9.89,
-      "ev_pct": 12.47,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.02,
-      "score": 101.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 89.3% vs. probabilitate implicată 79.4%.",
-        "EV estimat 12.5% și edge 9.9 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
     {
       "event_id": 9422,
       "prediction_id": 3582,
@@ -1478,6 +1450,34 @@
         "EV estimat 2.0% și edge 1.7 puncte procentuale.",
         "Miză Kelly fracțională 2.32% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 205762,
+      "prediction_id": 3573,
+      "home": "Beijing Guoan",
+      "away": "Dalian Yingbo FC",
+      "league": "Chinese Super League",
+      "event_date": "2026-05-06T14:35:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.19,
+      "model_probability": 0.8352,
+      "model_probability_pct": 83.52,
+      "implied_probability_pct": 84.03,
+      "fair_odds": 1.197,
+      "edge_pp": -0.51,
+      "ev_pct": -0.61,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 45.25,
+      "score": 76.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 83.5% vs. probabilitate implicată 84.0%.",
+        "EV estimat -0.6% și edge -0.5 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1534,34 +1534,6 @@
       "rationale": [
         "Probabilitate model 87.7% vs. probabilitate implicată 80.0%.",
         "EV estimat 9.6% și edge 7.7 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 204867,
-      "prediction_id": 3536,
-      "home": "FC Tokyo",
-      "away": "JEF United Chiba",
-      "league": "J1 League",
-      "event_date": "2026-05-06T09:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.26,
-      "model_probability": 0.8926,
-      "model_probability_pct": 89.26,
-      "implied_probability_pct": 79.37,
-      "fair_odds": 1.12,
-      "edge_pp": 9.89,
-      "ev_pct": 12.47,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 62.02,
-      "score": 101.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 89.3% vs. probabilitate implicată 79.4%.",
-        "EV estimat 12.5% și edge 9.9 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1932,11 +1904,11 @@
     },
     {
       "key": "Over 1.5G",
-      "bets": 215,
-      "wins": 149,
-      "winrate": 69.3,
-      "profit_units": -17.63,
-      "roi_pct": -8.2,
+      "bets": 216,
+      "wins": 150,
+      "winrate": 69.44,
+      "profit_units": -17.37,
+      "roi_pct": -8.04,
       "avg_odds": 1.328
     }
   ],
@@ -2033,12 +2005,12 @@
     },
     {
       "key": "J1 League",
-      "bets": 26,
-      "wins": 21,
-      "winrate": 80.77,
-      "profit_units": 3.3,
-      "roi_pct": 12.68,
-      "avg_odds": 1.378
+      "bets": 27,
+      "wins": 22,
+      "winrate": 81.48,
+      "profit_units": 3.56,
+      "roi_pct": 13.17,
+      "avg_odds": 1.373
     },
     {
       "key": "Copa Sudamericana",
