@@ -64,24 +64,84 @@ def get(url, params=None, timeout=20):
     return None
 
 
+def prediction_key(pred):
+    """Cheie stabilă pentru deduplicarea predicțiilor paginated."""
+    event = pred.get("event", {}) if isinstance(pred, dict) else {}
+    return event.get("id") or pred.get("id")
+
+
 # ─── Fetch predicții ──────────────────────────────────────────
 def fetch_predictions():
-    """Fetch predicții upcoming din /api/predictions/."""
+    """Fetch predicții upcoming din /api/predictions/, cu paginare.
+
+    API-ul întoarce frecvent doar 50 rezultate pe pagină chiar dacă trimitem
+    limit mai mare. De aceea iterăm prin next/page până la MAX_EVENTS.
+    """
     url = f"{API_BASE}/predictions/"
-    # Obținem meciurile din următoarele LOOKAHEAD_DAYS zile,
-    # ca să aliniem cache-ul ML5 cu totalul de meciuri afișat în aplicație.
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    week  = (datetime.utcnow() + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
-    data  = get(url, params={
+    date_to = (datetime.utcnow() + timedelta(days=LOOKAHEAD_DAYS)).strftime("%Y-%m-%d")
+    base_params = {
         "status": "notstarted",
         "date_from": today,
-        "date_to": week,
-        "limit": MAX_EVENTS
-    })
-    if not data:
-        return []
-    results = data.get("results", data) if isinstance(data, dict) else data
-    return results if isinstance(results, list) else []
+        "date_to": date_to,
+        "limit": min(MAX_EVENTS, 100)
+    }
+
+    all_preds = []
+    seen = set()
+    next_url = None
+    page = 1
+    max_pages = max(1, (MAX_EVENTS // 25) + 10)
+
+    while len(all_preds) < MAX_EVENTS and page <= max_pages:
+        if next_url:
+            data = get(next_url)
+        else:
+            params = dict(base_params)
+            params["page"] = page
+            data = get(url, params=params)
+
+        if not data:
+            break
+
+        if isinstance(data, dict):
+            results = data.get("results", [])
+            next_url = data.get("next")
+            count = data.get("count")
+        else:
+            results = data if isinstance(data, list) else []
+            next_url = None
+            count = None
+
+        if not isinstance(results, list) or not results:
+            break
+
+        added = 0
+        for pred in results:
+            if not isinstance(pred, dict):
+                continue
+            key = prediction_key(pred)
+            if key and key in seen:
+                continue
+            if key:
+                seen.add(key)
+            all_preds.append(pred)
+            added += 1
+            if len(all_preds) >= MAX_EVENTS:
+                break
+
+        print(f"  pagină {page}: {len(results)} rezultate, +{added}, total {len(all_preds)}" + (f" / count {count}" if count else ""))
+
+        if not next_url:
+            # Unele API-uri nu trimit next, dar acceptă page=N. Continuăm cât timp
+            # pagina curentă a adus rezultate noi; oprim dacă se repetă/goalește.
+            if added == 0:
+                break
+            page += 1
+        else:
+            page += 1
+
+    return all_preds[:MAX_EVENTS]
 
 
 # ─── Extrage câmpurile ML5 dintr-un event detail ─────────────
