@@ -14,17 +14,13 @@ on:
   workflow_dispatch:
     inputs:
       max_events:
-        description: 'Număr maxim meciuri (default 350)'
+        description: 'Număr maxim meciuri (default 100)'
         required: false
-        default: '350'
+        default: '100'
       delay_ms:
         description: 'Delay între request-uri în ms (default 200)'
         required: false
         default: '200'
-      lookahead_days:
-        description: 'Orizont meciuri în zile (default 30)'
-        required: false
-        default: '30'
 
 jobs:
   enrich:
@@ -47,11 +43,10 @@ jobs:
 
       - name: Run fetch_enriched.py
         env:
-          BSD_TOKEN:      ${{ secrets.BSD_TOKEN }}
-          MAX_EVENTS:     ${{ github.event.inputs.max_events     || '350' }}
-          DELAY_MS:       ${{ github.event.inputs.delay_ms       || '200' }}
-          LOOKAHEAD_DAYS: ${{ github.event.inputs.lookahead_days || '30' }}
-          OUTPUT_PATH:    data/enriched.json
+          BSD_TOKEN:   ${{ secrets.BSD_TOKEN }}
+          MAX_EVENTS:  ${{ github.event.inputs.max_events || '100' }}
+          DELAY_MS:    ${{ github.event.inputs.delay_ms   || '200' }}
+          OUTPUT_PATH: data/enriched.json
         run: python3 fetch_enriched.py
 
       - name: Check output
