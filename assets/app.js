@@ -1150,6 +1150,10 @@ function prefetchNonCriticalTabData(){
   scheduleIdleTask(function(){
     ensureArchiveSummaryData().catch(function(err){ console.warn('[Prefetch] archiveSummary failed', err); });
   }, 4200);
+  // Preîncarcă full-history.js în background — populează decoratorii din meniu automat
+  scheduleIdleTask(function(){
+    ensureFullHistoryAssets().catch(function(err){ console.warn('[Prefetch] fullHistory failed', err); });
+  }, 6000);
 }
 function switchTab(name){
   if(name==='istoricfull' || name==='apihistory' || name==='traininglab'){
