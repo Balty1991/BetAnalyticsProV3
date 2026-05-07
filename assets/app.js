@@ -5503,6 +5503,7 @@ function renderSignalAudit(){
         '<div class="audit-pick-box">'+
           '<div class="audit-pick-label">Pronostic</div>'+
           '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.book_odds || 0).toFixed(2)+'</div>'+
+          (r.odds_upgraded && r.best_odds_bookmaker ? '<div style="font-size:10px;color:var(--grn);margin-top:3px;font-weight:700">📈 Best @ '+r.best_odds_bookmaker+(r.odds_consensus && Number(r.odds_consensus) > 1.01 ? ' <span style=\"color:var(--muted);font-weight:400\">(cons. '+Number(r.odds_consensus).toFixed(2)+')</span>' : '')+'</div>' : '')+
         '</div>'+
       '</div>'+
       '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff) >= 0.2 ? 'var(--grn)' : Number(r.xgd_diff) <= -0.2 ? 'var(--red)' : 'var(--muted)')+'">xGd '+(Number(r.xgd_diff) >= 0 ? '+' : '')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff)>=0.2?'var(--grn)':Number(r.xgd_diff)<=-0.2?'var(--red)':'var(--muted)')+'">'+(Number(r.xgd_diff)>=0?'+':'')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
@@ -5644,6 +5645,7 @@ function renderAIMemory(){
         '<div class="audit-pick-box">'+
           '<div class="audit-pick-label">Pronostic</div>'+
           '<div class="audit-pick-value">'+(r.market || '—')+' @ '+Number(r.odds || 0).toFixed(2)+'</div>'+
+          (r.odds_upgraded && r.best_odds_bookmaker ? '<div style="font-size:10px;color:var(--grn);margin-top:3px;font-weight:700">📈 Best @ '+r.best_odds_bookmaker+'</div>' : '')+
         '</div>'+
       '</div>'+
       '<div class="audit-row-tags"><span class="audit-badge" style="color:'+(bonus >= 0 ? 'var(--grn)' : 'var(--red)')+'">Mem '+(bonus >= 0 ? '+' : '')+bonus.toFixed(1)+'</span>'+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+'<span class="audit-badge">Sursă '+(r.source || '—')+'</span></div>'+
