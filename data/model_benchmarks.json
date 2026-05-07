@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-07T00:17:52.721237+00:00",
+  "updated_at": "2026-05-07T00:55:33.626918+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -50,7 +50,7 @@
     },
     {
       "model": "ensemble",
-      "avg_score": 62.3,
+      "avg_score": 62.2,
       "grade": "C",
       "n_markets_credible": 7,
       "rank": 3
@@ -268,7 +268,7 @@
         "credible": true,
         "brier": 0.2009,
         "log_loss": 0.5892,
-        "ece": 0.0118,
+        "ece": 0.0119,
         "score": 79.6,
         "grade": "B",
         "n_bets": 2647,
@@ -974,128 +974,6 @@
         "max_drawdown": 24.19,
         "profit": 26.173,
         "winrate": 44.86
-      }
-    },
-    "Copa Libertadores": {
-      "home_win": {
-        "n": 73,
-        "credible": true,
-        "brier": 0.2596,
-        "log_loss": 0.7135,
-        "ece": 0.0821,
-        "score": 59.7,
-        "grade": "D",
-        "n_bets": 32,
-        "roi_pct": -16.33,
-        "yield_pct": -16.33,
-        "max_drawdown": 11.61,
-        "profit": -5.224,
-        "winrate": 37.5
-      },
-      "draw": {
-        "n": 73,
-        "credible": true,
-        "brier": 0.1738,
-        "log_loss": 0.5337,
-        "ece": 0.0726,
-        "score": 69.3,
-        "grade": "C",
-        "n_bets": 70,
-        "roi_pct": 5.01,
-        "yield_pct": 5.01,
-        "max_drawdown": 24.75,
-        "profit": 3.505,
-        "winrate": 20.0
-      },
-      "away_win": {
-        "n": 73,
-        "credible": true,
-        "brier": 0.2273,
-        "log_loss": 0.6475,
-        "ece": 0.1012,
-        "score": 58.6,
-        "grade": "D",
-        "n_bets": 33,
-        "roi_pct": 4.0,
-        "yield_pct": 4.0,
-        "max_drawdown": 5.14,
-        "profit": 1.321,
-        "winrate": 30.3
-      },
-      "over15": {
-        "n": 73,
-        "credible": true,
-        "brier": 0.2661,
-        "log_loss": 0.7292,
-        "ece": 0.1558,
-        "score": 51.2,
-        "grade": "D",
-        "n_bets": 62,
-        "roi_pct": 24.87,
-        "yield_pct": 24.87,
-        "max_drawdown": 6.95,
-        "profit": 15.419,
-        "winrate": 58.06
-      },
-      "over25": {
-        "n": 73,
-        "credible": true,
-        "brier": 0.2689,
-        "log_loss": 0.7466,
-        "ece": 0.1276,
-        "score": 51.0,
-        "grade": "D",
-        "n_bets": 54,
-        "roi_pct": -5.54,
-        "yield_pct": -5.54,
-        "max_drawdown": 13.87,
-        "profit": -2.994,
-        "winrate": 29.63
-      },
-      "under35": {
-        "n": 73,
-        "credible": true,
-        "brier": 0.1209,
-        "log_loss": 0.4174,
-        "ece": 0.0524,
-        "score": 78.3,
-        "grade": "B",
-        "n_bets": 55,
-        "roi_pct": 8.92,
-        "yield_pct": 8.92,
-        "max_drawdown": 2.55,
-        "profit": 4.907,
-        "winrate": 89.09
-      },
-      "btts": {
-        "n": 73,
-        "credible": true,
-        "brier": 0.252,
-        "log_loss": 0.6987,
-        "ece": 0.0861,
-        "score": 59.6,
-        "grade": "D",
-        "n_bets": 52,
-        "roi_pct": 11.06,
-        "yield_pct": 11.06,
-        "max_drawdown": 6.37,
-        "profit": 5.754,
-        "winrate": 42.31
-      },
-      "_all": {
-        "n": 511,
-        "credible": true,
-        "brier": 0.2241,
-        "log_loss": 0.6409,
-        "ece": 0.0433,
-        "score": 71.0,
-        "grade": "C",
-        "n_bets": 358,
-        "roi_pct": 6.34,
-        "yield_pct": 6.34,
-        "max_drawdown": 30.38,
-        "profit": 22.687,
-        "winrate": 44.41
       }
     },
     "Europa League": {
@@ -2429,8 +2307,8 @@
         "credible": true,
         "brier": 0.2301,
         "log_loss": 0.6549,
-        "ece": 0.0625,
-        "score": 66.4,
+        "ece": 0.0633,
+        "score": 66.3,
         "grade": "C",
         "n_bets": 342,
         "roi_pct": 38.65,
@@ -4786,14 +4664,14 @@
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 792,
+    "n_total": 796,
     "overall": {
-      "n": 792,
-      "n_wins": 570,
-      "winrate": 71.97,
-      "roi_pct": -0.24,
-      "profit": -1.877,
-      "avg_odds": 1.392,
+      "n": 796,
+      "n_wins": 574,
+      "winrate": 72.11,
+      "roi_pct": -0.14,
+      "profit": -1.087,
+      "avg_odds": 1.391,
       "max_drawdown": 19.01,
       "avg_edge_pct": 8.49
     },
@@ -4829,12 +4707,12 @@
         "avg_edge_pct": 7.58
       },
       "under35": {
-        "n": 449,
-        "n_wins": 326,
-        "winrate": 72.61,
-        "roi_pct": -0.3,
-        "profit": -1.363,
-        "avg_odds": 1.384,
+        "n": 453,
+        "n_wins": 330,
+        "winrate": 72.85,
+        "roi_pct": -0.13,
+        "profit": -0.573,
+        "avg_odds": 1.383,
         "max_drawdown": 17.78,
         "avg_edge_pct": 8.83
       }
@@ -4910,6 +4788,26 @@
         "max_drawdown": 7.66,
         "avg_edge_pct": 6.43
       },
+      "Copa Libertadores": {
+        "n": 33,
+        "n_wins": 27,
+        "winrate": 81.82,
+        "roi_pct": 6.49,
+        "profit": 2.142,
+        "avg_odds": 1.326,
+        "max_drawdown": 1.8,
+        "avg_edge_pct": 10.98
+      },
+      "Copa Sudamericana": {
+        "n": 33,
+        "n_wins": 29,
+        "winrate": 87.88,
+        "roi_pct": 13.17,
+        "profit": 4.346,
+        "avg_odds": 1.299,
+        "max_drawdown": 1.0,
+        "avg_edge_pct": 10.36
+      },
       "Parva Liga": {
         "n": 33,
         "n_wins": 28,
@@ -4939,26 +4837,6 @@
         "avg_odds": 1.365,
         "max_drawdown": 3.13,
         "avg_edge_pct": 7.8
-      },
-      "Copa Sudamericana": {
-        "n": 31,
-        "n_wins": 27,
-        "winrate": 87.1,
-        "roi_pct": 12.66,
-        "profit": 3.926,
-        "avg_odds": 1.305,
-        "max_drawdown": 1.0,
-        "avg_edge_pct": 10.4
-      },
-      "Copa Libertadores": {
-        "n": 31,
-        "n_wins": 25,
-        "winrate": 80.65,
-        "roi_pct": 5.72,
-        "profit": 1.772,
-        "avg_odds": 1.336,
-        "max_drawdown": 1.8,
-        "avg_edge_pct": 11.27
       },
       "Ekstraklasa": {
         "n": 30,
@@ -5253,24 +5131,24 @@
         "avg_edge_pct": 3.49
       },
       "5-10%": {
-        "n": 395,
-        "n_wins": 283,
-        "winrate": 71.65,
-        "roi_pct": -2.16,
-        "profit": -8.535,
-        "avg_odds": 1.376,
+        "n": 398,
+        "n_wins": 286,
+        "winrate": 71.86,
+        "roi_pct": -2.0,
+        "profit": -7.965,
+        "avg_odds": 1.375,
         "max_drawdown": 19.24,
-        "avg_edge_pct": 7.26
+        "avg_edge_pct": 7.25
       },
       "10-15%": {
-        "n": 174,
-        "n_wins": 126,
-        "winrate": 72.41,
-        "roi_pct": 4.53,
-        "profit": 7.885,
-        "avg_odds": 1.438,
+        "n": 175,
+        "n_wins": 127,
+        "winrate": 72.57,
+        "roi_pct": 4.63,
+        "profit": 8.105,
+        "avg_odds": 1.437,
         "max_drawdown": 5.03,
-        "avg_edge_pct": 11.96
+        "avg_edge_pct": 11.97
       },
       "15%+": {
         "n": 69,
@@ -5296,24 +5174,24 @@
           "avg_edge_pct": 3.6
         },
         "5-10%": {
-          "n": 215,
-          "n_wins": 160,
-          "winrate": 74.42,
-          "roi_pct": 0.59,
-          "profit": 1.271,
-          "avg_odds": 1.365,
+          "n": 218,
+          "n_wins": 163,
+          "winrate": 74.77,
+          "roi_pct": 0.84,
+          "profit": 1.841,
+          "avg_odds": 1.362,
           "max_drawdown": 10.22,
-          "avg_edge_pct": 7.26
+          "avg_edge_pct": 7.25
         },
         "10-15%": {
-          "n": 106,
-          "n_wins": 73,
-          "winrate": 68.87,
-          "roi_pct": -2.72,
-          "profit": -2.879,
-          "avg_odds": 1.416,
+          "n": 107,
+          "n_wins": 74,
+          "winrate": 69.16,
+          "roi_pct": -2.49,
+          "profit": -2.659,
+          "avg_odds": 1.414,
           "max_drawdown": 11.11,
-          "avg_edge_pct": 12.04
+          "avg_edge_pct": 12.06
         },
         "15%+": {
           "n": 45,
@@ -5498,9 +5376,9 @@
       "min_edge": 5.0,
       "disabled": false,
       "basis": "5-10%",
-      "roi_at_threshold": 0.59,
+      "roi_at_threshold": 0.84,
       "bootstrap_min_edge": null,
-      "bootstrap_n": 215,
+      "bootstrap_n": 218,
       "bootstrap_target_n": 20,
       "prev_edge": 5.0,
       "changed": false,

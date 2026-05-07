@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-07T00:17:52.865322+00:00",
+  "updated_at": "2026-05-07T00:55:33.744667+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 52.4,
+  "overall_score": 52.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,21 +9,21 @@
   },
   "data_quality": {
     "recommendation_rows": 892,
-    "pending_rows": 100,
-    "candidates_with_odds_and_probability": 59,
+    "pending_rows": 96,
+    "candidates_with_odds_and_probability": 58,
     "top_ev_count": 22,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 50,
+    "speculative": 49,
     "balanced": 9
   },
   "market_distribution_top150": {
     "Over 1.5G": 24,
     "BTTS": 12,
-    "Under 3.5G": 22,
+    "Under 3.5G": 21,
     "Over 2.5G": 1
   },
   "league_distribution_top150": {
@@ -32,11 +32,11 @@
     "Parva Liga": 5,
     "Segunda División": 5,
     "Copa Libertadores": 2,
-    "Copa Sudamericana": 4,
     "La Liga": 4,
     "FA Cup": 1,
     "Scottish Premiership": 2,
     "Premier League": 2,
+    "Copa Sudamericana": 3,
     "Pro League": 2,
     "Brasileirão Serie A": 1,
     "Serie A": 4,
@@ -606,6 +606,34 @@
       ]
     },
     {
+      "event_id": 9308,
+      "prediction_id": 3554,
+      "home": "Botafogo",
+      "away": "Racing Club",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-05-07T03:30:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.39,
+      "model_probability": 0.761,
+      "model_probability_pct": 76.1,
+      "implied_probability_pct": 71.94,
+      "fair_odds": 1.314,
+      "edge_pp": 4.16,
+      "ev_pct": 5.78,
+      "kelly_fraction": 0.037,
+      "kelly_units_100": 3.7,
+      "confidence": 46.9,
+      "score": 73.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 76.1% vs. probabilitate implicată 71.9%.",
+        "EV estimat 5.8% și edge 4.2 puncte procentuale.",
+        "Miză Kelly fracțională 3.70% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 206670,
       "prediction_id": 3715,
       "home": "Middlesbrough",
@@ -659,34 +687,6 @@
         "Probabilitate model 74.8% vs. probabilitate implicată 71.9%.",
         "EV estimat 4.0% și edge 2.9 puncte procentuale.",
         "Miză Kelly fracțională 2.55% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9308,
-      "prediction_id": 3554,
-      "home": "Botafogo",
-      "away": "Racing Club",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-05-07T03:30:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.36,
-      "model_probability": 0.761,
-      "model_probability_pct": 76.1,
-      "implied_probability_pct": 73.53,
-      "fair_odds": 1.314,
-      "edge_pp": 2.57,
-      "ev_pct": 3.5,
-      "kelly_fraction": 0.0243,
-      "kelly_units_100": 2.43,
-      "confidence": 46.9,
-      "score": 70.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.1% vs. probabilitate implicată 73.5%.",
-        "EV estimat 3.5% și edge 2.6 puncte procentuale.",
-        "Miză Kelly fracțională 2.43% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -829,34 +829,6 @@
         "Probabilitate model 83.2% vs. probabilitate implicată 83.3%.",
         "EV estimat -0.2% și edge -0.2 puncte procentuale.",
         "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9304,
-      "prediction_id": 3548,
-      "home": "Montevideo City Torque",
-      "away": "Palestino",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-05-07T01:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.22,
-      "model_probability": 0.8239,
-      "model_probability_pct": 82.39,
-      "implied_probability_pct": 81.97,
-      "fair_odds": 1.214,
-      "edge_pp": 0.42,
-      "ev_pct": 0.52,
-      "kelly_fraction": 0.0059,
-      "kelly_units_100": 0.59,
-      "confidence": 38.06,
-      "score": 98.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 82.4% vs. probabilitate implicată 82.0%.",
-        "EV estimat 0.5% și edge 0.4 puncte procentuale.",
-        "Miză Kelly fracțională 0.59% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1250,6 +1222,34 @@
         "EV estimat 4.1% și edge 3.1 puncte procentuale.",
         "Miză Kelly fracțională 3.32% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 10297,
+      "prediction_id": 3657,
+      "home": "Dundee FC",
+      "away": "Livingston",
+      "league": "Scottish Premiership",
+      "event_date": "2026-05-09T17:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.26,
+      "model_probability": 0.791,
+      "model_probability_pct": 79.1,
+      "implied_probability_pct": 79.37,
+      "fair_odds": 1.264,
+      "edge_pp": -0.27,
+      "ev_pct": -0.33,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 49.35,
+      "score": 68.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 79.1% vs. probabilitate implicată 79.4%.",
+        "EV estimat -0.3% și edge -0.3 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
     }
   ],
   "balanced": [
@@ -1527,12 +1527,12 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 449,
-      "wins": 326,
-      "winrate": 72.61,
-      "profit_units": -1.36,
-      "roi_pct": -0.3,
-      "avg_odds": 1.384
+      "bets": 453,
+      "wins": 330,
+      "winrate": 72.85,
+      "profit_units": -0.57,
+      "roi_pct": -0.13,
+      "avg_odds": 1.383
     },
     {
       "key": "Over 1.5G",
@@ -1646,12 +1646,12 @@
     },
     {
       "key": "Copa Sudamericana",
-      "bets": 31,
-      "wins": 27,
-      "winrate": 87.1,
-      "profit_units": 3.93,
-      "roi_pct": 12.66,
-      "avg_odds": 1.305
+      "bets": 33,
+      "wins": 29,
+      "winrate": 87.88,
+      "profit_units": 4.35,
+      "roi_pct": 13.17,
+      "avg_odds": 1.299
     }
   ],
   "recommendations": [
