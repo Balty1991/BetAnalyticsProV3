@@ -112,12 +112,10 @@ function summarizeCard(key){
   if(key==='apihistory') return `${fmt(apiValid.leagues_total||W.API_HISTORY_LEAGUES.length)} ligi • ${fmt(apiValid.seasons_total||W.API_SEASONS_HISTORY.length)} sezoane • ${fmt(apiEv.total_events_counted||0)} meciuri`;
   if(key==='traininglab') return `${fmt(tr.rows_total||W.TRAINING_MATCHES.length)} rows • ${fmt(feat.eligible_min_history_5||model.rows_eligible_min5||0)} ready • ${fmt(arr(model.markets).filter(x=>x&&x.ready).length||arr(tr.markets_ready).length)} piețe`;
   if(key==='smartbet'){
-    // SIGNAL_AUDIT e încărcat la startup — citim direct, fără dependință de getSmartBetAnalysis
-    var signalRows = arr((W.SIGNAL_AUDIT||{}).rows);
-    var auditPool = signalRows.filter(function(r){
-      return r && Number(r.edge_pct||0) > 0 && Number(r.value||0) > 0 && Number(r.book_odds||0) >= 1.20;
-    }).length;
-    var picks = auditPool > 0 ? auditPool : (memSum.pending_scored||0);
+    // Numărul autoritar scris de renderUnifiedEngine — sursă unică de adevăr
+    var picks = (typeof window.__UNIFIED_POOL_COUNT__ === 'number' && window.__UNIFIED_POOL_COUNT__ > 0)
+      ? window.__UNIFIED_POOL_COUNT__
+      : (memSum.pending_scored || arr(memory.adaptive_picks).length || 0);
     return `${fmt(picks)} picks în pool • ${fmt(memSum.settled_bets||0)} settled • ROI ${pct(memSum.settled_roi||0,2)}`;
   }
   return '';

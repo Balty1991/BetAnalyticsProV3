@@ -13806,6 +13806,9 @@ function renderUnifiedEngine(){
   }
   if(meta) meta.textContent = pool.length + ' predicții validate';
 
+  // Sursă unică de adevăr — citită de hybrid_adaptive_runtime și full-history
+  window.__UNIFIED_POOL_COUNT__ = pool.length;
+
   var avgScore = pool.length ? Math.round(pool.reduce(function(a,r){ return a + r._unifiedScore; },0) / pool.length) : 0;
   var avgProb = pool.length ? pool.reduce(function(a,r){ return a + Number(r.prob||0); },0) / pool.length : 0;
   var avgEdge = pool.length ? pool.reduce(function(a,r){ return a + Number(r.edge||0); },0) / pool.length : 0;

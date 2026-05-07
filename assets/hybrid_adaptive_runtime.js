@@ -80,11 +80,13 @@
   }
 
   function visibleValidatedCount(){
+    // Numărul autoritar scris de renderUnifiedEngine — sursă unică de adevăr
+    if(typeof window.__UNIFIED_POOL_COUNT__ === 'number' && window.__UNIFIED_POOL_COUNT__ > 0){
+      return window.__UNIFIED_POOL_COUNT__;
+    }
     var grid = q('#unified-summary-grid') || q('#smartbet-summary-grid') || q('#unified-engine-summary');
     if(!grid) return 0;
-    // Citim textContent brut (fără clean care elimină ț → strică regex-ul)
     var raw = grid.textContent || grid.innerText || '';
-    // Matches: "Predicții validate 8", "Predictii validate 8", "Predicii validate 8"
     var m = raw.match(/Predi\w*ii\s+validate\s*:?\s*(\d{1,3})/i) ||
             raw.match(/validate\s*:?\s*(\d{1,3})\s*trecute/i);
     return m ? num(m[1]) : 0;
