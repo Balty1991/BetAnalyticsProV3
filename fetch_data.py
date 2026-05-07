@@ -1734,6 +1734,93 @@ def fetch_best_market_odds(event_id, market_key):
     return None
 
 
+def fetch_bulk_best_odds(unique_event_ids):
+    """
+    Fetch best odds pentru toate piețele relevante dintr-un singur call per piață.
+    Folosim /api/v2/odds/best/?market=X — returnează best odds per event × outcome
+    pentru TOATE evenimentele viitoare. Mult mai eficient decât per-event.
+
+    Acoperă piețele care lipsesc din compare endpoint (over/under în special).
+    Rezultatele se merge în EVENT_ODDS_COMPARE_CACHE.
+    """
+    # Piețe de fetchat bulk + mapare outcome_code → market_key intern
+    BULK_MARKETS = [
+        ("over_under_15",  {"over": "over15",  "under": "under15"}),
+        ("over_under_25",  {"over": "over25",  "under": "under25"}),
+        ("over_under_35",  {"over": "over35",  "under": "under35"}),
+        ("btts",           {"yes": "btts",     "no":  "bttsNo"}),
+        ("double_chance",  {"1X": "dc1x",      "X2": "dcx2", "12": "dc12"}),
+    ]
+    id_set = set(unique_event_ids)
+    total_enriched = 0
+
+    for market_slug, outcome_map in BULK_MARKETS:
+        try:
+            url = f"{V2_BASE}/odds/best/?market={market_slug}&limit=200"
+            seen_urls = set()
+            page_results = []
+            next_url = url
+            while next_url and next_url not in seen_urls:
+                seen_urls.add(next_url)
+                r = requests.get(next_url, headers=HEADERS, timeout=20)
+                if r.status_code in (400, 404, 405):
+                    break
+                r.raise_for_status()
+                data = r.json()
+                if isinstance(data, dict):
+                    page_results.extend(data.get("results") or [])
+                    next_url = data.get("next")
+                    if next_url and not str(next_url).startswith("http"):
+                        next_url = V2_BASE.rstrip("/") + "/" + str(next_url).lstrip("/")
+                else:
+                    break
+
+            for item in page_results:
+                try:
+                    event_id = int(item.get("event_id") or 0)
+                except Exception:
+                    continue
+                if event_id not in id_set:
+                    continue
+                best_odds_list = item.get("best_odds") or []
+                if not isinstance(best_odds_list, list):
+                    continue
+                cache_entry = EVENT_ODDS_COMPARE_CACHE.setdefault(event_id, {})
+                for bo in best_odds_list:
+                    outcome_code = str(bo.get("outcome") or "").strip()
+                    market_key = outcome_map.get(outcome_code)
+                    if not market_key:
+                        continue
+                    if market_key in cache_entry:
+                        # Già esiste — aggiorna solo se best_odds è più alto
+                        existing_best = _safe_float(cache_entry[market_key].get("best_odds")) or 0.0
+                        new_best = _safe_float(bo.get("decimal_odds")) or 0.0
+                        if new_best <= existing_best:
+                            continue
+                    best = _safe_float(bo.get("decimal_odds"))
+                    if not best or best < 1.01:
+                        continue
+                    bk = bo.get("bookmaker_name") or bo.get("bookmaker_slug") or "unknown"
+                    cache_entry[market_key] = {
+                        "best_odds": round(best, 3),
+                        "best_bookmaker": bk,
+                        "bookmakers_count": 0,   # bulk endpoint nu returnează count
+                        "avg_odds": round(best, 3),
+                        "avg_implied_probability": round(100.0 / best, 2) if best > 1.01 else None,
+                        "best_implied_probability": round(100.0 / best, 2) if best > 1.01 else None,
+                        "movement": None,
+                        "ai_probability": None,
+                        "updated_at": None,
+                    }
+                    total_enriched += 1
+
+        except Exception as e:
+            print(f"[BulkBestOdds] {market_slug} failed (non-fatal): {e}")
+
+    print(f"[BulkBestOdds] {total_enriched} market entries adăugate în cache din bulk fetch")
+    return total_enriched
+
+
 def enrich_predictions_with_market_odds(predictions, events=None):
     if not predictions:
         return predictions, events or [], {"predicted_events": 0, "events_with_market_compare": 0, "markets_enriched": 0}
@@ -1759,6 +1846,8 @@ def enrich_predictions_with_market_odds(predictions, events=None):
     if not unique_event_ids:
         return predictions, events, {"predicted_events": 0, "events_with_market_compare": 0, "markets_enriched": 0}
     print(f"Enriching market compare odds for {len(unique_event_ids)} predicted events...")
+
+    # Pasul 1: per-event compare + raw (1x2, btts, deja implementat)
     enriched_events = 0
     enriched_markets = 0
     for event_id in unique_event_ids:
@@ -1771,6 +1860,15 @@ def enrich_predictions_with_market_odds(predictions, events=None):
         if isinstance(ev, dict):
             ev["market_best_odds"] = snapshot
             ev["bookmakers_count"] = max([int((v or {}).get("bookmakers_count") or 0) for v in snapshot.values()] + [0])
+
+    # Pasul 2: bulk best odds per piață (over/under acoperite eficient)
+    # Completează cache-ul cu piețele care lipsesc din compare
+    try:
+        fetch_bulk_best_odds(unique_event_ids)
+    except Exception as e:
+        print(f"[BulkBestOdds] Bulk fetch failed (non-fatal): {e}")
+
+    # Pasul 3: propagă cache-ul complet (include acum și over/under) pe fiecare event
     for row in predictions:
         ev = (row or {}).get("event") or {}
         try:
