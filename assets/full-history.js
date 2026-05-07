@@ -53,15 +53,14 @@ async function j(paths,fb){
   return fb;
 }
 
-// Cache sesiune: evită re-fetch la switch între tab-uri
+// Cache sesiune: stochează PROMISE-ul, nu un boolean
+// Astfel apelurile simultane primesc același promise și nu citesc W[key] gol
 const _L={};
 function px(key,paths,fb){
-  if(_L[key]) return Promise.resolve(W[key]);
-  _L[key]=true;
-  return j(paths,fb).then(d=>{W[key]=d;return d;});
+  if(!_L[key]) _L[key]=j(paths,fb).then(d=>{W[key]=d;return d;});
+  return _L[key]; // toți apelanții primesc același promise, indiferent de timing
 }
 
-// Loaders paraleli per tab — fiecare descarcă DOAR ce are nevoie
 function loadIstoric(){
   return Promise.all([
     px('RECOMMENDATION_JOURNAL',['./data/recommendation_journal.json','data/recommendation_journal.json','/BetAnalyticsProV3/data/recommendation_journal.json'],[]),
@@ -92,22 +91,9 @@ function loadTrainingLab(){
   ]);
 }
 
-async function load(){
-  // Prioritizăm tab-ul activ, restul se încarcă în background
-  const activeId=(document.querySelector('.tab-content.active')||{}).id||'';
-  if(activeId==='tab-istoricfull'){
-    await loadIstoric();
-    Promise.all([loadApiHistory(),loadTrainingLab()]).catch(()=>{});
-  } else if(activeId==='tab-apihistory'){
-    await loadApiHistory();
-    Promise.all([loadIstoric(),loadTrainingLab()]).catch(()=>{});
-  } else if(activeId==='tab-traininglab'){
-    await loadTrainingLab();
-    Promise.all([loadIstoric(),loadApiHistory()]).catch(()=>{});
-  } else {
-    await loadIstoric();
-    Promise.all([loadApiHistory(),loadTrainingLab()]).catch(()=>{});
-  }
+// Toate fișierele în paralel — cel mai rapid posibil
+function load(){
+  return Promise.all([loadIstoric(),loadApiHistory(),loadTrainingLab()]);
 }
 
 function cardKeyTitle(title){
@@ -340,19 +326,10 @@ function boot(){
     const old=W.switchTab;
     W.switchTab=function(name){
       const r=old.apply(this,arguments);
-      if(name==='istoricfull'){
-        // Dacă datele sunt deja încărcate → render imediat; altfel așteptăm
-        if(_L.RECOMMENDATION_JOURNAL) setTimeout(renderFull,0);
-        else loadIstoric().then(()=>{ if(($('tab-istoricfull')||{}).classList&&$('tab-istoricfull').classList.contains('active')) renderFull(); }).catch(()=>{});
-      }
-      if(name==='apihistory'){
-        if(_L.API_HISTORY_SUMMARY) setTimeout(renderApi,0);
-        else loadApiHistory().then(()=>{ if(($('tab-apihistory')||{}).classList&&$('tab-apihistory').classList.contains('active')) renderApi(); }).catch(()=>{});
-      }
-      if(name==='traininglab'){
-        if(_L.TRAINING_DATASET_SUMMARY) setTimeout(renderTraining,0);
-        else loadTrainingLab().then(()=>{ if(($('tab-traininglab')||{}).classList&&$('tab-traininglab').classList.contains('active')) renderTraining(); }).catch(()=>{});
-      }
+      // px() stochează promise-ul real → loadX() așteaptă fetch-ul complet, nu date goale
+      if(name==='istoricfull') loadIstoric().then(()=>{ if($('tab-istoricfull')&&$('tab-istoricfull').classList.contains('active')) renderFull(); }).catch(()=>{});
+      if(name==='apihistory')  loadApiHistory().then(()=>{ if($('tab-apihistory')&&$('tab-apihistory').classList.contains('active')) renderApi(); }).catch(()=>{});
+      if(name==='traininglab') loadTrainingLab().then(()=>{ if($('tab-traininglab')&&$('tab-traininglab').classList.contains('active')) renderTraining(); }).catch(()=>{});
       setTimeout(decorateMoreCards,0);
       if(name==='smartbet') setTimeout(()=>{ if(typeof W.renderArchivePanel==='function') W.renderArchivePanel(); },100);
       return r;
