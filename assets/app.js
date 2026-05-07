@@ -6986,6 +6986,7 @@ function renderMatches(){
       m17CalibPill = '<span class="m17-pill m17-calib">'+htmlEsc(calibTxt)+'</span>';
     }
     var m17ScorePill = m.mostLikelyScore ? '<span class="m17-pill">⚽ '+htmlEsc(m.mostLikelyScore)+'</span>' : '';
+    var m17ConsensusPill = m17ConsensusText ? '<span class="m17-pill m17-consensus '+m17MarketClass+'">'+htmlEsc(m17ConsensusText)+'</span>' : '';
     var m17V2Pill = m.v2Recommended ? '<span class="m17-pill" style="background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.35);font-weight:700">⚡ V2</span>' : '';
     // Context v2: derby, vreme, deplasare
     var m17ContextPills = '';
