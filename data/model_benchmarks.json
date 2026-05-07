@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-05-07T20:58:44.904918+00:00",
+  "updated_at": "2026-05-07T21:46:34.086479+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
-  "n_train": 6179,
+  "n_train": 6178,
   "n_test": 2649,
   "vig_factor": 0.93,
   "min_bet_edge": 0.002,
@@ -360,15 +360,15 @@
         "credible": true,
         "brier": 0.25,
         "log_loss": 0.6931,
-        "ece": 0.2501,
+        "ece": 0.2497,
         "score": 52.7,
         "grade": "D",
         "n_bets": 2649,
-        "roi_pct": 61.31,
-        "yield_pct": 61.31,
+        "roi_pct": 61.23,
+        "yield_pct": 61.23,
         "max_drawdown": 5.0,
-        "profit": 1624.118,
-        "winrate": 75.01
+        "profit": 1621.968,
+        "winrate": 74.97
       },
       "team_form_blend": {
         "n": 2649,
@@ -424,11 +424,11 @@
         "score": 55.4,
         "grade": "D",
         "n_bets": 2309,
-        "roi_pct": 61.97,
-        "yield_pct": 61.97,
+        "roi_pct": 61.87,
+        "yield_pct": 61.87,
         "max_drawdown": 4.85,
-        "profit": 1430.785,
-        "winrate": 75.31
+        "profit": 1428.634,
+        "winrate": 75.27
       },
       "ensemble": {
         "n": 2649,
@@ -4664,27 +4664,27 @@
     "n_leagues": 0
   },
   "real_backtest": {
-    "n_total": 805,
+    "n_total": 807,
     "overall": {
-      "n": 805,
+      "n": 807,
       "n_wins": 582,
-      "winrate": 72.3,
-      "roi_pct": 0.03,
-      "profit": 0.243,
+      "winrate": 72.12,
+      "roi_pct": -0.22,
+      "profit": -1.747,
       "avg_odds": 1.39,
       "max_drawdown": 19.01,
-      "avg_edge_pct": 8.46
+      "avg_edge_pct": 8.45
     },
     "by_market": {
       "btts": {
         "n": 106,
         "n_wins": 77,
         "winrate": 72.64,
-        "roi_pct": 13.02,
-        "profit": 13.804,
+        "roi_pct": 13.03,
+        "profit": 13.814,
         "avg_odds": 1.553,
         "max_drawdown": 3.9,
-        "avg_edge_pct": 8.96
+        "avg_edge_pct": 8.97
       },
       "over15": {
         "n": 224,
@@ -4707,14 +4707,14 @@
         "avg_edge_pct": 7.58
       },
       "under35": {
-        "n": 459,
+        "n": 461,
         "n_wins": 335,
-        "winrate": 72.98,
-        "roi_pct": -0.13,
-        "profit": -0.603,
+        "winrate": 72.67,
+        "roi_pct": -0.56,
+        "profit": -2.603,
         "avg_odds": 1.38,
         "max_drawdown": 17.78,
-        "avg_edge_pct": 8.79
+        "avg_edge_pct": 8.77
       }
     },
     "by_league": {
@@ -4922,11 +4922,11 @@
         "n": 19,
         "n_wins": 13,
         "winrate": 68.42,
-        "roi_pct": -1.73,
-        "profit": -0.328,
+        "roi_pct": -1.67,
+        "profit": -0.318,
         "avg_odds": 1.477,
         "max_drawdown": 2.77,
-        "avg_edge_pct": 9.92
+        "avg_edge_pct": 9.94
       },
       "Eredivisie": {
         "n": 19,
@@ -4998,6 +4998,16 @@
         "max_drawdown": 3.57,
         "avg_edge_pct": 10.79
       },
+      "Europa League": {
+        "n": 9,
+        "n_wins": 3,
+        "winrate": 33.33,
+        "roi_pct": -54.56,
+        "profit": -4.91,
+        "avg_odds": 1.366,
+        "max_drawdown": 5.27,
+        "avg_edge_pct": 6.73
+      },
       "Stoiximan Super League": {
         "n": 9,
         "n_wins": 4,
@@ -5017,16 +5027,6 @@
         "avg_odds": 1.363,
         "max_drawdown": 2.09,
         "avg_edge_pct": 11.64
-      },
-      "Europa League": {
-        "n": 7,
-        "n_wins": 3,
-        "winrate": 42.86,
-        "roi_pct": -41.57,
-        "profit": -2.91,
-        "avg_odds": 1.379,
-        "max_drawdown": 4.0,
-        "avg_edge_pct": 7.25
       },
       "Liga F": {
         "n": 5,
@@ -5121,24 +5121,24 @@
     },
     "by_edge_bucket": {
       "0-5%": {
-        "n": 157,
+        "n": 158,
         "n_wins": 110,
-        "winrate": 70.06,
-        "roi_pct": -6.3,
-        "profit": -9.886,
+        "winrate": 69.62,
+        "roi_pct": -6.89,
+        "profit": -10.886,
         "avg_odds": 1.357,
         "max_drawdown": 16.49,
-        "avg_edge_pct": 3.5
+        "avg_edge_pct": 3.51
       },
       "5-10%": {
-        "n": 404,
+        "n": 405,
         "n_wins": 291,
-        "winrate": 72.03,
-        "roi_pct": -1.86,
-        "profit": -7.515,
+        "winrate": 71.85,
+        "roi_pct": -2.1,
+        "profit": -8.505,
         "avg_odds": 1.373,
         "max_drawdown": 19.24,
-        "avg_edge_pct": 7.25
+        "avg_edge_pct": 7.24
       },
       "10-15%": {
         "n": 175,
@@ -5177,8 +5177,8 @@
           "n": 55,
           "n_wins": 38,
           "winrate": 69.09,
-          "roi_pct": 6.95,
-          "profit": 3.824,
+          "roi_pct": 6.97,
+          "profit": 3.834,
           "avg_odds": 1.549,
           "max_drawdown": 3.3,
           "avg_edge_pct": 7.38
@@ -5206,24 +5206,24 @@
       },
       "under35": {
         "0-5%": {
-          "n": 85,
+          "n": 86,
           "n_wins": 59,
-          "winrate": 69.41,
-          "roi_pct": -7.97,
-          "profit": -6.772,
+          "winrate": 68.6,
+          "roi_pct": -9.04,
+          "profit": -7.772,
           "avg_odds": 1.355,
-          "max_drawdown": 13.86,
-          "avg_edge_pct": 3.59
+          "max_drawdown": 13.85,
+          "avg_edge_pct": 3.61
         },
         "5-10%": {
-          "n": 222,
+          "n": 223,
           "n_wins": 166,
-          "winrate": 74.77,
-          "roi_pct": 0.64,
-          "profit": 1.431,
+          "winrate": 74.44,
+          "roi_pct": 0.19,
+          "profit": 0.431,
           "avg_odds": 1.359,
           "max_drawdown": 10.22,
-          "avg_edge_pct": 7.24
+          "avg_edge_pct": 7.23
         },
         "10-15%": {
           "n": 107,
@@ -5340,7 +5340,7 @@
       "min_edge": 5.0,
       "disabled": false,
       "basis": "5-10%",
-      "roi_at_threshold": 6.95,
+      "roi_at_threshold": 6.97,
       "bootstrap_min_edge": null,
       "bootstrap_n": 55,
       "bootstrap_target_n": 20,
@@ -5376,9 +5376,9 @@
       "min_edge": 5.0,
       "disabled": false,
       "basis": "5-10%",
-      "roi_at_threshold": 0.64,
+      "roi_at_threshold": 0.19,
       "bootstrap_min_edge": null,
-      "bootstrap_n": 222,
+      "bootstrap_n": 223,
       "bootstrap_target_n": 20,
       "prev_edge": 5.0,
       "changed": false,
