@@ -340,11 +340,20 @@ function boot(){
     const old=W.switchTab;
     W.switchTab=function(name){
       const r=old.apply(this,arguments);
-      if(name==='istoricfull') setTimeout(renderFull,0);
-      if(name==='apihistory') setTimeout(renderApi,0);
-      if(name==='traininglab') setTimeout(renderTraining,0);
+      if(name==='istoricfull'){
+        // Dacă datele sunt deja încărcate → render imediat; altfel așteptăm
+        if(_L.RECOMMENDATION_JOURNAL) setTimeout(renderFull,0);
+        else loadIstoric().then(()=>{ if(($('tab-istoricfull')||{}).classList&&$('tab-istoricfull').classList.contains('active')) renderFull(); }).catch(()=>{});
+      }
+      if(name==='apihistory'){
+        if(_L.API_HISTORY_SUMMARY) setTimeout(renderApi,0);
+        else loadApiHistory().then(()=>{ if(($('tab-apihistory')||{}).classList&&$('tab-apihistory').classList.contains('active')) renderApi(); }).catch(()=>{});
+      }
+      if(name==='traininglab'){
+        if(_L.TRAINING_DATASET_SUMMARY) setTimeout(renderTraining,0);
+        else loadTrainingLab().then(()=>{ if(($('tab-traininglab')||{}).classList&&$('tab-traininglab').classList.contains('active')) renderTraining(); }).catch(()=>{});
+      }
       setTimeout(decorateMoreCards,0);
-      // refresh archive panel if currently visible
       if(name==='smartbet') setTimeout(()=>{ if(typeof W.renderArchivePanel==='function') W.renderArchivePanel(); },100);
       return r;
     };
@@ -362,8 +371,12 @@ function boot(){
   }
   load().then(()=>{
     decorateMoreCards();
-    rerender();
-    // expose data references so renderArchivePanel (defined in index.html) can read them
+    // Render explicit pentru tab-ul activ după ce datele s-au încărcat
+    const _aid=(document.querySelector('.tab-content.active')||{}).id||'';
+    if(_aid==='tab-istoricfull') renderFull();
+    else if(_aid==='tab-apihistory') renderApi();
+    else if(_aid==='tab-traininglab') renderTraining();
+    else rerender();
     W.RECOMMENDATION_JOURNAL = W.RECOMMENDATION_JOURNAL || [];
     if(typeof W.renderArchivePanel === 'function') setTimeout(W.renderArchivePanel, 200);
   });
