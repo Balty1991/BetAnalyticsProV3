@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-07T03:55:39.198681",
+  "updated_at": "2026-05-07T04:34:57.345615",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 8822,
+  "n_rows": 8825,
   "n_folds": 2,
   "global_score": 74.4,
   "global_grade": "B",
@@ -41,7 +41,7 @@
       "folds": 2,
       "avg_brier": 0.1874,
       "avg_log_loss": 0.5615,
-      "avg_ece": 0.0043,
+      "avg_ece": 0.0044,
       "avg_winrate": 0.252,
       "score": 82.4,
       "grade": "B",
@@ -58,7 +58,7 @@
           "n": 2448,
           "brier": 0.1855,
           "log_loss": 0.557,
-          "ece": 0.008,
+          "ece": 0.0081,
           "winrate": 0.2492
         }
       ]
@@ -68,7 +68,7 @@
       "label": "Victorie oaspete",
       "folds": 2,
       "avg_brier": 0.2055,
-      "avg_log_loss": 0.5998,
+      "avg_log_loss": 0.5999,
       "avg_ece": 0.0088,
       "avg_winrate": 0.2965,
       "score": 79.8,
@@ -85,8 +85,8 @@
         {
           "n": 2448,
           "brier": 0.2058,
-          "log_loss": 0.6004,
-          "ece": 0.0081,
+          "log_loss": 0.6005,
+          "ece": 0.008,
           "winrate": 0.2982
         }
       ]
