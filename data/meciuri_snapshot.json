@@ -1,8 +1,9 @@
 {
-  "version": 1,
-  "generated_at": "2026-05-07T08:08:41.440811+00:00",
+  "version": 2,
+  "generated_at": "2026-05-07T05:25:56.907558+00:00",
   "start_date": "2026-05-07",
-  "note": "Snapshot: NUMAI meciuri afisate in Meciuri (pending cand au fost adaugate). Meciuri deja terminate la momentul primei rulari sunt excluse.",
+  "init_date": "2026-05-07",
+  "note": "Snapshot V2: NUMAI meciuri afisate in Meciuri. init_date = ziua blocata (rulari ulterioare nu adauga intrari noi, doar actualizeaza statusuri). Categorii: all / safe(Top) / o15 / o25 / btts / u35 / value. Reset curat: 2026-05-07.",
   "total": 156,
   "entries": [
     {
@@ -1146,7 +1147,8 @@
         "all",
         "value",
         "o15",
-        "btts"
+        "btts",
+        "o25"
       ],
       "status": "pending",
       "won": null,
@@ -3338,7 +3340,8 @@
         "all",
         "value",
         "o15",
-        "btts"
+        "btts",
+        "o25"
       ],
       "status": "pending",
       "won": null,
