@@ -6,22 +6,28 @@
 //   - eligible_categories = EXACT ce apare în tab-ul Meciuri
 //   - Nu recalculează nimic în JS — zero divergențe față de Meciuri
 //
-// Structura fișierului snapshot:
-//   { version, generated_at, start_date, entries: [ { ...fields,
-//     eligible_categories: ["all","btts",...], status: "pending|win|lose" } ] }
+// Categorii sincronizate cu filtrele din Meciuri:
+//   all(Toate) / safe(Top) / o15(O1.5) / o25(O2.5) / btts / u35 / value
+//
+// Structura fișierului snapshot V2:
+//   { version:2, generated_at, start_date, init_date, entries: [ {
+//     ...fields, eligible_categories: ["all","btts",...],
+//     status: "pending|win|lose" } ] }
 // ═══════════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
   if (window.__batHistoricTrackerV6) return;
   window.__batHistoricTrackerV6 = true;
 
+  // ── CATEGORII — identice cu filtrele din tab-ul Meciuri ──────────────
   var CATS = [
-    { key:'all',   label:'Toate',         accent:'rgba(59,130,246,.85)' },
-    { key:'safe',  label:'\u2B50 Top',    accent:'rgba(34,197,94,.9)'   },
-    { key:'o15',   label:'\uD83D\uDD25 O1.5',   accent:'rgba(249,115,22,.9)'  },
-    { key:'btts',  label:'\uD83E\uDD1D BTTS',   accent:'rgba(168,85,247,.9)'  },
-    { key:'u35',   label:'\uD83E\uDDCA U3.5',   accent:'rgba(6,182,212,.9)'   },
-    { key:'value', label:'\uD83D\uDCB0 Value',  accent:'rgba(245,158,11,.9)'  }
+    { key:'all',   label:'Toate',                  accent:'rgba(59,130,246,.85)'  },
+    { key:'safe',  label:'\u2B50 Top',             accent:'rgba(34,197,94,.9)'    },
+    { key:'o15',   label:'\uD83D\uDD25 O1.5',      accent:'rgba(249,115,22,.9)'   },
+    { key:'o25',   label:'\uD83D\uDCCA O2.5',      accent:'rgba(234,179,8,.9)'    },
+    { key:'btts',  label:'\uD83E\uDD1D BTTS',      accent:'rgba(168,85,247,.9)'   },
+    { key:'u35',   label:'\uD83E\uDDCA U3.5',      accent:'rgba(6,182,212,.9)'    },
+    { key:'value', label:'\uD83D\uDCB0 Value',     accent:'rgba(245,158,11,.9)'   }
   ];
 
   var MKT_NICE = {
@@ -44,12 +50,12 @@
     year:_ini.getFullYear(), view:'grid', cat:null
   };
 
-  // ── SNAPSHOT STATE ──
+  // ── SNAPSHOT STATE ────────────────────────────────────────────────────
   var _snap = null;
   var _snapTs = 0;
   var _snapLoading = false;
   var SNAP_URL = 'data/meciuri_snapshot.json';
-  var SNAP_TTL = 90000;
+  var SNAP_TTL = 90000; // 90 secunde cache
 
   function loadSnapshot(cb) {
     var now = Date.now();
@@ -74,7 +80,7 @@
 
   function invalidateSnap() { _snapTs = 0; }
 
-  // ── HELPERS ──
+  // ── HELPERS ───────────────────────────────────────────────────────────
   function nv(v){ return Number(v)||0; }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
   function pct(v){ var x=nv(v);return(x>=0?'+':'')+x.toFixed(1)+'%'; }
@@ -84,7 +90,7 @@
   function pad2(x){ return String(x).padStart(2,'0'); }
   function fmtDM(d){ return pad2(d.getDate())+'/'+pad2(d.getMonth()+1); }
 
-  // ── CALENDAR WEEK HELPERS ──
+  // ── CALENDAR WEEK HELPERS ─────────────────────────────────────────────
   function weekMonday(d){
     var x=new Date(d);x.setHours(0,0,0,0);
     var dow=x.getDay();x.setDate(x.getDate()-(dow===0?6:dow-1));return x;
@@ -106,7 +112,7 @@
   }
   function isCurrentWeek(w){ return Date.now()>=w.s&&Date.now()<=w.e; }
 
-  // ── BOUNDS ──
+  // ── BOUNDS ────────────────────────────────────────────────────────────
   function dayBounds(idx){
     var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-idx);
     var e=new Date(d);e.setHours(23,59,59,999);
@@ -138,7 +144,8 @@
     return '';
   }
 
-  // ── DATE DIN SNAPSHOT ──
+  // ── DATE DIN SNAPSHOT ─────────────────────────────────────────────────
+  // Filtrare pe eligible_categories — identic cu logica din Meciuri
   function getRowsForCat(catKey, snapEntries) {
     return (snapEntries||[]).filter(function(r){
       if(!inPeriod(r))return false;
@@ -159,7 +166,7 @@
     });
   }
 
-  // ── STATS ──
+  // ── STATS ─────────────────────────────────────────────────────────────
   function calcStats(rows){
     var s=rows.filter(function(r){return r._st==='win'||r._st==='lose';});
     var p=rows.filter(function(r){return r._st==='pending';});
@@ -177,7 +184,7 @@
     };
   }
 
-  // ── CSS ──
+  // ── CSS ───────────────────────────────────────────────────────────────
   function injectCss(){
     if(document.getElementById('bat-hist-v6-css'))return;
     var css=[
@@ -248,7 +255,7 @@
     document.head.appendChild(el);
   }
 
-  // ── PERIOD BAR ──
+  // ── PERIOD BAR ────────────────────────────────────────────────────────
   function renderPeriodBar(){
     var h='<div class="bh-mbar">'+
       mb('days7','7 Zile')+mb('weeks','Saptamani')+mb('month','Luna')+mb('year','Anual')+
@@ -304,7 +311,7 @@
     return opts;
   }
 
-  // ── SUMMARY ──
+  // ── SUMMARY ───────────────────────────────────────────────────────────
   function renderSummary(entries){
     var rows=getRowsForCat('all',entries);
     var s=calcStats(rows); var nd=s.settled===0;
@@ -321,10 +328,12 @@
   }
   function kc(val,col,lbl){return'<div class="bh-kcard"><div class="bh-kval" style="color:'+col+'">'+val+'</div><div class="bh-klbl">'+lbl+'</div></div>';}
 
-  // ── GRID ──
+  // ── GRID ──────────────────────────────────────────────────────────────
   function renderGrid(entries){
+    // Afiseaza doar categoriile care au cel putin un meci in perioada
     var cards=CATS.filter(function(c){return c.key!=='all';}).map(function(cat){
       var rows=getRowsForCat(cat.key,entries);
+      if(rows.length===0)return''; // Ascunde categoriile goale
       var s=calcStats(rows); var nd=s.settled===0;
       var rCol=rcol(s.roi,!nd);
       var bCol=nd?'rgba(255,255,255,.06)':(s.roi>=0?'rgba(34,197,94,.22)':'rgba(239,68,68,.18)');
@@ -342,11 +351,11 @@
           (s.delta>=0?'+':'')+s.delta.toFixed(1)+'pp</b>':'')+
         '</div><div class="bh-card-bar" style="background:'+cat.accent+';width:'+barW+'%"></div>'+
       '</div>';
-    });
+    }).filter(Boolean);
     return'<div class="bh-grid">'+cards.join('')+'</div>';
   }
 
-  // ── DRILLDOWN ──
+  // ── DRILLDOWN ─────────────────────────────────────────────────────────
   function renderDrilldown(entries){
     var cat=getCat(S.cat);
     var rows=getRowsForCat(S.cat,entries);
@@ -401,7 +410,7 @@
   }
   function pl(txt,col){return'<div class="bh-pill" style="color:'+col+'">'+txt+'</div>';}
 
-  // ── RENDER ──
+  // ── RENDER ────────────────────────────────────────────────────────────
   var _last='';
   function render(){
     var root=document.getElementById('history21-root');
@@ -417,7 +426,7 @@
         html='<div class="bh-wrap">'+renderPeriodBar()+renderDrilldown(entries)+'</div>';
       }else{
         html='<div class="bh-wrap">'+renderPeriodBar()+
-          '<div class="bh-note">\uD83D\uDCCC Date din recomandarile reale ale motorului \u2014 identice cu filtrele din Meciuri.</div>'+
+          '<div class="bh-note">\uD83D\uDCCC Date identice cu filtrele din Meciuri \u2014 acelea\u015Fi meciuri, acelea\u015Fi categorii.</div>'+
           renderSummary(entries)+renderGrid(entries)+'</div>';
       }
       if(html!==_last){
@@ -427,7 +436,7 @@
     });
   }
 
-  // ── PUBLIC API ──
+  // ── PUBLIC API ────────────────────────────────────────────────────────
   window.batH={
     mode:function(m){S.mode=m;S.view='grid';S.cat=null;if(m==='days7')S.selDay=0;if(m==='weeks')S.selWeekIdx=-1;if(m==='month'){var now=new Date();S.month={y:now.getFullYear(),m:now.getMonth()};}if(m==='year')S.year=new Date().getFullYear();_last='';render();},
     day:function(i){S.selDay=i;_last='';render();},
@@ -440,7 +449,7 @@
     refresh:function(){invalidateSnap();_last='';render();}
   };
 
-  // ── BOOT ──
+  // ── BOOT ──────────────────────────────────────────────────────────────
   function boot(){
     render();
     [500,1500,4000,9000].forEach(function(t){setTimeout(render,t);});
