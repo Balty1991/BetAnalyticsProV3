@@ -1,36 +1,36 @@
 {
-  "updated_at": "2026-05-07T20:20:38.280720+00:00",
+  "updated_at": "2026-05-07T20:58:45.180157+00:00",
   "summary": {
-    "total_picks": 786,
-    "avg_clv_pct": -0.5396,
+    "total_picks": 787,
+    "avg_clv_pct": -0.5285,
     "median_clv_pct": 0.0,
-    "clv_positive_n": 147,
+    "clv_positive_n": 148,
     "clv_negative_n": 639,
-    "clv_positive_rate": 0.187,
-    "avg_clv_wins": -0.3014,
+    "clv_positive_rate": 0.1881,
+    "avg_clv_wins": -0.2866,
     "avg_clv_losses": -1.1721,
-    "win_rate_pct": 72.65,
-    "roi_flat_pct": 0.0537,
-    "roi_flat_at_picked_odds_pct": 0.0537,
-    "roi_flat_closing_proxy_pct": 0.55,
+    "win_rate_pct": 72.68,
+    "roi_flat_pct": 0.1286,
+    "roi_flat_at_picked_odds_pct": 0.1286,
+    "roi_flat_closing_proxy_pct": 0.609,
     "roi_basis": "picked_odds",
     "roi_note": "ROI este calculat la cota luată / opening_odds, nu la closing proxy.",
-    "ev_positive_n": 499,
+    "ev_positive_n": 500,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.0726
+    "std_clv_pct": 6.0766
   },
   "by_market": {
     "btts": {
-      "n": 103,
-      "avg_clv_pct": -2.1379,
+      "n": 104,
+      "avg_clv_pct": -2.0388,
       "median_clv_pct": 0.0,
-      "clv_positive_rate": 0.2816,
-      "win_rate_pct": 72.82,
-      "roi_flat_pct": 11.5252,
-      "roi_flat_at_picked_odds_pct": 11.5252,
-      "roi_flat_closing_proxy_pct": 13.5282,
-      "avg_ev_at_pick": 3.2834,
+      "clv_positive_rate": 0.2885,
+      "win_rate_pct": 73.08,
+      "roi_flat_pct": 11.9817,
+      "roi_flat_at_picked_odds_pct": 11.9817,
+      "roi_flat_closing_proxy_pct": 13.85,
+      "avg_ev_at_pick": 3.2947,
       "roi_basis": "picked_odds",
       "verdict": "ROI_BUN_CLV_SLAB",
       "label": "ROI bun, CLV slab",
@@ -100,11 +100,11 @@
   },
   "clv_buckets": {
     "clv_strong_pos": {
-      "n": 33,
-      "win_rate": 72.73,
-      "roi_pct": 11.5303,
+      "n": 34,
+      "win_rate": 73.53,
+      "roi_pct": 12.9265,
       "roi_basis": "picked_odds",
-      "avg_clv": 19.082
+      "avg_clv": 18.7609
     },
     "clv_mild_pos": {
       "n": 114,
@@ -136,27 +136,27 @@
     }
   },
   "rolling_30d": {
-    "n": 786,
-    "avg_clv_pct": -0.5396,
-    "win_rate_pct": 72.65,
-    "roi_flat_pct": 0.0537,
+    "n": 787,
+    "avg_clv_pct": -0.5285,
+    "win_rate_pct": 72.68,
+    "roi_flat_pct": 0.1286,
     "roi_basis": "picked_odds",
     "days": 30
   },
   "rolling_90d": {
-    "n": 786,
-    "avg_clv_pct": -0.5396,
-    "win_rate_pct": 72.65,
-    "roi_flat_pct": 0.0537,
+    "n": 787,
+    "avg_clv_pct": -0.5285,
+    "win_rate_pct": 72.68,
+    "roi_flat_pct": 0.1286,
     "roi_basis": "picked_odds",
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 499,
-      "avg_clv": 0.5998,
-      "clv_positive_rate": 0.2365,
-      "roi_flat_pct": 3.9341
+      "n": 500,
+      "avg_clv": 0.6149,
+      "clv_positive_rate": 0.238,
+      "roi_flat_pct": 4.0442
     },
     "ev_negative_picks": {
       "n": 287,
@@ -169,7 +169,7 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_POSITIVE",
-    "interpretation": "🎲 ROI pozitiv (0.05%) dar CLV negativ (-0.54%). Nu crește stake-ul până CLV confirmă edge-ul.",
+    "interpretation": "🎲 ROI pozitiv (0.13%) dar CLV negativ (-0.53%). Nu crește stake-ul până CLV confirmă edge-ul.",
     "action": "Ține stake plafonat; cere CLV pozitiv înainte de scaling.",
     "confidence": "high",
     "rolling_trend": "stabil",
@@ -182,6 +182,32 @@
     ]
   },
   "picks": [
+    {
+      "event_id": "4817",
+      "date": "2026-05-07",
+      "home": "Al-Shabab",
+      "away": "Al-Nassr",
+      "league": "Saudi Pro League",
+      "market": "btts",
+      "picked_odds": 1.59,
+      "closing_odds": 1.47,
+      "picked_implied": 0.628931,
+      "closing_implied": 0.680272,
+      "clv_pct": 8.1633,
+      "clv_positive": true,
+      "ev_at_pick_pct": 4.463,
+      "model_prob": 65.7,
+      "edge_pct": 5.47,
+      "score": 82,
+      "line_move_pct": -7.5472,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-07T20:39:19.994151+00:00",
+      "prediction_id": 3576,
+      "profit_at_pick": 0.59,
+      "profit_at_closing_proxy": 0.47,
+      "roi_basis": "picked_odds"
+    },
     {
       "event_id": "9420",
       "date": "2026-05-07",
@@ -20649,15 +20675,15 @@
     },
     {
       "market": "btts",
-      "n": 103,
+      "n": 104,
       "verdict": "ROI_BUN_CLV_SLAB",
       "label": "ROI bun, CLV slab",
       "severity": "caution",
       "action": "Nu crește stake-ul; ROI-ul poate fi variance. Cere confirmare CLV înainte de scaling.",
       "stake_policy": "cap_stake",
       "edge_adjustment_pp": 1.5,
-      "avg_clv_pct": -2.1379,
-      "roi_flat_pct": 11.5252,
+      "avg_clv_pct": -2.0388,
+      "roi_flat_pct": 11.9817,
       "confidence": "high"
     },
     {
