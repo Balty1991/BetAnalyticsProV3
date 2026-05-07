@@ -60,6 +60,12 @@ jobs:
             python build_api_events_index.py
           fi
 
+      - name: Generate Meciuri Snapshot (sursa exacta pentru Istoric)
+        run: |
+          if [ -f generate_meciuri_snapshot.py ]; then
+            python generate_meciuri_snapshot.py
+          fi
+
       - name: Verify data files
         run: |
           test -f data/predictions.json
