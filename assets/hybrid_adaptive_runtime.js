@@ -82,7 +82,11 @@
   function visibleValidatedCount(){
     var grid = q('#unified-summary-grid') || q('#smartbet-summary-grid') || q('#unified-engine-summary');
     if(!grid) return 0;
-    var m = clean(grid).match(/Predicții validate\s*(\d{1,3})/i) || clean(grid).match(/Predictii validate\s*(\d{1,3})/i);
+    // Citim textContent brut (fără clean care elimină ț → strică regex-ul)
+    var raw = grid.textContent || grid.innerText || '';
+    // Matches: "Predicții validate 8", "Predictii validate 8", "Predicii validate 8"
+    var m = raw.match(/Predi\w*ii\s+validate\s*:?\s*(\d{1,3})/i) ||
+            raw.match(/validate\s*:?\s*(\d{1,3})\s*trecute/i);
     return m ? num(m[1]) : 0;
   }
 
