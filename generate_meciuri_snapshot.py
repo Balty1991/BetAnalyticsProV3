@@ -2,32 +2,28 @@
 """
 generate_meciuri_snapshot.py — BetAnalytics Pro V21+
 
-Citeste recommendation_log.json si produce data/meciuri_snapshot.json.
+Logica:
+  1. PENDING  → din recommendation_log: status=pending, event_date in viitor
+                 (meciuri care sunt acum in Meciuri, neincepute)
+  2. SETTLED  → actualizeaza statusul DOAR pentru intrari deja in snapshot
+                 (meciuri care ERAU pending si au primit rezultat)
 
-Snapshot-ul contine EXACT ce apare in tab-ul Meciuri:
-  - Se foloseste eligible_categories salvat la momentul logarii
-  - Fiecare entry are statusul curent (pending / win / lose)
-  - Nu se recalculeaza nimic — snapshot = ground truth pentru Istoric
-
-Rulat de GitHub Actions dupa fiecare fetch, astfel:
-  - Pending-urile se actualizeaza la fiecare fetch (status + scor)
-  - Istoricul citeste din snapshot, nu recalculeaza din ALL_MATCHES
+Regula cheie: niciodata nu adauga meciuri deja terminate care nu au
+              trecut prin snapshot ca pending. Asa dispar Copa/Sudamericana
+              la 01:00 AM pe care user-ul nu le-a vazut in Meciuri.
 """
 
 import json
-import os
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone
 from pathlib import Path
 
-DATA_DIR = Path("data")
-LOG_FILE = DATA_DIR / "recommendation_log.json"
+DATA_DIR      = Path("data")
+LOG_FILE      = DATA_DIR / "recommendation_log.json"
 SNAPSHOT_FILE = DATA_DIR / "meciuri_snapshot.json"
+START_DATE    = "2026-05-07"   # Ignoram intrari mai vechi de aceasta data
 
-# Porneste de la aceasta data — intrari mai vechi nu se includ
-START_DATE = date(2026, 5, 7)
-
-# Categorii valide
 VALID_CATS = {"all", "safe", "o15", "btts", "u35", "value"}
+DC_MKTS    = {"dc1x", "dcx2", "dc12"}
 
 KEEP_FIELDS = [
     "log_id", "event_id", "home", "away", "league",
@@ -38,161 +34,158 @@ KEEP_FIELDS = [
 ]
 
 
-def normalize_status(entry: dict) -> str:
-    """Determina statusul curent al unui entry."""
-    status = str(entry.get("status") or "").lower().strip()
-    won = entry.get("won")
+def ts(raw):
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return None
 
-    if status == "win" or won is True:
+
+def normalize_status(r):
+    st  = str(r.get("status") or "").lower().strip()
+    won = r.get("won")
+    if st == "win" or won is True:
         return "win"
-    if status in ("lose", "loss", "lost") or won is False:
+    if st in ("lose", "loss", "lost") or won is False:
         return "lose"
-    if status == "pending" or won is None:
-        return "pending"
-    # Fallback: daca are scor, evalueaza
-    hs = entry.get("home_score")
-    as_ = entry.get("away_score")
-    mk = entry.get("market_key", "")
-    if hs is not None and as_ is not None:
+    hs  = r.get("home_score")
+    asy = r.get("away_score")
+    mk  = r.get("market_key", "")
+    if hs is not None and asy is not None:
         try:
-            hs, as_ = int(hs), int(as_)
-            total = hs + as_
-            if mk == "over15":
-                return "win" if total > 1 else "lose"
-            if mk == "over25":
-                return "win" if total > 2 else "lose"
-            if mk == "under25":
-                return "win" if total < 3 else "lose"
-            if mk == "under35":
-                return "win" if total < 4 else "lose"
-            if mk == "btts":
-                return "win" if hs > 0 and as_ > 0 else "lose"
-            if mk == "homeWin":
-                return "win" if hs > as_ else "lose"
-            if mk == "awayWin":
-                return "win" if as_ > hs else "lose"
-            if mk == "draw":
-                return "win" if hs == as_ else "lose"
+            hs, asy = int(hs), int(asy)
+            tot = hs + asy
+            table = {
+                "over15":  tot > 1, "over25": tot > 2, "under25": tot < 3,
+                "under35": tot < 4, "btts":   hs > 0 and asy > 0,
+                "homeWin": hs > asy, "awayWin": asy > hs, "draw": hs == asy,
+            }
+            if mk in table:
+                return "win" if table[mk] else "lose"
         except (ValueError, TypeError):
             pass
     return "pending"
 
 
-def get_event_date(entry: dict):
-    """Extrage data evenimentului ca date object."""
-    raw = entry.get("event_date") or entry.get("logged_at") or ""
-    if not raw:
+def load_snapshot():
+    if SNAPSHOT_FILE.exists():
+        try:
+            return json.loads(SNAPSHOT_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"version": 1, "entries": []}
+
+
+def build_entry(r, status):
+    entry = {}
+    for f in KEEP_FIELDS:
+        if f in r:
+            entry[f] = r[f]
+    entry["status"] = status
+    cats = [c for c in (r.get("eligible_categories") or []) if c in VALID_CATS]
+    if not cats:
         return None
-    try:
-        # Trimite cu/fara timezone
-        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        return dt.date()
-    except (ValueError, TypeError):
-        return None
+    if "all" not in cats:
+        cats.insert(0, "all")
+    entry["eligible_categories"] = cats
+    return entry
 
 
 def build_snapshot():
     if not LOG_FILE.exists():
-        print(f"[snapshot] {LOG_FILE} nu exista, skip.")
+        print("[snapshot] recommendation_log.json nu exista, skip.")
         return
 
-    log = json.loads(LOG_FILE.read_text(encoding="utf-8"))
-    print(f"[snapshot] recommendation_log: {len(log)} intrari")
+    log  = json.loads(LOG_FILE.read_text(encoding="utf-8"))
+    now  = datetime.now(timezone.utc)
+    snap = load_snapshot()
 
-    # DC markets excluse (la fel ca in Meciuri)
-    DC_MKTS = {"dc1x", "dcx2", "dc12"}
+    # Index intrari existente in snapshot dupa event_id::market_key
+    existing = {}
+    for e in snap.get("entries", []):
+        key = f"{e.get('event_id','')}::{e.get('market_key','')}"
+        existing[key] = e
 
-    entries = []
-    skipped_date = 0
-    skipped_no_cats = 0
-    skipped_dc = 0
+    added    = 0
+    updated  = 0
+    skipped  = 0
+    new_snap = {}
 
     for r in log:
-        # Skip DC markets
         mk = r.get("market_key", "")
         if mk in DC_MKTS:
-            skipped_dc += 1
+            skipped += 1
             continue
 
-        # Skip fara eligible_categories
         cats = r.get("eligible_categories")
-        if not cats or not isinstance(cats, list) or len(cats) == 0:
-            skipped_no_cats += 1
+        if not cats or not isinstance(cats, list):
+            skipped += 1
             continue
 
-        # Skip intrari mai vechi de START_DATE
-        ev_date = get_event_date(r)
-        if ev_date is None or ev_date < START_DATE:
-            skipped_date += 1
+        event_date_raw = r.get("event_date", "")
+        if event_date_raw[:10] < START_DATE:
+            skipped += 1
             continue
 
-        # Construieste entry curat
-        entry = {}
-        for f in KEEP_FIELDS:
-            if f in r:
-                entry[f] = r[f]
+        key    = f"{r.get('event_id','')}::{mk}"
+        status = normalize_status(r)
 
-        # Normalizeaza statusul
-        entry["status"] = normalize_status(r)
+        if key in existing:
+            # Actualizeaza statusul intrarii deja in snapshot
+            old = existing[key].copy()
+            old["status"]     = status
+            old["home_score"] = r.get("home_score")
+            old["away_score"] = r.get("away_score")
+            old["settled_at"] = r.get("settled_at")
+            old["won"]        = r.get("won")
+            new_snap[key]     = old
+            updated += 1
 
-        # Curata eligible_categories (doar cele valide)
-        entry["eligible_categories"] = [
-            c for c in cats if c in VALID_CATS
-        ]
-        if not entry["eligible_categories"]:
-            skipped_no_cats += 1
-            continue
+        elif status == "pending":
+            # Adauga NOU numai daca meciul nu a inceput inca
+            ev_dt = ts(event_date_raw)
+            if ev_dt is None or ev_dt <= now:
+                skipped += 1
+                continue
+            entry = build_entry(r, "pending")
+            if entry is None:
+                skipped += 1
+                continue
+            new_snap[key] = entry
+            added += 1
 
-        # Asigura ca 'all' e inclus daca lipseste
-        if "all" not in entry["eligible_categories"]:
-            entry["eligible_categories"].insert(0, "all")
-
-        entries.append(entry)
-
-    # Dedup pe event_id + market_key (pastreaza cel mai recent)
-    seen = {}
-    for e in entries:
-        key = f"{e.get('event_id', '')}::{e.get('market_key', '')}"
-        if key not in seen:
-            seen[key] = e
         else:
-            # Pastreaza cel cu logged_at mai nou
-            existing = seen[key]
-            try:
-                ts_new = datetime.fromisoformat(
-                    str(e.get("logged_at", "1970")).replace("Z", "+00:00")
-                ).timestamp()
-                ts_old = datetime.fromisoformat(
-                    str(existing.get("logged_at", "1970")).replace("Z", "+00:00")
-                ).timestamp()
-                if ts_new > ts_old:
-                    seen[key] = e
-            except (ValueError, TypeError):
-                pass
+            # Match deja terminat si nu era in snapshot → ignoram
+            skipped += 1
 
-    final_entries = list(seen.values())
+    entries = list(new_snap.values())
 
-    # Sorteaza dupa event_date
     def sort_key(e):
-        try:
-            return datetime.fromisoformat(
-                str(e.get("event_date", "1970")).replace("Z", "+00:00")
-            ).timestamp()
-        except (ValueError, TypeError):
-            return 0
+        t = ts(e.get("event_date"))
+        return t.timestamp() if t else 0
 
-    final_entries.sort(key=sort_key)
+    entries.sort(key=sort_key)
+
+    # Statistici per categorie
+    cats_count = {}
+    status_count = {"pending": 0, "win": 0, "lose": 0}
+    for e in entries:
+        status_count[e["status"]] = status_count.get(e["status"], 0) + 1
+        for c in e.get("eligible_categories", []):
+            cats_count[c] = cats_count.get(c, 0) + 1
 
     snapshot = {
-        "version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "start_date": START_DATE.isoformat(),
-        "note": (
-            "Snapshot generat din recommendation_log cu eligible_categories "
-            "exacte din tab-ul Meciuri. Istoric citeste DOAR din acest fisier."
+        "version":      1,
+        "generated_at": now.isoformat(),
+        "start_date":   START_DATE,
+        "note":         (
+            "Snapshot: NUMAI meciuri afisate in Meciuri (pending cand au fost adaugate). "
+            "Meciuri deja terminate la momentul primei rulari sunt excluse."
         ),
-        "total": len(final_entries),
-        "entries": final_entries,
+        "total":   len(entries),
+        "entries": entries,
     }
 
     SNAPSHOT_FILE.write_text(
@@ -200,22 +193,19 @@ def build_snapshot():
         encoding="utf-8",
     )
 
-    # Stats
-    pending = sum(1 for e in final_entries if e["status"] == "pending")
-    wins = sum(1 for e in final_entries if e["status"] == "win")
-    losses = sum(1 for e in final_entries if e["status"] == "lose")
-    cats_count = {}
-    for e in final_entries:
-        for c in e["eligible_categories"]:
-            cats_count[c] = cats_count.get(c, 0) + 1
-
-    print(f"[snapshot] Generat: {len(final_entries)} intrari "
-          f"(pending={pending}, win={wins}, lose={losses})")
-    print(f"[snapshot] Skipped: date_veche={skipped_date}, "
-          f"fara_cats={skipped_no_cats}, DC={skipped_dc}")
+    print(f"[snapshot] Total: {len(entries)} "
+          f"(added={added}, updated={updated}, skipped={skipped})")
+    print(f"[snapshot] Status: {status_count}")
     print(f"[snapshot] Per categorie: {cats_count}")
     print(f"[snapshot] Salvat: {SNAPSHOT_FILE}")
 
 
 if __name__ == "__main__":
+    # La prima rulare, stergem snapshot-ul vechi (start curat de azi)
+    if SNAPSHOT_FILE.exists():
+        old = json.loads(SNAPSHOT_FILE.read_text(encoding="utf-8"))
+        if old.get("note", "").startswith("Snapshot generat din recommendation_log"):
+            print("[snapshot] Sterg snapshot-ul vechi (format incompatibil)...")
+            SNAPSHOT_FILE.unlink()
+
     build_snapshot()
