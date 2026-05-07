@@ -1,25 +1,32 @@
 // ═══════════════════════════════════════════════════════════════════════
-// Historic Meciuri Tracker  —  BetAnalytics Pro V21+  (Snapshot Edition)
+// Historic Meciuri Tracker  —  BetAnalytics Pro V21+ (Client-Side Capture)
 //
-// Sursă unică de adevăr: data/meciuri_snapshot.json
-//   - Generat de Python după fiecare fetch din recommendation_log
-//   - eligible_categories = EXACT ce apare în tab-ul Meciuri
-//   - Nu recalculează nimic în JS — zero divergențe față de Meciuri
+// Două componente:
+//   1. CAPTURE — la fiecare vizualizare a tab-ului Meciuri:
+//      • Citește window.ALL_MATCHES (sursa reală pe care Meciuri o afișează)
+//      • Filtrează ELIGIBLE (analysisState === 'ELIGIBLE')
+//      • Calculează eligible_categories cu EXACT logica din Meciuri
+//      • Salvează în localStorage (cheia 'bat_meciuri_capture_v1')
+//      • Sincronizează status (win/lose) din recommendation_log pe baza scorurilor
 //
-// Categorii sincronizate cu filtrele din Meciuri:
+//   2. RENDER — la deschiderea tab-ului Istoric:
+//      • PRIMARY: localStorage capture (ce a apărut efectiv în Meciuri)
+//      • FALLBACK: data/meciuri_snapshot.json (când localStorage e gol)
+//
+// Categorii sincronizate exact cu Meciuri:
 //   all(Toate) / safe(Top) / o15(O1.5) / o25(O2.5) / btts / u35 / value
-//
-// Structura fișierului snapshot V2:
-//   { version:2, generated_at, start_date, init_date, entries: [ {
-//     ...fields, eligible_categories: ["all","btts",...],
-//     status: "pending|win|lose" } ] }
 // ═══════════════════════════════════════════════════════════════════════
 (function () {
   'use strict';
-  if (window.__batHistoricTrackerV6) return;
-  window.__batHistoricTrackerV6 = true;
+  if (window.__batHistoricTrackerV7) return;
+  window.__batHistoricTrackerV7 = true;
 
-  // ── CATEGORII — identice cu filtrele din tab-ul Meciuri ──────────────
+  // ── STORAGE ──────────────────────────────────────────────────────────
+  var STORAGE_KEY = 'bat_meciuri_capture_v1';
+  var SNAP_URL    = 'data/meciuri_snapshot.json';
+  var LOG_URL     = 'data/recommendation_log.json';
+
+  // ── CATEGORII — identice cu filtrele din tab-ul Meciuri ─────────────
   var CATS = [
     { key:'all',   label:'Toate',                  accent:'rgba(59,130,246,.85)'  },
     { key:'safe',  label:'\u2B50 Top',             accent:'rgba(34,197,94,.9)'    },
@@ -33,10 +40,309 @@
   var MKT_NICE = {
     over15:'O1.5G', over25:'O2.5G', under35:'U3.5G', under25:'U2.5G',
     btts:'BTTS', homeWin:'1', awayWin:'2', draw:'X',
+    'over_15':'O1.5G', 'over_25':'O2.5G', 'under_35':'U3.5G', 'under_25':'U2.5G',
+    'btts_yes':'BTTS', 'home_win':'1', 'away_win':'2', 'btts_no':'BTTS NO',
     'Over 1.5G':'O1.5G', 'Over 2.5G':'O2.5G',
     'Under 3.5G':'U3.5G', 'Under 2.5G':'U2.5G'
   };
 
+  function nv(v){ return Number(v)||0; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
+
+  // ═════════════════════════════════════════════════════════════════════
+  // PARTEA 1 — CAPTURE din tab-ul Meciuri
+  // ═════════════════════════════════════════════════════════════════════
+
+  function _bestPickOf(m){
+    if (!m) return null;
+    if (typeof window.bestPickFor === 'function') {
+      try { return window.bestPickFor(m); } catch(e) {}
+    }
+    return m.bestPick || m.bestBet || null;
+  }
+
+  function _hasEligibleType(m, type){
+    if (typeof window.hasEligibleType === 'function') {
+      try { return !!window.hasEligibleType(m, type); } catch(e) {}
+    }
+    var cands = m && (m.candidates || m.eligibleTypes || []);
+    if (!Array.isArray(cands)) return false;
+    return cands.some(function(c){
+      if (!c) return false;
+      var t = c.type || c.market || c.market_key || '';
+      return t === type;
+    });
+  }
+
+  function _normalizeMarketKey(mk){
+    if (!mk) return '';
+    var s = String(mk).toLowerCase();
+    var map = {
+      'over_15':'over15', 'over_25':'over25', 'over_35':'over35',
+      'under_15':'under15', 'under_25':'under25', 'under_35':'under35',
+      'btts_yes':'btts', 'btts_no':'btts_no',
+      'home_win':'homeWin', 'away_win':'awayWin'
+    };
+    return map[s] || s;
+  }
+
+  // Calculează eligible_categories cu EXACT logica din Meciuri (app.js)
+  function _computeCats(m){
+    if (!m || m.analysisState !== 'ELIGIBLE') return [];
+    var cats = ['all'];
+
+    // Top (safe)
+    if (m.verdict === 'safe' || m.riskTier === 'Safe') cats.push('safe');
+
+    // Value
+    var b = _bestPickOf(m);
+    if (m.riskTier === 'Value' || (b && nv(b.value) >= 0.08 && nv(b.edgePct || b.edge_pct) >= 3)) {
+      cats.push('value');
+    }
+
+    // Markets
+    if (_hasEligibleType(m, 'over15'))  cats.push('o15');
+    if (_hasEligibleType(m, 'over25'))  cats.push('o25');
+    if (_hasEligibleType(m, 'btts'))    cats.push('btts');
+    if (_hasEligibleType(m, 'under35')) cats.push('u35');
+
+    // O2.5 din SIGNAL_AUDIT (cum face și Meciuri)
+    var sa = window.SIGNAL_AUDIT;
+    if (sa && cats.indexOf('o25') < 0) {
+      var rows = sa.entries || sa.rows || [];
+      if (Array.isArray(rows)) {
+        var found = rows.some(function(r){
+          if (!r) return false;
+          var rmk = String(r.market_key || '').toLowerCase();
+          return Number(r.event_id) === Number(m.event_id) &&
+                 (rmk === 'over25' || rmk === 'over_25');
+        });
+        if (found) cats.push('o25');
+      }
+    }
+
+    return cats;
+  }
+
+  function _matchToEntry(m){
+    var b = _bestPickOf(m) || {};
+    var mkRaw = b.type || b.market || b.market_key || '';
+    var mk = _normalizeMarketKey(mkRaw);
+    var prob = b.prob || b.probability || b.adjusted_prob || 0;
+    if (prob > 0 && prob < 2) prob = prob * 100; // dacă e fraction, convertim
+
+    return {
+      event_id: m.event_id || (m.event && m.event.id),
+      home: m.home || (m.event && m.event.home_team) || '?',
+      away: m.away || (m.event && m.event.away_team) || '?',
+      league: m.league || (m.leagueObj && m.leagueObj.name) ||
+              (m.event && m.event.league && m.event.league.name) || '',
+      event_date: m.eventDate || m.event_date ||
+                  (m.event && m.event.event_date) || '',
+      market_key: mk,
+      market: b.label || b.market || mkRaw,
+      odds: nv(b.odds),
+      adjusted_prob: nv(prob),
+      edge_pct: nv(b.edgePct || b.edge_pct),
+      value: nv(b.value),
+      score: nv(m.score || m.smartScore || b.score),
+      verdict: m.verdict || '',
+      risk_tier: m.riskTier || '',
+      eligible_categories: _computeCats(m),
+      status: 'pending',
+      captured_at: new Date().toISOString()
+    };
+  }
+
+  function _readCapture(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { version:1, entries:[] };
+      var obj = JSON.parse(raw);
+      if (!obj || !Array.isArray(obj.entries)) return { version:1, entries:[] };
+      return obj;
+    } catch(e) { return { version:1, entries:[] }; }
+  }
+
+  function _writeCapture(capture){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(capture));
+      return true;
+    } catch(e) {
+      console.warn('[HistoricTracker] Storage error:', e);
+      return false;
+    }
+  }
+
+  function captureFromMeciuri(){
+    var ALL = window.ALL_MATCHES;
+    if (!Array.isArray(ALL) || ALL.length === 0) return 0;
+
+    var fresh = {};
+    ALL.forEach(function(m){
+      var cats = _computeCats(m);
+      if (cats.length === 0) return; // nu e ELIGIBLE
+      var entry = _matchToEntry(m);
+      if (!entry.event_id || !entry.market_key) return;
+      var key = entry.event_id + '::' + entry.market_key;
+      fresh[key] = entry;
+    });
+
+    if (Object.keys(fresh).length === 0) return 0;
+
+    // Merge cu existent (păstrează status terminat)
+    var existing = _readCapture();
+    var existingMap = {};
+    (existing.entries || []).forEach(function(e){
+      existingMap[e.event_id + '::' + e.market_key] = e;
+    });
+
+    Object.keys(fresh).forEach(function(key){
+      var prev = existingMap[key];
+      if (prev && (prev.status === 'win' || prev.status === 'lose')) {
+        fresh[key].status = prev.status;
+        fresh[key].home_score = prev.home_score;
+        fresh[key].away_score = prev.away_score;
+        fresh[key].settled_at = prev.settled_at;
+        fresh[key].won = prev.won;
+      }
+      existingMap[key] = fresh[key];
+    });
+
+    var allEntries = [];
+    Object.keys(existingMap).forEach(function(k){ allEntries.push(existingMap[k]); });
+
+    var capture = {
+      version: 1,
+      captured_at: new Date().toISOString(),
+      total: allEntries.length,
+      entries: allEntries
+    };
+    _writeCapture(capture);
+    invalidateLocalCache();
+    console.log('[HistoricTracker] Capturat ' + Object.keys(fresh).length + ' meciuri din Meciuri (total: ' + allEntries.length + ')');
+    return Object.keys(fresh).length;
+  }
+
+  // ── Sincronizare status din recommendation_log (folosind scorurile) ──
+  function _computeWonFromScores(market_key, hs, asy){
+    if (hs == null || asy == null) return null;
+    hs = Number(hs); asy = Number(asy);
+    if (!isFinite(hs) || !isFinite(asy)) return null;
+    var tot = hs + asy;
+    var mk = String(market_key||'').toLowerCase();
+    var table = {
+      'over15':  tot > 1, 'over_15':  tot > 1,
+      'over25':  tot > 2, 'over_25':  tot > 2,
+      'over35':  tot > 3, 'over_35':  tot > 3,
+      'under15': tot < 2, 'under_15': tot < 2,
+      'under25': tot < 3, 'under_25': tot < 3,
+      'under35': tot < 4, 'under_35': tot < 4,
+      'btts':    hs > 0 && asy > 0, 'btts_yes': hs > 0 && asy > 0,
+      'btts_no': !(hs > 0 && asy > 0),
+      'homewin': hs > asy, 'home_win': hs > asy,
+      'awaywin': asy > hs, 'away_win': asy > hs,
+      'draw':    hs === asy
+    };
+    if (mk in table) return table[mk];
+    return null;
+  }
+
+  function syncStatusFromLog(){
+    fetch(LOG_URL + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(log){
+        if (!Array.isArray(log)) return;
+        var capture = _readCapture();
+        var entries = capture.entries || [];
+        if (entries.length === 0) return;
+
+        // Indexare log pe event_id (pentru a obține scoruri finale)
+        var logByEvent = {};
+        log.forEach(function(r){
+          var eid = r.event_id;
+          if (!eid) return;
+          var st = String(r.status||'').toLowerCase();
+          if ((st === 'win' || st === 'lose' || st === 'loss')
+              && r.home_score != null && r.away_score != null) {
+            logByEvent[eid] = r;
+          }
+        });
+
+        var changed = 0;
+        entries.forEach(function(e){
+          if (e.status === 'win' || e.status === 'lose') return;
+          var lr = logByEvent[e.event_id];
+          if (!lr) return;
+          var won = _computeWonFromScores(e.market_key, lr.home_score, lr.away_score);
+          if (won === null) return;
+          e.status = won ? 'win' : 'lose';
+          e.home_score = lr.home_score;
+          e.away_score = lr.away_score;
+          e.settled_at = lr.settled_at || new Date().toISOString();
+          e.won = won;
+          changed++;
+        });
+
+        if (changed > 0) {
+          capture.entries = entries;
+          capture.captured_at = new Date().toISOString();
+          _writeCapture(capture);
+          invalidateLocalCache();
+          console.log('[HistoricTracker] Status sincronizat: ' + changed + ' meciuri terminate');
+        }
+      })
+      .catch(function(){});
+  }
+
+  // ═════════════════════════════════════════════════════════════════════
+  // PARTEA 2 — RENDER tab-ul Istoric
+  // ═════════════════════════════════════════════════════════════════════
+
+  var _localCache = null;
+  var _localCacheTs = 0;
+  var LOCAL_TTL = 5000;
+  var _isUsingCapture = false;
+
+  function invalidateLocalCache(){ _localCacheTs = 0; _localCache = null; }
+
+  function loadEntries(cb){
+    var now = Date.now();
+    if (_localCache && (now - _localCacheTs) < LOCAL_TTL) {
+      cb(_localCache);
+      return;
+    }
+
+    var capture = _readCapture();
+    var localEntries = capture.entries || [];
+
+    // PRIMARY: localStorage (capturat din Meciuri)
+    if (localEntries.length > 0) {
+      _isUsingCapture = true;
+      _localCache = localEntries;
+      _localCacheTs = now;
+      cb(localEntries);
+      return;
+    }
+
+    // FALLBACK: snapshot.json (când localStorage e gol)
+    _isUsingCapture = false;
+    fetch(SNAP_URL + '?t=' + now, { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var entries = (data && Array.isArray(data.entries)) ? data.entries : [];
+        _localCache = entries;
+        _localCacheTs = Date.now();
+        cb(entries);
+      })
+      .catch(function(){
+        _localCache = [];
+        _localCacheTs = Date.now();
+        cb([]);
+      });
+  }
+
+  // ── State pentru UI ─────────────────────────────────────────────────
   var ML = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
             'Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
   var MS = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
@@ -50,39 +356,6 @@
     year:_ini.getFullYear(), view:'grid', cat:null
   };
 
-  // ── SNAPSHOT STATE ────────────────────────────────────────────────────
-  var _snap = null;
-  var _snapTs = 0;
-  var _snapLoading = false;
-  var SNAP_URL = 'data/meciuri_snapshot.json';
-  var SNAP_TTL = 90000; // 90 secunde cache
-
-  function loadSnapshot(cb) {
-    var now = Date.now();
-    if (_snap && (now - _snapTs) < SNAP_TTL) { cb(_snap); return; }
-    if (_snapLoading) { setTimeout(function(){ loadSnapshot(cb); }, 300); return; }
-    _snapLoading = true;
-    fetch(SNAP_URL + '?t=' + now, { cache: 'no-store' })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        _snap = (data && Array.isArray(data.entries)) ? data : { entries: [] };
-        _snapTs = Date.now();
-        _snapLoading = false;
-        cb(_snap);
-      })
-      .catch(function(e) {
-        console.warn('[HistoricTracker] Eroare snapshot:', e);
-        _snapLoading = false;
-        if (!_snap) _snap = { entries: [] };
-        cb(_snap);
-      });
-  }
-
-  function invalidateSnap() { _snapTs = 0; }
-
-  // ── HELPERS ───────────────────────────────────────────────────────────
-  function nv(v){ return Number(v)||0; }
-  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];}); }
   function pct(v){ var x=nv(v);return(x>=0?'+':'')+x.toFixed(1)+'%'; }
   function rcol(v,ok){ return ok?(nv(v)>0?'var(--grn)':(nv(v)<0?'var(--red)':'var(--muted)')):'var(--muted)'; }
   function wcol(v){ return nv(v)>=65?'var(--grn)':(nv(v)>=50?'var(--yel)':'var(--red)'); }
@@ -90,7 +363,6 @@
   function pad2(x){ return String(x).padStart(2,'0'); }
   function fmtDM(d){ return pad2(d.getDate())+'/'+pad2(d.getMonth()+1); }
 
-  // ── CALENDAR WEEK HELPERS ─────────────────────────────────────────────
   function weekMonday(d){
     var x=new Date(d);x.setHours(0,0,0,0);
     var dow=x.getDay();x.setDate(x.getDate()-(dow===0?6:dow-1));return x;
@@ -112,7 +384,6 @@
   }
   function isCurrentWeek(w){ return Date.now()>=w.s&&Date.now()<=w.e; }
 
-  // ── BOUNDS ────────────────────────────────────────────────────────────
   function dayBounds(idx){
     var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-idx);
     var e=new Date(d);e.setHours(23,59,59,999);
@@ -144,10 +415,8 @@
     return '';
   }
 
-  // ── DATE DIN SNAPSHOT ─────────────────────────────────────────────────
-  // Filtrare pe eligible_categories — identic cu logica din Meciuri
-  function getRowsForCat(catKey, snapEntries) {
-    return (snapEntries||[]).filter(function(r){
+  function getRowsForCat(catKey, entries) {
+    return (entries||[]).filter(function(r){
       if(!inPeriod(r))return false;
       var cats=r.eligible_categories;
       if(!Array.isArray(cats)||cats.length===0)return false;
@@ -166,7 +435,6 @@
     });
   }
 
-  // ── STATS ─────────────────────────────────────────────────────────────
   function calcStats(rows){
     var s=rows.filter(function(r){return r._st==='win'||r._st==='lose';});
     var p=rows.filter(function(r){return r._st==='pending';});
@@ -184,9 +452,8 @@
     };
   }
 
-  // ── CSS ───────────────────────────────────────────────────────────────
   function injectCss(){
-    if(document.getElementById('bat-hist-v6-css'))return;
+    if(document.getElementById('bat-hist-v7-css'))return;
     var css=[
       '.bh-wrap{padding:2px 0 12px}',
       '.bh-mbar{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}',
@@ -251,11 +518,10 @@
       '.bh-loading{text-align:center;padding:32px 16px;color:var(--muted);font-size:12px}',
       '@media(max-width:360px){.bh-grid{grid-template-columns:1fr}.bh-kval{font-size:17px}.bh-days{gap:4px}.bh-daybtn{min-width:34px;padding:6px 6px}}'
     ].join('');
-    var el=document.createElement('style');el.id='bat-hist-v6-css';el.textContent=css;
+    var el=document.createElement('style');el.id='bat-hist-v7-css';el.textContent=css;
     document.head.appendChild(el);
   }
 
-  // ── PERIOD BAR ────────────────────────────────────────────────────────
   function renderPeriodBar(){
     var h='<div class="bh-mbar">'+
       mb('days7','7 Zile')+mb('weeks','Saptamani')+mb('month','Luna')+mb('year','Anual')+
@@ -311,7 +577,6 @@
     return opts;
   }
 
-  // ── SUMMARY ───────────────────────────────────────────────────────────
   function renderSummary(entries){
     var rows=getRowsForCat('all',entries);
     var s=calcStats(rows); var nd=s.settled===0;
@@ -328,7 +593,6 @@
   }
   function kc(val,col,lbl){return'<div class="bh-kcard"><div class="bh-kval" style="color:'+col+'">'+val+'</div><div class="bh-klbl">'+lbl+'</div></div>';}
 
-  // ── GRID ──────────────────────────────────────────────────────────────
   function renderGrid(entries){
     // Toate categoriile vizibile mereu, identic cu filtrele din Meciuri
     var cards=CATS.filter(function(c){return c.key!=='all';}).map(function(cat){
@@ -354,7 +618,6 @@
     return'<div class="bh-grid">'+cards.join('')+'</div>';
   }
 
-  // ── DRILLDOWN ─────────────────────────────────────────────────────────
   function renderDrilldown(entries){
     var cat=getCat(S.cat);
     var rows=getRowsForCat(S.cat,entries);
@@ -409,23 +672,22 @@
   }
   function pl(txt,col){return'<div class="bh-pill" style="color:'+col+'">'+txt+'</div>';}
 
-  // ── RENDER ────────────────────────────────────────────────────────────
   var _last='';
   function render(){
     var root=document.getElementById('history21-root');
     if(!root)return;
     injectCss();
-    if(!_snap&&!_snapLoading){
+    if(!_localCache && root.innerHTML.indexOf('bh-wrap')<0){
       root.innerHTML='<div class="bh-loading">\u29D7 Se incarca istoricul\u2026</div>';
     }
-    loadSnapshot(function(snap){
-      var entries=snap.entries||[];
+    loadEntries(function(entries){
       var html;
       if(S.view==='drilldown'&&S.cat){
         html='<div class="bh-wrap">'+renderPeriodBar()+renderDrilldown(entries)+'</div>';
       }else{
+        var src = _isUsingCapture ? 'capturat din Meciuri' : 'snapshot.json';
         html='<div class="bh-wrap">'+renderPeriodBar()+
-          '<div class="bh-note">\uD83D\uDCCC Date identice cu filtrele din Meciuri \u2014 acelea\u015Fi meciuri, acelea\u015Fi categorii.</div>'+
+          '<div class="bh-note">\uD83D\uDCCC Sursa: <b>'+src+'</b> \u2014 acelea\u015Fi meciuri ca \xEEn Meciuri.</div>'+
           renderSummary(entries)+renderGrid(entries)+'</div>';
       }
       if(html!==_last){
@@ -445,25 +707,61 @@
     setYear:function(v){S.year=parseInt(v);_last='';render();},
     drill:function(k){S.cat=k;S.view='drilldown';_last='';render();var r=document.getElementById('history21-root');if(r&&r.scrollIntoView)r.scrollIntoView({behavior:'smooth',block:'start'});},
     back:function(){S.view='grid';S.cat=null;_last='';render();},
-    refresh:function(){invalidateSnap();_last='';render();}
+    refresh:function(){invalidateLocalCache();_last='';render();},
+    capture:function(){return captureFromMeciuri();},
+    syncStatus:function(){syncStatusFromLog();},
+    clearCapture:function(){try{localStorage.removeItem(STORAGE_KEY);invalidateLocalCache();_last='';render();return true;}catch(e){return false;}}
   };
 
   // ── BOOT ──────────────────────────────────────────────────────────────
   function boot(){
     render();
-    [500,1500,4000,9000].forEach(function(t){setTimeout(render,t);});
-    setInterval(function(){invalidateSnap();render();},120000);
-    window.renderHistory21=function(){invalidateSnap();_last='';render();};
-    var orig=window.switchTab;
-    if(typeof orig==='function'){
-      window.switchTab=function(name){
-        orig.apply(this,arguments);
-        if(name==='istoric21'||name==='istoric'){invalidateSnap();_last='';setTimeout(render,80);setTimeout(render,700);}
+
+    // Hook în switchTab pentru a captura când utilizatorul merge la Meciuri
+    var origSwitch = window.switchTab;
+    if (typeof origSwitch === 'function') {
+      window.switchTab = function(name){
+        origSwitch.apply(this, arguments);
+        if (name === 'meciuri' || name === 'matches') {
+          // Captură când Meciuri se randează
+          setTimeout(captureFromMeciuri, 800);
+          setTimeout(captureFromMeciuri, 2200);
+          setTimeout(syncStatusFromLog, 3500);
+        } else if (name === 'istoric21' || name === 'istoric' || name === 'history') {
+          invalidateLocalCache();
+          _last='';
+          setTimeout(render, 80);
+          setTimeout(render, 700);
+        }
       };
     }
+
+    // Captură inițială (dacă utilizatorul deja e pe Meciuri la load)
+    setTimeout(function(){
+      if (window.ALL_MATCHES && window.ALL_MATCHES.length > 0) {
+        captureFromMeciuri();
+        syncStatusFromLog();
+      }
+    }, 2500);
+
+    // Captură periodică (în caz că ALL_MATCHES e actualizat)
+    setInterval(function(){
+      if (window.ALL_MATCHES && window.ALL_MATCHES.length > 0) {
+        captureFromMeciuri();
+      }
+    }, 60000); // 1 min
+
+    // Sincronizare status periodică
+    setInterval(syncStatusFromLog, 180000); // 3 min
+
+    // Compatibilitate cu cod vechi
+    window.renderHistory21 = function(){ invalidateLocalCache(); _last=''; render(); };
+
     try{
       var root=document.getElementById('history21-root');
-      if(root)new MutationObserver(function(){if(!root.querySelector('.bh-wrap')){_last='';render();}}).observe(root,{childList:true});
+      if(root) new MutationObserver(function(){
+        if(!root.querySelector('.bh-wrap')){_last='';render();}
+      }).observe(root,{childList:true});
     }catch(e){}
   }
 
