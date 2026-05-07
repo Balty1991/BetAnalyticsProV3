@@ -2060,6 +2060,7 @@ def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event
         if _pick_value >= 0.08 and _pick_edge >= 3 or _pick_risk == "Value":
             _eligible_cats.append("value")
         if "over15"  in _all_mkt_keys: _eligible_cats.append("o15")
+        if "over25"  in _all_mkt_keys: _eligible_cats.append("o25")
         if "btts"    in _all_mkt_keys: _eligible_cats.append("btts")
         if "under35" in _all_mkt_keys: _eligible_cats.append("u35")
 
