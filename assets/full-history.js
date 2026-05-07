@@ -111,7 +111,18 @@ function summarizeCard(key){
   if(key==='istoricfull') return `${fmt(hist.journal_rows||W.RECOMMENDATION_JOURNAL.length)} jurnal • ${fmt(hist.history_rows||0)} rezultate • ${fmt(hist.lookback_days||0)} zile`;
   if(key==='apihistory') return `${fmt(apiValid.leagues_total||W.API_HISTORY_LEAGUES.length)} ligi • ${fmt(apiValid.seasons_total||W.API_SEASONS_HISTORY.length)} sezoane • ${fmt(apiEv.total_events_counted||0)} meciuri`;
   if(key==='traininglab') return `${fmt(tr.rows_total||W.TRAINING_MATCHES.length)} rows • ${fmt(feat.eligible_min_history_5||model.rows_eligible_min5||0)} ready • ${fmt(arr(model.markets).filter(x=>x&&x.ready).length||arr(tr.markets_ready).length)} piețe`;
-  if(key==='smartbet') return `${fmt(memSum.pending_scored||0)} adaptive picks • ${fmt(memSum.settled_bets||0)} settled • ROI ${pct(memSum.settled_roi||0,2)}`;
+  if(key==='smartbet'){
+    // Prioritizăm count-ul filtrat din getSmartBetAnalysis (același număr ca în tab)
+    var filteredCount = null;
+    try {
+      if(typeof W.getSmartBetAnalysis === 'function'){
+        var _analysis = W.getSmartBetAnalysis();
+        filteredCount = (_analysis.pool || []).length;
+      }
+    } catch(e){}
+    var picks = filteredCount !== null ? filteredCount : (memSum.pending_scored||0);
+    return `${fmt(picks)} picks validate • ${fmt(memSum.settled_bets||0)} settled • ROI ${pct(memSum.settled_roi||0,2)}`;
+  }
   return '';
 }
 
