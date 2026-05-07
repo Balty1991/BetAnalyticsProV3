@@ -53,24 +53,61 @@ async function j(paths,fb){
   return fb;
 }
 
+// Cache sesiune: evită re-fetch la switch între tab-uri
+const _L={};
+function px(key,paths,fb){
+  if(_L[key]) return Promise.resolve(W[key]);
+  _L[key]=true;
+  return j(paths,fb).then(d=>{W[key]=d;return d;});
+}
+
+// Loaders paraleli per tab — fiecare descarcă DOAR ce are nevoie
+function loadIstoric(){
+  return Promise.all([
+    px('RECOMMENDATION_JOURNAL',['./data/recommendation_journal.json','data/recommendation_journal.json','/BetAnalyticsProV3/data/recommendation_journal.json'],[]),
+    px('FULL_HISTORY_META',['./data/full_history_meta.json','data/full_history_meta.json','/BetAnalyticsProV3/data/full_history_meta.json'],null),
+    px('META',['./data/meta.json','data/meta.json','/BetAnalyticsProV3/data/meta.json'],null)
+  ]);
+}
+function loadApiHistory(){
+  return Promise.all([
+    px('API_HISTORY_SUMMARY',['./data/api_history_summary.json','data/api_history_summary.json','/BetAnalyticsProV3/data/api_history_summary.json'],null),
+    px('API_HISTORY_LEAGUES',['./data/api_history_leagues.json','data/api_history_leagues.json','/BetAnalyticsProV3/data/api_history_leagues.json'],[]),
+    px('API_EVENTS_HISTORY_SUMMARY',['./data/api_events_history_summary.json','data/api_events_history_summary.json','/BetAnalyticsProV3/data/api_events_history_summary.json'],null),
+    px('API_SEASONS_HISTORY',['./data/api_seasons_history.json','data/api_seasons_history.json','/BetAnalyticsProV3/data/api_seasons_history.json'],[]),
+    px('API_EVENTS_HISTORY_INDEX',['./data/api_events_history_index.json','data/api_events_history_index.json','/BetAnalyticsProV3/data/api_events_history_index.json'],[])
+  ]);
+}
+function loadTrainingLab(){
+  return Promise.all([
+    px('TRAINING_DATASET_SUMMARY',['./data/training_dataset_summary.json','data/training_dataset_summary.json','/BetAnalyticsProV3/data/training_dataset_summary.json'],null),
+    px('TRAINING_INSIGHTS_SUMMARY',['./data/training_insights_summary.json','data/training_insights_summary.json','/BetAnalyticsProV3/data/training_insights_summary.json'],null),
+    px('TRAINING_MATCHES',['./data/training_matches.json','data/training_matches.json','/BetAnalyticsProV3/data/training_matches.json'],[]),
+    px('TRAINING_MARKET_BASELINES',['./data/training_market_baselines.json','data/training_market_baselines.json','/BetAnalyticsProV3/data/training_market_baselines.json'],[]),
+    px('TRAINING_DATASET_FAILURES',['./data/training_dataset_failures.json','data/training_dataset_failures.json','/BetAnalyticsProV3/data/training_dataset_failures.json'],[]),
+    px('TRAINING_FEATURE_SUMMARY',['./data/training_feature_summary.json','data/training_feature_summary.json','/BetAnalyticsProV3/data/training_feature_summary.json'],null),
+    px('TRAINING_SCORING_SUMMARY',['./data/training_scoring_summary.json','data/training_scoring_summary.json','/BetAnalyticsProV3/data/training_scoring_summary.json'],null),
+    px('TRAINING_MODEL_SUMMARY',['./data/training_model_summary.json','data/training_model_summary.json','/BetAnalyticsProV3/data/training_model_summary.json'],null),
+    px('AI_MEMORY',['./data/ai_memory.json','data/ai_memory.json','/BetAnalyticsProV3/data/ai_memory.json'],null)
+  ]);
+}
+
 async function load(){
-  W.RECOMMENDATION_JOURNAL=await j(['./data/recommendation_journal.json','data/recommendation_journal.json','/BetAnalyticsProV3/data/recommendation_journal.json'],[]);
-  W.API_HISTORY_SUMMARY=await j(['./data/api_history_summary.json','data/api_history_summary.json','/BetAnalyticsProV3/data/api_history_summary.json'],null);
-  W.API_HISTORY_LEAGUES=await j(['./data/api_history_leagues.json','data/api_history_leagues.json','/BetAnalyticsProV3/data/api_history_leagues.json'],[]);
-  W.API_EVENTS_HISTORY_SUMMARY=await j(['./data/api_events_history_summary.json','data/api_events_history_summary.json','/BetAnalyticsProV3/data/api_events_history_summary.json'],null);
-  W.API_SEASONS_HISTORY=await j(['./data/api_seasons_history.json','data/api_seasons_history.json','/BetAnalyticsProV3/data/api_seasons_history.json'],[]);
-  W.API_EVENTS_HISTORY_INDEX=await j(['./data/api_events_history_index.json','data/api_events_history_index.json','/BetAnalyticsProV3/data/api_events_history_index.json'],[]);
-  W.TRAINING_DATASET_SUMMARY=await j(['./data/training_dataset_summary.json','data/training_dataset_summary.json','/BetAnalyticsProV3/data/training_dataset_summary.json'],null);
-  W.TRAINING_INSIGHTS_SUMMARY=await j(['./data/training_insights_summary.json','data/training_insights_summary.json','/BetAnalyticsProV3/data/training_insights_summary.json'],null);
-  W.TRAINING_MATCHES=await j(['./data/training_matches.json','data/training_matches.json','/BetAnalyticsProV3/data/training_matches.json'],[]);
-  W.TRAINING_MARKET_BASELINES=await j(['./data/training_market_baselines.json','data/training_market_baselines.json','/BetAnalyticsProV3/data/training_market_baselines.json'],[]);
-  W.TRAINING_DATASET_FAILURES=await j(['./data/training_dataset_failures.json','data/training_dataset_failures.json','/BetAnalyticsProV3/data/training_dataset_failures.json'],[]);
-  W.TRAINING_FEATURE_SUMMARY=await j(['./data/training_feature_summary.json','data/training_feature_summary.json','/BetAnalyticsProV3/data/training_feature_summary.json'],null);
-  W.TRAINING_SCORING_SUMMARY=await j(['./data/training_scoring_summary.json','data/training_scoring_summary.json','/BetAnalyticsProV3/data/training_scoring_summary.json'],null);
-  W.TRAINING_MODEL_SUMMARY=await j(['./data/training_model_summary.json','data/training_model_summary.json','/BetAnalyticsProV3/data/training_model_summary.json'],null);
-  W.AI_MEMORY=await j(['./data/ai_memory.json','data/ai_memory.json','/BetAnalyticsProV3/data/ai_memory.json'],null);
-  W.FULL_HISTORY_META=await j(['./data/full_history_meta.json','data/full_history_meta.json','/BetAnalyticsProV3/data/full_history_meta.json'],null);
-  W.META=await j(['./data/meta.json','data/meta.json','/BetAnalyticsProV3/data/meta.json'],null);
+  // Prioritizăm tab-ul activ, restul se încarcă în background
+  const activeId=(document.querySelector('.tab-content.active')||{}).id||'';
+  if(activeId==='tab-istoricfull'){
+    await loadIstoric();
+    Promise.all([loadApiHistory(),loadTrainingLab()]).catch(()=>{});
+  } else if(activeId==='tab-apihistory'){
+    await loadApiHistory();
+    Promise.all([loadIstoric(),loadTrainingLab()]).catch(()=>{});
+  } else if(activeId==='tab-traininglab'){
+    await loadTrainingLab();
+    Promise.all([loadIstoric(),loadApiHistory()]).catch(()=>{});
+  } else {
+    await loadIstoric();
+    Promise.all([loadApiHistory(),loadTrainingLab()]).catch(()=>{});
+  }
 }
 
 function cardKeyTitle(title){
