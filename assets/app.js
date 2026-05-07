@@ -10675,7 +10675,7 @@ function renderML5MatchCard(m){
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">' +
       '<div>' +
         '<div style="font-size:13px;font-weight:800;color:var(--txt)">'+htmlEsc(m.home||'')+' vs '+htmlEsc(m.away||'')+'</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+htmlEsc(m.league||'')+' · '+htmlEsc(m.timeLabel||m.dateLabel||'')+'</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+htmlEsc(m.league||'')+' · '+htmlEsc(m.dateLabel||'')+' '+htmlEsc(m.timeLabel||'')+'</div>' +
       '</div>' +
       '<div style="text-align:right">' +
         '<div style="font-size:22px;font-weight:900;color:'+scoreColor+';line-height:1">'+score+'</div>' +
