@@ -202,6 +202,11 @@ def build_snapshot():
             skipped += 1
             continue
 
+        # Excludem verdict='avoid' - nu apar in Meciuri (filtrul ELIGIBLE)
+        if str(r.get("verdict") or "").lower() == "avoid":
+            skipped += 1
+            continue
+
         cats = r.get("eligible_categories")
         if not cats or not isinstance(cats, list):
             skipped += 1
