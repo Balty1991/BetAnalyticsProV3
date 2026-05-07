@@ -330,10 +330,9 @@
 
   // ── GRID ──────────────────────────────────────────────────────────────
   function renderGrid(entries){
-    // Afiseaza doar categoriile care au cel putin un meci in perioada
+    // Toate categoriile vizibile mereu, identic cu filtrele din Meciuri
     var cards=CATS.filter(function(c){return c.key!=='all';}).map(function(cat){
       var rows=getRowsForCat(cat.key,entries);
-      if(rows.length===0)return''; // Ascunde categoriile goale
       var s=calcStats(rows); var nd=s.settled===0;
       var rCol=rcol(s.roi,!nd);
       var bCol=nd?'rgba(255,255,255,.06)':(s.roi>=0?'rgba(34,197,94,.22)':'rgba(239,68,68,.18)');
@@ -351,7 +350,7 @@
           (s.delta>=0?'+':'')+s.delta.toFixed(1)+'pp</b>':'')+
         '</div><div class="bh-card-bar" style="background:'+cat.accent+';width:'+barW+'%"></div>'+
       '</div>';
-    }).filter(Boolean);
+    });
     return'<div class="bh-grid">'+cards.join('')+'</div>';
   }
 
