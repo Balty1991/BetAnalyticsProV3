@@ -694,6 +694,27 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
         return None
     if odds < 1.01:
         return None
+
+    # ── Best Odds Multi-Bookmaker (v2 API) ────────────────────────────────────
+    # Citim din EVENT_ODDS_COMPARE_CACHE populat de enrich_predictions_with_market_odds.
+    # Dacă best odds e mai bun decât consensus → îl folosim pentru EV/Kelly/Edge.
+    # Stocăm ambele valori: odds_consensus (referință) și odds (best real).
+    odds_consensus = odds
+    best_odds_bk: Optional[str] = None
+    odds_upgraded = False
+    try:
+        ev_id = int(event.get("id") or 0) or None
+        if ev_id:
+            snap = EVENT_ODDS_COMPARE_CACHE.get(ev_id, {}).get(market_key) or {}
+            snap_best = _safe_float(snap.get("best_odds"))
+            if snap_best and snap_best > odds * 1.0005:   # minim +0.05% față de consensus
+                odds = snap_best
+                best_odds_bk = snap.get("best_bookmaker") or None
+                odds_upgraded = True
+    except Exception:
+        pass
+    # ──────────────────────────────────────────────────────────────────────────
+
     prob_meta = blend_model_probability(row, market_key)
     prob = prob_meta.get("effective_prob")
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
@@ -712,10 +733,20 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
     outcome = market_outcome(event, market_key)
     if outcome is None:
         return None
+
+    # EV% și Kelly calculat față de best odds (dacă e disponibil)
+    ev_pct = round(value * 100.0, 2) if value is not None else None
+    kelly_pct = round(calc_kelly_pct(adj, odds, fraction=0.25), 2) if adj and odds > 1.01 else None
+
     return {
         "market": market["label"],
         "market_key": market_key,
         "odds": round(odds, 3),
+        "odds_consensus": round(odds_consensus, 3),
+        "odds_upgraded": odds_upgraded,
+        "best_odds_bookmaker": best_odds_bk,
+        "ev_pct": ev_pct,
+        "kelly_pct": kelly_pct,
         "prob": round(prob, 2),
         "api_prob": prob_meta.get("api_prob"),
         "poisson_prob": prob_meta.get("poisson_prob"),
@@ -1003,87 +1034,18 @@ def build_signal_audit(predictions, recommendation_log=None):
         if event.get("status") != "notstarted":
             continue
 
+        # Folosim build_candidate() — include best odds din cache (v2 multi-bookmaker)
+        # Ranking-ul se face direct cu best odds, nu cu consensus → pick corect
         candidates = []
         for market in MARKETS:
-            market_key = market["key"]
-            try:
-                odds = float((market["odds"](event) or 0))
-            except Exception:
-                odds = 0.0
-            if odds < 1.01:
-                continue
-            prob_meta = blend_model_probability(row, market_key)
-            prob = prob_meta.get("effective_prob")
-            confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
-            value = calc_value(prob, odds)
-            league_name = (event.get("league") or {}).get("name") or "Unknown"
-            tier_info = get_league_tier_info(league_name)
-            calib_info = get_league_calibration(league_name)
-            adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
-            market_prob = market_prob_from_row_event(row, event, market_key)
-            edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
-            fit = market_fit_score(row, market_key)
-            source_api = api_recommend(row, market_key)
-            source_heuristic = heuristic_recommend(row, market_key)
-            score = calc_smart_score(adj, value, confidence, edge_pct, fit, source_api, source_heuristic)
-            verdict = verdict_from_metrics(adj, value, confidence, edge_pct)
-            candidate = {
-                "market": market["label"],
-                "market_key": market_key,
-                "odds": round(odds, 3),
-                "prob": round(prob, 2),
-                "api_prob": prob_meta.get("api_prob"),
-                "poisson_prob": prob_meta.get("poisson_prob"),
-                "poisson_delta": prob_meta.get("poisson_delta"),
-                "poisson_alert": bool(prob_meta.get("poisson_alert")),
-                "poisson_direction": prob_meta.get("poisson_direction"),
-                "adj_prob": round(adj, 2),
-                "value": round(value, 4),
-                "confidence": round(confidence, 2),
-                "market_prob": round(market_prob, 2) if market_prob is not None else None,
-                "edge_pct": round(edge_pct, 2) if edge_pct is not None else None,
-                "fit_score": round(fit, 2),
-                "score": score,
-                "verdict": verdict,
-                "source_api": bool(source_api),
-                "source_heuristic": bool(source_heuristic),
-                "league": league_name,
-        "league_tier": tier_info.get("tier"),
-        "league_calib_tier": calib_info.get("tier", "neutral"),
-        "league_roi_backtest": calib_info.get("roi", None),
-        "adjustment_factor": round(dynamic_adjustment_factor(prob, confidence, league_name=league_name, market_key=market_key, odds=odds), 4),
-                "event_id": event.get("id"),
-                "prediction_id": row.get("id"),
-                "date": event.get("event_date"),
-                "created_at": row.get("created_at"),
-                "most_likely_score": row.get("most_likely_score"),
-            }
-            if qualifies_for_strategy(candidate, STRATEGIES["engine_overall"]):
-                candidates.append(candidate)
+            cand = build_candidate(row, market["key"])
+            if cand and qualifies_for_strategy(cand, STRATEGIES["engine_overall"]):
+                candidates.append(cand)
 
         if not candidates:
             continue
 
         pick = max(candidates, key=rank_candidate)
-
-        # Încearcă să obțină cea mai bună cotă de pe piață (22+ bookmakers)
-        event_id_sa = pick.get("event_id")
-        best_odds_result = fetch_best_market_odds(event_id_sa, pick.get("market_key")) if event_id_sa else None
-        if best_odds_result and best_odds_result[0] > (pick.get("odds") or 0):
-            best_odds_val, best_bk = best_odds_result
-            pick = dict(pick)
-            pick["odds_original"] = pick["odds"]
-            pick["odds"] = round(best_odds_val, 3)
-            pick["best_odds_bookmaker"] = best_bk
-            adj = pick.get("adj_prob") or 0
-            market_prob = pick.get("market_prob")
-            pick["edge_pct"] = round(adj - market_prob, 2) if market_prob is not None else pick.get("edge_pct")
-            pick["value"] = round(calc_value(adj / 100.0, best_odds_val), 4)
-            pick["score"] = calc_smart_score(
-                adj, pick["value"], pick.get("confidence") or 0,
-                pick.get("edge_pct"), pick.get("fit_score") or 0,
-                pick.get("source_api") or False, pick.get("source_heuristic") or False,
-            )
 
         created_at = parse_dt(pick.get("created_at"))
         age_hours = round((now_utc - created_at.astimezone(timezone.utc)).total_seconds() / 3600.0, 2) if created_at else None
@@ -1102,6 +1064,8 @@ def build_signal_audit(predictions, recommendation_log=None):
             reason_tags.append(f"xG {xg_total:.2f}")
         if row.get("most_likely_score"):
             reason_tags.append(f"Scor {row.get('most_likely_score')}")
+        if pick.get("odds_upgraded") and pick.get("best_odds_bookmaker"):
+            reason_tags.append(f"Best@{pick['best_odds_bookmaker']}")
         log_row = log_index.get(str(pick.get("event_id"))) or {}
         previous_odds = log_row.get("odds") if log_row.get("odds") is not None else pick.get("odds")
         opening_odds = log_row.get("opening_odds") if log_row.get("opening_odds") is not None else previous_odds
@@ -1131,6 +1095,9 @@ def build_signal_audit(predictions, recommendation_log=None):
             "market_key": pick.get("market_key"),
             "market": pick.get("market"),
             "book_odds": pick.get("odds"),
+            "odds_consensus": pick.get("odds_consensus"),
+            "odds_upgraded": pick.get("odds_upgraded", False),
+            "best_odds_bookmaker": pick.get("best_odds_bookmaker"),
             "market_prob": pick.get("market_prob"),
             "model_prob": pick.get("prob"),
             "api_prob": pick.get("api_prob"),
@@ -1140,6 +1107,7 @@ def build_signal_audit(predictions, recommendation_log=None):
             "adjusted_prob": pick.get("adj_prob"),
             "fair_odds": fair_odds,
             "edge_pct": pick.get("edge_pct"),
+            "ev_pct": pick.get("ev_pct"),
             "value": pick.get("value"),
             "score": pick.get("score"),
             "verdict": pick.get("verdict"),
@@ -1414,6 +1382,24 @@ MARKET_COMPARE_CONFIG = {
     "dc12":     {"market": "double_chance",  "aliases": lambda ctx: ["12", "1/2", "Home or Away"]},
 }
 
+# v2 API — outcome keys sunt coduri stabile (HOME/DRAW/AWAY/over/under/yes/no)
+# nu mai depindem de team names; parsing direct fără alias matching
+MARKET_COMPARE_CONFIG_V2 = {
+    "homeWin":  {"market": "1x2",           "outcome_code": "HOME"},
+    "draw":     {"market": "1x2",           "outcome_code": "DRAW"},
+    "awayWin":  {"market": "1x2",           "outcome_code": "AWAY"},
+    "over15":   {"market": "over_under_15", "outcome_code": "over"},
+    "under15":  {"market": "over_under_15", "outcome_code": "under"},
+    "over25":   {"market": "over_under_25", "outcome_code": "over"},
+    "under25":  {"market": "over_under_25", "outcome_code": "under"},
+    "over35":   {"market": "over_under_35", "outcome_code": "over"},
+    "under35":  {"market": "over_under_35", "outcome_code": "under"},
+    "btts":     {"market": "btts",          "outcome_code": "yes"},
+    "dc1x":     {"market": "double_chance", "outcome_code": "1X"},
+    "dcx2":     {"market": "double_chance", "outcome_code": "X2"},
+    "dc12":     {"market": "double_chance", "outcome_code": "12"},
+}
+
 
 def _safe_float(value):
     try:
@@ -1516,6 +1502,62 @@ def _parse_compare_snapshot(data):
     return snapshot
 
 
+def _parse_compare_snapshot_v2(data):
+    """
+    Parser pentru BSD API v2 /events/{id}/odds/comparison/
+    Outcome keys = coduri stabile: HOME/DRAW/AWAY/over/under/yes/no/1X/X2/12
+    Nu mai depindem de team names — parsing direct și robust.
+    """
+    if not isinstance(data, dict):
+        return {}
+    markets = data.get("markets") or {}
+    if not markets:
+        return {}
+    snapshot = {}
+    for market_key, cfg in MARKET_COMPARE_CONFIG_V2.items():
+        market_name = cfg["market"]
+        outcome_code = cfg["outcome_code"]
+        market_block = markets.get(market_name)
+        if not isinstance(market_block, dict):
+            continue
+        # Lookup direct pe outcome code — v2 garantează aceste chei stabile
+        chosen = market_block.get(outcome_code)
+        if not isinstance(chosen, dict):
+            continue
+        best_odds = _safe_float(chosen.get("best_odds"))
+        if best_odds is None or best_odds < 1.01:
+            continue
+        # Extrage odds individuale per bookmaker pentru avg și bookmakers_count
+        bookmakers = chosen.get("bookmakers") or {}
+        values = []
+        best_bk_from_books = None
+        best_odds_in_books = 0.0
+        for bk_slug, bk_payload in (bookmakers.items() if isinstance(bookmakers, dict) else []):
+            if not isinstance(bk_payload, dict):
+                continue
+            # v2 bookmaker payload: {"decimal_odds": 2.20, "implied_probability": 0.4545, "movement": "..."}
+            odd = _safe_float(bk_payload.get("decimal_odds") or bk_payload.get("decimal"))
+            if odd is None or odd < 1.01:
+                continue
+            values.append(odd)
+            if odd > best_odds_in_books:
+                best_odds_in_books = odd
+                best_bk_from_books = bk_slug
+        if not values:
+            values = [best_odds]
+        best_bk = chosen.get("best_bookmaker") or best_bk_from_books or "unknown"
+        entry = _build_snapshot_entry(
+            values=values,
+            best_odds=best_odds,
+            best_bk=best_bk,
+            best_movement=None,
+            best_ai_probability=None,
+            best_updated_at=None,
+        )
+        snapshot[market_key] = entry
+    return snapshot
+
+
 def _parse_raw_odds_snapshot(data):
     if not isinstance(data, dict):
         return {}
@@ -1526,11 +1568,24 @@ def _parse_raw_odds_snapshot(data):
         if not isinstance(row, dict):
             continue
         market_name = str(row.get("market") or "").strip().lower()
-        outcome_name = str(row.get("outcome_name") or row.get("outcome") or "").strip()
+        # v2: outcome = cod stabil (HOME/DRAW/AWAY/over/under/yes/no)
+        # v1: outcome_name = text liber (team name, "Over 2.5" etc.)
+        outcome_code = str(row.get("outcome") or "").strip()          # v2 cod
+        outcome_name = str(row.get("outcome_name") or "").strip()     # v1/v2 label
         outcome_slug = _slug(outcome_name)
         odd = _safe_float(row.get("decimal_odds"))
         if odd is None or odd < 1.01:
             continue
+        # Prioritate: match direct pe outcome code v2 (MARKET_COMPARE_CONFIG_V2)
+        matched = False
+        for market_key, cfg in MARKET_COMPARE_CONFIG_V2.items():
+            if market_name == cfg["market"] and outcome_code == cfg["outcome_code"]:
+                grouped[market_key].append(row)
+                matched = True
+                break
+        if matched:
+            continue
+        # Fallback: match pe alias (v1 sau outcome_name text liber)
         for market_key, cfg in MARKET_COMPARE_CONFIG.items():
             if market_name != cfg.get("market"):
                 continue
@@ -1555,14 +1610,23 @@ def _parse_raw_odds_snapshot(data):
                 best_row = row
         if not best_row or best_odds < 1.01:
             continue
+        # v2: bookmaker_slug; v1: bookmaker / bookmaker_code
+        bk_name = (
+            best_row.get("bookmaker_name")
+            or best_row.get("bookmaker_slug")
+            or best_row.get("bookmaker")
+            or best_row.get("bookmaker_code")
+            or "unknown"
+        )
+        movement = best_row.get("movement")  # v2: "SHORTENING" | "DRIFTING" | null
         ai_prob = best_row.get("ai_probability")
         if ai_prob is not None:
             ai_prob = pct(float(ai_prob) * 100.0 if float(ai_prob) <= 1 else float(ai_prob))
         snapshot[market_key] = _build_snapshot_entry(
             values=values,
             best_odds=best_odds,
-            best_bk=best_row.get("bookmaker") or best_row.get("bookmaker_code") or "unknown",
-            best_movement=best_row.get("movement"),
+            best_bk=bk_name,
+            best_movement=movement,
             best_ai_probability=ai_prob,
             best_updated_at=best_row.get("updated_at"),
         )
@@ -1570,10 +1634,10 @@ def _parse_raw_odds_snapshot(data):
 
 
 def _fetch_raw_odds_snapshot(event_id_int):
-    # market=all → returnează 1x2 + btts + over_under_15/25/35 + double_chance + draw_no_bet
-    base_url = f"{API_BASE}/api/odds/?event={event_id_int}&market=all"
+    # v2: /api/v2/odds/?event_id=X — rows per (event, bookmaker, market, outcome)
+    # Returnează bookmaker_slug, movement (SHORTENING/DRIFTING), implied_probability
+    base_url = f"{V2_BASE}/odds/?event_id={event_id_int}&limit=200"
     all_rows = []
-    event_context = None
     seen_urls = set()
     next_url = base_url
     while next_url and next_url not in seen_urls:
@@ -1584,27 +1648,19 @@ def _fetch_raw_odds_snapshot(event_id_int):
         r.raise_for_status()
         data = r.json()
         if isinstance(data, dict):
-            if event_context is None and isinstance(data.get("event"), dict):
-                event_context = data.get("event")
-            rows = data.get("odds") or data.get("results") or []
+            rows = data.get("results") or []
             if isinstance(rows, list):
                 all_rows.extend(rows)
             next_candidate = data.get("next")
             if next_candidate:
-                next_url = next_candidate if str(next_candidate).startswith("http") else (API_BASE.rstrip("/") + "/" + str(next_candidate).lstrip("/"))
+                next_url = next_candidate if str(next_candidate).startswith("http") else (V2_BASE.rstrip("/") + "/" + str(next_candidate).lstrip("/"))
             else:
-                page = int(data.get("page") or 1)
-                total_pages = int(data.get("total_pages") or 1)
-                if total_pages > page:
-                    sep = '&' if '?' in base_url else '?'
-                    next_url = f"{base_url}{sep}page={page+1}"
-                else:
-                    next_url = None
+                next_url = None
         else:
             break
     if not all_rows:
         return {}
-    return _parse_raw_odds_snapshot({"event": event_context or {}, "odds": all_rows})
+    return _parse_raw_odds_snapshot({"odds": all_rows})
 
 
 def fetch_event_odds_compare_snapshot(event_id):
@@ -1612,11 +1668,13 @@ def fetch_event_odds_compare_snapshot(event_id):
     Returnează pentru un eveniment harta cu best odds / best bookmaker / average odds
     pe toate piețele suportate. Cache-uit per event pentru a evita request-uri repetate.
 
-    Strategie:
-    1. Fetch compare endpoint → returnează 1x2 + btts + avg_odds/bookmakers_count
-    2. Fetch raw odds endpoint (market=all) → returnează TOATE piețele incl. over_under_35
-    3. Merge: raw odds furnizează piețele lipsă (under35, over15 etc.)
-       compare endpoint furnizează avg_odds și bookmakers_count mai precise
+    Strategie v2:
+    1. Fetch /api/v2/events/{id}/odds/comparison/ → outcome keys stabile (HOME/DRAW/AWAY/over/under)
+       Parser nou: _parse_compare_snapshot_v2 — robust, fără dependență de team names
+    2. Fetch /api/v2/odds/?event_id={id} → toate piețele incl. over_under_35, movement
+       Include bookmaker_slug, movement (SHORTENING/DRIFTING) per row
+    3. Merge: compare furnizează bookmakers_count și best per 1x2/btts
+              raw completează piețele lipsă (under35, over15) și movement signal
     """
     try:
         event_id_int = int(event_id)
@@ -1625,16 +1683,17 @@ def fetch_event_odds_compare_snapshot(event_id):
     if event_id_int in EVENT_ODDS_COMPARE_CACHE:
         return EVENT_ODDS_COMPARE_CACHE[event_id_int]
 
-    # Pasul 1: compare endpoint (1x2 + btts, cu avg_odds precis)
+    # Pasul 1: v2 compare endpoint — outcome keys stabile (HOME/DRAW/AWAY/over/under/yes)
+    # nu mai depinde de team names → parsing robust și corect
     compare_snapshot = {}
     try:
         r = requests.get(
-            f"{API_BASE}/api/odds/compare/?event={event_id_int}&market=all",
+            f"{V2_BASE}/events/{event_id_int}/odds/comparison/",
             headers=HEADERS, timeout=20
         )
         if r.status_code not in (400, 404, 405):
             r.raise_for_status()
-            compare_snapshot = _parse_compare_snapshot(r.json()) or {}
+            compare_snapshot = _parse_compare_snapshot_v2(r.json()) or {}
     except Exception:
         pass
 
