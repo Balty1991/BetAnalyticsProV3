@@ -4569,16 +4569,37 @@ function analyzeMatch(raw){
     refIsStrict    : raw.ref_is_strict    != null ? !!raw.ref_is_strict    : null,
     refIsHighGoals : raw.ref_is_high_goals!= null ? !!raw.ref_is_high_goals: null,
     refMatches     : raw.ref_matches   != null ? Number(raw.ref_matches)   : null,
-    // ─── Lineup (fetch_lineups_today.py) ─────────────────────────────────
-    lineupStatus   : raw.lineup_status  || null,
+    // ─── Lineup (fetch_lineups_today.py + v1 event unavailable_players) ──
+    lineupStatus   : (function(){
+      if(raw.lineup_status) return raw.lineup_status;
+      var eu = raw.event && raw.event.unavailable_players;
+      if(eu && (( Array.isArray(eu.home) && eu.home.length) || (Array.isArray(eu.away) && eu.away.length))) return 'predicted';
+      return null;
+    })(),
     homeFormation  : raw.home_formation || null,
     awayFormation  : raw.away_formation || null,
     nInjuredHome   : raw.n_injured_home != null ? Number(raw.n_injured_home) : 0,
     nInjuredAway   : raw.n_injured_away != null ? Number(raw.n_injured_away) : 0,
-    nUnavailHome   : raw.n_unavail_home != null ? Number(raw.n_unavail_home) : 0,
-    nUnavailAway   : raw.n_unavail_away != null ? Number(raw.n_unavail_away) : 0,
-    homeUnavailable: Array.isArray(raw.home_unavailable) ? raw.home_unavailable : [],
-    awayUnavailable: Array.isArray(raw.away_unavailable) ? raw.away_unavailable : [],
+    nUnavailHome   : (function(){
+      if(raw.n_unavail_home != null) return Number(raw.n_unavail_home);
+      var eu = raw.event && raw.event.unavailable_players;
+      return (eu && Array.isArray(eu.home)) ? eu.home.length : 0;
+    })(),
+    nUnavailAway   : (function(){
+      if(raw.n_unavail_away != null) return Number(raw.n_unavail_away);
+      var eu = raw.event && raw.event.unavailable_players;
+      return (eu && Array.isArray(eu.away)) ? eu.away.length : 0;
+    })(),
+    homeUnavailable: (function(){
+      if(Array.isArray(raw.home_unavailable) && raw.home_unavailable.length) return raw.home_unavailable;
+      var eu = raw.event && raw.event.unavailable_players;
+      return (eu && Array.isArray(eu.home)) ? eu.home : [];
+    })(),
+    awayUnavailable: (function(){
+      if(Array.isArray(raw.away_unavailable) && raw.away_unavailable.length) return raw.away_unavailable;
+      var eu = raw.event && raw.event.unavailable_players;
+      return (eu && Array.isArray(eu.away)) ? eu.away : [];
+    })(),
     homeStarters   : Array.isArray(raw.home_starters)    ? raw.home_starters    : [],
     awayStarters   : Array.isArray(raw.away_starters)    ? raw.away_starters    : [],
     homeConfidence : raw.home_confidence != null ? Number(raw.home_confidence) : null,
