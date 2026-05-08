@@ -108,86 +108,108 @@ def fetch_lineup(event_id):
 
 def normalize_lineup(event_id, raw):
     """
-    Normalizează răspunsul API într-un dict consistent.
-    Gestionează atât lineup confirmed cât și predicted.
+    Normalizează răspunsul API conform documentației BSD v2:
+    {
+      "lineup_status": "predicted" | "confirmed" | "unavailable",
+      "lineups": {
+        "home": { "formation": "4-3-3", "confidence": 0.74, "players": [...], "substitutes": [...] },
+        "away": { ... }
+      },
+      "unavailable_players": {
+        "home": [{ "id", "name", "status", "reason" }],
+        "away": [...]
+      }
+    }
     """
     if not raw or not isinstance(raw, dict):
         return {"status": "unavailable", "event_id": event_id}
 
-    status = raw.get("status") or "predicted"
+    status = raw.get("lineup_status") or raw.get("status") or "unavailable"
 
-    home = raw.get("home_team") or raw.get("home") or {}
-    away = raw.get("away_team") or raw.get("away") or {}
-
-    def parse_team(team_data):
-        if not isinstance(team_data, dict):
-            return {"formation": None, "confidence": None, "starters": [], "unavailable": []}
-
-        formation   = team_data.get("formation") or team_data.get("preferred_formation")
-        confidence  = team_data.get("confidence") or team_data.get("ai_confidence")
-
-        # Starters
-        lineup_raw  = team_data.get("lineup") or team_data.get("starters") or []
-        starters = []
-        for p in lineup_raw if isinstance(lineup_raw, list) else []:
-            if not isinstance(p, dict):
-                continue
-            # Acceptăm ambele formate: is_starter flag sau simplu listă
-            if not p.get("is_starter", True):
-                continue
-            starters.append({
-                "id":           p.get("player_id") or p.get("id"),
-                "name":         p.get("player_name") or p.get("name") or "",
-                "position":     p.get("position") or "",
-                "shirt":        p.get("shirt_number") or p.get("number"),
-                "ai_score":     p.get("ai_score") or p.get("rating"),
-            })
-
-        # Unavailable
-        unavail_raw = team_data.get("unavailable_players") or team_data.get("unavailable") or []
-        unavailable = []
-        for p in unavail_raw if isinstance(unavail_raw, list) else []:
-            if not isinstance(p, dict):
-                continue
-            unavailable.append({
-                "id":          p.get("player_id") or p.get("id"),
-                "name":        p.get("player_name") or p.get("name") or "",
-                "status":      p.get("status") or "unknown",   # injured/suspended/doubtful
-                "return_date": p.get("return_date") or p.get("expected_return"),
-            })
-
+    if status == "unavailable" or raw.get("lineups") is None:
         return {
-            "formation":   formation,
-            "confidence":  round(float(confidence), 3) if confidence else None,
-            "starters":    starters,
-            "unavailable": unavailable,
+            "event_id":         event_id,
+            "status":           "unavailable",
+            "home_formation":   None,
+            "away_formation":   None,
+            "home_confidence":  None,
+            "away_confidence":  None,
+            "home_starters":    [],
+            "away_starters":    [],
+            "home_unavailable": [],
+            "away_unavailable": [],
+            "n_injured_home":   0,
+            "n_injured_away":   0,
+            "n_unavail_home":   0,
+            "n_unavail_away":   0,
+            "fetched_at":       datetime.now(timezone.utc).isoformat(),
         }
 
-    home_data = parse_team(home)
-    away_data = parse_team(away)
+    # Structura confirmată din docs: raw["lineups"]["home"] și raw["lineups"]["away"]
+    lineups_block = raw.get("lineups") or {}
+    home_block = lineups_block.get("home") or {}
+    away_block = lineups_block.get("away") or {}
 
-    # Număr jucători lipsă (injured + suspended, nu doubtful)
+    # unavailable_players e la top-level, nu în home/away block
+    unavail_block = raw.get("unavailable_players") or {}
+    home_unavail_raw = unavail_block.get("home") or []
+    away_unavail_raw = unavail_block.get("away") or []
+
+    def parse_players(players_list):
+        """Parsează lista de jucători din docs: id, name, position, jersey_number, ai_score"""
+        result = []
+        for p in (players_list if isinstance(players_list, list) else []):
+            if not isinstance(p, dict):
+                continue
+            result.append({
+                "id":       p.get("id"),
+                "name":     p.get("name") or p.get("short_name") or "",
+                "position": p.get("position") or "",
+                "shirt":    p.get("jersey_number") or p.get("shirt_number"),
+                "ai_score": p.get("ai_score"),
+            })
+        return result
+
+    def parse_unavailable(unavail_list):
+        """Parsează lista de jucători lipsă din docs: id, name, status, reason"""
+        result = []
+        for p in (unavail_list if isinstance(unavail_list, list) else []):
+            if not isinstance(p, dict):
+                continue
+            result.append({
+                "id":     p.get("id"),
+                "name":   p.get("name") or p.get("short_name") or "",
+                "status": p.get("status") or "unknown",  # injured/suspended/doubtful
+                "reason": p.get("reason") or "",
+            })
+        return result
+
     def count_missing(unavail_list):
         return sum(
             1 for p in unavail_list
             if p.get("status") in ("injured", "suspended", "out", "injury", "red_card")
         )
 
+    home_starters = parse_players(home_block.get("players") or [])
+    away_starters = parse_players(away_block.get("players") or [])
+    home_unavail = parse_unavailable(home_unavail_raw)
+    away_unavail = parse_unavailable(away_unavail_raw)
+
     return {
         "event_id":         event_id,
         "status":           status,
-        "home_formation":   home_data["formation"],
-        "away_formation":   away_data["formation"],
-        "home_confidence":  home_data["confidence"],
-        "away_confidence":  away_data["confidence"],
-        "home_starters":    home_data["starters"],
-        "away_starters":    away_data["starters"],
-        "home_unavailable": home_data["unavailable"],
-        "away_unavailable": away_data["unavailable"],
-        "n_injured_home":   count_missing(home_data["unavailable"]),
-        "n_injured_away":   count_missing(away_data["unavailable"]),
-        "n_unavail_home":   len(home_data["unavailable"]),
-        "n_unavail_away":   len(away_data["unavailable"]),
+        "home_formation":   home_block.get("formation"),
+        "away_formation":   away_block.get("formation"),
+        "home_confidence":  round(float(home_block["confidence"]), 4) if home_block.get("confidence") is not None else None,
+        "away_confidence":  round(float(away_block["confidence"]), 4) if away_block.get("confidence") is not None else None,
+        "home_starters":    home_starters,
+        "away_starters":    away_starters,
+        "home_unavailable": home_unavail,
+        "away_unavailable": away_unavail,
+        "n_injured_home":   count_missing(home_unavail),
+        "n_injured_away":   count_missing(away_unavail),
+        "n_unavail_home":   len(home_unavail),
+        "n_unavail_away":   len(away_unavail),
         "fetched_at":       datetime.now(timezone.utc).isoformat(),
     }
 
