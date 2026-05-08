@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-05-08T16:14:45.014916+00:00",
+  "updated_at": "2026-05-08T17:07:51.491509+00:00",
   "summary": {
-    "total_picks": 797,
-    "avg_clv_pct": -0.5295,
+    "total_picks": 798,
+    "avg_clv_pct": -0.5235,
     "median_clv_pct": 0.0,
-    "clv_positive_n": 153,
+    "clv_positive_n": 154,
     "clv_negative_n": 644,
-    "clv_positive_rate": 0.192,
-    "avg_clv_wins": -0.2776,
+    "clv_positive_rate": 0.193,
+    "avg_clv_wins": -0.2698,
     "avg_clv_losses": -1.1944,
-    "win_rate_pct": 72.52,
-    "roi_flat_pct": -0.193,
-    "roi_flat_at_picked_odds_pct": -0.193,
-    "roi_flat_closing_proxy_pct": 0.2777,
+    "win_rate_pct": 72.56,
+    "roi_flat_pct": -0.1639,
+    "roi_flat_at_picked_odds_pct": -0.1639,
+    "roi_flat_closing_proxy_pct": 0.2999,
     "roi_basis": "picked_odds",
     "roi_note": "ROI este calculat la cota luată / opening_odds, nu la closing proxy.",
-    "ev_positive_n": 504,
+    "ev_positive_n": 505,
     "max_clv_pct": 39.3162,
     "min_clv_pct": -28.125,
-    "std_clv_pct": 6.0507
+    "std_clv_pct": 6.0492
   },
   "by_market": {
     "btts": {
@@ -79,22 +79,22 @@
       "confidence": "low"
     },
     "under35": {
-      "n": 456,
-      "avg_clv_pct": -1.009,
+      "n": 457,
+      "avg_clv_pct": -0.9976,
       "median_clv_pct": 0.0,
-      "clv_positive_rate": 0.1579,
-      "win_rate_pct": 73.03,
-      "roi_flat_pct": -1.1985,
-      "roi_flat_at_picked_odds_pct": -1.1985,
-      "roi_flat_closing_proxy_pct": -0.2156,
-      "avg_ev_at_pick": 2.9568,
+      "clv_positive_rate": 0.1597,
+      "win_rate_pct": 73.09,
+      "roi_flat_pct": -1.1455,
+      "roi_flat_at_picked_odds_pct": -1.1455,
+      "roi_flat_closing_proxy_pct": -0.1757,
+      "avg_ev_at_pick": 2.9575,
       "roi_basis": "picked_odds",
       "verdict": "RECALIBRARE_NECESARA",
       "label": "CLV- și ROI-",
       "severity": "bad",
       "action": "Ridică pragul de edge și auditează probabilitățile/sursa cotelor pentru piața asta.",
       "stake_policy": "avoid_or_probe",
-      "edge_adjustment_pp": 3.0,
+      "edge_adjustment_pp": 2.0,
       "confidence": "high"
     }
   },
@@ -107,11 +107,11 @@
       "avg_clv": 18.3888
     },
     "clv_mild_pos": {
-      "n": 118,
-      "win_rate": 80.51,
-      "roi_pct": 13.0534,
+      "n": 119,
+      "win_rate": 80.67,
+      "roi_pct": 13.137,
       "roi_basis": "picked_odds",
-      "avg_clv": 1.7396
+      "avg_clv": 1.7606
     },
     "clv_neutral": {
       "n": 394,
@@ -136,27 +136,27 @@
     }
   },
   "rolling_30d": {
-    "n": 797,
-    "avg_clv_pct": -0.5295,
-    "win_rate_pct": 72.52,
-    "roi_flat_pct": -0.193,
+    "n": 798,
+    "avg_clv_pct": -0.5235,
+    "win_rate_pct": 72.56,
+    "roi_flat_pct": -0.1639,
     "roi_basis": "picked_odds",
     "days": 30
   },
   "rolling_90d": {
-    "n": 797,
-    "avg_clv_pct": -0.5295,
-    "win_rate_pct": 72.52,
-    "roi_flat_pct": -0.193,
+    "n": 798,
+    "avg_clv_pct": -0.5235,
+    "win_rate_pct": 72.56,
+    "roi_flat_pct": -0.1639,
     "roi_basis": "picked_odds",
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 504,
-      "avg_clv": 0.6134,
-      "clv_positive_rate": 0.2401,
-      "roi_flat_pct": 3.7244
+      "n": 505,
+      "avg_clv": 0.6206,
+      "clv_positive_rate": 0.2416,
+      "roi_flat_pct": 3.7626
     },
     "ev_negative_picks": {
       "n": 293,
@@ -169,7 +169,7 @@
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.53%) și ROI negativ (-0.19%) la cota luată. Edge-ul calculat nu bate piața suficient.",
+    "interpretation": "❌ CLV negativ (-0.52%) și ROI negativ (-0.16%) la cota luată. Edge-ul calculat nu bate piața suficient.",
     "action": "Ridică pragurile de edge și auditează probabilitățile pe piețele slabe.",
     "confidence": "high",
     "rolling_trend": "stabil",
@@ -182,6 +182,32 @@
     ]
   },
   "picks": [
+    {
+      "event_id": "202998",
+      "date": "2026-05-08",
+      "home": "Lokomotiv Plovdiv",
+      "away": "Arda Kardzhali",
+      "league": "Parva Liga",
+      "market": "under35",
+      "picked_odds": 1.23,
+      "closing_odds": 1.18,
+      "picked_implied": 0.813008,
+      "closing_implied": 0.847458,
+      "clv_pct": 4.2373,
+      "clv_positive": true,
+      "ev_at_pick_pct": 3.2585,
+      "model_prob": 83.95,
+      "edge_pct": 12.68,
+      "score": 97,
+      "line_move_pct": -4.065,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-05-08T16:47:39.263026+00:00",
+      "prediction_id": 3601,
+      "profit_at_pick": 0.23,
+      "profit_at_closing_proxy": 0.18,
+      "roi_basis": "picked_odds"
+    },
     {
       "event_id": "9425",
       "date": "2026-05-08",
@@ -20909,15 +20935,15 @@
   "market_actions": [
     {
       "market": "under35",
-      "n": 456,
+      "n": 457,
       "verdict": "RECALIBRARE_NECESARA",
       "label": "CLV- și ROI-",
       "severity": "bad",
       "action": "Ridică pragul de edge și auditează probabilitățile/sursa cotelor pentru piața asta.",
       "stake_policy": "avoid_or_probe",
-      "edge_adjustment_pp": 3.0,
-      "avg_clv_pct": -1.009,
-      "roi_flat_pct": -1.1985,
+      "edge_adjustment_pp": 2.0,
+      "avg_clv_pct": -0.9976,
+      "roi_flat_pct": -1.1455,
       "confidence": "high"
     },
     {
