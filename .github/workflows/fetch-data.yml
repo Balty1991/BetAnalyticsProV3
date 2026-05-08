@@ -64,6 +64,41 @@ jobs:
           test -f data/events.json
           test -f data/recommendation_log.json
 
+      # ─── CatBoost ÎNAINTE de enrich — catboost_signal trebuie să existe în ev_signals_v2.json
+      # înainte ca enrich_predictions.py să îl citească și să îl adauge pe predictions ───────────
+      - name: SmartBet v2 — Verificare modele (retrain dacă lipsesc)
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          MODEL_COUNT=$(ls models/catboost_*.cbm 2>/dev/null | wc -l)
+          echo "Modele CatBoost găsite: $MODEL_COUNT"
+          if [ "$MODEL_COUNT" -lt 3 ]; then
+            echo "⚠️  Modele lipsă — pornesc retrain automat (durată ~10-15 min)..."
+            pip install catboost scikit-learn pandas numpy scipy 2>/dev/null | tail -3
+            python feature_engineering.py
+            python train_engine_v2.py --skip-shap
+            MODEL_COUNT_AFTER=$(ls models/catboost_*.cbm 2>/dev/null | wc -l)
+            echo "✅ Retrain complet: $MODEL_COUNT_AFTER modele generate"
+            git config user.name "actions-user"
+            git config user.email "actions-user@users.noreply.github.com"
+            git add models/
+            git diff --staged --quiet || git commit -m "chore(ml): auto-retrain modele lipsă $(date -u +%Y-%m-%dT%H:%M)"
+            git fetch origin
+            git merge origin/main -X ours --no-edit 2>/dev/null || true
+            git push || true
+          else
+            echo "✅ Modele OK ($MODEL_COUNT găsite) — skip retrain"
+          fi
+
+      - name: SmartBet v2 — Predicții CatBoost pe meciuri de azi
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          pip install catboost scikit-learn pandas numpy 2>/dev/null | tail -1
+          python predict_current.py
+        continue-on-error: true
+      # ────────────────────────────────────────────────────────────────────────────────────────────
+
       - name: Enrich predictions with EV/Kelly/fair_odds/risk_tier
         run: python enrich_predictions.py
 
@@ -122,39 +157,6 @@ jobs:
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python build_adaptive_predictions.py
-
-      - name: SmartBet v2 — Verificare modele (retrain dacă lipsesc)
-        env:
-          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: |
-          MODEL_COUNT=$(ls models/catboost_*.cbm 2>/dev/null | wc -l)
-          echo "Modele CatBoost găsite: $MODEL_COUNT"
-          if [ "$MODEL_COUNT" -lt 3 ]; then
-            echo "⚠️  Modele lipsă — pornesc retrain automat (durată ~10-15 min)..."
-            pip install catboost scikit-learn pandas numpy scipy 2>/dev/null | tail -3
-            python feature_engineering.py
-            python train_engine_v2.py --skip-shap
-            MODEL_COUNT_AFTER=$(ls models/catboost_*.cbm 2>/dev/null | wc -l)
-            echo "✅ Retrain complet: $MODEL_COUNT_AFTER modele generate"
-            # Commitim modelele noi
-            git config user.name "actions-user"
-            git config user.email "actions-user@users.noreply.github.com"
-            git add models/
-            git diff --staged --quiet || git commit -m "chore(ml): auto-retrain modele lipsă $(date -u +%Y-%m-%dT%H:%M)"
-            git fetch origin
-            git merge origin/main -X ours --no-edit 2>/dev/null || true
-            git push || true
-          else
-            echo "✅ Modele OK ($MODEL_COUNT găsite) — skip retrain"
-          fi
-
-      - name: SmartBet v2 — Predicții CatBoost pe meciuri de azi
-        env:
-          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: |
-          pip install catboost scikit-learn pandas numpy 2>/dev/null | tail -1
-          python predict_current.py
-        continue-on-error: true
 
       - name: Walk-Forward Validation (calibrare time-series)
         run: python build_wfv_validation.py
