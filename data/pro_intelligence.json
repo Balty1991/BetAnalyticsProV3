@@ -1,30 +1,30 @@
 {
-  "updated_at": "2026-05-07T23:36:08.271677+00:00",
+  "updated_at": "2026-05-08T00:21:52.184227+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 60.1,
+  "overall_score": 60.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 968,
-    "pending_rows": 161,
-    "candidates_with_odds_and_probability": 109,
+    "recommendation_rows": 969,
+    "pending_rows": 162,
+    "candidates_with_odds_and_probability": 110,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 88,
+    "speculative": 89,
     "balanced": 20,
     "safe": 1
   },
   "market_distribution_top150": {
     "Over 1.5G": 41,
     "BTTS": 21,
-    "Under 3.5G": 46,
+    "Under 3.5G": 47,
     "Over 2.5G": 1
   },
   "league_distribution_top150": {
@@ -40,9 +40,9 @@
     "FA Cup": 1,
     "Scottish Premiership": 3,
     "Superliga": 2,
+    "Copa Sudamericana": 2,
     "Pro League": 6,
     "Saudi Pro League": 3,
-    "Copa Sudamericana": 2,
     "Premier League": 4,
     "Copa Libertadores": 2,
     "Ekstraklasa": 4,
@@ -50,8 +50,8 @@
     "Liga Portugal Betclic": 2,
     "MLS": 4,
     "Eredivisie": 2,
+    "Chinese Super League": 4,
     "Allsvenskan": 4,
-    "Chinese Super League": 3,
     "Trendyol Super Lig": 3,
     "Championship": 2,
     "Brasileirão Serie B": 2
@@ -544,7 +544,7 @@
       "kelly_fraction": 0.053,
       "kelly_units_100": 5.3,
       "confidence": 39.98,
-      "score": 97.0,
+      "score": 96.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
@@ -562,13 +562,13 @@
       "league": "Superliga",
       "event_date": "2026-05-10T16:00:00+03:00",
       "market": "Over 1.5G",
-      "odds": 1.39,
+      "odds": 1.4,
       "model_probability": 0.7942,
       "model_probability_pct": 79.42,
-      "implied_probability_pct": 71.94,
+      "implied_probability_pct": 71.43,
       "fair_odds": 1.259,
-      "edge_pp": 7.48,
-      "ev_pct": 10.39,
+      "edge_pp": 7.99,
+      "ev_pct": 11.19,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 40.25,
@@ -577,8 +577,8 @@
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 79.4% vs. probabilitate implicată 71.9%.",
-        "EV estimat 10.4% și edge 7.5 puncte procentuale.",
+        "Probabilitate model 79.4% vs. probabilitate implicată 71.4%.",
+        "EV estimat 11.2% și edge 8.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -779,6 +779,34 @@
       ]
     },
     {
+      "event_id": 1433,
+      "prediction_id": 3785,
+      "home": "Milan",
+      "away": "Atalanta",
+      "league": "Serie A",
+      "event_date": "2026-05-10T21:45:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.39,
+      "model_probability": 0.7746,
+      "model_probability_pct": 77.46,
+      "implied_probability_pct": 71.94,
+      "fair_odds": 1.291,
+      "edge_pp": 5.52,
+      "ev_pct": 7.67,
+      "kelly_fraction": 0.0492,
+      "kelly_units_100": 4.92,
+      "confidence": 47.44,
+      "score": 94.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 77.5% vs. probabilitate implicată 71.9%.",
+        "EV estimat 7.7% și edge 5.5 puncte procentuale.",
+        "Miză Kelly fracțională 4.92% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 204257,
       "prediction_id": 3753,
       "home": "Leganés",
@@ -804,34 +832,6 @@
         "Probabilitate model 72.1% vs. probabilitate implicată 67.1%.",
         "EV estimat 7.5% și edge 5.0 puncte procentuale.",
         "Miză Kelly fracțională 3.82% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 1433,
-      "prediction_id": 3785,
-      "home": "Milan",
-      "away": "Atalanta",
-      "league": "Serie A",
-      "event_date": "2026-05-10T21:45:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.38,
-      "model_probability": 0.7746,
-      "model_probability_pct": 77.46,
-      "implied_probability_pct": 72.46,
-      "fair_odds": 1.291,
-      "edge_pp": 5.0,
-      "ev_pct": 6.89,
-      "kelly_fraction": 0.0454,
-      "kelly_units_100": 4.54,
-      "confidence": 47.44,
-      "score": 94.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 77.5% vs. probabilitate implicată 72.5%.",
-        "EV estimat 6.9% și edge 5.0 puncte procentuale.",
-        "Miză Kelly fracțională 4.54% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1022,7 +1022,7 @@
       "kelly_fraction": 0.0,
       "kelly_units_100": 0.0,
       "confidence": 48.03,
-      "score": 81.0,
+      "score": 80.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
@@ -1124,24 +1124,24 @@
       "league": "Parva Liga",
       "event_date": "2026-05-08T17:30:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.21,
+      "odds": 1.22,
       "model_probability": 0.8395,
       "model_probability_pct": 83.95,
-      "implied_probability_pct": 82.64,
+      "implied_probability_pct": 81.97,
       "fair_odds": 1.191,
-      "edge_pp": 1.31,
-      "ev_pct": 1.58,
-      "kelly_fraction": 0.0188,
-      "kelly_units_100": 1.88,
+      "edge_pp": 1.98,
+      "ev_pct": 2.42,
+      "kelly_fraction": 0.0275,
+      "kelly_units_100": 2.75,
       "confidence": 46.37,
       "score": 102.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 84.0% vs. probabilitate implicată 82.6%.",
-        "EV estimat 1.6% și edge 1.3 puncte procentuale.",
-        "Miză Kelly fracțională 1.88% din bancă, plafonată prudent."
+        "Probabilitate model 84.0% vs. probabilitate implicată 82.0%.",
+        "EV estimat 2.4% și edge 2.0 puncte procentuale.",
+        "Miză Kelly fracțională 2.75% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1386,7 +1386,7 @@
       "kelly_fraction": 0.0516,
       "kelly_units_100": 5.16,
       "confidence": 44.68,
-      "score": 88.0,
+      "score": 87.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
@@ -2032,7 +2032,7 @@
       "kelly_fraction": 0.0,
       "kelly_units_100": 0.0,
       "confidence": 56.24,
-      "score": 70.0,
+      "score": 69.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
@@ -2064,21 +2064,21 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 460,
+      "bets": 461,
       "wins": 335,
-      "winrate": 72.83,
-      "profit_units": -1.6,
-      "roi_pct": -0.35,
+      "winrate": 72.67,
+      "profit_units": -2.6,
+      "roi_pct": -0.56,
       "avg_odds": 1.38
     },
     {
       "key": "Over 1.5G",
-      "bets": 225,
-      "wins": 158,
-      "winrate": 70.22,
-      "profit_units": -15.73,
-      "roi_pct": -6.99,
-      "avg_odds": 1.328
+      "bets": 224,
+      "wins": 157,
+      "winrate": 70.09,
+      "profit_units": -16.14,
+      "roi_pct": -7.2,
+      "avg_odds": 1.327
     }
   ],
   "settled_league_performance": [
