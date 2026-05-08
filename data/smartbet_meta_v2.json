@@ -1,36 +1,74 @@
 {
   "version": "smartbet-fusion-v2",
-  "updated_at": "2026-04-27T06:36:27.384075+00:00",
+  "updated_at": "2026-05-08T12:46:01.377553+00:00",
   "system": {
-    "avg_wfv_auc": null,
-    "avg_test_ece": null,
-    "models_trained": 0,
-    "feature_count": null,
-    "training_rows": 8481,
-    "eligible_rows_min5": 6665,
-    "warehouse_events": 8481,
-    "warehouse_leagues": 34,
-    "warehouse_year_min": 2025,
+    "avg_wfv_auc": 0.6093,
+    "avg_test_ece": 0.0134,
+    "models_trained": 7,
+    "feature_count": 168,
+    "training_rows": 55741,
+    "eligible_rows_min5": 50266,
+    "warehouse_events": 55741,
+    "warehouse_leagues": 35,
+    "warehouse_year_min": 2003,
     "warehouse_year_max": 2079
   },
-  "markets_ranked": [],
-  "leagues_count": 29,
+  "markets_ranked": [
+    {
+      "market": "away_win",
+      "wfv_auc": 0.6799
+    },
+    {
+      "market": "home_win",
+      "wfv_auc": 0.6673
+    },
+    {
+      "market": "under35",
+      "wfv_auc": 0.6083
+    },
+    {
+      "market": "over15",
+      "wfv_auc": 0.5918
+    },
+    {
+      "market": "over25",
+      "wfv_auc": 0.5879
+    },
+    {
+      "market": "btts",
+      "wfv_auc": 0.5702
+    },
+    {
+      "market": "draw",
+      "wfv_auc": 0.5597
+    }
+  ],
+  "leagues_count": 31,
   "health": {
-    "all_ok": false,
+    "all_ok": true,
     "files": {
       "model_pack_v2.json": {
-        "exists": false
+        "exists": true,
+        "age_hours": 0.0
       },
       "features_v2.json": {
         "exists": true,
-        "age_hours": 0.0
+        "age_hours": 0.1
       },
       "league_baselines_v2.json": {
         "exists": true,
-        "age_hours": 0.0
+        "age_hours": 0.1
       },
-      "models_count": 0,
-      "models": []
+      "models_count": 7,
+      "models": [
+        "catboost_btts.cbm",
+        "catboost_draw.cbm",
+        "catboost_under35.cbm",
+        "catboost_over25.cbm",
+        "catboost_home_win.cbm",
+        "catboost_over15.cbm",
+        "catboost_away_win.cbm"
+      ]
     }
   },
   "score_config": {
