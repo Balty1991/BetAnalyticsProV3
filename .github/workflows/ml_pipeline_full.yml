@@ -118,7 +118,22 @@ jobs:
             echo "Nicio schimbare de committat."
           else
             git commit -m "chore(ml): SmartBet v2 retrain $(date -u +%Y-%m-%d)"
-            git pull --rebase --autostash
+
+            # Fetch remote fără a suprascrie fișierele noastre ML
+            git fetch origin
+
+            # Merge remote cu strategia "ours" pentru conflicte pe fișiere de date
+            # Fișierele noastre (modele + date ML) câștigă întotdeauna
+            if git merge origin/main -X ours --no-edit -m "chore(ml): merge remote în retrain" 2>/dev/null; then
+              echo "✅ Merge cu remote reușit (ours strategy)"
+            else
+              # Fallback: resolve manual conflictele pe fișierele noastre
+              git checkout --ours data/ models/ 2>/dev/null || true
+              git add data/ models/ 2>/dev/null || true
+              git merge --continue --no-edit 2>/dev/null || \
+              git commit -m "chore(ml): resolve conflicts after retrain" || true
+            fi
+
             git push
             echo "✅ Modele și date ML committate cu succes."
           fi
