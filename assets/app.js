@@ -4573,6 +4573,8 @@ function analyzeMatch(raw){
     refIsStrict    : raw.ref_is_strict    != null ? !!raw.ref_is_strict    : null,
     refIsHighGoals : raw.ref_is_high_goals!= null ? !!raw.ref_is_high_goals: null,
     refMatches     : raw.ref_matches   != null ? Number(raw.ref_matches)   : null,
+    refYellowTrend : raw.ref_yellow_trend != null ? Number(raw.ref_yellow_trend) : null,
+    refGoalsTrend  : raw.ref_goals_trend  != null ? Number(raw.ref_goals_trend)  : null,
     // ─── Lineup (fetch_lineups_today.py + v1 event unavailable_players) ──
     lineupStatus   : (function(){
       if(raw.lineup_status) return raw.lineup_status;
@@ -6916,7 +6918,9 @@ function renderMatches(){
       var refYellowStr = m.refAvgYellow != null ? (' • 🟨 '+Number(m.refAvgYellow).toFixed(1)) : '';
       var refGoalStr = '⚽ '+Number(m.refAvgGoals).toFixed(1)+'g/meci';
       var refStrictStr = m.refIsStrict ? ' • strict' : '';
-      refBadge = '<span class="card-reco-badge" style="color:'+refColor+'" title="Arbitru: '+htmlEsc(m.refName)+(m.refMatches?' ('+m.refMatches+' meciuri)':'')+'">👨‍⚖️ '+htmlEsc(m.refName.split(' ').pop())+' • '+refGoalStr+refYellowStr+refStrictStr+'</span>';
+      var refTrendStr = '';
+      if(m.refYellowTrend != null){ var rt=Number(m.refYellowTrend); if(rt>=0.5) refTrendStr=' 📈'; else if(rt<=-0.5) refTrendStr=' 📉'; }
+      refBadge = '<span class="card-reco-badge" style="color:'+refColor+'" title="Arbitru: '+htmlEsc(m.refName)+(m.refMatches?' ('+m.refMatches+' meciuri)':'')+(m.refYellowTrend!=null?' trend:'+Number(m.refYellowTrend).toFixed(1):'')+'">👨‍⚖️ '+htmlEsc(m.refName.split(' ').pop())+' • '+refGoalStr+refYellowStr+refStrictStr+refTrendStr+'</span>';
     }
     // ─── Polymarket signal badge ─────────────────────────────────────────────
     var polyBadge = '';
