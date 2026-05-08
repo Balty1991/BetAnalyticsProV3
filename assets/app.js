@@ -4581,12 +4581,12 @@ function analyzeMatch(raw){
     nInjuredHome   : raw.n_injured_home != null ? Number(raw.n_injured_home) : 0,
     nInjuredAway   : raw.n_injured_away != null ? Number(raw.n_injured_away) : 0,
     nUnavailHome   : (function(){
-      if(raw.n_unavail_home != null) return Number(raw.n_unavail_home);
+      if(raw.n_unavail_home > 0) return Number(raw.n_unavail_home);
       var eu = raw.event && raw.event.unavailable_players;
       return (eu && Array.isArray(eu.home)) ? eu.home.length : 0;
     })(),
     nUnavailAway   : (function(){
-      if(raw.n_unavail_away != null) return Number(raw.n_unavail_away);
+      if(raw.n_unavail_away > 0) return Number(raw.n_unavail_away);
       var eu = raw.event && raw.event.unavailable_players;
       return (eu && Array.isArray(eu.away)) ? eu.away.length : 0;
     })(),

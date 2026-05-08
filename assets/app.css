@@ -5560,8 +5560,11 @@ button[onclick*="resetFilter"]:hover {
     padding: 2px 6px !important;
     font-size: 8.5px !important;
   }
-  .m17-calib,
-  .m17-source-row,
+  .m17-calib { display: none !important; }
+  .m17-source-row {
+    margin-top: 6px !important;
+    gap: 4px !important;
+  }
   .m17-market-line { display: none !important; }
 
   .m17-teams {
