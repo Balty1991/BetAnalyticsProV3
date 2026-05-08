@@ -57,6 +57,14 @@ jobs:
           "
 
       # ─── FEATURES ─────────────────────────────────────────────────────────
+      - name: Fetch stats + incidents cache (incremental, v2 API)
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          echo "Fetching v2 stats + incidents pentru meciurile din warehouse..."
+          STATS_FETCH_LIMIT=600 python3 fetch_stats_incidents_cache.py
+        continue-on-error: true
+
       - name: Feature engineering
         run: python3 feature_engineering.py
 
