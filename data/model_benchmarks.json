@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-08T14:27:38.039299+00:00",
+  "updated_at": "2026-05-08T15:24:42.191138+00:00",
   "version": "v1",
   "data_source": "training_features.json",
   "split_ratio": 0.7,
@@ -5344,6 +5344,8 @@
       "bootstrap_min_edge": null,
       "bootstrap_n": 55,
       "bootstrap_target_n": 20,
+      "prev_edge": 5.0,
+      "changed": false,
       "recent_changes": []
     },
     "over15": {
@@ -5355,18 +5357,9 @@
       "bootstrap_n": 16,
       "bootstrap_target_n": 20,
       "cap_warning": true,
-      "prev_edge": 15.0,
-      "changed": true,
-      "recent_changes": [
-        {
-          "market": "over15",
-          "type": "threshold_change",
-          "prev_edge": 15.0,
-          "new_edge": 10.0,
-          "message": "over15: prag coborat 15.0% -> 10.0% (ROI +5.4%)",
-          "timestamp": "2026-05-08T14:27:38.038527+00:00"
-        }
-      ]
+      "prev_edge": 10.0,
+      "changed": false,
+      "recent_changes": []
     },
     "over25": {
       "min_edge": 0.0,
@@ -5376,6 +5369,8 @@
       "bootstrap_min_edge": null,
       "bootstrap_n": 6,
       "bootstrap_target_n": 20,
+      "prev_edge": 0.0,
+      "changed": false,
       "recent_changes": []
     },
     "under35": {
@@ -5386,6 +5381,8 @@
       "bootstrap_min_edge": null,
       "bootstrap_n": 224,
       "bootstrap_target_n": 20,
+      "prev_edge": 5.0,
+      "changed": false,
       "recent_changes": []
     }
   },
