@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-05-08T18:49:23.635889",
+  "updated_at": "2026-05-08T19:37:42.893613",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 8838,
+  "n_rows": 8839,
   "n_folds": 2,
   "global_score": 74.4,
   "global_grade": "B",
@@ -153,16 +153,16 @@
       "folds": 2,
       "avg_brier": 0.2433,
       "avg_log_loss": 0.6794,
-      "avg_ece": 0.0059,
-      "avg_winrate": 0.5178,
-      "score": 77.0,
+      "avg_ece": 0.0058,
+      "avg_winrate": 0.5181,
+      "score": 77.1,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
         {
           "n": 2575,
-          "brier": 0.2431,
-          "log_loss": 0.6792,
+          "brier": 0.2432,
+          "log_loss": 0.6793,
           "ece": 0.0074,
           "winrate": 0.5212
         },
@@ -180,8 +180,8 @@
       "label": "Peste 1.5G",
       "folds": 2,
       "avg_brier": 0.2845,
-      "avg_log_loss": 0.763,
-      "avg_ece": 0.3037,
+      "avg_log_loss": 0.7629,
+      "avg_ece": 0.3036,
       "avg_winrate": 0.7528,
       "score": 50.0,
       "grade": "D",
@@ -190,8 +190,8 @@
         {
           "n": 2575,
           "brier": 0.2821,
-          "log_loss": 0.7581,
-          "ece": 0.3055,
+          "log_loss": 0.758,
+          "ece": 0.3054,
           "winrate": 0.7592
         },
         {
