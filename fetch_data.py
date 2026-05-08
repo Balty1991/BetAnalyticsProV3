@@ -1826,7 +1826,7 @@ def fetch_bulk_best_odds(unique_event_ids):
                     cache_entry[market_key] = {
                         "best_odds": round(best, 3),
                         "best_bookmaker": bk,
-                        "bookmakers_count": 0,   # bulk endpoint nu returnează count
+                        "bookmakers_count": 1,   # minim 1 — știm că există cel puțin bk-ul sursă
                         "avg_odds": round(best, 3),
                         "avg_implied_probability": round(100.0 / best, 2) if best > 1.01 else None,
                         "best_implied_probability": round(100.0 / best, 2) if best > 1.01 else None,
