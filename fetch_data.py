@@ -36,6 +36,28 @@ MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
 
+
+def load_referee_stats() -> Dict[int, Any]:
+    """
+    Încarcă data/referee_stats.json generat de fetch_referee_stats.py.
+    Returnează dict {referee_id (int): stats_dict} sau {} dacă fișierul lipsește.
+    """
+    path = os.path.join(DATA_DIR, "referee_stats.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        raw = data.get("referees") or {}
+        # cheile sunt str în JSON → convertim la int
+        return {int(k): v for k, v in raw.items() if v}
+    except Exception as e:
+        print(f"[RefereeStats] load failed (non-fatal): {e}")
+        return {}
+
+
+REFEREE_STATS: Dict[int, Any] = {}  # populat lazy în main()
+
 # Restricții weekday bazate pe istoricul jurnalului (950 pariuri settled)
 # ROI simulat după filtrare: +7.10% vs +0.45% fără filtru (+6.65pp)
 # Sunt excluse combinațiile market+zi cu ROI < -8% și min 15 pariuri
@@ -2870,15 +2892,37 @@ def fetch_standings_xgd_map(league_api_ids):
     return xgd_map
 
 
+def fetch_event_referee_id(event_id_int: int) -> Optional[int]:
+    """
+    Fetch referee_id pentru un eveniment din /api/v2/events/{id}/.
+    Folosit la enrichment pentru predicțiile curente.
+    Graceful: returnează None dacă nu există.
+    """
+    try:
+        r = requests.get(
+            f"{V2_BASE}/events/{event_id_int}/",
+            headers=HEADERS, timeout=15
+        )
+        if r.status_code != 200:
+            return None
+        data = r.json()
+        ref_id = data.get("referee_id")
+        return int(ref_id) if ref_id else None
+    except Exception:
+        return None
+
+
 def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map):
     """
     Adaugă pe fiecare prediction row câmpuri derivate din v2:
       v2_recommended, home/away_mgr_*, home/away_xgd, xgd_diff.
+      referee_id, ref_avg_yellow, ref_avg_goals, ref_avg_fouls, ref_style.
     Graceful: câmpuri lipsă rămân None, nu aruncă excepții.
     """
     if not predictions:
         return predictions
     enriched_count = 0
+    ref_enriched = 0
     for row in predictions:
         event = row.get("event") or {}
         event_id = event.get("id")
@@ -2914,10 +2958,39 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
             if (home_xgd is not None and away_xgd is not None) else None
         )
 
-        if home_mgr or away_mgr or home_xgd is not None:
+        # ── Referee enrichment ─────────────────────────────────────────────
+        # Pasul 1: referee_id din event (v1 API nu îl returnează → fetch v2 detail)
+        ref_id = event.get("referee_id")
+        if not ref_id and event_id and REFEREE_STATS:
+            try:
+                ref_id = fetch_event_referee_id(int(event_id))
+                if ref_id and isinstance(event, dict):
+                    event["referee_id"] = ref_id  # cache pe event object
+            except Exception:
+                pass
+
+        # Pasul 2: lookup stats arbitru
+        ref_stats = REFEREE_STATS.get(int(ref_id)) if ref_id else None
+        row["referee_id"]       = ref_id
+        row["ref_name"]         = ref_stats.get("name")         if ref_stats else None
+        row["ref_country"]      = ref_stats.get("country")      if ref_stats else None
+        row["ref_avg_yellow"]   = ref_stats.get("avg_yellow")   if ref_stats else None
+        row["ref_avg_red"]      = ref_stats.get("avg_red")      if ref_stats else None
+        row["ref_avg_goals"]    = ref_stats.get("avg_goals")    if ref_stats else None
+        row["ref_avg_fouls"]    = ref_stats.get("avg_fouls")    if ref_stats else None
+        row["ref_style"]        = ref_stats.get("style")        if ref_stats else None
+        row["ref_is_strict"]    = ref_stats.get("is_strict")    if ref_stats else None
+        row["ref_is_high_goals"]= ref_stats.get("is_high_goals")if ref_stats else None
+        row["ref_matches"]      = ref_stats.get("matches")      if ref_stats else None
+        if ref_stats:
+            ref_enriched += 1
+        # ───────────────────────────────────────────────────────────────────
+
+        if home_mgr or away_mgr or home_xgd is not None or ref_stats:
             enriched_count += 1
 
     print(f"[V2] Enriched {enriched_count}/{len(predictions)} predictions cu semnale v2")
+    print(f"[V2] Referee stats: {ref_enriched}/{len(predictions)} predictions cu date arbitru")
     return predictions
 
 
@@ -2999,8 +3072,13 @@ def main():
     print("\n[2.5/6] Enriching predictions with best odds from market compare...")
     predictions, events, market_compare_stats = enrich_predictions_with_market_odds(predictions, events)
 
-    print("\n[2.7/6] Fetching v2 signals (recommendations, manager stats, standings xGd)...")
+    print("\n[2.7/6] Fetching v2 signals (recommendations, manager stats, standings xGd, referee stats)...")
     try:
+        # 0. Referee stats — load din cache local (generat de fetch_referee_stats.py)
+        global REFEREE_STATS
+        REFEREE_STATS = load_referee_stats()
+        print(f"[V2] Referee stats loaded: {len(REFEREE_STATS)} arbitri din cache")
+
         # 1. Event IDs recomandate de v2 (confidence ≥ 0.68 + recommended=true)
         v2_recommended_ids = fetch_v2_recommended_event_ids(today, future)
 
