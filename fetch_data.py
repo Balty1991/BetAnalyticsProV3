@@ -1161,6 +1161,20 @@ def build_signal_audit(predictions, recommendation_log=None):
             "line_movement_pct": line_movement_pct,
             "from_open_pct": from_open_pct,
             "reason_tags": reason_tags[:4],
+            # ── Referee (din predicție, nu din candidat) ──────────────────
+            "ref_name":          row.get("ref_name"),
+            "ref_avg_goals":     row.get("ref_avg_goals"),
+            "ref_avg_yellow":    row.get("ref_avg_yellow"),
+            "ref_is_strict":     row.get("ref_is_strict"),
+            "ref_is_high_goals": row.get("ref_is_high_goals"),
+            # ── Lineup ────────────────────────────────────────────────────
+            "lineup_status":     row.get("lineup_status"),
+            "home_formation":    row.get("home_formation"),
+            "away_formation":    row.get("away_formation"),
+            "n_unavail_home":    row.get("n_unavail_home", 0),
+            "n_unavail_away":    row.get("n_unavail_away", 0),
+            "home_unavailable":  row.get("home_unavailable", []),
+            "away_unavailable":  row.get("away_unavailable", []),
         })
 
     rows.sort(key=lambda x: (float(x.get("kelly_quarter_pct") or 0), float(x.get("edge_pct") or 0), float(x.get("score") or 0)), reverse=True)
