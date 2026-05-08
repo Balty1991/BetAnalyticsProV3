@@ -6742,7 +6742,7 @@ function renderMatches(){
     var recLabel = b ? b.label : 'Fără recomandare activă';
     var recOdd = b && b.odds ? Number(b.odds).toFixed(2) : null;
     var marketGapText = b && Number(b.marketGapPct || 0) > 0 ? ('+' + Number(b.marketGapPct || 0).toFixed(1) + '%') : null;
-    var bestMarketLine = b && Number(b.bookmakersCount || 0) > 0 ? ('Best piață ' + Number(b.odds || 0).toFixed(2) + (b.bestBookmaker ? (' @ ' + htmlEsc(b.bestBookmaker)) : '') + (marketGapText ? (' • gap ' + marketGapText) : '') + ' • ' + Number(b.bookmakersCount || 0) + ' case') : '';
+    var bestMarketLine = b && (Number(b.bookmakersCount || 0) > 0 || String(b.bestBookmaker || '').trim()) ? ('Best piață ' + Number(b.bestOdds || b.odds || 0).toFixed(2) + (b.bestBookmaker ? (' @ ' + htmlEsc(b.bestBookmaker)) : '') + (marketGapText ? (' • gap ' + marketGapText) : '') + (Number(b.bookmakersCount || 0) > 1 ? (' • ' + Number(b.bookmakersCount || 0) + ' case') : '')) : '';
     var compareBadge = bestMarketLine ? ('<span class="card-reco-badge" style="background:rgba(16,185,129,.10);border-color:rgba(16,185,129,.24);color:var(--grn)">📈 ' + bestMarketLine + '</span>') : '';
     var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
     var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
