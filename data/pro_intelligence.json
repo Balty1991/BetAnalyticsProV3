@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-08T19:38:05.308512+00:00",
+  "updated_at": "2026-05-08T20:32:32.466930+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 60.2,
+  "overall_score": 60.0,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,22 +9,22 @@
   },
   "data_quality": {
     "recommendation_rows": 988,
-    "pending_rows": 165,
-    "candidates_with_odds_and_probability": 110,
+    "pending_rows": 163,
+    "candidates_with_odds_and_probability": 108,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 88,
+    "speculative": 86,
     "balanced": 21,
     "safe": 1
   },
   "market_distribution_top150": {
     "Over 1.5G": 38,
     "BTTS": 24,
-    "Under 3.5G": 46,
+    "Under 3.5G": 44,
     "Over 2.5G": 2
   },
   "league_distribution_top150": {
@@ -46,7 +46,6 @@
     "Super League": 4,
     "Liga Portugal Betclic": 3,
     "Scottish Premiership": 2,
-    "Botola Pro": 2,
     "Chinese Super League": 3,
     "Eredivisie": 3,
     "Liga F": 3,
@@ -54,7 +53,8 @@
     "Trendyol Super Lig": 3,
     "Liga MX Clausura": 1,
     "Championship": 2,
-    "Brasileirão Serie B": 2
+    "Brasileirão Serie B": 2,
+    "Botola Pro": 1
   },
   "bankroll": {
     "default_bankroll_units": 100,
@@ -888,6 +888,34 @@
         "Probabilitate model 69.3% vs. probabilitate implicată 64.1%.",
         "EV estimat 8.1% și edge 5.2 puncte procentuale.",
         "Miză Kelly fracțională 3.63% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 10251,
+      "prediction_id": 3755,
+      "home": "FC Sion",
+      "away": "FC Thun",
+      "league": "Super League",
+      "event_date": "2026-05-10T17:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.57,
+      "model_probability": 0.6856,
+      "model_probability_pct": 68.56,
+      "implied_probability_pct": 63.69,
+      "fair_odds": 1.459,
+      "edge_pp": 4.87,
+      "ev_pct": 7.64,
+      "kelly_fraction": 0.0335,
+      "kelly_units_100": 3.35,
+      "confidence": 49.13,
+      "score": 93.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 68.6% vs. probabilitate implicată 63.7%.",
+        "EV estimat 7.6% și edge 4.9 puncte procentuale.",
+        "Miză Kelly fracțională 3.35% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -2036,11 +2064,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 473,
-      "wins": 346,
-      "winrate": 73.15,
-      "profit_units": -1.1,
-      "roi_pct": -0.23,
+      "bets": 475,
+      "wins": 348,
+      "winrate": 73.26,
+      "profit_units": -0.53,
+      "roi_pct": -0.11,
       "avg_odds": 1.376
     },
     {
@@ -2048,8 +2076,8 @@
       "bets": 228,
       "wins": 160,
       "winrate": 70.18,
-      "profit_units": -16.21,
-      "roi_pct": -7.11,
+      "profit_units": -16.23,
+      "roi_pct": -7.12,
       "avg_odds": 1.327
     }
   ],
@@ -2080,6 +2108,15 @@
       "profit_units": 0.4,
       "roi_pct": 40.0,
       "avg_odds": 1.4
+    },
+    {
+      "key": "Botola Pro",
+      "bets": 1,
+      "wins": 1,
+      "winrate": 100.0,
+      "profit_units": 0.31,
+      "roi_pct": 31.0,
+      "avg_odds": 1.31
     },
     {
       "key": "Coppa Italia",
@@ -2152,15 +2189,6 @@
       "profit_units": 4.5,
       "roi_pct": 14.06,
       "avg_odds": 1.422
-    },
-    {
-      "key": "Ekstraklasa",
-      "bets": 31,
-      "wins": 25,
-      "winrate": 80.65,
-      "profit_units": 3.77,
-      "roi_pct": 12.16,
-      "avg_odds": 1.388
     }
   ],
   "recommendations": [
