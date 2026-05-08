@@ -11254,12 +11254,13 @@ function impliedProbFromOdds(odds){
 }
 function getMarketCompareMap(source){
   if(!source || typeof source !== 'object') return {};
-  var direct = source.market_best_odds || source.marketBestOdds || source.market_compare || source.marketCompare || {};
-  if(direct && typeof direct === 'object' && !Array.isArray(direct)) return direct;
+  // Nu folosim || {} ca fallback — {} gol e truthy și blochează lookup-ul nested
+  var direct = source.market_best_odds || source.marketBestOdds || source.market_compare || source.marketCompare;
+  if(direct && typeof direct === 'object' && !Array.isArray(direct) && Object.keys(direct).length) return direct;
   var event = source.event || source.rawEvent || null;
   if(event && typeof event === 'object'){
-    var nested = event.market_best_odds || event.marketBestOdds || event.market_compare || event.marketCompare || {};
-    if(nested && typeof nested === 'object' && !Array.isArray(nested)) return nested;
+    var nested = event.market_best_odds || event.marketBestOdds || event.market_compare || event.marketCompare;
+    if(nested && typeof nested === 'object' && !Array.isArray(nested) && Object.keys(nested).length) return nested;
   }
   return {};
 }
