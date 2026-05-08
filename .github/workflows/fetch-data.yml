@@ -36,6 +36,23 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Fetch referee stats (weekly cache)
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          # Rulăm doar dacă fișierul lipsește sau e mai vechi de 7 zile
+          if [ ! -f data/referee_stats.json ] || [ "$(find data/referee_stats.json -mtime +7)" != "" ]; then
+            echo "Fetching referee stats..."
+            python fetch_referee_stats.py
+          else
+            echo "Referee stats cache valid (< 7 zile), skip fetch."
+          fi
+
+      - name: Fetch lineups for today's matches
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python fetch_lineups_today.py
+
       - name: Fetch predictions and events
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
