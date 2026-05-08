@@ -4568,7 +4568,21 @@ function analyzeMatch(raw){
     refStyle       : raw.ref_style    || null,
     refIsStrict    : raw.ref_is_strict    != null ? !!raw.ref_is_strict    : null,
     refIsHighGoals : raw.ref_is_high_goals!= null ? !!raw.ref_is_high_goals: null,
-    refMatches     : raw.ref_matches   != null ? Number(raw.ref_matches)   : null
+    refMatches     : raw.ref_matches   != null ? Number(raw.ref_matches)   : null,
+    // ─── Lineup (fetch_lineups_today.py) ─────────────────────────────────
+    lineupStatus   : raw.lineup_status  || null,
+    homeFormation  : raw.home_formation || null,
+    awayFormation  : raw.away_formation || null,
+    nInjuredHome   : raw.n_injured_home != null ? Number(raw.n_injured_home) : 0,
+    nInjuredAway   : raw.n_injured_away != null ? Number(raw.n_injured_away) : 0,
+    nUnavailHome   : raw.n_unavail_home != null ? Number(raw.n_unavail_home) : 0,
+    nUnavailAway   : raw.n_unavail_away != null ? Number(raw.n_unavail_away) : 0,
+    homeUnavailable: Array.isArray(raw.home_unavailable) ? raw.home_unavailable : [],
+    awayUnavailable: Array.isArray(raw.away_unavailable) ? raw.away_unavailable : [],
+    homeStarters   : Array.isArray(raw.home_starters)    ? raw.home_starters    : [],
+    awayStarters   : Array.isArray(raw.away_starters)    ? raw.away_starters    : [],
+    homeConfidence : raw.home_confidence != null ? Number(raw.home_confidence) : null,
+    awayConfidence : raw.away_confidence != null ? Number(raw.away_confidence) : null
   };
 }
 
@@ -6784,6 +6798,23 @@ function renderMatches(){
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
     var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
 
+    // ─── Lineup Badge ───────────────────────────────────────────────────────
+    var lineupBadge = '';
+    var totalUnavail = (m.nUnavailHome || 0) + (m.nUnavailAway || 0);
+    if(totalUnavail > 0 && m.lineupStatus){
+      var homeU = m.nUnavailHome || 0;
+      var awayU = m.nUnavailAway || 0;
+      var lineupParts = [];
+      if(homeU > 0) lineupParts.push(htmlEsc(m.homeTeam||'G')+': '+homeU+' lipsă');
+      if(awayU > 0) lineupParts.push(htmlEsc(m.awayTeam||'O')+': '+awayU+' lipsă');
+      var lineupColor = totalUnavail >= 3 ? 'var(--red)' : totalUnavail >= 1 ? '#f59e0b' : 'var(--muted)';
+      var confirmedStr = m.lineupStatus === 'confirmed' ? ' ✓' : '';
+      lineupBadge = '<span class="card-reco-badge" style="color:'+lineupColor+'">🤕 '+lineupParts.join(' | ')+confirmedStr+'</span>';
+    } else if(m.lineupStatus === 'confirmed' && m.homeFormation && m.awayFormation) {
+      lineupBadge = '<span class="card-reco-badge" style="color:var(--muted)">📋 '+htmlEsc(m.homeFormation)+' vs '+htmlEsc(m.awayFormation)+' ✓</span>';
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     // ─── Referee Badge ──────────────────────────────────────────────────────
     var refBadge = '';
     if(m.refName && m.refAvgGoals != null){
@@ -6904,17 +6935,79 @@ function renderMatches(){
       '</div>'+
       predictionProbabilityHtml+
     '</div>';
-    var expertBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+refBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>';
-    var simpleBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+motorBadge+refBadge+ageBadge+'</div>';
+    var expertBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+refBadge+lineupBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>';
+    var simpleBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+motorBadge+refBadge+lineupBadge+ageBadge+'</div>';
+
+    // ─── Lineup Section ─────────────────────────────────────────────────────
+    var lineupBlock = '';
+    if(m.lineupStatus && m.lineupStatus !== 'unavailable'){
+      var isConfirmed = m.lineupStatus === 'confirmed';
+      var statusLabel = isConfirmed
+        ? '<span style="color:var(--grn);font-weight:700">✓ Confirmat</span>'
+        : '<span style="color:#f59e0b;font-weight:700">~ Predicted</span>';
+
+      function renderUnavailList(players, teamName){
+        if(!players || !players.length) return '<span style="color:var(--grn);font-size:11px">Toți disponibili</span>';
+        return players.map(function(p){
+          var statusIcon = p.status === 'injured' || p.status === 'injury' ? '🤕'
+            : p.status === 'suspended' || p.status === 'red_card' ? '🟥'
+            : p.status === 'doubtful' ? '⚠️' : '❓';
+          var returnStr = p.return_date ? (' <span style="color:var(--muted);font-size:10px">ret. '+p.return_date+'</span>') : '';
+          return '<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:6px">'+
+            '<span style="font-size:14px">'+statusIcon+'</span>'+
+            '<span style="font-size:12px;font-weight:600;color:var(--txt)">'+htmlEsc(p.name||'—')+'</span>'+
+            '<span style="font-size:10px;color:var(--muted);text-transform:capitalize">'+htmlEsc(p.status||'')+'</span>'+
+            returnStr+
+          '</div>';
+        }).join('');
+      }
+
+      function renderFormationPill(formation, confidence){
+        if(!formation) return '<span style="color:var(--muted)">—</span>';
+        var confStr = confidence ? (' <span style="color:var(--muted);font-size:10px">'+Math.round(confidence*100)+'%</span>') : '';
+        return '<span style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#93c5fd;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700">'+htmlEsc(formation)+confStr+'</span>';
+      }
+
+      var homeFormPill = renderFormationPill(m.homeFormation, m.homeConfidence);
+      var awayFormPill = renderFormationPill(m.awayFormation, m.awayConfidence);
+
+      var homeUnavailHtml = renderUnavailList(m.homeUnavailable, m.homeTeam);
+      var awayUnavailHtml = renderUnavailList(m.awayUnavailable, m.awayTeam);
+
+      lineupBlock =
+        '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-top:12px">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
+            '<span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Lineup</span>'+
+            statusLabel+
+          '</div>'+
+          '<div style="display:flex;gap:10px;margin-bottom:14px;align-items:center;justify-content:center">'+
+            homeFormPill+
+            '<span style="color:var(--muted);font-size:12px">vs</span>'+
+            awayFormPill+
+          '</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+            '<div>'+
+              '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase">'+htmlEsc(m.homeTeam||'Gazde')+' — Lipsă</div>'+
+              homeUnavailHtml+
+            '</div>'+
+            '<div>'+
+              '<div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase">'+htmlEsc(m.awayTeam||'Oaspeți')+' — Lipsă</div>'+
+              awayUnavailHtml+
+            '</div>'+
+          '</div>'+
+        '</div>';
+    }
+    // ────────────────────────────────────────────────────────────────────────
     var xgMiniGrid = '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgHome || 0).toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
     '</div>';
-    var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock) ? '<div class="analysis-detail-lower-frame">'+
+    var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';
     var expertInsightFrame = '<div class="analysis-detail-expert-overview-frame">'+
       buildAnalysisSection('Indicatori cheie', analysisMetricCards, 'analysis-detail-metrics-section')+
@@ -6938,10 +7031,11 @@ function renderMatches(){
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
     '</div>';
-    var simpleLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock) ? '<div class="analysis-detail-lower-frame">'+
+    var simpleLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';
     var simpleDetails = '<div class="analysis-detail-shell simple">'+
       detailHero+
