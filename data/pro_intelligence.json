@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-05-08T00:21:52.184227+00:00",
+  "updated_at": "2026-05-08T01:01:44.870948+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 60.2,
+  "overall_score": 60.0,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,22 +9,22 @@
   },
   "data_quality": {
     "recommendation_rows": 969,
-    "pending_rows": 162,
-    "candidates_with_odds_and_probability": 110,
+    "pending_rows": 158,
+    "candidates_with_odds_and_probability": 108,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 27
   },
   "risk_distribution": {
-    "speculative": 89,
+    "speculative": 87,
     "balanced": 20,
     "safe": 1
   },
   "market_distribution_top150": {
     "Over 1.5G": 41,
     "BTTS": 21,
-    "Under 3.5G": 47,
+    "Under 3.5G": 45,
     "Over 2.5G": 1
   },
   "league_distribution_top150": {
@@ -36,6 +36,7 @@
     "Tunisian Ligue Professionnelle 1": 2,
     "Serie A": 8,
     "Segunda División": 9,
+    "Copa Sudamericana": 1,
     "La Liga": 6,
     "FA Cup": 1,
     "Scottish Premiership": 3,
@@ -44,7 +45,6 @@
     "Pro League": 6,
     "Saudi Pro League": 3,
     "Premier League": 4,
-    "Copa Libertadores": 2,
     "Ekstraklasa": 4,
     "Super League": 4,
     "Liga Portugal Betclic": 2,
@@ -53,6 +53,7 @@
     "Chinese Super League": 4,
     "Allsvenskan": 4,
     "Trendyol Super Lig": 3,
+    "Copa Libertadores": 1,
     "Championship": 2,
     "Brasileirão Serie B": 2
   },
@@ -443,6 +444,34 @@
       ]
     },
     {
+      "event_id": 9312,
+      "prediction_id": 3586,
+      "home": "Blooming",
+      "away": "Red Bull Bragantino",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-05-08T03:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.42,
+      "model_probability": 0.7599,
+      "model_probability_pct": 75.99,
+      "implied_probability_pct": 70.42,
+      "fair_odds": 1.316,
+      "edge_pp": 5.57,
+      "ev_pct": 7.91,
+      "kelly_fraction": 0.0471,
+      "kelly_units_100": 4.71,
+      "confidence": 38.2,
+      "score": 98.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 76.0% vs. probabilitate implicată 70.4%.",
+        "EV estimat 7.9% și edge 5.6 puncte procentuale.",
+        "Miză Kelly fracțională 4.71% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 204254,
       "prediction_id": 3671,
       "home": "Real Valladolid",
@@ -450,24 +479,24 @@
       "league": "Segunda División",
       "event_date": "2026-05-09T19:30:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.28,
+      "odds": 1.27,
       "model_probability": 0.8189,
       "model_probability_pct": 81.89,
-      "implied_probability_pct": 78.12,
+      "implied_probability_pct": 78.74,
       "fair_odds": 1.221,
-      "edge_pp": 3.76,
-      "ev_pct": 4.82,
-      "kelly_fraction": 0.043,
-      "kelly_units_100": 4.3,
+      "edge_pp": 3.15,
+      "ev_pct": 4.0,
+      "kelly_fraction": 0.037,
+      "kelly_units_100": 3.7,
       "confidence": 39.96,
-      "score": 99.0,
+      "score": 98.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 81.9% vs. probabilitate implicată 78.1%.",
-        "EV estimat 4.8% și edge 3.8 puncte procentuale.",
-        "Miză Kelly fracțională 4.30% din bancă, plafonată prudent."
+        "Probabilitate model 81.9% vs. probabilitate implicată 78.7%.",
+        "EV estimat 4.0% și edge 3.1 puncte procentuale.",
+        "Miză Kelly fracțională 3.70% din bancă, plafonată prudent."
       ]
     },
     {
@@ -636,34 +665,6 @@
         "Probabilitate model 71.8% vs. probabilitate implicată 68.0%.",
         "EV estimat 5.5% și edge 3.7 puncte procentuale.",
         "Miză Kelly fracțională 2.93% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 9312,
-      "prediction_id": 3586,
-      "home": "Blooming",
-      "away": "Red Bull Bragantino",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-05-08T03:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.37,
-      "model_probability": 0.7599,
-      "model_probability_pct": 75.99,
-      "implied_probability_pct": 72.99,
-      "fair_odds": 1.316,
-      "edge_pp": 3.0,
-      "ev_pct": 4.11,
-      "kelly_fraction": 0.0277,
-      "kelly_units_100": 2.77,
-      "confidence": 38.2,
-      "score": 95.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.0% vs. probabilitate implicată 73.0%.",
-        "EV estimat 4.1% și edge 3.0 puncte procentuale.",
-        "Miză Kelly fracțională 2.77% din bancă, plafonată prudent."
       ]
     },
     {
@@ -2064,12 +2065,12 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 461,
-      "wins": 335,
-      "winrate": 72.67,
-      "profit_units": -2.6,
-      "roi_pct": -0.56,
-      "avg_odds": 1.38
+      "bets": 464,
+      "wins": 338,
+      "winrate": 72.84,
+      "profit_units": -1.95,
+      "roi_pct": -0.42,
+      "avg_odds": 1.379
     },
     {
       "key": "Over 1.5G",
@@ -2182,13 +2183,13 @@
       "avg_odds": 1.422
     },
     {
-      "key": "Copa Sudamericana",
-      "bets": 37,
-      "wins": 32,
-      "winrate": 86.49,
-      "profit_units": 4.39,
-      "roi_pct": 11.85,
-      "avg_odds": 1.299
+      "key": "Ekstraklasa",
+      "bets": 30,
+      "wins": 24,
+      "winrate": 80.0,
+      "profit_units": 3.52,
+      "roi_pct": 11.73,
+      "avg_odds": 1.392
     }
   ],
   "recommendations": [
