@@ -726,7 +726,7 @@ def verdict_from_metrics(adj_prob, value, confidence, edge_pct):
     return "avoid"
 
 
-def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
+def build_candidate(row, market_key, require_outcome=True) -> Optional[Dict[str, Any]]:
     market = MARKET_MAP[market_key]
     event = row.get("event") or {}
     odds = market["odds"](event)
@@ -773,7 +773,7 @@ def build_candidate(row, market_key) -> Optional[Dict[str, Any]]:
     score = calc_smart_score(adj, value, confidence, edge_pct, fit, source_api, source_heuristic)
     verdict = verdict_from_metrics(adj, value, confidence, edge_pct)
     outcome = market_outcome(event, market_key)
-    if outcome is None:
+    if require_outcome and outcome is None:
         return None
 
     # EV% și Kelly calculat față de best odds (dacă e disponibil)
@@ -1076,11 +1076,10 @@ def build_signal_audit(predictions, recommendation_log=None):
         if event.get("status") != "notstarted":
             continue
 
-        # Folosim build_candidate() — include best odds din cache (v2 multi-bookmaker)
-        # Ranking-ul se face direct cu best odds, nu cu consensus → pick corect
+        # Folosim build_candidate(require_outcome=False) — meciuri notstarted nu au scor
         candidates = []
         for market in MARKETS:
-            cand = build_candidate(row, market["key"])
+            cand = build_candidate(row, market["key"], require_outcome=False)
             if cand and qualifies_for_strategy(cand, STRATEGIES["engine_overall"]):
                 candidates.append(cand)
 
