@@ -58,6 +58,26 @@ def load_referee_stats() -> Dict[int, Any]:
 
 REFEREE_STATS: Dict[int, Any] = {}  # populat lazy în main()
 
+
+def load_lineups_today() -> Dict[str, Any]:
+    """
+    Încarcă data/lineups_today.json generat de fetch_lineups_today.py.
+    Returnează dict {event_id (str): lineup_dict} sau {} dacă fișierul lipsește.
+    """
+    path = os.path.join(DATA_DIR, "lineups_today.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("lineups") or {}
+    except Exception as e:
+        print(f"[Lineups] load failed (non-fatal): {e}")
+        return {}
+
+
+LINEUPS_TODAY: Dict[str, Any] = {}  # populat lazy în main()
+
 # Restricții weekday bazate pe istoricul jurnalului (950 pariuri settled)
 # ROI simulat după filtrare: +7.10% vs +0.45% fără filtru (+6.65pp)
 # Sunt excluse combinațiile market+zi cu ROI < -8% și min 15 pariuri
@@ -2984,6 +3004,38 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
         row["ref_matches"]      = ref_stats.get("matches")      if ref_stats else None
         if ref_stats:
             ref_enriched += 1
+
+        # ── Lineup enrichment ──────────────────────────────────────────────
+        lineup = LINEUPS_TODAY.get(str(event_id)) if event_id else None
+        if lineup and isinstance(lineup, dict) and lineup.get("status") != "unavailable":
+            row["lineup_status"]    = lineup.get("status")
+            row["home_formation"]   = lineup.get("home_formation")
+            row["away_formation"]   = lineup.get("away_formation")
+            row["n_injured_home"]   = lineup.get("n_injured_home", 0)
+            row["n_injured_away"]   = lineup.get("n_injured_away", 0)
+            row["n_unavail_home"]   = lineup.get("n_unavail_home", 0)
+            row["n_unavail_away"]   = lineup.get("n_unavail_away", 0)
+            row["home_unavailable"] = lineup.get("home_unavailable", [])
+            row["away_unavailable"] = lineup.get("away_unavailable", [])
+            row["home_starters"]    = lineup.get("home_starters", [])
+            row["away_starters"]    = lineup.get("away_starters", [])
+            row["home_confidence"]  = lineup.get("home_confidence")
+            row["away_confidence"]  = lineup.get("away_confidence")
+        else:
+            row["lineup_status"]    = None
+            row["home_formation"]   = None
+            row["away_formation"]   = None
+            row["n_injured_home"]   = 0
+            row["n_injured_away"]   = 0
+            row["n_unavail_home"]   = 0
+            row["n_unavail_away"]   = 0
+            row["home_unavailable"] = []
+            row["away_unavailable"] = []
+            row["home_starters"]    = []
+            row["away_starters"]    = []
+            row["home_confidence"]  = None
+            row["away_confidence"]  = None
+        # ───────────────────────────────────────────────────────────────────
         # ───────────────────────────────────────────────────────────────────
 
         if home_mgr or away_mgr or home_xgd is not None or ref_stats:
@@ -3078,6 +3130,12 @@ def main():
         global REFEREE_STATS
         REFEREE_STATS = load_referee_stats()
         print(f"[V2] Referee stats loaded: {len(REFEREE_STATS)} arbitri din cache")
+
+        # 0b. Lineup data — load din cache local (generat de fetch_lineups_today.py)
+        global LINEUPS_TODAY
+        LINEUPS_TODAY = load_lineups_today()
+        confirmed_lineups = sum(1 for v in LINEUPS_TODAY.values() if v.get("status") == "confirmed")
+        print(f"[V2] Lineups loaded: {len(LINEUPS_TODAY)} evenimente ({confirmed_lineups} confirmate)")
 
         # 1. Event IDs recomandate de v2 (confidence ≥ 0.68 + recommended=true)
         v2_recommended_ids = fetch_v2_recommended_event_ids(today, future)
