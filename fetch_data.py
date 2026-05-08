@@ -3006,34 +3006,59 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
 
         # ── Lineup enrichment ──────────────────────────────────────────────
         lineup = LINEUPS_TODAY.get(str(event_id)) if event_id else None
+
+        # unavailable_players vine deja din v1 API pe event — folosim ASTA
+        # (v2 /lineups/ returnează liste goale pentru "predicted"; v1 are datele reale)
+        ev_unavail = event.get("unavailable_players") or {}
+        home_unavail_raw = ev_unavail.get("home") or []
+        away_unavail_raw = ev_unavail.get("away") or []
+
+        def _norm_unavail(players):
+            result = []
+            for p in (players if isinstance(players, list) else []):
+                if not isinstance(p, dict):
+                    continue
+                result.append({
+                    "id":     p.get("id"),
+                    "name":   p.get("name") or p.get("player_name") or "",
+                    "status": p.get("status") or "unknown",
+                    "reason": p.get("reason") or p.get("return_date") or "",
+                })
+            return result
+
+        def _count_missing(lst):
+            return sum(1 for p in lst if p.get("status") in (
+                "injured", "suspended", "out", "injury", "red_card"
+            ))
+
+        home_unavail = _norm_unavail(home_unavail_raw)
+        away_unavail = _norm_unavail(away_unavail_raw)
+
+        row["home_unavailable"] = home_unavail
+        row["away_unavailable"] = away_unavail
+        row["n_unavail_home"]   = len(home_unavail)
+        row["n_unavail_away"]   = len(away_unavail)
+        row["n_injured_home"]   = _count_missing(home_unavail)
+        row["n_injured_away"]   = _count_missing(away_unavail)
+
+        # Formații și status lineup vin din v2 (LINEUPS_TODAY)
         if lineup and isinstance(lineup, dict) and lineup.get("status") != "unavailable":
-            row["lineup_status"]    = lineup.get("status")
-            row["home_formation"]   = lineup.get("home_formation")
-            row["away_formation"]   = lineup.get("away_formation")
-            row["n_injured_home"]   = lineup.get("n_injured_home", 0)
-            row["n_injured_away"]   = lineup.get("n_injured_away", 0)
-            row["n_unavail_home"]   = lineup.get("n_unavail_home", 0)
-            row["n_unavail_away"]   = lineup.get("n_unavail_away", 0)
-            row["home_unavailable"] = lineup.get("home_unavailable", [])
-            row["away_unavailable"] = lineup.get("away_unavailable", [])
-            row["home_starters"]    = lineup.get("home_starters", [])
-            row["away_starters"]    = lineup.get("away_starters", [])
-            row["home_confidence"]  = lineup.get("home_confidence")
-            row["away_confidence"]  = lineup.get("away_confidence")
+            row["lineup_status"]   = lineup.get("status")
+            row["home_formation"]  = lineup.get("home_formation")
+            row["away_formation"]  = lineup.get("away_formation")
+            row["home_confidence"] = lineup.get("home_confidence")
+            row["away_confidence"] = lineup.get("away_confidence")
+            row["home_starters"]   = lineup.get("home_starters", [])
+            row["away_starters"]   = lineup.get("away_starters", [])
         else:
-            row["lineup_status"]    = None
-            row["home_formation"]   = None
-            row["away_formation"]   = None
-            row["n_injured_home"]   = 0
-            row["n_injured_away"]   = 0
-            row["n_unavail_home"]   = 0
-            row["n_unavail_away"]   = 0
-            row["home_unavailable"] = []
-            row["away_unavailable"] = []
-            row["home_starters"]    = []
-            row["away_starters"]    = []
-            row["home_confidence"]  = None
-            row["away_confidence"]  = None
+            # Dacă nu avem v2 lineup, setăm status pe baza availabilității jucătorilor
+            row["lineup_status"]   = "predicted" if (home_unavail or away_unavail) else None
+            row["home_formation"]  = None
+            row["away_formation"]  = None
+            row["home_confidence"] = None
+            row["away_confidence"] = None
+            row["home_starters"]   = []
+            row["away_starters"]   = []
         # ───────────────────────────────────────────────────────────────────
         # ───────────────────────────────────────────────────────────────────
 
