@@ -1,0 +1,179 @@
+name: Fetch BetAnalytics Data
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.run-fetch'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-betanalytics-data
+  cancel-in-progress: false
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch referee stats (weekly cache)
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          # Rulăm doar dacă fișierul lipsește sau e mai vechi de 7 zile
+          if [ ! -f data/referee_stats.json ] || [ "$(find data/referee_stats.json -mtime +7)" != "" ]; then
+            echo "Fetching referee stats..."
+            python fetch_referee_stats.py
+          else
+            echo "Referee stats cache valid (< 7 zile), skip fetch."
+          fi
+
+      - name: Fetch predictions and events
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python fetch_data.py
+
+      - name: Verify cached data exists
+        run: |
+          test -f data/predictions.json
+          test -f data/events.json
+          test -f data/recommendation_log.json
+
+      - name: Enrich predictions with EV/Kelly/fair_odds/risk_tier
+        run: python enrich_predictions.py
+
+      - name: Build API history catalog
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_api_history.py
+
+      - name: Build recent historical events index
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_api_events_index.py
+
+      - name: Build training dataset
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_dataset.py
+
+      - name: Build training features
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_features.py
+
+      - name: Build training model pack
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_model_pack.py
+
+      - name: Build training scoring baselines
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_scores.py
+
+      - name: Build training insights
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_training_insights.py
+
+      - name: Build full history journal and patch index
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          FULL_HISTORY_LOOKBACK_DAYS: '730'
+          FULL_HISTORY_MAX_ROWS: '60000'
+          FULL_HISTORY_PREDICTION_MAX_AGE_HOURS: '17544'
+        run: python build_full_history.py
+
+      - name: Build AI Memory enhanced
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_ai_memory_enhanced.py
+
+      - name: Build prediction type history
+        run: python build_prediction_type_history.py
+
+      - name: Build Hybrid Adaptive Predictions
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: python build_adaptive_predictions.py
+
+      - name: SmartBet v2 — Predicții CatBoost pe meciuri de azi
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          pip install catboost scikit-learn pandas numpy 2>/dev/null | tail -1
+          python predict_current.py
+        continue-on-error: true
+
+      - name: Walk-Forward Validation (calibrare time-series)
+        run: python build_wfv_validation.py
+
+      - name: Build model quality audit
+        run: python build_model_quality.py
+
+      - name: Build Model Benchmarks (model vs model per ligă și piață)
+        run: python build_model_benchmarks.py
+
+      - name: Patch Over 1.5 recovery probe
+        run: python patch_over15_recovery_probe.py
+
+      - name: Build professional intelligence cockpit data
+        run: python build_pro_intelligence.py
+
+      - name: Build CLV Tracker (Closing Line Value)
+        run: python build_clv_tracker.py
+        continue-on-error: true
+
+      - name: Apply CLV quality layer
+        run: python build_clv_quality.py
+        continue-on-error: true
+
+      - name: Install CLV card guidance loader
+        run: python patch_clv_guidance_loader.py
+        continue-on-error: true
+
+      - name: Commit and push changes when data changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/ index.html assets/app.js assets/hybrid_adaptive_runtime.js assets/performance-patch.js assets/prediction_history_runtime.js assets/pro_command_center.css assets/pro_command_center.js assets/pro_intelligence_runtime.js assets/clv_tracker_runtime.js assets/clv_card_guidance_runtime.js assets/smartbet_v2_integration.js build_adaptive_predictions.py build_prediction_type_history.py build_training_features.py build_training_model_pack.py build_model_quality.py build_model_benchmarks.py build_pro_intelligence.py build_wfv_validation.py build_clv_tracker.py build_clv_quality.py patch_clv_guidance_loader.py patch_over15_recovery_probe.py .github/workflows/fetch-data.yml .github/workflows/pro-intelligence.yml .gitignore
+
+          if git diff --staged --quiet; then
+            echo "No data changes detected. Skipping commit."
+            exit 0
+          fi
+
+          git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git pull --rebase -X theirs origin main || {
+            git rebase --abort
+            git fetch origin main
+            git reset --hard origin/main
+            git add data/ index.html
+            git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC') [conflict-resolved]" || true
+          }
+          git push origin HEAD:main
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "::error::Workflow failed!"
