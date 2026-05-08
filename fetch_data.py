@@ -3074,6 +3074,65 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
             row["home_starters"]   = []
             row["away_starters"]   = []
         # ───────────────────────────────────────────────────────────────────
+        # ─── Polymarket signal ─────────────────────────────────────────────
+        if event_id:
+            row["polymarket_signal"] = None
+            row["polymarket_divergence"] = None
+            row["polymarket_market"] = None
+            try:
+                pm_url = f"{V2_BASE}/events/{int(event_id)}/polymarket/"
+                pm_data = fetch_url(pm_url)
+                if pm_data and isinstance(pm_data, dict) and "markets" in pm_data:
+                    markets_pm = pm_data.get("markets") or {}
+                    # Căutăm piețele relevante: 1x2, over_under_25, btts
+                    best_div = 0
+                    for mk, outcomes in markets_pm.items():
+                        if not isinstance(outcomes, dict):
+                            continue
+                        for outcome_code, pm_price in outcomes.items():
+                            if pm_price is None:
+                                continue
+                            pm_prob = float(pm_price) * 100  # 0-1 → 0-100
+                            # Comparăm cu probabilitățile API
+                            api_prob = None
+                            if mk == "1x2":
+                                if outcome_code == "HOME": api_prob = (event.get("prob_home_win") or 0)
+                                elif outcome_code == "DRAW": api_prob = (event.get("prob_draw") or 0)
+                                elif outcome_code == "AWAY": api_prob = (event.get("prob_away_win") or 0)
+                            elif mk in ("over_under_25",) and outcome_code == "over":
+                                api_prob = (event.get("prob_over_25") or row.get("prob_over_25") or 0)
+                            elif mk == "btts" and outcome_code == "yes":
+                                api_prob = (event.get("prob_btts_yes") or row.get("prob_btts_yes") or 0)
+                            if api_prob and float(api_prob) > 0:
+                                div = round(pm_prob - float(api_prob), 2)
+                                if abs(div) > abs(best_div):
+                                    best_div = div
+                                    row["polymarket_market"] = f"{mk}_{outcome_code}"
+                    if abs(best_div) >= 6:  # minim 6pp divergență
+                        row["polymarket_divergence"] = best_div
+                        if best_div > 0:
+                            row["polymarket_signal"] = "PM_BULLISH"  # Polymarket mai optimist
+                        else:
+                            row["polymarket_signal"] = "PM_BEARISH"  # Polymarket mai pesimist
+            except Exception:
+                pass  # graceful degradation
+
+        # ─── Funfacts pre-meci ─────────────────────────────────────────────
+        if event_id:
+            row["funfacts"] = []
+            try:
+                meta_url = f"{V2_BASE}/events/{int(event_id)}/metadata/"
+                meta_data = fetch_url(meta_url)
+                if meta_data and isinstance(meta_data, dict):
+                    facts = meta_data.get("funfacts") or []
+                    row["funfacts"] = [
+                        f.get("sentence", "")
+                        for f in facts
+                        if f.get("sentence") and len(f.get("sentence", "")) > 10
+                    ][:3]  # max 3 funfacts
+            except Exception:
+                pass
+
         # ───────────────────────────────────────────────────────────────────
 
         if home_mgr or away_mgr or home_xgd is not None or ref_stats:

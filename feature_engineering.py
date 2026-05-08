@@ -163,6 +163,7 @@ def build_team_histories(rows_sorted):
         # acum actualizăm cu rezultatul acestui meci
         if hid:
             team_hist[hid].append({
+                "event_id":      eid,
                 "date":          row["date"],
                 "goals_for":     row["home_score"],
                 "goals_against": row["away_score"],
@@ -177,6 +178,7 @@ def build_team_histories(rows_sorted):
             })
         if aid:
             team_hist[aid].append({
+                "event_id":      eid,
                 "date":          row["date"],
                 "goals_for":     row["away_score"],
                 "goals_against": row["home_score"],
@@ -554,8 +556,103 @@ def xg_features(row, home_hist, away_hist):
     return feats
 
 
+# ─── Stats features (din stats_cache.json — /events/{id}/stats/) ──────────────
+def stats_features(home_hist, away_hist, stats_cache: dict) -> dict:
+    """
+    Features derivate din /api/v2/events/{id}/stats/ pentru echipele home/away.
+    Calculează medie rolling pe ultimele 5 meciuri disponibile în cache.
+    """
+    feats = {}
+
+    def _get_stat(hist, field_home, field_away, is_home_team=True, window=5):
+        field = field_home if is_home_team else field_away
+        vals = []
+        for m in hist[-window:]:
+            eid = str(m.get("event_id", ""))
+            if eid and eid in stats_cache and stats_cache[eid]:
+                v = stats_cache[eid].get(field)
+                if v is not None and float(v) >= 0:
+                    vals.append(float(v))
+        return round(sum(vals) / len(vals), 4) if vals else None
+
+    # Shots on target ratio (calitate șuturi)
+    home_shots = _get_stat(home_hist, "home_shots", "home_shots", True)
+    home_sot   = _get_stat(home_hist, "home_shots_on_target", "home_shots_on_target", True)
+    away_shots = _get_stat(away_hist, "away_shots", "away_shots", True)
+    away_sot   = _get_stat(away_hist, "away_shots_on_target", "away_shots_on_target", True)
+
+    feats["home_shots_form5"]      = home_shots
+    feats["home_sot_form5"]        = home_sot
+    feats["away_shots_form5"]      = away_shots
+    feats["away_sot_form5"]        = away_sot
+    feats["home_sot_ratio_form5"]  = round(home_sot / home_shots, 4) if home_shots and home_sot else None
+    feats["away_sot_ratio_form5"]  = round(away_sot / away_shots, 4) if away_shots and away_sot else None
+
+    # Posesie medie
+    feats["home_possession_form5"] = _get_stat(home_hist, "home_possession", "home_possession", True)
+    feats["away_possession_form5"] = _get_stat(away_hist, "away_possession", "away_possession", True)
+
+    # Atacuri periculoase
+    feats["home_dangerous_attack_form5"] = _get_stat(home_hist, "home_dangerous_attack", "home_dangerous_attack", True)
+    feats["away_dangerous_attack_form5"] = _get_stat(away_hist, "away_dangerous_attack", "away_dangerous_attack", True)
+
+    # xG la min 70 ratio (cât % din joc a fost petrecut sub presiune)
+    feats["home_xg_at70_ratio_form5"] = _get_stat(home_hist, "home_xg_at70_ratio", "home_xg_at70_ratio", True)
+    feats["away_xg_at70_ratio_form5"] = _get_stat(away_hist, "away_xg_at70_ratio", "away_xg_at70_ratio", True)
+
+    # Momentum final meci (presiune în ultimele 15 minute)
+    feats["home_momentum_last15_form5"] = _get_stat(home_hist, "momentum_last15", "momentum_last15", True)
+
+    return feats
+
+
+# ─── Incidents features (din incidents_cache.json — /events/{id}/incidents/) ──
+def incidents_features(home_hist, away_hist, incidents_cache: dict) -> dict:
+    """
+    Features derivate din /api/v2/events/{id}/incidents/ pentru echipele home/away.
+    Calculează rate rolling pe ultimele 5 meciuri disponibile în cache.
+    """
+    feats = {}
+
+    def _get_inc(hist, field, window=5):
+        vals = []
+        for m in hist[-window:]:
+            eid = str(m.get("event_id", ""))
+            if eid and eid in incidents_cache and incidents_cache[eid]:
+                v = incidents_cache[eid].get(field)
+                if v is not None:
+                    vals.append(float(v))
+        return round(sum(vals) / len(vals), 4) if vals else None
+
+    # Gol timpuriu (< min 20) — predictor bun pentru 1X2 și BTTS
+    feats["home_early_goal_rate5"]   = _get_inc(home_hist, "early_goal_home")
+    feats["away_early_goal_rate5"]   = _get_inc(away_hist, "early_goal_away")
+
+    # Gol târziu (> min 75) — relevant pentru Under/BTTS
+    feats["home_late_goal_rate5"]    = _get_inc(home_hist, "late_goal_home")
+    feats["away_late_goal_rate5"]    = _get_inc(away_hist, "late_goal_away")
+
+    # Minuta primului gol (estimare timp până la primul gol)
+    feats["home_first_goal_min_avg5"] = _get_inc(home_hist, "first_goal_home_min")
+    feats["away_first_goal_min_avg5"] = _get_inc(away_hist, "first_goal_away_min")
+
+    # Cartonașe (stil de joc, relevanță pentru corners/fouls → xG indirect)
+    feats["home_yellow_cards_avg5"]  = _get_inc(home_hist, "home_yellow_cards")
+    feats["away_yellow_cards_avg5"]  = _get_inc(away_hist, "away_yellow_cards")
+    feats["home_red_cards_avg5"]     = _get_inc(home_hist, "home_red_cards")
+    feats["away_red_cards_avg5"]     = _get_inc(away_hist, "away_red_cards")
+
+    # Total carduri galbene (indicator joc agresiv)
+    h_y = feats.get("home_yellow_cards_avg5") or 0
+    a_y = feats.get("away_yellow_cards_avg5") or 0
+    feats["total_yellow_avg5"]       = round(h_y + a_y, 4) if (h_y or a_y) else None
+
+    return feats
+
+
 # ─── Asamblare rând features ──────────────────────────────────────────────────
-def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline):
+def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline,
+                      stats_cache=None, incidents_cache=None):
     home_hist = h_snap
     away_hist = a_snap
     hid       = row.get("home_team_id")
@@ -590,7 +687,15 @@ def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline):
     # E) Context features
     feats.update(context_features(row, home_hist, away_hist, league_baseline))
 
-    # F) Target labels
+    # F) Stats features (shots, possession, dangerous attacks, xG@70)
+    if stats_cache:
+        feats.update(stats_features(home_hist, away_hist, stats_cache))
+
+    # G) Incidents features (early/late goals, cards)
+    if incidents_cache:
+        feats.update(incidents_features(home_hist, away_hist, incidents_cache))
+
+    # Targets
     feats["target_home_win"] = row["home_win"]
     feats["target_draw"]     = row["draw"]
     feats["target_away_win"] = row["away_win"]
@@ -616,6 +721,20 @@ def main():
     if not rows:
         print("ERROR: Warehouse gol. Rulează fetch_history_batch.py mai întâi.")
         return
+
+    # 1b. Load stats + incidents cache (opțional — generate de fetch_stats_incidents_cache.py)
+    def _load_cache(path):
+        if path.exists():
+            try:
+                return json.load(open(path))
+            except Exception as e:
+                print(f"  WARN cache {path.name}: {e}")
+        return {}
+
+    stats_cache     = _load_cache(DATA_DIR / "stats_cache.json")
+    incidents_cache = _load_cache(DATA_DIR / "incidents_cache.json")
+    print(f"Stats cache: {len([v for v in stats_cache.values() if v])} entries valide")
+    print(f"Incidents cache: {len([v for v in incidents_cache.values() if v])} entries valide")
 
     # 2. Sortare cronologică (OBLIGATORIE pentru no-leakage)
     rows_sorted = sorted(rows, key=lambda r: r.get("date", ""))
@@ -650,6 +769,8 @@ def main():
             a_snap=snap.get("away_hist", []),
             h2h_snap=h2h,
             league_baseline=lb,
+            stats_cache=stats_cache,
+            incidents_cache=incidents_cache,
         )
         feature_rows.append(feat_row)
 
