@@ -4557,7 +4557,18 @@ function analyzeMatch(raw){
     homeMgrBtts    : raw.home_mgr_btts_pct  != null ? Number(raw.home_mgr_btts_pct)   : null,
     awayMgrBtts    : raw.away_mgr_btts_pct  != null ? Number(raw.away_mgr_btts_pct)   : null,
     homeMgrCs      : raw.home_mgr_cs_pct    != null ? Number(raw.home_mgr_cs_pct)     : null,
-    awayMgrCs      : raw.away_mgr_cs_pct    != null ? Number(raw.away_mgr_cs_pct)     : null
+    awayMgrCs      : raw.away_mgr_cs_pct    != null ? Number(raw.away_mgr_cs_pct)     : null,
+    // ─── Referee stats (fetch_referee_stats.py) ──────────────────────────────
+    refName        : raw.ref_name     || null,
+    refCountry     : raw.ref_country  || null,
+    refAvgYellow   : raw.ref_avg_yellow  != null ? Number(raw.ref_avg_yellow)  : null,
+    refAvgRed      : raw.ref_avg_red     != null ? Number(raw.ref_avg_red)     : null,
+    refAvgGoals    : raw.ref_avg_goals   != null ? Number(raw.ref_avg_goals)   : null,
+    refAvgFouls    : raw.ref_avg_fouls   != null ? Number(raw.ref_avg_fouls)   : null,
+    refStyle       : raw.ref_style    || null,
+    refIsStrict    : raw.ref_is_strict    != null ? !!raw.ref_is_strict    : null,
+    refIsHighGoals : raw.ref_is_high_goals!= null ? !!raw.ref_is_high_goals: null,
+    refMatches     : raw.ref_matches   != null ? Number(raw.ref_matches)   : null
   };
 }
 
@@ -5506,7 +5517,7 @@ function renderSignalAudit(){
           (r.odds_upgraded && r.best_odds_bookmaker ? '<div style="font-size:10px;color:var(--grn);margin-top:3px;font-weight:700">📈 Best @ '+r.best_odds_bookmaker+(r.odds_consensus && Number(r.odds_consensus) > 1.01 ? ' <span style=\"color:var(--muted);font-weight:400\">(cons. '+Number(r.odds_consensus).toFixed(2)+')</span>' : '')+'</div>' : '')+
         '</div>'+
       '</div>'+
-      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff) >= 0.2 ? 'var(--grn)' : Number(r.xgd_diff) <= -0.2 ? 'var(--red)' : 'var(--muted)')+'">xGd '+(Number(r.xgd_diff) >= 0 ? '+' : '')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff)>=0.2?'var(--grn)':Number(r.xgd_diff)<=-0.2?'var(--red)':'var(--muted)')+'">'+(Number(r.xgd_diff)>=0?'+':'')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
+      '<div class="audit-row-tags">'+sourceChipHtmlForAuditRow(r)+(r.poisson_alert && r.poisson_delta != null ? ('<span class="audit-badge" style="color:'+(Number(r.poisson_delta) >= 0 ? 'var(--grn)' : 'var(--red)')+'">Poisson '+(Number(r.poisson_delta) >= 0 ? '+' : '')+Number(r.poisson_delta).toFixed(1)+'pp</span>') : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff) >= 0.2 ? 'var(--grn)' : Number(r.xgd_diff) <= -0.2 ? 'var(--red)' : 'var(--muted)')+'">xGd '+(Number(r.xgd_diff) >= 0 ? '+' : '')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+(r.xgd_diff != null ? '<span class="audit-badge" style="color:'+(Number(r.xgd_diff)>=0.2?'var(--grn)':Number(r.xgd_diff)<=-0.2?'var(--red)':'var(--muted)')+'">'+(Number(r.xgd_diff)>=0?'+':'')+Number(r.xgd_diff).toFixed(2)+'</span>' : '')+(r.ref_name && r.ref_avg_goals != null ? '<span class="audit-badge" style="color:'+(r.ref_is_high_goals ? 'var(--red)' : r.ref_avg_goals <= 2.2 ? 'var(--grn)' : 'var(--muted)')+'">'+'👨‍⚖️ '+r.ref_name.split(' ').pop()+' ⚽ '+Number(r.ref_avg_goals).toFixed(1)+(r.ref_avg_yellow != null ? ' 🟨 '+Number(r.ref_avg_yellow).toFixed(1) : '')+'</span>' : '')+'<span class="audit-badge">Kelly adj '+fmtPct(computeAdjustedKelly(r))+'</span><span class="audit-badge" style="color:var(--muted)">brut '+fmtPct(Number(r.kelly_quarter_pct || 0))+'</span><span class="audit-badge">Age '+age+'</span></div>'+
       hybridBlock+
       '<div class="audit-stat-grid">'+
         '<div class="audit-stat"><div class="audit-stat-label">Prob. ajustată</div><div class="audit-stat-value">'+fmtPct(Number(r.adjusted_prob || 0))+'</div></div>'+
@@ -6772,6 +6783,17 @@ function renderMatches(){
     }
     var compactWhy = b ? ('<div class="match-why"><strong>De ce:</strong> ' + ((m.why && String(m.why).trim()) ? m.why : (m.rationale && String(m.rationale).trim()) ? m.rationale : buildRecommendationReasons(m, b).slice(0, 2).join(' • ')) + '</div>') : '';
     var catboostBadge = m.catboostSignal ? ('<span class="card-reco-badge" style="background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--yel);font-weight:800">⚡ CB: '+m.catboostSignal+(m.catboostEvPct!=null?' • EV '+Number(m.catboostEvPct).toFixed(1)+'%':'')+'</span>') : '';
+
+    // ─── Referee Badge ──────────────────────────────────────────────────────
+    var refBadge = '';
+    if(m.refName && m.refAvgGoals != null){
+      var refColor = m.refIsHighGoals ? 'var(--red)' : (m.refAvgGoals <= 2.2 ? 'var(--grn)' : 'var(--muted)');
+      var refYellowStr = m.refAvgYellow != null ? (' • 🟨 '+Number(m.refAvgYellow).toFixed(1)) : '';
+      var refGoalStr = '⚽ '+Number(m.refAvgGoals).toFixed(1)+'g/meci';
+      var refStrictStr = m.refIsStrict ? ' • strict' : '';
+      refBadge = '<span class="card-reco-badge" style="color:'+refColor+'" title="Arbitru: '+htmlEsc(m.refName)+(m.refMatches?' ('+m.refMatches+' meciuri)':'')+'">👨‍⚖️ '+htmlEsc(m.refName.split(' ').pop())+' • '+refGoalStr+refYellowStr+refStrictStr+'</span>';
+    }
+    // ────────────────────────────────────────────────────────────────────────
     var _btEdgeBad = b ? benchmarkEdgeIsBad(b.type || b.marketKey || '', Number(b.edgePct || 0)) : false;
     var motorBadge = motorMeta && motorMeta.state === 'validated' && !_btEdgeBad
       ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
@@ -6882,8 +6904,8 @@ function renderMatches(){
       '</div>'+
       predictionProbabilityHtml+
     '</div>';
-    var expertBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>';
-    var simpleBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+motorBadge+ageBadge+'</div>';
+    var expertBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+refBadge+edgeBadge+valueBadge+confBadge+tierBadge+poissonBadge+ageBadge+'</div>';
+    var simpleBadgeRow = '<div class="analysis-detail-chip-row">'+sourceBadge+oddsSourceBadge+motorBadge+refBadge+ageBadge+'</div>';
     var xgMiniGrid = '<div class="ticket-mini-grid ticket-mini-grid-premium">'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgHome || 0).toFixed(2)+'</div><div class="l">xG gazde</div></div>'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
@@ -7004,7 +7026,7 @@ function renderMatches(){
     var _cardVerdict = b ? getBetVerdict(m, b) : null;
     var m17VerdictPill = _cardVerdict ? '<span class="m17-pill" style="background:'+_cardVerdict.bg+';color:'+_cardVerdict.color+';border:1px solid '+_cardVerdict.border+';font-weight:800;font-size:10px">'+_cardVerdict.label+'</span>' : '';
     // Verdict PARIAZA/RISC/EVITA vizibil pe card (elimina contradictia cu detaliile)
-    var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+motorBadge+catboostBadge+ml5Badge+ageBadge+'</div>' : '';
+    var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+motorBadge+catboostBadge+ml5Badge+refBadge+ageBadge+'</div>' : '';
     var m17Metrics = b ? ('<div class="m17-metric-strip">'+
       '<div class="m17-metric '+m17ProbClass+'"><span>Prob.</span><strong>'+fmtPct(m17AdjProb)+'</strong></div>'+
       '<div class="m17-metric '+m17EdgeClass+'"><span>Edge</span><strong>'+(m17Edge == null ? '—' : ((m17Edge >= 0 ? '+' : '')+m17Edge.toFixed(1)+'pp'))+'</strong></div>'+
