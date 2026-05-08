@@ -3004,17 +3004,22 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
 
         # Pasul 2: lookup stats arbitru
         ref_stats = REFEREE_STATS.get(int(ref_id)) if ref_id else None
-        row["referee_id"]       = ref_id
-        row["ref_name"]         = ref_stats.get("name")         if ref_stats else None
-        row["ref_country"]      = ref_stats.get("country")      if ref_stats else None
-        row["ref_avg_yellow"]   = ref_stats.get("avg_yellow")   if ref_stats else None
-        row["ref_avg_red"]      = ref_stats.get("avg_red")      if ref_stats else None
-        row["ref_avg_goals"]    = ref_stats.get("avg_goals")    if ref_stats else None
-        row["ref_avg_fouls"]    = ref_stats.get("avg_fouls")    if ref_stats else None
-        row["ref_style"]        = ref_stats.get("style")        if ref_stats else None
-        row["ref_is_strict"]    = ref_stats.get("is_strict")    if ref_stats else None
-        row["ref_is_high_goals"]= ref_stats.get("is_high_goals")if ref_stats else None
-        row["ref_matches"]      = ref_stats.get("matches")      if ref_stats else None
+        row["referee_id"]        = ref_id
+        row["ref_name"]          = ref_stats.get("name")            if ref_stats else None
+        row["ref_country"]       = ref_stats.get("country")         if ref_stats else None
+        row["ref_avg_yellow"]    = ref_stats.get("avg_yellow")      if ref_stats else None
+        row["ref_avg_red"]       = ref_stats.get("avg_red")         if ref_stats else None
+        row["ref_avg_goals"]     = ref_stats.get("avg_goals")       if ref_stats else None
+        row["ref_avg_fouls"]     = ref_stats.get("avg_fouls")       if ref_stats else None
+        row["ref_style"]         = ref_stats.get("style")           if ref_stats else None
+        row["ref_is_strict"]     = ref_stats.get("is_strict")       if ref_stats else None
+        row["ref_is_high_goals"] = ref_stats.get("is_high_goals")   if ref_stats else None
+        row["ref_matches"]       = ref_stats.get("matches")         if ref_stats else None
+        # Trend recent vs medie carieră (populat de fetch_referee_stats.py)
+        row["ref_yellow_trend"]  = ref_stats.get("yellow_trend")    if ref_stats else None
+        row["ref_goals_trend"]   = ref_stats.get("goals_trend")     if ref_stats else None
+        row["ref_recent_yellow"] = ref_stats.get("recent_yellow_avg") if ref_stats else None
+        row["ref_recent_goals"]  = ref_stats.get("recent_goals_avg")  if ref_stats else None
         if ref_stats:
             ref_enriched += 1
 

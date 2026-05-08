@@ -510,6 +510,27 @@ def context_features(row, home_hist, away_hist, league_baseline):
                   "league_draw_rate","league_away_win_rate","league_avg_xg_home","league_avg_xg_away"]:
             feats[k] = None
 
+    # Referee features
+    ref_avg_y   = row.get("ref_avg_yellow")
+    ref_avg_g   = row.get("ref_avg_goals")
+    ref_trend_y = row.get("ref_yellow_trend")
+    ref_trend_g = row.get("ref_goals_trend")
+    feats["ref_avg_yellow"]        = round(float(ref_avg_y),  3) if ref_avg_y  is not None else None
+    feats["ref_avg_goals"]         = round(float(ref_avg_g),  3) if ref_avg_g  is not None else None
+    feats["ref_yellow_trend"]      = round(float(ref_trend_y),3) if ref_trend_y is not None else None
+    feats["ref_goals_trend"]       = round(float(ref_trend_g),3) if ref_trend_g is not None else None
+    feats["ref_is_strict"]         = 1 if row.get("ref_is_strict")     else 0
+    feats["ref_is_high_goals"]     = 1 if row.get("ref_is_high_goals") else 0
+    feats["ref_stricter_recent"]   = 1 if (ref_trend_y and float(ref_trend_y) >=  0.5) else 0
+    feats["ref_looser_recent"]     = 1 if (ref_trend_y and float(ref_trend_y) <= -0.5) else 0
+    feats["ref_more_goals_recent"] = 1 if (ref_trend_g and float(ref_trend_g) >=  0.3) else 0
+
+    # BSD model confidence (0-1, normalizat din v1 confidence 0-100)
+    api_conf = row.get("api_confidence")
+    feats["api_confidence"]          = round(float(api_conf) / 100, 4) if api_conf is not None else None
+    feats["api_confidence_high"]     = 1 if (api_conf and float(api_conf) >= 60) else 0
+    feats["api_confidence_very_high"]= 1 if (api_conf and float(api_conf) >= 70) else 0
+
     return feats
 
 
@@ -686,6 +707,12 @@ def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline,
 
     # E) Context features
     feats.update(context_features(row, home_hist, away_hist, league_baseline))
+
+    # E2) BSD model confidence — feature ensemble puternic
+    api_conf = row.get("api_confidence")
+    feats["api_confidence"]       = round(float(api_conf) / 100, 4) if api_conf is not None else None
+    feats["api_confidence_above60"] = 1 if (api_conf and float(api_conf) >= 60) else 0
+    feats["api_confidence_above70"] = 1 if (api_conf and float(api_conf) >= 70) else 0
 
     # F) Stats features (shots, possession, dangerous attacks, xG@70)
     if stats_cache:

@@ -205,6 +205,55 @@ def print_summary(stats):
         print(f"    {r['name']} ({r['country']}): {r['avg_goals']} gol/meci, {r['avg_yellow']} galben/meci, {r['matches']} meciuri")
 
 
+def fetch_referee_recent_trend(referee_id: int, career_avg_yellow: float, career_avg_goals: float) -> dict:
+    """
+    Fetchez ultimele 10 meciuri ale unui arbitru de la /api/v2/referees/{id}/matches/
+    și calculez trendul recent vs medie carieră.
+
+    Returns dict cu:
+      recent_yellow_avg  — media galben ultimele 5 meciuri
+      recent_goals_avg   — media goluri ultimele 5 meciuri
+      yellow_trend       — recent_yellow_avg - career_avg_yellow (pozitiv = mai strict recent)
+      goals_trend        — recent_goals_avg - career_avg_goals (pozitiv = mai multe goluri recent)
+      trend_matches      — numărul de meciuri din trend
+    """
+    url = f"{V2_BASE}/referees/{referee_id}/matches/?limit=10"
+    try:
+        resp = requests.get(url, headers={"Authorization": f"Token {TOKEN}"}, timeout=10)
+        if resp.status_code != 200:
+            return {}
+        data = resp.json()
+    except Exception:
+        return {}
+
+    matches = data.get("results") or data if isinstance(data, list) else []
+    if not matches:
+        return {}
+
+    # Ultimele 5 meciuri cu date complete
+    recent = []
+    for m in matches[:5]:
+        stats = m.get("stats") or m
+        yellow = stats.get("yellow_cards") or stats.get("yellow") or stats.get("total_yellow")
+        goals  = stats.get("goals") or stats.get("total_goals")
+        if yellow is not None and goals is not None:
+            recent.append({"yellow": float(yellow), "goals": float(goals)})
+
+    if not recent:
+        return {}
+
+    recent_yellow = round(sum(r["yellow"] for r in recent) / len(recent), 3)
+    recent_goals  = round(sum(r["goals"]  for r in recent) / len(recent), 3)
+
+    return {
+        "recent_yellow_avg": recent_yellow,
+        "recent_goals_avg":  recent_goals,
+        "yellow_trend":      round(recent_yellow - (career_avg_yellow or 0), 3),
+        "goals_trend":       round(recent_goals  - (career_avg_goals  or 0), 3),
+        "trend_matches":     len(recent),
+    }
+
+
 def main():
     ensure_token()
     print(f"=== fetch_referee_stats.py | {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} ===")
@@ -217,6 +266,24 @@ def main():
     stats = build_referee_stats(referees)
     print(f"\nStatistici construite pentru {len(stats)} arbitri:")
     print_summary(stats)
+
+    # Adaugă trend recent pentru primii 200 arbitri (cei cu cele mai multe meciuri)
+    # Rate-limit friendly: max 200 calls, sleep 0.3s
+    top_refs = sorted(stats.items(), key=lambda x: -(x[1].get("matches") or 0))[:200]
+    print(f"\nFetching trend recent pentru {len(top_refs)} arbitri (top by matches)...")
+    trend_count = 0
+    for ref_id, ref_data in top_refs:
+        trend = fetch_referee_recent_trend(
+            ref_id,
+            career_avg_yellow=ref_data.get("avg_yellow") or 0,
+            career_avg_goals=ref_data.get("avg_goals") or 0,
+        )
+        if trend:
+            stats[ref_id].update(trend)
+            trend_count += 1
+        time.sleep(0.3)
+
+    print(f"Trend completat pentru {trend_count}/{len(top_refs)} arbitri")
 
     save_stats(stats)
     print("\nDone.")

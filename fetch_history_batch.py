@@ -276,6 +276,8 @@ def normalize_event(ev, season_id, season_meta):
         "most_likely_score":  ev.get("most_likely_score"),
         "favorite_recommend": ev.get("favorite_recommend"),
         "referee_id":         ev.get("referee_id"),
+        # BSD model confidence (0-100, scala v1) — feature ML important
+        "api_confidence":     _float(ev, "confidence"),
     }
     return row
 
