@@ -89,11 +89,21 @@ jobs:
         run: |
           git config --global user.name  'SmartBet Bot'
           git config --global user.email 'bot@betanalytics.local'
-          # Adaugă modelele CatBoost + calibratoarele Isotonic (.cbm + .pkl)
-          # FIX: fără models/ în commit, fișierele dispar după run și predict_current.py nu le găsește
-          git add models/ || true
-          # Adaugă JSON-urile — fiecare separat cu || true ca să nu moară pe fișiere lipsă
-          # FIX: backtest_v2.json eliminat (nu există, cauza erorilor anterioare)
+
+          # Verifică că modelele există înainte de commit
+          MODEL_COUNT=$(ls models/catboost_*.cbm 2>/dev/null | wc -l)
+          echo "Modele găsite: $MODEL_COUNT"
+          if [ "$MODEL_COUNT" -lt 3 ]; then
+            echo "EROARE: Prea puține modele ($MODEL_COUNT). Training probabil a eșuat."
+            exit 1
+          fi
+
+          # Adaugă modelele CatBoost + calibratoarele (.cbm + .pkl)
+          git add models/ || echo "WARN: git add models/ a eșuat"
+          echo "Modele adăugate la staging:"
+          git diff --staged --name-only | grep models/ || echo "  (niciun model nou)"
+
+          # Adaugă JSON-urile de output
           git add data/model_pack_v2.json         || true
           git add data/ev_signals_v2.json         || true
           git add data/shap_global_v2.json        || true
@@ -103,9 +113,14 @@ jobs:
           git add data/league_baselines_v2.json   || true
           git add data/league_baselines_compact.json || true
           git add data/features_v2_summary.json   || true
-          git diff --staged --quiet || git commit -m \
-            "chore(ml): SmartBet v2 retrain $(date -u +%Y-%m-%d)"
-          # FIX: --autostash previne eroarea "unstaged changes" la rebase
-          git pull --rebase --autostash && git push
+
+          if git diff --staged --quiet; then
+            echo "Nicio schimbare de committat."
+          else
+            git commit -m "chore(ml): SmartBet v2 retrain $(date -u +%Y-%m-%d)"
+            git pull --rebase --autostash
+            git push
+            echo "✅ Modele și date ML committate cu succes."
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
