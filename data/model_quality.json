@@ -1,18 +1,18 @@
 {
-  "updated_at": "2026-05-08T22:07:44.900917+00:00",
-  "quality_score": 70.5,
+  "updated_at": "2026-05-08T23:05:31.362767+00:00",
+  "quality_score": 70.7,
   "quality_grade": "C",
   "coverage": {
     "predictions": 352,
     "ev_signals": 234,
     "log_total": 989,
-    "log_closed": 833,
+    "log_closed": 834,
     "markets_audited": 4
   },
   "freshness": {
     "age_hours": 0.3,
     "color": "green",
-    "label": "0.3h"
+    "label": "0.4h"
   },
   "markets": [
     {
@@ -33,16 +33,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 230,
+      "n": 231,
       "credible": true,
-      "brier": 0.2169,
-      "log_loss": 0.6312,
-      "ece": 0.0822,
+      "brier": 0.2165,
+      "log_loss": 0.6304,
+      "ece": 0.0803,
       "calib_label": "acceptabil",
-      "winrate": 69.57,
-      "roi_pct": -7.92,
-      "n_wins": 160,
-      "score": 63.5,
+      "winrate": 69.7,
+      "roi_pct": -7.64,
+      "n_wins": 161,
+      "score": 63.9,
       "grade": "C"
     },
     {
@@ -77,14 +77,14 @@
     }
   ],
   "backtest": {
-    "roi_pct": 11.87,
-    "winrate": 78.57,
-    "n_bets": 42,
-    "avg_odds": 1.434,
-    "avg_edge": 12.67
+    "roi_pct": 14.34,
+    "winrate": 80.0,
+    "n_bets": 45,
+    "avg_odds": 1.438,
+    "avg_edge": 12.48
   },
   "recommendations": [
-    "Backtest ROI global: +11.9% — semnal pozitiv."
+    "Backtest ROI global: +14.3% — semnal pozitiv."
   ],
   "wfv": {
     "global_score": 74.5,
@@ -292,24 +292,24 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-05-08T22:07:44.744535"
+    "updated_at": "2026-05-08T23:05:31.243688"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 70.5,
+      "value": 70.7,
       "suffix": "/100",
       "tone": "warn"
     },
     {
       "label": "Meciuri analizate",
-      "value": 833,
+      "value": 834,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": 11.9,
+      "value": 14.3,
       "suffix": "%",
       "tone": "good"
     },
