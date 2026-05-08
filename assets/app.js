@@ -4533,6 +4533,10 @@ function analyzeMatch(raw){
     enrichedKellyPct: raw.kelly_pct != null ? Number(raw.kelly_pct) : null,
     enrichedEvPct  : raw.ev_pct != null ? Number(raw.ev_pct) : null,
     catboostSignal : raw.catboost_signal || null,
+    polymarketSignal   : raw.polymarket_signal     || null,
+    polymarketDivergence: raw.polymarket_divergence != null ? Number(raw.polymarket_divergence) : null,
+    polymarketMarket   : raw.polymarket_market     || null,
+    funfacts           : Array.isArray(raw.funfacts) ? raw.funfacts : [],
     catboostMarket : raw.catboost_market || null,
     catboostScore  : raw.catboost_score != null ? Number(raw.catboost_score) : null,
     catboostEvPct  : raw.catboost_ev_pct != null ? Number(raw.catboost_ev_pct) : null,
@@ -6914,8 +6918,17 @@ function renderMatches(){
       var refStrictStr = m.refIsStrict ? ' • strict' : '';
       refBadge = '<span class="card-reco-badge" style="color:'+refColor+'" title="Arbitru: '+htmlEsc(m.refName)+(m.refMatches?' ('+m.refMatches+' meciuri)':'')+'">👨‍⚖️ '+htmlEsc(m.refName.split(' ').pop())+' • '+refGoalStr+refYellowStr+refStrictStr+'</span>';
     }
+    // ─── Polymarket signal badge ─────────────────────────────────────────────
+    var polyBadge = '';
+    if(m.polymarketSignal && m.polymarketDivergence != null){
+      var pdiv = Number(m.polymarketDivergence);
+      var pabs = Math.abs(pdiv);
+      var pcolor = pdiv > 0 ? 'var(--grn)' : 'var(--red)';
+      var pmk = String(m.polymarketMarket || '').replace('_', ' ').toUpperCase();
+      var psign = pdiv > 0 ? '+' : '';
+      polyBadge = '<span class="card-reco-badge" style="background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3);color:#818cf8" title="Polymarket diverge față de bookmakers cu '+psign+pdiv.toFixed(1)+'pp ('+pmk+')">💎 PM '+(pabs >= 10 ? '⚡' : '')+psign+pdiv.toFixed(1)+'pp</span>';
+    }
     // ────────────────────────────────────────────────────────────────────────
-    var _btEdgeBad = b ? benchmarkEdgeIsBad(b.type || b.marketKey || '', Number(b.edgePct || 0)) : false;
     var motorBadge = motorMeta && motorMeta.state === 'validated' && !_btEdgeBad
       ? '<span class="card-reco-badge" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:var(--grn)">Validat Motor' + (motorMeta.score != null ? ' • scor ' + Number(motorMeta.score || 0).toFixed(0) : '') + '</span>'
       : (motorMeta && motorMeta.state === 'validated' && _btEdgeBad
@@ -7093,10 +7106,34 @@ function renderMatches(){
       '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
     '</div>';
-    var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    // ─── Funfacts block ─────────────────────────────────────────────────────
+    var funfactsBlock = '';
+    if(m.funfacts && m.funfacts.length > 0){
+      var ffItems = m.funfacts.map(function(f){
+        return '<div class="funfact-item">💡 '+htmlEsc(String(f))+'</div>';
+      }).join('');
+      funfactsBlock = '<div class="funfacts-block">'+ffItems+'</div>';
+    }
+    var polyBlock = '';
+    if(m.polymarketSignal && m.polymarketDivergence != null){
+      var pdiv2 = Number(m.polymarketDivergence);
+      var psign2 = pdiv2 > 0 ? '+' : '';
+      var pdir = pdiv2 > 0
+        ? 'Polymarket mai optimist decât bookmakers'
+        : 'Polymarket mai pesimist decât bookmakers';
+      var pmk2 = String(m.polymarketMarket || '').replace('_', ' ').toUpperCase();
+      polyBlock = '<div class="poly-signal-block" style="border-left:3px solid #818cf8;padding:8px 10px;margin-top:8px;background:rgba(99,102,241,.07);border-radius:0 8px 8px 0">'
+        + '<span style="color:#818cf8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">💎 Polymarket Signal</span>'
+        + '<div style="font-size:12px;color:var(--c-text);margin-top:4px">'+pdir+': <strong style="color:'+(pdiv2>0?'var(--grn)':'var(--red)')+'">'+psign2+pdiv2.toFixed(1)+'pp</strong>'
+        + (pmk2 ? ' <span style="color:var(--muted);font-size:10px">('+pmk2+')</span>' : '') + '</div>'
+        + '</div>';
+    }
+
+    var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      (funfactsBlock ? buildAnalysisSection('Context pre-meci', funfactsBlock + polyBlock, 'analysis-detail-funfacts-section') : (polyBlock ? buildAnalysisSection('', polyBlock, 'analysis-detail-poly-section') : ''))+
       (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';
     var expertInsightFrame = '<div class="analysis-detail-expert-overview-frame">'+
@@ -7121,10 +7158,11 @@ function renderMatches(){
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
     '</div>';
-    var simpleLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    var simpleLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      (funfactsBlock ? buildAnalysisSection('Context pre-meci', funfactsBlock + polyBlock, 'analysis-detail-funfacts-section') : (polyBlock ? buildAnalysisSection('', polyBlock, 'analysis-detail-poly-section') : ''))+
       (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';
     var simpleDetails = '<div class="analysis-detail-shell simple">'+
@@ -7210,7 +7248,7 @@ function renderMatches(){
     var _cardVerdict = b ? getBetVerdict(m, b) : null;
     var m17VerdictPill = _cardVerdict ? '<span class="m17-pill" style="background:'+_cardVerdict.bg+';color:'+_cardVerdict.color+';border:1px solid '+_cardVerdict.border+';font-weight:800;font-size:10px">'+_cardVerdict.label+'</span>' : '';
     // Verdict PARIAZA/RISC/EVITA vizibil pe card (elimina contradictia cu detaliile)
-    var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+refBadge+lineupBadge+ageBadge+'</div>' : '';
+    var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+refBadge+lineupBadge+polyBadge+ageBadge+'</div>' : '';
     var m17Metrics = b ? ('<div class="m17-metric-strip">'+
       '<div class="m17-metric '+m17ProbClass+'"><span>Prob.</span><strong>'+fmtPct(m17AdjProb)+'</strong></div>'+
       '<div class="m17-metric '+m17EdgeClass+'"><span>Edge</span><strong>'+(m17Edge == null ? '—' : ((m17Edge >= 0 ? '+' : '')+m17Edge.toFixed(1)+'pp'))+'</strong></div>'+

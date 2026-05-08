@@ -7710,3 +7710,22 @@ button[onclick*="resetFilter"]:hover {
   content-visibility: visible !important;
   contain-intrinsic-size: auto !important;
 }
+
+/* ─── Funfacts & Polymarket ─────────────────────────────────────────── */
+.funfacts-block {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+.funfact-item {
+  font-size: 12px !important;
+  color: var(--c-text) !important;
+  line-height: 1.4 !important;
+  padding: 6px 10px !important;
+  background: rgba(255,255,255,.04) !important;
+  border-radius: 8px !important;
+  border-left: 2px solid rgba(99,102,241,.4) !important;
+}
+.analysis-detail-funfacts-section .analysis-section-title {
+  color: #818cf8 !important;
+}
