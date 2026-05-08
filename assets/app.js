@@ -6918,8 +6918,7 @@ function renderMatches(){
       var refYellowStr = m.refAvgYellow != null ? (' • 🟨 '+Number(m.refAvgYellow).toFixed(1)) : '';
       var refGoalStr = '⚽ '+Number(m.refAvgGoals).toFixed(1)+'g/meci';
       var refStrictStr = m.refIsStrict ? ' • strict' : '';
-      var refTrendStr = '';
-      if(m.refYellowTrend != null){ var rt=Number(m.refYellowTrend); if(rt>=0.5) refTrendStr=' 📈'; else if(rt<=-0.5) refTrendStr=' 📉'; }
+      var refTrendStr = ''; try { if(m.refYellowTrend != null){ var rt=Number(m.refYellowTrend||0); if(rt>=0.5) refTrendStr=' 📈'; else if(rt<=-0.5) refTrendStr=' 📉'; } } catch(e){}
       refBadge = '<span class="card-reco-badge" style="color:'+refColor+'" title="Arbitru: '+htmlEsc(m.refName)+(m.refMatches?' ('+m.refMatches+' meciuri)':'')+(m.refYellowTrend!=null?' trend:'+Number(m.refYellowTrend).toFixed(1):'')+'">👨‍⚖️ '+htmlEsc(m.refName.split(' ').pop())+' • '+refGoalStr+refYellowStr+refStrictStr+refTrendStr+'</span>';
     }
     // ─── Polymarket signal badge ─────────────────────────────────────────────
@@ -7110,28 +7109,22 @@ function renderMatches(){
       '<div class="ticket-mini"><div class="v">'+Number(m.xgAway || 0).toFixed(2)+'</div><div class="l">xG oaspeți</div></div>'+
       '<div class="ticket-mini"><div class="v">'+Number(m.xgTotal || 0).toFixed(2)+'</div><div class="l">xG total</div></div>'+
     '</div>';
-    // ─── Funfacts block ─────────────────────────────────────────────────────
+        // ─── Funfacts + Polymarket block (defensive) ────────────────────────────
     var funfactsBlock = '';
-    if(m.funfacts && m.funfacts.length > 0){
-      var ffItems = m.funfacts.map(function(f){
-        return '<div class="funfact-item">💡 '+htmlEsc(String(f))+'</div>';
-      }).join('');
-      funfactsBlock = '<div class="funfacts-block">'+ffItems+'</div>';
-    }
     var polyBlock = '';
-    if(m.polymarketSignal && m.polymarketDivergence != null){
-      var pdiv2 = Number(m.polymarketDivergence);
-      var psign2 = pdiv2 > 0 ? '+' : '';
-      var pdir = pdiv2 > 0
-        ? 'Polymarket mai optimist decât bookmakers'
-        : 'Polymarket mai pesimist decât bookmakers';
-      var pmk2 = String(m.polymarketMarket || '').replace('_', ' ').toUpperCase();
-      polyBlock = '<div class="poly-signal-block" style="border-left:3px solid #818cf8;padding:8px 10px;margin-top:8px;background:rgba(99,102,241,.07);border-radius:0 8px 8px 0">'
-        + '<span style="color:#818cf8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">💎 Polymarket Signal</span>'
-        + '<div style="font-size:12px;color:var(--c-text);margin-top:4px">'+pdir+': <strong style="color:'+(pdiv2>0?'var(--grn)':'var(--red)')+'">'+psign2+pdiv2.toFixed(1)+'pp</strong>'
-        + (pmk2 ? ' <span style="color:var(--muted);font-size:10px">('+pmk2+')</span>' : '') + '</div>'
-        + '</div>';
-    }
+    try {
+      if(m.funfacts && Array.isArray(m.funfacts) && m.funfacts.length > 0){
+        var ffItems = m.funfacts.map(function(f){ return '<div class="funfact-item">💡 '+htmlEsc(String(f||''))+'</div>'; }).join('');
+        if(ffItems) funfactsBlock = '<div class="funfacts-block">'+ffItems+'</div>';
+      }
+      if(m.polymarketSignal && m.polymarketDivergence != null){
+        var pdiv2 = Number(m.polymarketDivergence) || 0;
+        var psign2 = pdiv2 > 0 ? '+' : '';
+        var pdir = pdiv2 > 0 ? 'Polymarket mai optimist' : 'Polymarket mai pesimist';
+        var pmk2 = String(m.polymarketMarket || '').replace('_',' ').toUpperCase();
+        polyBlock = '<div style="border-left:3px solid #818cf8;padding:8px 10px;margin-top:8px;background:rgba(99,102,241,.07);border-radius:0 8px 8px 0"><span style="color:#818cf8;font-size:10px;font-weight:700">💎 Polymarket Signal</span><div style="font-size:12px;color:var(--c-text);margin-top:4px">'+pdir+': <strong style="color:'+(pdiv2>0?'var(--grn)':'var(--red)')+'">'+psign2+pdiv2.toFixed(1)+'pp</strong>'+(pmk2?' ('+pmk2+')':'')+' față de bookmakers</div></div>';
+      }
+    } catch(e) { funfactsBlock = ''; polyBlock = ''; }
 
     var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
