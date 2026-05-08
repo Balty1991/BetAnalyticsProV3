@@ -7295,6 +7295,8 @@ function renderMatches(){
   if(MATCHES_SCROLL_OBSERVER){ try{ MATCHES_SCROLL_OBSERVER.disconnect(); }catch(e){} MATCHES_SCROLL_OBSERVER = null; }
 
   function buildBatchHtml(startIdx, count){
+    // Wrapper defensiv — dacă renderCard aruncă pentru un match, îl sare
+    var _safeRenderCard = function(m){ try { return renderCard(m) || ''; } catch(e) { console.error('renderCard error:', e && e.message); return ''; } };
     var slice = MATCHES_FILTERED_CACHE.slice(startIdx, startIdx + count);
     if(sort === 'date'){
       var html = '';
@@ -7308,14 +7310,14 @@ function renderMatches(){
         // Check if group div already exists (for appending)
         var existingGroup = container.querySelector('[data-date-group="' + date + '"]');
         if(existingGroup && startIdx > 0){
-          existingGroup.querySelector('.matches-grid').innerHTML += groups[date].map(renderCard).join('');
+          existingGroup.querySelector('.matches-grid').innerHTML += groups[date].map(_safeRenderCard).join('');
         } else {
-          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">📅 ' + date + '</div><div class="matches-grid">' + groups[date].map(renderCard).join('') + '</div></div>';
+          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">📅 ' + date + '</div><div class="matches-grid">' + groups[date].map(_safeRenderCard).join('') + '</div></div>';
         }
       });
       return html;
     }
-    return slice.map(renderCard).join('');
+    return slice.map(_safeRenderCard).join('');
   }
 
   // Render primul batch.
@@ -7342,7 +7344,7 @@ function renderMatches(){
     sort, CURRENT_FILTER, MATCH_CARD_MODE, MATCH_FOCUS_KEY || '', leagueF || '', dateF || '', marketF || '', verdictF || '', proMode || '',
     minProb, minEdge, kickoffF || '', tierF || '', minScore, MATCHES_FILTERED_CACHE.length, firstVisibleSig
   ].join('::');
-  if(container.getAttribute('data-ba-render-sig') === renderSig && container.childElementCount){
+  if(container.getAttribute('data-ba-render-sig') === renderSig && container.querySelector('.match-card')){
     renderTicketQuickPeek();
     if(typeof renderDashboardMonitor === 'function') renderDashboardMonitor();
     return;
