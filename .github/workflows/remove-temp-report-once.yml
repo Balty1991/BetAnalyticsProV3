@@ -1,0 +1,30 @@
+name: Remove Temp Report Once
+
+on:
+  push:
+    paths:
+      - '.cleanup/remove-temp-report.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  remove-temp-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove temp report
+        run: python tools/remove_popup_audit_json_once.py
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Clean temporary report"
+            git push
+          fi
