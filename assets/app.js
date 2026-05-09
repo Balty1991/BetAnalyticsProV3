@@ -10704,7 +10704,7 @@ window.addEventListener('DOMContentLoaded', function(){
   setMobileNavActive('dashboard');
   doRefresh();
   setInterval(checkDailyRefresh, 60000);
-  setInterval(doRefresh, 900000);
+  setInterval(doRefresh, 1800000);
 });
 /* ===== Math Portfolio Override ===== */
 function getActualBankrollValue(){

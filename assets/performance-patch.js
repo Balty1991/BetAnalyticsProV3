@@ -20,7 +20,7 @@
         console.info('[BA] skipped legacy checkDailyRefresh interval');
         return 0;
       }
-      // Keep app data auto-refresh active. doRefresh every 15 minutes must run.
+      // Keep app data auto-refresh active. doRefresh must remain active; external cron cadence is 30 minutes.
 
       return originalSetInterval.apply(this, arguments);
     };
