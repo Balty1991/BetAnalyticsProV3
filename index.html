@@ -43,10 +43,12 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 </style>
 <link rel="stylesheet" href="./assets/app.css?v=20260508v4"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
+<link rel="stylesheet" href="./assets/pyramid_daily.css?v=20260509pyr1"/>
 <script src="./assets/performance-patch.js?v=20260503m24"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
 <script defer src="./assets/app.js?v=20260508v4"></script>
+<script defer src="./assets/pyramid_daily_runtime.js?v=20260509pyr1"></script>
 <script defer src="./assets/pro_command_center.js?v=20260427procc3"></script>
 </head>
 <body>
@@ -116,6 +118,10 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     <button class="more-card-btn" onclick="switchTab('cota2')">
       <span class="more-card-title">🎯 Cota 2 Daily</span>
       <span class="more-card-sub">Generator zilnic 1.70–3.00, auto-învățare și monitorizare ROI.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('piramida');closeDesktopMore()">
+      <span class="more-card-title">🧗 Piramidă Daily</span>
+      <span class="more-card-sub">1–2 evenimente ale zilei, probabilitate mare și reinvestire totală în 4–10 pași.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
       <span class="more-card-title">🔬 Analiză ML5</span>
@@ -972,6 +978,78 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   </div>
 
 
+  <div class="tab-content" id="tab-piramida">
+    <div class="pyramid-shell">
+      <div class="pyramid-hero">
+        <div class="pyramid-title">🧗 Piramidă Daily <span class="sec-badge" id="pyramid-picks-badge">—</span></div>
+        <div class="pyramid-sub">Rubrică pentru 1–2 evenimente ale zilei, filtrate pe probabilitate mare, cotă controlată și scor matematic. Planul reproduce logica din XLS: miză inițială, reinvestire totală, retragere 0 și traseu pe 4–10 pași.</div>
+        <div class="pyramid-actions">
+          <button class="btn btn-primary" onclick="refreshPyramidDaily()">🔄 Recalculează pick-uri</button>
+          <button class="btn btn-green" onclick="createPyramidDailySession()">✅ Pornește sesiune</button>
+          <button class="btn" onclick="savePyramidDailySettings()">💾 Salvează setări</button>
+        </div>
+      </div>
+
+      <div class="pyramid-grid">
+        <div class="pyramid-panel">
+          <div class="pyramid-panel-title"><span>🎯 Evenimentele zilei</span><span id="pyramid-ticket-summary" style="font-size:11px;color:var(--muted);font-weight:700">—</span></div>
+          <div class="pyramid-panel-sub">Selectează doar vârful zilei: ideal 1 pick, maxim 2 pick-uri necorelate. Dacă pragurile nu sunt îndeplinite, secțiunea rămâne goală în mod intenționat.</div>
+          <div id="pyramid-picks-list"></div>
+        </div>
+
+        <div class="pyramid-panel">
+          <div class="pyramid-panel-title">⚙️ Parametri piramidă</div>
+          <div class="pyramid-form">
+            <div>
+              <label class="pyramid-label">Miză inițială</label>
+              <input id="pyramid-stake" class="pyramid-input" type="number" min="1" step="1" onchange="refreshPyramidDaily()">
+            </div>
+            <div>
+              <label class="pyramid-label">Cotă țintă/pas</label>
+              <input id="pyramid-target-odds" class="pyramid-input" type="number" min="1.10" max="2.50" step="0.01" onchange="refreshPyramidDaily()">
+            </div>
+            <div>
+              <label class="pyramid-label">Pași</label>
+              <input id="pyramid-steps" class="pyramid-input" type="number" min="4" max="10" step="1" onchange="refreshPyramidDaily()">
+            </div>
+            <div>
+              <label class="pyramid-label">Nr. evenimente</label>
+              <select id="pyramid-picks-count" class="pyramid-select" onchange="refreshPyramidDaily()">
+                <option value="1">1 eveniment</option>
+                <option value="2">2 evenimente</option>
+              </select>
+            </div>
+            <div>
+              <label class="pyramid-label">Profil</label>
+              <select id="pyramid-profile" class="pyramid-select" onchange="refreshPyramidDaily()">
+                <option value="ultra">Ultra safe</option>
+                <option value="safe">Safe</option>
+                <option value="balanced">Balanced</option>
+              </select>
+            </div>
+            <div>
+              <label class="pyramid-label">Zi</label>
+              <select id="pyramid-day-mode" class="pyramid-select" onchange="refreshPyramidDaily()">
+                <option value="today">Azi</option>
+                <option value="tomorrow">Mâine</option>
+              </select>
+            </div>
+          </div>
+          <div id="pyramid-plan"></div>
+        </div>
+      </div>
+
+      <div class="pyramid-panel">
+        <div class="pyramid-panel-title">📒 Monitorizare sesiuni piramidă</div>
+        <div class="pyramid-panel-sub">După fiecare pas marchezi WIN, LOSS sau Cashout. Monitorul păstrează local sesiunile și calculează profitul net față de miza inițială.</div>
+        <div id="pyramid-session-stats"></div>
+        <div id="pyramid-session-list"></div>
+      </div>
+    </div>
+  </div>
+
+
+
   <div class="tab-content" id="tab-cota2">
     <div class="help-panel amber">
       <div class="help-head">
@@ -1129,6 +1207,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 </nav>
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
   <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 Daily</span><small class="sheet-btn-sub">Secțiune dedicată cotei 2 și învățare continuă</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('piramida');closeMobileMore()"><span class="sheet-btn-title">🧗 Piramidă Daily</span><small class="sheet-btn-sub">1–2 evenimente top + reinvestire totală 4–10 pași</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">📊 Istoric</span><small class="sheet-btn-sub">Monitorizare per categorie · ROI · WR · Edge · pe perioade selectabile</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
