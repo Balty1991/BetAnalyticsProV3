@@ -48,7 +48,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
 <script defer src="./assets/app.js?v=20260508v4"></script>
-<script defer src="./assets/pyramid_daily_runtime.js?v=20260509pyr1"></script>
+<script defer src="./assets/pyramid_daily_runtime.js?v=20260509pyr2"></script>
 <script defer src="./assets/pro_command_center.js?v=20260427procc3"></script>
 </head>
 <body>
@@ -121,7 +121,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     </button>
     <button class="more-card-btn" onclick="switchTab('piramida');closeDesktopMore()">
       <span class="more-card-title">🧗 Piramidă Daily</span>
-      <span class="more-card-sub">1–2 evenimente ale zilei, probabilitate mare și reinvestire totală în 4–10 pași.</span>
+      <span class="more-card-sub">1–3 evenimente + reinvestire în etape.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
       <span class="more-card-title">🔬 Analiză ML5</span>
@@ -982,7 +982,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     <div class="pyramid-shell">
       <div class="pyramid-hero">
         <div class="pyramid-title">🧗 Piramidă Daily <span class="sec-badge" id="pyramid-picks-badge">—</span></div>
-        <div class="pyramid-sub">Rubrică pentru 1–2 evenimente ale zilei, filtrate pe probabilitate mare, cotă controlată și scor matematic. Planul reproduce logica din XLS: miză inițială, reinvestire totală, retragere 0 și traseu pe 4–10 pași.</div>
         <div class="pyramid-actions">
           <button class="btn btn-primary" onclick="refreshPyramidDaily()">🔄 Recalculează pick-uri</button>
           <button class="btn btn-green" onclick="createPyramidDailySession()">✅ Pornește sesiune</button>
@@ -993,7 +992,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
       <div class="pyramid-grid">
         <div class="pyramid-panel">
           <div class="pyramid-panel-title"><span>🎯 Evenimentele zilei</span><span id="pyramid-ticket-summary" style="font-size:11px;color:var(--muted);font-weight:700">—</span></div>
-          <div class="pyramid-panel-sub">Selectează doar vârful zilei: ideal 1 pick, maxim 2 pick-uri necorelate. Dacă pragurile nu sunt îndeplinite, secțiunea rămâne goală în mod intenționat.</div>
           <div id="pyramid-picks-list"></div>
         </div>
 
@@ -1017,6 +1015,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
               <select id="pyramid-picks-count" class="pyramid-select" onchange="refreshPyramidDaily()">
                 <option value="1">1 eveniment</option>
                 <option value="2">2 evenimente</option>
+                <option value="3">3 evenimente</option>
               </select>
             </div>
             <div>
@@ -1207,7 +1206,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 </nav>
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
   <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 Daily</span><small class="sheet-btn-sub">Secțiune dedicată cotei 2 și învățare continuă</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('piramida');closeMobileMore()"><span class="sheet-btn-title">🧗 Piramidă Daily</span><small class="sheet-btn-sub">1–2 evenimente top + reinvestire totală 4–10 pași</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('piramida');closeMobileMore()"><span class="sheet-btn-title">🧗 Piramidă Daily</span><small class="sheet-btn-sub">1–3 evenimente + reinvestire în etape</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">📊 Istoric</span><small class="sheet-btn-sub">Monitorizare per categorie · ROI · WR · Edge · pe perioade selectabile</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
