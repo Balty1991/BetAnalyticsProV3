@@ -1,4 +1,4 @@
-name: Fetch BetAnalytics Data
+name: Fetch VEYRA Data
 
 on:
   schedule:
@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: fetch-betanalytics-data
+  group: fetch-veyra-data
   cancel-in-progress: false
 
 jobs:
