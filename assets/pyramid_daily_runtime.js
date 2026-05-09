@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV9) return;
-window.__PyramidDailyRuntimeV9 = true;
+if(window.__PyramidDailyRuntimeV10) return;
+window.__PyramidDailyRuntimeV10 = true;
 
 var W = window;
 var D = document;
@@ -231,10 +231,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v9')) return;
+  if(D.getElementById('pyramid-daily-compact-v10')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v9';
+  style.id = 'pyramid-daily-compact-v10';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -1361,7 +1361,37 @@ function getSessions(){
   return Array.isArray(arr) ? arr : [];
 }
 function saveSessions(arr){
-  writeJson(STORAGE_SESSIONS,arr || []);
+  try{
+    localStorage.setItem(STORAGE_SESSIONS, JSON.stringify(arr || []));
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+function compactAiReport(report){
+  report = report || {};
+
+  var combo = report.combo || {};
+
+  return {
+    raw:n(report.raw,0),
+    candidates:n(report.candidates,0),
+    tier:n(report.tier,0),
+    relaxed:!!report.relaxed,
+    mode:report.mode || '',
+    reason:report.reason || '',
+    selectedLegs:n(report.selectedLegs,0),
+    combo:{
+      odds:n(combo.odds,0),
+      prob:n(combo.prob,0),
+      ai:n(combo.ai,0),
+      stability:n(combo.stability,0),
+      edge:n(combo.edge,0),
+      penalty:n(combo.penalty,0),
+      score:n(combo.score,0),
+      reached:!!combo.reached
+    }
+  };
 }
 function sessionProfit(s){
   if(!s) return 0;
@@ -1378,13 +1408,13 @@ function createSession(){
 
   if(!picks.length){
     if(typeof W.toast === 'function') W.toast('AI nu recomandă intrare acum.', 'warn');
-    return;
+    return false;
   }
 
   var odds = s.useRealOdds ? comboOdds(picks) : (s.targetOdds || comboOdds(picks));
   var arr = getSessions();
 
-  arr.unshift({
+  var session = {
     id:Date.now(),
     createdAt:new Date().toISOString(),
     status:'active',
@@ -1395,7 +1425,7 @@ function createSession(){
     targetOdds:s.targetOdds,
     lastDailyOdds:odds,
     history:[],
-    aiReport:ACTIVE_REPORT,
+    aiReport:compactAiReport(ACTIVE_REPORT),
     picks:picks.map(function(p){
       return {
         home:p.home,
@@ -1404,18 +1434,30 @@ function createSession(){
         market:p.displayMarket,
         odds:p.odds,
         prob:p.prob,
-        aiScore:p.ai.total,
+        aiScore:p.ai && p.ai.total ? p.ai.total : 0,
         date:p.date
       };
     })
-  });
+  };
 
-  saveSessions(arr.slice(0,60));
+  arr.unshift(session);
+
+  if(!saveSessions(arr.slice(0,60))){
+    if(typeof W.toast === 'function') W.toast('Nu pot salva sesiunea local. Eliberează cache/localStorage și încearcă din nou.', 'warn');
+    return false;
+  }
+
   renderSessions();
 
   if(typeof W.toast === 'function'){
     W.toast('Sesiune pornită', 'ok');
   }
+
+  return true;
+}
+function savePyramidDailySettings(){
+  saveSettingsFromUi(false);
+  refreshPyramidDaily();
 }
 function sessionAction(id,action){
   var arr = getSessions();
@@ -1599,20 +1641,20 @@ function bind(){
   hideInfoTexts();
 
   var refresh = el('refreshBtn');
-  if(refresh && !refresh.__pyrV8){
-    refresh.__pyrV8 = true;
+  if(refresh && !refresh.__pyrV10){
+    refresh.__pyrV10 = true;
     refresh.addEventListener('click',refreshPyramidDaily);
   }
 
   var start = el('startBtn');
-  if(start && !start.__pyrV8){
-    start.__pyrV8 = true;
+  if(start && !start.__pyrV10){
+    start.__pyrV10 = true;
     start.addEventListener('click',createSession);
   }
 
   var save = el('saveBtn');
-  if(save && !save.__pyrV8){
-    save.__pyrV8 = true;
+  if(save && !save.__pyrV10){
+    save.__pyrV10 = true;
     save.addEventListener('click',function(){
       saveSettingsFromUi(false);
       refreshPyramidDaily();
@@ -1622,8 +1664,8 @@ function bind(){
   ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
     var node = el(k);
 
-    if(node && !node.__pyrV8){
-      node.__pyrV8 = true;
+    if(node && !node.__pyrV10){
+      node.__pyrV10 = true;
 
       node.addEventListener('change',function(){
         saveSettingsFromUi(true);
@@ -1662,12 +1704,13 @@ function refreshPyramidDaily(){
 W.renderPyramidDaily = renderPyramidDaily;
 W.refreshPyramidDaily = refreshPyramidDaily;
 W.createPyramidDailySession = createSession;
+W.savePyramidDailySettings = savePyramidDailySettings;
 W.pyramidDailyAction = sessionAction;
 W.pyramidUndoLastStep = undoStep;
 W.pyramidDeleteSession = deleteSession;
 
 var oldSwitch = W.switchTab;
-if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV8){
+if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV10){
   var patchedSwitch = function(name){
     var r = oldSwitch.apply(this,arguments);
 
@@ -1678,12 +1721,12 @@ if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV8){
     return r;
   };
 
-  patchedSwitch.__pyrV8 = true;
+  patchedSwitch.__pyrV10 = true;
   W.switchTab = patchedSwitch;
 }
 
 var oldRefresh = W.doRefresh;
-if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV8){
+if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV10){
   var patchedRefresh = function(){
     var r = oldRefresh.apply(this,arguments);
 
@@ -1698,7 +1741,7 @@ if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV8){
     return r;
   };
 
-  patchedRefresh.__pyrV8 = true;
+  patchedRefresh.__pyrV10 = true;
   W.doRefresh = patchedRefresh;
 }
 
