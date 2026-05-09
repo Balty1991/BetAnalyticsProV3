@@ -21,7 +21,7 @@ concurrency:
 jobs:
   update-meciuri:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,13 +41,13 @@ jobs:
         id: fetch_current
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: python fetch_data.py
+        run: timeout 360s python fetch_data.py
         continue-on-error: true
 
       - name: Optional enrich
         id: enrich_current
         run: |
-          if [ -f enrich_predictions.py ]; then python enrich_predictions.py; fi
+          if [ -f enrich_predictions.py ]; then timeout 120s python enrich_predictions.py; fi
         continue-on-error: true
 
       - name: Optional recent index
@@ -55,7 +55,7 @@ jobs:
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: |
-          if [ -f build_api_events_index.py ]; then python build_api_events_index.py; fi
+          if [ -f build_api_events_index.py ]; then timeout 120s python build_api_events_index.py; fi
         continue-on-error: true
 
       - name: Update meta marker
@@ -85,7 +85,7 @@ jobs:
               'enrich_predictions': os.environ.get('ENRICH_STATUS', 'unknown'),
               'build_api_events_index': os.environ.get('INDEX_STATUS', 'unknown')
           }
-          meta['status'] = 'ok' if meta['workflow_results']['fetch_data'] == 'success' else 'fetch_data_failed'
+          meta['status'] = 'ok' if meta['workflow_results']['fetch_data'] == 'success' else 'fetch_data_failed_or_timeout'
           path.write_text(json.dumps(meta, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
           print('updated_at=' + now)
           print('status=' + str(meta.get('status')))
