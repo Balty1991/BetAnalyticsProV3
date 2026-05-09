@@ -1,0 +1,55 @@
+/* BetAnalytics Pro — Piramidă Daily */
+.pyramid-shell{padding:0 0 80px}
+.pyramid-hero{position:relative;overflow:hidden;margin-bottom:14px;padding:16px;border-radius:20px;background:linear-gradient(135deg,rgba(43,229,197,.09),rgba(59,130,246,.07) 48%,rgba(168,85,247,.06));border:1px solid rgba(43,229,197,.18);box-shadow:0 16px 42px rgba(0,0,0,.22)}
+.pyramid-hero:before{content:"";position:absolute;inset:-80px -120px auto auto;width:240px;height:240px;border-radius:999px;background:radial-gradient(circle,rgba(43,229,197,.20),transparent 64%);pointer-events:none}
+.pyramid-title{font-size:18px;font-weight:900;letter-spacing:-.03em;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pyramid-sub{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.45;max-width:980px}
+.pyramid-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pyramid-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);gap:14px;margin-bottom:14px}
+.pyramid-panel{padding:14px;border-radius:18px;background:rgba(14,20,36,.88);border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 28px rgba(0,0,0,.16)}
+.pyramid-panel-title{font-size:13px;font-weight:900;color:var(--txt);display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.pyramid-panel-sub{font-size:11px;color:var(--muted);line-height:1.45;margin-top:-4px;margin-bottom:12px}
+.pyramid-picks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pyramid-pick{position:relative;overflow:hidden;padding:12px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(43,229,197,.14)}
+.pyramid-pick:before{content:"";position:absolute;left:0;top:0;width:4px;height:100%;background:linear-gradient(180deg,var(--acc),rgba(168,85,247,.8))}
+.pyramid-pick-rank{font-size:10px;color:var(--acc);font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.pyramid-pick-teams{font-size:13px;font-weight:900;color:var(--txt);line-height:1.28;margin-bottom:5px}
+.pyramid-pick-meta{font-size:10px;color:var(--muted);line-height:1.35;margin-bottom:9px}
+.pyramid-pick-rec{padding:9px 10px;border-radius:12px;background:rgba(43,229,197,.08);border:1px solid rgba(43,229,197,.16);font-size:12px;font-weight:800;color:var(--txt)}
+.pyramid-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}
+.pyramid-mini{padding:7px 8px;border-radius:10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}
+.pyramid-mini-v{font-size:13px;font-weight:900;color:var(--acc);line-height:1.05}
+.pyramid-mini-l{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.pyramid-empty{padding:16px;border-radius:16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.16);color:var(--muted);font-size:12px;line-height:1.5}
+.pyramid-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.pyramid-label{display:block;font-size:9px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.pyramid-input,.pyramid-select{width:100%;background:#0b1120;border:1px solid rgba(255,255,255,.10);border-radius:12px;color:var(--txt);padding:10px 11px;font-size:13px;outline:none}
+.pyramid-input:focus,.pyramid-select:focus{border-color:rgba(43,229,197,.50);box-shadow:0 0 0 3px rgba(43,229,197,.08)}
+.pyramid-plan-table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:14px;font-size:11px}
+.pyramid-plan-table th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:900;background:rgba(255,255,255,.04);padding:8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:right;white-space:nowrap}
+.pyramid-plan-table th:first-child,.pyramid-plan-table td:first-child{text-align:left}
+.pyramid-plan-table td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;color:var(--txt);font-variant-numeric:tabular-nums}
+.pyramid-plan-table tr:nth-child(even) td{background:rgba(255,255,255,.018)}
+.pyramid-step-chip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;border-radius:8px;background:rgba(43,229,197,.10);border:1px solid rgba(43,229,197,.18);color:var(--acc);font-weight:900}
+.pyramid-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.pyramid-stat{padding:10px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.075)}
+.pyramid-stat-v{font-size:18px;font-weight:950;color:var(--txt);line-height:1.05}
+.pyramid-stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:5px}
+.pyramid-session{padding:11px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.pyramid-session:last-child{border-bottom:none;padding-bottom:0}
+.pyramid-session-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:7px}
+.pyramid-session-name{font-size:12px;font-weight:900;color:var(--txt)}
+.pyramid-session-meta{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.35}
+.pyramid-session-profit{font-size:14px;font-weight:950;white-space:nowrap}
+.pyramid-session-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pyramid-session-actions .btn{font-size:10px;padding:6px 9px;border-radius:10px}
+.pyramid-warn{margin-top:10px;padding:10px 12px;border-radius:14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.18);color:var(--muted);font-size:11px;line-height:1.45}
+@media(max-width:860px){
+  .pyramid-grid{grid-template-columns:1fr}
+  .pyramid-picks{grid-template-columns:1fr}
+  .pyramid-form{grid-template-columns:1fr 1fr}
+  .pyramid-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pyramid-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pyramid-plan-wrap{overflow-x:auto;margin-left:-2px;margin-right:-2px;padding-bottom:2px}
+  .pyramid-plan-table{min-width:620px}
+}
