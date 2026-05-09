@@ -545,6 +545,30 @@ function marketLabel(k,fallback){
 
   return k || '—';
 }
+function getMeciuriFilteredPool(){
+  var cache = [];
+
+  if(Array.isArray(W.MATCHES_FILTERED_CACHE)){
+    cache = W.MATCHES_FILTERED_CACHE;
+  }
+
+  /*
+    Piramida trebuie să folosească strict lista filtrată din tab-ul Meciuri.
+    Dacă utilizatorul intră direct în Piramidă după refresh și cache-ul nu a fost
+    construit încă, rulăm o singură recalculare a tab-ului Meciuri pentru a aplica
+    filtrele curente din UI, apoi citim MATCHES_FILTERED_CACHE.
+  */
+  if(!cache.length && typeof W.renderMatches === 'function'){
+    try{
+      W.renderMatches();
+      if(Array.isArray(W.MATCHES_FILTERED_CACHE)){
+        cache = W.MATCHES_FILTERED_CACHE;
+      }
+    }catch(e){}
+  }
+
+  return Array.isArray(cache) ? cache.filter(Boolean) : [];
+}
 function rawPool(){
   var out = [];
 
@@ -559,23 +583,7 @@ function rawPool(){
     out.push(v);
   }
 
-  try{ if(typeof W.getPortfolioMatchPool === 'function') add(W.getPortfolioMatchPool()); }catch(e){}
-  try{ add(W.ALL_MATCHES); }catch(e){}
-  try{ add(W.MATCH_POOL); }catch(e){}
-  try{ add(W.PORTFOLIO_MATCH_POOL); }catch(e){}
-  try{ add((W.SIGNAL_AUDIT || {}).rows); }catch(e){}
-  try{ add((W.AI_MEMORY || {}).adaptive_picks); }catch(e){}
-  try{ add((W.AI_MEMORY || {}).picks); }catch(e){}
-  try{ add(W.RECOMMENDATION_LOG); }catch(e){}
-  try{ add(W.RECOMMENDATION_JOURNAL); }catch(e){}
-
-  try{
-    if(W.BILETE){
-      add(W.BILETE.premium && W.BILETE.premium.picks);
-      add(W.BILETE.double && W.BILETE.double.picks);
-      add(W.BILETE.triple && W.BILETE.triple.picks);
-    }
-  }catch(e){}
+  add(getMeciuriFilteredPool());
 
   return out.reduce(function(acc,x){
     if(!x) return acc;
@@ -584,13 +592,15 @@ function rawPool(){
       var b = x.bestBet;
 
       acc.push(Object.assign({},x,{
-        marketKey:b.type || x.marketKey || x.market_key || x.market || '',
-        market:b.label || x.market || '',
-        odds:b.odds || x.odds || x.book_odds || x.price,
+        marketKey:b.type || b.marketKey || x.marketKey || x.market_key || x.market || '',
+        market:b.label || b.market || x.market || '',
+        odds:b.odds || b.baseOdds || x.odds || x.book_odds || x.price,
         prob:b.adjProb || b.prob || x.prob || x.adjusted_prob || x.final_probability,
-        edge:b.edgePct || x.edge || x.edge_pct || x.edgePct,
+        edge:b.edgePct || b.edge || x.edge || x.edge_pct || x.edgePct,
         value:b.value != null ? b.value : x.value,
-        score:x.smartScore || x.score || x.adaptive_score || x.ticketScore || x.confidence
+        score:b.score || x.smartScore || x.score || x.adaptive_score || x.ticketScore || x.confidence,
+        source_api:b.sourceApi !== false && x.source_api !== false,
+        source_heuristic:b.sourceHeuristic === true || x.source_heuristic === true
       }));
     }else{
       acc.push(x);
