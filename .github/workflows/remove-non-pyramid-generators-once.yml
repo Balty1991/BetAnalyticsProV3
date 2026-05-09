@@ -1,0 +1,30 @@
+name: Remove Non Pyramid Generators Once
+
+on:
+  push:
+    paths:
+      - '.cleanup/remove-non-pyramid-generators.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  remove-non-pyramid-generators:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove non-pyramid ticket generators
+        run: python tools/remove_non_pyramid_generators_once.py
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Remove non-pyramid ticket generators"
+            git push
+          fi
