@@ -4,17 +4,18 @@
 <!-- status refresh -->
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta name="description" content="BetAnalytics Pro oferă dashboard mobil pentru analiză pariuri, tracking, bilete, SmartBet și istoric de performanță."/>
+<meta name="description" content="VEYRA oferă sports analytics, predicții AI, ML5, tracking și istoric de performanță pentru decizii mai clare."/>
 <link rel="canonical" href="https://balty1991.github.io/BetAnalyticsProV3/index.html"/>
-<title>BetAnalytics Pro · Meciuri v18</title>
+<title>VEYRA · Sports Analytics AI</title>
 <meta name="theme-color" content="#06080F"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="BetAnalytics"/>
+<meta name="apple-mobile-web-app-title" content="VEYRA"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="icon" href="icon-192.png"/>
+<link rel="icon" type="image/svg+xml" href="./assets/veyra-icon.svg?v=20260509brand1"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="preload" href="./assets/veyra-icon.svg?v=20260509brand1" as="image" type="image/svg+xml"/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
@@ -41,7 +42,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 .skip-link{position:absolute;left:12px;top:-44px;z-index:1000;background:#2BE5C5;color:#06080F;padding:10px 14px;border-radius:12px;font-weight:700;text-decoration:none}
 .skip-link:focus{top:12px}
 </style>
-<link rel="stylesheet" href="./assets/app.css?v=20260508v4"/>
+<link rel="stylesheet" href="./assets/app.css?v=20260509brand1"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
 <link rel="stylesheet" href="./assets/pyramid_daily.css?v=20260509pyr1"/>
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
@@ -68,8 +69,10 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <div class="header">
   <div class="header-inner">
     <div class="logo">
-      <div class="logo-title">BetAnalytics Pro</div>
-      <div class="logo-sub">PRO V21 · Intelligence</div>
+      <img class="veyra-brand-mark" src="./assets/veyra-icon.svg?v=20260509brand1" alt="VEYRA logo"/>
+      <div class="veyra-brand-copy">
+        <div class="logo-title veyra-wordmark">VEYRA</div>
+        <div class="logo-sub veyra-tagline">SPORTS ANALYTICS · AI PREDICTIONS</div>
       <div class="logo-sync-row">
         <div class="sb-dot live" id="sb-dot"></div>
         <span><b id="hq-ml">—</b> ML</span>
@@ -80,6 +83,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
       </div>
       <div id="sb-text" role="status" aria-live="polite" class="sr-only"></div>
       <span id="hq-safe" style="display:none"></span>
+      </div>
     </div>
     <div class="header-tools">
       <button class="btn btn-refresh-ico" id="btn-refresh" onclick="doRefresh(true)" aria-label="Reimprospateaza date" title="Reimprospateaza">
@@ -138,7 +142,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 </div>
 
 <div class="main" id="main-content" role="main">
-  <h1 class="sr-only">BetAnalytics Pro</h1>
+  <h1 class="sr-only">VEYRA</h1>
 
   <!-- ===== DASHBOARD ===== -->
     <div class="tab-content active" id="tab-dashboard"></div>
