@@ -1,0 +1,3379 @@
+{
+  "index_visible_generator_controls": [
+    {
+      "line": 186,
+      "text": "🛡️ Generează Safe",
+      "onclick": "generateUnifiedTicket(",
+      "html_preview": "<button class=\"btn\" style=\"background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.3);color:var(--grn);font-size:12px;padding:8px 14px\" onclick=\"generateUnifiedTicket('safe')\">🛡️ Generează Safe</button>"
+    },
+    {
+      "line": 187,
+      "text": "⚖️ Generează Echilibrat",
+      "onclick": "generateUnifiedTicket(",
+      "html_preview": "<button class=\"btn\" style=\"background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font-size:12px;padding:8px 14px\" onclick=\"generateUnifiedTicket('balanced')\">⚖️ Generează Echilibrat</button>"
+    },
+    {
+      "line": 188,
+      "text": "🚀 Generează Value",
+      "onclick": "generateUnifiedTicket(",
+      "html_preview": "<button class=\"btn\" style=\"background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.3);color:var(--yel);font-size:12px;padding:8px 14px\" onclick=\"generateUnifiedTicket('value')\">🚀 Generează Value</button>"
+    }
+  ],
+  "index_hidden_generator_controls": [],
+  "index_ticket_related_ids": [
+    {
+      "line": 65,
+      "id": "ticket-quickpeek"
+    },
+    {
+      "line": 190,
+      "id": "unified-ticket-output"
+    },
+    {
+      "line": 474,
+      "id": "pyramid-ticket-summary"
+    }
+  ],
+  "js_generator_functions": [
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 1956,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2331,
+      "name": "generateStepForSession"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 257,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 310,
+      "name": "handleGenerateAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 321,
+      "name": "handleGenerateAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7849,
+      "name": "generateConservativeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7883,
+      "name": "generateTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7913,
+      "name": "toggleAdvancedGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8293,
+      "name": "generateControlledComboTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8379,
+      "name": "generateCustomTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8511,
+      "name": "generateOver15Ticket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8540,
+      "name": "generateOver35Ticket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8544,
+      "name": "generateMixTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8573,
+      "name": "generateBestEventTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8629,
+      "name": "generateProfitFocusTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8774,
+      "name": "generateBigWinTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11114,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11117,
+      "name": "generateSinglePremiumTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11118,
+      "name": "generateDoubleConfirmedTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11119,
+      "name": "generateTripleValueTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11120,
+      "name": "generateContrarianShotTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11154,
+      "name": "generateAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11218,
+      "name": "generateAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11696,
+      "name": "generateDailyPortfolioTickets"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11748,
+      "name": "handleGenerateDailyPortfolio"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11918,
+      "name": "getGeneratorAvailability"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11933,
+      "name": "generateAuditTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11938,
+      "name": "generateAiMemoryTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11943,
+      "name": "handleGenerateAuditTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11951,
+      "name": "handleGenerateAiMemoryTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11959,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11966,
+      "name": "renderAiMemoryGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11983,
+      "name": "getSourcePoolForGenerator"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11989,
+      "name": "generatePortfolioTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11998,
+      "name": "handleGeneratePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12006,
+      "name": "handleGeneratePortfolioTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12015,
+      "name": "enhanceGeneratorCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12053,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12610,
+      "name": "renderSmartBetGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12620,
+      "name": "handleGenerateSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13543,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 259,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "data/app.js",
+      "line": 312,
+      "name": "handleGenerateAuditTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 323,
+      "name": "handleGenerateAiMemoryTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 7621,
+      "name": "generateConservativeTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 7655,
+      "name": "generateTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 7685,
+      "name": "toggleAdvancedGenerators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8065,
+      "name": "generateControlledComboTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8151,
+      "name": "generateCustomTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8283,
+      "name": "generateOver15Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8312,
+      "name": "generateOver35Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8316,
+      "name": "generateMixTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8345,
+      "name": "generateBestEventTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8401,
+      "name": "generateProfitFocusTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8546,
+      "name": "generateBigWinTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10236,
+      "name": "generateCota2DailyTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11448,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11451,
+      "name": "generateSinglePremiumTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11452,
+      "name": "generateDoubleConfirmedTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11453,
+      "name": "generateTripleValueTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11454,
+      "name": "generateContrarianShotTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11488,
+      "name": "generateAuditTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11552,
+      "name": "generateAiMemoryTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12030,
+      "name": "generateDailyPortfolioTickets"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12082,
+      "name": "handleGenerateDailyPortfolio"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12252,
+      "name": "getGeneratorAvailability"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12267,
+      "name": "generateAuditTicketVariant"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12272,
+      "name": "generateAiMemoryTicketVariant"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12277,
+      "name": "handleGenerateAuditTicketRelaxed"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12285,
+      "name": "handleGenerateAiMemoryTicketRelaxed"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12293,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12300,
+      "name": "renderAiMemoryGenerators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12317,
+      "name": "getSourcePoolForGenerator"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12323,
+      "name": "generatePortfolioTicketVariant"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12332,
+      "name": "handleGeneratePortfolioTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12340,
+      "name": "handleGeneratePortfolioTicketRelaxed"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12349,
+      "name": "enhanceGeneratorCards"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12387,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12944,
+      "name": "renderSmartBetGenerators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12954,
+      "name": "handleGenerateSmartBetTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 13877,
+      "name": "generateUnifiedTicket"
+    }
+  ],
+  "js_ticket_related_functions": [
+    {
+      "file": "assets/app.js",
+      "line": 310,
+      "name": "handleGenerateAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 321,
+      "name": "handleGenerateAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6425,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6436,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6513,
+      "name": "quickAddMatchToTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7810,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7849,
+      "name": "generateConservativeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7883,
+      "name": "generateTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8248,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8257,
+      "name": "setTicketError"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8293,
+      "name": "generateControlledComboTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8379,
+      "name": "generateCustomTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8511,
+      "name": "generateOver15Ticket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8540,
+      "name": "generateOver35Ticket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8544,
+      "name": "generateMixTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8573,
+      "name": "generateBestEventTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8629,
+      "name": "generateProfitFocusTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8774,
+      "name": "generateBigWinTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8804,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8821,
+      "name": "buildSmartTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8847,
+      "name": "buildConservativeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8876,
+      "name": "buildBestEventTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8923,
+      "name": "buildProfitFocusTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9012,
+      "name": "rankPresetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9031,
+      "name": "renderPresetTicketCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9174,
+      "name": "renderTicketLaneBoard"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9179,
+      "name": "clearCurrentTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9184,
+      "name": "placeCurrentTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9251,
+      "name": "addExtraTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9270,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9517,
+      "name": "computeAutoTicketSettlement"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9667,
+      "name": "markTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9678,
+      "name": "editTicketOdds"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9693,
+      "name": "cashOutTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9707,
+      "name": "releaseTicketToAuto"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9719,
+      "name": "renderTicketDetail"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9741,
+      "name": "toggleTicketDetail"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9746,
+      "name": "deleteTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9954,
+      "name": "storeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10077,
+      "name": "summarizeTicketPerformance"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10114,
+      "name": "buildTrackingEntryFromTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10155,
+      "name": "buildJournalEntryFromTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10763,
+      "name": "getStakePctForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10861,
+      "name": "hasRecentContrarianTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10878,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10901,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10981,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11078,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11114,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11117,
+      "name": "generateSinglePremiumTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11118,
+      "name": "generateDoubleConfirmedTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11119,
+      "name": "generateTripleValueTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11120,
+      "name": "generateContrarianShotTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11154,
+      "name": "generateAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11159,
+      "name": "renderAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11218,
+      "name": "generateAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11223,
+      "name": "renderAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11251,
+      "name": "normalizeTicketCategory"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11263,
+      "name": "getBankrollCategoryForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11270,
+      "name": "getStakeForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11273,
+      "name": "getPresetTicketCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11285,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11696,
+      "name": "generateDailyPortfolioTickets"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11762,
+      "name": "openDailyPortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11815,
+      "name": "buildRelaxedMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11819,
+      "name": "makeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11933,
+      "name": "generateAuditTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11938,
+      "name": "generateAiMemoryTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11943,
+      "name": "handleGenerateAuditTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11951,
+      "name": "handleGenerateAiMemoryTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11989,
+      "name": "generatePortfolioTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11998,
+      "name": "handleGeneratePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12006,
+      "name": "handleGeneratePortfolioTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12512,
+      "name": "buildSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12583,
+      "name": "renderSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12620,
+      "name": "handleGenerateSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13543,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13554,
+      "name": "renderUnifiedTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 312,
+      "name": "handleGenerateAuditTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 323,
+      "name": "handleGenerateAiMemoryTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6388,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6399,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6476,
+      "name": "quickAddMatchToTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 7582,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 7621,
+      "name": "generateConservativeTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 7655,
+      "name": "generateTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8020,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8029,
+      "name": "setTicketError"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8065,
+      "name": "generateControlledComboTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8151,
+      "name": "generateCustomTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8283,
+      "name": "generateOver15Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8312,
+      "name": "generateOver35Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8316,
+      "name": "generateMixTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8345,
+      "name": "generateBestEventTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8401,
+      "name": "generateProfitFocusTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8546,
+      "name": "generateBigWinTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8576,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8593,
+      "name": "buildSmartTicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8619,
+      "name": "buildConservativeTicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8648,
+      "name": "buildBestEventTicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8695,
+      "name": "buildProfitFocusTicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8784,
+      "name": "rankPresetTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8803,
+      "name": "renderPresetTicketCards"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8946,
+      "name": "renderTicketLaneBoard"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8951,
+      "name": "clearCurrentTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 8956,
+      "name": "placeCurrentTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9023,
+      "name": "addExtraTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9042,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9289,
+      "name": "computeAutoTicketSettlement"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9440,
+      "name": "markTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9451,
+      "name": "editTicketOdds"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9466,
+      "name": "cashOutTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9480,
+      "name": "releaseTicketToAuto"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9492,
+      "name": "renderTicketDetail"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9514,
+      "name": "toggleTicketDetail"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9519,
+      "name": "deleteTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9727,
+      "name": "storeTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9860,
+      "name": "isCota2Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9865,
+      "name": "getCota2TrackedTickets"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9868,
+      "name": "deleteCota2TrackedTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9884,
+      "name": "getCota2TicketOddsBand"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9901,
+      "name": "getCota2TicketUnitProfit"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9966,
+      "name": "summarizeTicketPerformance"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10177,
+      "name": "makeCota2TicketObject"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10223,
+      "name": "buildCota2TicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10233,
+      "name": "persistCota2Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10236,
+      "name": "generateCota2DailyTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10245,
+      "name": "buildTrackingEntryFromTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10286,
+      "name": "buildJournalEntryFromTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10315,
+      "name": "storeCota2Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10327,
+      "name": "placeCota2Ticket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10346,
+      "name": "syncCota2ToBilete"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10421,
+      "name": "renderCota2TicketCard"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11098,
+      "name": "getStakePctForTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11195,
+      "name": "hasRecentContrarianTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11212,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11235,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11315,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11412,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11448,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11451,
+      "name": "generateSinglePremiumTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11452,
+      "name": "generateDoubleConfirmedTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11453,
+      "name": "generateTripleValueTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11454,
+      "name": "generateContrarianShotTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11488,
+      "name": "generateAuditTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11493,
+      "name": "renderAuditTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11552,
+      "name": "generateAiMemoryTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11557,
+      "name": "renderAiMemoryTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11585,
+      "name": "normalizeTicketCategory"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11597,
+      "name": "getBankrollCategoryForTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11604,
+      "name": "getStakeForTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11607,
+      "name": "getPresetTicketCards"
+    },
+    {
+      "file": "data/app.js",
+      "line": 11619,
+      "name": "renderBilete"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12030,
+      "name": "generateDailyPortfolioTickets"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12096,
+      "name": "openDailyPortfolioTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12149,
+      "name": "buildRelaxedMathTicketPreviewFromPool"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12153,
+      "name": "makeTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12267,
+      "name": "generateAuditTicketVariant"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12272,
+      "name": "generateAiMemoryTicketVariant"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12277,
+      "name": "handleGenerateAuditTicketRelaxed"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12285,
+      "name": "handleGenerateAiMemoryTicketRelaxed"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12323,
+      "name": "generatePortfolioTicketVariant"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12332,
+      "name": "handleGeneratePortfolioTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12340,
+      "name": "handleGeneratePortfolioTicketRelaxed"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12846,
+      "name": "buildSmartBetTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12917,
+      "name": "renderSmartBetTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 12954,
+      "name": "handleGenerateSmartBetTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 13877,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 13888,
+      "name": "renderUnifiedTicket"
+    }
+  ],
+  "js_generator_calls": [
+    {
+      "file": "fix_ui_display.py",
+      "line": 24,
+      "name": "generate_api_history_summary"
+    },
+    {
+      "file": "fix_ui_display.py",
+      "line": 68,
+      "name": "generate_training_market_baselines"
+    },
+    {
+      "file": "fix_ui_display.py",
+      "line": 121,
+      "name": "generate_training_model_summary"
+    },
+    {
+      "file": "fix_ui_display.py",
+      "line": 164,
+      "name": "generate_api_history_summary"
+    },
+    {
+      "file": "fix_ui_display.py",
+      "line": 165,
+      "name": "generate_training_market_baselines"
+    },
+    {
+      "file": "fix_ui_display.py",
+      "line": 166,
+      "name": "generate_training_model_summary"
+    },
+    {
+      "file": "build_wfv_validation.py",
+      "line": 81,
+      "name": "generate_folds"
+    },
+    {
+      "file": "build_wfv_validation.py",
+      "line": 223,
+      "name": "generate_folds"
+    },
+    {
+      "file": "feature_engineering.py",
+      "line": 804,
+      "name": "generate"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 1956,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2209,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2220,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2326,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2331,
+      "name": "generateStepForSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2479,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2570,
+      "name": "pyramidGenerateSessionStep"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2646,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/pyramid_daily_runtime.js",
+      "line": 2652,
+      "name": "clearGeneratorAfterSession"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 257,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 310,
+      "name": "handleGenerateAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 312,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 314,
+      "name": "generateAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 317,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 321,
+      "name": "handleGenerateAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 323,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 325,
+      "name": "generateAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 328,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 1045,
+      "name": "renderTicketLaneBoard"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 1055,
+      "name": "renderTicketLaneBoard"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 1083,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 1164,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 5517,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 5554,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6425,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6436,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6442,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6452,
+      "name": "clearCurrentTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6453,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6513,
+      "name": "quickAddMatchToTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6517,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6518,
+      "name": "getStakeForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6519,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 6520,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7331,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7395,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7810,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7818,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7842,
+      "name": "getStakeForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7845,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7849,
+      "name": "generateConservativeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7873,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7875,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7880,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7883,
+      "name": "generateTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7904,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7909,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 7913,
+      "name": "toggleAdvancedGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8248,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8257,
+      "name": "setTicketError"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8264,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8293,
+      "name": "generateControlledComboTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8314,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8316,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8321,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8379,
+      "name": "generateCustomTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8394,
+      "name": "setTicketError"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8417,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8418,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8419,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8428,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8429,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8430,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8451,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8452,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8453,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8469,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8470,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8471,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8482,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8483,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8484,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8500,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8501,
+      "name": "setCustomTicketMeta"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8502,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8509,
+      "name": "setTicketError"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8511,
+      "name": "generateOver15Ticket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8532,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8537,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8540,
+      "name": "generateOver35Ticket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8541,
+      "name": "setTicketError"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8544,
+      "name": "generateMixTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8565,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8570,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8573,
+      "name": "generateBestEventTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8620,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8622,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8626,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8629,
+      "name": "generateProfitFocusTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8767,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8771,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8774,
+      "name": "generateBigWinTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8795,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8800,
+      "name": "finalizeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8804,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8821,
+      "name": "buildSmartTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8841,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8844,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8847,
+      "name": "buildConservativeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8870,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8873,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8876,
+      "name": "buildBestEventTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8918,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8920,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 8923,
+      "name": "buildProfitFocusTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9007,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9009,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9012,
+      "name": "rankPresetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9031,
+      "name": "renderPresetTicketCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9034,
+      "name": "getPresetTicketCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9169,
+      "name": "renderPresetTicketCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9174,
+      "name": "renderTicketLaneBoard"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9175,
+      "name": "renderPresetTicketCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9179,
+      "name": "clearCurrentTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9181,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9184,
+      "name": "placeCurrentTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9187,
+      "name": "biletului"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9235,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9251,
+      "name": "addExtraTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9270,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9325,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9326,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9327,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9328,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9369,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9370,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9371,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9372,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9517,
+      "name": "computeAutoTicketSettlement"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9561,
+      "name": "computeAutoTicketSettlement"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9652,
+      "name": "markTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9653,
+      "name": "markTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9654,
+      "name": "cashOutTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9655,
+      "name": "editTicketOdds"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9656,
+      "name": "releaseTicketToAuto"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9657,
+      "name": "toggleTicketDetail"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9658,
+      "name": "deleteTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9660,
+      "name": "renderTicketDetail"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9667,
+      "name": "markTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9678,
+      "name": "editTicketOdds"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9693,
+      "name": "cashOutTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9707,
+      "name": "releaseTicketToAuto"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9719,
+      "name": "renderTicketDetail"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9741,
+      "name": "toggleTicketDetail"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9746,
+      "name": "deleteTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9901,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9902,
+      "name": "normalizeTicketEntityName"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9954,
+      "name": "storeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9967,
+      "name": "getStakeForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10077,
+      "name": "summarizeTicketPerformance"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10086,
+      "name": "getCota2TicketUnitProfit"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10114,
+      "name": "buildTrackingEntryFromTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10155,
+      "name": "buildJournalEntryFromTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10684,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10763,
+      "name": "getStakePctForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10774,
+      "name": "getStakePctForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10861,
+      "name": "hasRecentContrarianTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10878,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10881,
+      "name": "getStakePctForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10901,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10903,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10981,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10985,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10995,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 10996,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11015,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11016,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11040,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11041,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11044,
+      "name": "hasRecentContrarianTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11044,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11073,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11074,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11076,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11078,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11079,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11092,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11110,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11114,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11115,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11117,
+      "name": "generateSinglePremiumTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11117,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11118,
+      "name": "generateDoubleConfirmedTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11118,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11119,
+      "name": "generateTripleValueTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11119,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11120,
+      "name": "generateContrarianShotTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11120,
+      "name": "generatePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11154,
+      "name": "generateAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11155,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11156,
+      "name": "renderAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11159,
+      "name": "renderAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11218,
+      "name": "generateAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11219,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11220,
+      "name": "renderAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11223,
+      "name": "renderAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11251,
+      "name": "normalizeTicketCategory"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11263,
+      "name": "getBankrollCategoryForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11270,
+      "name": "getStakeForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11271,
+      "name": "getStakePctForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11273,
+      "name": "getPresetTicketCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11275,
+      "name": "generateSinglePremiumTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11275,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11276,
+      "name": "generateDoubleConfirmedTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11276,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11277,
+      "name": "generateTripleValueTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11277,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11278,
+      "name": "generateContrarianShotTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11278,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11280,
+      "name": "rankPresetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11280,
+      "name": "rankPresetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11285,
+      "name": "renderBilete"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11309,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11310,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11316,
+      "name": "getStakePctForTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11321,
+      "name": "normalizeTicketCategory"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11359,
+      "name": "storeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11360,
+      "name": "placeCurrentTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11361,
+      "name": "clearCurrentTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11364,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11365,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11666,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11671,
+      "name": "buildRelaxedMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11690,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11696,
+      "name": "generateDailyPortfolioTickets"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11741,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11748,
+      "name": "handleGenerateDailyPortfolio"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11752,
+      "name": "generateDailyPortfolioTickets"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11762,
+      "name": "openDailyPortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11780,
+      "name": "openDailyPortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11797,
+      "name": "openDailyPortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11815,
+      "name": "buildRelaxedMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11817,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11819,
+      "name": "makeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11820,
+      "name": "makeMathTicketObject"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11829,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11831,
+      "name": "makeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11835,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11854,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11867,
+      "name": "makeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11891,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11892,
+      "name": "makeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11912,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11913,
+      "name": "makeTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11916,
+      "name": "makeEmptyMathTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11918,
+      "name": "getGeneratorAvailability"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11919,
+      "name": "getSourcePoolForGenerator"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11933,
+      "name": "generateAuditTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11934,
+      "name": "buildRelaxedMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11934,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11935,
+      "name": "renderAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11938,
+      "name": "generateAiMemoryTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11939,
+      "name": "buildRelaxedMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11939,
+      "name": "buildMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11940,
+      "name": "renderAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11943,
+      "name": "handleGenerateAuditTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11946,
+      "name": "generateAuditTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11948,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11951,
+      "name": "handleGenerateAiMemoryTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11954,
+      "name": "generateAiMemoryTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11956,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11959,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11960,
+      "name": "enhanceGeneratorCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11962,
+      "name": "renderAuditTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11964,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11966,
+      "name": "renderAiMemoryGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11967,
+      "name": "enhanceGeneratorCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11969,
+      "name": "renderAiMemoryTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11971,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11974,
+      "name": "enhanceGeneratorCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11983,
+      "name": "getSourcePoolForGenerator"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11989,
+      "name": "generatePortfolioTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11990,
+      "name": "buildRelaxedMathTicketPreviewFromPool"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11990,
+      "name": "buildPortfolioTicketPreview"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11993,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 11998,
+      "name": "handleGeneratePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12001,
+      "name": "generatePortfolioTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12003,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12006,
+      "name": "handleGeneratePortfolioTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12009,
+      "name": "generatePortfolioTicketVariant"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12011,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12015,
+      "name": "enhanceGeneratorCards"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12044,
+      "name": "handleGenerateAuditTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12045,
+      "name": "handleGenerateAiMemoryTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12046,
+      "name": "handleGeneratePortfolioTicketRelaxed"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12053,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12055,
+      "name": "getGeneratorAvailability"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12057,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12058,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12060,
+      "name": "getGeneratorAvailability"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12062,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12063,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12065,
+      "name": "getGeneratorAvailability"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12067,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12068,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12074,
+      "name": "_origGeneratePortfolioTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12076,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12081,
+      "name": "_origGenerateDailyPortfolioTickets"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12082,
+      "name": "updateGeneratorStatusBadges"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12512,
+      "name": "buildSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12583,
+      "name": "renderSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12610,
+      "name": "renderSmartBetGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12612,
+      "name": "renderSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12615,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12616,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12617,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12620,
+      "name": "handleGenerateSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12623,
+      "name": "buildSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12624,
+      "name": "renderSmartBetGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 12639,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13543,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13546,
+      "name": "buildSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13548,
+      "name": "buildSmartBetTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13551,
+      "name": "renderUnifiedTicket"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 13554,
+      "name": "renderUnifiedTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 259,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "data/app.js",
+      "line": 312,
+      "name": "handleGenerateAuditTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 314,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "data/app.js",
+      "line": 316,
+      "name": "generateAuditTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 319,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "data/app.js",
+      "line": 323,
+      "name": "handleGenerateAiMemoryTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 325,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "data/app.js",
+      "line": 327,
+      "name": "generateAiMemoryTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 330,
+      "name": "setGeneratorStatus"
+    },
+    {
+      "file": "data/app.js",
+      "line": 1052,
+      "name": "renderTicketLaneBoard"
+    },
+    {
+      "file": "data/app.js",
+      "line": 1067,
+      "name": "renderTicketLaneBoard"
+    },
+    {
+      "file": "data/app.js",
+      "line": 1098,
+      "name": "renderBilete"
+    },
+    {
+      "file": "data/app.js",
+      "line": 1180,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "data/app.js",
+      "line": 5482,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 5518,
+      "name": "renderAuditGenerators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6388,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6399,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6405,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6415,
+      "name": "clearCurrentTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6416,
+      "name": "updateTicketIndicators"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6476,
+      "name": "quickAddMatchToTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6480,
+      "name": "makeTicketPreview"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6481,
+      "name": "getStakeForTicket"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6482,
+      "name": "renderBilete"
+    },
+    {
+      "file": "data/app.js",
+      "line": 6483,
+      "name": "renderTicketQuickPeek"
+    },
+    {
+      "file": "data/app.js",
+      "line": 7103,
+      "name": "renderTicketQuickPeek"
+    }
+  ],
+  "ticket_storage_keys": [
+    {
+      "file": "cleanup_deep_audit_report.json",
+      "line": 195,
+      "key": "bet_cota2_settings"
+    },
+    {
+      "file": "cleanup_deep_audit_report.json",
+      "line": 200,
+      "key": "bet_cota2_latest"
+    },
+    {
+      "file": "cleanup_deep_audit_report.json",
+      "line": 235,
+      "key": "bet_cota2_settings"
+    },
+    {
+      "file": "cleanup_deep_audit_report.md",
+      "line": 32,
+      "key": "bet_cota2_settings"
+    },
+    {
+      "file": "cleanup_deep_audit_report.md",
+      "line": 33,
+      "key": "bet_cota2_latest"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 38,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 39,
+      "key": "bet_ticket_journal"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9232,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9256,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9585,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9675,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9686,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9703,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9715,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9750,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9757,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9984,
+      "key": "bet_ticket_journal"
+    },
+    {
+      "file": "assets/app.js",
+      "line": 9995,
+      "key": "bet_ticket_journal"
+    },
+    {
+      "file": "data/app.js",
+      "line": 38,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 39,
+      "key": "bet_ticket_journal"
+    },
+    {
+      "file": "data/app.js",
+      "line": 41,
+      "key": "bet_cota2_settings"
+    },
+    {
+      "file": "data/app.js",
+      "line": 42,
+      "key": "bet_cota2_latest"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9004,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9028,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9357,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9448,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9459,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9476,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9488,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9523,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9530,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9757,
+      "key": "bet_ticket_journal"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9768,
+      "key": "bet_ticket_journal"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9823,
+      "key": "bet_cota2_settings"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9855,
+      "key": "bet_cota2_settings"
+    },
+    {
+      "file": "data/app.js",
+      "line": 9874,
+      "key": "bet_tracking"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10234,
+      "key": "bet_cota2_latest"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10323,
+      "key": "bet_ticket_journal"
+    },
+    {
+      "file": "data/app.js",
+      "line": 10339,
+      "key": "bet_tracking"
+    }
+  ],
+  "summary": {
+    "visible_generator_controls_count": 3,
+    "hidden_generator_controls_count": 0,
+    "generator_functions_count": 81,
+    "ticket_related_functions_count": 169,
+    "likely_visible_generators": [
+      {
+        "function": "generateUnifiedTicket",
+        "visible_onclick": true
+      }
+    ],
+    "likely_code_only_generators": [
+      {
+        "function": "generateAiMemoryTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateAiMemoryTicketVariant",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateAuditTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateAuditTicketVariant",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateBestEventTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateBigWinTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateConservativeTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateContrarianShotTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateControlledComboTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateCota2DailyTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateCustomTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateDailyPortfolioTickets",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateDoubleConfirmedTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateMixTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateOver15Ticket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateOver35Ticket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generatePortfolioTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generatePortfolioTicketVariant",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateProfitFocusTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateSinglePremiumTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateTripleValueTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGenerateAiMemoryTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGenerateAiMemoryTicketRelaxed",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGenerateAuditTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGenerateAuditTicketRelaxed",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGenerateDailyPortfolio",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGeneratePortfolioTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGeneratePortfolioTicketRelaxed",
+        "visible_onclick": false
+      },
+      {
+        "function": "handleGenerateSmartBetTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "renderSmartBetGenerators",
+        "visible_onclick": false
+      }
+    ]
+  },
+  "notes": []
+}
