@@ -16,6 +16,9 @@ on:
 permissions:
   contents: write
 
+env:
+  TZ: Europe/Bucharest
+
 concurrency:
   group: update-meciuri-live-data
   cancel-in-progress: false
@@ -30,6 +33,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -40,6 +44,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests
+
+      - name: Verify BSD token
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          if [ -z "$BSD_TOKEN" ]; then
+            echo "::error::BSD_TOKEN lipsește din GitHub Secrets pentru repo-ul VEYRA. Adaugă secretul în Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "BSD_TOKEN prezent."
 
       - name: Fetch latest matches and predictions
         env:
@@ -60,11 +74,40 @@ jobs:
             python build_api_events_index.py
           fi
 
-      - name: Generate Meciuri Snapshot (sursa exacta pentru Istoric)
+      - name: Generate Meciuri Snapshot if script exists
         run: |
           if [ -f generate_meciuri_snapshot.py ]; then
             python generate_meciuri_snapshot.py
           fi
+
+      - name: Force visible refresh timestamp
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          meta_path = Path('data/meta.json')
+          meta_path.parent.mkdir(parents=True, exist_ok=True)
+          if meta_path.exists():
+              try:
+                  meta = json.loads(meta_path.read_text(encoding='utf-8'))
+              except Exception:
+                  meta = {}
+          else:
+              meta = {}
+
+          now = datetime.now(timezone.utc).isoformat()
+          meta['updated_at'] = now
+          meta['fetched_at'] = now
+          meta['workflow_updated_at'] = now
+          meta['status'] = meta.get('status') or 'ok'
+          meta['source'] = meta.get('source') or 'bsd_api_light'
+          meta['repo'] = 'Balty1991/VEYRA'
+          meta['update_workflow'] = 'update-meciuri'
+          meta_path.write_text(json.dumps(meta, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          print('data/meta.json updated_at forced to', now)
+          PY
 
       - name: Verify data files
         run: |
@@ -86,16 +129,14 @@ jobs:
           git add data/
 
           if git diff --staged --quiet; then
-            echo "No match changes detected."
+            echo "No data changes detected even after forced timestamp."
             exit 0
           fi
 
           git commit -m "Auto-update meciuri $(date -u '+%Y-%m-%d %H:%M UTC')"
 
-          # Main can move while this job runs because Pages/deploy/cleanup commits are frequent.
-          # Rebase the data commit on top of latest main, keeping this job's generated data on conflicts.
           git fetch origin main
-          git rebase -X ours origin/main || {
+          git pull --rebase -X ours origin main || {
             git rebase --abort || true
             git fetch origin main
             git reset --soft origin/main
