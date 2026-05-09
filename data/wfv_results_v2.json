@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-09T04:31:56.962396",
+  "updated_at": "2026-05-09T05:29:08.080042",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
   "n_rows": 8845,
@@ -76,11 +76,11 @@
       "trend": "stabil",
       "fold_details": [
         {
-          "n": 2510,
-          "brier": 0.2046,
-          "log_loss": 0.5979,
-          "ece": 0.0089,
-          "winrate": 0.2932
+          "n": 2576,
+          "brier": 0.2054,
+          "log_loss": 0.5996,
+          "ece": 0.0081,
+          "winrate": 0.2954
         },
         {
           "n": 2448,
@@ -104,11 +104,11 @@
       "trend": "stabil",
       "fold_details": [
         {
-          "n": 2510,
-          "brier": 0.2414,
-          "log_loss": 0.6756,
-          "ece": 0.0109,
-          "winrate": 0.5151
+          "n": 2576,
+          "brier": 0.2415,
+          "log_loss": 0.6759,
+          "ece": 0.0123,
+          "winrate": 0.5167
         },
         {
           "n": 2448,
@@ -205,15 +205,15 @@
     }
   ],
   "warnings": [
-    "Peste 1.5G: ECE mediu 0.301 — calibrare slabă consistent."
+    "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
   ],
   "fold_windows": [
     {
       "train_end": "2025-08-22",
       "val_start": "2025-09-05",
       "val_end": "2025-12-05",
-      "n_train": 1106,
-      "n_val": 2510
+      "n_train": 1277,
+      "n_val": 2576
     },
     {
       "train_end": "2025-11-22",

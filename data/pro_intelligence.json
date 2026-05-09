@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-05-09T04:32:19.136826+00:00",
+  "updated_at": "2026-05-09T05:29:30.385977+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 60.1,
+  "overall_score": 60.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 999,
-    "pending_rows": 165,
-    "candidates_with_odds_and_probability": 109,
+    "recommendation_rows": 998,
+    "pending_rows": 164,
+    "candidates_with_odds_and_probability": 110,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,13 +18,13 @@
   },
   "risk_distribution": {
     "speculative": 89,
-    "balanced": 19,
+    "balanced": 20,
     "safe": 1
   },
   "market_distribution_top150": {
     "Over 1.5G": 35,
     "BTTS": 24,
-    "Under 3.5G": 49,
+    "Under 3.5G": 50,
     "Over 2.5G": 1
   },
   "league_distribution_top150": {
@@ -45,7 +45,7 @@
     "Ekstraklasa": 2,
     "Super League": 4,
     "Liga Portugal Betclic": 3,
-    "Chinese Super League": 3,
+    "Chinese Super League": 4,
     "Liga F": 3,
     "Allsvenskan": 3,
     "Eredivisie": 3,
@@ -423,13 +423,13 @@
       "league": "J1 League",
       "event_date": "2026-05-09T10:00:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.4,
+      "odds": 1.39,
       "model_probability": 0.7987,
       "model_probability_pct": 79.87,
-      "implied_probability_pct": 71.43,
+      "implied_probability_pct": 71.94,
       "fair_odds": 1.252,
-      "edge_pp": 8.44,
-      "ev_pct": 11.82,
+      "edge_pp": 7.93,
+      "ev_pct": 11.02,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 48.33,
@@ -438,8 +438,8 @@
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 79.9% vs. probabilitate implicată 71.4%.",
-        "EV estimat 11.8% și edge 8.4 puncte procentuale.",
+        "Probabilitate model 79.9% vs. probabilitate implicată 71.9%.",
+        "EV estimat 11.0% și edge 7.9 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1995,24 +1995,24 @@
       "league": "Championship",
       "event_date": "2026-05-09T14:30:00+03:00",
       "market": "Over 1.5G",
-      "odds": 1.36,
+      "odds": 1.32,
       "model_probability": 0.777,
       "model_probability_pct": 77.7,
-      "implied_probability_pct": 73.53,
+      "implied_probability_pct": 75.76,
       "fair_odds": 1.287,
-      "edge_pp": 4.17,
-      "ev_pct": 5.67,
-      "kelly_fraction": 0.0394,
-      "kelly_units_100": 3.94,
+      "edge_pp": 1.94,
+      "ev_pct": 2.56,
+      "kelly_fraction": 0.02,
+      "kelly_units_100": 2.0,
       "confidence": 52.98,
-      "score": 72.0,
+      "score": 70.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 77.7% vs. probabilitate implicată 73.5%.",
-        "EV estimat 5.7% și edge 4.2 puncte procentuale.",
-        "Miză Kelly fracțională 3.94% din bancă, plafonată prudent."
+        "Probabilitate model 77.7% vs. probabilitate implicată 75.8%.",
+        "EV estimat 2.6% și edge 1.9 puncte procentuale.",
+        "Miză Kelly fracțională 2.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -2105,8 +2105,8 @@
       "bets": 231,
       "wins": 161,
       "winrate": 69.7,
-      "profit_units": -17.65,
-      "roi_pct": -7.64,
+      "profit_units": -17.67,
+      "roi_pct": -7.65,
       "avg_odds": 1.328
     }
   ],
@@ -2125,9 +2125,9 @@
       "bets": 2,
       "wins": 2,
       "winrate": 100.0,
-      "profit_units": 0.86,
-      "roi_pct": 43.0,
-      "avg_odds": 1.43
+      "profit_units": 0.87,
+      "roi_pct": 43.5,
+      "avg_odds": 1.435
     },
     {
       "key": "Puchar Polski",
@@ -2179,9 +2179,9 @@
       "bets": 6,
       "wins": 6,
       "winrate": 100.0,
-      "profit_units": 1.16,
-      "roi_pct": 19.35,
-      "avg_odds": 1.194
+      "profit_units": 1.2,
+      "roi_pct": 20.02,
+      "avg_odds": 1.2
     },
     {
       "key": "Trendyol Super Lig",
