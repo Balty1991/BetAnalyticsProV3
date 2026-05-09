@@ -13,9 +13,9 @@
 <meta name="apple-mobile-web-app-title" content="VEYRA"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="icon" type="image/svg+xml" href="./assets/veyra-icon.svg?v=20260509brand2"/>
+<link rel="icon" type="image/svg+xml" href="./assets/veyra-icon.svg?v=20260509brand3"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
-<link rel="preload" href="./assets/veyra-icon.svg?v=20260509brand2" as="image" type="image/svg+xml"/>
+<link rel="preload" href="./assets/veyra-icon.svg?v=20260509brand3" as="image" type="image/svg+xml"/>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
@@ -42,7 +42,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 .skip-link{position:absolute;left:12px;top:-44px;z-index:1000;background:#2BE5C5;color:#06080F;padding:10px 14px;border-radius:12px;font-weight:700;text-decoration:none}
 .skip-link:focus{top:12px}
 </style>
-<link rel="stylesheet" href="./assets/app.css?v=20260509brand2"/>
+<link rel="stylesheet" href="./assets/app.css?v=20260509brand3"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
 <link rel="stylesheet" href="./assets/pyramid_daily.css?v=20260509pyr1"/>
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
@@ -68,15 +68,21 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <!-- HEADER -->
 <div class="header">
   <div class="header-inner">
-    <div class="logo veyra-logo-header">
-      <img class="veyra-header-logo-img" src="./assets/veyra-logo.svg?v=20260509brand2" alt="VEYRA · Sports Analytics · AI Predictions"/>
-      <div class="logo-sync-row veyra-sync-row">
-        <div class="sb-dot live" id="sb-dot"></div>
-        <span><b id="hq-ml">—</b> ML</span>
-        <span class="lsr-dot">·</span>
-        <span><b id="hq-odds">—</b> cote</span>
-        <span class="lsr-dot">·</span>
-        <span id="hq-time">—</span>
+    <div class="logo veyra-framed-brand">
+      <div class="veyra-emblem-frame">
+        <img class="veyra-emblem-img" src="./assets/veyra-icon.svg?v=20260509brand3" alt="VEYRA logo"/>
+      </div>
+      <div class="veyra-brand-textblock">
+        <div class="logo-title veyra-wordmark-clean">VEYRA</div>
+        <div class="logo-sub veyra-tagline-clean">SPORTS ANALYTICS · AI</div>
+        <div class="logo-sync-row veyra-sync-row">
+          <div class="sb-dot live" id="sb-dot"></div>
+          <span><b id="hq-ml">—</b> ML</span>
+          <span class="lsr-dot">·</span>
+          <span><b id="hq-odds">—</b> cote</span>
+          <span class="lsr-dot">·</span>
+          <span id="hq-time">—</span>
+        </div>
       </div>
       <div id="sb-text" role="status" aria-live="polite" class="sr-only"></div>
       <span id="hq-safe" style="display:none"></span>

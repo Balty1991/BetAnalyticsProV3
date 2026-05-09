@@ -7766,3 +7766,84 @@ button[onclick*="resetFilter"]:hover {
   .veyra-header-logo-img{width:min(238px,calc(100vw - 108px)) !important;max-height:58px !important;}
   .veyra-sync-row{font-size:9px !important;}
 }
+
+/* VEYRA framed brand layout */
+.veyra-framed-brand{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:12px !important;
+  min-width:0 !important;
+  max-width:calc(100vw - 96px) !important;
+}
+.veyra-emblem-frame{
+  width:72px !important;
+  height:72px !important;
+  flex:0 0 72px !important;
+  border-radius:20px !important;
+  padding:5px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(43,229,197,.22), transparent 58%),
+    linear-gradient(145deg, rgba(4,12,22,.96), rgba(3,7,14,.82)) !important;
+  border:1px solid rgba(43,229,197,.32) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.035) inset,
+    0 0 22px rgba(43,229,197,.22),
+    0 12px 30px rgba(0,0,0,.45) !important;
+}
+.veyra-emblem-img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+  display:block !important;
+  filter:drop-shadow(0 0 10px rgba(43,229,197,.45));
+}
+.veyra-brand-textblock{
+  display:flex !important;
+  flex-direction:column !important;
+  min-width:0 !important;
+  justify-content:center !important;
+}
+.veyra-wordmark-clean{
+  font-size:34px !important;
+  line-height:.94 !important;
+  font-weight:950 !important;
+  letter-spacing:.055em !important;
+  color:#fff !important;
+  text-transform:uppercase !important;
+  text-shadow:0 0 18px rgba(43,229,197,.18) !important;
+  white-space:nowrap !important;
+}
+.veyra-tagline-clean{
+  margin-top:7px !important;
+  font-size:10px !important;
+  line-height:1 !important;
+  letter-spacing:.24em !important;
+  font-family:var(--mono) !important;
+  color:rgba(232,239,255,.72) !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+.veyra-sync-row{
+  margin-top:10px !important;
+  padding-left:0 !important;
+  font-size:11px !important;
+  line-height:1.05 !important;
+}
+@media(max-width:480px){
+  .header-inner{padding:10px 12px !important;gap:8px !important;}
+  .veyra-framed-brand{gap:10px !important;max-width:calc(100vw - 94px) !important;}
+  .veyra-emblem-frame{width:64px !important;height:64px !important;flex-basis:64px !important;border-radius:18px !important;padding:5px !important;}
+  .veyra-wordmark-clean{font-size:30px !important;letter-spacing:.045em !important;}
+  .veyra-tagline-clean{font-size:8.5px !important;letter-spacing:.18em !important;max-width:190px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
+  .veyra-sync-row{margin-top:9px !important;font-size:10px !important;gap:6px !important;}
+}
+@media(max-width:370px){
+  .veyra-emblem-frame{width:58px !important;height:58px !important;flex-basis:58px !important;}
+  .veyra-wordmark-clean{font-size:26px !important;}
+  .veyra-tagline-clean{max-width:158px !important;font-size:8px !important;letter-spacing:.14em !important;}
+  .veyra-sync-row{font-size:9px !important;gap:5px !important;}
+}
