@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV7) return;
-window.__PyramidDailyRuntimeV7 = true;
+if(window.__PyramidDailyRuntimeV8) return;
+window.__PyramidDailyRuntimeV8 = true;
 
 var W = window;
 var D = document;
@@ -147,6 +147,7 @@ function defaultSettings(){
     stake:20,
     targetOdds:null,
     steps:4,
+    maxPicks:3,
     dayMode:'today',
     useRealOdds:true
   };
@@ -164,12 +165,17 @@ function sanitizeSettings(raw){
     stake:clamp(n(raw.stake,d.stake),1,100000),
     targetOdds:target,
     steps:Math.round(clamp(n(raw.steps,d.steps),4,10)),
+    maxPicks:Math.round(clamp(n(raw.maxPicks || raw.count || d.maxPicks),1,3)),
     dayMode:String(raw.dayMode || d.dayMode) === 'tomorrow' ? 'tomorrow' : 'today',
     useRealOdds:raw.useRealOdds === false || raw.useRealOdds === 'no' ? false : true
   };
 }
 function getSettings(){
   return sanitizeSettings(readJson(STORAGE_SETTINGS,defaultSettings()));
+}
+function hasUserCriteria(s){
+  s = sanitizeSettings(s || getSettings());
+  return !!s.targetOdds;
 }
 function saveSettingsFromUi(silent){
   var targetInput = el('odds');
@@ -179,6 +185,7 @@ function saveSettingsFromUi(silent){
     stake:el('stake') ? el('stake').value : undefined,
     targetOdds:target,
     steps:el('steps') ? el('steps').value : undefined,
+    maxPicks:el('count') ? el('count').value : undefined,
     dayMode:el('day') ? el('day').value : undefined,
     useRealOdds:el('useRealOdds') ? el('useRealOdds').value !== 'no' : true
   });
@@ -197,9 +204,10 @@ function loadSettingsIntoUi(s){
   if(el('stake')) el('stake').value = String(s.stake).replace('.', ',');
   if(el('odds')){
     el('odds').value = s.targetOdds ? String(s.targetOdds).replace('.', ',') : '';
-    el('odds').placeholder = 'AI auto';
+    el('odds').placeholder = 'ex. 1.30';
   }
   if(el('steps')) el('steps').value = s.steps;
+  if(el('count')) el('count').value = String(s.maxPicks || 3);
   if(el('day')) el('day').value = s.dayMode;
   if(el('useRealOdds')) el('useRealOdds').value = s.useRealOdds ? 'yes' : 'no';
 
@@ -209,7 +217,7 @@ function hideUnusedControls(){
   var count = el('count');
   if(count){
     var countWrap = count.closest('.pyr-field,.pyramid-field,div');
-    if(countWrap) countWrap.style.display = 'none';
+    if(countWrap) countWrap.style.display = '';
   }
 
   var profile = el('profile');
@@ -224,10 +232,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v7')) return;
+  if(D.getElementById('pyramid-daily-compact-v8')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v7';
+  style.id = 'pyramid-daily-compact-v8';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -270,6 +278,7 @@ function injectCompactCss(){
   font-size:8.7px!important;
   line-height:1.22!important;
 }
+#tab-piramida .pyramid-sub,
 #tab-piramida .pyr-hero .pyr-muted,
 #tab-piramida .pyr-hero .pyramid-muted,
 #tab-piramida .pyramid-hero .pyr-muted,
@@ -487,7 +496,7 @@ function hideInfoTexts(){
   var tab = D.getElementById('tab-piramida');
   if(!tab) return;
 
-  tab.querySelectorAll('.pyr-muted,.pyramid-muted,p,.section-subtitle,.pyramid-engine-note').forEach(function(node){
+  tab.querySelectorAll('.pyr-muted,.pyramid-muted,.pyramid-sub,.pyramid-panel-sub,p,.section-subtitle,.pyramid-engine-note').forEach(function(node){
     var txt = (node.textContent || '').trim();
 
     if(
@@ -499,7 +508,9 @@ function hideInfoTexts(){
       txt.indexOf('AI decide') >= 0 ||
       txt.indexOf('AI alege singur') >= 0 ||
       txt.indexOf('Scorul combină') >= 0 ||
-      txt.indexOf('Dacă introduci cotă') >= 0
+      txt.indexOf('Dacă introduci cotă') >= 0 ||
+      txt.indexOf('reinvestire totală') >= 0 ||
+      txt.indexOf('vârful zilei') >= 0
     ){
       node.style.display = 'none';
       node.innerHTML = '';
@@ -1029,6 +1040,11 @@ function combinations(arr,k,limit){
   return res;
 }
 function aiDecidePicks(s){
+  if(!hasUserCriteria(s)){
+    ACTIVE_REPORT = {raw:0,candidates:0,reason:'Aștept criterii de filtrare.',mode:'waiting'};
+    return [];
+  }
+
   var built = buildCandidatePool(s);
   var pool = built.pool;
   var report = built.report || {};
@@ -1045,7 +1061,10 @@ function aiDecidePicks(s){
   var scan = pool.slice(0,18);
   var variants = [];
 
+  var maxLegs = Math.round(clamp(n(s.maxPicks || 3,3),1,3));
+
   [1,2,3].forEach(function(legs){
+    if(legs > maxLegs) return;
     combinations(scan,legs,180).forEach(function(picks){
       var q = comboQuality(picks,s);
 
@@ -1191,6 +1210,23 @@ function renderPicks(s){
   var target = el('picks');
   if(!target) return;
 
+  if(!hasUserCriteria(s)){
+    ACTIVE_PICKS = [];
+    ACTIVE_REPORT = {raw:0,candidates:0,reason:'Aștept criterii de filtrare.',mode:'waiting'};
+
+    renderTopStats(s,ACTIVE_PICKS);
+
+    if(el('badge')) el('badge').textContent = '—';
+    if(el('summary')) el('summary').innerHTML = 'Introdu cotă țintă pentru filtrare.';
+
+    target.innerHTML =
+      '<div class="pyramid-empty"><b>Introdu criterii pentru afișare.</b><br>' +
+      'Exemplu: completează câmpul Cotă țintă/pas cu 1.30, apoi AI afișează 1–3 evenimente potrivite.</div>';
+
+    hideInfoTexts();
+    return;
+  }
+
   ACTIVE_PICKS = aiDecidePicks(s);
 
   var picks = ACTIVE_PICKS;
@@ -1269,6 +1305,14 @@ function renderPlan(s){
   if(!box) return;
 
   var picks = ACTIVE_PICKS || [];
+
+  if(!hasUserCriteria(s)){
+    box.innerHTML =
+      '<div class="pyramid-empty">Completează cotă țintă/pas pentru calculul piramidei și afișarea evenimentelor.</div>';
+    hideInfoTexts();
+    return;
+  }
+
   var rows = planRows(s,picks);
   var final = rows[rows.length - 1] || {next:0};
 
@@ -1294,7 +1338,7 @@ function renderPlan(s){
       '</tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="pyramid-warn">Fără cotă țintă: AI alege varianta cu risc minim. Cu țintă introdusă: caută cea mai bună combinație care o atinge.</div>';
+    '<div class="pyramid-warn">AI afișează evenimente doar după criteriile introduse; combinația selectată urmărește cota țintă și evită corelările.</div>';
 
   hideInfoTexts();
 }
@@ -1546,31 +1590,31 @@ function bind(){
   hideInfoTexts();
 
   var refresh = el('refreshBtn');
-  if(refresh && !refresh.__pyrV7){
-    refresh.__pyrV7 = true;
+  if(refresh && !refresh.__pyrV8){
+    refresh.__pyrV8 = true;
     refresh.addEventListener('click',refreshPyramidDaily);
   }
 
   var start = el('startBtn');
-  if(start && !start.__pyrV7){
-    start.__pyrV7 = true;
+  if(start && !start.__pyrV8){
+    start.__pyrV8 = true;
     start.addEventListener('click',createSession);
   }
 
   var save = el('saveBtn');
-  if(save && !save.__pyrV7){
-    save.__pyrV7 = true;
+  if(save && !save.__pyrV8){
+    save.__pyrV8 = true;
     save.addEventListener('click',function(){
       saveSettingsFromUi(false);
       refreshPyramidDaily();
     });
   }
 
-  ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
+  ['stake','odds','steps','count','day','useRealOdds'].forEach(function(k){
     var node = el(k);
 
-    if(node && !node.__pyrV7){
-      node.__pyrV7 = true;
+    if(node && !node.__pyrV8){
+      node.__pyrV8 = true;
 
       node.addEventListener('change',function(){
         saveSettingsFromUi(true);
@@ -1614,7 +1658,7 @@ W.pyramidUndoLastStep = undoStep;
 W.pyramidDeleteSession = deleteSession;
 
 var oldSwitch = W.switchTab;
-if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV7){
+if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV8){
   var patchedSwitch = function(name){
     var r = oldSwitch.apply(this,arguments);
 
@@ -1625,12 +1669,12 @@ if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV7){
     return r;
   };
 
-  patchedSwitch.__pyrV7 = true;
+  patchedSwitch.__pyrV8 = true;
   W.switchTab = patchedSwitch;
 }
 
 var oldRefresh = W.doRefresh;
-if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV7){
+if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV8){
   var patchedRefresh = function(){
     var r = oldRefresh.apply(this,arguments);
 
@@ -1645,7 +1689,7 @@ if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV7){
     return r;
   };
 
-  patchedRefresh.__pyrV7 = true;
+  patchedRefresh.__pyrV8 = true;
   W.doRefresh = patchedRefresh;
 }
 
