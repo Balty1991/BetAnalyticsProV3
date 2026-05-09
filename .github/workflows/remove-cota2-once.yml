@@ -1,0 +1,31 @@
+name: Remove Cota 2 Once
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.cleanup/remove-cota2.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  remove-cota2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove Cota 2 code and UI
+        run: python tools/remove_cota2_once.py
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Remove Cota 2 feature"
+            git push
+          fi
