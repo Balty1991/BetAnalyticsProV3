@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV15) return;
-window.__PyramidDailyRuntimeV15 = true;
+if(window.__PyramidDailyRuntimeV16) return;
+window.__PyramidDailyRuntimeV16 = true;
 
 var W = window;
 var D = document;
@@ -149,7 +149,7 @@ function defaultSettings(){
     stake:20,
     targetOdds:null,
     steps:4,
-    maxPicks:3,
+    maxPicks:null,
     dayMode:'today',
     useRealOdds:true
   };
@@ -160,14 +160,14 @@ function sanitizeSettings(raw){
 
   var target = null;
   if(raw.targetOdds !== null && raw.targetOdds !== '' && raw.targetOdds !== undefined){
-    target = clamp(n(raw.targetOdds,0),1.10,3.00);
+    target = clamp(n(raw.targetOdds,0),1.10,100);
   }
 
   return {
     stake:clamp(n(raw.stake,d.stake),1,100000),
     targetOdds:target,
-    steps:Math.round(clamp(n(raw.steps,d.steps),1,10)),
-    maxPicks:3,
+    steps:Math.round(clamp(n(raw.steps,d.steps),1,30)),
+    maxPicks:null,
     dayMode:String(raw.dayMode || d.dayMode) === 'tomorrow' ? 'tomorrow' : 'today',
     useRealOdds:raw.useRealOdds === false || raw.useRealOdds === 'no' ? false : true
   };
@@ -187,7 +187,7 @@ function saveSettingsFromUi(silent){
     stake:el('stake') ? el('stake').value : undefined,
     targetOdds:target,
     steps:el('steps') ? el('steps').value : undefined,
-    maxPicks:3,
+    maxPicks:null,
     dayMode:el('day') ? el('day').value : undefined,
     useRealOdds:el('useRealOdds') ? el('useRealOdds').value !== 'no' : true
   });
@@ -233,10 +233,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v15')) return;
+  if(D.getElementById('pyramid-daily-compact-v16')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v15';
+  style.id = 'pyramid-daily-compact-v16';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -785,6 +785,64 @@ function injectCompactCss(){
   color:#94a3b8!important;
   margin:8px 0 4px!important;
 }
+
+#tab-piramida .pyramid-session-settings{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 82px!important;
+  gap:6px!important;
+  align-items:end!important;
+  margin-top:8px!important;
+  padding:8px!important;
+  border-radius:12px!important;
+  background:rgba(20,184,166,.08)!important;
+  border:1px solid rgba(94,234,212,.18)!important;
+}
+#tab-piramida .pyramid-session-settings label{
+  display:block!important;
+  color:#cbd5e1!important;
+  font-size:8px!important;
+  font-weight:950!important;
+  margin:0 0 4px!important;
+}
+#tab-piramida .pyramid-session-settings input{
+  width:100%!important;
+  height:30px!important;
+  min-height:30px!important;
+  color:#f8fafc!important;
+  background:rgba(15,23,42,.94)!important;
+  border:1px solid rgba(148,163,184,.24)!important;
+}
+#tab-piramida .pyramid-action-save-steps{
+  min-height:30px!important;
+  height:30px!important;
+  font-size:8.5px!important;
+  color:#1b1303!important;
+  background:linear-gradient(180deg,#fde68a,#f59e0b)!important;
+  border-color:rgba(251,191,36,.58)!important;
+}
+#tab-piramida .pyramid-session-kpi{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:5px!important;
+  margin-top:7px!important;
+}
+#tab-piramida .pyramid-session-kpi span{
+  padding:6px 5px!important;
+  border-radius:9px!important;
+  background:rgba(2,6,23,.45)!important;
+  border:1px solid rgba(148,163,184,.15)!important;
+  color:#e2e8f0!important;
+  font-size:8.3px!important;
+  font-weight:900!important;
+  text-align:center!important;
+}
+#tab-piramida .pyramid-session-kpi b{
+  display:block!important;
+  color:#fde68a!important;
+  font-size:9.3px!important;
+  margin-bottom:2px!important;
+}
+
 @media(max-width:430px){
   #tab-piramida .pyr-form,
   #tab-piramida .pyramid-form{
@@ -1294,17 +1352,15 @@ function comboQuality(picks,s){
   var legBias = 0;
 
   if(hasTarget){
-    if(picks.length === 1) legBias = 3;
-    if(picks.length === 2) legBias = 1;
-    if(picks.length === 3) legBias = -3;
+    legBias = -Math.max(0, picks.length - 1) * 1.4;
 
     if(picks.length === 1 && odds < s.targetOdds * .92){
       legBias -= 12;
     }
   }else{
     if(picks.length === 1) legBias = 9;
-    if(picks.length === 2) legBias = 1;
-    if(picks.length === 3) legBias = -7;
+    else if(picks.length === 2) legBias = 2;
+    else legBias = -Math.max(2, picks.length - 2) * 4;
   }
 
   var score;
@@ -1373,6 +1429,86 @@ function combinations(arr,k,limit){
   walk(0,[]);
   return res;
 }
+function dynamicMaxLegs(s,pool){
+  var target = n(s && s.targetOdds,0);
+  var size = Array.isArray(pool) ? pool.length : 0;
+
+  if(!size) return 0;
+  if(!target) return Math.min(size,4);
+
+  if(target >= 25) return Math.min(size,12);
+  if(target >= 10) return Math.min(size,10);
+  if(target >= 6) return Math.min(size,8);
+  if(target >= 3) return Math.min(size,6);
+  return Math.min(size,5);
+}
+function probabilityFloorForLegs(legs,s){
+  var target = n(s && s.targetOdds,0);
+
+  if(target >= 10){
+    if(legs <= 2) return 18;
+    if(legs <= 4) return 5;
+    return 1.5;
+  }
+
+  if(target >= 6){
+    if(legs <= 2) return 24;
+    if(legs <= 4) return 8;
+    return 3;
+  }
+
+  if(legs === 1) return 0;
+  if(legs === 2) return target ? 30 : 38;
+  if(legs === 3) return target ? 18 : 25;
+  if(legs === 4) return target ? 10 : 16;
+  if(legs === 5) return target ? 6 : 10;
+  return target ? 2.5 : 6;
+}
+function buildDynamicVariants(scan,s,maxLegs){
+  var variants = [];
+  var level = [{picks:[], lastIndex:-1}];
+  var keepPerLevel = 380;
+
+  for(var legs=1; legs<=maxLegs; legs++){
+    var next = [];
+
+    level.forEach(function(base){
+      for(var i=base.lastIndex + 1; i<scan.length; i++){
+        var candidate = scan[i];
+        var ok = true;
+
+        for(var j=0;j<base.picks.length;j++){
+          if(correlated(base.picks[j],candidate)){
+            ok = false;
+            break;
+          }
+        }
+
+        if(!ok) continue;
+
+        var picks = base.picks.concat(candidate);
+        var q = comboQuality(picks,s);
+
+        if(q.penalty >= 34) continue;
+        if(q.prob < probabilityFloorForLegs(legs,s)) continue;
+
+        variants.push(q);
+        next.push({picks:picks,lastIndex:i,q:q});
+      }
+    });
+
+    next.sort(function(a,b){
+      if(b.q.score !== a.q.score) return b.q.score - a.q.score;
+      if(b.q.prob !== a.q.prob) return b.q.prob - a.q.prob;
+      return Math.abs(a.q.odds - n(s.targetOdds,0)) - Math.abs(b.q.odds - n(s.targetOdds,0));
+    });
+
+    level = next.slice(0,keepPerLevel);
+    if(!level.length) break;
+  }
+
+  return variants;
+}
 function aiDecidePicks(s){
   if(!hasUserCriteria(s)){
     ACTIVE_REPORT = {raw:0,candidates:0,reason:'Aștept criterii de filtrare.',mode:'waiting'};
@@ -1392,23 +1528,10 @@ function aiDecidePicks(s){
     return [];
   }
 
-  var scan = pool.slice(0,18);
-  var variants = [];
-
-  var maxLegs = Math.round(clamp(n(s.maxPicks || 3,3),1,3));
-
-  [1,2,3].forEach(function(legs){
-    if(legs > maxLegs) return;
-    combinations(scan,legs,180).forEach(function(picks){
-      var q = comboQuality(picks,s);
-
-      if(q.penalty >= 30) return;
-      if(legs === 2 && q.prob < 38) return;
-      if(legs === 3 && q.prob < 25) return;
-
-      variants.push(q);
-    });
-  });
+  var scanSize = hasTarget ? 28 : 18;
+  var scan = pool.slice(0,scanSize);
+  var maxLegs = dynamicMaxLegs(s,scan);
+  var variants = buildDynamicVariants(scan,s,maxLegs);
 
   if(!variants.length){
     var single = comboQuality([pool[0]],s);
@@ -1434,7 +1557,7 @@ function aiDecidePicks(s){
       });
 
       chosen = reached[0];
-      report.reason = 'AI a ales combinația cu probabilitate maximă care atinge cota țintă.';
+      report.reason = 'AI a ales combinația cu probabilitate maximă care atinge cota țintă, folosind câte selecții sunt necesare.';
     }else{
       variants.sort(function(a,b){
         var da = Math.abs(a.odds - s.targetOdds);
@@ -2134,7 +2257,7 @@ function sessionAction(id,action){
       odds:odds,
       returnAfter:after,
       profit:after - before,
-      picks:(s.picks || []).slice(0,3)
+      picks:(s.picks || []).slice()
     });
 
     s.currentStake = after;
@@ -2164,7 +2287,7 @@ function sessionAction(id,action){
         odds:lossOdds,
         returnAfter:0,
         profit:-lossStake,
-        picks:(s.picks || []).slice(0,3)
+        picks:(s.picks || []).slice()
       });
     }
 
@@ -2183,7 +2306,7 @@ function sessionAction(id,action){
       odds:1,
       returnAfter:cashStake,
       profit:cashStake - n(s.initialStake,0),
-      picks:(s.picks || []).slice(0,3)
+      picks:(s.picks || []).slice()
     });
 
     s.status = 'cashout';
@@ -2231,7 +2354,7 @@ function generateStepForSession(id){
   ui.stake = n(s.currentStake || s.initialStake, s.initialStake);
   ui.targetOdds = n(s.targetOdds || ui.targetOdds, ui.targetOdds);
   ui.steps = targetSteps;
-  ui.maxPicks = 3;
+  ui.maxPicks = null;
 
   writeJson(STORAGE_SETTINGS, ui);
   loadSettingsIntoUi(ui);
@@ -2304,6 +2427,63 @@ function undoStep(id){
     W.toast('Ultimul pas a fost șters.', 'ok');
   }
 }
+function updateSessionSteps(id){
+  var arr = getSessions();
+  var s = arr.find(function(x){ return String(x.id) === String(id); });
+
+  if(!s) return;
+
+  var input = D.getElementById('pyramid-session-steps-' + id);
+  var requested = input ? Math.round(n(input.value,0)) : 0;
+
+  if(!requested){
+    if(typeof W.toast === 'function') W.toast('Introdu un număr valid de pași.', 'warn');
+    return;
+  }
+
+  s.history = Array.isArray(s.history) ? s.history : [];
+
+  var playedMax = s.history.reduce(function(max,h){
+    return Math.max(max,n(h.step,0));
+  },0);
+  playedMax = Math.max(playedMax, n(s.closedStep,0));
+
+  var oldTotal = Math.max(1,n(s.targetSteps,4));
+  var newTotal = Math.max(1, Math.min(30, requested));
+
+  if(newTotal < playedMax){
+    newTotal = playedMax;
+    if(input) input.value = newTotal;
+    if(typeof W.toast === 'function') W.toast('Nu pot coborî sub pașii deja jucați. Am păstrat minimul valid.', 'warn');
+  }
+
+  s.targetSteps = newTotal;
+
+  if((s.status === 'completed' || s.status === 'cashout') && newTotal > oldTotal){
+    s.status = 'active';
+    s.closedAt = null;
+    s.closedStep = null;
+    s.currentStep = Math.max(playedMax + 1, 1);
+    s.currentStake = n(s.currentStake || s.initialStake, s.initialStake);
+    s.picks = [];
+    s.awaitingGeneration = true;
+    s.lastDailyOdds = s.targetOdds || null;
+  }
+
+  if((s.status === 'active' || s.status === 'paused') && n(s.currentStep,1) > newTotal){
+    s.currentStep = newTotal;
+  }
+
+  saveSessions(arr);
+  SELECTED_SESSION_ID = s.id;
+  clearGeneratorAfterSession('Numărul de pași a fost actualizat. Generează pasul curent când ești pregătit.');
+  renderSessions();
+  renderPlan(getSettings());
+
+  if(typeof W.toast === 'function'){
+    W.toast('Piramida a fost actualizată la ' + newTotal + ' pași.', 'ok');
+  }
+}
 function deleteSession(id){
   saveSessions(getSessions().filter(function(s){
     return String(s.id) !== String(id);
@@ -2351,14 +2531,36 @@ function renderSessions(){
       s.status === 'completed' ? 'Piramidă WIN' : 'Piramidă cashout';
 
     var prof = sessionProfit(s);
-    var currentStep = Math.max(1, Math.min(n(s.targetSteps,4), n(s.currentStep,1)));
-    var totalSteps = n(s.targetSteps,4);
+    var totalSteps = Math.max(1,n(s.targetSteps,4));
+    var currentStep = Math.max(1, Math.min(totalSteps, n(s.currentStep,1)));
+    if(s.status === 'completed') currentStep = totalSteps;
 
     var currentPicks = (s.picks || []).length
       ? (s.picks || []).map(function(p){
           return esc(p.home || '') + ' vs ' + esc(p.away || '') + ' • ' + esc(p.market || '') + ' @ ' + fmt(p.odds,2);
         }).join('<br>')
       : '<span style="color:var(--yel);font-weight:800">Fără bilet pe pasul curent. Apasă „Generează pasul”.</span>';
+
+    var playedMax = s.history.reduce(function(max,h){ return Math.max(max,n(h.step,0)); },0);
+    playedMax = Math.max(playedMax,n(s.closedStep,0));
+    var minEditableSteps = Math.max(1, playedMax || currentStep);
+    var selectedSettings = selected
+      ? '<div class="pyramid-session-settings" onclick="event.stopPropagation()">' +
+          '<div><label>Pași piramidă selectată</label><input id="pyramid-session-steps-' + s.id + '" type="number" min="' + minEditableSteps + '" max="30" step="1" value="' + totalSteps + '"></div>' +
+          '<button class="btn pyramid-action-save-steps" onclick="pyramidUpdateSessionSteps(\'' + s.id + '\')">Salvează pași</button>' +
+        '</div>'
+      : '';
+
+    var cardStatus =
+      s.status === 'active' ? 'ACTIVĂ' :
+      s.status === 'paused' ? 'PAUZĂ' :
+      sessionStatusLabel(s).toUpperCase();
+
+    var sessionKpi = '<div class="pyramid-session-kpi">' +
+      '<span><b>' + currentStep + '/' + totalSteps + '</b>Pas curent</span>' +
+      '<span><b>' + cardStatus + '</b>Status</span>' +
+      '<span><b>' + money(prof) + '</b>Profit</span>' +
+    '</div>';
 
     var actions = '';
     var stop = 'event.stopPropagation();';
@@ -2393,9 +2595,11 @@ function renderSessions(){
           '<div class="pyramid-session-name">' + esc(label) + ' · Pas ' + currentStep + ' din ' + totalSteps + '</div>' +
           '<div class="pyramid-session-badge">' + (selected ? 'SELECTAT' : 'apasă pentru selectare') + '</div>' +
           '<div class="pyramid-session-meta">Start ' + money(s.initialStake) + ' • curent ' + money(s.currentStake || s.initialStake) + ' • cotă ' + fmt(s.lastDailyOdds || s.targetOdds || 1.30,2) + '<br>' + currentPicks + '</div>' +
+          sessionKpi +
         '</div>' +
         '<div class="pyramid-session-profit" style="color:' + (prof >= 0 ? 'var(--grn)' : 'var(--red)') + '">' + money(prof) + '</div>' +
       '</div>' +
+      selectedSettings +
       stepHistory +
       '<div class="pyramid-session-actions">' + actions + '</div>' +
     '</div>';
@@ -2412,20 +2616,20 @@ function bind(){
   hideInfoTexts();
 
   var refresh = el('refreshBtn');
-  if(refresh && !refresh.__pyrV15){
-    refresh.__pyrV15 = true;
+  if(refresh && !refresh.__pyrV16){
+    refresh.__pyrV16 = true;
     refresh.addEventListener('click',refreshPyramidDaily);
   }
 
   var start = el('startBtn');
-  if(start && !start.__pyrV15){
-    start.__pyrV15 = true;
+  if(start && !start.__pyrV16){
+    start.__pyrV16 = true;
     start.addEventListener('click',createSession);
   }
 
   var save = el('saveBtn');
-  if(save && !save.__pyrV15){
-    save.__pyrV15 = true;
+  if(save && !save.__pyrV16){
+    save.__pyrV16 = true;
     save.addEventListener('click',function(){
       savePyramidDailySettings();
     });
@@ -2434,8 +2638,8 @@ function bind(){
   ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
     var node = el(k);
 
-    if(node && !node.__pyrV15){
-      node.__pyrV15 = true;
+    if(node && !node.__pyrV16){
+      node.__pyrV16 = true;
 
       node.addEventListener('change',function(){
         saveSettingsFromUi(true);
@@ -2485,11 +2689,12 @@ W.savePyramidDailySettings = savePyramidDailySettings;
 W.pyramidDailyAction = sessionAction;
 W.pyramidUndoLastStep = undoStep;
 W.pyramidDeleteSession = deleteSession;
+W.pyramidUpdateSessionSteps = updateSessionSteps;
 W.pyramidGenerateSessionStep = generateStepForSession;
 W.pyramidSelectSession = selectSession;
 
 var oldSwitch = W.switchTab;
-if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV15){
+if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV16){
   var patchedSwitch = function(name){
     var r = oldSwitch.apply(this,arguments);
 
@@ -2500,12 +2705,12 @@ if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV15){
     return r;
   };
 
-  patchedSwitch.__pyrV15 = true;
+  patchedSwitch.__pyrV16 = true;
   W.switchTab = patchedSwitch;
 }
 
 var oldRefresh = W.doRefresh;
-if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV15){
+if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV16){
   var patchedRefresh = function(){
     var r = oldRefresh.apply(this,arguments);
 
@@ -2520,7 +2725,7 @@ if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV15){
     return r;
   };
 
-  patchedRefresh.__pyrV15 = true;
+  patchedRefresh.__pyrV16 = true;
   W.doRefresh = patchedRefresh;
 }
 
