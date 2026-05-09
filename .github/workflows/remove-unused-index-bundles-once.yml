@@ -1,0 +1,30 @@
+name: Remove Unused Index Bundles Once
+
+on:
+  push:
+    paths:
+      - '.cleanup/remove-unused-index-bundles.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  remove-unused-index-bundles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove unreferenced assets/index-* bundles
+        run: python tools/remove_unused_index_bundles_once.py
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Remove unused index bundles"
+            git push
+          fi
