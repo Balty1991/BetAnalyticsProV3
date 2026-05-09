@@ -460,8 +460,6 @@ function renderDashboardVisuals(){
   });
   if($('dash-category-meta')) $('dash-category-meta').textContent = 'aceleași categorii • 21 zile';
   renderVisualBarList('dash-category-chart', catRows, function(v){ return (v>=0?'+':'') + v.toFixed(1) + '%'; });
-  renderDashboardMonitor();
-  renderModernDashboard();
 }
 
 function renderDashboardMonitor(){
@@ -1038,19 +1036,13 @@ function markTabRendered(name){
 }
 function renderDashboardTab(opts){
   opts = opts || {};
-  renderModernDashboard();
   if(opts.deferSecondary){
     scheduleIdleTask(function(){
       if(!isTabActive('dashboard')) return;
       renderBacktest();
-      renderDashboardVisuals();
       renderMarketDistribution();
-      renderMarketPerformance();
       renderFocusCenter();
       renderTicketLaneBoard();
-      renderTodayBest();
-      renderTopPicks();
-      renderTopSafe();
       renderSignalAudit();
       renderAuditVisuals();
       markTabRendered('dashboard');
@@ -1058,14 +1050,9 @@ function renderDashboardTab(opts){
     return;
   }
   renderBacktest();
-  renderDashboardVisuals();
   renderMarketDistribution();
-  renderMarketPerformance();
   renderFocusCenter();
   renderTicketLaneBoard();
-  renderTodayBest();
-  renderTopPicks();
-  renderTopSafe();
   renderSignalAudit();
   renderAuditVisuals();
   markTabRendered('dashboard');
@@ -1085,7 +1072,7 @@ function renderHistory21Tab(){
 function renderActiveTab(name, opts){
   opts = opts || {};
   if(name === 'dashboard'){
-    renderDashboardTab({ deferSecondary: !!opts.deferDashboardSecondary });
+    markTabRendered('dashboard');
     return;
   }
   if(name === 'meciuri'){
@@ -5061,7 +5048,6 @@ function rerenderTabAfterLazyLoad(name){
     return;
   }
   if(name === 'dashboard'){
-    renderDashboardVisuals();
     return;
   }
   if(name === 'istoric21'){
@@ -9675,7 +9661,6 @@ function renderTracking(){
     '</div>';
   }).join('');
   calcBankroll();
-  renderDashboardVisuals();
   if($('tab-cota2') && $('tab-cota2').classList.contains('active')) renderCota2Section();
 }
 
@@ -10534,7 +10519,6 @@ function checkDailyRefresh(){
   var current = getCurrentDayKey();
   if(LAST_DAY_KEY && current !== LAST_DAY_KEY){
     LAST_DAY_KEY = current;
-    renderTodayBest();
     renderMatches();
     toast('Top 2 pronosticuri ale zilei a fost actualizat pentru noua zi', 'ok');
   }
@@ -13751,3 +13735,18 @@ document.addEventListener('DOMContentLoaded', function(){
   }, 500);
   setTimeout(function(){ clearInterval(checkInterval); }, 8000);
 });
+
+
+// Dashboard removed from active app: no-op legacy dashboard renderers.
+(function(){
+  'use strict';
+  window.__BA_DASHBOARD_REMOVED = true;
+  var names = [
+    'renderModernDashboard','renderDashboardTab','renderDashboard','renderDashboardStats',
+    'renderDashboardVisuals','renderDashboardMonitor','renderTodayBest','renderTopPicks',
+    'renderTopSafe','renderFocusPanel','renderMarketPerformance','renderBacktestSummary'
+  ];
+  names.forEach(function(name){
+    try { window[name] = function(){ return null; }; } catch(e) {}
+  });
+})();
