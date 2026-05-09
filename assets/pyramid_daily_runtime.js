@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV13) return;
-window.__PyramidDailyRuntimeV13 = true;
+if(window.__PyramidDailyRuntimeV14) return;
+window.__PyramidDailyRuntimeV14 = true;
 
 var W = window;
 var D = document;
@@ -12,7 +12,7 @@ var STORAGE_SESSIONS = 'bet_pyramid_daily_sessions';
 
 var ACTIVE_PICKS = [];
 var ACTIVE_REPORT = null;
-var GENERATOR_CLEARED = false;
+var GENERATOR_CLEARED = true;
 var SELECTED_SESSION_ID = null;
 
 var IDS = {
@@ -233,10 +233,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v13')) return;
+  if(D.getElementById('pyramid-daily-compact-v14')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v13';
+  style.id = 'pyramid-daily-compact-v14';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -440,39 +440,93 @@ function injectCompactCss(){
   border-radius:5px!important;
 }
 #tab-piramida .pyramid-session{
-  padding:7px!important;
-  border-radius:11px!important;
-  margin-top:6px!important;
+  padding:9px!important;
+  border-radius:13px!important;
+  margin-top:7px!important;
+  background:linear-gradient(180deg,rgba(15,23,42,.92),rgba(2,6,23,.78))!important;
 }
 #tab-piramida .pyramid-session.selected{
-  border-color:rgba(245,158,11,.64)!important;
-  box-shadow:0 0 0 1px rgba(245,158,11,.32), inset 0 0 24px rgba(245,158,11,.08)!important;
+  border-color:rgba(245,158,11,.72)!important;
+  box-shadow:0 0 0 1px rgba(245,158,11,.38), inset 0 0 26px rgba(245,158,11,.10)!important;
+}
+#tab-piramida .pyramid-session-head{
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:flex-start!important;
+  gap:8px!important;
 }
 #tab-piramida .pyramid-session-name{
-  font-size:10px!important;
+  font-size:11px!important;
+  line-height:1.18!important;
+  color:#f8fafc!important;
 }
 #tab-piramida .pyramid-session-meta{
-  font-size:8px!important;
-  line-height:1.22!important;
-  margin-top:3px!important;
+  font-size:8.3px!important;
+  line-height:1.35!important;
+  margin-top:4px!important;
+  color:#cbd5e1!important;
 }
 #tab-piramida .pyramid-session-profit{
-  font-size:10px!important;
+  font-size:11px!important;
+  min-width:72px!important;
+  text-align:right!important;
+  white-space:nowrap!important;
 }
 #tab-piramida .pyramid-session-actions{
   display:grid!important;
   grid-template-columns:1fr 1fr!important;
-  gap:4px!important;
-  padding:6px!important;
-  border-radius:10px!important;
-  margin-top:6px!important;
+  gap:6px!important;
+  padding:8px!important;
+  border-radius:13px!important;
+  margin-top:8px!important;
+  background:rgba(2,6,23,.48)!important;
+  border:1px solid rgba(45,212,191,.22)!important;
 }
 #tab-piramida .pyramid-session-actions .btn{
-  min-height:28px!important;
-  height:28px!important;
-  font-size:8px!important;
-  padding:3px 4px!important;
-  border-radius:9px!important;
+  min-height:34px!important;
+  height:auto!important;
+  font-size:9.5px!important;
+  line-height:1.12!important;
+  padding:6px 5px!important;
+  border-radius:11px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  white-space:normal!important;
+}
+#tab-piramida .pyramid-action-generate{
+  grid-column:1/-1!important;
+  min-height:36px!important;
+  font-size:10px!important;
+  color:#07111f!important;
+  background:linear-gradient(180deg,#5eead4,#14b8a6)!important;
+  border-color:rgba(94,234,212,.65)!important;
+}
+#tab-piramida .pyramid-action-win{
+  color:#052e16!important;
+  background:linear-gradient(180deg,#86efac,#22c55e)!important;
+  border-color:rgba(134,239,172,.60)!important;
+}
+#tab-piramida .pyramid-action-loss{
+  color:#fff!important;
+  background:linear-gradient(180deg,#ef4444,#991b1b)!important;
+  border-color:rgba(248,113,113,.55)!important;
+}
+#tab-piramida .pyramid-action-cashout{
+  color:#221205!important;
+  background:linear-gradient(180deg,#fde68a,#f59e0b)!important;
+  border-color:rgba(251,191,36,.58)!important;
+}
+#tab-piramida .pyramid-action-pause{
+  color:#e2e8f0!important;
+  background:linear-gradient(180deg,#334155,#0f172a)!important;
+  border-color:rgba(148,163,184,.32)!important;
+}
+#tab-piramida .pyramid-action-delete{
+  color:#fecaca!important;
+  background:rgba(127,29,29,.34)!important;
+  border-color:rgba(248,113,113,.40)!important;
 }
 #tab-piramida .pyramid-history{
   font-size:7.5px!important;
@@ -635,6 +689,13 @@ function injectCompactCss(){
   }
   #tab-piramida .pyramid-monitor-summary{
     max-width:none!important;
+  }
+  #tab-piramida .pyramid-session-actions{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #tab-piramida .pyramid-session-actions .btn{
+    min-height:32px!important;
+    font-size:9px!important;
   }
 }`;
   D.head.appendChild(style);
@@ -1571,12 +1632,13 @@ function compactPickForSession(p){
     date:p.date
   };
 }
-function clearGeneratorAfterSession(){
+function clearGeneratorAfterSession(message){
   GENERATOR_CLEARED = true;
   ACTIVE_PICKS = [];
-  ACTIVE_REPORT = {raw:0,candidates:0,reason:'Generator liber după pornirea sesiunii.',mode:'cleared'};
+  ACTIVE_REPORT = {raw:0,candidates:0,reason:'Generator liber.',mode:'cleared'};
 
   var s = getSettings();
+  var msg = message || 'Apasă Recalculează pick-uri când vrei o variantă nouă.';
 
   renderTopStats(s,ACTIVE_PICKS);
 
@@ -1585,7 +1647,7 @@ function clearGeneratorAfterSession(){
   if(el('picks')){
     el('picks').innerHTML =
       '<div class="pyramid-empty"><b>Generator liber.</b><br>' +
-      'Apasă Recalculează pick-uri când vrei o variantă nouă.</div>';
+      esc(msg) + '</div>';
   }
 
   renderPlan(s);
@@ -1709,7 +1771,7 @@ function createSession(){
   }
 
   SELECTED_SESSION_ID = session.id;
-  clearGeneratorAfterSession();
+  clearGeneratorAfterSession('Sesiunea a fost plasată. Generatorul este pregătit pentru o nouă generare.');
   renderSessions();
 
   if(typeof W.toast === 'function'){
@@ -1720,7 +1782,8 @@ function createSession(){
 }
 function savePyramidDailySettings(){
   saveSettingsFromUi(false);
-  refreshPyramidDaily();
+  clearGeneratorAfterSession('Setările au fost salvate. Recalculează când vrei să generezi evenimente.');
+  renderSessions();
 }
 function sessionAction(id,action){
   var arr = getSessions();
@@ -1793,6 +1856,11 @@ function sessionAction(id,action){
   }
 
   saveSessions(arr);
+
+  if(action === 'win' || action === 'loss' || action === 'cashout' || action === 'cancelToday'){
+    clearGeneratorAfterSession('Generatorul este liber. Selectează sesiunea dorită și generează pasul următor.');
+  }
+
   renderSessions();
 }
 function generateStepForSession(id){
@@ -1937,22 +2005,22 @@ function renderSessions(){
 
     if(s.status === 'active'){
       actions =
-        '<button class="btn btn-primary" onclick="pyramidGenerateSessionStep(\''+s.id+'\')">🎯 Generează pasul</button>' +
-        '<button class="btn btn-green" onclick="pyramidDailyAction(\''+s.id+'\',\'win\')">✅ WIN</button>' +
-        '<button class="btn" onclick="pyramidDailyAction(\''+s.id+'\',\'cashout\')">💰 Cashout</button>' +
-        '<button class="btn pyramid-danger" onclick="pyramidDailyAction(\''+s.id+'\',\'loss\')">❌ LOSS</button>' +
-        '<button class="btn pyramid-warn-btn" onclick="pyramidDailyAction(\''+s.id+'\',\'cancelToday\')">⏸ Anulează</button>';
+        '<button class="btn pyramid-action-generate" onclick="pyramidGenerateSessionStep(\''+s.id+'\')">🎯 Generează pasul curent</button>' +
+        '<button class="btn pyramid-action-win" onclick="pyramidDailyAction(\''+s.id+'\',\'win\')">✅ WIN</button>' +
+        '<button class="btn pyramid-action-loss" onclick="pyramidDailyAction(\''+s.id+'\',\'loss\')">❌ LOSS</button>' +
+        '<button class="btn pyramid-action-cashout" onclick="pyramidDailyAction(\''+s.id+'\',\'cashout\')">💰 Cashout</button>' +
+        '<button class="btn pyramid-action-pause" onclick="pyramidDailyAction(\''+s.id+'\',\'cancelToday\')">⏸ Anulează azi</button>';
 
       if(s.history.length){
-        actions += '<button class="btn" onclick="pyramidUndoLastStep(\''+s.id+'\')">↩ Șterge pas</button>';
+        actions += '<button class="btn pyramid-action-pause" onclick="pyramidUndoLastStep(\''+s.id+'\')">↩ Șterge pas</button>';
       }
     }else if(s.status === 'paused'){
       actions =
-        '<button class="btn btn-green" onclick="pyramidDailyAction(\''+s.id+'\',\'resume\')">▶ Reia</button>' +
-        (s.history.length ? '<button class="btn" onclick="pyramidUndoLastStep(\''+s.id+'\')">↩ Șterge pas</button>' : '') +
-        '<button class="btn pyramid-danger" onclick="pyramidDeleteSession(\''+s.id+'\')">Șterge</button>';
+        '<button class="btn pyramid-action-generate" onclick="pyramidDailyAction(\''+s.id+'\',\'resume\')">▶ Reia sesiunea</button>' +
+        (s.history.length ? '<button class="btn pyramid-action-pause" onclick="pyramidUndoLastStep(\''+s.id+'\')">↩ Șterge pas</button>' : '') +
+        '<button class="btn pyramid-action-delete" onclick="pyramidDeleteSession(\''+s.id+'\')">Șterge</button>';
     }else{
-      actions = '<button class="btn" onclick="pyramidDeleteSession(\''+s.id+'\')">Șterge</button>';
+      actions = '<button class="btn pyramid-action-delete" onclick="pyramidDeleteSession(\''+s.id+'\')">Șterge</button>';
     }
 
     var hist = s.history.length
@@ -1985,40 +2053,41 @@ function bind(){
   hideInfoTexts();
 
   var refresh = el('refreshBtn');
-  if(refresh && !refresh.__pyrV13){
-    refresh.__pyrV13 = true;
+  if(refresh && !refresh.__pyrV14){
+    refresh.__pyrV14 = true;
     refresh.addEventListener('click',refreshPyramidDaily);
   }
 
   var start = el('startBtn');
-  if(start && !start.__pyrV13){
-    start.__pyrV13 = true;
+  if(start && !start.__pyrV14){
+    start.__pyrV14 = true;
     start.addEventListener('click',createSession);
   }
 
   var save = el('saveBtn');
-  if(save && !save.__pyrV13){
-    save.__pyrV13 = true;
+  if(save && !save.__pyrV14){
+    save.__pyrV14 = true;
     save.addEventListener('click',function(){
-      saveSettingsFromUi(false);
-      refreshPyramidDaily();
+      savePyramidDailySettings();
     });
   }
 
   ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
     var node = el(k);
 
-    if(node && !node.__pyrV13){
-      node.__pyrV13 = true;
+    if(node && !node.__pyrV14){
+      node.__pyrV14 = true;
 
       node.addEventListener('change',function(){
         saveSettingsFromUi(true);
-        refreshPyramidDaily();
+        clearGeneratorAfterSession('Criteriile au fost actualizate. Apasă Recalculează pick-uri pentru generare.');
+        renderSessions();
       });
 
       node.addEventListener('input',function(){
         saveSettingsFromUi(true);
-        refreshPyramidDaily();
+        clearGeneratorAfterSession('Criteriile au fost actualizate. Apasă Recalculează pick-uri pentru generare.');
+        renderSessions();
       });
     }
   });
@@ -2027,6 +2096,10 @@ function renderPyramidDaily(){
   if(!D.getElementById('tab-piramida')) return;
 
   bind();
+
+  GENERATOR_CLEARED = true;
+  ACTIVE_PICKS = [];
+  ACTIVE_REPORT = {raw:0,candidates:0,reason:'Generator gol la intrarea în Piramidă.',mode:'idle'};
 
   var s = getSettings();
 
@@ -2056,7 +2129,7 @@ W.pyramidDeleteSession = deleteSession;
 W.pyramidGenerateSessionStep = generateStepForSession;
 
 var oldSwitch = W.switchTab;
-if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV13){
+if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV14){
   var patchedSwitch = function(name){
     var r = oldSwitch.apply(this,arguments);
 
@@ -2067,12 +2140,12 @@ if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV13){
     return r;
   };
 
-  patchedSwitch.__pyrV13 = true;
+  patchedSwitch.__pyrV14 = true;
   W.switchTab = patchedSwitch;
 }
 
 var oldRefresh = W.doRefresh;
-if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV13){
+if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV14){
   var patchedRefresh = function(){
     var r = oldRefresh.apply(this,arguments);
 
@@ -2087,7 +2160,7 @@ if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV13){
     return r;
   };
 
-  patchedRefresh.__pyrV13 = true;
+  patchedRefresh.__pyrV14 = true;
   W.doRefresh = patchedRefresh;
 }
 
