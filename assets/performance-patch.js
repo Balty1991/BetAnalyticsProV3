@@ -1,56 +1,47 @@
-// BetAnalyticsProV3 performance + runtime loader
+// BetAnalyticsProV3 lean runtime guard
+// Dashboard is intentionally blank; keep active tabs functional and stop legacy hidden loaders.
 (function(){
   'use strict';
-  if(window.__baPerfV22_ForceFresh3)return; window.__baPerfV22_ForceFresh3=true;
-  var originalFetch=window.fetch&&window.fetch.bind(window);
-  var dataRe=/\/data\/[^?#]+\.json(?:[?#].*)?$/;
-  var inflight={}, mem={}, ttl=30000;
-  function urlOf(input){try{return new URL(typeof input==='string'?input:input.url,location.href)}catch(e){return null}}
-  function methodOf(input,init){return String((init&&init.method)||(input&&input.method)||'GET').toUpperCase()}
-  function isData(input,init){var u=urlOf(input);return !!u&&u.origin===location.origin&&methodOf(input,init)==='GET'&&dataRe.test(u.pathname)}
-  function bypass(input,init){var u=urlOf(input),mode=String((init&&init.cache)||'').toLowerCase();return !!u&&(mode==='no-store'||mode==='reload'||u.searchParams.has('t')||u.searchParams.has('_t')||u.searchParams.has('fresh'))}
-  function keyOf(input){var u=urlOf(input);return u?u.origin+u.pathname:''}
-  function hdr(h){var o={};try{h.forEach(function(v,k){o[k]=v})}catch(e){}return o}
-  function cached(c){return new Response(c.body,{status:c.status,statusText:c.statusText,headers:c.headers})}
-  function store(key,res){try{if(!res||!res.ok)return Promise.resolve(res);return res.clone().text().then(function(body){mem[key]={time:Date.now(),body:body,status:res.status,statusText:res.statusText,headers:hdr(res.headers)};return res}).catch(function(){return res})}catch(e){return Promise.resolve(res)}}
-  if(originalFetch){window.fetch=function(input,init){if(!isData(input,init))return originalFetch(input,init);var key=keyOf(input),c=mem[key];if(bypass(input,init))return originalFetch(input,init).then(function(r){return store(key,r)});if(c&&Date.now()-c.time<ttl){originalFetch(input,init).then(function(r){return store(key,r)}).catch(function(){});return Promise.resolve(cached(c))}if(inflight[key])return inflight[key].then(function(r){return r.clone()});inflight[key]=originalFetch(input,init).then(function(r){return store(key,r)}).finally(function(){delete inflight[key]});return inflight[key].then(function(r){return r.clone()})}}
-  function addStyle(id,css){if(document.getElementById(id))return;var s=document.createElement('style');s.id=id;s.textContent=css;document.head.appendChild(s)}
-  function addLink(href,id){if(document.getElementById(id)||document.querySelector('link[href*="'+href.split('?')[0]+'"]'))return;var l=document.createElement('link');l.id=id;l.rel='stylesheet';l.href=href;document.head.appendChild(l)}
-  function loadScript(src,id){if(document.getElementById(id)||document.querySelector('script[src*="'+src.split('?')[0]+'"]'))return;var s=document.createElement('script');s.id=id;s.src=src;s.defer=true;document.head.appendChild(s)}
-  function isBadgeText(txt){txt=String(txt||'').replace(/\s+/g,' ').trim();return txt.indexOf('PRO V22: butoanele Top EV / Safe / Balanced sunt active')>=0||txt.indexOf('PRO v18 activ')>=0||txt.indexOf('PRO v18 activ · analiză live')>=0}
-  function removeBadges(){['ba-pro-v22-toast','procc-floating-proof'].forEach(function(id){var el=document.getElementById(id);if(el&&el.parentNode)el.parentNode.removeChild(el)});document.querySelectorAll('.ba-pro-toast,.procc-floating-proof,#ba-pro-v22-toast,#procc-floating-proof').forEach(function(el){if(el&&el.parentNode)el.parentNode.removeChild(el)});document.querySelectorAll('body *').forEach(function(el){var txt=(el.textContent||'').replace(/\s+/g,' ').trim();if(txt.length&&txt.length<180&&isBadgeText(txt)&&el.parentNode)el.parentNode.removeChild(el)})}
-  function installBadgeCleaner(){addStyle('ba-remove-pro-badges-css','#ba-pro-v22-toast,.ba-pro-toast,#procc-floating-proof,.procc-floating-proof{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}');removeBadges();try{new MutationObserver(function(){setTimeout(removeBadges,0)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true})}catch(e){}setInterval(removeBadges,1000)}
-  function loadRuntimes(){if(window.__baRuntimeLoaderV22_3)return; window.__baRuntimeLoaderV22_3=true;loadScript('assets/logic_safety_patch.js?v=20260506ml5date8','logic-safety-patch-script-v8');loadScript('assets/ml5_backend_status_fix.js?v=20260506backend1','ml5-backend-status-fix-script-v1');loadScript('assets/hybrid_adaptive_runtime.js?v=20260426hybrid8','hybrid-adaptive-runtime-script');loadScript('assets/prediction_history_runtime.js?v=20260426hist2','prediction-history-runtime-script');loadScript('assets/adaptive_restore_runtime.js?v=20260426restore2','adaptive-restore-runtime-script');loadScript('assets/api_history_label_runtime.js?v=20260428color2','api-history-label-runtime-script');loadScript('assets/dashboard_history21_sync.js?v=20260428videoexact3','dashboard-history21-sync-script');loadScript('assets/dashboard_motor_tracker_sync.js?v=20260503motortracker21','dashboard-motor-tracker-sync-script');loadScript('assets/performance_color_runtime.js?v=20260502filterfix1','performance-color-runtime-script');addLink('assets/pro_command_center.css?v=20260506forcefresh2','pro-command-center-css');loadScript('assets/pro_command_center.js?v=20260506forcefresh2','pro-command-center-script');loadScript('assets/pro_intelligence_runtime.js?v=20260503m23','pro-intelligence-runtime-script')}
-  function compactStatusText(){var el=document.getElementById('sb-text');if(!el||el.__baCompactBusy)return;var raw=(el.textContent||'').trim();if(!raw)return;var compact=raw.replace(/\bpredictions?\b/ig,'').replace(/\bcu\s+cote\b/ig,'cote').replace(/\bcote\s+BSD\b/ig,'cote').replace(/\s*[–—-]\s*/g,' • ').replace(/\s+/g,' ').trim();var m=raw.match(/(\d+)\s*ML[^0-9]+(\d+)/i);if(m)compact=m[1]+' ML • '+m[2]+' cote';if(!compact||compact===raw)return;el.__baCompactBusy=true;el.textContent=compact;el.title=raw;setTimeout(function(){el.__baCompactBusy=false},50)}
-  function watchHeader(){compactStatusText();var el=document.getElementById('sb-text');if(!el||el.__baStatusObserver)return;el.__baStatusObserver=true;try{new MutationObserver(function(){setTimeout(compactStatusText,0)}).observe(el,{childList:true,characterData:true,subtree:true})}catch(e){}setInterval(compactStatusText,2500)}
-  function installToastFilter(){if(typeof window.toast!=='function'||window.toast.__baFilterInstalled)return;var old=window.toast;window.toast=function(msg,type){var t=String(msg||'');if(t.indexOf('API sync:')===0||t.indexOf('ML5')>=0||isBadgeText(t))return;return old.apply(this,arguments)};window.toast.__baFilterInstalled=true}
-  function prefetch(){['data/meta.json','data/predictions.json','data/leagues.json','data/backtest.json','data/model_quality.json','data/pro_intelligence.json','data/ev_signals_v2.json','data/enriched.json'].forEach(function(f){try{originalFetch&&originalFetch(f,{cache:'force-cache'}).catch(function(){})}catch(e){}})}
-  function installMl5DateFix(){
-    if(window.__baMl5DateFixInlineV2)return; window.__baMl5DateFixInlineV2=true;
-    var MONTHS=['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'], DATA=null, loading=false, timer=null;
-    function text(e){return String((e&&(e.innerText||e.textContent))||'').replace(/\s+/g,' ').trim()}
-    function norm(s){try{s=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')}catch(e){s=String(s||'')}return s.toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
-    function leaves(e){return Array.prototype.slice.call(e.querySelectorAll('*')).filter(function(x){return !x.children.length})}
-    function tabRoot(){return document.getElementById('tab-ml5')||document.getElementById('ml5-root')||document.body}
-    function addObj(a,x){if(!x)return;if(Array.isArray(x))x.forEach(function(v){addObj(a,v)});else if(typeof x==='object')a.push(x)}
-    function objs(){var a=[];try{addObj(a,window.ALL_MATCHES)}catch(e){}try{addObj(a,window.ALL_EVENTS)}catch(e){}try{addObj(a,window.RECOMMENDATION_LOG)}catch(e){}try{addObj(a,window.RECOMMENDATION_JOURNAL)}catch(e){}try{if(window.SIGNAL_AUDIT)addObj(a,window.SIGNAL_AUDIT.rows)}catch(e){}try{if(window.AI_MEMORY)addObj(a,window.AI_MEMORY.adaptive_picks)}catch(e){}try{if(window.ENRICHED_EVENT_CACHE)Object.keys(window.ENRICHED_EVENT_CACHE).forEach(function(k){addObj(a,window.ENRICHED_EVENT_CACHE[k])})}catch(e){}if(DATA)addObj(a,DATA);return a}
-    function rawDate(o){if(!o||typeof o!=='object')return'';var ks=['event_date','eventDate','date','match_date','kickoff','kickoff_time','start_time','startTime','commence_time','utcDate','prediction_date'];for(var i=0;i<ks.length;i++){if(o[ks[i]])return o[ks[i]]}return''}
-    function objText(o,d){var out=[];function walk(x,depth){if(!x||depth>d||out.join(' ').length>2200)return;if(typeof x==='string'||typeof x==='number'){out.push(String(x));return}if(typeof x!=='object')return;if(Array.isArray(x)){for(var i=0;i<Math.min(x.length,60);i++)walk(x[i],depth+1);return}Object.keys(x).forEach(function(k){if(/home|away|team|league|country|match|fixture|event|name|title|date|kickoff|start|commence/i.test(k))walk(x[k],depth+1)})}walk(o,0);return out.join(' ')}
-    function matchObj(o,h,a){var t=norm(objText(o,4)),hn=norm(h),an=norm(a);if(!t||!hn||!an)return false;var hs=hn.split(' ').slice(0,2).join(' '),as=an.split(' ').slice(0,2).join(' ');return(t.indexOf(hn)>=0||(hs.length>3&&t.indexOf(hs)>=0))&&(t.indexOf(an)>=0||(as.length>3&&t.indexOf(as)>=0))}
-    function title(card){var ls=leaves(card).map(text).filter(Boolean);for(var i=0;i<ls.length;i++){var t=ls[i];if(/\bvs\b/i.test(t)&&!/H2H/i.test(t)&&t.length<160)return t}var m=text(card).match(/([A-ZĂÂÎȘȚ0-9][A-Za-zÀ-ž0-9 .'-]{1,90}\s+vs\s+[A-ZĂÂÎȘȚ0-9][A-Za-zÀ-ž0-9 .'-]{1,90})/);return m?m[1]:''}
-    function parts(t){var p=String(t||'').split(/\s+vs\s+/i);return{home:p[0]||'',away:p[1]||''}}
-    function findDate(h,a){var list=objs();for(var i=0;i<list.length;i++){if(matchObj(list[i],h,a)){var r=rawDate(list[i]);if(r)return r}}return''}
-    function fmt(raw){var d=new Date(raw);if(!isFinite(d.getTime()))d=new Date();return d.getDate()+' '+MONTHS[d.getMonth()]}
-    function loadData(){if(DATA||loading||!window.fetch)return;loading=true;Promise.all(['data/predictions.json','data/pro_intelligence.json','data/ev_signals_v2.json','data/model_quality.json','data/backtest.json'].map(function(f){return fetch(f,{cache:'force-cache'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})})).then(function(all){DATA=all.filter(Boolean);loading=false;sched()}).catch(function(){loading=false})}
-    function cards(){var all=Array.prototype.slice.call(tabRoot().querySelectorAll('div,article,section')).filter(function(e){var t=text(e),r=e.getBoundingClientRect?e.getBoundingClientRect():{width:0,height:0};return e.id!=='tab-ml5'&&e.id!=='ml5-root'&&r.width>240&&r.height>180&&/ML5\s*SCORE/i.test(t)&&/PRONOSTIC/i.test(t)});return all.filter(function(e){return !all.some(function(o){return o!==e&&e.contains(o)&&text(o).length>80})})}
-    function injectDate(card){if(card.__baDateInjected)return;var p=parts(title(card));if(!p.home||!p.away)return;var label=fmt(findDate(p.home,p.away));var ls=leaves(card);for(var i=0;i<ls.length;i++){var e=ls[i],s=text(e);if(!/\b\d{1,2}:\d{2}\b/.test(s)||/H2H|ML5|SCORE|PRONOSTIC|KELLY|ACORD/i.test(s))continue;if(/\b\d{1,2}\s+(ian|feb|mar|apr|mai|iun|iul|aug|sep|oct|nov|dec)\b|\b\d{1,2}[./]\d{1,2}\b/i.test(s)){card.__baDateInjected=true;return}e.textContent=s.indexOf('·')>=0?s.replace(/·\s*(\d{1,2}:\d{2})\b/,'· '+label+' · $1'):(label+' · '+s);e.style.color='#aebed8';card.__baDateInjected=true;return}}
-    function run(){loadData();try{cards().forEach(injectDate)}catch(e){}}
-    function sched(){if(timer)clearTimeout(timer);timer=setTimeout(run,80)}
-    ['switchTab','renderML5','renderML5Tab','renderMoreTab','renderActiveTab','doRefresh'].forEach(function(n){try{var f=window[n];if(typeof f!=='function'||f.__baMl5DateFix)return;window[n]=function(){var r=f.apply(this,arguments);sched();setTimeout(sched,400);setTimeout(sched,1200);return r};window[n].__baMl5DateFix=true}catch(e){}});
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sched);else sched();[250,700,1400,2600,5000,9000,15000,24000].forEach(function(t){setTimeout(sched,t)});try{new MutationObserver(sched).observe(document.documentElement,{childList:true,subtree:true,characterData:true})}catch(e){}
+  if (window.__baLeanRuntimeGuardV1) return;
+  window.__baLeanRuntimeGuardV1 = true;
+  window.__BA_DASHBOARD_BLANK = true;
+
+  var originalSetInterval = window.setInterval ? window.setInterval.bind(window) : null;
+  if (originalSetInterval) {
+    window.setInterval = function(fn, delay) {
+      var ms = Number(delay || 0);
+      var name = '';
+      try { name = String((fn && fn.name) || ''); } catch(e) {}
+      var src = '';
+      try { src = String(fn || ''); } catch(e) {}
+
+      // Legacy daily dashboard refresh: it rendered Top 2 / Dashboard blocks every day.
+      if (ms === 60000 && (name === 'checkDailyRefresh' || src.indexOf('checkDailyRefresh') >= 0)) {
+        console.info('[BA] skipped legacy checkDailyRefresh interval');
+        return 0;
+      }
+
+      // Legacy auto refresh every 15 minutes. Manual refresh button remains available.
+      if (ms === 900000 && (name === 'doRefresh' || src.indexOf('doRefresh') >= 0)) {
+        console.info('[BA] skipped legacy doRefresh interval');
+        return 0;
+      }
+
+      return originalSetInterval.apply(this, arguments);
+    };
   }
-  addStyle('ba-perf-css','.dash-yday-strip{display:none!important}.match-card,.top-pick-card,.ml-card,.bilet-card,.ticket-card,.bankroll-card,.visual-card,.history-table-wrapper{content-visibility:auto;contain-intrinsic-size:1px 260px}.matches-grid,.top-picks-grid,.ml-grid,.focus-grid,.visual-grid{contain:layout style paint}@media(max-width:900px){.header-quick-stats{display:none!important}#btn-refresh{min-width:52px!important;border-radius:18px!important}}');
-  installBadgeCleaner();loadRuntimes();installMl5DateFix();
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){watchHeader();installToastFilter();prefetch();removeBadges()});else{watchHeader();installToastFilter();prefetch();removeBadges()}
-  setTimeout(installToastFilter,1200);setTimeout(removeBadges,1600);
+
+  function neutralizeDashboardOnly(){
+    if (!window.__BA_DASHBOARD_BLANK) return;
+    try {
+      var dash = document.getElementById('tab-dashboard');
+      if (dash) dash.setAttribute('data-dashboard-blank', '1');
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', neutralizeDashboardOnly);
+  } else {
+    neutralizeDashboardOnly();
+  }
 })();
