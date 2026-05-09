@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV10) return;
-window.__PyramidDailyRuntimeV10 = true;
+if(window.__PyramidDailyRuntimeV11) return;
+window.__PyramidDailyRuntimeV11 = true;
 
 var W = window;
 var D = document;
@@ -231,10 +231,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v10')) return;
+  if(D.getElementById('pyramid-daily-compact-v11')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v10';
+  style.id = 'pyramid-daily-compact-v11';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -473,6 +473,106 @@ function injectCompactCss(){
   line-height:1.22!important;
   margin-top:5px!important;
 }
+
+#tab-piramida .pyramid-monitor-title{
+  font-size:9px!important;
+  font-weight:900!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+  margin:7px 0 5px!important;
+  color:#f8fafc!important;
+}
+#tab-piramida .pyramid-monitor-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 132px!important;
+  gap:6px!important;
+  align-items:start!important;
+}
+#tab-piramida .pyramid-monitor-wrap{
+  width:100%!important;
+  overflow-x:auto!important;
+  border:1px solid rgba(148,163,184,.20)!important;
+  border-radius:9px!important;
+  background:rgba(2,6,23,.36)!important;
+}
+#tab-piramida .pyramid-monitor-table{
+  width:100%!important;
+  min-width:440px!important;
+  border-collapse:collapse!important;
+  font-size:7.8px!important;
+}
+#tab-piramida .pyramid-monitor-table th,
+#tab-piramida .pyramid-monitor-table td{
+  padding:5px 4px!important;
+  border-bottom:1px solid rgba(148,163,184,.22)!important;
+  border-right:1px solid rgba(148,163,184,.16)!important;
+  text-align:right!important;
+  white-space:nowrap!important;
+}
+#tab-piramida .pyramid-monitor-table th{
+  background:rgba(147,197,253,.78)!important;
+  color:#07111f!important;
+  text-transform:uppercase!important;
+  font-weight:900!important;
+}
+#tab-piramida .pyramid-monitor-table th:first-child,
+#tab-piramida .pyramid-monitor-table td:first-child{
+  text-align:center!important;
+  font-weight:900!important;
+}
+#tab-piramida .pyramid-monitor-table th:last-child,
+#tab-piramida .pyramid-monitor-table td:last-child{
+  text-align:center!important;
+  border-right:0!important;
+}
+#tab-piramida .pyramid-monitor-attempt.win{background:rgba(34,197,94,.88)!important;color:#04130a!important;}
+#tab-piramida .pyramid-monitor-attempt.loss{background:rgba(239,68,68,.90)!important;color:#fff!important;}
+#tab-piramida .pyramid-monitor-attempt.open{background:rgba(250,204,21,.92)!important;color:#111827!important;}
+#tab-piramida .pyramid-monitor-status.win{color:var(--grn)!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-status.loss{color:var(--red)!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-status.open{color:#e5e7eb!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-summary{
+  border:1px solid rgba(148,163,184,.20)!important;
+  border-radius:9px!important;
+  overflow:hidden!important;
+  background:rgba(2,6,23,.36)!important;
+}
+#tab-piramida .pyramid-monitor-summary-title{
+  padding:6px!important;
+  font-size:8px!important;
+  font-weight:900!important;
+  text-transform:uppercase!important;
+  color:#f8fafc!important;
+  border-bottom:1px solid rgba(148,163,184,.20)!important;
+}
+#tab-piramida .pyramid-monitor-summary-row{
+  display:grid!important;
+  grid-template-columns:1fr 42px!important;
+  min-height:23px!important;
+  border-bottom:1px solid rgba(148,163,184,.16)!important;
+}
+#tab-piramida .pyramid-monitor-summary-row:last-child{border-bottom:0!important;}
+#tab-piramida .pyramid-monitor-summary-label,
+#tab-piramida .pyramid-monitor-summary-value{
+  padding:5px 6px!important;
+  font-size:7.8px!important;
+  line-height:1.1!important;
+}
+#tab-piramida .pyramid-monitor-summary-label.win{background:rgba(34,197,94,.75)!important;color:#04130a!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-summary-label.loss{background:rgba(239,68,68,.90)!important;color:#fff!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-summary-label.profit{background:rgba(56,189,248,.85)!important;color:#031625!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-summary-value{
+  text-align:right!important;
+  font-weight:900!important;
+  color:#f8fafc!important;
+}
+#tab-piramida .pyramid-monitor-cards-title{
+  font-size:8px!important;
+  font-weight:900!important;
+  text-transform:uppercase!important;
+  color:#94a3b8!important;
+  margin:8px 0 4px!important;
+}
 @media(max-width:430px){
   #tab-piramida .pyr-form,
   #tab-piramida .pyramid-form{
@@ -487,6 +587,12 @@ function injectCompactCss(){
   }
   #tab-piramida .pyramid-metrics{
     grid-template-columns:1fr 1fr!important;
+  }
+  #tab-piramida .pyramid-monitor-grid{
+    grid-template-columns:1fr!important;
+  }
+  #tab-piramida .pyramid-monitor-summary{
+    max-width:none!important;
   }
 }`;
   D.head.appendChild(style);
@@ -1397,10 +1503,83 @@ function sessionProfit(s){
   if(!s) return 0;
 
   if(s.status === 'lost'){
-    return -n(s.initialStake,0);
+    return -Math.max(n(s.currentStake,0), n(s.initialStake,0));
+  }
+
+  if(s.status === 'active' || s.status === 'paused'){
+    return 0;
   }
 
   return n(s.currentStake || s.initialStake,0) - n(s.initialStake,0);
+}
+function sessionClass(s){
+  if(!s) return 'open';
+  if(s.status === 'lost') return 'loss';
+  if(s.status === 'completed' || s.status === 'cashout') return 'win';
+  return 'open';
+}
+function sessionStatusLabel(s){
+  if(!s) return '0';
+  if(s.status === 'lost') return 'Lose';
+  if(s.status === 'completed' || s.status === 'cashout') return 'Win';
+  return '0';
+}
+function sessionMaxStep(s){
+  if(!s) return 0;
+  var target = n(s.targetSteps,4);
+  var current = n(s.currentStep,1);
+
+  if(s.closedStep) return Math.max(1, Math.min(target, n(s.closedStep,1)));
+  if(s.status === 'completed') return target;
+  if(s.status === 'cashout') return Math.max(1, Math.min(target, current - 1));
+  if(s.status === 'lost') return Math.max(1, Math.min(target, current));
+
+  return Math.max(1, Math.min(target, current));
+}
+function sessionCreatedMs(s){
+  var ms = s && s.createdAt ? new Date(s.createdAt).getTime() : NaN;
+  return isFinite(ms) ? ms : n(s && s.id,0);
+}
+function renderMonitorTable(arr){
+  var chron = (arr || []).slice().sort(function(a,b){
+    return sessionCreatedMs(a) - sessionCreatedMs(b);
+  });
+
+  if(!chron.length){
+    return '<div class="pyramid-monitor-title">EVIDENȚĂ ÎNCERCĂRI PIRAMIDĂ</div>' +
+      '<div class="pyramid-empty">Nu ai încercări salvate încă.</div>';
+  }
+
+  var rows = chron.map(function(s,i){
+    var cls = sessionClass(s);
+    return '<tr>' +
+      '<td class="pyramid-monitor-attempt '+cls+'">' + (i + 1) + '</td>' +
+      '<td>' + money(s.initialStake) + '</td>' +
+      '<td>' + sessionMaxStep(s) + '</td>' +
+      '<td>' + money(sessionProfit(s)) + '</td>' +
+      '<td class="pyramid-monitor-status '+cls+'">' + esc(sessionStatusLabel(s)) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="pyramid-monitor-title">EVIDENȚĂ ÎNCERCĂRI PIRAMIDĂ</div>' +
+    '<div class="pyramid-monitor-wrap"><table class="pyramid-monitor-table">' +
+      '<thead><tr>' +
+        '<th>Încercarea</th><th>Miză start</th><th>Pas maxim atins</th><th>Profit/Pierdere</th><th>Status</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+function renderMonitorSummary(arr){
+  arr = arr || [];
+  var wins = arr.filter(function(s){ return sessionClass(s) === 'win'; }).length;
+  var loses = arr.filter(function(s){ return sessionClass(s) === 'loss'; }).length;
+  var profit = arr.reduce(function(a,s){ return a + sessionProfit(s); },0);
+
+  return '<div class="pyramid-monitor-summary">' +
+    '<div class="pyramid-monitor-summary-title">STATISTICI GENERALE</div>' +
+    '<div class="pyramid-monitor-summary-row"><div class="pyramid-monitor-summary-label">Total încercări</div><div class="pyramid-monitor-summary-value">' + arr.length + '</div></div>' +
+    '<div class="pyramid-monitor-summary-row"><div class="pyramid-monitor-summary-label win">Serii WIN</div><div class="pyramid-monitor-summary-value">' + wins + '</div></div>' +
+    '<div class="pyramid-monitor-summary-row"><div class="pyramid-monitor-summary-label loss">Serii LOSE</div><div class="pyramid-monitor-summary-value">' + loses + '</div></div>' +
+    '<div class="pyramid-monitor-summary-row"><div class="pyramid-monitor-summary-label profit">Profit total</div><div class="pyramid-monitor-summary-value" style="color:' + (profit >= 0 ? 'var(--grn)' : 'var(--red)') + '">' + money(profit) + '</div></div>' +
+  '</div>';
 }
 function createSession(){
   var s = saveSettingsFromUi(true);
@@ -1496,17 +1675,21 @@ function sessionAction(id,action){
 
     if(s.currentStep > n(s.targetSteps,4)){
       s.status = 'completed';
+      s.closedAt = new Date().toISOString();
+      s.closedStep = n(s.targetSteps,4);
     }
   }
 
   if(action === 'loss'){
     s.status = 'lost';
     s.closedAt = new Date().toISOString();
+    s.closedStep = Math.max(1, Math.min(n(s.targetSteps,4), n(s.currentStep,1)));
   }
 
   if(action === 'cashout'){
     s.status = 'cashout';
     s.closedAt = new Date().toISOString();
+    s.closedStep = Math.max(1, Math.min(n(s.targetSteps,4), n(s.currentStep,1) - 1));
   }
 
   if(action === 'cancelToday'){
@@ -1558,16 +1741,11 @@ function renderSessions(){
   if(!stats || !list) return;
 
   var arr = getSessions();
-  var active = arr.filter(function(s){ return s.status === 'active'; }).length;
-  var paused = arr.filter(function(s){ return s.status === 'paused'; }).length;
-  var profit = arr.reduce(function(a,s){ return a + sessionProfit(s); },0);
 
   stats.innerHTML =
-    '<div class="pyramid-stats">' +
-      '<div class="pyramid-stat"><div class="pyramid-stat-v">' + arr.length + '</div><div class="pyramid-stat-l">Total</div></div>' +
-      '<div class="pyramid-stat"><div class="pyramid-stat-v" style="color:var(--acc)">' + active + '</div><div class="pyramid-stat-l">Active</div></div>' +
-      '<div class="pyramid-stat"><div class="pyramid-stat-v" style="color:var(--yel)">' + paused + '</div><div class="pyramid-stat-l">Anulate</div></div>' +
-      '<div class="pyramid-stat"><div class="pyramid-stat-v" style="color:' + (profit >= 0 ? 'var(--grn)' : 'var(--red)') + '">' + money(profit) + '</div><div class="pyramid-stat-l">Profit</div></div>' +
+    '<div class="pyramid-monitor-grid">' +
+      '<div>' + renderMonitorTable(arr) + '</div>' +
+      '<div>' + renderMonitorSummary(arr) + '</div>' +
     '</div>';
 
   if(!arr.length){
@@ -1575,7 +1753,7 @@ function renderSessions(){
     return;
   }
 
-  list.innerHTML = arr.slice(0,20).map(function(s){
+  list.innerHTML = '<div class="pyramid-monitor-cards-title">Sesiuni / acțiuni</div>' + arr.slice(0,20).map(function(s){
     s.history = Array.isArray(s.history) ? s.history : [];
 
     var label =
@@ -1641,20 +1819,20 @@ function bind(){
   hideInfoTexts();
 
   var refresh = el('refreshBtn');
-  if(refresh && !refresh.__pyrV10){
-    refresh.__pyrV10 = true;
+  if(refresh && !refresh.__pyrV11){
+    refresh.__pyrV11 = true;
     refresh.addEventListener('click',refreshPyramidDaily);
   }
 
   var start = el('startBtn');
-  if(start && !start.__pyrV10){
-    start.__pyrV10 = true;
+  if(start && !start.__pyrV11){
+    start.__pyrV11 = true;
     start.addEventListener('click',createSession);
   }
 
   var save = el('saveBtn');
-  if(save && !save.__pyrV10){
-    save.__pyrV10 = true;
+  if(save && !save.__pyrV11){
+    save.__pyrV11 = true;
     save.addEventListener('click',function(){
       saveSettingsFromUi(false);
       refreshPyramidDaily();
@@ -1664,8 +1842,8 @@ function bind(){
   ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
     var node = el(k);
 
-    if(node && !node.__pyrV10){
-      node.__pyrV10 = true;
+    if(node && !node.__pyrV11){
+      node.__pyrV11 = true;
 
       node.addEventListener('change',function(){
         saveSettingsFromUi(true);
@@ -1710,7 +1888,7 @@ W.pyramidUndoLastStep = undoStep;
 W.pyramidDeleteSession = deleteSession;
 
 var oldSwitch = W.switchTab;
-if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV10){
+if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV11){
   var patchedSwitch = function(name){
     var r = oldSwitch.apply(this,arguments);
 
@@ -1721,12 +1899,12 @@ if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV10){
     return r;
   };
 
-  patchedSwitch.__pyrV10 = true;
+  patchedSwitch.__pyrV11 = true;
   W.switchTab = patchedSwitch;
 }
 
 var oldRefresh = W.doRefresh;
-if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV10){
+if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV11){
   var patchedRefresh = function(){
     var r = oldRefresh.apply(this,arguments);
 
@@ -1741,7 +1919,7 @@ if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV10){
     return r;
   };
 
-  patchedRefresh.__pyrV10 = true;
+  patchedRefresh.__pyrV11 = true;
   W.doRefresh = patchedRefresh;
 }
 
