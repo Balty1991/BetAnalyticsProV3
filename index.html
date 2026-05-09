@@ -48,7 +48,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
 <script defer src="./assets/app.js?v=20260508v4"></script>
-<script defer src="./assets/pyramid_daily_runtime.js?v=20260509pyr9"></script>
+<script defer src="./assets/pyramid_daily_runtime.js?v=20260509pyr10"></script>
 <script defer src="./assets/pro_command_center.js?v=20260427procc3"></script>
 </head>
 <body>
@@ -1000,19 +1000,19 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
           <div class="pyramid-form">
             <div>
               <label class="pyramid-label">Miză inițială</label>
-              <input id="pyramid-stake" class="pyramid-input" type="number" min="1" step="1" onchange="refreshPyramidDaily()">
+              <input id="pyramid-stake" class="pyramid-input" type="number" min="1" step="1" onchange="savePyramidDailySettings()">
             </div>
             <div>
               <label class="pyramid-label">Cotă țintă/pas</label>
-              <input id="pyramid-target-odds" class="pyramid-input" type="number" min="1.10" max="2.50" step="0.01" onchange="refreshPyramidDaily()">
+              <input id="pyramid-target-odds" class="pyramid-input" type="number" min="1.10" max="2.50" step="0.01" onchange="savePyramidDailySettings()">
             </div>
             <div>
               <label class="pyramid-label">Pași</label>
-              <input id="pyramid-steps" class="pyramid-input" type="number" min="1" max="10" step="1" onchange="refreshPyramidDaily()">
+              <input id="pyramid-steps" class="pyramid-input" type="number" min="1" max="10" step="1" onchange="savePyramidDailySettings()">
             </div>
             <div>
               <label class="pyramid-label">Profil</label>
-              <select id="pyramid-profile" class="pyramid-select" onchange="refreshPyramidDaily()">
+              <select id="pyramid-profile" class="pyramid-select" onchange="savePyramidDailySettings()">
                 <option value="ultra">Ultra safe</option>
                 <option value="safe">Safe</option>
                 <option value="balanced">Balanced</option>
@@ -1020,7 +1020,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
             </div>
             <div>
               <label class="pyramid-label">Zi</label>
-              <select id="pyramid-day-mode" class="pyramid-select" onchange="refreshPyramidDaily()">
+              <select id="pyramid-day-mode" class="pyramid-select" onchange="savePyramidDailySettings()">
                 <option value="today">Azi</option>
                 <option value="tomorrow">Mâine</option>
               </select>
