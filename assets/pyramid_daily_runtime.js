@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV6) return;
-window.__PyramidDailyRuntimeV6 = true;
+if(window.__PyramidDailyRuntimeV7) return;
+window.__PyramidDailyRuntimeV7 = true;
 
 var W = window;
 var D = document;
@@ -37,12 +37,12 @@ var IDS = {
 
 function first(list){
   for(var i=0;i<list.length;i++){
-    var e = D.getElementById(list[i]);
-    if(e) return e;
+    var node = D.getElementById(list[i]);
+    if(node) return node;
   }
   return null;
 }
-function el(k){ return first(IDS[k] || [k]); }
+function el(key){ return first(IDS[key] || [key]); }
 
 function esc(v){
   if(typeof W.htmlEsc === 'function') return W.htmlEsc(v);
@@ -50,10 +50,10 @@ function esc(v){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
   });
 }
-function n(v,fb){
+function n(v, fallback){
   if(typeof v === 'string') v = v.replace(',', '.').trim();
   var x = Number(v);
-  return isFinite(x) ? x : (fb || 0);
+  return isFinite(x) ? x : (fallback || 0);
 }
 function maybeNumber(v){
   if(v == null) return null;
@@ -62,7 +62,7 @@ function maybeNumber(v){
   var x = Number(s);
   return isFinite(x) ? x : null;
 }
-function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 function money(v){
   return n(v,0).toLocaleString('ro-RO',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' RON';
 }
@@ -70,31 +70,42 @@ function fmt(v,d){ return n(v,0).toFixed(d == null ? 2 : d); }
 function pct(v){ return fmt(v,1) + '%'; }
 function pctRaw(v){
   var x = n(v,0);
-  if(Math.abs(x) <= 1 && x !== 0) return x * 100;
-  return x;
+  return Math.abs(x) <= 1 && x !== 0 ? x * 100 : x;
 }
-function readJson(k,fallback){
+function readJson(key,fallback){
   try{
-    var raw = localStorage.getItem(k);
+    var raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : fallback;
   }catch(e){ return fallback; }
 }
-function writeJson(k,v){
-  try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+function writeJson(key,value){
+  try{ localStorage.setItem(key,JSON.stringify(value)); }catch(e){}
 }
 function todayKeyFrom(v){
   var d = v ? new Date(v) : new Date();
   if(!isFinite(d.getTime())) d = new Date();
+
   if(typeof W.fmtDateKey === 'function'){
     try{ return W.fmtDateKey(d.toISOString()); }catch(e){}
   }
+
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function eventMs(x){
   if(typeof W.getEventDateMs === 'function'){
     try{ return W.getEventDateMs(x); }catch(e){}
   }
-  var raw = x && (x.date || x.event_date || x.eventDate || x.start_time || x.startTime || x.kickoff || x.fixture_date);
+
+  var raw = x && (
+    x.date ||
+    x.event_date ||
+    x.eventDate ||
+    x.start_time ||
+    x.startTime ||
+    x.kickoff ||
+    x.fixture_date
+  );
+
   var ms = raw ? new Date(raw).getTime() : NaN;
   return isFinite(ms) ? ms : null;
 }
@@ -102,6 +113,7 @@ function eventKey(x){
   if(typeof W.getGenericEventKey === 'function'){
     try{ return W.getGenericEventKey(x); }catch(e){}
   }
+
   return [
     x && (x.eventId || x.event_id || x.id || x.fixture_id || ''),
     x && (x.home || x.homeTeam || x.home_name || x.home_team || ''),
@@ -111,9 +123,11 @@ function eventKey(x){
 }
 function correlated(a,b){
   if(!a || !b) return false;
+
   if(typeof W.areRowsCorrelated === 'function'){
     try{ return W.areRowsCorrelated(a,b); }catch(e){}
   }
+
   if(eventKey(a) === eventKey(b)) return true;
 
   var la = String(a.league || '').toLowerCase();
@@ -124,9 +138,10 @@ function correlated(a,b){
   return !!(la && lb && la === lb && ta && tb && Math.abs(ta - tb) < 90 * 60000);
 }
 
-/* =========================
+/* =========================================================
    SETTINGS
-========================= */
+========================================================= */
+
 function defaultSettings(){
   return {
     stake:20,
@@ -139,9 +154,11 @@ function defaultSettings(){
 function sanitizeSettings(raw){
   var d = defaultSettings();
   raw = raw || {};
-  var target = raw.targetOdds === null || raw.targetOdds === '' || raw.targetOdds === undefined
-    ? null
-    : clamp(n(raw.targetOdds,0), 1.10, 3.00);
+
+  var target = null;
+  if(raw.targetOdds !== null && raw.targetOdds !== '' && raw.targetOdds !== undefined){
+    target = clamp(n(raw.targetOdds,0),1.10,3.00);
+  }
 
   return {
     stake:clamp(n(raw.stake,d.stake),1,100000),
@@ -152,7 +169,7 @@ function sanitizeSettings(raw){
   };
 }
 function getSettings(){
-  return sanitizeSettings(readJson(STORAGE_SETTINGS, defaultSettings()));
+  return sanitizeSettings(readJson(STORAGE_SETTINGS,defaultSettings()));
 }
 function saveSettingsFromUi(silent){
   var targetInput = el('odds');
@@ -166,8 +183,12 @@ function saveSettingsFromUi(silent){
     useRealOdds:el('useRealOdds') ? el('useRealOdds').value !== 'no' : true
   });
 
-  writeJson(STORAGE_SETTINGS, s);
-  if(!silent && typeof W.toast === 'function') W.toast('Setări salvate', 'ok');
+  writeJson(STORAGE_SETTINGS,s);
+
+  if(!silent && typeof W.toast === 'function'){
+    W.toast('Setări salvate', 'ok');
+  }
+
   return s;
 }
 function loadSettingsIntoUi(s){
@@ -187,25 +208,26 @@ function loadSettingsIntoUi(s){
 function hideUnusedControls(){
   var count = el('count');
   if(count){
-    var w1 = count.closest('.pyr-field,.pyramid-field,div');
-    if(w1) w1.style.display = 'none';
+    var countWrap = count.closest('.pyr-field,.pyramid-field,div');
+    if(countWrap) countWrap.style.display = 'none';
   }
 
   var profile = el('profile');
   if(profile){
-    var w2 = profile.closest('.pyr-field,.pyramid-field,div');
-    if(w2) w2.style.display = 'none';
+    var profileWrap = profile.closest('.pyr-field,.pyramid-field,div');
+    if(profileWrap) profileWrap.style.display = 'none';
   }
 }
 
-/* =========================
-   COMPACT UI
-========================= */
+/* =========================================================
+   COMPACT UI + HIDE MARKED INFO
+========================================================= */
+
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v6')) return;
+  if(D.getElementById('pyramid-daily-compact-v7')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v6';
+  style.id = 'pyramid-daily-compact-v7';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -231,7 +253,7 @@ function injectCompactCss(){
 #tab-piramida h2{
   font-size:13px!important;
   line-height:1.05!important;
-  margin:0 0 3px!important;
+  margin:0!important;
 }
 #tab-piramida .pyr-title,
 #tab-piramida .pyramid-title{
@@ -248,6 +270,17 @@ function injectCompactCss(){
   font-size:8.7px!important;
   line-height:1.22!important;
 }
+#tab-piramida .pyr-hero .pyr-muted,
+#tab-piramida .pyr-hero .pyramid-muted,
+#tab-piramida .pyramid-hero .pyr-muted,
+#tab-piramida .pyramid-hero .pyramid-muted{
+  display:none!important;
+}
+#tab-piramida .pyr-panel > p,
+#tab-piramida .pyramid-panel > p,
+#tab-piramida .pyramid-engine-note{
+  display:none!important;
+}
 #tab-piramida .pyr-head,
 #tab-piramida .pyramid-head{
   gap:5px!important;
@@ -257,7 +290,7 @@ function injectCompactCss(){
   display:grid!important;
   grid-template-columns:repeat(3,minmax(0,1fr))!important;
   gap:4px!important;
-  margin-top:5px!important;
+  margin-top:6px!important;
 }
 #tab-piramida .pyr-actions .btn,
 #tab-piramida .pyramid-actions .btn{
@@ -367,11 +400,6 @@ function injectCompactCss(){
   margin-top:2px!important;
   line-height:1!important;
 }
-#tab-piramida .pyramid-engine-note{
-  padding:7px!important;
-  margin-bottom:6px!important;
-  border-radius:10px!important;
-}
 #tab-piramida .pyramid-engine-breakdown,
 #tab-piramida .pyramid-reasons{
   gap:3px!important;
@@ -455,48 +483,56 @@ function injectCompactCss(){
 }`;
   D.head.appendChild(style);
 }
-function compactStaticText(){
+function hideInfoTexts(){
   var tab = D.getElementById('tab-piramida');
   if(!tab) return;
 
-  tab.querySelectorAll('.pyr-muted,.pyramid-muted,p,.section-subtitle').forEach(function(node){
+  tab.querySelectorAll('.pyr-muted,.pyramid-muted,p,.section-subtitle,.pyramid-engine-note').forEach(function(node){
     var txt = (node.textContent || '').trim();
 
-    if(txt.indexOf('Rubrică pentru') >= 0){
-      node.textContent = 'AI alege automat 1–3 evenimente. Ținta este folosită doar dacă o introduci.';
-    }
-
-    if(txt.indexOf('Selectează doar vârful zilei') >= 0){
-      node.textContent = 'AI caută combinația optimă pentru țintă. Fără țintă, joacă varianta cu risc minim.';
-    }
-
-    if(txt.indexOf('După fiecare pas marchezi') >= 0){
-      node.textContent = 'Monitor local: WIN / LOSS / Cashout / Anulează azi.';
+    if(
+      txt.indexOf('Rubrică pentru') >= 0 ||
+      txt.indexOf('AI alege automat') >= 0 ||
+      txt.indexOf('Selectează doar') >= 0 ||
+      txt.indexOf('AI caută') >= 0 ||
+      txt.indexOf('Decizie AI') >= 0 ||
+      txt.indexOf('AI decide') >= 0 ||
+      txt.indexOf('AI alege singur') >= 0 ||
+      txt.indexOf('Scorul combină') >= 0 ||
+      txt.indexOf('Dacă introduci cotă') >= 0
+    ){
+      node.style.display = 'none';
+      node.innerHTML = '';
     }
   });
 }
 
-/* =========================
+/* =========================================================
    DATA NORMALIZATION
-========================= */
+========================================================= */
+
 function marketKey(v){
   var s = String(v || '').toLowerCase().trim();
+
   if(s.indexOf('over 1.5') >= 0 || s.indexOf('peste 1.5') >= 0 || s === 'over15') return 'over15';
   if(s.indexOf('under 3.5') >= 0 || s.indexOf('sub 3.5') >= 0 || s === 'under35') return 'under35';
   if(s.indexOf('over 2.5') >= 0 || s.indexOf('peste 2.5') >= 0 || s === 'over25') return 'over25';
   if(s.indexOf('btts') >= 0 || s.indexOf('ambele') >= 0) return 'btts';
   if(s === '1x' || s.indexOf('double chance 1x') >= 0 || s.indexOf('șansă dublă 1x') >= 0) return '1x';
   if(s === 'x2' || s.indexOf('double chance x2') >= 0 || s.indexOf('șansă dublă x2') >= 0) return 'x2';
+
   return s;
 }
 function marketLabel(k,fallback){
   if(fallback) return fallback;
+
   if(k === 'over15') return 'Over 1.5G';
   if(k === 'under35') return 'Under 3.5G';
   if(k === 'over25') return 'Over 2.5G';
   if(k === 'btts') return 'BTTS';
   if(k === '1x') return '1X';
   if(k === 'x2') return 'X2';
+
   return k || '—';
 }
 function rawPool(){
@@ -504,10 +540,12 @@ function rawPool(){
 
   function add(v){
     if(!v) return;
+
     if(Array.isArray(v)){
       v.forEach(add);
       return;
     }
+
     out.push(v);
   }
 
@@ -520,6 +558,7 @@ function rawPool(){
   try{ add((W.AI_MEMORY || {}).picks); }catch(e){}
   try{ add(W.RECOMMENDATION_LOG); }catch(e){}
   try{ add(W.RECOMMENDATION_JOURNAL); }catch(e){}
+
   try{
     if(W.BILETE){
       add(W.BILETE.premium && W.BILETE.premium.picks);
@@ -533,7 +572,8 @@ function rawPool(){
 
     if(x.bestBet){
       var b = x.bestBet;
-      acc.push(Object.assign({}, x, {
+
+      acc.push(Object.assign({},x,{
         marketKey:b.type || x.marketKey || x.market_key || x.market || '',
         market:b.label || x.market || '',
         odds:b.odds || x.odds || x.book_odds || x.price,
@@ -547,7 +587,7 @@ function rawPool(){
     }
 
     return acc;
-  }, []);
+  },[]);
 }
 function normalize(x){
   if(!x) return null;
@@ -562,7 +602,8 @@ function normalize(x){
   var ms = eventMs(x);
 
   var createdAt = x.created_at || x.createdAt || null;
-  var ageHours = n(x.age_hours, NaN);
+  var ageHours = n(x.age_hours,NaN);
+
   if(!isFinite(ageHours) && createdAt){
     ageHours = (Date.now() - new Date(createdAt).getTime()) / 36e5;
   }
@@ -582,7 +623,7 @@ function normalize(x){
   if(!prob) prob = clamp((1 / odds) * 100 + 2, 50, 92);
   if(!score) score = prob;
 
-  var c = Object.assign({}, x, {
+  var c = Object.assign({},x,{
     eventKey:eventKey(x),
     home:home,
     away:away,
@@ -619,9 +660,10 @@ function normalize(x){
   return c;
 }
 
-/* =========================
-   SINGLE SCORE
-========================= */
+/* =========================================================
+   AI SCORING
+========================================================= */
+
 function scoreCandidate(c){
   var safety = clamp(
     c.prob * 0.56 +
@@ -662,37 +704,61 @@ function scoreCandidate(c){
 
   var history = 50;
   history += clamp(c.journalScore * 6, -12, 18);
+
   if(c.journalSample >= 250) history += 5;
   else if(c.journalSample >= 80) history += 3;
+
   if(c.sourceApi && c.sourceHeuristic) history += 4;
   else if(c.sourceApi) history += 2;
 
   var value = 50;
   value += clamp(c.edge * 2.2, -18, 26);
-  value += clamp(c.valuePct * 0.9, -14, 18);
+  value += clamp(c.valuePct * .9, -14, 18);
   value += clamp(c.kelly * 1.3, 0, 8);
 
   var stability = 100;
   var risks = [];
 
-  if(c.odds >= 1.85){ stability -= 20; risks.push('cotă volatilă'); }
-  else if(c.odds >= 1.65){ stability -= 10; }
+  if(c.odds >= 1.85){
+    stability -= 20;
+    risks.push('cotă volatilă');
+  }else if(c.odds >= 1.65){
+    stability -= 10;
+  }
 
-  if(c.poissonAlert){ stability -= 8; risks.push('Poisson alert'); }
+  if(c.poissonAlert){
+    stability -= 8;
+    risks.push('Poisson alert');
+  }
 
   if(isFinite(c.ageHours)){
-    if(c.ageHours > 120){ stability -= 16; risks.push('predicție veche'); }
-    else if(c.ageHours > 72){ stability -= 8; }
+    if(c.ageHours > 120){
+      stability -= 16;
+      risks.push('predicție veche');
+    }else if(c.ageHours > 72){
+      stability -= 8;
+    }
   }
 
   if(c.eventMs){
     var h = (c.eventMs - Date.now()) / 36e5;
-    if(h < -0.5){ stability -= 35; risks.push('meci expirat'); }
-    else if(h >= .5 && h <= 22){ stability += 4; }
+
+    if(h < -0.5){
+      stability -= 35;
+      risks.push('meci expirat');
+    }else if(h >= .5 && h <= 22){
+      stability += 4;
+    }
   }
 
-  if(c.lineMove > 8){ stability -= 7; risks.push('cotă urcă'); }
-  if(c.lineMove < -8){ stability += 3; }
+  if(c.lineMove > 8){
+    stability -= 7;
+    risks.push('cotă urcă');
+  }
+
+  if(c.lineMove < -8){
+    stability += 3;
+  }
 
   var total =
     safety * .30 +
@@ -713,9 +779,10 @@ function scoreCandidate(c){
   };
 }
 
-/* =========================
+/* =========================================================
    SMART TARGET ENGINE
-========================= */
+========================================================= */
+
 function filterCfg(tier){
   var cfg = {
     minProb:64,
@@ -730,6 +797,7 @@ function filterCfg(tier){
     cfg.maxSingleOdds += .18;
     cfg.minEdge -= 2;
   }
+
   if(tier === 2){
     cfg.minProb -= 8;
     cfg.minAi -= 8;
@@ -747,17 +815,24 @@ function allowedWindow(c,s,relaxed){
     var d = new Date();
     d.setHours(0,0,0,0);
     d.setDate(d.getDate()+1);
-    var start = d.getTime();
-    var end = start + 24*36e5;
 
-    if(ms) return relaxed ? (ms >= now - 36e5 && ms <= now + 72*36e5) : (ms >= start && ms < end);
+    var start = d.getTime();
+    var end = start + 24 * 36e5;
+
+    if(ms){
+      return relaxed ? (ms >= now - 36e5 && ms <= now + 72 * 36e5) : (ms >= start && ms < end);
+    }
+
     return relaxed ? true : c.dateKey === todayKeyFrom(start);
   }
 
   var endToday = new Date();
   endToday.setHours(23,59,59,999);
 
-  if(ms) return relaxed ? (ms >= now - 36e5 && ms <= now + 72*36e5) : (ms >= now - 30*60000 && ms <= endToday.getTime());
+  if(ms){
+    return relaxed ? (ms >= now - 36e5 && ms <= now + 72 * 36e5) : (ms >= now - 30 * 60000 && ms <= endToday.getTime());
+  }
+
   return relaxed ? true : c.dateKey === todayKeyFrom(new Date());
 }
 function buildCandidatePool(s){
@@ -791,12 +866,23 @@ function buildCandidatePool(s){
       return a.odds - b.odds;
     });
 
-    report = {raw:all.length,candidates:filtered.length,tier:tier,relaxed:relaxed,cfg:cfg};
+    report = {
+      raw:all.length,
+      candidates:filtered.length,
+      tier:tier,
+      relaxed:relaxed,
+      cfg:cfg
+    };
 
-    if(filtered.length) return {pool:filtered,report:report};
+    if(filtered.length){
+      return {pool:filtered, report:report};
+    }
   }
 
-  return {pool:[],report:report || {raw:all.length,candidates:0,tier:2,relaxed:true}};
+  return {
+    pool:[],
+    report:report || {raw:all.length,candidates:0,tier:2,relaxed:true}
+  };
 }
 function comboOdds(picks){
   return picks.reduce(function(a,p){ return a * n(p.odds,1); },1);
@@ -811,18 +897,18 @@ function avgStability(picks){
   return picks.reduce(function(a,p){ return a + n(p.ai.stability,0); },0) / (picks.length || 1);
 }
 function comboPenalty(picks){
-  var pen = 0;
+  var penalty = 0;
 
   for(var i=0;i<picks.length;i++){
     for(var j=i+1;j<picks.length;j++){
-      if(correlated(picks[i],picks[j])) pen += 34;
-      if(String(picks[i].league || '') === String(picks[j].league || '')) pen += 5;
-      if(picks[i].marketKey === picks[j].marketKey) pen += 3;
-      if(picks[i].eventMs && picks[j].eventMs && Math.abs(picks[i].eventMs - picks[j].eventMs) < 2*36e5) pen += 4;
+      if(correlated(picks[i],picks[j])) penalty += 34;
+      if(String(picks[i].league || '') === String(picks[j].league || '')) penalty += 5;
+      if(picks[i].marketKey === picks[j].marketKey) penalty += 3;
+      if(picks[i].eventMs && picks[j].eventMs && Math.abs(picks[i].eventMs - picks[j].eventMs) < 2 * 36e5) penalty += 4;
     }
   }
 
-  return pen;
+  return penalty;
 }
 function targetFit(odds,target){
   if(!target) return 75;
@@ -832,9 +918,18 @@ function targetFit(odds,target){
   var idealHigh = target * 1.08;
   var max = target * 1.22;
 
-  if(odds >= idealLow && odds <= idealHigh) return 100 - Math.abs(odds - target) * 40;
-  if(odds >= min && odds <= max) return 82 - Math.abs(odds - target) * 48;
-  if(odds < min) return 58 - (min - odds) * 95;
+  if(odds >= idealLow && odds <= idealHigh){
+    return 100 - Math.abs(odds - target) * 40;
+  }
+
+  if(odds >= min && odds <= max){
+    return 82 - Math.abs(odds - target) * 48;
+  }
+
+  if(odds < min){
+    return 58 - (min - odds) * 95;
+  }
+
   return 50 - (odds - max) * 80;
 }
 function reachedTarget(odds,target){
@@ -858,7 +953,9 @@ function comboQuality(picks,s){
     if(picks.length === 2) legBias = 1;
     if(picks.length === 3) legBias = -3;
 
-    if(picks.length === 1 && odds < s.targetOdds * .92) legBias -= 12;
+    if(picks.length === 1 && odds < s.targetOdds * .92){
+      legBias -= 12;
+    }
   }else{
     if(picks.length === 1) legBias = 9;
     if(picks.length === 2) legBias = 1;
@@ -951,19 +1048,23 @@ function aiDecidePicks(s){
   [1,2,3].forEach(function(legs){
     combinations(scan,legs,180).forEach(function(picks){
       var q = comboQuality(picks,s);
+
       if(q.penalty >= 30) return;
       if(legs === 2 && q.prob < 38) return;
       if(legs === 3 && q.prob < 25) return;
+
       variants.push(q);
     });
   });
 
   if(!variants.length){
     var single = comboQuality([pool[0]],s);
+
     report.reason = 'Fallback pe cel mai bun single.';
     report.selectedLegs = 1;
     report.combo = single;
     ACTIVE_REPORT = report;
+
     return single.picks;
   }
 
@@ -978,16 +1079,20 @@ function aiDecidePicks(s){
         if(b.prob !== a.prob) return b.prob - a.prob;
         return Math.abs(a.odds - s.targetOdds) - Math.abs(b.odds - s.targetOdds);
       });
+
       chosen = reached[0];
       report.reason = 'AI a ales combinația cu probabilitate maximă care atinge cota țintă.';
     }else{
       variants.sort(function(a,b){
         var da = Math.abs(a.odds - s.targetOdds);
         var db = Math.abs(b.odds - s.targetOdds);
+
         if(da !== db) return da - db;
         if(b.score !== a.score) return b.score - a.score;
+
         return b.prob - a.prob;
       });
+
       chosen = variants[0];
       report.reason = 'AI nu a găsit target curat; a ales cea mai apropiată variantă productivă.';
     }
@@ -997,6 +1102,7 @@ function aiDecidePicks(s){
       if(b.prob !== a.prob) return b.prob - a.prob;
       return a.odds - b.odds;
     });
+
     chosen = variants[0];
     report.reason = 'Fără cotă țintă: AI a ales varianta cu risc minim și probabilitate maximă.';
   }
@@ -1014,9 +1120,10 @@ function aiDecidePicks(s){
   return chosen.picks;
 }
 
-/* =========================
+/* =========================================================
    RENDER
-========================= */
+========================================================= */
+
 function mini(label,value,color){
   return '<div class="pyramid-mini"><div class="pyramid-mini-v"' + (color ? ' style="color:'+color+'"' : '') + '>' + value + '</div><div class="pyramid-mini-l">' + label + '</div></div>';
 }
@@ -1039,18 +1146,26 @@ function renderTopStats(s,picks){
 }
 function pickCard(c,i){
   var dateText = '';
+
   if(c.date){
     try{
       var d = new Date(c.date);
-      dateText = d.toLocaleDateString('ro-RO',{weekday:'short',day:'2-digit',month:'short'}) + ' ' +
-                 d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+      dateText =
+        d.toLocaleDateString('ro-RO',{weekday:'short',day:'2-digit',month:'short'}) +
+        ' ' +
+        d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
     }catch(e){}
   }
 
   var reasons = (c.ai.reasons || []).slice(0,3);
-  if(!reasons.length) reasons = ['AI ' + fmt(c.ai.total,0), 'Prob. ' + pct(c.prob), 'Stab. ' + fmt(c.ai.stability,0)];
 
-  var risk = c.ai.risks && c.ai.risks.length ? '<span class="pyramid-risk">' + esc(c.ai.risks[0]) + '</span>' : '';
+  if(!reasons.length){
+    reasons = ['AI ' + fmt(c.ai.total,0), 'Prob. ' + pct(c.prob), 'Stab. ' + fmt(c.ai.stability,0)];
+  }
+
+  var risk = c.ai.risks && c.ai.risks.length
+    ? '<span class="pyramid-risk">' + esc(c.ai.risks[0]) + '</span>'
+    : '';
 
   return '<div class="pyramid-pick">' +
     '<div class="pyramid-pick-rank">Pick #' + (i+1) + ' · AI AUTO ' + risk + '</div>' +
@@ -1077,19 +1192,27 @@ function renderPicks(s){
   if(!target) return;
 
   ACTIVE_PICKS = aiDecidePicks(s);
+
   var picks = ACTIVE_PICKS;
   var report = ACTIVE_REPORT || {};
 
   renderTopStats(s,picks);
 
-  if(el('badge')) el('badge').textContent = picks.length ? picks.length + ' AI' : '—';
+  if(el('badge')){
+    el('badge').textContent = picks.length ? picks.length + ' AI' : '—';
+  }
 
   if(el('summary')){
     if(picks.length){
       var text = 'AI: <b style="color:var(--acc)">' + picks.length + '</b>';
-      if(s.targetOdds) text += ' • țintă <b style="color:var(--yel)">' + fmt(s.targetOdds,2) + '</b>';
+
+      if(s.targetOdds){
+        text += ' • țintă <b style="color:var(--yel)">' + fmt(s.targetOdds,2) + '</b>';
+      }
+
       text += ' • cotă <b style="color:var(--yel)">' + fmt(comboOdds(picks),2) + '</b>';
       text += ' • prob. <b style="color:var(--grn)">' + pct(comboProb(picks)) + '</b>';
+
       el('summary').innerHTML = text;
     }else{
       el('summary').innerHTML = 'AI nu recomandă intrare acum.';
@@ -1100,17 +1223,24 @@ function renderPicks(s){
     target.innerHTML =
       '<div class="pyramid-empty"><b>Nu există intrare bună acum.</b><br>' +
       'Verificat: ' + (report.raw || 0) + ' înregistrări. AI nu forțează piramida dacă nu găsește combinație curată.</div>';
+    hideInfoTexts();
     return;
   }
 
   target.innerHTML =
-    '<div class="pyramid-engine-note"><b>Decizie AI:</b> ' + esc(report.reason || 'Selecție automată.') +
-    '<br><span>AI alege singur 1–3 evenimente. Dacă introduci cotă țintă, încearcă să o atingă cu probabilitatea maximă.</span></div>' +
-    '<div class="pyramid-picks">' + picks.map(pickCard).join('') + '</div>';
+    '<div class="pyramid-picks">' +
+      picks.map(pickCard).join('') +
+    '</div>';
+
+  hideInfoTexts();
 }
 function planRows(s,picks){
   var odds = picks.length ? comboOdds(picks) : (s.targetOdds || 1.30);
-  if(!s.useRealOdds && s.targetOdds) odds = s.targetOdds;
+
+  if(!s.useRealOdds && s.targetOdds){
+    odds = s.targetOdds;
+  }
+
   odds = Math.max(1.10, odds);
 
   var rows = [];
@@ -1118,6 +1248,7 @@ function planRows(s,picks){
 
   for(var i=1;i<=s.steps;i++){
     var gross = stake * odds;
+
     rows.push({
       step:i,
       stake:stake,
@@ -1127,6 +1258,7 @@ function planRows(s,picks){
       next:gross,
       profit:gross - s.stake
     });
+
     stake = gross;
   }
 
@@ -1151,23 +1283,40 @@ function renderPlan(s){
       '<th>Pas</th><th>Miză</th><th>Cotă</th><th>Câștig</th><th>Retragere</th><th>Următoare</th><th>Profit</th>' +
     '</tr></thead><tbody>' +
     rows.map(function(r){
-      return '<tr><td><span class="pyramid-step-chip">' + r.step + '</span></td><td>' + money(r.stake) + '</td><td>' + fmt(r.odds,2) + '</td><td>' + money(r.gross) + '</td><td>' + money(r.withdraw) + '</td><td>' + money(r.next) + '</td><td>' + money(r.profit) + '</td></tr>';
+      return '<tr>' +
+        '<td><span class="pyramid-step-chip">' + r.step + '</span></td>' +
+        '<td>' + money(r.stake) + '</td>' +
+        '<td>' + fmt(r.odds,2) + '</td>' +
+        '<td>' + money(r.gross) + '</td>' +
+        '<td>' + money(r.withdraw) + '</td>' +
+        '<td>' + money(r.next) + '</td>' +
+        '<td>' + money(r.profit) + '</td>' +
+      '</tr>';
     }).join('') +
     '</tbody></table></div>' +
     '<div class="pyramid-warn">Fără cotă țintă: AI alege varianta cu risc minim. Cu țintă introdusă: caută cea mai bună combinație care o atinge.</div>';
+
+  hideInfoTexts();
 }
 
-/* =========================
+/* =========================================================
    SESSIONS
-========================= */
+========================================================= */
+
 function getSessions(){
   var arr = readJson(STORAGE_SESSIONS,[]);
   return Array.isArray(arr) ? arr : [];
 }
-function saveSessions(arr){ writeJson(STORAGE_SESSIONS,arr || []); }
+function saveSessions(arr){
+  writeJson(STORAGE_SESSIONS,arr || []);
+}
 function sessionProfit(s){
   if(!s) return 0;
-  if(s.status === 'lost') return -n(s.initialStake,0);
+
+  if(s.status === 'lost'){
+    return -n(s.initialStake,0);
+  }
+
   return n(s.currentStake || s.initialStake,0) - n(s.initialStake,0);
 }
 function createSession(){
@@ -1210,11 +1359,15 @@ function createSession(){
 
   saveSessions(arr.slice(0,60));
   renderSessions();
-  if(typeof W.toast === 'function') W.toast('Sesiune pornită', 'ok');
+
+  if(typeof W.toast === 'function'){
+    W.toast('Sesiune pornită', 'ok');
+  }
 }
 function sessionAction(id,action){
   var arr = getSessions();
   var s = arr.find(function(x){ return String(x.id) === String(id); });
+
   if(!s) return;
 
   s.history = Array.isArray(s.history) ? s.history : [];
@@ -1246,7 +1399,9 @@ function sessionAction(id,action){
     s.currentStake = after;
     s.currentStep = n(s.currentStep,1) + 1;
 
-    if(s.currentStep > n(s.targetSteps,4)) s.status = 'completed';
+    if(s.currentStep > n(s.targetSteps,4)){
+      s.status = 'completed';
+    }
   }
 
   if(action === 'loss'){
@@ -1271,6 +1426,7 @@ function sessionAction(id,action){
 function undoStep(id){
   var arr = getSessions();
   var s = arr.find(function(x){ return String(x.id) === String(id); });
+
   if(!s) return;
 
   s.history = Array.isArray(s.history) ? s.history : [];
@@ -1281,6 +1437,7 @@ function undoStep(id){
   }
 
   var last = s.history.pop();
+
   s.currentStake = n(last.stakeBefore,s.initialStake);
   s.currentStep = n(last.step,1);
   s.status = 'active';
@@ -1288,15 +1445,21 @@ function undoStep(id){
   saveSessions(arr);
   renderSessions();
 
-  if(typeof W.toast === 'function') W.toast('Ultimul pas a fost șters.', 'ok');
+  if(typeof W.toast === 'function'){
+    W.toast('Ultimul pas a fost șters.', 'ok');
+  }
 }
 function deleteSession(id){
-  saveSessions(getSessions().filter(function(s){ return String(s.id) !== String(id); }));
+  saveSessions(getSessions().filter(function(s){
+    return String(s.id) !== String(id);
+  }));
+
   renderSessions();
 }
 function renderSessions(){
   var stats = el('sessionStats');
   var list = el('sessionList');
+
   if(!stats || !list) return;
 
   var arr = getSessions();
@@ -1373,29 +1536,30 @@ function renderSessions(){
   }).join('');
 }
 
-/* =========================
-   BIND
-========================= */
+/* =========================================================
+   BIND / PATCH
+========================================================= */
+
 function bind(){
   injectCompactCss();
-  compactStaticText();
   hideUnusedControls();
+  hideInfoTexts();
 
   var refresh = el('refreshBtn');
-  if(refresh && !refresh.__pyrV6){
-    refresh.__pyrV6 = true;
+  if(refresh && !refresh.__pyrV7){
+    refresh.__pyrV7 = true;
     refresh.addEventListener('click',refreshPyramidDaily);
   }
 
   var start = el('startBtn');
-  if(start && !start.__pyrV6){
-    start.__pyrV6 = true;
+  if(start && !start.__pyrV7){
+    start.__pyrV7 = true;
     start.addEventListener('click',createSession);
   }
 
   var save = el('saveBtn');
-  if(save && !save.__pyrV6){
-    save.__pyrV6 = true;
+  if(save && !save.__pyrV7){
+    save.__pyrV7 = true;
     save.addEventListener('click',function(){
       saveSettingsFromUi(false);
       refreshPyramidDaily();
@@ -1404,12 +1568,15 @@ function bind(){
 
   ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
     var node = el(k);
-    if(node && !node.__pyrV6){
-      node.__pyrV6 = true;
+
+    if(node && !node.__pyrV7){
+      node.__pyrV7 = true;
+
       node.addEventListener('change',function(){
         saveSettingsFromUi(true);
         refreshPyramidDaily();
       });
+
       node.addEventListener('input',function(){
         saveSettingsFromUi(true);
         refreshPyramidDaily();
@@ -1419,19 +1586,24 @@ function bind(){
 }
 function renderPyramidDaily(){
   if(!D.getElementById('tab-piramida')) return;
+
   bind();
 
   var s = getSettings();
+
   loadSettingsIntoUi(s);
   renderPicks(s);
   renderPlan(s);
   renderSessions();
+  hideInfoTexts();
 }
 function refreshPyramidDaily(){
   var s = saveSettingsFromUi(true);
+
   renderPicks(s);
   renderPlan(s);
   renderSessions();
+  hideInfoTexts();
 }
 
 W.renderPyramidDaily = renderPyramidDaily;
@@ -1442,40 +1614,61 @@ W.pyramidUndoLastStep = undoStep;
 W.pyramidDeleteSession = deleteSession;
 
 var oldSwitch = W.switchTab;
-if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV6){
+if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV7){
   var patchedSwitch = function(name){
     var r = oldSwitch.apply(this,arguments);
-    if(name === 'piramida') setTimeout(renderPyramidDaily,0);
+
+    if(name === 'piramida'){
+      setTimeout(renderPyramidDaily,0);
+    }
+
     return r;
   };
-  patchedSwitch.__pyrV6 = true;
+
+  patchedSwitch.__pyrV7 = true;
   W.switchTab = patchedSwitch;
 }
 
 var oldRefresh = W.doRefresh;
-if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV6){
+if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV7){
   var patchedRefresh = function(){
     var r = oldRefresh.apply(this,arguments);
+
     setTimeout(function(){
       var active = D.querySelector('.tab-content.active');
-      if(active && active.id === 'tab-piramida') renderPyramidDaily();
+
+      if(active && active.id === 'tab-piramida'){
+        renderPyramidDaily();
+      }
     },900);
+
     return r;
   };
-  patchedRefresh.__pyrV6 = true;
+
+  patchedRefresh.__pyrV7 = true;
   W.doRefresh = patchedRefresh;
 }
 
 D.addEventListener('DOMContentLoaded',function(){
   bind();
+
   var active = D.querySelector('.tab-content.active');
-  if(active && active.id === 'tab-piramida') renderPyramidDaily();
+
+  if(active && active.id === 'tab-piramida'){
+    renderPyramidDaily();
+  }
 });
 
-setTimeout(bind,500);
+setTimeout(bind,300);
+setTimeout(bind,900);
 setTimeout(function(){
   var active = D.querySelector('.tab-content.active');
-  if(active && active.id === 'tab-piramida') renderPyramidDaily();
+
+  if(active && active.id === 'tab-piramida'){
+    renderPyramidDaily();
+  }else{
+    hideInfoTexts();
+  }
 },1400);
 
 })();
