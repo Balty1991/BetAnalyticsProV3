@@ -1,0 +1,124 @@
+# Popup message audit
+
+Total hits: 966
+
+- `tools/audit_popup_messages_once.py` L46 terms=ML5 activ,date contextuale,API sync,ML5,sync,toast,snackbar,bottom: `for k in ['toast','snackbar','api sync','ml5 activ','date contextuale','fixed','bottom','status']:`
+- `assets/app.js` L2373 terms=ML5 activ,date contextuale,ML5,toast: `toast('🔬 ML5 activ: ' + enriched + ' meciuri cu date contextuale', 'ok');`
+- `assets/app.css` L60 terms=toast,bottom: `.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}`
+- `assets/app.js` L5162 terms=API sync,sync: `'API sync: ' + statusMetrics.ml + ' ML / ' + statusMetrics.odds + ' cote' + enrichLabel + (statusTime ? ' @ ' + statusTime : ''),`
+- `assets/app.js` L9811 terms=bottom: `'<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+(avgEdge>=0?'var(--grn)':'var(--red)')+'">'+(avgEdge>=0?'+':'')+avgEdge.toFixed(1)+'%</td>'+`
+- `assets/app.js` L9812 terms=bottom: `'<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+avgScore.toFixed(1)+'</td>'+`
+- `assets/app.js` L9853 terms=bottom: `'<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+(roi >= 0 ? 'var(--grn)' : 'var(--red)')+'">'+(roi>=0?'+':'')+roi.toFixed(1)+'%</td>'+`
+- `assets/app.js` L9855 terms=bottom: `'<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right;color:'+(wr >= 65 ? 'var(--grn)' : 'var(--txt)')+'">'+(item.bets ? wr.toFixed(1)+'%' : '—')+'</td>'+`
+- `assets/app.js` L9856 terms=bottom: `'<td style="padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">'+(item.bets ? item.avgOdds.toFixed(2) : '—')+'</td>'+`
+- `assets/clear_cache_button.js` L33 terms=bottom: `'  position:fixed;right:14px;bottom:78px;z-index:9999;',`
+- `assets/clear_cache_button.js` L50 terms=bottom: `'  position:fixed;left:50%;bottom:140px;transform:translateX(-50%);',`
+- `assets/ml5_backend_status_fix.js` L53 terms=ML5: `box.setAttribute('data-ba-ml5-backend-status-fixed','1');`
+- `assets/pro_intelligence_runtime.js` L23 terms=toast: `'.ba-pro-toast{position:fixed;left:14px;right:14px;top:86px;z-index:99998;padding:12px 14px;border-radius:20px;background:linear-gradient(135deg,#2BE5C5,#60A5FA);color:#041018;font-weight:950;text-align:center;box-shadow:0 18px 40px rgba(0,`
+- `assets/app.css` L66 terms=toast,bottom: `.toast-wrap{left:12px;right:12px;bottom:calc(88px + env(safe-area-inset-bottom,0px));gap:10px}`
+- `assets/app.css` L565 terms=bottom: `.mobile-sheet{position:fixed;left:12px;right:12px;bottom:84px;z-index:180;background:rgba(10,14,23,.98);border:1px solid var(--brd2);border-radius:18px;padding:12px;box-shadow:0 18px 38px rgba(0,0,0,.38);backdrop-filter:blur(14px)}`
+- `assets/app.css` L691 terms=bottom: `.desktop-more-panel.show{display:block;position:fixed;left:0;right:0;bottom:0;top:var(--more-panel-top,140px);max-width:none;margin:0;padding:16px 16px 26px;background:rgba(8,12,20,.985);border-top:1px solid rgba(255,255,255,.06);overflow:a`
+- `assets/app.css` L1001 terms=bottom: `.ticket-quickpeek{position:fixed;right:16px;bottom:18px;z-index:140;display:none;width:min(360px,calc(100vw - 24px));padding:12px 12px 10px;border-radius:18px;background:linear-gradient(180deg,rgba(16,24,40,.98),rgba(12,18,32,.98));border:1`
+- `assets/app.css` L4296 terms=API sync,sync,toast: `/* ── Toast / floating "API sync" indicator — keep above mobile nav ── */`
+- `assets/app.js` L211 terms=toast: `function toast(msg,type){`
+- `assets/app.js` L212 terms=toast: `var w=$('toast-wrap');`
+- `assets/app.js` L214 terms=toast: `t.className='toast toast-'+(type||'ok');`
+- `assets/app.js` L289 terms=toast: `toast('Tracking exportat în CSV', 'ok');`
+- `assets/app.js` L290 terms=toast: `}catch(e){ console.error(e); toast('Eroare la export CSV', 'err'); }`
+- `assets/app.js` L298 terms=toast: `toast('Audit Kelly exportat în CSV', 'ok');`
+- `assets/app.js` L299 terms=toast: `}catch(e){ console.error(e); toast('Eroare la export CSV', 'err'); }`
+- `assets/app.js` L307 terms=toast: `toast('AI Memory exportat în CSV', 'ok');`
+- `assets/app.js` L308 terms=toast: `}catch(e){ console.error(e); toast('Eroare la export CSV', 'err'); }`
+- `assets/app.js` L354 terms=bottom: `var w = 860, h = 180, padX = 18, padTop = 14, padBottom = 22;`
+- `assets/app.js` L355 terms=bottom: `var plotW = w - padX * 2, plotH = h - padTop - padBottom;`
+- `assets/app.js` L363 terms=bottom: `var baseY = h - padBottom;`
+- `assets/app.js` L401 terms=bottom: `var w = 760, h = 170, padX = 14, padTop = 12, padBottom = 18;`
+- `assets/app.js` L974 terms=bottom: `document.documentElement.style.setProperty('--more-panel-top', Math.max(0, Math.round(rect.bottom)) + 'px');`
+- `assets/app.js` L1088 terms=sync: `try { autoSyncTrackingStatuses(); } catch(e){}`
+- `assets/app.js` L1149 terms=toast: `toast('Nu am putut încărca baza extinsă.', 'warn');`
+- `assets/app.js` L1640 terms=bottom: `'<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +`
+- `assets/app.js` L1641 terms=bottom: `'<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Global</div>' +`
+- `assets/app.js` L1659 terms=bottom: `return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +`
+- `assets/app.js` L1673 terms=bottom: `'<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +`
+- `assets/app.js` L1674 terms=bottom: `'<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per piata</div>' +`
+- `assets/app.js` L1686 terms=bottom: `return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +`
+- `assets/app.js` L1700 terms=bottom: `'<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +`
+- `assets/app.js` L1701 terms=bottom: `'<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per bucket edge</div>' +`
+- `assets/app.js` L1711 terms=bottom: `return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +`
+- `assets/app.js` L1723 terms=bottom: `'<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +`
+- `assets/app.js` L1724 terms=bottom: `'<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Praguri dinamice active</div>' +`
+- `assets/app.js` L1725 terms=bottom: `'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Recalculate automat la fiecare fetch din date reale.</div>' +`
+- `assets/app.js` L1732 terms=bottom: `? '<div style="padding:12px;border-radius:10px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.22);margin-bottom:14px">' +`
+- `assets/app.js` L1733 terms=bottom: `warnings.map(function(w){ return '<div style="font-size:12px;color:#f59e0b;margin-bottom:4px">\u26a0\ufe0f ' + w + '</div>'; }).join('') +`
+- `assets/app.js` L1742 terms=bottom: `changeNotifHtml = '<div style="padding:12px 14px;border-radius:12px;background:rgba(99,102,241,.10);border:1px solid rgba(99,102,241,.30);margin-bottom:14px">' +`
+- `assets/app.js` L1743 terms=bottom: `'<div style="font-size:12px;font-weight:800;color:#818cf8;margin-bottom:8px">\ud83d\udd04 Praguri auto-recalibrate</div>' +`
+- `assets/app.js` L1748 terms=bottom: `return '<div style="font-size:12px;color:var(--txt);margin-bottom:4px">' +`
+- `assets/app.js` L1761 terms=bottom: `histHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +`
+- `assets/app.js` L1762 terms=bottom: `'<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Istoric modificari prag</div>' +`
+- `assets/app.js` L1766 terms=bottom: `return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">' +`
+- `assets/app.js` L1775 terms=bottom: `var metaHtml = '<div style="font-size:10px;color:var(--muted);margin-bottom:14px">Ultima actualizare: ' + updAt + ' &nbsp;|&nbsp; ' + (bt.n_total||0) + ' pariuri finalizate cu cote reale</div>';`
+- `assets/app.js` L3617 terms=bottom: `'<div style="font-size:15px;font-weight:900;color:var(--txt);margin-bottom:6px">⏱️ ROI pe Timpul Până la Start</div>'+`
+- `assets/app.js` L3618 terms=bottom: `'<div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">Performanța pariurilor în funcție de cât timp înainte de start au fost înregistrate. Util pentru a ști dacă trebuie să miști strategia mai aproape/mai depart`
+- `assets/app.js` L3624 terms=bottom: `'<div style="font-size:15px;font-weight:900;color:var(--txt);margin-bottom:6px">🧠 ROI pe Sursa Probabilității</div>'+`
+- `assets/app.js` L3625 terms=bottom: `'<div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">Cum performează pariurile în funcție de ce motor domină calculul probabilității. Dacă "Poisson hybrid" are ROI semnificativ mai bun, merită să dai mai multă `
+- `assets/app.js` L3630 terms=bottom: `'<div style="font-size:15px;font-weight:900;color:var(--txt);margin-bottom:6px">🎯 A/B Test — OFF vs BALANCED vs STRICT</div>'+`
+- `assets/app.js` L3631 terms=bottom: `'<div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">Comparația se face pe pariurile settled cu value &gt; 0 din jurnal. În loc de un singur filtru agresiv, aplicația îți arată acum clar care mod păstrează cel `
+- `assets/app.js` L3662 terms=bottom: `(abSamples ? ('<div style="margin-top:14px"><div style="font-size:11px;font-weight:800;color:var(--txt);margin-bottom:8px">Exemple win-uri pe care STRICT le-ar fi eliminat:</div><div style="display:flex;flex-direction:column;gap:6px">'+abSa`
+- `assets/app.js` L3706 terms=bottom: `'<div style="margin-bottom:12px;padding:10px 12px;border-radius:12px;background:'+(verdictState==='positive'?'rgba(16,185,129,.08)':verdictState==='harmful'?'rgba(239,68,68,.08)':'rgba(245,158,11,.08)')+';border:1px solid '+(verdictState===`
+- `assets/app.js` L3708 terms=bottom: `'<div style="margin-bottom:6px;font-size:11px;font-weight:800;color:var(--txt);letter-spacing:.05em">📏 IMPACT STAKE SIZING (V17)</div>' +`
+- `assets/app.js` L3774 terms=bottom: `'<div style="font-size:11px;font-weight:800;color:var(--grn);margin-bottom:6px">✅ Blocari corecte</div>' +`
+- `assets/app.js` L3779 terms=bottom: `'<div style="font-size:11px;font-weight:800;color:var(--red);margin-bottom:6px">❌ Blocari gresite</div>' +`
+- `assets/app.js` L3784 terms=bottom: `'<div style="font-size:11px;font-weight:800;color:var(--txt);margin-bottom:6px">🎯 Acuratete blocari</div>' +`
+- `assets/app.js` L3794 terms=bottom: `'<div style="font-size:12px;font-weight:800;color:var(--txt);margin-bottom:8px">🔍 Ultimele ' + Math.min(10, wf.blocked_samples.length) + ' pariuri pe care motorul le-ar fi blocat</div>' +`
+- `assets/app.js` L3819 terms=bottom: `'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +`
+- `assets/app.js` L4085 terms=bottom: `root.innerHTML = '<div class="help-panel" style="text-align:center;padding:32px"><div style="font-size:14px;font-weight:800;color:var(--txt);margin-bottom:8px">🧬 Motorul de invatare asteapta date</div><div style="font-size:12px;color:var(--`
+- `assets/app.js` L4091 terms=bottom: `var summary = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px">' +`
+- `assets/app.js` L4124 terms=bottom: `'<th style="padding:9px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Piata</th>' +`
+- `assets/app.js` L4125 terms=bottom: `'<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pariuri</th>' +`
+- `assets/app.js` L4126 terms=bottom: `'<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Winrate</th>' +`
+- `assets/app.js` L4127 terms=bottom: `'<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">ROI</th>' +`
+- `assets/app.js` L4128 terms=bottom: `'<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Multi</th>' +`
+- `assets/app.js` L4129 terms=bottom: `'<th style="padding:9px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">30z</th>' +`
+- `assets/app.js` L4154 terms=bottom: `'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:4px">' +`
+- `assets/app.js` L4172 terms=bottom: `'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:4px">' +`
+- `assets/app.js` L4201 terms=bottom: `'<div class="section" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(168,85,247,.06),rgba(16,185,129,.04));border:1px solid rgba(168,85,247,.22);border-radius:16px">' +`
+- `assets/app.js` L4202 terms=bottom: `'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +`
+- `assets/app.js` L4212 terms=bottom: `'<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08)">' +`
+- `assets/app.js` L4213 terms=bottom: `'<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">📊 Performanta pe piata</div>' +`
+- `assets/app.js` L4217 terms=bottom: `'<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(16,185,129,.18);background:linear-gradient(135deg,rgba(16,185,129,.03),rgba(0,0,0,0))">' +`
+- `assets/app.js` L4218 terms=bottom: `'<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">🚀 Top tipare cu boost activ</div>' +`
+- `assets/app.js` L4224 terms=bottom: `'<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(239,68,68,.18);background:linear-gradient(135deg,rgba(239,68,68,.03),rgba(0,0,0,0))">' +`
+- `assets/app.js` L4225 terms=bottom: `'<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:10px">🚫 Tipare toxice (auto-blocate)</div>' +`
+- `assets/app.js` L4229 terms=bottom: `'<div class="section" style="margin-bottom:12px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08)">' +`
+- `assets/app.js` L4230 terms=bottom: `'<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:6px">🎯 Calibrare probabilitate prezisa vs realitate</div>' +`
+- `assets/app.js` L4231 terms=bottom: `'<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.55">Daca actual &gt; predicted (bias pozitiv), piata este sub-estimata si poti creste incredere. Invers, supra-estimata.</div>' +`
+- `assets/app.js` L4235 terms=bottom: `'<th style="padding:8px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Interval prob</th>' +`
+- `assets/app.js` L4236 terms=bottom: `'<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Prezis</th>' +`
+- `assets/app.js` L4237 terms=bottom: `'<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Real</th>' +`
+- `assets/app.js` L4238 terms=bottom: `'<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Bias</th>' +`
+- `assets/app.js` L4239 terms=bottom: `'<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Sample</th>' +`
+- `assets/app.js` L4240 terms=bottom: `'<th style="padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.08);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Semnal</th>' +`
+- `assets/app.js` L4768 terms=bottom: `'<div style="height:18px;width:58%;border-radius:8px;background:rgba(255,255,255,.08);margin-bottom:12px"></div>' +`
+- `assets/app.js` L4769 terms=bottom: `'<div style="height:26px;width:72%;border-radius:10px;background:rgba(255,255,255,.10);margin-bottom:8px"></div>' +`
+- `assets/app.js` L4770 terms=bottom: `'<div style="height:12px;width:78%;border-radius:8px;background:rgba(255,255,255,.06);margin-bottom:10px"></div>' +`
+- `assets/app.js` L4955 terms=sync: `try { autoSyncTrackingStatuses(); } catch(e){}`
+- `assets/app.js` L5037 terms=sync: `try { autoSyncTrackingStatuses(); } catch(e){}`
+- `assets/app.js` L5161 terms=toast: `toast(`
+- `assets/app.js` L5168 terms=toast: `toast('Eroare la incarcarea datelor', 'err');`
+- `assets/app.js` L5378 terms=bottom: `'<div style="font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:center;gap:10px">'+`
+- `assets/app.js` L5383 terms=bottom: `(m.mostLikelyScore ? '<div style="text-align:center;margin-bottom:6px">'+scoreStr+'</div>' : '')+`
+- `assets/app.js` L5751 terms=bottom: `'<div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;margin-bottom:6px"><span style="color:var(--muted)">'+r.label+'</span><strong style="font-family:var(--mono);color:'+r.color+'">'+r.value+'</strong></div>'+`
+- `assets/app.js` L5864 terms=bottom: `'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">'+`
+- `assets/app.js` L6006 terms=bottom: `'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">'+`
+- `assets/app.js` L6148 terms=bottom: `'<div style="font-size:9px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+`
+- `assets/app.js` L6180 terms=bottom: `'<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">'+`
+- `assets/app.js` L6225 terms=bottom: `'<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">'+`
+- `assets/app.js` L6256 terms=bottom: `'<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+`
+- `assets/app.js` L6295 terms=bottom: `'<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+`
+- `assets/app.js` L6325 terms=bottom: `'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+`
+- `assets/app.js` L6329 terms=bottom: `'<div class="ml-teams" style="font-weight:700;color:var(--txt);margin-bottom:8px">'+m.home+' vs '+m.away+'</div>'+`
+- `assets/app.js` L6330 terms=bottom: `'<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'+`
+- `assets/app.js` L6334 terms=bottom: `(m.mostLikelyScore ? '<div style="margin-bottom:6px">'+scoreStr+'</div>' : '')+`
+- `assets/app.js` L6470 terms=toast: `toast('Am deschis meciul selectat direct în lista de analiză', 'ok');`
+- `assets/app.js` L6515 terms=toast: `if(!m || !m.bestBet) return toast('Nu există o selecție activă pentru acest meci', 'err');`
+- `assets/app.js` L6528 terms=toast: `toast('Selecția a fost adăugată în biletul curent', 'ok');`
