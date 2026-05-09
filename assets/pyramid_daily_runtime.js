@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV12) return;
-window.__PyramidDailyRuntimeV12 = true;
+if(window.__PyramidDailyRuntimeV13) return;
+window.__PyramidDailyRuntimeV13 = true;
 
 var W = window;
 var D = document;
@@ -12,6 +12,8 @@ var STORAGE_SESSIONS = 'bet_pyramid_daily_sessions';
 
 var ACTIVE_PICKS = [];
 var ACTIVE_REPORT = null;
+var GENERATOR_CLEARED = false;
+var SELECTED_SESSION_ID = null;
 
 var IDS = {
   stake:['pyramid-stake','pyrStake'],
@@ -231,10 +233,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v11')) return;
+  if(D.getElementById('pyramid-daily-compact-v13')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v11';
+  style.id = 'pyramid-daily-compact-v13';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -441,6 +443,10 @@ function injectCompactCss(){
   padding:7px!important;
   border-radius:11px!important;
   margin-top:6px!important;
+}
+#tab-piramida .pyramid-session.selected{
+  border-color:rgba(245,158,11,.64)!important;
+  box-shadow:0 0 0 1px rgba(245,158,11,.32), inset 0 0 24px rgba(245,158,11,.08)!important;
 }
 #tab-piramida .pyramid-session-name{
   font-size:10px!important;
@@ -1372,7 +1378,24 @@ function renderPicks(s){
 
     target.innerHTML =
       '<div class="pyramid-empty"><b>Introdu criterii pentru afișare.</b><br>' +
-      'Exemplu: completează câmpul Cotă țintă/pas cu 1.30; AI alege automat cea mai smart variantă dintre 1–3 evenimente.</div>';
+      'Completează cota țintă/pas, apoi apasă Recalculează pick-uri.</div>';
+
+    hideInfoTexts();
+    return;
+  }
+
+  if(GENERATOR_CLEARED){
+    ACTIVE_PICKS = [];
+    ACTIVE_REPORT = {raw:0,candidates:0,reason:'Generator liber după pornirea sesiunii.',mode:'cleared'};
+
+    renderTopStats(s,ACTIVE_PICKS);
+
+    if(el('badge')) el('badge').textContent = '—';
+    if(el('summary')) el('summary').innerHTML = 'Generator liber pentru altă generare.';
+
+    target.innerHTML =
+      '<div class="pyramid-empty"><b>Generator liber.</b><br>' +
+      'Apasă Recalculează pick-uri când vrei o variantă nouă.</div>';
 
     hideInfoTexts();
     return;
@@ -1488,8 +1511,7 @@ function renderPlan(s){
         '<td>' + money(r.profit) + '</td>' +
       '</tr>';
     }).join('') +
-    '</tbody></table></div>' +
-    '<div class="pyramid-warn">AI afișează evenimente doar după criteriile introduse și alege automat cea mai smart variantă 1–3 evenimente.</div>';
+    '</tbody></table></div>';
 
   hideInfoTexts();
 }
@@ -1534,6 +1556,40 @@ function compactAiReport(report){
       reached:!!combo.reached
     }
   };
+}
+function compactPickForSession(p){
+  p = p || {};
+
+  return {
+    home:p.home,
+    away:p.away,
+    league:p.league,
+    market:p.displayMarket || p.market,
+    odds:n(p.odds,0),
+    prob:n(p.prob,0),
+    aiScore:p.ai && p.ai.total ? n(p.ai.total,0) : n(p.aiScore,0),
+    date:p.date
+  };
+}
+function clearGeneratorAfterSession(){
+  GENERATOR_CLEARED = true;
+  ACTIVE_PICKS = [];
+  ACTIVE_REPORT = {raw:0,candidates:0,reason:'Generator liber după pornirea sesiunii.',mode:'cleared'};
+
+  var s = getSettings();
+
+  renderTopStats(s,ACTIVE_PICKS);
+
+  if(el('badge')) el('badge').textContent = '—';
+  if(el('summary')) el('summary').innerHTML = 'Generator liber pentru altă generare.';
+  if(el('picks')){
+    el('picks').innerHTML =
+      '<div class="pyramid-empty"><b>Generator liber.</b><br>' +
+      'Apasă Recalculează pick-uri când vrei o variantă nouă.</div>';
+  }
+
+  renderPlan(s);
+  hideInfoTexts();
 }
 function sessionProfit(s){
   if(!s) return 0;
@@ -1619,10 +1675,10 @@ function renderMonitorSummary(arr){
 }
 function createSession(){
   var s = saveSettingsFromUi(true);
-  var picks = ACTIVE_PICKS && ACTIVE_PICKS.length ? ACTIVE_PICKS : aiDecidePicks(s);
+  var picks = ACTIVE_PICKS && ACTIVE_PICKS.length && !GENERATOR_CLEARED ? ACTIVE_PICKS : [];
 
   if(!picks.length){
-    if(typeof W.toast === 'function') W.toast('AI nu recomandă intrare acum.', 'warn');
+    if(typeof W.toast === 'function') W.toast('Generează întâi evenimentele, apoi pornește sesiunea.', 'warn');
     return false;
   }
 
@@ -1641,18 +1697,8 @@ function createSession(){
     lastDailyOdds:odds,
     history:[],
     aiReport:compactAiReport(ACTIVE_REPORT),
-    picks:picks.map(function(p){
-      return {
-        home:p.home,
-        away:p.away,
-        league:p.league,
-        market:p.displayMarket,
-        odds:p.odds,
-        prob:p.prob,
-        aiScore:p.ai && p.ai.total ? p.ai.total : 0,
-        date:p.date
-      };
-    })
+    picks:picks.map(compactPickForSession),
+    awaitingGeneration:false
   };
 
   arr.unshift(session);
@@ -1662,10 +1708,12 @@ function createSession(){
     return false;
   }
 
+  SELECTED_SESSION_ID = session.id;
+  clearGeneratorAfterSession();
   renderSessions();
 
   if(typeof W.toast === 'function'){
-    W.toast('Sesiune pornită', 'ok');
+    W.toast('Sesiune pornită. Generatorul a fost eliberat.', 'ok');
   }
 
   return true;
@@ -1694,6 +1742,11 @@ function sessionAction(id,action){
   }
 
   if(action === 'win'){
+    if(!(s.picks || []).length){
+      if(typeof W.toast === 'function') W.toast('Generează întâi pasul pentru această sesiune.', 'warn');
+      return;
+    }
+
     var before = n(s.currentStake || s.initialStake,0);
     var odds = n(s.lastDailyOdds || s.targetOdds || 1.30,1.30);
     var after = +(before * odds).toFixed(2);
@@ -1703,7 +1756,8 @@ function sessionAction(id,action){
       date:new Date().toISOString(),
       stakeBefore:before,
       odds:odds,
-      returnAfter:after
+      returnAfter:after,
+      picks:(s.picks || []).slice(0,3)
     });
 
     s.currentStake = after;
@@ -1713,6 +1767,10 @@ function sessionAction(id,action){
       s.status = 'completed';
       s.closedAt = new Date().toISOString();
       s.closedStep = n(s.targetSteps,4);
+    }else{
+      s.picks = [];
+      s.awaitingGeneration = true;
+      s.lastDailyOdds = s.targetOdds || null;
     }
   }
 
@@ -1737,6 +1795,71 @@ function sessionAction(id,action){
   saveSessions(arr);
   renderSessions();
 }
+function generateStepForSession(id){
+  var arr = getSessions();
+  var s = arr.find(function(x){ return String(x.id) === String(id); });
+
+  if(!s){
+    if(typeof W.toast === 'function') W.toast('Sesiunea nu a fost găsită.', 'warn');
+    return false;
+  }
+
+  if(s.status !== 'active' && s.status !== 'paused'){
+    if(typeof W.toast === 'function') W.toast('Poți genera pași doar pentru sesiuni active.', 'warn');
+    return false;
+  }
+
+  if(s.status === 'paused'){
+    s.status = 'active';
+    s.pausedAt = null;
+  }
+
+  var ui = saveSettingsFromUi(true);
+  var currentStep = Math.max(1, n(s.currentStep,1));
+  var targetSteps = Math.max(currentStep, n(s.targetSteps || ui.steps, ui.steps));
+
+  ui.stake = n(s.currentStake || s.initialStake, s.initialStake);
+  ui.targetOdds = n(s.targetOdds || ui.targetOdds, ui.targetOdds);
+  ui.steps = Math.max(1, targetSteps - currentStep + 1);
+  ui.maxPicks = 3;
+
+  writeJson(STORAGE_SETTINGS, ui);
+  loadSettingsIntoUi(ui);
+
+  SELECTED_SESSION_ID = s.id;
+  GENERATOR_CLEARED = false;
+
+  renderPicks(ui);
+
+  var picks = ACTIVE_PICKS || [];
+
+  if(!picks.length){
+    s.awaitingGeneration = true;
+    s.picks = [];
+    saveSessions(arr);
+    renderPlan(ui);
+    renderSessions();
+
+    if(typeof W.toast === 'function') W.toast('Nu există pick valid pentru pasul acestei sesiuni.', 'warn');
+    return false;
+  }
+
+  s.picks = picks.map(compactPickForSession);
+  s.lastDailyOdds = ui.useRealOdds ? comboOdds(picks) : (ui.targetOdds || comboOdds(picks));
+  s.awaitingGeneration = false;
+  s.generatedAt = new Date().toISOString();
+  s.aiReport = compactAiReport(ACTIVE_REPORT);
+
+  saveSessions(arr);
+  renderPlan(ui);
+  renderSessions();
+
+  if(typeof W.toast === 'function'){
+    W.toast('Pasul ' + currentStep + '/' + targetSteps + ' a fost generat pentru sesiunea selectată.', 'ok');
+  }
+
+  return true;
+}
 function undoStep(id){
   var arr = getSessions();
   var s = arr.find(function(x){ return String(x.id) === String(id); });
@@ -1755,6 +1878,9 @@ function undoStep(id){
   s.currentStake = n(last.stakeBefore,s.initialStake);
   s.currentStep = n(last.step,1);
   s.status = 'active';
+  s.picks = Array.isArray(last.picks) ? last.picks : (s.picks || []);
+  s.lastDailyOdds = n(last.odds || s.lastDailyOdds || s.targetOdds, s.targetOdds || 1.30);
+  s.awaitingGeneration = !((s.picks || []).length);
 
   saveSessions(arr);
   renderSessions();
@@ -1800,14 +1926,18 @@ function renderSessions(){
 
     var prof = sessionProfit(s);
 
-    var picks = (s.picks || []).map(function(p){
-      return esc(p.home || '') + ' vs ' + esc(p.away || '') + ' • ' + esc(p.market || '') + ' @ ' + fmt(p.odds,2);
-    }).join('<br>');
+    var hasStepPicks = (s.picks || []).length > 0;
+    var picks = hasStepPicks
+      ? (s.picks || []).map(function(p){
+          return esc(p.home || '') + ' vs ' + esc(p.away || '') + ' • ' + esc(p.market || '') + ' @ ' + fmt(p.odds,2);
+        }).join('<br>')
+      : '<span style="color:var(--yel);font-weight:800">Alege sesiunea și generează pasul curent.</span>';
 
     var actions = '';
 
     if(s.status === 'active'){
       actions =
+        '<button class="btn btn-primary" onclick="pyramidGenerateSessionStep(\''+s.id+'\')">🎯 Generează pasul</button>' +
         '<button class="btn btn-green" onclick="pyramidDailyAction(\''+s.id+'\',\'win\')">✅ WIN</button>' +
         '<button class="btn" onclick="pyramidDailyAction(\''+s.id+'\',\'cashout\')">💰 Cashout</button>' +
         '<button class="btn pyramid-danger" onclick="pyramidDailyAction(\''+s.id+'\',\'loss\')">❌ LOSS</button>' +
@@ -1831,7 +1961,7 @@ function renderSessions(){
         }).join('<br>') + '</div>'
       : '';
 
-    return '<div class="pyramid-session">' +
+    return '<div class="pyramid-session ' + (String(SELECTED_SESSION_ID || '') === String(s.id) ? 'selected' : '') + '">' +
       '<div class="pyramid-session-head">' +
         '<div>' +
           '<div class="pyramid-session-name">' + label + ' · Pas ' + Math.min(n(s.currentStep,1),n(s.targetSteps,4)) + '/' + n(s.targetSteps,4) + '</div>' +
@@ -1855,20 +1985,20 @@ function bind(){
   hideInfoTexts();
 
   var refresh = el('refreshBtn');
-  if(refresh && !refresh.__pyrV12){
-    refresh.__pyrV12 = true;
+  if(refresh && !refresh.__pyrV13){
+    refresh.__pyrV13 = true;
     refresh.addEventListener('click',refreshPyramidDaily);
   }
 
   var start = el('startBtn');
-  if(start && !start.__pyrV12){
-    start.__pyrV12 = true;
+  if(start && !start.__pyrV13){
+    start.__pyrV13 = true;
     start.addEventListener('click',createSession);
   }
 
   var save = el('saveBtn');
-  if(save && !save.__pyrV11){
-    save.__pyrV11 = true;
+  if(save && !save.__pyrV13){
+    save.__pyrV13 = true;
     save.addEventListener('click',function(){
       saveSettingsFromUi(false);
       refreshPyramidDaily();
@@ -1878,8 +2008,8 @@ function bind(){
   ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
     var node = el(k);
 
-    if(node && !node.__pyrV11){
-      node.__pyrV11 = true;
+    if(node && !node.__pyrV13){
+      node.__pyrV13 = true;
 
       node.addEventListener('change',function(){
         saveSettingsFromUi(true);
@@ -1907,6 +2037,7 @@ function renderPyramidDaily(){
   hideInfoTexts();
 }
 function refreshPyramidDaily(){
+  GENERATOR_CLEARED = false;
   var s = saveSettingsFromUi(true);
 
   renderPicks(s);
@@ -1922,9 +2053,10 @@ W.savePyramidDailySettings = savePyramidDailySettings;
 W.pyramidDailyAction = sessionAction;
 W.pyramidUndoLastStep = undoStep;
 W.pyramidDeleteSession = deleteSession;
+W.pyramidGenerateSessionStep = generateStepForSession;
 
 var oldSwitch = W.switchTab;
-if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV11){
+if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV13){
   var patchedSwitch = function(name){
     var r = oldSwitch.apply(this,arguments);
 
@@ -1935,12 +2067,12 @@ if(typeof oldSwitch === 'function' && !oldSwitch.__pyrV11){
     return r;
   };
 
-  patchedSwitch.__pyrV11 = true;
+  patchedSwitch.__pyrV13 = true;
   W.switchTab = patchedSwitch;
 }
 
 var oldRefresh = W.doRefresh;
-if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV11){
+if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV13){
   var patchedRefresh = function(){
     var r = oldRefresh.apply(this,arguments);
 
@@ -1955,7 +2087,7 @@ if(typeof oldRefresh === 'function' && !oldRefresh.__pyrV11){
     return r;
   };
 
-  patchedRefresh.__pyrV11 = true;
+  patchedRefresh.__pyrV13 = true;
   W.doRefresh = patchedRefresh;
 }
 
