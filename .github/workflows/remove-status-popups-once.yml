@@ -1,0 +1,30 @@
+name: Remove Status Popups Once
+
+on:
+  push:
+    paths:
+      - '.cleanup/remove-status-popups.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  remove-status-popups:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove ML5/API status popups
+        run: python tools/remove_status_popups_once.py
+      - name: Commit popup cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Remove ML5 and API status popups"
+            git push
+          fi
