@@ -447,43 +447,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   </div>
 
   <!-- ===== TRACKING ===== -->
-  <div class="tab-content" id="tab-tracking">
-    <div style="margin-bottom:12px;font-size:13px;font-weight:700;color:var(--acc)">📊 Statistici Bilete Generate</div>
-    <div class="tracking-stats">
-      <div class="track-stat"><div class="track-num" id="tr-total" style="color:var(--acc)">0</div><div class="track-lbl">Bilete</div></div>
-      <div class="track-stat"><div class="track-num" id="tr-winrate" style="color:var(--grn)">0%</div><div class="track-lbl">Win Rate</div></div>
-      <div class="track-stat"><div class="track-num" id="tr-roi" style="color:var(--val)">0%</div><div class="track-lbl">ROI</div></div>
-    </div>
-    <div style="margin-bottom:12px;font-size:13px;font-weight:700;color:var(--pur)">📊 Statistici Bilete Extra</div>
-    <div class="tracking-stats">
-      <div class="track-stat"><div class="track-num" id="tr-extra-total" style="color:var(--pur)">0</div><div class="track-lbl">Bilete</div></div>
-      <div class="track-stat"><div class="track-num" id="tr-extra-winrate" style="color:var(--grn)">0%</div><div class="track-lbl">Win Rate</div></div>
-      <div class="track-stat"><div class="track-num" id="tr-extra-roi" style="color:var(--val)">0%</div><div class="track-lbl">ROI</div></div>
-    </div>
-    <div class="sec-hdr">
-      <div class="sec-title">📋 Istoric Pariuri</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-green" onclick="toggleExtraForm()" style="font-size:11px;padding:5px 10px">➕ Adaugă Extra</button>
-        <button class="btn btn-primary" onclick="exportTrackingCsv()" style="font-size:11px;padding:5px 10px">📄 CSV</button>
-        <button class="btn btn-ghost" onclick="exportHistory()" style="font-size:11px;padding:5px 10px">📥 JSON</button>
-        <button class="btn" style="background:rgba(239,68,68,.15);color:var(--red);font-size:11px;padding:5px 10px;border:1px solid rgba(239,68,68,.3)" onclick="clearHistory()">🗑️ Sterge</button>
-      </div>
-    </div>
-    <div class="extra-form" id="extra-form">
-      <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--acc)">➕ Adauga Bilet Extra</div>
-      <div class="form-grid">
-        <div class="form-group"><label>Data</label><input type="date" id="ex-date" class="form-input"></div>
-        <div class="form-group"><label>Nr. Selectii</label><input type="number" id="ex-picks" class="form-input" value="1" min="1"></div>
-        <div class="form-group"><label>Cota Totala</label><input type="number" id="ex-odds" class="form-input" value="2.00" step="0.01" min="1.01"></div>
-        <div class="form-group"><label>Miza (RON)</label><input type="number" id="ex-stake" class="form-input" value="100" step="1" min="1"></div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-green" onclick="addExtraTicket()" style="flex:1;justify-content:center">Salveaza Bilet</button>
-        <button class="btn" onclick="toggleExtraForm()" style="background:var(--brd);color:var(--txt)">Anuleaza</button>
-      </div>
-    </div>
-    <div id="tracking-container"></div>
-  </div>
+  
 
   <!-- ===== BANKROLL ===== -->
   <!-- ML5 ANALYSIS TAB -->
@@ -491,79 +455,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     <div id="ml5-root" style="padding:16px 0 80px"></div>
   </div>
 
-  <div class="tab-content" id="tab-bankroll">
-    
-    <div class="help-panel amber">
-      <div class="help-head">
-        <div>
-          <div class="help-title">💰 Ghid rapid Bankroll</div>
-          <div class="help-sub">Bankroll-ul folosește profitul și pierderea din Tracking și recalculează automat mizele recomandate. Mai jos ai și evoluția bankroll-ului pe biletele deja salvate.</div>
-        </div>
-        <div class="action-row"><span class="sec-badge" style="color:var(--yel);border-color:rgba(245,158,11,.24);background:rgba(245,158,11,.08)">Control miză</span><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="exportTrackingCsv()">📄 Export Tracking CSV</button></div>
-      </div>
-      <div class="help-chip-row">
-        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','single_premium_stake')">Single Premium</button>
-        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','double_confirmed_stake')">Double Confirmed</button>
-        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','triple_value_stake')">Triple Value</button>
-        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','contrarian_stake')">Contrarian</button>
-        <button class="help-chip" onclick="showInlineHelp('bankroll-help-output','bankroll_flow')">Flux bankroll</button>
-      </div>
-      <div class="help-output" id="bankroll-help-output"></div>
-    </div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
-      <div class="bankroll-card" style="margin-bottom:0">
-        <div class="sec-title" style="margin-bottom:16px">💰 Management Bankroll</div>
-        <div class="bk-input-row">
-          <label style="font-size:13px;font-weight:600">Bankroll inițial (RON):</label>
-          <input type="number" class="bk-input" id="bankroll-input" value="1000" min="10" step="50" onchange="calcBankroll()"/>
-          <label style="font-size:13px;font-weight:600">Single %:</label>
-          <input type="number" class="bk-input" id="bk-single-pct" value="4" min="0.1" step="0.1" onchange="calcBankroll()" style="width:90px"/>
-          <label style="font-size:13px;font-weight:600">Double %:</label>
-          <input type="number" class="bk-input" id="bk-double-pct" value="2.5" min="0.1" step="0.1" onchange="calcBankroll()" style="width:90px"/>
-          <label style="font-size:13px;font-weight:600">Triple %:</label>
-          <input type="number" class="bk-input" id="bk-triple-pct" value="1.5" min="0.1" step="0.1" onchange="calcBankroll()" style="width:90px"/>
-          <label style="font-size:13px;font-weight:600">Contrarian %:</label>
-          <input type="number" class="bk-input" id="bk-contrarian-pct" value="0.8" min="0.1" step="0.1" onchange="calcBankroll()" style="width:90px"/>
-          <button class="btn btn-primary" onclick="calcBankroll()">Salvează</button>
-        </div>
-        <div id="bk-current-status" style="margin-bottom:20px;padding:16px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
-          <div>
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Bankroll actual</div>
-            <div id="bk-actual-val" style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--grn)">1000.00 RON</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Profit / Pierdere</div>
-            <div id="bk-profit-val" style="font-size:18px;font-weight:700;font-family:var(--mono)">+0.00 RON</div>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Mizele sugerate pentru biletele generate se calculează în RON direct din procentele tale. Profitul și pierderea vin din Tracking, nu din povești pescărești.</div>
-        <div class="bk-grid" id="bk-grid"></div>
-
-        <div class="trend-shell" id="bankroll-trend-shell">
-          <div class="trend-head">
-            <div>
-              <div class="trend-title">📈 Evoluție bankroll</div>
-              <div class="trend-sub">Graficul folosește ordinea biletelor din Tracking și îți arată traseul bankroll-ului după fiecare rezultat înregistrat.</div>
-            </div>
-            <div class="trend-legend">
-              <span class="trend-pill">linie = bankroll</span>
-              <span class="trend-pill">punct final = stare curentă</span>
-            </div>
-          </div>
-          <div id="bankroll-trend-chart"></div>
-          <div class="trend-meta" id="bankroll-trend-meta"></div>
-        </div>
-      </div>
-
-      <div class="bankroll-card" style="margin-bottom:0">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px">
-          <div class="sec-title" style="margin-bottom:0">📓 Jurnal bilete</div>
-          <button class="btn" onclick="clearJournal()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.22);color:var(--red)">Șterge jurnalul</button>
-        </div>
-        <div id="ticket-journal"></div>
-      </div>
-    </div>
-  </div>
+  
 
 
   <div class="tab-content" id="tab-piramida">
@@ -654,22 +546,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   </div>
 
 
-  <div class="tab-content" id="tab-charts">
-    <div class="addon-grid">
-      <div class="addon-card">
-        <div class="addon-head"><div><div class="addon-title">🧱 Heatmap ligă × piață</div><div class="addon-sub">ROI recent pe combinațiile cele mai folosite. Verde = mai bine, roșu = mai slab.</div></div><div class="addon-chip">ultimele 30 zile</div></div>
-        <div id="advanced-heatmap"></div>
-      </div>
-      <div class="addon-card">
-        <div class="addon-head"><div><div class="addon-title">🛸 Radar operațional</div><div class="addon-sub">Pulse check pe motorul curent: coverage, confidence, edge, value, pro rate, win rate.</div></div><div class="addon-chip">live + istoric</div></div>
-        <div class="radar-wrap" id="advanced-radar"></div>
-      </div>
-      <div class="addon-card">
-        <div class="addon-head"><div><div class="addon-title">🌊 Flow tip sankey</div><div class="addon-sub">Cum curge pool-ul din total meciuri spre cu cote, eligibile, Pro și Value.</div></div><div class="addon-chip">funnel vizual</div></div>
-        <div class="sankey-wrap" id="advanced-sankey"></div>
-      </div>
-    </div>
-  </div><!-- end tab-charts -->
+  <!-- end tab-charts -->
 
   <!-- ===== CLV TRACKER ===== -->
   <div class="tab-content" id="tab-clv">
