@@ -115,10 +115,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="closeDesktopMore()">Închide</button>
   </div>
   <div class="more-grid">
-    <button class="more-card-btn" onclick="switchTab('cota2')">
-      <span class="more-card-title">🎯 Cota 2 Daily</span>
-      <span class="more-card-sub">Generator zilnic 1.70–3.00, auto-învățare și monitorizare ROI.</span>
-    </button>
     <button class="more-card-btn" onclick="switchTab('piramida');closeDesktopMore()">
       <span class="more-card-title">🧗 Piramidă Daily</span>
       <span class="more-card-sub">Reinvestire în etape.</span>
@@ -1040,86 +1036,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 
 
 
-  <div class="tab-content" id="tab-cota2">
-    <div class="help-panel amber">
-      <div class="help-head">
-        <div>
-          <div class="help-title">🎯 Cota 2 Daily</div>
-          <div class="help-sub">Generatorul selectează 2–4 evenimente pentru o cotă totală în intervalul 1.70–3.00, urmărește istoricul și își ajustează profilul pe baza rezultatelor închise.</div>
-        </div>
-        <div class="action-row">
-          <span class="sec-badge" style="color:var(--yel);border-color:rgba(245,158,11,.24);background:rgba(245,158,11,.08)">adaptive engine</span>
-          <div id="cota2-daymode-switch" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-          <button class="btn btn-primary" style="font-size:11px;padding:6px 10px" onclick="generateCota2DailyTicket()">🔄 Generează acum</button>
-        </div>
-      </div>
-      <div class="help-chip-row">
-        <button class="help-chip" onclick="showInlineHelp('cota2-help-output','double_confirmed_stake')">Miză & risc</button>
-        <button class="help-chip" onclick="showInlineHelp('cota2-help-output','bankroll_flow')">Flux bankroll</button>
-        <button class="help-chip" onclick="showInlineHelp('cota2-help-output','value_single')">Value logic</button>
-      </div>
-      <div class="help-output" id="cota2-help-output"></div>
-    </div>
-
-    <div class="cota2-panel" style="margin-bottom:16px">
-      <div class="sec-hdr" style="margin-bottom:12px">
-        <div>
-          <div class="sec-title">⚙️ Configurare generator</div>
-          <div class="cota2-note" style="margin-top:6px">Setezi banda de cotă, numărul de selecții și profilul de risc. Motorul combină aceste reguli cu istoricul real din tracking.</div>
-        </div>
-      </div>
-      <div class="addon-form" style="margin-bottom:12px">
-        <div>
-          <label class="addon-label">Cotă totală minimă</label>
-          <input id="cota2-min-total" class="addon-input" type="number" min="1.50" max="4.00" step="0.01" onchange="saveCota2Settings(true);renderCota2Section()">
-        </div>
-        <div>
-          <label class="addon-label">Cotă totală maximă</label>
-          <input id="cota2-max-total" class="addon-input" type="number" min="1.60" max="4.50" step="0.01" onchange="saveCota2Settings(true);renderCota2Section()">
-        </div>
-        <div>
-          <label class="addon-label">Selecții minime</label>
-          <input id="cota2-min-legs" class="addon-input" type="number" min="2" max="4" step="1" onchange="saveCota2Settings(true);renderCota2Section()">
-        </div>
-        <div>
-          <label class="addon-label">Selecții maxime</label>
-          <input id="cota2-max-legs" class="addon-input" type="number" min="2" max="4" step="1" onchange="saveCota2Settings(true);renderCota2Section()">
-        </div>
-        <div>
-          <label class="addon-label">Strategie</label>
-          <select id="cota2-strategy" class="addon-select" onchange="saveCota2Settings(true);renderCota2Section()">
-            <option value="safe">Safe</option>
-            <option value="balanced">Balanced</option>
-            <option value="value">Value</option>
-          </select>
-        </div>
-        <div>
-          <label class="addon-label">Orizont meciuri</label>
-          <select id="cota2-day-mode" class="addon-select" onchange="saveCota2Settings(true);renderCota2Section()">
-            <option value="today">Azi</option>
-            <option value="tomorrow">Mâine</option>
-          </select>
-        </div>
-        <div>
-          <label class="addon-label">Învățare adaptivă</label>
-          <select id="cota2-learning-proxy" class="addon-select" onchange="var c=$('cota2-learning'); if(c){ c.checked=this.value==='on'; } saveCota2Settings(true); renderCota2Section();">
-            <option value="on">Pornit</option>
-            <option value="off">Oprit</option>
-          </select>
-          <input id="cota2-learning" type="checkbox" style="display:none" checked>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="saveCota2Settings();renderCota2Section()">💾 Salvează profilul</button>
-        <button class="btn btn-green" onclick="generateCota2DailyTicket()">🎯 Regenerare optimă</button>
-      </div>
-    </div>
-
-    <div id="cota2-summary-grid"></div>
-    <div id="cota2-ticket-container"></div>
-    <div id="cota2-learning-container"></div>
-    <div id="cota2-history-container"></div>
-  </div>
+  
 
   <div class="tab-content" id="tab-istoric21">
     <div class="section" style="margin-bottom:12px">
@@ -1196,7 +1113,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   </button>
 </nav>
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
-  <button class="mobile-sheet-btn" onclick="switchTab('cota2');closeMobileMore()"><span class="sheet-btn-title">🎯 Cota 2 Daily</span><small class="sheet-btn-sub">Secțiune dedicată cotei 2 și învățare continuă</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('piramida');closeMobileMore()"><span class="sheet-btn-title">🧗 Piramidă Daily</span><small class="sheet-btn-sub">Reinvestire în etape</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">📊 Istoric</span><small class="sheet-btn-sub">Monitorizare per categorie · ROI · WR · Edge · pe perioade selectabile</small></button>
