@@ -20,12 +20,7 @@
         console.info('[BA] skipped legacy checkDailyRefresh interval');
         return 0;
       }
-
-      // Legacy auto refresh every 15 minutes. Manual refresh button remains available.
-      if (ms === 900000 && (name === 'doRefresh' || src.indexOf('doRefresh') >= 0)) {
-        console.info('[BA] skipped legacy doRefresh interval');
-        return 0;
-      }
+      // Keep app data auto-refresh active. doRefresh every 15 minutes must run.
 
       return originalSetInterval.apply(this, arguments);
     };
