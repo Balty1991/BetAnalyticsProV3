@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: update-meciuri-live-data
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   update-meciuri:
@@ -91,8 +91,16 @@ jobs:
           fi
 
           git commit -m "Auto-update meciuri $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase -X theirs origin main || {
+
+          # Main can move while this job runs because Pages/deploy/cleanup commits are frequent.
+          # Rebase the data commit on top of latest main, keeping this job's generated data on conflicts.
+          git fetch origin main
+          git rebase -X ours origin/main || {
             git rebase --abort || true
-            git pull --rebase origin main
+            git fetch origin main
+            git reset --soft origin/main
+            git add data/
+            git commit -m "Auto-update meciuri $(date -u '+%Y-%m-%d %H:%M UTC') [rebased]" || true
           }
+
           git push origin HEAD:main
