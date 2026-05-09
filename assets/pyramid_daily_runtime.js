@@ -487,79 +487,99 @@ function injectCompactCss(){
   grid-template-columns:minmax(0,1fr) 132px!important;
   gap:6px!important;
   align-items:start!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+#tab-piramida .pyramid-monitor-grid > div{
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
 }
 #tab-piramida .pyramid-monitor-wrap{
   width:100%!important;
-  overflow-x:auto!important;
-  border:1px solid rgba(45,212,191,.34)!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  border:1px solid rgba(250,204,21,.30)!important;
   border-radius:9px!important;
-  background:rgba(2,6,23,.72)!important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)!important;
+  background:rgba(3,7,18,.78)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 0 12px rgba(0,0,0,.25)!important;
+  box-sizing:border-box!important;
 }
 #tab-piramida .pyramid-monitor-table{
   width:100%!important;
-  min-width:440px!important;
+  min-width:0!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
   border-collapse:collapse!important;
-  font-size:8.2px!important;
+  font-size:7.4px!important;
+  line-height:1.12!important;
   color:#f8fafc!important;
 }
 #tab-piramida .pyramid-monitor-table th,
 #tab-piramida .pyramid-monitor-table td{
-  padding:6px 5px!important;
-  border-bottom:1px solid rgba(45,212,191,.18)!important;
-  border-right:1px solid rgba(45,212,191,.16)!important;
+  padding:5px 3px!important;
+  border-bottom:1px solid rgba(148,163,184,.18)!important;
+  border-right:1px solid rgba(148,163,184,.16)!important;
   text-align:right!important;
   white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  box-sizing:border-box!important;
 }
 #tab-piramida .pyramid-monitor-table th{
-  background:linear-gradient(180deg,rgba(20,184,166,.98),rgba(13,148,136,.98))!important;
-  color:#001515!important;
+  background:linear-gradient(180deg,#1f2937,#0f172a)!important;
+  color:#fde68a!important;
   text-transform:uppercase!important;
   font-weight:1000!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.22)!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.75)!important;
+  border-bottom:1px solid rgba(250,204,21,.40)!important;
 }
 #tab-piramida .pyramid-monitor-table td{
   color:#f8fafc!important;
-  background:rgba(15,23,42,.58)!important;
+  background:rgba(15,23,42,.74)!important;
   font-weight:800!important;
 }
-#tab-piramida .pyramid-monitor-table th:first-child,
-#tab-piramida .pyramid-monitor-table td:first-child{
-  text-align:center!important;
-  font-weight:900!important;
-}
-#tab-piramida .pyramid-monitor-table th:last-child,
-#tab-piramida .pyramid-monitor-table td:last-child{
-  text-align:center!important;
-  border-right:0!important;
-}
-#tab-piramida .pyramid-monitor-attempt.win{background:#22c55e!important;color:#021109!important;font-weight:1000!important;}
-#tab-piramida .pyramid-monitor-attempt.loss{background:#ef4444!important;color:#fff!important;font-weight:1000!important;}
+#tab-piramida .pyramid-monitor-table th:nth-child(1),
+#tab-piramida .pyramid-monitor-table td:nth-child(1){width:22%!important;text-align:center!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-table th:nth-child(2),
+#tab-piramida .pyramid-monitor-table td:nth-child(2){width:21%!important;}
+#tab-piramida .pyramid-monitor-table th:nth-child(3),
+#tab-piramida .pyramid-monitor-table td:nth-child(3){width:17%!important;}
+#tab-piramida .pyramid-monitor-table th:nth-child(4),
+#tab-piramida .pyramid-monitor-table td:nth-child(4){width:24%!important;}
+#tab-piramida .pyramid-monitor-table th:nth-child(5),
+#tab-piramida .pyramid-monitor-table td:nth-child(5){width:16%!important;text-align:center!important;border-right:0!important;}
+#tab-piramida .pyramid-monitor-attempt.win{background:#16a34a!important;color:#ecfdf5!important;font-weight:1000!important;}
+#tab-piramida .pyramid-monitor-attempt.loss{background:#dc2626!important;color:#fff!important;font-weight:1000!important;}
 #tab-piramida .pyramid-monitor-attempt.open{background:#facc15!important;color:#111827!important;font-weight:1000!important;}
-#tab-piramida .pyramid-monitor-status.win{color:var(--grn)!important;font-weight:900!important;}
-#tab-piramida .pyramid-monitor-status.loss{color:var(--red)!important;font-weight:900!important;}
-#tab-piramida .pyramid-monitor-status.open{color:#e5e7eb!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-status.win{color:#86efac!important;font-weight:1000!important;}
+#tab-piramida .pyramid-monitor-status.loss{color:#fca5a5!important;font-weight:1000!important;}
+#tab-piramida .pyramid-monitor-status.open{color:#fde68a!important;font-weight:1000!important;}
 #tab-piramida .pyramid-monitor-summary{
-  border:1px solid rgba(45,212,191,.34)!important;
+  border:1px solid rgba(250,204,21,.30)!important;
   border-radius:9px!important;
   overflow:hidden!important;
-  background:rgba(2,6,23,.72)!important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)!important;
+  background:rgba(3,7,18,.78)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 0 12px rgba(0,0,0,.25)!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
 }
 #tab-piramida .pyramid-monitor-summary-title{
   padding:6px!important;
   font-size:8px!important;
   font-weight:1000!important;
   text-transform:uppercase!important;
-  color:#ffffff!important;
-  background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(30,41,59,.92))!important;
-  border-bottom:1px solid rgba(45,212,191,.24)!important;
+  color:#fde68a!important;
+  background:linear-gradient(180deg,#1f2937,#0f172a)!important;
+  border-bottom:1px solid rgba(250,204,21,.40)!important;
 }
 #tab-piramida .pyramid-monitor-summary-row{
   display:grid!important;
-  grid-template-columns:1fr 48px!important;
+  grid-template-columns:minmax(0,1fr) 52px!important;
   min-height:25px!important;
-  border-bottom:1px solid rgba(45,212,191,.16)!important;
+  border-bottom:1px solid rgba(148,163,184,.16)!important;
 }
 #tab-piramida .pyramid-monitor-summary-row:last-child{border-bottom:0!important;}
 #tab-piramida .pyramid-monitor-summary-label,
@@ -568,15 +588,19 @@ function injectCompactCss(){
   font-size:8.2px!important;
   line-height:1.1!important;
   font-weight:900!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
 }
-#tab-piramida .pyramid-monitor-summary-label.win{background:rgba(34,197,94,.75)!important;color:#04130a!important;font-weight:900!important;}
-#tab-piramida .pyramid-monitor-summary-label.loss{background:rgba(239,68,68,.90)!important;color:#fff!important;font-weight:900!important;}
-#tab-piramida .pyramid-monitor-summary-label.profit{background:rgba(56,189,248,.85)!important;color:#031625!important;font-weight:900!important;}
+#tab-piramida .pyramid-monitor-summary-label{background:rgba(15,23,42,.74)!important;color:#f8fafc!important;}
+#tab-piramida .pyramid-monitor-summary-label.win{background:rgba(22,101,52,.90)!important;color:#dcfce7!important;font-weight:1000!important;}
+#tab-piramida .pyramid-monitor-summary-label.loss{background:rgba(127,29,29,.94)!important;color:#fee2e2!important;font-weight:1000!important;}
+#tab-piramida .pyramid-monitor-summary-label.profit{background:rgba(113,63,18,.94)!important;color:#fde68a!important;font-weight:1000!important;}
 #tab-piramida .pyramid-monitor-summary-value{
   text-align:right!important;
   font-weight:1000!important;
   color:#ffffff!important;
-  background:rgba(15,23,42,.72)!important;
+  background:rgba(15,23,42,.82)!important;
 }
 #tab-piramida .pyramid-monitor-cards-title{
   font-size:8px!important;
@@ -1576,7 +1600,7 @@ function renderMonitorTable(arr){
   return '<div class="pyramid-monitor-title">EVIDENȚĂ ÎNCERCĂRI PIRAMIDĂ</div>' +
     '<div class="pyramid-monitor-wrap"><table class="pyramid-monitor-table">' +
       '<thead><tr>' +
-        '<th>Încercarea</th><th>Miză start</th><th>Pas maxim atins</th><th>Profit/Pierdere</th><th>Status</th>' +
+        '<th>Încerc.</th><th>Start</th><th>Pas max</th><th>Profit</th><th>Status</th>' +
       '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 function renderMonitorSummary(arr){
