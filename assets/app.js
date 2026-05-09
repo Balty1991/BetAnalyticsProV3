@@ -2370,8 +2370,7 @@ function enrichTopMatchesBackground(){
         // Re-render doar tab-ul activ, nu tot renderAll()
         var activeTab = getCurrentActiveTabName ? getCurrentActiveTabName() : 'dashboard';
         try { renderActiveTab(activeTab, {}); } catch(e){}
-        toast('🔬 ML5 activ: ' + enriched + ' meciuri cu date contextuale', 'ok');
-      } catch(e){ console.warn('[ML5] Re-render failed', e); }
+              } catch(e){ console.warn('[ML5] Re-render failed', e); }
     }
     return enriched;
   }).catch(function(e){
@@ -5158,11 +5157,7 @@ function doRefresh(isManual){
       var statusTime = getStatusDisplayTime();
       var statusMetrics = getStatusDisplayMetrics();
       var enrichLabel = enrichedCount > 0 ? (' • 🔬 ML5 ' + enrichedCount + ' meciuri') : '';
-      toast(
-        'API sync: ' + statusMetrics.ml + ' ML / ' + statusMetrics.odds + ' cote' + enrichLabel + (statusTime ? ' @ ' + statusTime : ''),
-        'ok'
-      );
-    });
+          });
   }).catch(function(err){
     if(shouldShowLoader) hideLoader();
     toast('Eroare la incarcarea datelor', 'err');
