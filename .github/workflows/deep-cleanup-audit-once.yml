@@ -1,0 +1,30 @@
+name: Deep Cleanup Audit Once
+
+on:
+  push:
+    paths:
+      - '.cleanup/deep-cleanup-audit.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  deep-cleanup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate deep cleanup audit
+        run: python tools/deep_cleanup_audit_once.py
+      - name: Commit deep cleanup report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cleanup_deep_audit_report.json cleanup_deep_audit_report.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add deep cleanup audit report"
+            git push
+          fi
