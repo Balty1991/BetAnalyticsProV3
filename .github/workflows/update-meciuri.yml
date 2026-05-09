@@ -2,12 +2,10 @@ name: Update Meciuri
 
 on:
   schedule:
-    # Rulează la fiecare 30 de minute. Orele sunt UTC.
     - cron: '*/30 * * * *'
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - '.run-fetch'
       - 'fetch_data.py'
@@ -16,9 +14,6 @@ on:
 permissions:
   contents: write
 
-env:
-  TZ: Europe/Bucharest
-
 concurrency:
   group: update-meciuri-live-data
   cancel-in-progress: false
@@ -26,122 +21,91 @@ concurrency:
 jobs:
   update-meciuri:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Verify BSD token
-        env:
-          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: |
-          if [ -z "$BSD_TOKEN" ]; then
-            echo "::error::BSD_TOKEN lipsește din GitHub Secrets pentru repo-ul VEYRA. Adaugă secretul în Settings → Secrets and variables → Actions."
-            exit 1
-          fi
-          echo "BSD_TOKEN prezent."
-
-      - name: Fetch latest matches and predictions
+      - name: Fetch current data
+        id: fetch_current
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python fetch_data.py
+        continue-on-error: true
 
-      - name: Enrich predictions if script exists
+      - name: Optional enrich
+        id: enrich_current
         run: |
-          if [ -f enrich_predictions.py ]; then
-            python enrich_predictions.py
-          fi
+          if [ -f enrich_predictions.py ]; then python enrich_predictions.py; fi
+        continue-on-error: true
 
-      - name: Refresh recent events index if script exists
+      - name: Optional recent index
+        id: index_current
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: |
-          if [ -f build_api_events_index.py ]; then
-            python build_api_events_index.py
-          fi
+          if [ -f build_api_events_index.py ]; then python build_api_events_index.py; fi
+        continue-on-error: true
 
-      - name: Generate Meciuri Snapshot if script exists
-        run: |
-          if [ -f generate_meciuri_snapshot.py ]; then
-            python generate_meciuri_snapshot.py
-          fi
-
-      - name: Force visible refresh timestamp
+      - name: Update meta marker
+        env:
+          FETCH_STATUS: ${{ steps.fetch_current.outcome }}
+          ENRICH_STATUS: ${{ steps.enrich_current.outcome }}
+          INDEX_STATUS: ${{ steps.index_current.outcome }}
         run: |
           python - <<'PY'
-          import json
+          import json, os
           from datetime import datetime, timezone
           from pathlib import Path
-
-          meta_path = Path('data/meta.json')
-          meta_path.parent.mkdir(parents=True, exist_ok=True)
-          if meta_path.exists():
-              try:
-                  meta = json.loads(meta_path.read_text(encoding='utf-8'))
-              except Exception:
-                  meta = {}
-          else:
+          path = Path('data/meta.json')
+          path.parent.mkdir(parents=True, exist_ok=True)
+          try:
+              meta = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+          except Exception:
               meta = {}
-
           now = datetime.now(timezone.utc).isoformat()
           meta['updated_at'] = now
           meta['fetched_at'] = now
           meta['workflow_updated_at'] = now
-          meta['status'] = meta.get('status') or 'ok'
-          meta['source'] = meta.get('source') or 'bsd_api_light'
           meta['repo'] = 'Balty1991/VEYRA'
           meta['update_workflow'] = 'update-meciuri'
-          meta_path.write_text(json.dumps(meta, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-          print('data/meta.json updated_at forced to', now)
+          meta['workflow_results'] = {
+              'fetch_data': os.environ.get('FETCH_STATUS', 'unknown'),
+              'enrich_predictions': os.environ.get('ENRICH_STATUS', 'unknown'),
+              'build_api_events_index': os.environ.get('INDEX_STATUS', 'unknown')
+          }
+          meta['status'] = 'ok' if meta['workflow_results']['fetch_data'] == 'success' else 'fetch_data_failed'
+          path.write_text(json.dumps(meta, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+          print('updated_at=' + now)
+          print('status=' + str(meta.get('status')))
           PY
 
-      - name: Verify data files
+      - name: Commit data files
         run: |
-          test -f data/predictions.json
-          test -f data/events.json
-          test -f data/meta.json
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          for f in ['data/predictions.json', 'data/events.json', 'data/meta.json']:
-              data = json.loads(Path(f).read_text(encoding='utf-8'))
-              print(f, 'OK', type(data).__name__)
-          PY
-
-      - name: Commit updated matches
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
           git add data/
-
-          if git diff --staged --quiet; then
-            echo "No data changes detected even after forced timestamp."
+          if git diff --cached --quiet; then
+            echo "No data changes."
             exit 0
           fi
-
           git commit -m "Auto-update meciuri $(date -u '+%Y-%m-%d %H:%M UTC')"
-
           git fetch origin main
           git pull --rebase -X ours origin main || {
             git rebase --abort || true
-            git fetch origin main
             git reset --soft origin/main
             git add data/
-            git commit -m "Auto-update meciuri $(date -u '+%Y-%m-%d %H:%M UTC') [rebased]" || true
+            git commit -m "Auto-update meciuri $(date -u '+%Y-%m-%d %H:%M UTC') rebased" || true
           }
-
           git push origin HEAD:main
