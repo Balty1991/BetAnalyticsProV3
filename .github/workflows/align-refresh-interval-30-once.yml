@@ -1,0 +1,30 @@
+name: Align Refresh Interval 30 Once
+
+on:
+  push:
+    paths:
+      - '.cleanup/align-refresh-interval-30.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  align-refresh-interval-30:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Align browser refresh interval
+        run: python tools/align_refresh_interval_30_once.py
+      - name: Commit interval alignment
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/app.js assets/performance-patch.js index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Align browser refresh interval to 30 minutes"
+            git push
+          fi
