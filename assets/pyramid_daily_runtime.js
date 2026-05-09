@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV8) return;
-window.__PyramidDailyRuntimeV8 = true;
+if(window.__PyramidDailyRuntimeV9) return;
+window.__PyramidDailyRuntimeV9 = true;
 
 var W = window;
 var D = document;
@@ -164,8 +164,8 @@ function sanitizeSettings(raw){
   return {
     stake:clamp(n(raw.stake,d.stake),1,100000),
     targetOdds:target,
-    steps:Math.round(clamp(n(raw.steps,d.steps),4,10)),
-    maxPicks:Math.round(clamp(n(raw.maxPicks || raw.count || d.maxPicks),1,3)),
+    steps:Math.round(clamp(n(raw.steps,d.steps),1,10)),
+    maxPicks:3,
     dayMode:String(raw.dayMode || d.dayMode) === 'tomorrow' ? 'tomorrow' : 'today',
     useRealOdds:raw.useRealOdds === false || raw.useRealOdds === 'no' ? false : true
   };
@@ -185,7 +185,7 @@ function saveSettingsFromUi(silent){
     stake:el('stake') ? el('stake').value : undefined,
     targetOdds:target,
     steps:el('steps') ? el('steps').value : undefined,
-    maxPicks:el('count') ? el('count').value : undefined,
+    maxPicks:3,
     dayMode:el('day') ? el('day').value : undefined,
     useRealOdds:el('useRealOdds') ? el('useRealOdds').value !== 'no' : true
   });
@@ -207,7 +207,6 @@ function loadSettingsIntoUi(s){
     el('odds').placeholder = 'ex. 1.30';
   }
   if(el('steps')) el('steps').value = s.steps;
-  if(el('count')) el('count').value = String(s.maxPicks || 3);
   if(el('day')) el('day').value = s.dayMode;
   if(el('useRealOdds')) el('useRealOdds').value = s.useRealOdds ? 'yes' : 'no';
 
@@ -217,7 +216,7 @@ function hideUnusedControls(){
   var count = el('count');
   if(count){
     var countWrap = count.closest('.pyr-field,.pyramid-field,div');
-    if(countWrap) countWrap.style.display = '';
+    if(countWrap) countWrap.style.display = 'none';
   }
 
   var profile = el('profile');
@@ -232,10 +231,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v8')) return;
+  if(D.getElementById('pyramid-daily-compact-v9')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v8';
+  style.id = 'pyramid-daily-compact-v9';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -1221,7 +1220,7 @@ function renderPicks(s){
 
     target.innerHTML =
       '<div class="pyramid-empty"><b>Introdu criterii pentru afișare.</b><br>' +
-      'Exemplu: completează câmpul Cotă țintă/pas cu 1.30, apoi AI afișează 1–3 evenimente potrivite.</div>';
+      'Exemplu: completează câmpul Cotă țintă/pas cu 1.30; AI alege automat cea mai smart variantă dintre 1–3 evenimente.</div>';
 
     hideInfoTexts();
     return;
@@ -1338,7 +1337,7 @@ function renderPlan(s){
       '</tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="pyramid-warn">AI afișează evenimente doar după criteriile introduse; combinația selectată urmărește cota țintă și evită corelările.</div>';
+    '<div class="pyramid-warn">AI afișează evenimente doar după criteriile introduse și alege automat cea mai smart variantă 1–3 evenimente.</div>';
 
   hideInfoTexts();
 }
@@ -1610,7 +1609,7 @@ function bind(){
     });
   }
 
-  ['stake','odds','steps','count','day','useRealOdds'].forEach(function(k){
+  ['stake','odds','steps','day','useRealOdds'].forEach(function(k){
     var node = el(k);
 
     if(node && !node.__pyrV8){
