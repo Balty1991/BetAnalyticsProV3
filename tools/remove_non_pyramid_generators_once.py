@@ -42,12 +42,14 @@ def remove_html_block_containing(html: str, marker: str) -> str:
         return html
     return html[:start] + html[end:]
 
-# 1) Remove visible non-pyramid ticket generator UI from SmartBet.
+# Remove the non-pyramid Unified Ticket Generator panel from SmartBet UI.
 index = ROOT / 'index.html'
 if index.exists():
     html = index.read_text(encoding='utf-8')
+    # First-pass marker before buttons were removed.
     html = remove_html_block_containing(html, 'Generator Bilet Unificat')
-    # Fallback: remove any leftover visible buttons that call generateUnifiedTicket.
+    # Second-pass marker after the title/buttons were removed but the empty output panel remained.
+    html = remove_html_block_containing(html, 'unified-ticket-output')
     html = re.sub(
         r'\n\s*<button\b(?=[^>]*onclick=["\'][^"\']*generateUnifiedTicket\([^"\']*["\'])[^>]*>[\s\S]*?<\/button>',
         '',
@@ -57,8 +59,7 @@ if index.exists():
     html = re.sub(r'\n{4,}', '\n\n\n', html)
     write_if_changed('index.html', html)
 
-# 2) Remove stale duplicate data/app.js if the public app does not reference it.
-# This file is not loaded by index.html and contains old generator/Cota2 code.
+# Remove stale duplicate data/app.js if the public app does not reference it.
 data_app = ROOT / 'data/app.js'
 if data_app.exists():
     refs = []
@@ -77,7 +78,7 @@ if data_app.exists():
         data_app.unlink()
         changed = True
 
-# 3) Keep pyramid runtime untouched and validate loaded app.js.
+# Keep pyramid runtime untouched and validate loaded app.js.
 app = ROOT / 'assets/app.js'
 if app.exists():
     result = subprocess.run(['node', '--check', 'assets/app.js'], cwd=ROOT, text=True, capture_output=True)
