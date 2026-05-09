@@ -189,7 +189,25 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add data/ index.html assets/app.js assets/hybrid_adaptive_runtime.js assets/performance-patch.js assets/prediction_history_runtime.js assets/pro_command_center.css assets/pro_command_center.js assets/pro_intelligence_runtime.js assets/clv_tracker_runtime.js assets/clv_card_guidance_runtime.js assets/smartbet_v2_integration.js build_adaptive_predictions.py build_prediction_type_history.py build_training_features.py build_training_model_pack.py build_model_quality.py build_model_benchmarks.py build_pro_intelligence.py build_wfv_validation.py build_clv_tracker.py build_clv_quality.py patch_clv_guidance_loader.py patch_over15_recovery_probe.py .github/workflows/fetch-data.yml .github/workflows/pro-intelligence.yml .gitignore
+
+          # Safe add: folosim folderele, nu listă rigidă de fișiere JS/CSS.
+          # Astfel workflow-ul nu mai pică dacă un asset auxiliar este șters intenționat.
+          git add -A data/ index.html assets/ \
+            build_adaptive_predictions.py \
+            build_prediction_type_history.py \
+            build_training_features.py \
+            build_training_model_pack.py \
+            build_model_quality.py \
+            build_model_benchmarks.py \
+            build_pro_intelligence.py \
+            build_wfv_validation.py \
+            build_clv_tracker.py \
+            build_clv_quality.py \
+            patch_clv_guidance_loader.py \
+            patch_over15_recovery_probe.py \
+            .github/workflows/fetch-data.yml \
+            .github/workflows/pro-intelligence.yml \
+            .gitignore
 
           if git diff --staged --quiet; then
             echo "No data changes detected. Skipping commit."
@@ -201,7 +219,7 @@ jobs:
             git rebase --abort
             git fetch origin main
             git reset --hard origin/main
-            git add data/ index.html
+            git add -A data/ index.html assets/
             git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC') [conflict-resolved]" || true
           }
           git push origin HEAD:main
