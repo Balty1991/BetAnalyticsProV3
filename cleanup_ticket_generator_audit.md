@@ -1,15 +1,13 @@
 # Ticket generator audit
 
 ## Summary
-- visible_generator_controls_count: 3
+- visible_generator_controls_count: 0
 - hidden_generator_controls_count: 0
 - generator_functions_count: 81
 - ticket_related_functions_count: 169
 
 ## Visible generator controls in index.html
-- L186: `🛡️ Generează Safe` — onclick: `generateUnifiedTicket(`
-- L187: `⚖️ Generează Echilibrat` — onclick: `generateUnifiedTicket(`
-- L188: `🚀 Generează Value` — onclick: `generateUnifiedTicket(`
+- none
 
 ## Hidden generator controls in index.html
 - none
@@ -139,7 +137,7 @@
 - `bet_tracking` in `data/app.js` L10339
 
 ## Likely visible generator functions
-- `generateUnifiedTicket`
+- none
 
 ## Likely code-only generator functions
 - `generateAiMemoryTicket`
@@ -164,6 +162,7 @@
 - `generateSinglePremiumTicket`
 - `generateTicket`
 - `generateTripleValueTicket`
+- `generateUnifiedTicket`
 - `handleGenerateAiMemoryTicket`
 - `handleGenerateAiMemoryTicketRelaxed`
 - `handleGenerateAuditTicket`

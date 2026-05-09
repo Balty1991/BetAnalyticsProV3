@@ -1,24 +1,5 @@
 {
-  "index_visible_generator_controls": [
-    {
-      "line": 186,
-      "text": "🛡️ Generează Safe",
-      "onclick": "generateUnifiedTicket(",
-      "html_preview": "<button class=\"btn\" style=\"background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.3);color:var(--grn);font-size:12px;padding:8px 14px\" onclick=\"generateUnifiedTicket('safe')\">🛡️ Generează Safe</button>"
-    },
-    {
-      "line": 187,
-      "text": "⚖️ Generează Echilibrat",
-      "onclick": "generateUnifiedTicket(",
-      "html_preview": "<button class=\"btn\" style=\"background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font-size:12px;padding:8px 14px\" onclick=\"generateUnifiedTicket('balanced')\">⚖️ Generează Echilibrat</button>"
-    },
-    {
-      "line": 188,
-      "text": "🚀 Generează Value",
-      "onclick": "generateUnifiedTicket(",
-      "html_preview": "<button class=\"btn\" style=\"background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.3);color:var(--yel);font-size:12px;padding:8px 14px\" onclick=\"generateUnifiedTicket('value')\">🚀 Generează Value</button>"
-    }
-  ],
+  "index_visible_generator_controls": [],
   "index_hidden_generator_controls": [],
   "index_ticket_related_ids": [
     {
@@ -26,11 +7,7 @@
       "id": "ticket-quickpeek"
     },
     {
-      "line": 190,
-      "id": "unified-ticket-output"
-    },
-    {
-      "line": 474,
+      "line": 461,
       "id": "pyramid-ticket-summary"
     }
   ],
@@ -1290,6 +1267,21 @@
   ],
   "js_generator_calls": [
     {
+      "file": "cleanup_ticket_generator_audit.md",
+      "line": 10,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.md",
+      "line": 11,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.md",
+      "line": 12,
+      "name": "generateUnifiedTicket"
+    },
+    {
       "file": "fix_ui_display.py",
       "line": 24,
       "name": "generate_api_history_summary"
@@ -1328,6 +1320,36 @@
       "file": "build_wfv_validation.py",
       "line": 223,
       "name": "generate_folds"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.json",
+      "line": 6,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.json",
+      "line": 7,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.json",
+      "line": 12,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.json",
+      "line": 13,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.json",
+      "line": 18,
+      "name": "generateUnifiedTicket"
+    },
+    {
+      "file": "cleanup_ticket_generator_audit.json",
+      "line": 19,
+      "name": "generateUnifiedTicket"
     },
     {
       "file": "feature_engineering.py",
@@ -2993,51 +3015,6 @@
       "file": "data/app.js",
       "line": 6399,
       "name": "renderTicketQuickPeek"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6405,
-      "name": "updateTicketIndicators"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6415,
-      "name": "clearCurrentTicket"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6416,
-      "name": "updateTicketIndicators"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6476,
-      "name": "quickAddMatchToTicket"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6480,
-      "name": "makeTicketPreview"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6481,
-      "name": "getStakeForTicket"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6482,
-      "name": "renderBilete"
-    },
-    {
-      "file": "data/app.js",
-      "line": 6483,
-      "name": "renderTicketQuickPeek"
-    },
-    {
-      "file": "data/app.js",
-      "line": 7103,
-      "name": "renderTicketQuickPeek"
     }
   ],
   "ticket_storage_keys": [
@@ -3238,16 +3215,11 @@
     }
   ],
   "summary": {
-    "visible_generator_controls_count": 3,
+    "visible_generator_controls_count": 0,
     "hidden_generator_controls_count": 0,
     "generator_functions_count": 81,
     "ticket_related_functions_count": 169,
-    "likely_visible_generators": [
-      {
-        "function": "generateUnifiedTicket",
-        "visible_onclick": true
-      }
-    ],
+    "likely_visible_generators": [],
     "likely_code_only_generators": [
       {
         "function": "generateAiMemoryTicket",
@@ -3335,6 +3307,10 @@
       },
       {
         "function": "generateTripleValueTicket",
+        "visible_onclick": false
+      },
+      {
+        "function": "generateUnifiedTicket",
         "visible_onclick": false
       },
       {
