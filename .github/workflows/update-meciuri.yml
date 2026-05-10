@@ -21,7 +21,7 @@ concurrency:
 jobs:
   update-meciuri:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,13 +41,17 @@ jobs:
         id: fetch_current
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: timeout 540s python fetch_data.py
+          PYTHONUNBUFFERED: '1'
+        run: |
+          echo "Starting fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          timeout 2400s python -u fetch_data.py
+          echo "Finished fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
       - name: Optional enrich
         id: enrich_current
         run: |
           if [ -f enrich_predictions.py ]; then
-            timeout 120s python enrich_predictions.py || echo "Optional enrich skipped or timed out; non-fatal."
+            timeout 300s python -u enrich_predictions.py || echo "Optional enrich skipped or timed out; non-fatal."
           fi
 
       - name: Update meta marker
