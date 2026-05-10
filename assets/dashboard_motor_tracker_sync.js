@@ -49,16 +49,6 @@
       }
     });
   }
-  function cleanupIstoric21(){
-    var tab=document.getElementById('tab-istoric21');if(!tab)return;
-    var targets={'SANSA DUBLA':1,'VALIDATE MOTOR':1};
-    [].slice.call(tab.querySelectorAll('.history-summary-card')).forEach(function(card){
-      var label=up((card.querySelector('.history-summary-label')||card).textContent||'');
-      if(targets[label])card.classList.add('ba-user-hidden');else card.classList.remove('ba-user-hidden');
-    });
-    var active=document.querySelector('#tab-istoric21 .history-summary-card.active.ba-user-hidden');
-    if(active){var first=[].slice.call(tab.querySelectorAll('.history-summary-card')).find(function(c){return !c.classList.contains('ba-user-hidden')});if(first){try{first.click()}catch(e){}}}
-  }
 
   /* ─── FIX: cleanText strips emoji before matching; controlButtons
      guards against help-chip buttons and anything inside a match card ─── */
@@ -148,7 +138,7 @@
     }catch(e){}
   }
 
-  function patch(){addCss();clearOldMeciuriPremiumControls();cleanupIstoric21();var s=trackerSummary();if(s)patchDashboard(s)}
+  function patch(){addCss();clearOldMeciuriPremiumControls();var s=trackerSummary();if(s)patchDashboard(s)}
   function boot(){patch();[100,350,800,1600,3200,5200,9000].forEach(function(t){setTimeout(patch,t)});setInterval(patch,600);try{new MutationObserver(function(){clearTimeout(window.__baMotorTrackerSyncT);window.__baMotorTrackerSyncT=setTimeout(patch,45)}).observe(document.body,{childList:true,subtree:true,characterData:true})}catch(e){}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
