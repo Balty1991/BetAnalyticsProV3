@@ -1814,6 +1814,130 @@ def _build_polymarket_signal_from_raw_rows(event_id_int, rows):
 
     return best[1] if best else None
 
+
+def _normalise_pm_price_to_pct(value):
+    """Acceptă atât preț 0-1, procent 0-100, decimal odds sau dict cu câmpuri comune."""
+    try:
+        if isinstance(value, dict):
+            for key in (
+                "probability", "prob", "price", "last_price", "yes_price", "no_price",
+                "implied_probability", "implied_prob", "implied", "value"
+            ):
+                if key in value and value.get(key) is not None:
+                    return _normalise_pm_price_to_pct(value.get(key))
+            odd = value.get("decimal_odds") or value.get("decimal") or value.get("odds")
+            if odd is not None:
+                odd = float(odd)
+                if math.isfinite(odd) and odd > 1.01:
+                    return 100.0 / odd
+            return None
+        n = float(value)
+        if not math.isfinite(n) or n <= 0:
+            return None
+        # Polymarket folosește de obicei 0-1. Unele endpoint-uri pot trimite deja procent.
+        if n <= 1.0:
+            return n * 100.0
+        if n <= 100.0:
+            return n
+        # Dacă vine accidental cotă decimală mare, o transformăm defensiv.
+        if n > 100.0:
+            return 100.0 / n if n > 1.01 else None
+    except Exception:
+        return None
+    return None
+
+
+def _row_api_prob_for_polymarket(row, market_name, outcome_code, outcome_name=None):
+    """Probabilitatea modelului intern pentru aceeași piață/outcome ca Polymarket."""
+    market = str(market_name or "").strip().lower()
+    outcome = str(outcome_code or outcome_name or "").strip().lower()
+    try:
+        if market in {"1x2", "match_winner", "winner"}:
+            if outcome in {"home", "1", "home_win"}:
+                return pct(row.get("prob_home_win"))
+            if outcome in {"draw", "x"}:
+                return pct(row.get("prob_draw"))
+            if outcome in {"away", "2", "away_win"}:
+                return pct(row.get("prob_away_win"))
+        if market in {"btts", "both_teams_to_score"}:
+            if outcome in {"yes", "y", "btts_yes", "gg"}:
+                return pct(row.get("prob_btts_yes"))
+            if outcome in {"no", "n", "btts_no", "ng"}:
+                return 100.0 - pct(row.get("prob_btts_yes"))
+        if market.startswith("over_under_"):
+            suffix = market.replace("over_under_", "").replace("_goals", "")
+            prob_key = None
+            if suffix in {"15", "1_5", "1.5"}:
+                prob_key = "prob_over_15"
+            elif suffix in {"25", "2_5", "2.5"}:
+                prob_key = "prob_over_25"
+            elif suffix in {"35", "3_5", "3.5"}:
+                prob_key = "prob_over_35"
+            if prob_key:
+                over_prob = pct(row.get(prob_key))
+                if outcome in {"over", "o"}:
+                    return over_prob
+                if outcome in {"under", "u"}:
+                    return 100.0 - over_prob
+    except Exception:
+        return None
+    return None
+
+
+def _fetch_polymarket_signal_direct(event_id_int, row):
+    """
+    Fallback identic ca safe-backup: folosește endpoint-ul dedicat
+    /api/v2/events/{id}/polymarket/ când raw /odds nu conține sursa Polymarket.
+    Fără acest fallback UI-ul are codul de afișare, dar primește numai valori None.
+    """
+    try:
+        event_id_int = int(event_id_int)
+    except Exception:
+        return None
+    try:
+        pm_url = f"{V2_BASE}/events/{event_id_int}/polymarket/"
+        r = requests.get(pm_url, headers=HEADERS, timeout=10)
+        if r.status_code in (400, 404, 405):
+            return None
+        r.raise_for_status()
+        pm_data = r.json()
+    except Exception as e:
+        print(f"[Polymarket] direct fetch failed for event {event_id_int} (non-fatal): {e}")
+        return None
+
+    markets_pm = None
+    if isinstance(pm_data, dict):
+        markets_pm = pm_data.get("markets") or pm_data.get("results") or pm_data.get("data")
+    if not isinstance(markets_pm, dict):
+        return None
+
+    best = None
+    best_abs = 0.0
+    for mk, outcomes in markets_pm.items():
+        if not isinstance(outcomes, dict):
+            continue
+        for outcome_code, pm_price in outcomes.items():
+            pm_prob = _normalise_pm_price_to_pct(pm_price)
+            if pm_prob is None or not math.isfinite(pm_prob) or pm_prob <= 0:
+                continue
+            api_prob = _row_api_prob_for_polymarket(row, mk, outcome_code)
+            if api_prob is None or not math.isfinite(api_prob) or api_prob <= 0:
+                continue
+            div = round(pm_prob - float(api_prob), 2)
+            if abs(div) > best_abs:
+                best_abs = abs(div)
+                best = {
+                    "polymarket_signal": "PM_BULLISH" if div > 0 else "PM_BEARISH",
+                    "polymarket_divergence": div,
+                    "polymarket_market": f"{mk}_{outcome_code}",
+                    "polymarket_probability": round(pm_prob, 2),
+                    "bookmakers_probability": round(float(api_prob), 2),
+                    "bookmakers_count": None,
+                }
+    if best and best_abs >= 6.0:
+        return best
+    return None
+
 def _fetch_raw_odds_snapshot(event_id_int):
     # v2: /api/v2/odds/?event_id=X — rows per (event, bookmaker, market, outcome)
     # Returnează bookmaker_slug, movement (SHORTENING/DRIFTING), implied_probability
@@ -3219,7 +3343,14 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
         pm_signal = None
         if event_id:
             try:
-                pm_signal = POLYMARKET_SIGNAL_CACHE.get(int(event_id))
+                eid_int = int(event_id)
+                pm_signal = POLYMARKET_SIGNAL_CACHE.get(eid_int)
+                # VEYRA pierdea badge-ul deoarece raw /odds nu mai returna Polymarket.
+                # Revenim la fallback-ul din Safe-backup, dar îl cache-uim pe event.
+                if not pm_signal:
+                    pm_signal = _fetch_polymarket_signal_direct(eid_int, row)
+                    if pm_signal:
+                        POLYMARKET_SIGNAL_CACHE[eid_int] = pm_signal
             except Exception:
                 pm_signal = None
         if pm_signal:
