@@ -128,10 +128,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
       <span class="more-card-title">🔬 Analiză ML5</span>
       <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Top picks cu breakdown complet.</span>
     </button>
-    <button class="more-card-btn" onclick="switchTab('istoric21')">
-      <span class="more-card-title">📊 Istoric</span>
-      <span class="more-card-sub">Monitorizare per categorie: ROI, WR, Edge pe 7 zile / săptămâni / lună / an.</span>
-    </button>
 <button class="more-card-btn" onclick="switchTab('smartbet')">
       <span class="more-card-title">🎯 Motor de Predicții Unificat</span>
       <span class="more-card-sub">Kelly + AI Memory + SmartBet — cel mai bun din 3 motoare, un singur scor.</span>
@@ -511,34 +507,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     </div>
   </div>
 
-
-  
-
-  <div class="tab-content" id="tab-istoric21">
-    <div class="section" style="margin-bottom:12px">
-      <div class="sec-hdr">
-        <div class="sec-title">📊 Istoric Meciuri</div>
-        <div style="font-size:11px;color:var(--muted)">monitorizare per categorie · date reale din recomandările motorului</div>
-      </div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px">Statistici complete pentru fiecare categorie din tab-ul Meciuri: <b>Toate · ⭐ Top · 🔥 O1.5 · 📈 O2.5 · 🤝 BTTS · 🧊 U3.5 · 💰 Value</b>. Selectează perioada, apasă pe o categorie pentru a vedea meciurile W/L.</div>
-    </div>
-    <div id="history21-root">
-      <div class="history21-shell-placeholder" aria-hidden="true">
-        <div class="history21-shell-grid">
-          <div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
-          <div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
-          <div class="boot-skeleton-card"><div class="boot-skeleton-kicker skeleton-shimmer"></div><div class="boot-skeleton-value skeleton-shimmer"></div><div class="boot-skeleton-line skeleton-shimmer"></div></div>
-        </div>
-        <div class="history21-shell-detail">
-          <div class="boot-skeleton-title skeleton-shimmer"></div>
-          <div class="boot-skeleton-line skeleton-shimmer"></div>
-          <div class="boot-skeleton-line short skeleton-shimmer"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
   <!-- end tab-charts -->
 
   <!-- ===== CLV TRACKER ===== -->
@@ -574,7 +542,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
   <button class="mobile-sheet-btn" onclick="switchTab('piramida');closeMobileMore()"><span class="sheet-btn-title">🧗 Piramidă Daily</span><small class="sheet-btn-sub">Reinvestire în etape</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('istoric21');closeMobileMore()"><span class="sheet-btn-title">📊 Istoric</span><small class="sheet-btn-sub">Monitorizare per categorie · ROI · WR · Edge · pe perioade selectabile</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
@@ -585,7 +552,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 
 
   <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
-  <script src="./assets/historic_meciuri_tracker.js?v=20260501hist1" defer></script>
   <script src="./assets/clv_tracker_runtime.js?v=20260429clv1" defer></script>
   <script>
   // Actualizeaza ora ultimei sincronizari in header
