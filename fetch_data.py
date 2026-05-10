@@ -35,6 +35,7 @@ RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
+POLYMARKET_SIGNAL_CACHE: Dict[int, Dict[str, Any]] = {}
 
 
 def load_referee_stats() -> Dict[int, Any]:
@@ -1688,6 +1689,131 @@ def _parse_raw_odds_snapshot(data):
     return snapshot
 
 
+
+def _normalise_market_label_for_pm(market_name, outcome_code, outcome_name):
+    market = str(market_name or "").strip().lower()
+    outcome = str(outcome_code or outcome_name or "").strip().lower()
+    if market == "btts":
+        if outcome in {"yes", "y", "btts yes", "gg"}:
+            return "btts_yes"
+        if outcome in {"no", "n", "btts no", "ng"}:
+            return "btts_no"
+    if market == "1x2":
+        if outcome in {"home", "1"}:
+            return "home_win"
+        if outcome in {"draw", "x"}:
+            return "draw"
+        if outcome in {"away", "2"}:
+            return "away_win"
+    if market.startswith("over_under_"):
+        suffix = market.replace("over_under_", "").replace("_goals", "")
+        if outcome in {"over", "o"}:
+            return f"over_{suffix}_goals"
+        if outcome in {"under", "u"}:
+            return f"under_{suffix}_goals"
+    return "_".join([x for x in [market, outcome] if x]).strip("_") or None
+
+
+def _row_is_polymarket(row):
+    bits = [
+        row.get("bookmaker_slug"),
+        row.get("bookmaker_name"),
+        row.get("bookmaker"),
+        row.get("bookmaker_code"),
+        row.get("source"),
+        row.get("provider"),
+    ]
+    blob = " ".join(str(x or "") for x in bits).lower()
+    return "polymarket" in blob or blob.strip() == "poly" or " poly " in f" {blob} "
+
+
+def _implied_pct_from_row(row):
+    # Preferăm implied_probability dacă API-ul îl furnizează; altfel calculăm din cota decimală.
+    ip = row.get("implied_probability")
+    try:
+        if ip is not None:
+            n = float(ip)
+            if math.isfinite(n) and n > 0:
+                return n * 100.0 if n <= 1.0 else n
+    except Exception:
+        pass
+    odd = _safe_float(row.get("decimal_odds") or row.get("decimal"))
+    if odd and odd > 1.01:
+        return 100.0 / odd
+    return None
+
+
+def _build_polymarket_signal_from_raw_rows(event_id_int, rows):
+    """
+    Construiește semnalul Polymarket fără request separat.
+    Refolosește rândurile deja trase din /api/v2/odds/?event_id=... ca să nu încetinească workflow-ul.
+    Semnal = probabilitatea implicită Polymarket minus media probabilităților implicite non-Polymarket.
+    """
+    if not isinstance(rows, list) or not rows:
+        return None
+
+    grouped = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        label = _normalise_market_label_for_pm(
+            row.get("market"),
+            row.get("outcome"),
+            row.get("outcome_name"),
+        )
+        if not label:
+            continue
+        implied = _implied_pct_from_row(row)
+        if implied is None or not math.isfinite(implied) or implied <= 0:
+            continue
+        bucket = grouped.setdefault(label, {"pm": [], "book": []})
+        if _row_is_polymarket(row):
+            bucket["pm"].append(implied)
+        else:
+            bucket["book"].append(implied)
+
+    # Piețele pe care vrem să le afișăm în UI; BTTS primește prioritate pentru interpretare clară.
+    preferred_order = {
+        "btts_yes": 0,
+        "btts_no": 1,
+        "under_35_goals": 2,
+        "over_25_goals": 3,
+        "under_25_goals": 4,
+        "over_15_goals": 5,
+        "home_win": 6,
+        "away_win": 7,
+        "draw": 8,
+    }
+
+    best = None
+    for label, vals in grouped.items():
+        pm_vals = vals.get("pm") or []
+        book_vals = vals.get("book") or []
+        # Avem nevoie de cel puțin Polymarket + minim 2 bookmakere ca diferența să fie utilă.
+        if not pm_vals or len(book_vals) < 2:
+            continue
+        pm_avg = sum(pm_vals) / len(pm_vals)
+        book_avg = sum(book_vals) / len(book_vals)
+        divergence = pm_avg - book_avg
+        if not math.isfinite(divergence):
+            continue
+        # Filtru anti-zgomot: sub 5pp nu merită afișat pe card.
+        if abs(divergence) < 5.0:
+            continue
+        score = abs(divergence) * 10.0 - preferred_order.get(label, 20)
+        candidate = {
+            "polymarket_signal": "optimistic" if divergence > 0 else "pessimistic",
+            "polymarket_divergence": round(divergence, 2),
+            "polymarket_market": label,
+            "polymarket_probability": round(pm_avg, 2),
+            "bookmakers_probability": round(book_avg, 2),
+            "bookmakers_count": len(book_vals),
+        }
+        if best is None or score > best[0]:
+            best = (score, candidate)
+
+    return best[1] if best else None
+
 def _fetch_raw_odds_snapshot(event_id_int):
     # v2: /api/v2/odds/?event_id=X — rows per (event, bookmaker, market, outcome)
     # Returnează bookmaker_slug, movement (SHORTENING/DRIFTING), implied_probability
@@ -1714,7 +1840,13 @@ def _fetch_raw_odds_snapshot(event_id_int):
         else:
             break
     if not all_rows:
+        POLYMARKET_SIGNAL_CACHE[event_id_int] = None
         return {}
+    try:
+        POLYMARKET_SIGNAL_CACHE[event_id_int] = _build_polymarket_signal_from_raw_rows(event_id_int, all_rows)
+    except Exception as e:
+        print(f"[Polymarket] parse failed for event {event_id_int} (non-fatal): {e}")
+        POLYMARKET_SIGNAL_CACHE[event_id_int] = None
     return _parse_raw_odds_snapshot({"odds": all_rows})
 
 
@@ -3080,13 +3212,30 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
             row["away_starters"]   = []
         # ───────────────────────────────────────────────────────────────────
         # ─── Polymarket signal ─────────────────────────────────────────────
-        # Dezactivat intenționat pentru rularea rapidă a workflow-ului.
-        # Endpoint-ul v2 /events/{id}/polymarket/ returnează 404 pentru majoritatea
-        # evenimentelor curente, iar fetch_url îl reîncearcă de 3 ori pentru fiecare
-        # meci. Asta blochează actualizarea 15-25 minute fără să aducă date utile.
-        row["polymarket_signal"] = None
-        row["polymarket_divergence"] = None
-        row["polymarket_market"] = None
+        # Reparat fără endpoint separat /polymarket/ ca să nu blocăm workflow-ul.
+        # Semnalul este calculat din cache-ul /api/v2/odds/?event_id=... populat
+        # deja în enrich_predictions_with_market_odds(). Dacă API-ul nu trimite
+        # Polymarket pentru evenimentul curent, câmpurile rămân None și UI nu afișează badge.
+        pm_signal = None
+        if event_id:
+            try:
+                pm_signal = POLYMARKET_SIGNAL_CACHE.get(int(event_id))
+            except Exception:
+                pm_signal = None
+        if pm_signal:
+            row["polymarket_signal"] = pm_signal.get("polymarket_signal")
+            row["polymarket_divergence"] = pm_signal.get("polymarket_divergence")
+            row["polymarket_market"] = pm_signal.get("polymarket_market")
+            row["polymarket_probability"] = pm_signal.get("polymarket_probability")
+            row["bookmakers_probability"] = pm_signal.get("bookmakers_probability")
+            row["polymarket_bookmakers_count"] = pm_signal.get("bookmakers_count")
+        else:
+            row["polymarket_signal"] = None
+            row["polymarket_divergence"] = None
+            row["polymarket_market"] = None
+            row["polymarket_probability"] = None
+            row["bookmakers_probability"] = None
+            row["polymarket_bookmakers_count"] = None
 
         # ─── Funfacts pre-meci ─────────────────────────────────────────────
         if event_id:
