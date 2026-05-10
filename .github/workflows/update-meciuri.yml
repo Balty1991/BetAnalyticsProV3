@@ -21,7 +21,7 @@ concurrency:
 jobs:
   update-meciuri:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,28 +41,19 @@ jobs:
         id: fetch_current
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: timeout 360s python fetch_data.py
-        continue-on-error: true
+        run: timeout 540s python fetch_data.py
 
       - name: Optional enrich
         id: enrich_current
         run: |
-          if [ -f enrich_predictions.py ]; then timeout 120s python enrich_predictions.py; fi
-        continue-on-error: true
-
-      - name: Optional recent index
-        id: index_current
-        env:
-          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
-        run: |
-          if [ -f build_api_events_index.py ]; then timeout 120s python build_api_events_index.py; fi
-        continue-on-error: true
+          if [ -f enrich_predictions.py ]; then
+            timeout 120s python enrich_predictions.py || echo "Optional enrich skipped or timed out; non-fatal."
+          fi
 
       - name: Update meta marker
         env:
           FETCH_STATUS: ${{ steps.fetch_current.outcome }}
           ENRICH_STATUS: ${{ steps.enrich_current.outcome }}
-          INDEX_STATUS: ${{ steps.index_current.outcome }}
         run: |
           python - <<'PY'
           import json, os
@@ -83,7 +74,7 @@ jobs:
           meta['workflow_results'] = {
               'fetch_data': os.environ.get('FETCH_STATUS', 'unknown'),
               'enrich_predictions': os.environ.get('ENRICH_STATUS', 'unknown'),
-              'build_api_events_index': os.environ.get('INDEX_STATUS', 'unknown')
+              'build_api_events_index': 'skipped_in_fast_update'
           }
           meta['status'] = 'ok' if meta['workflow_results']['fetch_data'] == 'success' else 'fetch_data_failed_or_timeout'
           path.write_text(json.dumps(meta, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
