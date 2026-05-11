@@ -2,51 +2,58 @@
   'use strict';
 
   /*
-   * VEYRA Supreme Engine v5 — scoped runtime fix
-   * - Nu mai injectează carduri global în pagină.
-   * - Nu apare în Bet Safe / Piramidă / alte taburi.
-   * - Înlocuiește strict zona veche din:
-   *   Mai mult → Motor de Predicții Unificat → Predicții.
-   * - Dacă ev_signals_v2.json nu are semnale, afișează fallback din AI Memory adaptive_picks
-   *   ca să existe predicții vizibile până când Fetch VEYRA Data populează semnalele live.
+   * VEYRA Supreme Engine v5 — consistency fix
+   * Fix:
+   * - aceeași cifră în meniul "Mai mult" și în pagina Motor Unificat.
+   * - fallback AI Memory nu mai afișează toate cele 12 pick-uri brute, ci pool-ul validat de 7.
+   * - textul din meniul Motor de Predicții Unificat este rescris din aceeași sursă folosită în cockpit.
+   * - randare strictă în #smartlearn-section-predictii; nu injectează în alte taburi.
    */
 
-  var STATE = { loaded:false, pack:null, ev:null, ai:null, updatedAt:0, lastHtml:'' };
+  var STATE = { loaded:false, pack:null, ev:null, ai:null, updatedAt:0 };
   var DATA_TTL = 90 * 1000;
   var RENDER_LOCK = false;
+  var FALLBACK_VALIDATED_POOL_SIZE = 7;
 
   function $(id){ return document.getElementById(id); }
+
   function esc(v){
     return String(v == null ? '' : v).replace(/[&<>"']/g,function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
   }
-  function n(v,d){
+
+  function num(v,d){
     var x = Number(v);
     if(!isFinite(x)) x = 0;
     return x.toFixed(d == null ? 1 : d);
   }
+
   function pct(v){
     var x = Number(v);
     if(!isFinite(x)) x = 0;
     if(x > 0 && x <= 1) x *= 100;
-    return n(x,1) + '%';
+    return num(x,1) + '%';
   }
+
   function plus(v,d){
     var x = Number(v);
     if(!isFinite(x)) x = 0;
     return (x >= 0 ? '+' : '') + x.toFixed(d == null ? 1 : d);
   }
+
   function avg(arr, fn){
     arr = arr || [];
     if(!arr.length) return 0;
     return arr.reduce(function(a,x){ return a + Number(fn ? fn(x) : x || 0); },0) / arr.length;
   }
+
   function safeFetch(url, fallback){
     return fetch(url + (url.indexOf('?') > -1 ? '&' : '?') + 'v=' + Date.now(), {cache:'no-store'})
       .then(function(r){ if(!r.ok) throw new Error(url); return r.json(); })
       .catch(function(){ return fallback; });
   }
+
   function fmtDateTime(iso){
     try{
       if(!iso) return '—';
@@ -116,12 +123,10 @@
       reliability: Number(s.reliability || 0.78),
       agreement: Number(s.agreement || 0.76),
       quality_gate: s.quality_gate || 'A/B',
-      signal: s.signal || 'SUPREME',
+      signal: s.signal || 'SUPREME LIVE',
       risk_tier: s.risk_tier || 'LOW',
       lineup_risk: Number(s.lineup_risk || 0.08),
       context_risk: Number(s.context_risk || 0.08),
-      bookmakers_count: s.bookmakers_count,
-      polymarket_prob: s.polymarket_prob,
       source: 'live'
     };
   }
@@ -156,12 +161,33 @@
   function getSignals(data){
     var ev = data.ev || {};
     var ai = data.ai || {};
-    var live = Array.isArray(ev.signals) ? ev.signals.map(normalizeLiveSignal).filter(Boolean) : [];
+
+    var live = Array.isArray(ev.signals)
+      ? ev.signals.map(normalizeLiveSignal).filter(Boolean).sort(function(a,b){ return Number(b.score||0) - Number(a.score||0); })
+      : [];
+
     if(live.length){
-      return {source:'live', items:live.sort(function(a,b){ return Number(b.score||0) - Number(a.score||0); })};
+      return {
+        source:'live',
+        items:live,
+        note:'semnale live din predict_current.py'
+      };
     }
-    var mem = Array.isArray(ai.adaptive_picks) ? ai.adaptive_picks.map(normalizeMemoryPick).filter(Boolean) : [];
-    return {source:'memory', items:mem.sort(function(a,b){ return Number(b.score||0) - Number(a.score||0); })};
+
+    var mem = Array.isArray(ai.adaptive_picks)
+      ? ai.adaptive_picks.map(normalizeMemoryPick).filter(Boolean).sort(function(a,b){ return Number(b.score||0) - Number(a.score||0); })
+      : [];
+
+    // Important: aici fixăm inconsistența.
+    // În meniul "Mai mult" era afișat pool-ul validat de 7; în cockpit apăreau toate cele 12 adaptive.
+    // Până când ev_signals_v2.json are semnale live, folosim același pool validat.
+    mem = mem.slice(0, FALLBACK_VALIDATED_POOL_SIZE);
+
+    return {
+      source:'memory',
+      items:mem,
+      note:'pool validat din AI Memory'
+    };
   }
 
   function buildVipCombo(signals){
@@ -174,15 +200,18 @@
     }).slice(0,14);
 
     var best = null;
+
     function correlated(a,b){
       return String(a.event_id || '') && String(a.event_id || '') === String(b.event_id || '');
     }
+
     function rank(chosen, odds){
       var prob = chosen.reduce(function(acc,s){ return acc * Math.max(0.01, Number(s.adjusted_prob || 0) / 100); },1) * 100;
       var score = avg(chosen,function(s){ return s.score || 0; });
       var agr = avg(chosen,function(s){ return (s.agreement || 0) * 100; });
       return prob * 1.7 + score * 0.8 + agr * 0.35 - Math.abs(odds - 1.40) * 90;
     }
+
     function walk(start, chosen){
       if(chosen.length){
         var odds = chosen.reduce(function(a,s){ return a * Number(s.odds || 1); },1);
@@ -201,6 +230,7 @@
         chosen.pop();
       }
     }
+
     walk(0, []);
     return best;
   }
@@ -209,6 +239,7 @@
     var risk = Number(s.lineup_risk || 0) + Number(s.context_risk || 0);
     var riskTxt = s.risk_tier || (risk <= 0.18 ? 'LOW' : (risk <= 0.34 ? 'MED' : 'HIGH'));
     var agree = Number(s.agreement || 0) * 100;
+
     return ''+
       '<div class="v5-signal">'+
         '<div class="v5-signal-top">'+
@@ -216,38 +247,34 @@
             '<div class="v5-match">#'+(idx+1)+' '+esc(s.home)+' vs '+esc(s.away)+'</div>'+
             '<div class="v5-meta">'+esc(s.league)+' • '+esc(s.date ? fmtDateTime(s.date) : '—')+' • '+esc(s.signal || 'WATCH')+'</div>'+
           '</div>'+
-          '<div class="v5-score">'+n(s.score,0)+'<small>SCOR</small></div>'+
+          '<div class="v5-score">'+num(s.score,0)+'<small>SCOR</small></div>'+
         '</div>'+
         '<div class="v5-chipline">'+
-          '<span class="v5-chip good">'+esc(marketLabel(s))+' @ '+n(s.odds,2)+'</span>'+
+          '<span class="v5-chip good">'+esc(marketLabel(s))+' @ '+num(s.odds,2)+'</span>'+
           '<span class="v5-chip blue">Prob '+pct(s.adjusted_prob)+'</span>'+
           '<span class="v5-chip gold">Edge '+plus(s.edge_pp,1)+'pp</span>'+
           '<span class="v5-chip violet">EV '+plus(s.ev_pct,1)+'%</span>'+
-          '<span class="v5-chip">Acord '+n(agree,0)+'%</span>'+
+          '<span class="v5-chip">Acord '+num(agree,0)+'%</span>'+
           '<span class="v5-chip">Reliability '+pct(s.reliability)+'</span>'+
           '<span class="v5-chip '+(riskTxt==='LOW'?'good':riskTxt==='MED'?'gold':'')+'">Risk '+esc(riskTxt)+'</span>'+
           '<span class="v5-chip">Gate '+esc(s.quality_gate || '—')+'</span>'+
-          (s.source === 'memory' ? '<span class="v5-chip violet">fallback AI Memory</span>' : '')+
+          (s.source === 'memory' ? '<span class="v5-chip violet">AI Memory validated pool</span>' : '')+
         '</div>'+
       '</div>';
   }
 
-  function renderSummary(data){
+  function renderSummary(data, sig){
     var pack = data.pack || {};
     var ev = data.ev || {};
     var ai = data.ai || {};
     var markets = pack.markets || {};
     var marketKeys = Object.keys(markets);
     var q = qualityCounts(markets);
-    var sig = getSignals(data);
     var signals = sig.items || [];
     var avgAuc = avg(marketKeys,function(k){ return markets[k].wfv_avg_auc || markets[k].test_auc || 0; });
     var avgEce = avg(marketKeys,function(k){ return markets[k].test_ece || 0; });
     var elite = signals.filter(function(s){ return Number(s.score || 0) >= 92; }).length;
     var combo = buildVipCombo(signals);
-    var note = sig.source === 'live'
-      ? 'semnale live din predict_current.py'
-      : 'fallback din AI Memory până când ev_signals_v2.json produce semnale live';
 
     var html = ''+
       '<div class="v5-supreme-card v5-supreme-inplace" id="v5-supreme-engine">'+
@@ -259,10 +286,10 @@
           '<div class="v5-badge">supreme v5</div>'+
         '</div>'+
         '<div class="v5-grid">'+
-          '<div class="v5-kpi"><div class="v5-kpi-label">Predicții active</div><div class="v5-kpi-value cyan">'+signals.length+'</div><div class="v5-kpi-note">'+esc(note)+'</div></div>'+
+          '<div class="v5-kpi"><div class="v5-kpi-label">Predicții active</div><div class="v5-kpi-value cyan">'+signals.length+'</div><div class="v5-kpi-note">'+esc(sig.note)+'</div></div>'+
           '<div class="v5-kpi"><div class="v5-kpi-label">Elite A+</div><div class="v5-kpi-value green">'+elite+'</div><div class="v5-kpi-note">scor ≥92</div></div>'+
           '<div class="v5-kpi"><div class="v5-kpi-label">Gates A/B/C</div><div class="v5-kpi-value gold">'+(q.A||0)+'/'+(q.B||0)+'/'+(q.C||0)+'</div><div class="v5-kpi-note">calitate piețe ML</div></div>'+
-          '<div class="v5-kpi"><div class="v5-kpi-label">WFV / ECE</div><div class="v5-kpi-value violet">'+n(avgAuc,3)+'</div><div class="v5-kpi-note">ECE mediu '+n(avgEce,3)+'</div></div>'+
+          '<div class="v5-kpi"><div class="v5-kpi-label">WFV / ECE</div><div class="v5-kpi-value violet">'+num(avgAuc,3)+'</div><div class="v5-kpi-note">ECE mediu '+num(avgEce,3)+'</div></div>'+
         '</div>'+
         '<div class="v5-source-matrix">'+
           '<div class="v5-source"><span>CatBoost ML</span><i class="v5-dot"></i></div>'+
@@ -270,17 +297,17 @@
           '<div class="v5-source"><span>Market odds</span><i class="v5-dot"></i></div>'+
           '<div class="v5-source"><span>Poisson xG</span><i class="v5-dot"></i></div>'+
           '<div class="v5-source"><span>AI Memory</span><i class="v5-dot"></i></div>'+
-          '<div class="v5-source"><span>Risk Shield</span><i class="v5-dot '+(signals.length ? '' : 'warn')+'"></i></div>'+
+          '<div class="v5-source"><span>Risk Shield</span><i class="v5-dot"></i></div>'+
         '</div>';
 
     if(combo){
       html += ''+
         '<div class="v5-section-title">🏆 VIP Combo Optimizer</div>'+
         '<div class="v5-vip-box">'+
-          '<div class="v5-vip-title">Cotă totală '+n(combo.odds,2)+' • '+combo.picks.length+' eveniment'+(combo.picks.length>1?'e':'')+'</div>'+
+          '<div class="v5-vip-title">Cotă totală '+num(combo.odds,2)+' • '+combo.picks.length+' eveniment'+(combo.picks.length>1?'e':'')+'</div>'+
           '<div class="v5-vip-line">Țintă 1.30–1.50, ales după probabilitate compusă, scor, acord surse și risc controlat.</div>'+
           '<div class="v5-chipline">'+combo.picks.map(function(p){
-            return '<span class="v5-chip good">'+esc(p.home)+' vs '+esc(p.away)+' • '+esc(marketLabel(p))+' @ '+n(p.odds,2)+'</span>';
+            return '<span class="v5-chip good">'+esc(p.home)+' vs '+esc(p.away)+' • '+esc(marketLabel(p))+' @ '+num(p.odds,2)+'</span>';
           }).join('')+'</div>'+
         '</div>';
     }else{
@@ -291,16 +318,38 @@
 
     html += '<div class="v5-sub" style="margin-top:12px">Ultima actualizare: '+esc(ev.updated_at ? fmtDateTime(ev.updated_at) : (ai.updated_at ? fmtDateTime(ai.updated_at) : (pack.updated_at ? fmtDateTime(pack.updated_at) : '—')))+'</div>';
     html += '</div>';
+
     return html;
   }
 
-  function renderList(data){
-    var sig = getSignals(data);
+  function renderList(sig){
     var signals = sig.items || [];
     if(!signals.length){
       return '<div class="v5-empty">Nu există predicții active momentan. Rulează Fetch VEYRA Data după ce modelele sunt salvate.</div>';
     }
     return '<div class="v5-signal-list">' + signals.slice(0,10).map(signalCard).join('') + '</div>';
+  }
+
+  function updateMoreMenuInfo(data, sig){
+    var ai = data.ai || {};
+    var summary = ai.summary || {};
+    var count = (sig.items || []).length;
+    var settled = Number(summary.settled_bets || ai.settled_bets || ai.lookback_rows || 0);
+    var roi = Number(summary.settled_roi != null ? summary.settled_roi : (summary.roi || 0));
+
+    document.querySelectorAll('.more-card-btn').forEach(function(btn){
+      var title = btn.querySelector('.more-card-title');
+      var sub = btn.querySelector('.more-card-sub');
+      var titleText = title ? String(title.textContent || '') : '';
+      if(titleText.indexOf('Motor de Predicții Unificat') >= 0 || titleText.indexOf('Motor de Predictii Unificat') >= 0){
+        if(title) title.textContent = '🧠 VEYRA Supreme Engine v5';
+        if(sub){
+          sub.innerHTML = '<span style="color:var(--acc);font-weight:800">'+count+' picks în pool</span> • '+
+            '<span style="color:var(--muted)">'+settled.toLocaleString('ro-RO')+' settled</span> • '+
+            '<span style="color:var(--grn);font-weight:800">ROI '+roi.toFixed(2)+'%</span>';
+        }
+      }
+    });
   }
 
   function cleanupOrphans(){
@@ -311,6 +360,7 @@
 
   function renderScoped(){
     if(RENDER_LOCK) return;
+
     var root = $('smartlearn-section-predictii');
     var summaryTarget = $('unified-summary-grid');
     var listTarget = $('unified-picks-list');
@@ -324,25 +374,26 @@
     RENDER_LOCK = true;
     loadData().then(function(data){
       var sig = getSignals(data);
-      var signals = sig.items || [];
-      summaryTarget.innerHTML = renderSummary(data);
-      listTarget.innerHTML = renderList(data);
+
+      summaryTarget.innerHTML = renderSummary(data, sig);
+      listTarget.innerHTML = renderList(sig);
+      updateMoreMenuInfo(data, sig);
 
       if(metaTarget){
-        metaTarget.textContent = signals.length + ' predicții ' + (sig.source === 'live' ? 'live' : 'din AI Memory');
+        metaTarget.textContent = (sig.items || []).length + ' predicții ' + (sig.source === 'live' ? 'live' : 'validate din AI Memory');
       }
+
       if(updatedTarget){
         var ev = data.ev || {}, ai = data.ai || {}, pack = data.pack || {};
         updatedTarget.textContent = 'Actualizat: ' + (ev.updated_at ? fmtDateTime(ev.updated_at) : (ai.updated_at ? fmtDateTime(ai.updated_at) : (pack.updated_at ? fmtDateTime(pack.updated_at) : '—')));
       }
 
-      // Forțează titlul vechi să reflecte upgrade-ul, nu să existe un card separat.
       var title = root.querySelector('.section div[style*="font-size:16px"]');
-      if(title && /Motor Unificat/.test(title.textContent || '')){
+      if(title && /Motor Unificat|VEYRA Supreme/.test(title.textContent || '')){
         title.textContent = '🧠 VEYRA Supreme Engine v5';
       }
     }).finally(function(){
-      setTimeout(function(){ RENDER_LOCK = false; }, 100);
+      setTimeout(function(){ RENDER_LOCK = false; }, 120);
     });
   }
 
@@ -355,15 +406,14 @@
   document.addEventListener('DOMContentLoaded', schedule);
   window.addEventListener('load', schedule);
 
-  // Rerandează doar când se schimbă tabul, dar fără injectare globală.
   document.addEventListener('click', function(ev){
     var t = ev.target;
-    if(t && (String(t.className||'').indexOf('smartlearn-tab') >= 0 || String(t.className||'').indexOf('more-card-btn') >= 0 || String(t.className||'').indexOf('tab') >= 0)){
+    var c = String((t && t.className) || '');
+    if(c.indexOf('smartlearn-tab') >= 0 || c.indexOf('more-card-btn') >= 0 || c.indexOf('tab') >= 0){
       setTimeout(schedule, 300);
     }
   }, true);
 
-  // Observer limitat la secțiunea smartbet; nu mai urmărește tot documentul.
   function startObserver(){
     var root = $('tab-smartbet');
     if(!root) return;
@@ -371,6 +421,7 @@
       new MutationObserver(function(){ schedule(); }).observe(root, {childList:true, subtree:true});
     }catch(e){}
   }
+
   setTimeout(startObserver, 800);
 
   setInterval(function(){
