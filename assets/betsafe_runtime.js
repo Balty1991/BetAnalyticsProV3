@@ -1,12 +1,13 @@
 (function(){
 'use strict';
 
-if(window.__VeyraBetSafeRuntimeV1) return;
-window.__VeyraBetSafeRuntimeV1 = true;
+if(window.__VeyraBetSafeRuntimeV2) return;
+window.__VeyraBetSafeRuntimeV2 = true;
 
 var W = window;
 var D = document;
-var STORAGE = 'veyra_bet_safe_state_v1';
+var STORAGE = 'veyra_bet_safe_state_v2';
+var HISTORY_STORAGE = 'veyra_bet_safe_history_v2';
 var state = readState();
 
 function readState(){
@@ -14,9 +15,11 @@ function readState(){
     var raw = JSON.parse(localStorage.getItem(STORAGE) || '{}');
     return {
       dayMode: raw.dayMode === 'tomorrow' ? 'tomorrow' : 'today',
-      view: raw.view === 'ultra' ? 'ultra' : 'all'
+      view: raw.view === 'ultra' ? 'ultra' : 'all',
+      screen: raw.screen === 'history' ? 'history' : 'live',
+      historyDay: raw.historyDay || dayKeyFromDate(new Date())
     };
-  }catch(e){ return {dayMode:'today', view:'all'}; }
+  }catch(e){ return {dayMode:'today', view:'all', screen:'live', historyDay:dayKeyFromDate(new Date())}; }
 }
 function saveState(){
   try{ localStorage.setItem(STORAGE, JSON.stringify(state)); }catch(e){}
@@ -62,23 +65,36 @@ function dateLabelForKey(key){
   var roDays = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
   return roDays[d.getDay()] + ' · ' + d.toLocaleDateString('ro-RO', {day:'2-digit', month:'short', year:'numeric'});
 }
+function shortDateLabel(key){
+  var parts = String(key || '').split('-').map(Number);
+  var d = parts.length === 3 ? new Date(parts[0], parts[1]-1, parts[2]) : new Date();
+  if(!isFinite(d.getTime())) d = new Date();
+  return d.toLocaleDateString('ro-RO', {day:'2-digit', month:'2-digit'});
+}
 function eventMs(m){
-  var raw = m && (m.date || m.event_date || m.eventDate || m.start_time || m.kickoff || '');
+  var raw = m && (m.date || m.event_date || m.eventDate || m.start_time || m.kickoff || m.created_at || '');
   var ms = raw ? new Date(raw).getTime() : NaN;
   return isFinite(ms) ? ms : null;
 }
 function matchDateKey(m){
   if(m && m.dateKey) return String(m.dateKey);
+  var raw = m && (m.date || m.event_date || m.eventDate || m.start_time || m.kickoff || m.created_at || '');
+  if(typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0,10);
   var ms = eventMs(m);
   return ms ? dayKeyFromDate(new Date(ms)) : '';
 }
-function statusText(m){ return String((m && m.status) || '').toLowerCase(); }
-function isFinished(m){
-  var s = statusText(m);
-  return ['finished','ft','aet','pen','cancelled','canceled','postponed','abandoned'].indexOf(s) >= 0;
+function statusText(m){ return String((m && (m.status || m.matchStatus || m.period)) || '').toLowerCase(); }
+function isVoidStatus(s){
+  s = String(s || '').toLowerCase();
+  return ['cancelled','canceled','postponed','abandoned','void','anulat'].indexOf(s) >= 0;
 }
+function isFinishedStatus(s){
+  s = String(s || '').toLowerCase();
+  return ['finished','ft','aet','pen','after_penalties','completed','closed','final','ended'].indexOf(s) >= 0;
+}
+function isFinished(m){ return isFinishedStatus(statusText(m)); }
 function isUpcomingEnough(m){
-  if(!m || isFinished(m)) return false;
+  if(!m || isFinished(m) || isVoidStatus(statusText(m))) return false;
   var ms = eventMs(m);
   if(!ms) return true;
   return ms > Date.now() - 90 * 60000;
@@ -96,8 +112,21 @@ function leagueLabel(m){
   var l = (m && m.league) || 'Liga necunoscută';
   return flag + ' ' + l;
 }
+function scorePairFromSource(src){
+  if(!src) return {homeScore:null, awayScore:null};
+  var h = src.homeScore; if(h == null) h = src.home_score; if(h == null) h = src.home_goals; if(h == null) h = src.score_home; if(h == null) h = src.goals_home;
+  var a = src.awayScore; if(a == null) a = src.away_score; if(a == null) a = src.away_goals; if(a == null) a = src.score_away; if(a == null) a = src.goals_away;
+  if((h == null || a == null) && typeof src.score === 'string'){
+    var m = src.score.match(/(\d+)\s*[-:]\s*(\d+)/);
+    if(m){ h = h == null ? m[1] : h; a = a == null ? m[2] : a; }
+  }
+  h = h == null || h === '' ? null : Number(h);
+  a = a == null || a === '' ? null : Number(a);
+  return {homeScore:isFinite(h) ? h : null, awayScore:isFinite(a) ? a : null};
+}
 function scoreLabel(m){
-  if(m && m.status && isFinished(m) && m.homeScore != null && m.awayScore != null) return String(m.homeScore) + ' : ' + String(m.awayScore);
+  var sp = scorePairFromSource(m);
+  if(m && isFinished(m) && sp.homeScore != null && sp.awayScore != null) return String(sp.homeScore) + ' : ' + String(sp.awayScore);
   return '- : -';
 }
 function getBet(m,type){
@@ -121,19 +150,19 @@ function poissonTotalBetween(totalLambda, minGoals, maxGoals){
 function addCandidate(out, m, cfg){
   var prob = clamp(n(cfg.prob,0), 0, 99.5);
   var od = n(cfg.odds,0);
-  if(prob < 72 || od < 1.01 || od > 1.36) return;
+  if(prob < 72 || od < 1.01 || od > 1.40) return;
 
   var sourcePenalty = cfg.real ? 0 : 3.5;
-  var oddsPenalty = od > 1.25 ? (od - 1.25) * 38 : 0;
+  var oddsPenalty = od > 1.30 ? (od - 1.30) * 44 : 0;
   var xgBonus = Math.min(4, Math.max(0, n(m.xgTotal,0) - 1.8));
   var injuryPenalty = Math.min(5, Math.max(0, n(m.nUnavailHome,0) + n(m.nUnavailAway,0)) * 0.13);
   var confidenceBonus = Math.max(0, Math.min(4, (n(m.confidence,0) - 50) / 12));
   var score = prob + xgBonus + confidenceBonus - sourcePenalty - oddsPenalty - injuryPenalty + n(cfg.priority,0);
 
   var grade = 'watch';
-  if(prob >= 91 && od <= 1.22) grade = 'ultra';
-  else if(prob >= 86 && od <= 1.26) grade = 'safe';
-  else if(prob >= 80 && od <= 1.30) grade = 'ok';
+  if(prob >= 91 && od <= 1.25) grade = 'ultra';
+  else if(prob >= 86 && od <= 1.30) grade = 'safe';
+  else if(prob >= 80 && od <= 1.35) grade = 'ok';
 
   out.push({
     eventId: m.eventId || m.id || [m.home,m.away,m.date].join('|'),
@@ -176,10 +205,10 @@ function buildCandidatesForMatch(m){
   var out = [];
   if(!m || !isUpcomingEnough(m)) return out;
 
-  addExistingBet(out,m,'under35','Sub 3.5 goluri','Under 3.5',82,1.28,4);
-  addExistingBet(out,m,'over15','Peste 1.5 goluri','Over 1.5',78,1.28,2.5);
-  addExistingBet(out,m,'dc1x','Șansă dublă 1X','1X',82,1.30,3);
-  addExistingBet(out,m,'dcx2','Șansă dublă X2','X2',82,1.30,3);
+  addExistingBet(out,m,'under35','Sub 3.5 goluri','Under 3.5',82,1.35,4);
+  addExistingBet(out,m,'over15','Peste 1.5 goluri','Over 1.5',78,1.35,2.5);
+  addExistingBet(out,m,'dc1x','Șansă dublă 1X','1X',82,1.35,3);
+  addExistingBet(out,m,'dcx2','Șansă dublă X2','X2',82,1.35,3);
 
   var homeGoalProb = poissonScoreAtLeastOne(m.xgHome);
   var awayGoalProb = poissonScoreAtLeastOne(m.xgAway);
@@ -262,28 +291,32 @@ function combinations(arr, len, start, cur, out){
 }
 function buildVip(candidates){
   var base = uniqueEvents(candidates)
-    .filter(function(c){ return c.prob >= 86 && c.odds <= 1.24; })
-    .slice(0,12);
+    .filter(function(c){ return c.prob >= 82 && c.odds <= 1.36; })
+    .slice(0,14);
   var combos = [];
   [3,2,1].forEach(function(len){ combinations(base, len, 0, [], combos); });
-  var viable = combos.map(function(items){
+  if(!combos.length && base.length) combos = [[base[0]]];
+
+  var enriched = combos.map(function(items){
     var st = comboStats(items);
-    return {items:items, stats:st, strict:st.prob >= 90 && st.odds <= 1.30};
-  }).filter(function(c){ return c.stats.odds <= 1.30; });
+    var inTarget = st.odds >= 1.30 && st.odds <= 1.50;
+    var soft = st.odds >= 1.20 && st.odds <= 1.55;
+    var realCount = items.filter(function(x){ return x.real; }).length;
+    var targetPenalty = Math.abs(1.38 - st.odds) * (inTarget ? 32 : 70);
+    var score = (st.prob * 1.45) - targetPenalty + (items.length * 2.6) + (realCount * 1.2);
+    return {items:items, stats:st, inTarget:inTarget, soft:soft, score:score};
+  }).filter(function(c){ return c.soft; });
 
-  var strict = viable.filter(function(c){ return c.strict; }).sort(function(a,b){
-    if(b.items.length !== a.items.length) return b.items.length - a.items.length;
-    if(Math.abs(1.24 - a.stats.odds) !== Math.abs(1.24 - b.stats.odds)) return Math.abs(1.24 - a.stats.odds) - Math.abs(1.24 - b.stats.odds);
-    return b.stats.prob - a.stats.prob;
-  })[0];
-  if(strict) return strict;
-
-  var fallback = viable.sort(function(a,b){
+  var target = enriched.filter(function(c){ return c.inTarget; }).sort(function(a,b){
+    if(Math.abs(1.38 - a.stats.odds) !== Math.abs(1.38 - b.stats.odds)) return Math.abs(1.38 - a.stats.odds) - Math.abs(1.38 - b.stats.odds);
     if(b.stats.prob !== a.stats.prob) return b.stats.prob - a.stats.prob;
-    return b.stats.odds - a.stats.odds;
+    return b.items.length - a.items.length;
   })[0];
+  if(target) return target;
+
+  var fallback = enriched.sort(function(a,b){ return b.score - a.score; })[0];
   if(fallback) return fallback;
-  if(base.length) return {items:[base[0]], stats:comboStats([base[0]]), strict:false};
+  if(base.length) return {items:[base[0]], stats:comboStats([base[0]]), inTarget:false, soft:true, score:base[0].score || 0};
   return null;
 }
 function gradeLabel(g){
@@ -292,15 +325,261 @@ function gradeLabel(g){
   if(g === 'ok') return 'OK';
   return 'WATCH';
 }
-function renderStats(pool,cands,vip){
+function marketResult(marketKey, h, a){
+  h = Number(h); a = Number(a);
+  if(!isFinite(h) || !isFinite(a)) return 'pending';
+  var total = h + a;
+  var k = String(marketKey || '').toLowerCase();
+  if(k === 'under35' || k === 'u35' || k === 'under_35') return total <= 3 ? 'win' : 'loss';
+  if(k === 'over15' || k === 'o15' || k === 'over_15') return total >= 2 ? 'win' : 'loss';
+  if(k === 'dc1x' || k === '1x') return h >= a ? 'win' : 'loss';
+  if(k === 'dcx2' || k === 'x2') return a >= h ? 'win' : 'loss';
+  if(k === 'home_o05' || k === 'home05' || k === '1-over 0.5') return h >= 1 ? 'win' : 'loss';
+  if(k === 'away_o05' || k === 'away05' || k === '2-over 0.5') return a >= 1 ? 'win' : 'loss';
+  if(k === 'goals_1_4' || k === '1_4_goals') return total >= 1 && total <= 4 ? 'win' : 'loss';
+  if(typeof W.evaluateMarketOutcome === 'function'){
+    try{ return W.evaluateMarketOutcome(k, h, a) || 'pending'; }catch(e){}
+  }
+  return 'pending';
+}
+function listSources(){
+  var out = [];
+  if(Array.isArray(W.ALL_MATCHES)) out = out.concat(W.ALL_MATCHES.map(function(x){ x.__bsSource = x.__bsSource || 'meciuri'; return x; }));
+  if(Array.isArray(W.ALL_EVENTS)) out = out.concat(W.ALL_EVENTS.map(function(x){ x.__bsSource = x.__bsSource || 'events'; return x; }));
+  if(Array.isArray(W.HISTORY_ENGINE)) out = out.concat(W.HISTORY_ENGINE.map(function(x){ x.__bsSource = x.__bsSource || 'history'; return x; }));
+  if(Array.isArray(W.RECOMMENDATION_LOG)) out = out.concat(W.RECOMMENDATION_LOG.map(function(x){ x.__bsSource = x.__bsSource || 'log'; return x; }));
+  return out;
+}
+function normName(v){ return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
+function sourceScore(src, entry){
+  if(!src || !entry) return -999;
+  var sc = 0;
+  var srcId = src.eventId != null ? src.eventId : (src.event_id != null ? src.event_id : src.id);
+  if(entry.eventId != null && srcId != null && String(entry.eventId) === String(srcId)) sc += 1000;
+  var sh = normName(src.home || src.home_team || src.localteam || '');
+  var sa = normName(src.away || src.away_team || src.visitorteam || '');
+  var eh = normName(entry.home || '');
+  var ea = normName(entry.away || '');
+  if(sh && eh && sh === eh) sc += 110;
+  if(sa && ea && sa === ea) sc += 110;
+  var sd = matchDateKey(src);
+  if(sd && entry.dateKey && sd === entry.dateKey) sc += 50;
+  var st = statusText(src);
+  if(isFinishedStatus(st)) sc += 18;
+  if(isVoidStatus(st)) sc += 18;
+  var sp = scorePairFromSource(src);
+  if(sp.homeScore != null && sp.awayScore != null) sc += 30;
+  return sc;
+}
+function findSourceForEntry(entry){
+  var best = null;
+  var bestScore = -999;
+  listSources().forEach(function(src){
+    var sc = sourceScore(src, entry);
+    if(sc > bestScore){ bestScore = sc; best = src; }
+  });
+  return bestScore >= 170 ? best : null;
+}
+function settleEntry(entry){
+  if(!entry) return entry;
+
+  if(typeof W.getAutoSettlementForPick === 'function'){
+    try{
+      var auto = W.getAutoSettlementForPick({
+        eventId:entry.eventId,
+        eventDate:entry.eventDate,
+        home:entry.home,
+        away:entry.away,
+        league:entry.league,
+        bet:entry.short || entry.label,
+        market:entry.market,
+        marketType:entry.marketKey
+      });
+      if(auto && auto.result && auto.result !== 'pending'){
+        entry.result = auto.result === 'lose' ? 'loss' : auto.result;
+        entry.matchStatus = auto.matchStatus || 'finished';
+        entry.homeScore = auto.homeScore != null ? auto.homeScore : entry.homeScore;
+        entry.awayScore = auto.awayScore != null ? auto.awayScore : entry.awayScore;
+        entry.autoSource = auto.source || 'app';
+        entry.settledAt = entry.settledAt || new Date().toISOString();
+        return entry;
+      }
+    }catch(e){}
+  }
+
+  var src = findSourceForEntry(entry);
+  if(!src){ entry.result = entry.result || 'pending'; return entry; }
+  var st = statusText(src);
+  var sp = scorePairFromSource(src);
+  entry.matchStatus = st || entry.matchStatus || 'pending';
+  if(sp.homeScore != null && sp.awayScore != null){
+    entry.homeScore = sp.homeScore;
+    entry.awayScore = sp.awayScore;
+  }
+  if(isVoidStatus(st)){
+    entry.result = 'anulat';
+    entry.autoSource = src.__bsSource || 'source';
+    entry.settledAt = entry.settledAt || new Date().toISOString();
+    return entry;
+  }
+  if(isFinishedStatus(st) || (sp.homeScore != null && sp.awayScore != null && String(st).indexOf('live') < 0)){
+    var res = marketResult(entry.marketKey || entry.market, sp.homeScore, sp.awayScore);
+    entry.result = res === 'lose' ? 'loss' : res;
+    entry.matchStatus = 'finished';
+    entry.autoSource = src.__bsSource || 'source';
+    if(entry.result !== 'pending') entry.settledAt = entry.settledAt || new Date().toISOString();
+  }else{
+    entry.result = entry.result || 'pending';
+  }
+  return entry;
+}
+function loadHistory(){
+  try{
+    var raw = JSON.parse(localStorage.getItem(HISTORY_STORAGE) || '{}');
+    return raw && typeof raw === 'object' ? raw : {};
+  }catch(e){ return {}; }
+}
+function saveHistory(hist){
+  try{ localStorage.setItem(HISTORY_STORAGE, JSON.stringify(hist || {})); }catch(e){}
+}
+function historyDays(){
+  var out = [];
+  var now = new Date();
+  for(var i=0;i<7;i++){
+    var d = new Date(now);
+    d.setDate(now.getDate() - i);
+    out.push(dayKeyFromDate(d));
+  }
+  return out;
+}
+function pickKey(p){ return String(p.eventId || (p.home + '|' + p.away + '|' + p.eventDate)) + '|' + String(p.marketKey || p.market || ''); }
+function candidateToHistory(c, dateKey){
+  var m = c.match || {};
+  return {
+    key: String(c.eventId || '') + '|' + String(c.marketKey || c.market || ''),
+    dateKey: dateKey || matchDateKey(m) || targetDayKey(),
+    eventId: c.eventId,
+    eventDate: m.date || m.event_date || m.eventDate || '',
+    timeLabel: m.timeLabel || '',
+    home: m.home || 'Gazde',
+    away: m.away || 'Oaspeți',
+    league: m.league || '',
+    country: m.country || '',
+    market: c.market,
+    marketKey: c.marketKey || c.market,
+    label: c.label,
+    short: c.short || c.label,
+    odds: +n(c.odds,0).toFixed(2),
+    prob: +n(c.prob,0).toFixed(2),
+    source: c.source || '',
+    real: !!c.real,
+    grade: c.grade || 'watch',
+    score: +n(c.score,0).toFixed(2),
+    xgHome: +n(m.xgHome,0).toFixed(2),
+    xgAway: +n(m.xgAway,0).toFixed(2),
+    loggedAt: new Date().toISOString(),
+    result: 'pending',
+    matchStatus: 'pending',
+    homeScore: null,
+    awayScore: null
+  };
+}
+function syncHistory(currentCandidates, currentVip){
+  var hist = loadHistory();
+  historyDays().forEach(function(k){ if(!hist[k]) hist[k] = {dateKey:k, picks:[], vip:null, updatedAt:null}; });
+
+  var key = targetDayKey();
+  if(currentCandidates && currentCandidates.length){
+    if(!hist[key]) hist[key] = {dateKey:key, picks:[], vip:null, updatedAt:null};
+    var map = {};
+    (hist[key].picks || []).forEach(function(p){ map[pickKey(p)] = p; });
+    currentCandidates.slice(0,20).forEach(function(c){
+      var hp = candidateToHistory(c, key);
+      var pk = pickKey(hp);
+      if(map[pk]){
+        var keep = map[pk];
+        ['odds','prob','score','source','grade','label','short','timeLabel','xgHome','xgAway'].forEach(function(f){ keep[f] = hp[f]; });
+        keep.lastSeenAt = new Date().toISOString();
+      }else{
+        map[pk] = hp;
+      }
+    });
+    hist[key].picks = Object.keys(map).map(function(k2){ return map[k2]; }).sort(function(a,b){ return (a.timeLabel || '').localeCompare(b.timeLabel || '') || n(b.score,0) - n(a.score,0); });
+    if(currentVip && currentVip.items && currentVip.items.length){
+      hist[key].vip = {
+        dateKey:key,
+        loggedAt:(hist[key].vip && hist[key].vip.loggedAt) || new Date().toISOString(),
+        updatedAt:new Date().toISOString(),
+        odds: currentVip.stats.odds,
+        prob: currentVip.stats.prob,
+        tenSteps: currentVip.stats.tenSteps,
+        inTarget: !!currentVip.inTarget,
+        picks: currentVip.items.map(function(c){ return candidateToHistory(c, key); }),
+        result:'pending'
+      };
+    }
+    hist[key].updatedAt = new Date().toISOString();
+  }
+
+  Object.keys(hist).forEach(function(k){
+    var day = hist[k] || {};
+    day.picks = (day.picks || []).map(settleEntry);
+    if(day.vip && Array.isArray(day.vip.picks)){
+      day.vip.picks = day.vip.picks.map(settleEntry);
+      var rs = day.vip.picks.map(function(p){ return p.result || 'pending'; });
+      if(rs.some(function(r){ return r === 'loss' || r === 'lose'; })) day.vip.result = 'loss';
+      else if(rs.some(function(r){ return r === 'pending' || !r; })) day.vip.result = 'pending';
+      else if(rs.length && rs.every(function(r){ return r === 'win' || r === 'anulat'; })) day.vip.result = 'win';
+      else day.vip.result = 'pending';
+    }
+    hist[k] = day;
+  });
+
+  var allowed = historyDays().reduce(function(acc,k){ acc[k] = true; return acc; },{});
+  Object.keys(hist).forEach(function(k){ if(!allowed[k]) delete hist[k]; });
+  saveHistory(hist);
+  return hist;
+}
+function resultLabel(res){
+  res = String(res || 'pending').toLowerCase();
+  if(res === 'win') return 'WIN';
+  if(res === 'loss' || res === 'lose') return 'LOSS';
+  if(res === 'anulat' || res === 'void') return 'VOID';
+  return 'PENDING';
+}
+function resultClass(res){
+  res = String(res || 'pending').toLowerCase();
+  if(res === 'win') return 'win';
+  if(res === 'loss' || res === 'lose') return 'loss';
+  if(res === 'anulat' || res === 'void') return 'void';
+  return 'pending';
+}
+function daySummary(day){
+  var rows = (day && day.picks) || [];
+  var settled = rows.filter(function(p){ return ['win','loss','lose','anulat','void'].indexOf(String(p.result || '').toLowerCase()) >= 0; });
+  var wins = rows.filter(function(p){ return String(p.result || '').toLowerCase() === 'win'; }).length;
+  var losses = rows.filter(function(p){ return ['loss','lose'].indexOf(String(p.result || '').toLowerCase()) >= 0; }).length;
+  var pending = rows.filter(function(p){ return !p.result || String(p.result).toLowerCase() === 'pending'; }).length;
+  var roi = 0;
+  settled.forEach(function(p){
+    var r = String(p.result || '').toLowerCase();
+    if(r === 'win') roi += n(p.odds,1) - 1;
+    else if(r === 'loss' || r === 'lose') roi -= 1;
+  });
+  return {total:rows.length, settled:settled.length, wins:wins, losses:losses, pending:pending, winrate:settled.length ? wins * 100 / settled.length : 0, roi:settled.length ? roi * 100 / settled.length : 0};
+}
+function renderStats(pool,cands,vip,hist){
   var ultra = cands.filter(function(c){ return c.grade === 'ultra'; }).length;
   var real = cands.filter(function(c){ return c.real; }).length;
   var vipText = vip ? (odds(vip.stats.odds) + ' / ' + pct(vip.stats.prob,1)) : '—';
+  var histDay = hist && hist[state.historyDay];
+  var sum = daySummary(histDay || {});
   return '<div class="bet-safe-stats">' +
     '<div class="bet-safe-stat"><b>' + pool.length + '</b><span>Meciuri azi din pool</span></div>' +
     '<div class="bet-safe-stat"><b>' + cands.length + '</b><span>Semnale safe generate</span></div>' +
     '<div class="bet-safe-stat"><b>' + ultra + '</b><span>Ultra safe</span></div>' +
     '<div class="bet-safe-stat"><b>' + esc(vipText) + '</b><span>VIP cotă / probabilitate</span></div>' +
+    '<div class="bet-safe-stat"><b>' + sum.wins + '/' + sum.settled + '</b><span>Istoric zi selectată</span></div>' +
   '</div>';
 }
 function renderCandidateCard(c){
@@ -329,7 +608,7 @@ function renderCandidateCard(c){
 }
 function renderVip(vip){
   if(!vip){
-    return '<div class="bet-safe-empty"><b>Nu am construit VIP.</b><br>Nu există încă semnale suficiente pentru cotă până la 1.30.</div>';
+    return '<div class="bet-safe-empty"><b>Nu am construit VIP.</b><br>Nu există încă semnale suficiente pentru cotă 1.30–1.50.</div>';
   }
   var dateKey = targetDayKey();
   var dayTitle = dateLabelForKey(dateKey).split(' · ')[0];
@@ -341,7 +620,8 @@ function renderVip(vip){
       '<div class="bet-safe-vip-pick"><span>' + esc(c.short || c.label) + '</span><em>' + (c.real ? '' : '≈') + esc(odds(c.odds)) + '</em></div>' +
     '</div>';
   }).join('');
-  var warning = vip.strict ? '' : '<div class="bet-safe-warning">Nu forțez eticheta de „90%+ combinat”: cel mai bun bilet găsit are ' + esc(pct(vip.stats.prob,1)) + '. Pentru piramidă, joacă doar dacă accepți riscul sau coboară miza.</div>';
+  var warning = vip.inTarget ? '' : '<div class="bet-safe-warning">Nu forțez cota 1.30–1.50: cel mai bun combo safe găsit are cota ' + esc(odds(vip.stats.odds)) + '. Dacă vrei strict 1.30+, așteaptă mai multe meciuri eligibile.</div>';
+  var probWarn = vip.stats.prob >= 90 ? '' : '<div class="bet-safe-warning">Probabilitatea combinată este ' + esc(pct(vip.stats.prob,1)) + ', nu 90%+. Pentru piramidă, tratează biletul ca risc controlat, nu garantat.</div>';
   var source = vip.items.every(function(c){ return c.real; }) ? 'toate cotele din API/odds' : 'include cote fair/model unde API-ul nu are piața';
   return '<div class="bet-safe-vip-box">' +
       '<div class="bet-safe-vip-day">👑 ' + esc(dayTitle) + ' · VIP Safe</div>' +
@@ -350,57 +630,119 @@ function renderVip(vip){
     '<div class="bet-safe-vip-total">Total: ' + esc(odds(vip.stats.odds)) + '</div>' +
     '<div class="bet-safe-card-meta" style="padding:0 12px 2px">' +
       '<span class="bet-safe-mini green">Prob. combinată ' + esc(pct(vip.stats.prob,1)) + '</span>' +
-      '<span class="bet-safe-mini gold">10 pași piramidă ≈ ' + esc(pct(vip.stats.tenSteps,1)) + '</span>' +
+      '<span class="bet-safe-mini gold">Țintă cotă 1.30–1.50</span>' +
+      '<span class="bet-safe-mini gold">10 pași ≈ ' + esc(pct(vip.stats.tenSteps,1)) + '</span>' +
       '<span class="bet-safe-mini">' + esc(source) + '</span>' +
-    '</div>' + warning;
+    '</div>' + warning + probWarn;
 }
-function renderMain(){
-  var root = D.getElementById('betsafe-root');
-  if(!root) return;
-
-  if(!Array.isArray(W.ALL_MATCHES) || !W.ALL_MATCHES.length){
-    root.innerHTML = '<div class="bet-safe-shell"><div class="bet-safe-empty"><b>Se încarcă predicțiile...</b><br>Secțiunea Bet Safe pornește automat după ce se populează lista Meciuri.</div></div>';
-    return;
-  }
-
-  var key = targetDayKey();
-  var pool = getPool();
-  var allCands = buildAllCandidates();
-  var visible = state.view === 'ultra' ? allCands.filter(function(c){ return c.grade === 'ultra' || c.grade === 'safe'; }) : allCands;
-  var vip = buildVip(allCands);
-
-  var cards = visible.slice(0,20).map(renderCandidateCard).join('');
-  if(!cards){
-    cards = '<div class="bet-safe-empty"><b>Nu am semnale safe pentru ' + esc(state.dayMode === 'today' ? 'azi' : 'mâine') + '.</b><br>Filtrul nu forțează pariuri când probabilitatea/cota nu intră în zona safe. Verifică și tabul Meciuri sau schimbă pe ' + (state.dayMode === 'today' ? 'Mâine' : 'Azi') + '.</div>';
-  }
-
-  root.innerHTML = '<div class="bet-safe-shell">' +
-    '<div class="bet-safe-hero">' +
+function renderHistoryPick(p){
+  var cls = resultClass(p.result);
+  var score = (p.homeScore != null && p.awayScore != null) ? (p.homeScore + ' : ' + p.awayScore) : '- : -';
+  return '<div class="bet-safe-history-row ' + cls + '">' +
+    '<div class="bet-safe-history-status ' + cls + '">' + esc(resultLabel(p.result)) + '</div>' +
+    '<div class="bet-safe-history-main">' +
+      '<div class="bet-safe-history-top"><span>' + esc((p.country ? countryFlag(p.country) + ' ' : '') + (p.league || 'Liga')) + '</span><em>' + esc(p.timeLabel || '') + '</em></div>' +
+      '<div class="bet-safe-history-teams"><strong>' + esc(p.home || 'Gazde') + '</strong><b>' + esc(score) + '</b><strong>' + esc(p.away || 'Oaspeți') + '</strong></div>' +
+      '<div class="bet-safe-history-pick"><span>' + esc(p.short || p.label || p.market) + '</span><em>' + (p.real ? '' : '≈') + esc(odds(p.odds)) + '</em></div>' +
+      '<div class="bet-safe-card-meta"><span class="bet-safe-mini">Prob ' + esc(pct(p.prob,1)) + '</span><span class="bet-safe-mini ' + (p.real ? 'green' : 'gold') + '">' + esc(p.source || 'model') + '</span>' + (p.autoSource ? '<span class="bet-safe-mini">auto ' + esc(p.autoSource) + '</span>' : '') + '</div>' +
+    '</div>' +
+  '</div>';
+}
+function renderHistoryVip(vip){
+  if(!vip || !vip.picks || !vip.picks.length) return '<div class="bet-safe-empty"><b>Fără VIP salvat.</b><br>Deschide Bet Safe în ziua respectivă ca să salvez biletul recomandat.</div>';
+  return '<div class="bet-safe-history-vip">' +
+    '<div class="bet-safe-history-vip-head"><div><b>👑 VIP recomandat</b><small>Cotă ' + esc(odds(vip.odds)) + ' · Prob ' + esc(pct(vip.prob,1)) + '</small></div><span class="bet-safe-history-status ' + resultClass(vip.result) + '">' + esc(resultLabel(vip.result)) + '</span></div>' +
+    vip.picks.map(renderHistoryPick).join('') +
+  '</div>';
+}
+function renderHistory(hist){
+  var days = historyDays();
+  if(days.indexOf(state.historyDay) < 0) state.historyDay = days[0];
+  var day = hist[state.historyDay] || {dateKey:state.historyDay,picks:[]};
+  var sum = daySummary(day);
+  var buttons = days.map(function(k,idx){
+    var label = idx === 0 ? 'Azi' : (idx === 1 ? 'Ieri' : shortDateLabel(k));
+    var dsum = daySummary(hist[k] || {});
+    return '<button class="bet-safe-day-btn ' + (state.historyDay === k ? 'active' : '') + '" onclick="setBetSafeHistoryDay(\'' + k + '\')"><b>' + esc(label) + '</b><small>' + dsum.wins + '/' + dsum.settled + '</small></button>';
+  }).join('');
+  var rows = (day.picks || []).length ? day.picks.map(renderHistoryPick).join('') : '<div class="bet-safe-empty"><b>Nu există predicții salvate pe ziua asta.</b><br>Istoricul salvează automat ce a fost afișat în Bet Safe și actualizează statusul când găsește scorul final în datele aplicației.</div>';
+  return '<div class="bet-safe-layout history">' +
+    '<div class="bet-safe-panel">' +
+      '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">📆 Istoric Bet Safe · 7 zile</div><div class="bet-safe-panel-sub">Monitorizează automat predicțiile afișate și biletul VIP recomandat.</div></div><span class="bet-safe-pill green">auto status</span></div>' +
+      '<div class="bet-safe-day-strip">' + buttons + '</div>' +
+      '<div class="bet-safe-history-summary">' +
+        '<div><b>' + sum.total + '</b><span>predicții salvate</span></div>' +
+        '<div><b>' + sum.wins + '</b><span>WIN</span></div>' +
+        '<div><b>' + sum.losses + '</b><span>LOSS</span></div>' +
+        '<div><b>' + pct(sum.winrate,1) + '</b><span>winrate închise</span></div>' +
+        '<div><b>' + (sum.roi >= 0 ? '+' : '') + pct(sum.roi,1) + '</b><span>ROI unit stake</span></div>' +
+      '</div>' +
+      '<div class="bet-safe-history-list">' + rows + '</div>' +
+    '</div>' +
+    '<div class="bet-safe-panel">' +
+      '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">👑 Monitorizare VIP</div><div class="bet-safe-panel-sub">Biletul VIP salvat pentru ziua selectată.</div></div></div>' +
+      renderHistoryVip(day.vip) +
+      '<div class="bet-safe-disclaimer"><b>Actualizare automată:</b> secțiunea caută scorurile în ALL_MATCHES, ALL_EVENTS, HISTORY_ENGINE și RECOMMENDATION_LOG. Dacă API-ul nu a adus încă rezultatul final, rămâne PENDING.</div>' +
+    '</div>' +
+  '</div>';
+}
+function renderHero(key){
+  return '<div class="bet-safe-hero">' +
       '<div class="bet-safe-hero-top">' +
         '<div><div class="bet-safe-title"><span class="bet-safe-title-badge">🛡️</span><span>Bet Safe</span></div>' +
-        '<div class="bet-safe-sub">Listă construită din meciurile din aplicație pentru ziua selectată. Caută piețe cu risc mic: 1X/X2, Under 3.5, Over 1.5 și piețe estimate din xG, cu prioritate pentru cote mici până în zona 1.20–1.30.</div></div>' +
-        '<div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><span class="bet-safe-pill green">Piramidă friendly</span><span class="bet-safe-pill gold">Max VIP 1.30</span></div>' +
+        '<div class="bet-safe-sub">Listă construită din meciurile din aplicație pentru ziua selectată. Caută piețe cu risc mic: 1X/X2, Under 3.5, Over 1.5 și piețe estimate din xG. VIP combină 1–3 evenimente cu țintă de cotă 1.30–1.50.</div></div>' +
+        '<div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><span class="bet-safe-pill green">Piramidă friendly</span><span class="bet-safe-pill gold">VIP 1.30–1.50</span></div>' +
+      '</div>' +
+      '<div class="bet-safe-view-tabs">' +
+        '<button class="bet-safe-view-btn ' + (state.screen === 'live' ? 'active' : '') + '" onclick="setBetSafeScreen(\'live\')">Tips + VIP</button>' +
+        '<button class="bet-safe-view-btn ' + (state.screen === 'history' ? 'active' : '') + '" onclick="setBetSafeScreen(\'history\')">Istoric 7 zile</button>' +
       '</div>' +
       '<div class="bet-safe-mode-row">' +
         '<button class="bet-safe-mode ' + (state.dayMode === 'today' ? 'active' : '') + '" onclick="setBetSafeDay(\'today\')">Today</button>' +
         '<button class="bet-safe-mode ' + (state.dayMode === 'tomorrow' ? 'active' : '') + '" onclick="setBetSafeDay(\'tomorrow\')">Tomorrow</button>' +
         '<div class="bet-safe-date-chip">' + esc(dateLabelForKey(key)) + '</div>' +
       '</div>' +
-    '</div>' +
-    renderStats(pool, allCands, vip) +
-    '<div class="bet-safe-layout">' +
+    '</div>';
+}
+function renderMain(){
+  var root = D.getElementById('betsafe-root');
+  if(!root) return;
+
+  var key = targetDayKey();
+  var pool = getPool();
+  var allCands = buildAllCandidates();
+  var vip = buildVip(allCands);
+  var hist = syncHistory(allCands, vip);
+  var visible = state.view === 'ultra' ? allCands.filter(function(c){ return c.grade === 'ultra' || c.grade === 'safe'; }) : allCands;
+
+  if((!Array.isArray(W.ALL_MATCHES) || !W.ALL_MATCHES.length) && state.screen === 'live'){
+    root.innerHTML = '<div class="bet-safe-shell">' + renderHero(key) + '<div class="bet-safe-empty"><b>Se încarcă predicțiile...</b><br>Secțiunea Bet Safe pornește automat după ce se populează lista Meciuri.</div></div>';
+    return;
+  }
+
+  var content = '';
+  if(state.screen === 'history'){
+    content = renderHistory(hist);
+  }else{
+    var cards = visible.slice(0,20).map(renderCandidateCard).join('');
+    if(!cards){
+      cards = '<div class="bet-safe-empty"><b>Nu am semnale safe pentru ' + esc(state.dayMode === 'today' ? 'azi' : 'mâine') + '.</b><br>Filtrul nu forțează pariuri când probabilitatea/cota nu intră în zona safe. Verifică și tabul Meciuri sau schimbă pe ' + (state.dayMode === 'today' ? 'Mâine' : 'Azi') + '.</div>';
+    }
+    content = '<div class="bet-safe-layout">' +
       '<div class="bet-safe-panel">' +
         '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">Tips Safe · ' + esc(state.dayMode === 'today' ? 'azi' : 'mâine') + '</div><div class="bet-safe-panel-sub">Nu sunt ponturi garantate; sunt shortlist-uri statistice cu cotă mică și probabilitate ridicată.</div></div>' +
         '<div class="bet-safe-toolbar"><button class="bet-safe-small-btn ' + (state.view === 'all' ? 'active' : '') + '" onclick="setBetSafeView(\'all\')">Toate</button><button class="bet-safe-small-btn ' + (state.view === 'ultra' ? 'active' : '') + '" onclick="setBetSafeView(\'ultra\')">Ultra/Safe</button></div></div>' +
         '<div class="bet-safe-list">' + cards + '</div>' +
       '</div>' +
       '<div class="bet-safe-panel">' +
-        '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">👑 VIP Safe Combo</div><div class="bet-safe-panel-sub">1–3 selecții, cotă totală ≤ 1.30, țintă model ≥90% combinat.</div></div><span class="bet-safe-pill gold">auto</span></div>' +
+        '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">👑 VIP Safe Combo</div><div class="bet-safe-panel-sub">1–3 selecții, țintă cotă totală 1.30–1.50, fără forțare dacă datele nu susțin.</div></div><span class="bet-safe-pill gold">auto</span></div>' +
         renderVip(vip) +
         '<div class="bet-safe-disclaimer"><b>Important:</b> probabilitatea combinată este produsul probabilităților modelului și presupune independență între evenimente. La 10 pași piramidali, riscul se multiplică rapid; secțiunea te ajută să nu forțezi bilet când nu există value/siguranță suficientă.</div>' +
       '</div>' +
-    '</div>' +
-  '</div>';
+    '</div>';
+  }
+
+  root.innerHTML = '<div class="bet-safe-shell">' + renderHero(key) + renderStats(pool, allCands, vip, hist) + content + '</div>';
 }
 
 W.setBetSafeDay = function(mode){
@@ -413,11 +755,22 @@ W.setBetSafeView = function(view){
   saveState();
   renderMain();
 };
+W.setBetSafeScreen = function(screen){
+  state.screen = screen === 'history' ? 'history' : 'live';
+  saveState();
+  renderMain();
+};
+W.setBetSafeHistoryDay = function(day){
+  state.historyDay = day || dayKeyFromDate(new Date());
+  state.screen = 'history';
+  saveState();
+  renderMain();
+};
 W.renderBetSafe = renderMain;
 
 function hook(){
-  if(W.__BetSafeHooksInstalled) return;
-  W.__BetSafeHooksInstalled = true;
+  if(W.__BetSafeHooksInstalledV2) return;
+  W.__BetSafeHooksInstalledV2 = true;
 
   if(typeof W.renderActiveTab === 'function'){
     var oldRenderActive = W.renderActiveTab;
