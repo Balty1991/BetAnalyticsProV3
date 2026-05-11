@@ -30,6 +30,10 @@ DATA_DIR  = Path("data")
 WINDOWS     = [3, 5, 8, 10]
 H2H_WINDOWS = [5, 10]
 MIN_MATCHES_LEAGUE = 80   # min meciuri per ligă pentru baseline valid
+ELO_START = 1500.0
+ELO_K = 22.0
+ELO_HOME_ADV = 55.0
+
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -120,6 +124,48 @@ def poisson_btts(xg_home, xg_away):
     ph = 1.0 - _poisson_prob(xg_home, 0)
     pa = 1.0 - _poisson_prob(xg_away, 0)
     return round(ph * pa, 6)
+
+
+def poisson_under(xg_home, xg_away, threshold=3.5):
+    """P(goluri_total < threshold) pentru praguri .5, ex. Under 3.5 => <=3 goluri."""
+    if xg_home is None or xg_away is None:
+        return None
+    max_goals = int(math.floor(threshold))
+    p = 0.0
+    for total_g in range(max_goals + 1):
+        for h in range(total_g + 1):
+            a = total_g - h
+            p += _poisson_prob(xg_home, h) * _poisson_prob(xg_away, a)
+    return round(p, 6)
+
+
+def poisson_1x2(xg_home, xg_away, max_goals=10):
+    """Distribuție 1X2 din lambda Poisson independent."""
+    if xg_home is None or xg_away is None:
+        return (None, None, None)
+    home = draw = away = 0.0
+    for h in range(max_goals + 1):
+        ph = _poisson_prob(xg_home, h)
+        for a in range(max_goals + 1):
+            p = ph * _poisson_prob(xg_away, a)
+            if h > a:
+                home += p
+            elif h == a:
+                draw += p
+            else:
+                away += p
+    total = home + draw + away
+    if total > 0:
+        home, draw, away = home / total, draw / total, away / total
+    return (round(home, 6), round(draw, 6), round(away, 6))
+
+
+def _clamp(v, lo, hi):
+    return max(lo, min(hi, v))
+
+
+def elo_expected(home_elo, away_elo, home_adv=ELO_HOME_ADV):
+    return 1.0 / (1.0 + math.pow(10.0, -((home_elo + home_adv) - away_elo) / 400.0))
 
 
 # ─── Loader ───────────────────────────────────────────────────────────────────
@@ -228,6 +274,17 @@ def form_features(hist, prefix, windows=WINDOWS):
         feats[f"{prefix}_draw_rate_{w}"]        = _pct(sum(1 for p in pts if p == 1), m)
         feats[f"{prefix}_loss_rate_{w}"]        = _pct(sum(1 for p in pts if p == 0), m)
 
+        # Split home/away în istoricul echipei. Pentru predicție reală contează mult
+        # cum joacă gazda acasă și oaspetele în deplasare, nu doar media globală.
+        home_only = [h for h in hist if h.get("is_home") == 1][-w:]
+        away_only = [h for h in hist if h.get("is_home") == 0][-w:]
+        feats[f"{prefix}_home_points_avg_{w}"] = _avg([h["points"] for h in home_only]) if home_only else None
+        feats[f"{prefix}_away_points_avg_{w}"] = _avg([h["points"] for h in away_only]) if away_only else None
+        feats[f"{prefix}_home_goal_diff_avg_{w}"] = _avg([h["goal_diff"] for h in home_only]) if home_only else None
+        feats[f"{prefix}_away_goal_diff_avg_{w}"] = _avg([h["goal_diff"] for h in away_only]) if away_only else None
+        feats[f"{prefix}_home_goals_for_avg_{w}"] = _avg([h["goals_for"] for h in home_only]) if home_only else None
+        feats[f"{prefix}_away_goals_for_avg_{w}"] = _avg([h["goals_for"] for h in away_only]) if away_only else None
+
         # xG features (dacă disponibil)
         feats[f"{prefix}_xg_for_avg_{w}"]      = _avg(xgf) if xgf else None
         feats[f"{prefix}_xg_against_avg_{w}"]  = _avg(xga) if xga else None
@@ -279,6 +336,17 @@ def diff_features(h_feats, a_feats, windows=WINDOWS):
                 diffs[out_key] = round(_f(hv) - _f(av), 4)
             else:
                 diffs[out_key] = None
+    for w in windows:
+        # Matchup-specific venue form: gazda acasă vs oaspetele în deplasare.
+        hp = h_feats.get(f"home_home_points_avg_{w}")
+        ap = a_feats.get(f"away_away_points_avg_{w}")
+        hg = h_feats.get(f"home_home_goal_diff_avg_{w}")
+        ag = a_feats.get(f"away_away_goal_diff_avg_{w}")
+        hgf = h_feats.get(f"home_home_goals_for_avg_{w}")
+        agf = a_feats.get(f"away_away_goals_for_avg_{w}")
+        diffs[f"venue_points_diff_{w}"] = round(_f(hp) - _f(ap), 4) if hp is not None and ap is not None else None
+        diffs[f"venue_goal_diff_delta_{w}"] = round(_f(hg) - _f(ag), 4) if hg is not None and ag is not None else None
+        diffs[f"venue_goals_for_diff_{w}"] = round(_f(hgf) - _f(agf), 4) if hgf is not None and agf is not None else None
     return diffs
 
 
@@ -366,7 +434,7 @@ def h2h_features(h2h_snap, home_team_id):
 
 # ─── League baseline ──────────────────────────────────────────────────────────
 def build_league_baselines(rows):
-    """Baseline per ligă (pe tot istoricul)."""
+    """Baseline per ligă pe tot istoricul. Se salvează pentru inferență live, nu pentru etichete."""
     per_league = defaultdict(list)
     for r in rows:
         lg_raw = r.get("league") or "Unknown"
@@ -379,25 +447,78 @@ def build_league_baselines(rows):
 
     baselines = {}
     for lg, items in per_league.items():
-        n = len(items)
-        if n < MIN_MATCHES_LEAGUE:
+        if len(items) < MIN_MATCHES_LEAGUE:
             continue
-        baselines[lg] = {
-            "matches":         n,
-            "avg_goals":       _avg([r["total_goals"] for r in items]),
-            "home_win_rate":   _pct(sum(r["home_win"] for r in items), n),
-            "draw_rate":       _pct(sum(r["draw"] for r in items), n),
-            "away_win_rate":   _pct(sum(r["away_win"] for r in items), n),
-            "btts_yes_rate":   _pct(sum(r["btts_yes"] for r in items), n),
-            "over_15_rate":    _pct(sum(r["over_15"] for r in items), n),
-            "over_25_rate":    _pct(sum(r["over_25"] for r in items), n),
-            "over_35_rate":    _pct(sum(r["over_35"] for r in items), n),
-            "under_35_rate":   _pct(sum(r["under_35"] for r in items), n),
-            "avg_xg_home":     _avg([r["xg_home"] for r in items if r.get("xg_home") is not None]) or None,
-            "avg_xg_away":     _avg([r["xg_away"] for r in items if r.get("xg_away") is not None]) or None,
-        }
+        baselines[lg] = league_stats_from_items(items)
     return baselines
 
+
+def league_stats_from_items(items):
+    n = len(items)
+    if n <= 0:
+        return None
+    return {
+        "matches":         n,
+        "avg_goals":       _avg([r["total_goals"] for r in items]),
+        "home_win_rate":   _pct(sum(r["home_win"] for r in items), n),
+        "draw_rate":       _pct(sum(r["draw"] for r in items), n),
+        "away_win_rate":   _pct(sum(r["away_win"] for r in items), n),
+        "btts_yes_rate":   _pct(sum(r["btts_yes"] for r in items), n),
+        "over_15_rate":    _pct(sum(r["over_15"] for r in items), n),
+        "over_25_rate":    _pct(sum(r["over_25"] for r in items), n),
+        "over_35_rate":    _pct(sum(r["over_35"] for r in items), n),
+        "under_35_rate":   _pct(sum(r["under_35"] for r in items), n),
+        "avg_xg_home":     _avg([r["xg_home"] for r in items if r.get("xg_home") is not None]) or None,
+        "avg_xg_away":     _avg([r["xg_away"] for r in items if r.get("xg_away") is not None]) or None,
+    }
+
+
+def build_league_baseline_snapshots(rows_sorted):
+    """Baseline pre-match per ligă: doar meciuri anterioare evenimentului (fără leakage)."""
+    per_league = defaultdict(list)
+    global_items = []
+    snapshots = {}
+    for row in rows_sorted:
+        lg = row.get("league") or "Unknown"
+        league_items = per_league[lg]
+        if len(league_items) >= MIN_MATCHES_LEAGUE:
+            snap = league_stats_from_items(league_items)
+            snap["baseline_scope"] = "league_rolling"
+        elif len(global_items) >= MIN_MATCHES_LEAGUE:
+            snap = league_stats_from_items(global_items)
+            snap["baseline_scope"] = "global_rolling"
+        else:
+            snap = None
+        snapshots[row["event_id"]] = snap
+        league_items.append(row)
+        global_items.append(row)
+    return snapshots
+
+
+def build_elo_snapshots(rows_sorted):
+    """ELO pre-match pentru fiecare eveniment, actualizat cronologic după rezultat."""
+    ratings = defaultdict(lambda: ELO_START)
+    snapshots = {}
+    for row in rows_sorted:
+        hid, aid = row.get("home_team_id"), row.get("away_team_id")
+        h_elo = ratings[hid] if hid else ELO_START
+        a_elo = ratings[aid] if aid else ELO_START
+        exp_h = elo_expected(h_elo, a_elo)
+        snapshots[row["event_id"]] = {
+            "home_elo_pre": round(h_elo, 2),
+            "away_elo_pre": round(a_elo, 2),
+            "elo_diff_pre": round(h_elo - a_elo, 2),
+            "elo_expected_home": round(exp_h, 6),
+        }
+        if hid and aid:
+            actual_h = 1.0 if row.get("home_win") else (0.5 if row.get("draw") else 0.0)
+            margin = abs(_f(row.get("home_score")) - _f(row.get("away_score")))
+            mov = math.log(max(1.0, margin) + 1.0)
+            k = ELO_K * mov
+            delta = k * (actual_h - exp_h)
+            ratings[hid] = h_elo + delta
+            ratings[aid] = a_elo - delta
+    return snapshots
 
 # ─── Odds features ────────────────────────────────────────────────────────────
 def odds_features(row):
@@ -432,6 +553,13 @@ def odds_features(row):
 
     nv_ou15 = _no_vig([ov15, ou15])
     feats["nv_prob_over_15"]  = nv_ou15[0]
+    feats["nv_prob_under_15"] = nv_ou15[1] if len(nv_ou15) > 1 else None
+
+    ov35 = row.get("odds_over_35")
+    ou35 = row.get("odds_under_35")
+    nv_ou35 = _no_vig([ov35, ou35])
+    feats["nv_prob_over_35"]  = nv_ou35[0]
+    feats["nv_prob_under_35"] = nv_ou35[1]
 
     nv_btts = _no_vig([ob, onb])
     feats["nv_prob_btts_yes"] = nv_btts[0]
@@ -504,10 +632,13 @@ def context_features(row, home_hist, away_hist, league_baseline):
         feats["league_away_win_rate"]   = league_baseline.get("away_win_rate")
         feats["league_avg_xg_home"]     = league_baseline.get("avg_xg_home")
         feats["league_avg_xg_away"]     = league_baseline.get("avg_xg_away")
+        feats["league_baseline_matches"] = league_baseline.get("matches")
+        feats["league_baseline_scope_code"] = 2 if league_baseline.get("baseline_scope") == "league_rolling" else 1
     else:
         for k in ["league_home_advantage","league_avg_goals","league_btts_rate",
                   "league_over25_rate","league_under35_rate","league_home_win_rate",
-                  "league_draw_rate","league_away_win_rate","league_avg_xg_home","league_avg_xg_away"]:
+                  "league_draw_rate","league_away_win_rate","league_avg_xg_home","league_avg_xg_away",
+                  "league_baseline_matches","league_baseline_scope_code"]:
             feats[k] = None
 
     # Referee features
@@ -543,7 +674,12 @@ def xg_features(row, home_hist, away_hist):
     # Poisson-based probs din xG actual (dacă disponibil)
     feats["poisson_prob_over25_xg"] = poisson_over(xgh, xga, 2.5)
     feats["poisson_prob_over15_xg"] = poisson_over(xgh, xga, 1.5)
+    feats["poisson_prob_under35_xg"] = poisson_under(xgh, xga, 3.5)
     feats["poisson_prob_btts_xg"]   = poisson_btts(xgh, xga)
+    ph, pd, pa = poisson_1x2(xgh, xga)
+    feats["poisson_prob_home_xg"] = ph
+    feats["poisson_prob_draw_xg"] = pd
+    feats["poisson_prob_away_xg"] = pa
 
     if xgh is not None and xga is not None:
         feats["xg_sum"]        = round(xgh + xga, 4)
@@ -566,13 +702,41 @@ def xg_features(row, home_hist, away_hist):
     if feats["home_xg_form_5"] and feats["away_xg_form_5"]:
         feats["xg_form_sum_5"]  = round(feats["home_xg_form_5"] + feats["away_xg_form_5"], 4)
         feats["xg_form_diff_5"] = round(feats["home_xg_form_5"] - feats["away_xg_form_5"], 4)
+        feats["poisson_prob_over15_form5"] = poisson_over(
+            feats["home_xg_form_5"], feats["away_xg_form_5"], 1.5)
         feats["poisson_prob_over25_form5"] = poisson_over(
             feats["home_xg_form_5"], feats["away_xg_form_5"], 2.5)
+        feats["poisson_prob_under35_form5"] = poisson_under(
+            feats["home_xg_form_5"], feats["away_xg_form_5"], 3.5)
         feats["poisson_prob_btts_form5"]   = poisson_btts(
             feats["home_xg_form_5"], feats["away_xg_form_5"])
+        ph, pd, pa = poisson_1x2(feats["home_xg_form_5"], feats["away_xg_form_5"])
+        feats["poisson_prob_home_form5"] = ph
+        feats["poisson_prob_draw_form5"] = pd
+        feats["poisson_prob_away_form5"] = pa
     else:
-        feats["xg_form_sum_5"] = feats["xg_form_diff_5"] = None
-        feats["poisson_prob_over25_form5"] = feats["poisson_prob_btts_form5"] = None
+        # Fallback Poisson din goluri/concedate rolling, util când API nu oferă xG.
+        lh = _avg([h.get("goals_for") for h in home_hist[-5:]]) if home_hist else None
+        la = _avg([h.get("goals_for") for h in away_hist[-5:]]) if away_hist else None
+        h_conc = _avg([h.get("goals_against") for h in home_hist[-5:]]) if home_hist else None
+        a_conc = _avg([h.get("goals_against") for h in away_hist[-5:]]) if away_hist else None
+        if lh is not None and la is not None and h_conc is not None and a_conc is not None:
+            lam_h = _clamp((lh + a_conc) / 2.0, 0.15, 3.8)
+            lam_a = _clamp((la + h_conc) / 2.0, 0.15, 3.8)
+            feats["xg_form_sum_5"]  = round(lam_h + lam_a, 4)
+            feats["xg_form_diff_5"] = round(lam_h - lam_a, 4)
+            feats["poisson_prob_over15_form5"] = poisson_over(lam_h, lam_a, 1.5)
+            feats["poisson_prob_over25_form5"] = poisson_over(lam_h, lam_a, 2.5)
+            feats["poisson_prob_under35_form5"] = poisson_under(lam_h, lam_a, 3.5)
+            feats["poisson_prob_btts_form5"] = poisson_btts(lam_h, lam_a)
+            ph, pd, pa = poisson_1x2(lam_h, lam_a)
+            feats["poisson_prob_home_form5"] = ph
+            feats["poisson_prob_draw_form5"] = pd
+            feats["poisson_prob_away_form5"] = pa
+        else:
+            feats["xg_form_sum_5"] = feats["xg_form_diff_5"] = None
+            for k in ["over15","over25","under35","btts","home","draw","away"]:
+                feats[f"poisson_prob_{k}_form5"] = None
 
     return feats
 
@@ -585,22 +749,22 @@ def stats_features(home_hist, away_hist, stats_cache: dict) -> dict:
     """
     feats = {}
 
-    def _get_stat(hist, field_home, field_away, is_home_team=True, window=5):
-        field = field_home if is_home_team else field_away
+    def _get_stat(hist, field_when_home, field_when_away, window=5):
         vals = []
         for m in hist[-window:]:
             eid = str(m.get("event_id", ""))
             if eid and eid in stats_cache and stats_cache[eid]:
+                field = field_when_home if m.get("is_home") == 1 else field_when_away
                 v = stats_cache[eid].get(field)
                 if v is not None and float(v) >= 0:
                     vals.append(float(v))
         return round(sum(vals) / len(vals), 4) if vals else None
 
-    # Shots on target ratio (calitate șuturi)
-    home_shots = _get_stat(home_hist, "home_shots", "home_shots", True)
-    home_sot   = _get_stat(home_hist, "home_shots_on_target", "home_shots_on_target", True)
-    away_shots = _get_stat(away_hist, "away_shots", "away_shots", True)
-    away_sot   = _get_stat(away_hist, "away_shots_on_target", "away_shots_on_target", True)
+    # Side-aware: dacă echipa a fost oaspete în meciul istoric, citim câmpurile away_*.
+    home_shots = _get_stat(home_hist, "home_shots", "away_shots")
+    home_sot   = _get_stat(home_hist, "home_shots_on_target", "away_shots_on_target")
+    away_shots = _get_stat(away_hist, "home_shots", "away_shots")
+    away_sot   = _get_stat(away_hist, "home_shots_on_target", "away_shots_on_target")
 
     feats["home_shots_form5"]      = home_shots
     feats["home_sot_form5"]        = home_sot
@@ -610,16 +774,16 @@ def stats_features(home_hist, away_hist, stats_cache: dict) -> dict:
     feats["away_sot_ratio_form5"]  = round(away_sot / away_shots, 4) if away_shots and away_sot else None
 
     # Posesie medie
-    feats["home_possession_form5"] = _get_stat(home_hist, "home_possession", "home_possession", True)
-    feats["away_possession_form5"] = _get_stat(away_hist, "away_possession", "away_possession", True)
+    feats["home_possession_form5"] = _get_stat(home_hist, "home_possession", "away_possession")
+    feats["away_possession_form5"] = _get_stat(away_hist, "home_possession", "away_possession")
 
     # Atacuri periculoase
-    feats["home_dangerous_attack_form5"] = _get_stat(home_hist, "home_dangerous_attack", "home_dangerous_attack", True)
-    feats["away_dangerous_attack_form5"] = _get_stat(away_hist, "away_dangerous_attack", "away_dangerous_attack", True)
+    feats["home_dangerous_attack_form5"] = _get_stat(home_hist, "home_dangerous_attack", "away_dangerous_attack")
+    feats["away_dangerous_attack_form5"] = _get_stat(away_hist, "home_dangerous_attack", "away_dangerous_attack")
 
     # xG la min 70 ratio (cât % din joc a fost petrecut sub presiune)
-    feats["home_xg_at70_ratio_form5"] = _get_stat(home_hist, "home_xg_at70_ratio", "home_xg_at70_ratio", True)
-    feats["away_xg_at70_ratio_form5"] = _get_stat(away_hist, "away_xg_at70_ratio", "away_xg_at70_ratio", True)
+    feats["home_xg_at70_ratio_form5"] = _get_stat(home_hist, "home_xg_at70_ratio", "away_xg_at70_ratio")
+    feats["away_xg_at70_ratio_form5"] = _get_stat(away_hist, "home_xg_at70_ratio", "away_xg_at70_ratio")
 
     # Momentum final meci (presiune în ultimele 15 minute)
     feats["home_momentum_last15_form5"] = _get_stat(home_hist, "momentum_last15", "momentum_last15", True)
@@ -635,33 +799,34 @@ def incidents_features(home_hist, away_hist, incidents_cache: dict) -> dict:
     """
     feats = {}
 
-    def _get_inc(hist, field, window=5):
+    def _get_inc(hist, field_when_home, field_when_away, window=5):
         vals = []
         for m in hist[-window:]:
             eid = str(m.get("event_id", ""))
             if eid and eid in incidents_cache and incidents_cache[eid]:
+                field = field_when_home if m.get("is_home") == 1 else field_when_away
                 v = incidents_cache[eid].get(field)
                 if v is not None:
                     vals.append(float(v))
         return round(sum(vals) / len(vals), 4) if vals else None
 
     # Gol timpuriu (< min 20) — predictor bun pentru 1X2 și BTTS
-    feats["home_early_goal_rate5"]   = _get_inc(home_hist, "early_goal_home")
-    feats["away_early_goal_rate5"]   = _get_inc(away_hist, "early_goal_away")
+    feats["home_early_goal_rate5"]   = _get_inc(home_hist, "early_goal_home", "early_goal_away")
+    feats["away_early_goal_rate5"]   = _get_inc(away_hist, "early_goal_home", "early_goal_away")
 
     # Gol târziu (> min 75) — relevant pentru Under/BTTS
-    feats["home_late_goal_rate5"]    = _get_inc(home_hist, "late_goal_home")
-    feats["away_late_goal_rate5"]    = _get_inc(away_hist, "late_goal_away")
+    feats["home_late_goal_rate5"]    = _get_inc(home_hist, "late_goal_home", "late_goal_away")
+    feats["away_late_goal_rate5"]    = _get_inc(away_hist, "late_goal_home", "late_goal_away")
 
     # Minuta primului gol (estimare timp până la primul gol)
-    feats["home_first_goal_min_avg5"] = _get_inc(home_hist, "first_goal_home_min")
-    feats["away_first_goal_min_avg5"] = _get_inc(away_hist, "first_goal_away_min")
+    feats["home_first_goal_min_avg5"] = _get_inc(home_hist, "first_goal_home_min", "first_goal_away_min")
+    feats["away_first_goal_min_avg5"] = _get_inc(away_hist, "first_goal_home_min", "first_goal_away_min")
 
     # Cartonașe (stil de joc, relevanță pentru corners/fouls → xG indirect)
-    feats["home_yellow_cards_avg5"]  = _get_inc(home_hist, "home_yellow_cards")
-    feats["away_yellow_cards_avg5"]  = _get_inc(away_hist, "away_yellow_cards")
-    feats["home_red_cards_avg5"]     = _get_inc(home_hist, "home_red_cards")
-    feats["away_red_cards_avg5"]     = _get_inc(away_hist, "away_red_cards")
+    feats["home_yellow_cards_avg5"]  = _get_inc(home_hist, "home_yellow_cards", "away_yellow_cards")
+    feats["away_yellow_cards_avg5"]  = _get_inc(away_hist, "home_yellow_cards", "away_yellow_cards")
+    feats["home_red_cards_avg5"]     = _get_inc(home_hist, "home_red_cards", "away_red_cards")
+    feats["away_red_cards_avg5"]     = _get_inc(away_hist, "home_red_cards", "away_red_cards")
 
     # Total carduri galbene (indicator joc agresiv)
     h_y = feats.get("home_yellow_cards_avg5") or 0
@@ -673,7 +838,7 @@ def incidents_features(home_hist, away_hist, incidents_cache: dict) -> dict:
 
 # ─── Asamblare rând features ──────────────────────────────────────────────────
 def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline,
-                      stats_cache=None, incidents_cache=None):
+                      stats_cache=None, incidents_cache=None, elo_snapshot=None):
     home_hist = h_snap
     away_hist = a_snap
     hid       = row.get("home_team_id")
@@ -707,6 +872,23 @@ def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline,
 
     # E) Context features
     feats.update(context_features(row, home_hist, away_hist, league_baseline))
+
+    # E1b) Rating ELO pre-match, fără leakage.
+    if elo_snapshot:
+        feats.update(elo_snapshot)
+    else:
+        feats.update({"home_elo_pre": None, "away_elo_pre": None, "elo_diff_pre": None, "elo_expected_home": None})
+
+    # Data-quality score: folosit de model și de gating la inferență.
+    h_pre = feats.get("home_matches_pre", 0) or 0
+    a_pre = feats.get("away_matches_pre", 0) or 0
+    base_matches = feats.get("league_baseline_matches") or 0
+    quality = 35.0
+    quality += min(25.0, min(h_pre, a_pre) * 3.0)
+    quality += 12.0 if row.get("odds_home") and row.get("odds_draw") and row.get("odds_away") else 0.0
+    quality += 10.0 if feats.get("xg_sum") is not None or feats.get("xg_form_sum_5") is not None else 0.0
+    quality += min(18.0, float(base_matches or 0) / 10.0)
+    feats["data_quality_score"] = round(_clamp(quality, 0.0, 100.0), 2)
 
     # E2) BSD model confidence — feature ensemble puternic
     api_conf = row.get("api_confidence")
@@ -767,10 +949,14 @@ def main():
     rows_sorted = sorted(rows, key=lambda r: r.get("date", ""))
     print(f"Meciuri sortate: {len(rows_sorted)}")
 
-    # 3. League baselines (pe întreg istoricul → folosit ca context static)
+    # 3. League baselines: static pentru inferență + rolling pre-match pentru training fără leakage
     print("Building league baselines...")
     league_baselines = build_league_baselines(rows_sorted)
+    league_baseline_snaps = build_league_baseline_snapshots(rows_sorted)
     print(f"  {len(league_baselines)} ligi eligibile")
+
+    print("Building ELO snapshots...")
+    elo_snaps = build_elo_snapshots(rows_sorted)
 
     # 4. Team history snapshots (cronologic, fără leakage)
     print("Building team history snapshots...")
@@ -788,7 +974,7 @@ def main():
         eid  = row["event_id"]
         snap = team_snaps.get(eid, {})
         h2h  = h2h_snaps.get(eid, {})
-        lb   = league_baselines.get(row.get("league", ""))
+        lb   = league_baseline_snaps.get(eid) or league_baselines.get(row.get("league", ""))
 
         feat_row = build_feature_row(
             row,
@@ -798,6 +984,7 @@ def main():
             league_baseline=lb,
             stats_cache=stats_cache,
             incidents_cache=incidents_cache,
+            elo_snapshot=elo_snaps.get(eid, {}),
         )
         feature_rows.append(feat_row)
 
@@ -808,11 +995,12 @@ def main():
     eligible3 = sum(1 for r in feature_rows if r.get("eligible_min3", 0))
     feat_cols  = [k for k in feature_rows[0] if k.startswith(("home_","away_","form_","h2h_",
                  "goals_","btts_","over2","under","xg_","poisson","nv_","odds_","api_",
-                 "league_","rest_","month","day_","hour_","season_year","close_","heavy_"))]
+                 "league_","rest_","month","day_","hour_","season_year","close_","heavy_",
+                 "venue_","elo_","data_quality","ref_"))]
 
     summary = {
         "updated_at":        datetime.now(timezone.utc).isoformat(),
-        "version":           "feature_engineering_v2",
+        "version":           "feature_engineering_v3_leakage_safe_elo_poisson",
         "rows_total":        len(feature_rows),
         "eligible_min3":     eligible3,
         "eligible_min5":     eligible5,

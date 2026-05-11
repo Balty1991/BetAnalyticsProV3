@@ -112,18 +112,33 @@ def get_feature_cols(df):
     return valid
 
 
-def prep_X(df, feat_cols):
-    """Prepară X: fill NaN, cast categorice."""
+def fit_feature_defaults(df, feat_cols):
+    """Mediile/medianele de imputare se învață doar din train ca să evităm leakage în validare."""
+    defaults = {}
+    for c in feat_cols:
+        if c in CAT_FEATURES:
+            defaults[c] = "N/A"
+            continue
+        try:
+            vals = pd.to_numeric(df[c], errors="coerce") if c in df.columns else pd.Series(dtype=float)
+            med = vals.median()
+            defaults[c] = 0.0 if pd.isna(med) else float(med)
+        except Exception:
+            defaults[c] = 0.0
+    return defaults
+
+
+def prep_X(df, feat_cols, defaults=None):
+    """Prepară X: fill NaN consistent, cast categorice."""
     X = df[feat_cols].copy()
-    # Fill NaN numeric cu median
-    num_cols = [c for c in feat_cols if c not in CAT_FEATURES]
-    for c in num_cols:
-        if c in X.columns:
-            X[c] = X[c].fillna(X[c].median())
-    # Fill NaN categorical cu "N/A"
-    for c in CAT_FEATURES:
-        if c in X.columns:
-            X[c] = X[c].fillna("N/A").astype(str)
+    defaults = defaults or fit_feature_defaults(df, feat_cols)
+    for c in feat_cols:
+        if c not in X.columns:
+            X[c] = None
+        if c in CAT_FEATURES:
+            X[c] = X[c].fillna(str(defaults.get(c, "N/A"))).astype(str)
+        else:
+            X[c] = pd.to_numeric(X[c], errors="coerce").fillna(float(defaults.get(c, 0.0)))
     return X
 
 
@@ -260,22 +275,33 @@ def run_wfv(df, feat_cols, target_col, params=None, max_folds=7):
 
     for i, sp in enumerate(splits):
         print(f"    Fold {i+1}/{len(splits)}: train={sp['n_train']}, val={sp['n_val']}")
-        df_tr = df.loc[sp["train_idx"]]
-        df_va = df.loc[sp["val_idx"]]
+        df_tr_full = df.loc[sp["train_idx"]].sort_values("date")
+        df_va = df.loc[sp["val_idx"]].sort_values("date")
 
-        X_tr = prep_X(df_tr, feat_cols)
-        y_tr = df_tr[target_col]
-        X_va = prep_X(df_va, feat_cols)
+        # Split intern train/cal în interiorul trecutului. Nu calibrăm pe foldul de validare.
+        cal_size = max(80, int(len(df_tr_full) * 0.18))
+        cal_size = min(cal_size, max(1, len(df_tr_full) // 3))
+        df_fit = df_tr_full.iloc[:-cal_size]
+        df_cal = df_tr_full.iloc[-cal_size:]
+
+        y_fit = df_fit[target_col]
+        y_cal = df_cal[target_col]
         y_va = df_va[target_col]
 
         # Skip dacă prea puțin din clasa pozitivă
-        if y_tr.mean() < 0.05 or y_tr.mean() > 0.95:
-            print(f"      SKIP fold {i+1}: dezechilibru extrem clase")
+        if y_fit.mean() < 0.05 or y_fit.mean() > 0.95 or y_cal.nunique() < 2:
+            print(f"      SKIP fold {i+1}: dezechilibru clase sau cal set invalid")
             continue
 
-        model, val_probs = train_model(X_tr, y_tr, X_va, y_va, feat_cols, params)
-        # Calibrare (self-calibrare pe val)
-        _, cal_probs = calibrate(val_probs, y_va.values, val_probs)
+        defaults = fit_feature_defaults(df_fit, feat_cols)
+        X_fit = prep_X(df_fit, feat_cols, defaults)
+        X_cal = prep_X(df_cal, feat_cols, defaults)
+        X_va = prep_X(df_va, feat_cols, defaults)
+
+        model, cal_raw = train_model(X_fit, y_fit, X_cal, y_cal, feat_cols, params)
+        ir, _ = calibrate(cal_raw, y_cal.values, cal_raw)
+        val_probs = model.predict_proba(X_va.values)[:, 1]
+        cal_probs = ir.transform(val_probs)
 
         m_raw = eval_metrics(y_va.values, val_probs)
         m_cal = eval_metrics(y_va.values, cal_probs)
@@ -339,11 +365,12 @@ def train_market(df, feat_cols, market_key, target_col, do_wfv=True, do_shap=Tru
 
     print(f"  Train: {len(df_train)} | Cal: {len(df_cal)} | Test: {len(df_test)}")
 
-    X_train = prep_X(df_train, feat_cols)
+    feature_defaults = fit_feature_defaults(df_train, feat_cols)
+    X_train = prep_X(df_train, feat_cols, feature_defaults)
     y_train = df_train[target_col]
-    X_cal   = prep_X(df_cal, feat_cols)
+    X_cal   = prep_X(df_cal, feat_cols, feature_defaults)
     y_cal   = df_cal[target_col]
-    X_test  = prep_X(df_test, feat_cols)
+    X_test  = prep_X(df_test, feat_cols, feature_defaults)
     y_test  = df_test[target_col]
 
     # Antrenare
@@ -351,7 +378,7 @@ def train_market(df, feat_cols, market_key, target_col, do_wfv=True, do_shap=Tru
 
     # Calibrare pe cal set, validare pe test set
     ir, _ = calibrate(cal_probs_val, y_cal.values, cal_probs_val)
-    test_probs_raw = model.predict_proba(prep_X(df_test, feat_cols).values)[:, 1]
+    test_probs_raw = model.predict_proba(prep_X(df_test, feat_cols, feature_defaults).values)[:, 1]
     test_probs_cal = ir.transform(test_probs_raw)
 
     # Metrici test
@@ -404,12 +431,13 @@ def train_market(df, feat_cols, market_key, target_col, do_wfv=True, do_shap=Tru
         "model_path":       str(model_path),
         "calibrator_path":  str(cal_path),
         "feat_cols":        feat_cols,
+        "feature_defaults": feature_defaults,
     }
 
 
 # ─── Export model_pack_v2.json ────────────────────────────────────────────────
-def build_model_pack(results, feat_cols):
-    """Construiește model_pack_v2.json pentru frontend."""
+def build_model_pack(results, feat_cols, df_for_defaults=None):
+    """Construiește model_pack_v2.json pentru frontend și inferență live."""
     markets_out = {}
     for mk, res in results.items():
         if res is None:
@@ -428,15 +456,19 @@ def build_model_pack(results, feat_cols):
             "wfv_std_auc":       res["wfv_summary"].get("std_auc"),
             "wfv_folds":         res["wfv_summary"].get("folds"),
             "calibrated":        True,
+            "quality_gate":      "A" if (res["wfv_summary"].get("avg_auc") or 0) >= 0.60 and (res["test_metrics_cal"].get("ece") or 1) <= 0.06 else ("B" if (res["wfv_summary"].get("avg_auc") or 0) >= 0.55 else "C"),
             "shap_top_features": res.get("shap_top_features", [])[:15],
         }
 
+    pack_defaults = fit_feature_defaults(df_for_defaults, feat_cols) if df_for_defaults is not None else {}
     pack = {
-        "version":      "smartbet-fusion-v2",
+        "version":      "smartbet-fusion-v3-reliability-gated",
         "updated_at":   datetime.now(timezone.utc).isoformat(),
         "feature_count":len(feat_cols),
         "markets":      markets_out,
         "feature_columns": feat_cols,
+        "feature_defaults": pack_defaults,
+        "calibration_policy": "temporal_train_cal_test_plus_walk_forward_no_val_leakage",
     }
 
     out_path = DATA_DIR / "model_pack_v2.json"
@@ -528,7 +560,7 @@ def main():
 
     # 3. Export
     if results:
-        pack = build_model_pack(results, feat_cols)
+        pack = build_model_pack(results, feat_cols, df_for_defaults=df)
         print(f"\n{'='*60}")
         print("SUMMARY:")
         for mk, res in results.items():

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch_stats_incidents_cache.py — SmartBet Fusion v2 | Stats + Incidents Cache
+fetch_stats_incidents_cache.py — SmartBet Fusion v3 | Stats + Incidents Cache
 ==============================================================================
 Fetchez /api/v2/events/{id}/stats/ și /api/v2/events/{id}/incidents/ pentru
 meciurile istorice din warehouse, și le salvează într-un cache persistent.
@@ -57,6 +57,56 @@ def _get(url: str, token: str, retries: int = 3) -> Optional[Dict]:
 
 
 # ─── Normalize stats ───────────────────────────────────────────────────────────
+def _unwrap_payload(raw):
+    """Acceptă răspunsuri BSD v2 în forme diferite: {data:{...}}, {result:{...}}, list direct sau dict direct."""
+    if isinstance(raw, dict):
+        for key in ("data", "result", "payload"):
+            val = raw.get(key)
+            if isinstance(val, (dict, list)):
+                return val
+    return raw
+
+
+def _num(value, default=0.0):
+    try:
+        if isinstance(value, dict):
+            for key in ("actual", "value", "total", "pct", "percentage"):
+                if value.get(key) is not None:
+                    return float(value.get(key))
+            return float(default)
+        if value is None or value == "":
+            return float(default)
+        return float(value)
+    except Exception:
+        return float(default)
+
+
+def _is_home_side(obj):
+    if not isinstance(obj, dict):
+        return False
+    if obj.get("is_home") is not None:
+        return bool(obj.get("is_home"))
+    side = str(obj.get("side") or obj.get("team_side") or obj.get("home_away") or "").lower()
+    if side in ("home", "h", "1"):
+        return True
+    if side in ("away", "a", "2"):
+        return False
+    team_obj = obj.get("team") if isinstance(obj.get("team"), dict) else {}
+    side = str(team_obj.get("side") or team_obj.get("type") or "").lower()
+    return side in ("home", "h", "1")
+
+
+def _event_list_payload(raw, list_key):
+    raw = _unwrap_payload(raw)
+    if isinstance(raw, list):
+        return raw
+    if isinstance(raw, dict):
+        val = raw.get(list_key) or raw.get("items") or raw.get("results")
+        if isinstance(val, list):
+            return val
+    return []
+
+
 def _extract_ratio_val(obj, default=0):
     """Extrage valoarea dintr-un câmp ratio {value, total, pct} sau int."""
     if isinstance(obj, dict):
@@ -67,19 +117,20 @@ def _extract_ratio_val(obj, default=0):
 
 
 def normalize_stats(raw: Dict, event_id: int) -> Optional[Dict]:
-    """Normalizează răspunsul /events/{id}/stats/ → dict flat."""
+    """Normalizează răspunsul /events/{id}/stats/ → dict flat, tolerant la schema v2."""
+    raw = _unwrap_payload(raw)
     if not raw or not isinstance(raw, dict):
         return None
-    stats = raw.get("stats") or {}
-    home  = stats.get("home") or {}
-    away  = stats.get("away") or {}
+    stats = raw.get("stats") or raw
+    home  = stats.get("home") or stats.get("home_stats") or {}
+    away  = stats.get("away") or stats.get("away_stats") or {}
 
     # Shotmap — calculăm shots on target din shotmap dacă există
-    shotmap = raw.get("shotmap") or []
-    home_sot = sum(1 for s in shotmap if s.get("is_home") and s.get("on_target"))
-    away_sot = sum(1 for s in shotmap if not s.get("is_home") and s.get("on_target"))
-    home_shots_total = sum(1 for s in shotmap if s.get("is_home"))
-    away_shots_total = sum(1 for s in shotmap if not s.get("is_home"))
+    shotmap = raw.get("shotmap") or raw.get("shots") or []
+    home_sot = sum(1 for s in shotmap if _is_home_side(s) and (s.get("on_target") or s.get("is_on_target") or s.get("outcome") == "on_target"))
+    away_sot = sum(1 for s in shotmap if (not _is_home_side(s)) and (s.get("on_target") or s.get("is_on_target") or s.get("outcome") == "on_target"))
+    home_shots_total = sum(1 for s in shotmap if _is_home_side(s))
+    away_shots_total = sum(1 for s in shotmap if not _is_home_side(s))
 
     # xG per minut — calculăm stats derivate
     xg_pm = raw.get("xg_per_minute") or []
@@ -121,23 +172,17 @@ def normalize_stats(raw: Dict, event_id: int) -> Optional[Dict]:
         "home_shots_on_target": home_sot or _extract_ratio_val(home.get("shots_on_target")),
         "away_shots_on_target": away_sot or _extract_ratio_val(away.get("shots_on_target")),
         # Posesie
-        "home_possession":      float(home.get("ball_possession") or 0),
-        "away_possession":      float(away.get("ball_possession") or 0),
+        "home_possession":      _num(home.get("ball_possession") or home.get("possession")),
+        "away_possession":      _num(away.get("ball_possession") or away.get("possession")),
         # Atacuri periculoase
-        "home_dangerous_attack": float(home.get("dangerous_attack") or 0),
-        "away_dangerous_attack": float(away.get("dangerous_attack") or 0),
+        "home_dangerous_attack": _num(home.get("dangerous_attack") or home.get("dangerous_attacks")),
+        "away_dangerous_attack": _num(away.get("dangerous_attack") or away.get("dangerous_attacks")),
         # Precizie pase
-        "home_pass_accuracy":   float(home.get("pass_accuracy_pct") or 0),
-        "away_pass_accuracy":   float(away.get("pass_accuracy_pct") or 0),
+        "home_pass_accuracy":   _num(home.get("pass_accuracy_pct") or home.get("pass_accuracy")),
+        "away_pass_accuracy":   _num(away.get("pass_accuracy_pct") or away.get("pass_accuracy")),
         # xG din stats (poate diferi de v1)
-        "home_xg_stats": float(
-            (home.get("xg") or {}).get("actual", 0)
-            if isinstance(home.get("xg"), dict) else (home.get("xg") or 0)
-        ),
-        "away_xg_stats": float(
-            (away.get("xg") or {}).get("actual", 0)
-            if isinstance(away.get("xg"), dict) else (away.get("xg") or 0)
-        ),
+        "home_xg_stats": _num(home.get("xg") or home.get("expected_goals")),
+        "away_xg_stats": _num(away.get("xg") or away.get("expected_goals")),
         # Derived
         "home_xg_at70_ratio":  home_xg_at70_ratio,
         "away_xg_at70_ratio":  away_xg_at70_ratio,
@@ -147,17 +192,17 @@ def normalize_stats(raw: Dict, event_id: int) -> Optional[Dict]:
 
 # ─── Normalize incidents ────────────────────────────────────────────────────────
 def normalize_incidents(raw: Dict, event_id: int) -> Optional[Dict]:
-    """Normalizează răspunsul /events/{id}/incidents/ → dict cu statistici."""
-    if not raw or not isinstance(raw, dict):
+    """Normalizează răspunsul /events/{id}/incidents/ → dict cu statistici, tolerant la schema v2."""
+    incidents = _event_list_payload(raw, "incidents")
+    if not incidents:
         return None
-    incidents = raw.get("incidents") or []
 
     goals        = [i for i in incidents if i.get("type") == "goal"]
     yellow_cards = [i for i in incidents if i.get("type") == "card" and i.get("card_type") == "yellow"]
     red_cards    = [i for i in incidents if i.get("type") == "card" and i.get("card_type") in ("red", "yellowRed")]
 
-    home_goals   = [g for g in goals if g.get("is_home")]
-    away_goals   = [g for g in goals if not g.get("is_home")]
+    home_goals   = [g for g in goals if _is_home_side(g)]
+    away_goals   = [g for g in goals if not _is_home_side(g)]
 
     # Gol timpuriu (< min 20) și târziu (> min 75)
     def _min(g):
@@ -173,10 +218,10 @@ def normalize_incidents(raw: Dict, event_id: int) -> Optional[Dict]:
     late_goal_away  = 1 if any(_min(g) >= 75 for g in away_goals) else 0
 
     # Cartonașe per echipă
-    home_yellows = sum(1 for c in yellow_cards if c.get("is_home"))
-    away_yellows = sum(1 for c in yellow_cards if not c.get("is_home"))
-    home_reds    = sum(1 for c in red_cards if c.get("is_home"))
-    away_reds    = sum(1 for c in red_cards if not c.get("is_home"))
+    home_yellows = sum(1 for c in yellow_cards if _is_home_side(c))
+    away_yellows = sum(1 for c in yellow_cards if not _is_home_side(c))
+    home_reds    = sum(1 for c in red_cards if _is_home_side(c))
+    away_reds    = sum(1 for c in red_cards if not _is_home_side(c))
 
     return {
         "event_id":           event_id,
