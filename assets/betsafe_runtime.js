@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__VeyraBetSafeRuntimeV4) return;
-window.__VeyraBetSafeRuntimeV4 = true;
+if(window.__VeyraBetSafeRuntimeV5) return;
+window.__VeyraBetSafeRuntimeV5 = true;
 
 var W = window;
 var D = document;
@@ -48,6 +48,124 @@ function fairOddsFromProb(prob){
   var p = clamp(n(prob,0), 1, 99.9);
   return +(100 / p).toFixed(2);
 }
+
+function impliedProbFromOddsLocal(od){
+  var o = n(od,0);
+  return o > 1.01 ? clamp(100 / o, 1, 99.7) : 0;
+}
+function rawEventOf(m){
+  if(!m || typeof m !== 'object') return {};
+  return (m.event && typeof m.event === 'object') ? m.event : ((m.rawEvent && typeof m.rawEvent === 'object') ? m.rawEvent : {});
+}
+function marketMapOf(m){
+  var ev = rawEventOf(m);
+  var map = (m && (m.market_best_odds || m.marketBestOdds || m.market_compare || m.marketCompare)) ||
+            (ev && (ev.market_best_odds || ev.marketBestOdds || ev.market_compare || ev.marketCompare)) || {};
+  return (map && typeof map === 'object' && !Array.isArray(map)) ? map : {};
+}
+function marketInfoByKeys(m, keys){
+  var map = marketMapOf(m);
+  for(var i=0;i<(keys||[]).length;i++){
+    var row = map[keys[i]];
+    if(row && typeof row === 'object'){
+      var bo = n(row.best_odds != null ? row.best_odds : row.bestOdds,0);
+      var ao = n(row.avg_odds != null ? row.avg_odds : row.avgOdds,0);
+      var od = bo > 1.01 ? bo : ao;
+      if(od > 1.01){
+        return {
+          odds:+od.toFixed(3),
+          source:(row.best_bookmaker || row.bestBookmaker || 'API/odds'),
+          implied:n(row.avg_implied_probability != null ? row.avg_implied_probability : row.avgImpliedProbability,0) || n(row.best_implied_probability != null ? row.best_implied_probability : row.bestImpliedProbability,0) || impliedProbFromOddsLocal(od),
+          real:true,
+          key:keys[i]
+        };
+      }
+    }
+  }
+  return null;
+}
+function directOddsByKeys(m, keys){
+  var ev = rawEventOf(m);
+  var objs = [m || {}, ev || {}];
+  for(var oi=0; oi<objs.length; oi++){
+    var obj = objs[oi];
+    for(var i=0;i<(keys||[]).length;i++){
+      var od = n(obj[keys[i]],0);
+      if(od > 1.01 && od < 20) return {odds:+od.toFixed(3), source:'cotă API', implied:impliedProbFromOddsLocal(od), real:true, key:keys[i]};
+    }
+  }
+  return null;
+}
+function findFlatOddsByHints(m, positiveHints, negativeHints){
+  var ev = rawEventOf(m);
+  var objs = [m || {}, ev || {}];
+  var best = null;
+  function okKey(k){
+    var key = String(k || '').toLowerCase().replace(/[^a-z0-9]+/g,'_');
+    if(key.indexOf('odds') < 0 && key.indexOf('odd') < 0) return false;
+    for(var i=0;i<(positiveHints||[]).length;i++) if(key.indexOf(positiveHints[i]) < 0) return false;
+    for(var j=0;j<(negativeHints||[]).length;j++) if(key.indexOf(negativeHints[j]) >= 0) return false;
+    return true;
+  }
+  objs.forEach(function(obj){
+    Object.keys(obj || {}).forEach(function(k){
+      if(!okKey(k)) return;
+      var od = n(obj[k],0);
+      if(od > 1.01 && od < 3.0 && (!best || od < best.odds)) best = {odds:+od.toFixed(3), source:'cotă API detectată', implied:impliedProbFromOddsLocal(od), real:true, key:k};
+    });
+  });
+  return best;
+}
+function marketAdjustedProb(modelProb, marketInfo, haircut){
+  var p = clamp(n(modelProb,0), 0, 99.5);
+  if(!marketInfo || !(marketInfo.odds > 1.01)) return p;
+  var imp = n(marketInfo.implied,0) || impliedProbFromOddsLocal(marketInfo.odds);
+  var factor = haircut != null ? haircut : (marketInfo.odds <= 1.12 ? 0.965 : (marketInfo.odds <= 1.20 ? 0.94 : (marketInfo.odds <= 1.28 ? 0.90 : 0.86)));
+  return clamp(Math.max(p, imp * factor), 0, 99.5);
+}
+function getTeamO05MarketQuote(m, side, xgProb){
+  var home = side === 'home';
+  var direct = directOddsByKeys(m, home ? [
+    'odds_home_over_05','odds_home_o05','odds_home_team_over_05','odds_home_team_goals_over_05','odds_home_total_goals_over_05','home_over_05_odds','home_team_over_05_odds','home_team_goals_over_05_odds','home_to_score_odds','odds_home_scores'
+  ] : [
+    'odds_away_over_05','odds_away_o05','odds_away_team_over_05','odds_away_team_goals_over_05','odds_away_total_goals_over_05','away_over_05_odds','away_team_over_05_odds','away_team_goals_over_05_odds','away_to_score_odds','odds_away_scores'
+  ]);
+  if(!direct){
+    direct = findFlatOddsByHints(m, home ? ['home','over','05'] : ['away','over','05'], home ? ['away'] : ['home']);
+  }
+  if(direct){
+    direct.prob = marketAdjustedProb(xgProb, direct, 0.965);
+    direct.label = 'cotă API team goals';
+    return direct;
+  }
+
+  // Dacă API-ul nu oferă piața „goluri echipă”, NU mai folosim fair odds 100/prob pur.
+  // Pentru piețele foarte mici, fair odds din model iese artificial mare (ex. 1.18 vs 1.05 Superbet).
+  // Calibrăm estimarea cu piețele reale disponibile: 1X/X2, Over 1.5 și 1X2.
+  var dc = marketInfoByKeys(m, home ? ['dc1x','homeOrDraw','doubleChance1X'] : ['dcx2','awayOrDraw','doubleChanceX2']);
+  var o15 = marketInfoByKeys(m, ['over15','over_15','totalOver15']);
+  var win = marketInfoByKeys(m, home ? ['homeWin','home','1'] : ['awayWin','away','2']);
+  var p = clamp(n(xgProb,0), 0, 99.5);
+  if(dc && dc.odds <= 1.22){
+    var dcHaircut = (p >= 82 && dc.odds <= 1.12) ? 0.995 : 0.985;
+    p = Math.max(p, n(dc.implied,0) * dcHaircut);
+  }
+  if(o15 && o15.odds <= 1.22) p = Math.max(p, n(o15.implied,0) * 0.955);
+  if(win && win.odds <= 1.55) p = Math.max(p, n(win.implied,0) * 0.985);
+  p = clamp(p, 0, 98.8);
+  var estimatedOdds = fairOddsFromProb(p);
+  // rotunjire realistă pentru low-odds: în practică bookmakerul nu afișează 1.083, ci 1.08/1.07/1.05.
+  if(estimatedOdds <= 1.12) estimatedOdds = Math.max(1.03, Math.round(estimatedOdds * 100) / 100);
+  return {
+    odds:+estimatedOdds.toFixed(2),
+    prob:+p.toFixed(2),
+    real:false,
+    source:'estimare calibrată din piață',
+    label:'estimare xG + odds reale',
+    key:home ? 'home_o05_est' : 'away_o05_est'
+  };
+}
+
 function dayKeyFromDate(d){
   var x = d ? new Date(d) : new Date();
   if(!isFinite(x.getTime())) x = new Date();
@@ -176,15 +294,16 @@ function addCandidate(out, m, cfg){
     grade: grade,
     score: +score.toFixed(2),
     reason: cfg.reason || '',
-    source: cfg.source || (cfg.real ? 'cotă API' : 'fair/model'),
+    source: cfg.source || (cfg.real ? 'cotă API' : 'estimat/calibrat'),
     marketKey: cfg.marketKey || cfg.market
   });
 }
 function addExistingBet(out,m,type,label,short,minProb,maxOdds,priority){
   var b = getBet(m,type);
   if(!b) return;
-  var prob = Math.max(n(b.adjProb,0), n(b.prob,0));
+  var rawProb = Math.max(n(b.adjProb,0), n(b.prob,0));
   var od = n(b.odds || b.bestOdds || b.baseOdds,0);
+  var prob = marketAdjustedProb(rawProb, {odds:od, implied:(n(b.avgImpliedProb,0) || n(b.bestImpliedProb,0) || impliedProbFromOddsLocal(od))});
   if(prob < minProb || od > maxOdds || od < 1.01) return;
   var edge = b.edgeVsMarket != null ? n(b.edgeVsMarket,0) : (b.edgePct != null ? n(b.edgePct,0) : null);
   var edgeTxt = edge != null ? 'edge ' + (edge >= 0 ? '+' : '') + edge.toFixed(1) + 'pp' : 'edge n/a';
@@ -198,7 +317,7 @@ function addExistingBet(out,m,type,label,short,minProb,maxOdds,priority){
     real:true,
     priority:priority,
     source:(b.bestBookmaker ? b.bestBookmaker : (b.oddsSource || 'cotă API')),
-    reason:'Model ' + pct(prob,1) + ' · ' + edgeTxt + ' · xG total ' + n(m.xgTotal,0).toFixed(2)
+    reason:'Prob AI/market ' + pct(prob,1) + ' · model ' + pct(rawProb,1) + ' · ' + edgeTxt + ' · xG total ' + n(m.xgTotal,0).toFixed(2)
   });
 }
 function buildCandidatesForMatch(m, context){
@@ -213,17 +332,19 @@ function buildCandidatesForMatch(m, context){
   var homeGoalProb = poissonScoreAtLeastOne(m.xgHome);
   var awayGoalProb = poissonScoreAtLeastOne(m.xgAway);
   if(homeGoalProb >= 75){
+    var homeQuote = getTeamO05MarketQuote(m, 'home', homeGoalProb);
     addCandidate(out,m,{
-      market:'home_o05', label:(m.home || 'Gazde') + ' marchează 0.5+', short:'1-over 0.5 ⚽', prob:homeGoalProb,
-      odds:fairOddsFromProb(homeGoalProb), real:false, priority:1.4, source:'fair din xG',
-      reason:'xG gazde ' + n(m.xgHome,0).toFixed(2) + ' ⇒ șansă gol ' + pct(homeGoalProb,1) + '. Cota este fair/model, nu cotă bookmaker.'
+      market:'home_o05', label:(m.home || 'Gazde') + ' marchează 0.5+', short:'1-over 0.5 ⚽', prob:homeQuote.prob || homeGoalProb,
+      odds:homeQuote.odds, real:!!homeQuote.real, priority:1.4, source:homeQuote.source || 'estimare calibrată', marketKey:'home_o05',
+      reason:'xG gazde ' + n(m.xgHome,0).toFixed(2) + ' ⇒ model gol ' + pct(homeGoalProb,1) + '. Cotă ' + (homeQuote.real ? 'din API' : 'calibrată cu 1X/Over1.5/1X2') + ', nu fair odds simplu.'
     });
   }
   if(awayGoalProb >= 75){
+    var awayQuote = getTeamO05MarketQuote(m, 'away', awayGoalProb);
     addCandidate(out,m,{
-      market:'away_o05', label:(m.away || 'Oaspeți') + ' marchează 0.5+', short:'2-over 0.5 ⚽', prob:awayGoalProb,
-      odds:fairOddsFromProb(awayGoalProb), real:false, priority:1.2, source:'fair din xG',
-      reason:'xG oaspeți ' + n(m.xgAway,0).toFixed(2) + ' ⇒ șansă gol ' + pct(awayGoalProb,1) + '. Cota este fair/model, nu cotă bookmaker.'
+      market:'away_o05', label:(m.away || 'Oaspeți') + ' marchează 0.5+', short:'2-over 0.5 ⚽', prob:awayQuote.prob || awayGoalProb,
+      odds:awayQuote.odds, real:!!awayQuote.real, priority:1.2, source:awayQuote.source || 'estimare calibrată', marketKey:'away_o05',
+      reason:'xG oaspeți ' + n(m.xgAway,0).toFixed(2) + ' ⇒ model gol ' + pct(awayGoalProb,1) + '. Cotă ' + (awayQuote.real ? 'din API' : 'calibrată cu X2/Over1.5/1X2') + ', nu fair odds simplu.'
     });
   }
 
@@ -294,7 +415,7 @@ function vipLegScore(c){
   var od = n(c.odds, 1);
   var prob = n(c.prob, 0);
   var oddsRisk = Math.max(0, od - 1.18) * 58 + Math.max(0, od - 1.25) * 115;
-  var modelPenalty = c.real ? 0 : 2.4;
+  var modelPenalty = c.real ? 0 : 5.2;
   var gradeBonus = c.grade === 'ultra' ? 7 : (c.grade === 'safe' ? 4 : (c.grade === 'ok' ? 1 : 0));
   return prob + gradeBonus + (c.real ? 1.5 : 0) - oddsRisk - modelPenalty + n(c.score,0) * 0.08;
 }
@@ -350,7 +471,7 @@ function scoreVipCombo(items, layer){
     return s + Math.max(0, o - 1.20) * 90 + Math.max(0, o - 1.28) * 165;
   },0);
   var concentrationPenalty = Math.max(0, maxLegOdds - avgLegOdds) * 70;
-  var modelPenalty = items.filter(function(x){ return !x.real; }).length * 1.8;
+  var modelPenalty = items.filter(function(x){ return !x.real; }).length * 3.8;
   var lengthBonus = items.length === 3 ? 15 : (items.length === 2 ? 9 : -10);
   var targetBonus = inTarget ? 240 : (nearTarget ? 42 : -80);
   var underTargetPenalty = st.odds < 1.30 ? (1.30 - st.odds) * 210 : 0;
@@ -734,7 +855,7 @@ function renderVip(vip){
   var warning = vip.inTarget ? '' : '<div class="bet-safe-warning">Motorul AI nu a găsit o combinație suficient de bună în intervalul 1.30–1.50. Afișez cel mai bun fallback safe găsit, cota ' + esc(odds(vip.stats.odds)) + ', fără să forțez risc inutil.</div>';
   var aiNote = '<div class="bet-safe-warning"><b>Decizie ' + esc(vip.aiLayer || 'AI') + ':</b> ' + esc(vip.aiReason || 'optimizare probabilitate + cotă totală') + '. A ales ' + vip.items.length + ' eveniment(e), max cotă/eveniment ' + esc(odds(vip.maxLegOdds)) + ', probabilitate minimă/picior ' + esc(pct(vip.minLegProb,1)) + '.</div>';
   var probWarn = vip.stats.prob >= 90 ? '' : '<div class="bet-safe-warning">Probabilitatea combinată este ' + esc(pct(vip.stats.prob,1)) + ', nu 90%+. Pentru piramidă, tratează biletul ca risc controlat, nu garantat.</div>';
-  var source = vip.items.every(function(c){ return c.real; }) ? 'toate cotele din API/odds' : 'include cote fair/model unde API-ul nu are piața';
+  var source = vip.items.every(function(c){ return c.real; }) ? 'toate cotele din API/odds' : 'include cote estimate calibrate unde API-ul nu are piața';
   return '<div class="bet-safe-vip-box">' +
       '<div class="bet-safe-vip-day">👑 ' + esc(dayTitle) + ' · VIP Safe</div>' +
       '<div class="bet-safe-vip-list">' + rows + '</div>' +
