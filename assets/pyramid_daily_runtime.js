@@ -68,6 +68,9 @@ function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 function money(v){
   return n(v,0).toLocaleString('ro-RO',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' RON';
 }
+function moneyCompact(v){
+  return n(v,0).toLocaleString('ro-RO',{minimumFractionDigits:0,maximumFractionDigits:2}) + ' RON';
+}
 function fmt(v,d){ return n(v,0).toFixed(d == null ? 2 : d); }
 function pct(v){ return fmt(v,1) + '%'; }
 function pctRaw(v){
@@ -448,6 +451,118 @@ function injectCompactCss(){
 #tab-piramida .pyramid-session.selected{
   border-color:rgba(245,158,11,.72)!important;
   box-shadow:0 0 0 1px rgba(245,158,11,.38), inset 0 0 26px rgba(245,158,11,.10)!important;
+}
+#tab-piramida .pyramid-session.collapsed{
+  padding:6px 7px!important;
+  cursor:pointer!important;
+  min-height:40px!important;
+}
+#tab-piramida .pyramid-session.collapsed .pyramid-session-head{
+  align-items:center!important;
+}
+#tab-piramida .pyramid-session-row{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:6px!important;
+  min-width:0!important;
+  width:100%!important;
+}
+#tab-piramida .pyramid-session-row-main{
+  display:flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  min-width:0!important;
+  flex:1 1 auto!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+#tab-piramida .pyramid-row-title{
+  color:#f8fafc!important;
+  font-size:9.7px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#tab-piramida .pyramid-row-chip{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:21px!important;
+  padding:0 6px!important;
+  border-radius:999px!important;
+  background:rgba(15,23,42,.82)!important;
+  border:1px solid rgba(148,163,184,.18)!important;
+  color:#cbd5e1!important;
+  font-size:8px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#tab-piramida .pyramid-row-chip.status{
+  color:#fde68a!important;
+  border-color:rgba(250,204,21,.28)!important;
+  background:rgba(250,204,21,.08)!important;
+}
+#tab-piramida .pyramid-row-profit{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:21px!important;
+  padding:0 6px!important;
+  border-radius:999px!important;
+  background:rgba(15,23,42,.82)!important;
+  border:1px solid rgba(148,163,184,.18)!important;
+  font-size:8px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+#tab-piramida .pyramid-row-chevron{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:24px!important;
+  height:22px!important;
+  border-radius:999px!important;
+  background:rgba(15,23,42,.92)!important;
+  border:1px solid rgba(94,234,212,.24)!important;
+  color:#5eead4!important;
+  font-size:10px!important;
+  font-weight:1000!important;
+  flex:0 0 auto!important;
+}
+#tab-piramida .pyramid-session-toggle{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:28px!important;
+  height:22px!important;
+  margin-top:4px!important;
+  padding:0 8px!important;
+  border-radius:999px!important;
+  background:rgba(15,23,42,.82)!important;
+  border:1px solid rgba(148,163,184,.20)!important;
+  color:#94a3b8!important;
+  font-size:11px!important;
+  font-weight:1000!important;
+}
+#tab-piramida .pyramid-session.selected .pyramid-session-toggle{
+  color:#5eead4!important;
+  border-color:rgba(94,234,212,.35)!important;
+  background:rgba(20,184,166,.12)!important;
+}
+#tab-piramida .pyramid-session-collapsed-meta{
+  margin-top:4px!important;
+  font-size:8.2px!important;
+  line-height:1.25!important;
+  color:#94a3b8!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#tab-piramida .pyramid-session-expanded{
+  display:block!important;
 }
 #tab-piramida .pyramid-session-head{
   display:flex!important;
@@ -2020,16 +2135,17 @@ function getSelectedSession(){
   if(!arr.length) return null;
 
   var found = arr.find(function(x){ return String(x.id) === String(SELECTED_SESSION_ID || ''); });
-  if(found) return found;
-
-  found = arr.find(function(x){ return x.status === 'active' || x.status === 'paused'; }) || arr[0];
-  SELECTED_SESSION_ID = found ? found.id : null;
   return found || null;
 }
 function selectSession(id, ev){
-  if(ev && ev.target && ev.target.closest && ev.target.closest('button')) return;
+  if(ev && ev.target && ev.target.closest && ev.target.closest('button,input,select,textarea,a,summary,details')) return;
 
-  SELECTED_SESSION_ID = id;
+  if(String(SELECTED_SESSION_ID || '') === String(id)){
+    SELECTED_SESSION_ID = null;
+  }else{
+    SELECTED_SESSION_ID = id;
+  }
+
   renderSessions();
   renderPlan(getSettings());
 }
@@ -2205,7 +2321,7 @@ function createSession(){
     return false;
   }
 
-  SELECTED_SESSION_ID = session.id;
+  SELECTED_SESSION_ID = null;
   clearGeneratorAfterSession('Sesiunea a fost plasată. Generatorul este pregătit pentru o nouă generare.');
   renderSessions();
 
@@ -2504,9 +2620,8 @@ function renderSessions(){
 
   var arr = getSessions();
 
-  if(arr.length && !arr.some(function(x){ return String(x.id) === String(SELECTED_SESSION_ID || ''); })){
-    var firstActive = arr.find(function(x){ return x.status === 'active' || x.status === 'paused'; });
-    SELECTED_SESSION_ID = (firstActive || arr[0]).id;
+  if(arr.length && SELECTED_SESSION_ID && !arr.some(function(x){ return String(x.id) === String(SELECTED_SESSION_ID || ''); })){
+    SELECTED_SESSION_ID = null;
   }
 
   stats.innerHTML =
@@ -2520,7 +2635,7 @@ function renderSessions(){
     return;
   }
 
-  list.innerHTML = '<div class="pyramid-monitor-cards-title">Sesiuni / acțiuni</div>' + arr.slice(0,20).map(function(s){
+  list.innerHTML = '<div class="pyramid-monitor-cards-title">Sesiuni / acțiuni</div>' + arr.slice(0,20).map(function(s, idx){
     s.history = Array.isArray(s.history) ? s.history : [];
 
     var selected = String(SELECTED_SESSION_ID || '') === String(s.id);
@@ -2588,20 +2703,43 @@ function renderSessions(){
     }
 
     var stepHistory = renderSessionStepHistory(s);
+    var collapsedMeta = 'Start ' + money(s.initialStake) + ' • curent ' + money(s.currentStake || s.initialStake) + ' • cotă ' + fmt(s.lastDailyOdds || s.targetOdds || 1.30,2);
 
-    return '<div class="pyramid-session ' + (selected ? 'selected' : '') + '" onclick="pyramidSelectSession(\''+s.id+'\', event)">' +
-      '<div class="pyramid-session-head">' +
-        '<div>' +
-          '<div class="pyramid-session-name">' + esc(label) + ' · Pas ' + currentStep + ' din ' + totalSteps + '</div>' +
-          '<div class="pyramid-session-badge">' + (selected ? 'SELECTAT' : 'apasă pentru selectare') + '</div>' +
-          '<div class="pyramid-session-meta">Start ' + money(s.initialStake) + ' • curent ' + money(s.currentStake || s.initialStake) + ' • cotă ' + fmt(s.lastDailyOdds || s.targetOdds || 1.30,2) + '<br>' + currentPicks + '</div>' +
-          sessionKpi +
+    if(!selected){
+      return '<div class="pyramid-session collapsed" onclick="pyramidSelectSession(\''+s.id+'\', event)" role="button" tabindex="0">' +
+        '<div class="pyramid-session-row">' +
+          '<div class="pyramid-session-row-main">' +
+            '<span class="pyramid-row-title">Pir. ' + (idx + 1) + '</span>' +
+            '<span class="pyramid-row-chip">Pas ' + currentStep + '/' + totalSteps + '</span>' +
+            '<span class="pyramid-row-chip status">' + esc(cardStatus) + '</span>' +
+            '<span class="pyramid-row-chip">Miză ' + moneyCompact(s.currentStake || s.initialStake) + '</span>' +
+            '<span class="pyramid-row-profit" style="color:' + (prof >= 0 ? 'var(--grn)' : 'var(--red)') + '">P/L ' + moneyCompact(prof) + '</span>' +
+          '</div>' +
+          '<span class="pyramid-row-chevron">⌄</span>' +
         '</div>' +
-        '<div class="pyramid-session-profit" style="color:' + (prof >= 0 ? 'var(--grn)' : 'var(--red)') + '">' + money(prof) + '</div>' +
-      '</div>' +
+      '</div>';
+    }
+
+    var expandedContent = '<div class="pyramid-session-expanded">' +
+      '<div class="pyramid-session-meta">' + collapsedMeta + '<br>' + currentPicks + '</div>' +
+      sessionKpi +
       selectedSettings +
       stepHistory +
       '<div class="pyramid-session-actions">' + actions + '</div>' +
+    '</div>';
+
+    return '<div class="pyramid-session selected" onclick="pyramidSelectSession(\''+s.id+'\', event)">' +
+      '<div class="pyramid-session-head">' +
+        '<div style="min-width:0;flex:1">' +
+          '<div class="pyramid-session-name">' + esc(label) + ' · Pas ' + currentStep + ' din ' + totalSteps + '</div>' +
+          '<div class="pyramid-session-badge">DESCHIS</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:flex-end;gap:8px;flex-shrink:0">' +
+          '<div class="pyramid-session-profit" style="color:' + (prof >= 0 ? 'var(--grn)' : 'var(--red)') + '">' + money(prof) + '</div>' +
+          '<div class="pyramid-session-toggle">⌃</div>' +
+        '</div>' +
+      '</div>' +
+      expandedContent +
     '</div>';
   }).join('');
 }
