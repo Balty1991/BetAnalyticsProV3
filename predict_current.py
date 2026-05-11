@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-predict_current.py — SmartBet Fusion v4 | Inferență live API-v2 consensus-gated
+predict_current.py — VEYRA Supreme Engine v5 | Inferență live multi-source, consensus + VIP shield
 ==========================================================================
 Rulat după fetch_data.py. Produce data/ev_signals_v2.json.
 
@@ -820,7 +820,7 @@ def _load_events():
 
 
 def main():
-    print("=== PREDICT CURRENT v4 API-v2 consensus-gated ===")
+    print("=== VEYRA SUPREME ENGINE v5 ===")
     if not (DATA_DIR / "events.json").exists():
         write_skip("events.json lipsește. Skip.")
         return
@@ -834,7 +834,7 @@ def main():
     pack = load_json(DATA_DIR / "model_pack_v2.json", {}) or {}
     feat_cols = pack.get("feature_columns", [])
     if not feat_cols:
-        write_skip("model_pack_v2.json lipsește sau nu are feature_columns. SmartBet v4 skip explicit.")
+        write_skip("model_pack_v2.json lipsește sau nu are feature_columns. VEYRA Supreme Engine v5 skip explicit.")
         return
     feature_defaults = pack.get("feature_defaults") or {}
     markets_meta = pack.get("markets", {}) if isinstance(pack.get("markets", {}), dict) else {}
@@ -971,22 +971,38 @@ def main():
                 "score": score,
                 "risk_tier": tier,
                 "signal": "STRONG BUY" if score >= 82 else ("BUY" if score >= 70 else "WATCH"),
-                "model_version": "smartbet-fusion-v4-api-v2-consensus-gated",
+                "model_version": "veyra-supreme-engine-v5",
                 "blend": blend_meta,
                 "rationale": f"{info['label']}: p_final={final_p*100:.1f}% (CatBoost {cat_prob*100:.1f}%, market {nv_p*100:.1f}%, API {(api_p*100 if api_p is not None else 0):.1f}%" + (f", Poisson {pois_p*100:.1f}%" if pois_p is not None else "") + (f", Polymarket {poly_p*100:.1f}%" if poly_p is not None else "") + f"), edge {edge_pp:+.1f}pp, EV {evp:+.1f}%, Kelly¼ {kelly_pct:.2f}%, acord {agreement*100:.0f}%, risk lineup/context {lineup_risk:.2f}/{context_risk:.2f}.",
             })
 
     signals.sort(key=lambda x: (x.get("score", 0), x.get("final_prob", 0), x.get("edge_pp", 0)), reverse=True)
+    elite = [s for s in signals if s.get("score", 0) >= 82]
+    a_quality = [s for s in signals if str(s.get("quality_gate", "")).upper() == "A"]
+    low_risk = [s for s in signals if (float(s.get("lineup_risk") or 0) + float(s.get("context_risk") or 0)) <= 0.22]
+    avg_score = round(sum(float(s.get("score") or 0) for s in signals) / len(signals), 2) if signals else 0
+    avg_agreement = round(sum(float(s.get("agreement") or 0) for s in signals) / len(signals), 4) if signals else 0
     out = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
-        "engine_version": "smartbet-fusion-v4-api-v2-consensus-gated",
+        "engine_version": "veyra-supreme-engine-v5",
+        "display_name": "VEYRA Supreme Engine v5",
         "signals_count": len(signals),
+        "supreme_summary": {
+            "elite_count": len(elite),
+            "quality_a_count": len(a_quality),
+            "low_risk_count": len(low_risk),
+            "avg_score": avg_score,
+            "avg_agreement_pct": round(avg_agreement * 100, 1),
+            "sources": ["CatBoost", "BSD API v2", "Market no-vig", "Odds comparison", "Poisson", "Polymarket", "AI Memory", "Risk Shield"],
+            "vip_rule": "VIP folosește doar scor ridicat, acord între surse, risc controlat și cotă totală 1.30–1.50."
+        },
         "quality_policy": {
             "probability": "CatBoost calibrat + BSD Predictions v2 + no-vig market + odds comparison + Polymarket + Poisson cu shrink pe dezacord",
-            "gates": "prob_min/edge_min/EV/Kelly/data-quality/agreement/WFV",
+            "gates": "prob_min/edge_min/EV/Kelly/data-quality/agreement/WFV/lineup-risk/context-risk",
         },
         "signals": signals,
     }
+    save_json(DATA_DIR / "supreme_engine_v5.json", out)
     save_json(DATA_DIR / "ev_signals_v2.json", out)
     print(f"Semnale EV+ generate: {len(signals)}")
     for signal in signals[:8]:
