@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<!-- status refresh -->
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="description" content="VEYRA oferă sports analytics, predicții AI, ML5, tracking și istoric de performanță pentru decizii mai clare."/>
+<link rel="canonical" href="https://balty1991.github.io/VEYRA/"/>
+<title>VEYRA · Sports Analytics AI</title>
+<meta name="theme-color" content="#06080F"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="VEYRA"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="manifest.json?v=20260509veyra6"/>
+<link rel="icon" type="image/svg+xml" href="./assets/veyra-icon.svg?v=20260509veyra6"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=20260509veyra6"/>
+<link rel="preload" href="./assets/veyra-icon.svg?v=20260509veyra6" as="image" type="image/svg+xml"/>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+:root{
+  --bg:#06080F;--txt:#F0F4FB;--muted:#6B7B97;--brd:#1E2942;--acc:#2BE5C5;
+  --font-sans:'Outfit',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt)}
+body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.header{position:sticky;top:0;z-index:100;background:rgba(6,8,15,.85);backdrop-filter:saturate(160%) blur(22px);-webkit-backdrop-filter:saturate(160%) blur(22px);border-bottom:1px solid rgba(255,255,255,.05)}
+.header-inner{max-width:1500px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 16px}
+.logo-title{font-size:21px;font-weight:900;letter-spacing:-.04em;color:var(--txt)}
+.logo-sub,.status-bar{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.logo-sync-row{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;font-family:var(--mono);color:var(--muted);flex-wrap:wrap}
+.logo-sync-row b{color:var(--acc);font-weight:700;font-size:11px}
+.lsr-dot{opacity:.3;font-size:10px}
+.btn-refresh-ico{display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border-radius:12px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.3);color:var(--acc);cursor:pointer;flex-shrink:0}
+.btn-refresh-ico:active{opacity:.75}
+.container,.main,.app-shell{max-width:1500px;margin:0 auto;width:100%}
+.section,.panel,.card,.tab-content{background:#0E1424;border:1px solid var(--brd);border-radius:20px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip-link{position:absolute;left:12px;top:-44px;z-index:1000;background:#2BE5C5;color:#06080F;padding:10px 14px;border-radius:12px;font-weight:700;text-decoration:none}
+.skip-link:focus{top:12px}
+</style>
+<link rel="stylesheet" href="./assets/app.css?v=20260509veyra6"/>
+<link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
+<link rel="stylesheet" href="./assets/pyramid_daily.css?v=20260509pyr1"/>
+<script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
+<script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
+<script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
+<script defer src="./assets/app.js?v=20260509autorefresh30"></script>
+<script defer src="./assets/pyramid_daily_runtime.js?v=20260511pyr-expand1"></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Sari la conținutul principal</a>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="loader-spin"></div>
+  <div class="loader-title">Se incarca datele...</div>
+  <div class="loader-sub" id="loader-sub" role="status" aria-live="polite">Conectare la API Bzzoiro</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toast-wrap" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="ticket-quickpeek" class="ticket-quickpeek"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="logo veyra-framed-brand">
+      <div class="veyra-emblem-frame">
+        <img class="veyra-emblem-img" src="./assets/veyra-icon.svg?v=20260509veyra6" alt="VEYRA logo"/>
+      </div>
+      <div class="veyra-brand-textblock">
+        <div class="logo-title veyra-wordmark-clean">VEYRA</div>
+        <div class="logo-sub veyra-tagline-clean">SPORTS ANALYTICS · AI</div>
+        <div class="logo-sync-row veyra-sync-row">
+          <div class="sb-dot live" id="sb-dot"></div>
+          <span><b id="hq-ml">—</b> ML</span>
+          <span class="lsr-dot">·</span>
+          <span><b id="hq-odds">—</b> cote</span>
+          <span class="lsr-dot">·</span>
+          <span id="hq-time">—</span>
+        </div>
+      </div>
+      <div id="sb-text" role="status" aria-live="polite" class="sr-only"></div>
+      <span id="hq-safe" style="display:none"></span>
+    </div>
+    <div class="header-tools">
+      <button class="btn btn-refresh-ico" id="btn-refresh" onclick="doRefresh(true)" aria-label="Reimprospateaza date" title="Reimprospateaza">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<nav class="tabs" aria-label="Navigare principală">
+  <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+    Dashboard
+  </button>
+  <button class="tab" data-tab="meciuri" onclick="switchTab('meciuri')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3l3 4-3 4-3-4 3-4z"/><path d="M3 12l4 3-2 5"/><path d="M21 12l-4 3 2 5"/></svg>
+    Meciuri
+  </button>
+  <button class="tab" data-tab="more" onclick="toggleDesktopMore()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
+    Mai mult
+  </button>
+</nav>
+
+<div class="desktop-more-panel" id="desktop-more-panel" aria-hidden="true">
+  <div class="desktop-more-head">
+    <div>
+      <div class="desktop-more-title">Mai mult</div>
+      <div class="desktop-more-sub">Secțiunile avansate rămân la un click distanță, fără să aglomereze navigarea principală.</div>
+    </div>
+    <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="closeDesktopMore()">Închide</button>
+  </div>
+  <div class="more-grid">
+    <button class="more-card-btn" onclick="switchTab('piramida');closeDesktopMore()">
+      <span class="more-card-title">🧗 Piramidă Daily</span>
+      <span class="more-card-sub">Reinvestire în etape.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
+      <span class="more-card-title">🔬 Analiză ML5</span>
+      <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Top picks cu breakdown complet.</span>
+    </button>
+<button class="more-card-btn" onclick="switchTab('smartbet')">
+      <span class="more-card-title">🎯 Motor de Predicții Unificat</span>
+      <span class="more-card-sub">Kelly + AI Memory + SmartBet — cel mai bun din 3 motoare, un singur scor.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('clv');closeDesktopMore()">
+      <span class="more-card-title">📈 CLV Tracker</span>
+      <span class="more-card-sub">Closing Line Value — verifică dacă modelul bate piața real.</span>
+    </button>
+  </div>
+</div>
+
+<div class="main" id="main-content" role="main">
+  <h1 class="sr-only">VEYRA</h1>
+
+  <!-- ===== DASHBOARD ===== -->
+    <div class="tab-content active" id="tab-dashboard"></div>
+
+
+  <!-- ===== SMARTBET LEARNING ENGINE (fuziune Audit + AI Memory + SmartBet) ===== -->
+  <div class="tab-content" id="tab-smartbet">
+    
+    
+
+    <!-- Sub-navigare internă -->
+    <div class="smartlearn-nav" id="smartlearn-nav">
+      <button class="smartlearn-tab active" id="slt-predictii" onclick="switchSmartLearnSection('predictii')">🎯 Predicții</button>
+      <button class="smartlearn-tab" id="slt-invatare" onclick="switchSmartLearnSection('invatare')">🧬 Motor Învățare</button>
+      <button class="smartlearn-tab" id="slt-arhiva" onclick="switchSmartLearnSection('arhiva')" style="opacity:0.6;font-size:11px">📚 Baza de Invatare</button>
+    </div>
+
+    <!-- ===== SECȚIUNEA PREDICȚII UNIFICATE (motor combinat) ===== -->
+    <div id="smartlearn-section-predictii">
+      <div class="section" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(16,185,129,.06));border:1px solid rgba(99,102,241,.22);border-radius:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+          <div>
+            <div style="font-size:16px;font-weight:900;color:var(--txt)">🧠 Motor Unificat de Predicții</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Kelly Discipline + AI Memory Patterns + SmartBet Fusion — un singur scor de acuratețe.</div>
+          </div>
+          <div id="unified-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+        </div>
+        <div id="unified-summary-grid" style="margin-top:12px"></div>
+      </div>
+
+      <div class="section" style="margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(16,185,129,.04),rgba(99,102,241,.04));border:1px solid rgba(255,255,255,.08);border-radius:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:800;color:var(--txt)">🏆 Predicții validate — Scor Unificat</div>
+          <div id="unified-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+        </div>
+        <div id="unified-picks-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== SECȚIUNEA MOTOR ÎNVĂȚARE ===== -->
+    <div id="smartlearn-section-invatare" style="display:none">
+      <div id="learning-engine-root"></div>
+    </div>
+
+    <!-- ===== SECȚIUNEA BAZA DE INVATARE (arhivă combinată) ===== -->
+    <div id="smartlearn-section-arhiva" style="display:none">
+      <div class="help-panel" style="border-color:rgba(99,102,241,.22);background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(16,185,129,.04))">
+        <div class="help-head">
+          <div>
+            <div class="help-title">📚 Baza de Invatare a Motorului</div>
+            <div class="help-sub">Aceste date alimentează motorul de predicții în fundal. Nu trebuie să le verifici zilnic — motorul le folosește automat la fiecare refresh.</div>
+          </div>
+          <span class="sec-badge" style="color:#a5b4fc;border-color:rgba(99,102,241,.28);background:rgba(99,102,241,.10)">Auto-invatare</span>
+        </div>
+      </div>
+      <div id="archive-summary-cards" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px"></div>
+      <div id="archive-learning-impact" style="margin-top:12px"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="switchTab('istoricfull')">📋 Jurnal complet →</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="switchTab('apihistory')">🌐 Baza API →</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px" onclick="switchTab('traininglab')">🤖 Model AI →</button>
+      </div>
+    </div>
+
+    <!-- ===== SECȚIUNEA AUDIT KELLY ===== -->
+    
+
+    <!-- ===== SECȚIUNEA AI MEMORY ===== -->
+    
+
+    <!-- ===== SECȚIUNEA FUZIUNE SMARTBET ===== -->
+    <div id="smartlearn-section-smartbet" style="display:none!important">
+      <div class="help-panel" style="border-color:rgba(168,85,247,.22);background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(168,85,247,.08))">
+        <div class="help-head">
+          <div>
+            <div class="help-title">🧬 SmartBet Engine</div>
+            <div class="help-sub">Fuziunea dintre <b>Audit Kelly</b> și <b>AI Memory</b>: filtrul rămâne strict, dar afișarea devine mai compactă, mai clară și mai utilă pentru verificare rapidă.</div>
+          </div>
+          <div class="action-row">
+            <span class="sec-badge" style="color:var(--pur);border-color:rgba(168,85,247,.28);background:rgba(168,85,247,.10)">Audit + Memory</span>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" id="smartbet-view-live-btn" onclick="setSmartBetView('live')">Listă validată</button>
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" id="smartbet-view-history-btn" onclick="setSmartBetView('history')">Istoric</button>
+          </div>
+        </div>
+      </div>
+      <div class="section" style="margin-bottom:12px;padding:12px 14px;background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <div style="font-size:15px;font-weight:800;color:var(--txt)">🧬 Lista unică de meciuri validate</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Toate informațiile rămân prezente, dar într-un format mult mai compact.</div>
+          </div>
+          <div id="smartbet-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+        </div>
+        <div id="smartbet-summary-grid"></div>
+      </div>
+      <div id="smartbet-live-section">
+        <div class="section" style="margin-bottom:12px;padding:12px;background:linear-gradient(135deg,rgba(34,197,94,.04),rgba(239,68,68,.03));border:1px solid rgba(255,255,255,.08);border-radius:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--txt)">🧩 Confirmări AI Memory / Blocaje active</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:3px">Tabel dublu, compact, cu pattern-urile pozitive și cele eliminate.</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+            <div>
+              <div style="font-size:12px;font-weight:800;color:var(--grn);margin-bottom:8px">✅ Confirmări AI Memory</div>
+              <div id="smartbet-patterns-good"></div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:800;color:var(--red);margin-bottom:8px">⛔ Blocaje active</div>
+              <div id="smartbet-patterns-bad"></div>
+            </div>
+          </div>
+        </div>
+        <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(59,130,246,.05),rgba(16,185,129,.03));border:1px solid rgba(59,130,246,.16);border-radius:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--txt)">🎯 Selecții validate</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:3px">Lista rămâne lizibilă, cu meciurile afișate clar.</div>
+            </div>
+            <div id="smartbet-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
+          </div>
+          <div id="smartbet-list"></div>
+        </div>
+      </div>
+      <div id="smartbet-history-section" style="display:none">
+        <div class="section" style="margin-bottom:0;padding:12px;background:linear-gradient(135deg,rgba(168,85,247,.05),rgba(59,130,246,.03));border:1px solid rgba(168,85,247,.16);border-radius:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--txt)">🧾 Istoric SmartBet Engine</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:3px">Istoric nelimitat, filtrabil pe intervale, pentru a vedea ROI, win-rate și evoluția selecțiilor.</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="smartbet-history-range-controls">
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('7d')" id="smartbet-range-7d">7 zile</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('30d')" id="smartbet-range-30d">30 zile</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('90d')" id="smartbet-range-90d">3 luni</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('180d')" id="smartbet-range-180d">6 luni</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('365d')" id="smartbet-range-365d">1 an</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="setSmartBetHistoryRange('all')" id="smartbet-range-all">Total</button>
+            </div>
+          </div>
+          <div id="smartbet-history-root"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LIVE TAB ===== -->
+
+  <!-- TAB PERFORMANTA VERDICT -->
+  <div class="tab-content" id="tab-performanta">
+    <div style="padding:16px 14px 80px">
+      <div style="font-size:17px;font-weight:900;color:var(--txt);margin-bottom:4px">📊 Performanță Verdict</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">Acuratețe semnale ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</div>
+      <div id="perf-verdict-content">
+        <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Se încarcă...</div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-content" id="tab-meciuri">
+    <div class="section mx21-card" style="margin-bottom:10px" data-matches-controls="v21">
+      <div class="mx21-head">
+        <div class="mx21-title-wrap">
+          <div class="mx21-title-row"><span class="mx21-ball">⚽</span><span class="mx21-title">Meciuri</span></div>
+        </div>
+        <span class="mx21-count" id="filter-count">0 meciuri</span>
+        <button class="mx21-filter-btn" onclick="toggleMfAdvanced(this)" aria-expanded="false" type="button">Filtre</button>
+      </div>
+
+      <div class="mx21-control-row">
+        <div class="mx21-mode" role="group" aria-label="Mod card">
+          <button class="mx21-mode-btn active" data-mode="simple" onclick="setMatchCardMode('simple', this)" type="button">Simplu</button>
+          <button class="mx21-mode-btn" data-mode="expert" onclick="setMatchCardMode('expert', this)" type="button">Expert</button>
+        </div>
+        <select class="mx21-select mx21-verdict-select" id="match-verdict-filter" onchange="renderMatches()" aria-label="Filtru verdict predicții">
+          <option value="all" selected>Verdict</option>
+          <option value="bet">✅ Pariază</option>
+          <option value="risk">⚠️ Risc</option>
+          <option value="avoid">❌ Evită</option>
+        </select>
+        <select class="mx21-select" id="sort-select" onchange="renderMatches()" aria-label="Sortare meciuri">
+          <option value="date" selected>Ora</option>
+          <option value="edge">Edge</option>
+          <option value="prob">Prob</option>
+          <option value="score">Score</option>
+          <option value="value">Value</option>
+        </select>
+      </div>
+
+      <div class="mx21-chiprail" aria-label="Categorii rapide">
+        <button class="mx21-chip active" onclick="setFilter('all',this)" type="button">Toate</button>
+        <button class="mx21-chip" onclick="setFilter('safe',this)" type="button">⭐ Top</button>
+        <button class="mx21-chip" onclick="setFilter('o15',this)" type="button">🔥 O1.5</button>
+        <button class="mx21-chip" onclick="setFilter('o25',this)" type="button">📈 O2.5</button>
+        <button class="mx21-chip" onclick="setFilter('btts',this)" type="button">🤝 BTTS</button>
+        <button class="mx21-chip" onclick="setFilter('u35',this)" type="button">🧊 U3.5</button>
+        <button class="mx21-chip" onclick="setFilter('value',this)" type="button">💰 Value</button>
+      </div>
+
+      <div class="mf-advanced mx21-advanced" id="mf-advanced" style="display:none">
+
+      <div class="league-filter-wrap matches-filter-advanced">
+        <div class="filter-field filter-field-wide">
+          <label for="league-filter">Liga</label>
+          <select class="league-filter-select" id="league-filter" onchange="renderMatches()">
+            <option value="">Toate Ligile</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-date-filter">Perioadă</label>
+          <select class="league-filter-select" id="match-date-filter" onchange="renderMatches()">
+            <option value="all">Toate</option>
+            <option value="today">Azi</option>
+            <option value="3">1–3 zile</option>
+            <option value="7">1–7 zile</option>
+            <option value="14">1–14 zile</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-market-filter">Piață</label>
+          <select class="league-filter-select" id="match-market-filter" onchange="renderMatches()">
+            <option value="">Toate piețele</option>
+            <option value="Over 1.5G">Over 1.5G</option>
+            <option value="Under 3.5G">Under 3.5G</option>
+            <option value="BTTS">BTTS</option>
+            <option value="Șansă Dublă 1X">Șansă Dublă 1X</option>
+            <option value="Șansă Dublă X2">Șansă Dublă X2</option>
+            <option value="Șansă Dublă 12">Șansă Dublă 12</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-pro-mode">Filtru Pro</label>
+          <select class="league-filter-select" id="match-pro-mode" onchange="renderMatches()">
+            <option value="all">Toate</option>
+            <option value="pro">Doar Pro</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-min-prob">Min. prob.</label>
+          <input id="match-min-prob" class="bk-input" type="number" min="0" max="100" step="1" value="0" onchange="renderMatches()">
+        </div>
+        <div class="filter-field">
+          <label for="match-min-edge">Min. edge</label>
+          <input id="match-min-edge" class="bk-input" type="number" min="-20" max="50" step="0.5" value="0" onchange="renderMatches()">
+        </div>
+        <div class="filter-field">
+          <label for="match-kickoff-filter">Kickoff max</label>
+          <select class="league-filter-select" id="match-kickoff-filter" onchange="renderMatches()">
+            <option value="all">Oricând</option>
+            <option value="2">≤ 2h</option>
+            <option value="6">≤ 6h</option>
+            <option value="12">≤ 12h</option>
+            <option value="24">≤ 24h</option>
+            <option value="48">≤ 48h</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-tier-filter">Liga confidence</label>
+          <select class="league-filter-select" id="match-tier-filter" onchange="renderMatches()">
+            <option value="all">Toate</option>
+            <option value="high">Tier 1</option>
+            <option value="neutral">Tier 2</option>
+            <option value="avoid">Tier 3</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="match-min-score">Min. smart score</label>
+          <input id="match-min-score" class="bk-input" type="number" min="0" max="150" step="1" value="0" onchange="renderMatches()">
+        </div>
+      </div>
+      </div><!-- /mf-advanced -->
+    </div><!-- /mx21-card -->
+
+    <div class="help-panel" id="matches-help-panel" style="margin-top:0;margin-bottom:12px">
+      <div class="help-head">
+        <div>
+          <div class="help-title">🧠 Glosar rapid Meciuri</div>
+          <div class="help-sub">Termenii sensibili din cardurile de analiză pot fi explicați direct aici, fără să părăsești lista de meciuri.</div>
+        </div>
+        <div class="action-row"><span class="sec-badge">Meciuri</span></div>
+      </div>
+      <div class="help-chip-row">
+        <button class="help-chip" onclick="showInlineHelp('matches-help-output','xg')">xG</button>
+        <button class="help-chip" onclick="showInlineHelp('matches-help-output','confidence')">Confidence</button>
+        <button class="help-chip" onclick="showInlineHelp('matches-help-output','edge')">Edge</button>
+        <button class="help-chip" onclick="showInlineHelp('matches-help-output','value')">Value</button>
+        <button class="help-chip" onclick="showInlineHelp('matches-help-output','fair_odds')">Fair odds</button>
+      </div>
+      <div class="help-output" id="matches-help-output"></div>
+    </div>
+
+    <div id="matches-container"></div>
+  </div>
+
+  <!-- ===== TRACKING ===== -->
+  
+
+  <!-- ===== BANKROLL ===== -->
+  <!-- ML5 ANALYSIS TAB -->
+  <div class="tab-content" id="tab-ml5">
+    <div id="ml5-root" style="padding:16px 0 80px"></div>
+  </div>
+
+  
+
+
+  <div class="tab-content" id="tab-piramida">
+    <div class="pyramid-shell">
+      <div class="pyramid-hero">
+        <div class="pyramid-title">🧗 Piramidă Daily <span class="sec-badge" id="pyramid-picks-badge">—</span></div>
+        <div class="pyramid-actions">
+          <button class="btn btn-primary" onclick="refreshPyramidDaily()">🔄 Recalculează pick-uri</button>
+          <button class="btn btn-green" onclick="createPyramidDailySession()">✅ Pornește sesiune</button>
+          <button class="btn" onclick="savePyramidDailySettings()">💾 Salvează setări</button>
+        </div>
+      </div>
+
+      <div class="pyramid-grid">
+        <div class="pyramid-panel">
+          <div class="pyramid-panel-title"><span>🎯 Evenimentele zilei</span><span id="pyramid-ticket-summary" style="font-size:11px;color:var(--muted);font-weight:700">—</span></div>
+          <div id="pyramid-picks-list"></div>
+        </div>
+
+        <div class="pyramid-panel">
+          <div class="pyramid-panel-title">⚙️ Parametri piramidă</div>
+          <div class="pyramid-form">
+            <div>
+              <label class="pyramid-label">Miză inițială</label>
+              <input id="pyramid-stake" class="pyramid-input" type="number" min="1" step="1" onchange="savePyramidDailySettings()">
+            </div>
+            <div>
+              <label class="pyramid-label">Cotă țintă/pas</label>
+              <input id="pyramid-target-odds" class="pyramid-input" type="number" min="1.10" max="100" step="0.01" onchange="savePyramidDailySettings()">
+            </div>
+            <div>
+              <label class="pyramid-label">Pași</label>
+              <input id="pyramid-steps" class="pyramid-input" type="number" min="1" max="30" step="1" onchange="savePyramidDailySettings()">
+            </div>
+            <div>
+              <label class="pyramid-label">Profil</label>
+              <select id="pyramid-profile" class="pyramid-select" onchange="savePyramidDailySettings()">
+                <option value="ultra">Ultra safe</option>
+                <option value="safe">Safe</option>
+                <option value="balanced">Balanced</option>
+              </select>
+            </div>
+            <div>
+              <label class="pyramid-label">Zi</label>
+              <select id="pyramid-day-mode" class="pyramid-select" onchange="savePyramidDailySettings()">
+                <option value="today">Azi</option>
+                <option value="tomorrow">Mâine</option>
+              </select>
+            </div>
+          </div>
+          <div id="pyramid-plan"></div>
+        </div>
+      </div>
+
+      <div class="pyramid-panel">
+        <div class="pyramid-panel-title">📒 Monitorizare sesiuni piramidă</div>
+        <div id="pyramid-session-stats"></div>
+        <div id="pyramid-session-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- end tab-charts -->
+
+  <!-- ===== CLV TRACKER ===== -->
+  <div class="tab-content" id="tab-clv">
+    <div class="clv-loading-init" style="text-align:center;padding:48px;color:var(--muted,#64748b)">
+      <div style="display:inline-block;width:22px;height:22px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:clvspin .7s linear infinite;margin-bottom:8px"></div>
+      <br>Se încarcă datele CLV…
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<nav class="mobile-nav" id="mobile-nav" aria-label="Navigare mobilă">
+  <button class="mobile-nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')" aria-label="Dashboard">
+    <span aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+    </span>
+    <small>Dashboard</small>
+  </button>
+  <button class="mobile-nav-btn" data-tab="meciuri" onclick="switchTab('meciuri')" aria-label="Meciuri">
+    <span aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3l3 4-3 4-3-4 3-4z"/><path d="M3 12l4 3-2 5"/><path d="M21 12l-4 3 2 5"/><path d="M9 17l3-2 3 2-1 4h-4l-1-4z"/></svg>
+    </span>
+    <small>Meciuri</small>
+  </button>
+  <button class="mobile-nav-btn" data-tab="more" onclick="toggleMobileMore()" aria-label="Mai mult">
+    <span aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
+    </span>
+    <small>Mai mult</small>
+  </button>
+</nav>
+<div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
+  <button class="mobile-sheet-btn" onclick="switchTab('piramida');closeMobileMore()"><span class="sheet-btn-title">🧗 Piramidă Daily</span><small class="sheet-btn-sub">Reinvestire în etape</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
+</div>
+
+
+<!-- ═══ DESIGN SYSTEM v3 — Animation Engine ═══ -->
+
+
+  <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
+  <script src="./assets/clv_tracker_runtime.js?v=20260429clv1" defer></script>
+  <script>
+  // Actualizeaza ora ultimei sincronizari in header
+  (function(){
+    function updateSyncTime(){
+      var el = document.getElementById('hq-time');
+      if(!el) return;
+      var t = '';
+      try { t = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : ''; } catch(e){}
+      if(!t){
+        // Fallback: citeste din sb-text (contine "ora HH:MM")
+        var sb = document.getElementById('sb-text');
+        if(sb){ var m = (sb.textContent||sb.innerText||'').match(/ora\s+(\d{2}:\d{2})/); if(m) t = m[1]; }
+      }
+      el.textContent = t ? '\u23F1 '+t : '';
+    }
+    [1000,2000,4000,8000].forEach(function(d){ setTimeout(updateSyncTime,d); });
+    setInterval(updateSyncTime, 15000);
+  })();
+  </script>
+</body>
+</html>
