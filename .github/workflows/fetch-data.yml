@@ -58,6 +58,18 @@ jobs:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: python fetch_data.py
 
+      - name: VEYRA Supreme v5 — API v2 enrichment cache
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          if [ -f fetch_v2_enrichment_cache.py ]; then
+            echo "Fetching API v2 enrichment cache before Supreme Engine v5..."
+            timeout 600s python -u fetch_v2_enrichment_cache.py || echo "API v2 enrichment skipped/timed out; non-fatal."
+          else
+            echo "fetch_v2_enrichment_cache.py missing; skip API v2 enrichment."
+          fi
+        continue-on-error: true
+
       - name: Verify cached data exists
         run: |
           test -f data/predictions.json
@@ -90,7 +102,7 @@ jobs:
             echo "✅ Modele OK ($MODEL_COUNT găsite) — skip retrain"
           fi
 
-      - name: SmartBet v2 — Predicții CatBoost pe meciuri de azi
+      - name: VEYRA Supreme v5 — Predicții multi-source pe meciuri curente
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
         run: |
