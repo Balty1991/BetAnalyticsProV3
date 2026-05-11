@@ -49,10 +49,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
 <script defer src="./assets/app.js?v=20260509autorefresh30"></script>
-<script defer src="./assets/pyramid_daily_runtime.js?v=20260509pyr12"></script>
-<script defer id="hybrid-adaptive-runtime-script" src="./assets/hybrid_adaptive_runtime.js?v=20260510motorfix1"></script>
-<script defer id="adaptive-restore-runtime-script" src="./assets/adaptive_restore_runtime.js?v=20260510motorfix1"></script>
-<script defer id="prediction-history-runtime-script" src="./assets/prediction_history_runtime.js?v=20260510motorfix1"></script>
+<script defer src="./assets/pyramid_daily_runtime.js?v=20260511pyr-row2"></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Sari la conținutul principal</a>
@@ -151,8 +148,8 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 
   <!-- ===== SMARTBET LEARNING ENGINE (fuziune Audit + AI Memory + SmartBet) ===== -->
   <div class="tab-content" id="tab-smartbet">
-    <div class="tab-content" id="tab-audit" style="display:none!important"></div>
-    <div class="tab-content" id="tab-aimemory" style="display:none!important"></div>
+    
+    
 
     <!-- Sub-navigare internă -->
     <div class="smartlearn-nav" id="smartlearn-nav">
@@ -180,19 +177,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
           <div id="unified-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
         </div>
         <div id="unified-picks-list"></div>
-      </div>
-
-      <div class="section memory-panel memory-mix" style="margin-top:14px">
-        <div style="padding:4px 0 10px">
-          <div class="memory-shell-title">🎫 Generator Bilet Unificat</div>
-          <div class="memory-shell-sub" style="margin-top:4px">Un singur generator — filtru maxim din toate cele 3 motoare.</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-          <button class="btn" style="background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.3);color:var(--grn);font-size:12px;padding:8px 14px" onclick="generateUnifiedTicket('safe')">🛡️ Generează Safe</button>
-          <button class="btn" style="background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;font-size:12px;padding:8px 14px" onclick="generateUnifiedTicket('balanced')">⚖️ Generează Echilibrat</button>
-          <button class="btn" style="background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.3);color:var(--yel);font-size:12px;padding:8px 14px" onclick="generateUnifiedTicket('value')">🚀 Generează Value</button>
-        </div>
-        <div id="unified-ticket-output"></div>
       </div>
     </div>
 
@@ -222,177 +206,10 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     </div>
 
     <!-- ===== SECȚIUNEA AUDIT KELLY ===== -->
-    <div id="smartlearn-section-audit" style="display:none!important">
-      <div class="help-panel">
-        <div class="help-head">
-          <div>
-            <div class="help-title">ℹ️ Ghid rapid Audit Kelly</div>
-            <div class="help-sub">Audit Kelly rămâne zona de selecție disciplinată: verifici întâi <b>Kelly 1/4</b>, apoi <b>Edge</b>, <b>Value</b> și doar la final cota. Explicațiile sunt acum direct în tab, fără pași în plus.</div>
-          </div>
-          <div class="action-row"><span class="sec-badge">Explicații contextuale</span><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="exportAuditCsv()">📄 Export CSV</button></div>
-        </div>
-        <div class="help-chip-row">
-          <button class="help-chip" onclick="showInlineHelp('audit-help-output','kelly_quarter')">Kelly 1/4</button>
-          <button class="help-chip" onclick="showInlineHelp('audit-help-output','edge')">Edge</button>
-          <button class="help-chip" onclick="showInlineHelp('audit-help-output','value')">Value</button>
-          <button class="help-chip" onclick="showInlineHelp('audit-help-output','fair_odds')">Fair odds</button>
-          <button class="help-chip" onclick="showInlineHelp('audit-help-output','adjusted_prob')">Prob. ajustată</button>
-        </div>
-        <div class="help-output" id="audit-help-output"></div>
-      </div>
-      <div class="section" style="margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(59,130,246,.06));border:1px solid rgba(245,158,11,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <div>
-            <div style="font-size:15px;font-weight:700;color:var(--txt)">🎯 Audit Kelly / Signal</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Sinteză a selecțiilor validate din <strong style="color:var(--txt)">signal_audit.json</strong>.</div>
-          </div>
-          <div id="audit-updated" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
-        </div>
-        <div class="audit-grid" id="audit-summary-grid"></div>
-      </div>
-      <div class="section" style="margin-top:14px;padding:14px;background:linear-gradient(135deg,rgba(34,197,94,.05),rgba(59,130,246,.04));border:1px solid rgba(34,197,94,.16);border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.14)">
-        <div class="visual-card-head" style="margin-bottom:12px">
-          <div>
-            <div class="visual-card-title">📈 Vizual Audit Kelly</div>
-            <div class="visual-card-sub">Metrici principale și piețe dominante din audit, prezentate mai ușor de digerat vizual.</div>
-          </div>
-          <div class="visual-mini-meta">Audit</div>
-        </div>
-        <div class="visual-grid">
-          <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">Metrici medii</div><div id="audit-metric-bars"></div></div>
-          <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">Piețe dominante</div><div id="audit-market-bars"></div></div>
-        </div>
-      </div>
-      <div class="section" style="padding:14px;background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(16,185,129,.05));border:1px solid rgba(59,130,246,.18);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16)">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <div>
-            <div style="font-size:14px;font-weight:700;color:var(--txt)">📋 Pariuri auditate</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Selecțiile sunt ordonate după Kelly 1/4.</div>
-          </div>
-          <div style="font-size:10px;color:var(--muted)">Sortare: Kelly 1/4 ↓</div>
-        </div>
-        <div id="signal-audit-table" class="audit-list"></div>
-      </div>
-      <div class="section memory-panel memory-mix" style="margin-top:14px">
-        <div class="memory-shell-head">
-          <div>
-            <div class="memory-shell-title">🎫 Generator Audit Kelly</div>
-            <div class="memory-shell-sub">Aceleași 4 categorii matematice, dar aplicate doar pe selecțiile validate în audit.</div>
-          </div>
-          <div class="memory-shell-meta">Single / Double / Triple / Contrarian</div>
-        </div>
-        <div class="memory-generator-grid">
-          <div class="memory-generator-card premium"><div class="memory-generator-title">🔥 Single Premium</div><div class="memory-generator-sub">1 selecție cu scor și edge dominante, fără taxă de corelație.</div><button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGenerateAuditTicket('premium', this)">Generează</button><div class="generator-status" id="audit-status-premium">Așteaptă o generare.</div><div id="audit-ticket-premium" style="margin-top:12px"></div></div>
-          <div class="memory-generator-card double"><div class="memory-generator-title">✅ Double Confirmed</div><div class="memory-generator-sub">Exact 2 selecții necorelate, cu probabilitate compusă solidă.</div><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGenerateAuditTicket('double', this)">Generează</button><div class="generator-status" id="audit-status-double">Așteaptă o generare.</div><div id="audit-ticket-double" style="margin-top:12px"></div></div>
-          <div class="memory-generator-card triple"><div class="memory-generator-title">⚖️ Triple Value</div><div class="memory-generator-sub">3 selecții, dar doar dacă probabilitatea compusă și bankroll-ul o justifică.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--yel),var(--acc))" onclick="handleGenerateAuditTicket('triple', this)">Generează</button><div class="generator-status" id="audit-status-triple">Așteaptă o generare.</div><div id="audit-ticket-triple" style="margin-top:12px"></div></div>
-          <div class="memory-generator-card contrarian"><div class="memory-generator-title">🎯 Contrarian Shot</div><div class="memory-generator-sub">2-3 selecții cu preț mai agresiv și edge pozitiv, miză minimă.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGenerateAuditTicket('contrarian', this)">Generează</button><div class="generator-status" id="audit-status-contrarian">Așteaptă o generare.</div><div id="audit-ticket-contrarian" style="margin-top:12px"></div></div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- ===== SECȚIUNEA AI MEMORY ===== -->
-    <div id="smartlearn-section-aimemory" style="display:none!important">
-      <div id="ai-memory-shell">
-        <div class="help-panel green">
-          <div class="help-head">
-            <div>
-              <div class="help-title">🧠 Ghid rapid AI Memory</div>
-              <div class="help-sub">AI Memory completează scorul principal cu pattern-uri validate. Aici contează mai ales <b>adaptive score</b>, <b>memory bonus</b> și felul în care istoricul confirmă sau penalizează selecția curentă.</div>
-            </div>
-            <div class="action-row"><span class="sec-badge" style="color:var(--grn);border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)">Adaptive scoring</span><button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="exportAiMemoryCsv()">📄 Export CSV</button></div>
-          </div>
-          <div class="help-chip-row">
-            <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','adaptive_score')">Adaptive score</button>
-            <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','memory_bonus')">Memory bonus</button>
-            <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','roi')">ROI</button>
-            <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','positive_patterns')">Pattern-uri pozitive</button>
-            <button class="help-chip" onclick="showInlineHelp('aimemory-help-output','negative_patterns')">Pattern-uri de evitat</button>
-          </div>
-          <div class="help-output" id="aimemory-help-output"></div>
-        </div>
-        <div class="section memory-panel memory-hero">
-          <div class="memory-shell-head">
-            <div>
-              <div class="memory-shell-title">🧠 AI Memory / Adaptive Engine</div>
-              <div class="memory-shell-sub">Sinteză vizuală în același stil cu Audit Kelly: rezumat compact, pattern-uri clare și selecții rescotate mai ușor de urmărit.</div>
-            </div>
-            <div id="ai-memory-updated" class="memory-shell-meta">—</div>
-          </div>
-          <div class="audit-grid" id="ai-memory-summary-grid"></div>
-          <div class="memory-note">Scorul adaptiv completează scorul principal pe baza istoricului validat și îl aduce într-un format mai compact și mai lizibil.</div>
-        </div>
-        <div class="memory-layout-two">
-          <div class="section memory-panel memory-blue">
-            <div class="memory-shell-head">
-              <div>
-                <div class="memory-shell-title">📊 Ce piețe a învățat motorul</div>
-                <div class="memory-shell-sub">Aceeași logică vizuală ca în audit: vezi rapid ce piețe au istoric bun și unde memoria chiar adaugă semnal util.</div>
-              </div>
-              <div class="memory-shell-meta">minim 4 exemple închise</div>
-            </div>
-            <div class="audit-grid" id="ai-memory-market-grid"></div>
-          </div>
-          <div class="memory-side-stack">
-            <div class="section memory-panel memory-green">
-              <div class="memory-shell-head">
-                <div>
-                  <div class="memory-shell-title">✅ Tipare care au mers</div>
-                  <div class="memory-shell-sub">Pattern-uri validate pozitiv în istoricul pe care îl folosește memoria adaptivă.</div>
-                </div>
-              </div>
-              <div id="ai-memory-patterns-good" class="memory-pattern-list"></div>
-            </div>
-            <div class="section memory-panel memory-red">
-              <div class="memory-shell-head">
-                <div>
-                  <div class="memory-shell-title">⛔ Tipare de evitat</div>
-                  <div class="memory-shell-sub">Semnale recurente care au tras în jos scorul și merită privite cu scepticism.</div>
-                </div>
-              </div>
-              <div id="ai-memory-patterns-bad" class="memory-pattern-list"></div>
-            </div>
-          </div>
-        </div>
-        <div class="section memory-panel memory-blue" style="margin-top:14px">
-          <div class="visual-card-head" style="margin-bottom:12px">
-            <div>
-              <div class="visual-card-title">📈 Vizual AI Memory</div>
-              <div class="visual-card-sub">ROI și memory score pe piețele pe care memoria deja a învățat ceva util.</div>
-            </div>
-            <div class="visual-mini-meta">AI Memory</div>
-          </div>
-          <div class="visual-grid">
-            <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">ROI pe piață</div><div id="aimemory-roi-bars"></div></div>
-            <div class="visual-card"><div class="visual-card-title" style="margin-bottom:10px">Memory score pe piață</div><div id="aimemory-score-bars"></div></div>
-          </div>
-        </div>
-        <div class="section memory-panel memory-indigo">
-          <div class="memory-shell-head">
-            <div>
-              <div class="memory-shell-title">🎯 Pronosticuri adaptive</div>
-              <div class="memory-shell-sub">Selecțiile rescotate păstrează aceeași prezentare compactă ca în Audit Kelly, dar cu accent pe bonusul de memorie și scorul adaptiv.</div>
-            </div>
-            <div class="memory-shell-meta">Top 12 selecții</div>
-          </div>
-          <div id="ai-memory-picks" class="audit-list"></div>
-        </div>
-        <div class="section memory-panel memory-mix">
-          <div class="memory-shell-head">
-            <div>
-              <div class="memory-shell-title">🎫 Generator AI Memory</div>
-              <div class="memory-shell-sub">Aceleași 4 categorii, dar ordonate după adaptive score și memory bonus.</div>
-            </div>
-            <div class="memory-shell-meta">Single / Double / Triple / Contrarian</div>
-          </div>
-          <div class="memory-generator-grid">
-            <div class="memory-generator-card premium"><div class="memory-generator-title">🔥 Single Premium</div><div class="memory-generator-sub">1 selecție cu adaptiv și memorie clar peste restul pool-ului.</div><button class="btn btn-green" style="width:100%;justify-content:center" onclick="handleGenerateAiMemoryTicket('premium', this)">Generează</button><div class="generator-status" id="aimemory-status-premium">Așteaptă o generare.</div><div id="ai-ticket-premium" style="margin-top:12px"></div></div>
-            <div class="memory-generator-card double"><div class="memory-generator-title">✅ Double Confirmed</div><div class="memory-generator-sub">2 selecții curate, fără suprapunere evidentă de context.</div><button class="btn btn-primary" style="width:100%;justify-content:center" onclick="handleGenerateAiMemoryTicket('double', this)">Generează</button><div class="generator-status" id="aimemory-status-double">Așteaptă o generare.</div><div id="ai-ticket-double" style="margin-top:12px"></div></div>
-            <div class="memory-generator-card triple"><div class="memory-generator-title">⚖️ Triple Value</div><div class="memory-generator-sub">3 selecții doar dacă adaptive score-ul nu cade sub prag.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--yel),var(--acc))" onclick="handleGenerateAiMemoryTicket('triple', this)">Generează</button><div class="generator-status" id="aimemory-status-triple">Așteaptă o generare.</div><div id="ai-ticket-triple" style="margin-top:12px"></div></div>
-            <div class="memory-generator-card contrarian"><div class="memory-generator-title">🎯 Contrarian Shot</div><div class="memory-generator-sub">2-3 selecții cu memorie suficientă, dar preț mai agresiv.</div><button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,var(--pur),var(--red))" onclick="handleGenerateAiMemoryTicket('contrarian', this)">Generează</button><div class="generator-status" id="aimemory-status-contrarian">Așteaptă o generare.</div><div id="ai-ticket-contrarian" style="margin-top:12px"></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- ===== SECȚIUNEA FUZIUNE SMARTBET ===== -->
     <div id="smartlearn-section-smartbet" style="display:none!important">
