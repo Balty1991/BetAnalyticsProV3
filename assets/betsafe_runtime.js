@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__VeyraBetSafeRuntimeV2) return;
-window.__VeyraBetSafeRuntimeV2 = true;
+if(window.__VeyraBetSafeRuntimeV4) return;
+window.__VeyraBetSafeRuntimeV4 = true;
 
 var W = window;
 var D = document;
@@ -201,7 +201,7 @@ function addExistingBet(out,m,type,label,short,minProb,maxOdds,priority){
     reason:'Model ' + pct(prob,1) + ' · ' + edgeTxt + ' · xG total ' + n(m.xgTotal,0).toFixed(2)
   });
 }
-function buildCandidatesForMatch(m){
+function buildCandidatesForMatch(m, context){
   var out = [];
   if(!m || !isUpcomingEnough(m)) return out;
 
@@ -236,14 +236,15 @@ function buildCandidatesForMatch(m){
     });
   }
 
-  return out.sort(function(a,b){
+  var sorted = out.sort(function(a,b){
     if(b.grade !== a.grade){
       var w = {ultra:4,safe:3,ok:2,watch:1};
       return (w[b.grade]||0) - (w[a.grade]||0);
     }
     if((b.score||0) !== (a.score||0)) return (b.score||0) - (a.score||0);
     return (b.prob||0) - (a.prob||0);
-  }).slice(0,2);
+  });
+  return sorted.slice(0, context === 'vip' ? 5 : 2);
 }
 function getPool(){
   var list = Array.isArray(W.ALL_MATCHES) ? W.ALL_MATCHES.slice() : [];
@@ -251,11 +252,11 @@ function getPool(){
   return list.filter(function(m){ return matchDateKey(m) === key && isUpcomingEnough(m); })
     .sort(function(a,b){ return (eventMs(a)||0) - (eventMs(b)||0); });
 }
-function buildAllCandidates(){
+function buildAllCandidates(context){
   var seen = {};
   var raw = [];
   getPool().forEach(function(m){
-    buildCandidatesForMatch(m).forEach(function(c){
+    buildCandidatesForMatch(m, context).forEach(function(c){
       var sig = String(c.eventId) + '|' + c.market;
       if(!seen[sig]){ seen[sig] = true; raw.push(c); }
     });
@@ -289,71 +290,144 @@ function combinations(arr, len, start, cur, out){
     cur.push(arr[i]); combinations(arr, len, i+1, cur, out); cur.pop();
   }
 }
-function buildVip(candidates){
-  var uniq = uniqueEvents(candidates).sort(function(a,b){
-    if((b.prob||0) !== (a.prob||0)) return (b.prob||0) - (a.prob||0);
-    if((a.odds||0) !== (b.odds||0)) return (a.odds||0) - (b.odds||0);
-    return (b.real?1:0) - (a.real?1:0);
+function vipLegScore(c){
+  var od = n(c.odds, 1);
+  var prob = n(c.prob, 0);
+  var oddsRisk = Math.max(0, od - 1.18) * 58 + Math.max(0, od - 1.25) * 115;
+  var modelPenalty = c.real ? 0 : 2.4;
+  var gradeBonus = c.grade === 'ultra' ? 7 : (c.grade === 'safe' ? 4 : (c.grade === 'ok' ? 1 : 0));
+  return prob + gradeBonus + (c.real ? 1.5 : 0) - oddsRisk - modelPenalty + n(c.score,0) * 0.08;
+}
+function prepareVipPool(candidates, layer){
+  var byEvent = {};
+  candidates.forEach(function(c){
+    if(!c || c.odds < 1.01 || c.odds > layer.maxOdds || c.prob < layer.minProb) return;
+    var id = String(c.eventId || '');
+    if(!id) return;
+    if(!byEvent[id]) byEvent[id] = [];
+    byEvent[id].push(c);
   });
+  var out = [];
+  Object.keys(byEvent).forEach(function(id){
+    byEvent[id].sort(function(a,b){
+      var sa = vipLegScore(a), sb = vipLegScore(b);
+      if(sb !== sa) return sb - sa;
+      if(b.prob !== a.prob) return b.prob - a.prob;
+      return a.odds - b.odds;
+    });
+    // păstrăm maximum două piețe / meci, ca motorul să poată alege varianta cea mai potrivită
+    out = out.concat(byEvent[id].slice(0,2));
+  });
+  out.sort(function(a,b){
+    var sa = vipLegScore(a), sb = vipLegScore(b);
+    if(sb !== sa) return sb - sa;
+    return a.odds - b.odds;
+  });
+  return out.slice(0, layer.limit || 34);
+}
+function comboHasUniqueEvents(items){
+  var seen = {};
+  for(var i=0;i<items.length;i++){
+    var id = String(items[i].eventId || '');
+    if(seen[id]) return false;
+    seen[id] = true;
+  }
+  return true;
+}
+function scoreVipCombo(items, layer){
+  var st = comboStats(items);
+  var inTarget = st.odds >= 1.30 && st.odds <= 1.50;
+  var nearTarget = st.odds >= 1.22 && st.odds <= 1.55;
+  var probs = items.map(function(x){ return n(x.prob,0); });
+  var oddsArr = items.map(function(x){ return n(x.odds,1); });
+  var minLegProb = Math.min.apply(null, probs);
+  var avgLegProb = probs.reduce(function(s,x){ return s+x; },0) / Math.max(1, probs.length);
+  var maxLegOdds = Math.max.apply(null, oddsArr);
+  var avgLegOdds = oddsArr.reduce(function(s,x){ return s+x; },0) / Math.max(1, oddsArr.length);
+  var realCount = items.filter(function(x){ return x.real; }).length;
+  var centerGap = Math.abs(1.38 - st.odds);
+  var highLegPenalty = oddsArr.reduce(function(s,o){
+    return s + Math.max(0, o - 1.20) * 90 + Math.max(0, o - 1.28) * 165;
+  },0);
+  var concentrationPenalty = Math.max(0, maxLegOdds - avgLegOdds) * 70;
+  var modelPenalty = items.filter(function(x){ return !x.real; }).length * 1.8;
+  var lengthBonus = items.length === 3 ? 15 : (items.length === 2 ? 9 : -10);
+  var targetBonus = inTarget ? 240 : (nearTarget ? 42 : -80);
+  var underTargetPenalty = st.odds < 1.30 ? (1.30 - st.odds) * 210 : 0;
+  var overTargetPenalty = st.odds > 1.50 ? (st.odds - 1.50) * 260 : 0;
+  var layerBonus = layer.rank || 0;
 
-  function pool(minProb, maxOdds){
-    return uniq.filter(function(c){
-      return c.prob >= minProb && c.odds <= maxOdds && c.odds >= 1.01;
-    }).slice(0,18);
+  var score = targetBonus + layerBonus + (st.prob * 3.2) + (minLegProb * 0.75) + (avgLegProb * 0.35) + lengthBonus + (realCount * 1.2)
+    - (centerGap * 32) - highLegPenalty - concentrationPenalty - modelPenalty - underTargetPenalty - overTargetPenalty;
+
+  return {
+    items:items,
+    stats:st,
+    inTarget:inTarget,
+    soft:nearTarget,
+    score:score,
+    maxLegOdds:maxLegOdds,
+    minLegProb:minLegProb,
+    avgLegOdds:avgLegOdds,
+    avgLegProb:avgLegProb,
+    aiLayer:layer.name,
+    aiReason:layer.reason
+  };
+}
+function enumerateVipCombos(pool, layer){
+  var combos = [];
+  [3,2,1].forEach(function(len){ combinations(pool, len, 0, [], combos); });
+  return combos.filter(comboHasUniqueEvents).map(function(items){ return scoreVipCombo(items, layer); });
+}
+function sortVipCombos(a,b){
+  // 1) întâi respectăm intervalul cerut, 2) apoi probabilitatea, 3) apoi evităm piciorul scump
+  if((b.inTarget?1:0) !== (a.inTarget?1:0)) return (b.inTarget?1:0) - (a.inTarget?1:0);
+  if(b.score !== a.score) return b.score - a.score;
+  if(b.stats.prob !== a.stats.prob) return b.stats.prob - a.stats.prob;
+  if(a.maxLegOdds !== b.maxLegOdds) return a.maxLegOdds - b.maxLegOdds;
+  if(b.items.length !== a.items.length) return b.items.length - a.items.length;
+  return Math.abs(1.38 - a.stats.odds) - Math.abs(1.38 - b.stats.odds);
+}
+function buildVip(candidates){
+  var layers = [
+    {name:'AI Ultra', minProb:88, maxOdds:1.20, limit:30, rank:18, reason:'doar cote/eveniment ≤1.20 și probabilitate foarte ridicată'},
+    {name:'AI Safe+', minProb:84, maxOdds:1.23, limit:34, rank:12, reason:'relaxare mică pentru a atinge intervalul fără picior scump'},
+    {name:'AI Balanced', minProb:78, maxOdds:1.28, limit:38, rank:6, reason:'echilibru între cotă totală 1.30–1.50 și probabilitate combinată'},
+    {name:'AI Adaptive', minProb:72, maxOdds:1.35, limit:42, rank:0, reason:'folosit doar când oferta safe strictă nu poate construi bilet în interval'}
+  ];
+
+  var globalBest = null;
+  var bestTarget = null;
+
+  for(var li=0; li<layers.length; li++){
+    var layer = layers[li];
+    var pool = prepareVipPool(candidates, layer);
+    if(!pool.length) continue;
+    var scored = enumerateVipCombos(pool, layer).filter(function(c){ return c.soft || c.inTarget; }).sort(sortVipCombos);
+    if(!scored.length) continue;
+
+    if(!globalBest || sortVipCombos(scored[0], globalBest) < 0) globalBest = scored[0];
+
+    var target = scored.filter(function(c){ return c.inTarget; }).sort(sortVipCombos)[0];
+    if(target){
+      bestTarget = target;
+      break; // primul layer care poate atinge intervalul este cel mai sigur layer disponibil
+    }
   }
 
-  function buildFromPool(base, relaxed){
-    var combos = [];
-    [3,2,1].forEach(function(len){ combinations(base, len, 0, [], combos); });
-    if(!combos.length && base.length) combos = [[base[0]]];
+  if(bestTarget) return bestTarget;
+  if(globalBest) return globalBest;
 
-    return combos.map(function(items){
-      var st = comboStats(items);
-      var inTarget = st.odds >= 1.30 && st.odds <= 1.50;
-      var soft = st.odds >= 1.18 && st.odds <= 1.55;
-      var realCount = items.filter(function(x){ return x.real; }).length;
-      var minLegProb = Math.min.apply(null, items.map(function(x){ return n(x.prob,0); }));
-      var maxLegOdds = Math.max.apply(null, items.map(function(x){ return n(x.odds,1); }));
-      var avgLegOdds = items.reduce(function(s,x){ return s + n(x.odds,1); },0) / Math.max(1, items.length);
-      var targetGap = inTarget ? 0 : Math.abs(1.36 - st.odds);
-      var highLegPenalty = Math.max(0, maxLegOdds - 1.20) * (relaxed ? 115 : 170);
-      var avgOddsPenalty = Math.max(0, avgLegOdds - 1.14) * 38;
-      var oneLegPenalty = items.length === 1 && st.odds < 1.30 ? 14 : 0;
-      var lengthBonus = items.length === 3 ? 9 : (items.length === 2 ? 5 : 0);
-      var targetBonus = inTarget ? 18 : 0;
-      var score = (st.prob * 2.15) + (minLegProb * 0.75) + lengthBonus + targetBonus + (realCount * 1.4) - (targetGap * 70) - highLegPenalty - avgOddsPenalty - oneLegPenalty;
-      return {items:items, stats:st, inTarget:inTarget, soft:soft, score:score, maxLegOdds:maxLegOdds, minLegProb:minLegProb, avgLegOdds:avgLegOdds, relaxed:!!relaxed};
-    }).filter(function(c){ return c.soft; });
+  // ultimă protecție: dacă nu există combo valid, afișăm cel mai bun singur eveniment, dar marcat explicit ca fallback
+  var emergency = candidates.filter(function(c){ return c && c.prob >= 80 && c.odds >= 1.01 && c.odds <= 1.35; }).sort(function(a,b){
+    var sa = vipLegScore(a), sb = vipLegScore(b);
+    if(sb !== sa) return sb - sa;
+    return a.odds - b.odds;
+  })[0];
+  if(emergency){
+    var fallbackLayer = {name:'AI Fallback', minProb:80, maxOdds:1.35, rank:-12, reason:'nu există suficiente selecții compatibile pentru 1.30–1.50'};
+    return scoreVipCombo([emergency], fallbackLayer);
   }
-
-  var strict = buildFromPool(pool(88, 1.20), false);
-  var targetStrict = strict.filter(function(c){ return c.inTarget; }).sort(function(a,b){
-    if(b.stats.prob !== a.stats.prob) return b.stats.prob - a.stats.prob;
-    if(a.maxLegOdds !== b.maxLegOdds) return a.maxLegOdds - b.maxLegOdds;
-    if(b.items.length !== a.items.length) return b.items.length - a.items.length;
-    return Math.abs(1.36 - a.stats.odds) - Math.abs(1.36 - b.stats.odds);
-  })[0];
-  if(targetStrict) return targetStrict;
-
-  var relaxed = buildFromPool(pool(86, 1.23), true);
-  var targetRelaxed = relaxed.filter(function(c){ return c.inTarget; }).sort(function(a,b){
-    if(b.stats.prob !== a.stats.prob) return b.stats.prob - a.stats.prob;
-    if(a.maxLegOdds !== b.maxLegOdds) return a.maxLegOdds - b.maxLegOdds;
-    if(b.items.length !== a.items.length) return b.items.length - a.items.length;
-    return Math.abs(1.36 - a.stats.odds) - Math.abs(1.36 - b.stats.odds);
-  })[0];
-  if(targetRelaxed) return targetRelaxed;
-
-  var all = strict.concat(relaxed);
-  var fallback = all.sort(function(a,b){
-    if(b.score !== a.score) return b.score - a.score;
-    if(b.stats.prob !== a.stats.prob) return b.stats.prob - a.stats.prob;
-    return a.maxLegOdds - b.maxLegOdds;
-  })[0];
-  if(fallback) return fallback;
-
-  var emergency = pool(90, 1.18)[0] || pool(86, 1.23)[0] || uniq.filter(function(c){ return c.prob >= 84 && c.odds <= 1.25; })[0];
-  if(emergency) return {items:[emergency], stats:comboStats([emergency]), inTarget:false, soft:true, score:emergency.score || 0, maxLegOdds:emergency.odds, minLegProb:emergency.prob, avgLegOdds:emergency.odds, relaxed:true};
   return null;
 }
 function gradeLabel(g){
@@ -657,7 +731,8 @@ function renderVip(vip){
       '<div class="bet-safe-vip-pick"><span>' + esc(c.short || c.label) + '</span><em>' + (c.real ? '' : '≈') + esc(odds(c.odds)) + '</em></div>' +
     '</div>';
   }).join('');
-  var warning = vip.inTarget ? '' : '<div class="bet-safe-warning">Nu forțez cota 1.30–1.50: prefer selecții cu probabilitate mai mare și cote mici/eveniment. Cel mai bun combo safe găsit are cota ' + esc(odds(vip.stats.odds)) + '. Pentru strict 1.30+, așteaptă mai multe meciuri eligibile în zona 1.05–1.20.</div>';
+  var warning = vip.inTarget ? '' : '<div class="bet-safe-warning">Motorul AI nu a găsit o combinație suficient de bună în intervalul 1.30–1.50. Afișez cel mai bun fallback safe găsit, cota ' + esc(odds(vip.stats.odds)) + ', fără să forțez risc inutil.</div>';
+  var aiNote = '<div class="bet-safe-warning"><b>Decizie ' + esc(vip.aiLayer || 'AI') + ':</b> ' + esc(vip.aiReason || 'optimizare probabilitate + cotă totală') + '. A ales ' + vip.items.length + ' eveniment(e), max cotă/eveniment ' + esc(odds(vip.maxLegOdds)) + ', probabilitate minimă/picior ' + esc(pct(vip.minLegProb,1)) + '.</div>';
   var probWarn = vip.stats.prob >= 90 ? '' : '<div class="bet-safe-warning">Probabilitatea combinată este ' + esc(pct(vip.stats.prob,1)) + ', nu 90%+. Pentru piramidă, tratează biletul ca risc controlat, nu garantat.</div>';
   var source = vip.items.every(function(c){ return c.real; }) ? 'toate cotele din API/odds' : 'include cote fair/model unde API-ul nu are piața';
   return '<div class="bet-safe-vip-box">' +
@@ -668,9 +743,10 @@ function renderVip(vip){
     '<div class="bet-safe-card-meta" style="padding:0 12px 2px">' +
       '<span class="bet-safe-mini green">Prob. combinată ' + esc(pct(vip.stats.prob,1)) + '</span>' +
       '<span class="bet-safe-mini gold">Țintă cotă 1.30–1.50</span>' +
+      '<span class="bet-safe-mini green">' + esc(vip.aiLayer || 'AI') + '</span>' +
       '<span class="bet-safe-mini gold">10 pași ≈ ' + esc(pct(vip.stats.tenSteps,1)) + '</span>' +
       '<span class="bet-safe-mini">' + esc(source) + '</span>' +
-    '</div>' + warning + probWarn;
+    '</div>' + aiNote + warning + probWarn;
 }
 function renderHistoryPick(p){
   var cls = resultClass(p.result);
@@ -727,7 +803,7 @@ function renderHero(key){
   return '<div class="bet-safe-hero">' +
       '<div class="bet-safe-hero-top">' +
         '<div><div class="bet-safe-title"><span class="bet-safe-title-badge">🛡️</span><span>Bet Safe</span></div>' +
-        '<div class="bet-safe-sub">Listă construită din meciurile din aplicație pentru ziua selectată. Caută piețe cu risc mic: 1X/X2, Under 3.5, Over 1.5 și piețe estimate din xG. VIP combină 1–3 evenimente cu cote mici/eveniment, prioritate pe probabilitate, apoi pe ținta totală 1.30–1.50.</div></div>' +
+        '<div class="bet-safe-sub">Listă construită din meciurile din aplicație pentru ziua selectată. Caută piețe cu risc mic: 1X/X2, Under 3.5, Over 1.5 și piețe estimate din xG. VIP folosește un motor decizional AI heuristic: testează combinații de 1–3 evenimente, caută întâi intervalul 1.30–1.50, apoi maximizează probabilitatea și evită piciorul scump.</div></div>' +
         '<div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><span class="bet-safe-pill green">Piramidă friendly</span><span class="bet-safe-pill gold">VIP low odds</span></div>' +
       '</div>' +
       '<div class="bet-safe-view-tabs">' +
@@ -748,7 +824,8 @@ function renderMain(){
   var key = targetDayKey();
   var pool = getPool();
   var allCands = buildAllCandidates();
-  var vip = buildVip(allCands);
+  var vipCands = buildAllCandidates('vip');
+  var vip = buildVip(vipCands);
   var hist = syncHistory(allCands, vip);
   var visible = state.view === 'ultra' ? allCands.filter(function(c){ return c.grade === 'ultra' || c.grade === 'safe'; }) : allCands;
 
@@ -772,7 +849,7 @@ function renderMain(){
         '<div class="bet-safe-list">' + cards + '</div>' +
       '</div>' +
       '<div class="bet-safe-panel">' +
-        '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">👑 VIP Safe Combo</div><div class="bet-safe-panel-sub">1–3 selecții low-odds, preferă cote/eveniment ≤1.20 și probabilitate mai ridicată; țintă totală 1.30–1.50 fără forțare.</div></div><span class="bet-safe-pill gold">auto</span></div>' +
+        '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">👑 VIP Safe Combo</div><div class="bet-safe-panel-sub">Motor AI: alege cea mai bună combinație de 1–3 selecții din oferta zilnică pentru cotă 1.30–1.50, cu prioritate pe probabilitatea combinată și cote mici/eveniment.</div></div><span class="bet-safe-pill gold">auto</span></div>' +
         renderVip(vip) +
         '<div class="bet-safe-disclaimer"><b>Important:</b> probabilitatea combinată este produsul probabilităților modelului și presupune independență între evenimente. La 10 pași piramidali, riscul se multiplică rapid; secțiunea te ajută să nu forțezi bilet când nu există value/siguranță suficientă.</div>' +
       '</div>' +
