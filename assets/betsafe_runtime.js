@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__VeyraBetSafeRuntimeV8) return;
-window.__VeyraBetSafeRuntimeV8 = true;
+if(window.__VeyraBetSafeRuntimeV9) return;
+window.__VeyraBetSafeRuntimeV9 = true;
 
 var W = window;
 var D = document;
@@ -213,7 +213,7 @@ function isVoidStatus(s){
 }
 function isFinishedStatus(s){
   s = String(s || '').toLowerCase();
-  return ['finished','ft','aet','pen','after_penalties','completed','closed','final','ended'].indexOf(s) >= 0;
+  return ['finished','ft','aet','pen','after_penalties','completed','closed','final','ended','win','won','loss','lose','lost'].indexOf(s) >= 0;
 }
 function isFinished(m){ return isFinishedStatus(statusText(m)); }
 function isUpcomingEnough(m){
@@ -329,22 +329,98 @@ function poissonTotalBetween(totalLambda, minGoals, maxGoals){
   for(var g=minGoals; g<=maxGoals; g++) s += p(g);
   return clamp(s * 100, 0, 99.5);
 }
+
+function safeMarketFamilyKey(v){
+  var k = normalizeMarketKey(v || '').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  if(k === 'under35' || k === 'u35' || k === 'under_35' || k.indexOf('under_3_5') >= 0) return 'under35';
+  if(k === 'over15' || k === 'o15' || k === 'over_15' || k.indexOf('over_1_5') >= 0) return 'over15';
+  if(k === 'dc1x' || k === '1x') return 'dc1x';
+  if(k === 'dcx2' || k === 'x2') return 'dcx2';
+  if(k.indexOf('home_o05') >= 0 || k.indexOf('1_over_0_5') >= 0) return 'home_o05';
+  if(k.indexOf('away_o05') >= 0 || k.indexOf('2_over_0_5') >= 0) return 'away_o05';
+  if(k.indexOf('goals_1_4') >= 0 || k.indexOf('1_4') >= 0) return 'goals_1_4';
+  return k || 'unknown';
+}
+function localBetSafeRows(){
+  var hist = {};
+  try{ hist = JSON.parse(localStorage.getItem(HISTORY_STORAGE) || '{}') || {}; }catch(e){ hist = {}; }
+  var rows = [];
+  Object.keys(hist || {}).forEach(function(k){
+    var d = hist[k] || {};
+    (d.picks || []).forEach(function(p){ rows.push(p); });
+    if(d.vip && Array.isArray(d.vip.picks)) d.vip.picks.forEach(function(p){ rows.push(p); });
+  });
+  return rows;
+}
+function marketHealth(marketKey){
+  var mk = safeMarketFamilyKey(marketKey);
+  var rows = localBetSafeRows().filter(function(p){ return safeMarketFamilyKey(p.marketKey || p.market || p.short || p.label) === mk; });
+  var settled = rows.filter(function(p){ var r=String(p.result||'').toLowerCase(); return r === 'win' || r === 'loss' || r === 'lose'; });
+  var wins = settled.filter(function(p){ return String(p.result||'').toLowerCase() === 'win'; }).length;
+  var losses = settled.length - wins;
+  var recentLosses = rows.slice(-12).filter(function(p){ var r=String(p.result||'').toLowerCase(); return r === 'loss' || r === 'lose'; }).length;
+  var wr = settled.length ? wins * 100 / settled.length : 100;
+  var penalty = 0;
+  if(settled.length >= 3 && wr < 65) penalty += 9;
+  else if(settled.length >= 3 && wr < 75) penalty += 5;
+  if(recentLosses >= 2) penalty += 5;
+  if(losses >= 3 && wins <= losses) penalty += 4;
+  return {market:mk, rows:rows.length, settled:settled.length, wins:wins, losses:losses, winrate:wr, recentLosses:recentLosses, penalty:penalty};
+}
+function candidateRiskFlags(m, cfg){
+  var flags = [];
+  var xg = n(m && m.xgTotal,0);
+  var mk = safeMarketFamilyKey(cfg.marketKey || cfg.market || cfg.short || cfg.label);
+  if(mk === 'over15' && xg > 0 && xg < 2.20) flags.push('xG mic pentru Over 1.5');
+  if(mk === 'under35' && xg > 3.05) flags.push('xG mare pentru Under 3.5');
+  if(!cfg.real && (mk === 'home_o05' || mk === 'away_o05' || mk === 'goals_1_4')) flags.push('piață estimată, nu cotă reală');
+  if(n(cfg.odds,0) > 1.25) flags.push('cotă prea mare pentru Bet Safe');
+  var st = statusText(m || {});
+  if(isFinishedStatus(st) || isVoidStatus(st)) flags.push('meci deja închis');
+  return flags;
+}
 function addCandidate(out, m, cfg){
   var prob = clamp(n(cfg.prob,0), 0, 99.5);
   var od = n(cfg.odds,0);
-  if(prob < 72 || od < 1.01 || od > 1.40) return;
+  var mk = safeMarketFamilyKey(cfg.marketKey || cfg.market || cfg.short || cfg.label || '');
+  var health = marketHealth(mk);
+  var flags = candidateRiskFlags(m, cfg);
 
-  var sourcePenalty = cfg.real ? 0 : 3.5;
-  var oddsPenalty = od > 1.30 ? (od - 1.30) * 44 : 0;
-  var xgBonus = Math.min(4, Math.max(0, n(m.xgTotal,0) - 1.8));
+  // Bet Safe V9: survival-first. Mai bine nu afișăm nimic decât să publicăm un „safe” fragil.
+  var minProb = cfg.real ? 84 : 90;
+  var maxOdds = cfg.real ? 1.28 : 1.14;
+  if(mk === 'over15') minProb = Math.max(minProb, 88);
+  if(mk === 'under35') minProb = Math.max(minProb, 88);
+  if(mk === 'dc1x' || mk === 'dcx2') minProb = Math.max(minProb, 88);
+  if(mk === 'home_o05' || mk === 'away_o05'){
+    minProb = cfg.real ? 90 : 93;
+    maxOdds = cfg.real ? 1.16 : 1.09;
+  }
+  if(mk === 'goals_1_4'){
+    minProb = 93;
+    maxOdds = 1.09;
+  }
+  if(health.penalty){
+    minProb += Math.min(8, health.penalty * 0.65);
+    maxOdds -= Math.min(0.06, health.penalty * 0.004);
+  }
+
+  if(prob < minProb || od < 1.01 || od > maxOdds) return;
+  if(flags.length && !cfg.force) return;
+
+  var sourcePenalty = cfg.real ? 0 : 8.5;
+  var oddsPenalty = od > 1.18 ? (od - 1.18) * 70 : 0;
+  var xgBonus = Math.min(3, Math.max(0, n(m.xgTotal,0) - 2.0));
   var injuryPenalty = Math.min(5, Math.max(0, n(m.nUnavailHome,0) + n(m.nUnavailAway,0)) * 0.13);
-  var confidenceBonus = Math.max(0, Math.min(4, (n(m.confidence,0) - 50) / 12));
-  var score = prob + xgBonus + confidenceBonus - sourcePenalty - oddsPenalty - injuryPenalty + n(cfg.priority,0);
+  var confidenceBonus = Math.max(0, Math.min(4, (n(m.confidence,0) - 55) / 13));
+  var healthPenalty = health.penalty || 0;
+  var score = prob + xgBonus + confidenceBonus - sourcePenalty - oddsPenalty - injuryPenalty - healthPenalty + n(cfg.priority,0);
 
   var grade = 'watch';
-  if(prob >= 91 && od <= 1.25) grade = 'ultra';
-  else if(prob >= 86 && od <= 1.30) grade = 'safe';
-  else if(prob >= 80 && od <= 1.35) grade = 'ok';
+  if(prob >= 93 && od <= 1.16 && score >= 88) grade = 'ultra';
+  else if(prob >= 89 && od <= 1.22 && score >= 82) grade = 'safe';
+  else if(prob >= 86 && od <= 1.26 && score >= 78) grade = 'ok';
+  else return;
 
   out.push({
     eventId: m.eventId || m.id || [m.home,m.away,m.date].join('|'),
@@ -357,9 +433,10 @@ function addCandidate(out, m, cfg){
     real: !!cfg.real,
     grade: grade,
     score: +score.toFixed(2),
-    reason: cfg.reason || '',
+    reason: (cfg.reason || '') + (health.settled >= 3 ? ' · market WR ' + pct(health.winrate,0) + ' (' + health.wins + '/' + health.settled + ')' : ''),
     source: cfg.source || (cfg.real ? 'cotă API' : 'estimat/calibrat'),
-    marketKey: cfg.marketKey || cfg.market
+    marketKey: cfg.marketKey || cfg.market,
+    health: health
   });
 }
 function addExistingBet(out,m,type,label,short,minProb,maxOdds,priority){
@@ -371,6 +448,10 @@ function addExistingBet(out,m,type,label,short,minProb,maxOdds,priority){
   if(prob < minProb || od > maxOdds || od < 1.01) return;
   var edge = b.edgeVsMarket != null ? n(b.edgeVsMarket,0) : (b.edgePct != null ? n(b.edgePct,0) : null);
   var edgeTxt = edge != null ? 'edge ' + (edge >= 0 ? '+' : '') + edge.toFixed(1) + 'pp' : 'edge n/a';
+  var mk = safeMarketFamilyKey(type);
+  if(mk === 'over15' && n(m.xgTotal,0) > 0 && n(m.xgTotal,0) < 2.20) return;
+  if(mk === 'under35' && n(m.xgTotal,0) > 3.05) return;
+  if((mk === 'dc1x' || mk === 'dcx2') && prob < 88) return;
   addCandidate(out,m,{
     market:type,
     marketKey:type,
@@ -388,10 +469,10 @@ function buildCandidatesForMatch(m, context){
   var out = [];
   if(!m || !isUpcomingEnough(m)) return out;
 
-  addExistingBet(out,m,'under35','Sub 3.5 goluri','Under 3.5',82,1.35,4);
-  addExistingBet(out,m,'over15','Peste 1.5 goluri','Over 1.5',78,1.35,2.5);
-  addExistingBet(out,m,'dc1x','Șansă dublă 1X','1X',82,1.35,3);
-  addExistingBet(out,m,'dcx2','Șansă dublă X2','X2',82,1.35,3);
+  addExistingBet(out,m,'under35','Sub 3.5 goluri','Under 3.5',88,1.24,5);
+  addExistingBet(out,m,'over15','Peste 1.5 goluri','Over 1.5',88,1.24,2);
+  addExistingBet(out,m,'dc1x','Șansă dublă 1X','1X',88,1.24,4);
+  addExistingBet(out,m,'dcx2','Șansă dublă X2','X2',88,1.24,4);
 
   var homeGoalProb = poissonScoreAtLeastOne(m.xgHome);
   var awayGoalProb = poissonScoreAtLeastOne(m.xgAway);
@@ -400,10 +481,10 @@ function buildCandidatesForMatch(m, context){
     var homeP = homeQuote.prob || homeGoalProb;
     // Protecție Bet Safe: nu mai publicăm „fair din xG” slab ca pont safe.
     // Păstrăm piața doar dacă are cotă reală/API sau dacă estimarea este foarte joasă și susținută de probabilitate mare.
-    if((homeQuote.real && homeP >= 82 && homeQuote.odds <= 1.22) || (!homeQuote.real && homeP >= 88 && homeQuote.odds <= 1.16)){
+    if((homeQuote.real && homeP >= 90 && homeQuote.odds <= 1.16) || (!homeQuote.real && homeP >= 93 && homeQuote.odds <= 1.09)){
       addCandidate(out,m,{
         market:'home_o05', label:(m.home || 'Gazde') + ' marchează 0.5+', short:'1-over 0.5 ⚽', prob:homeP,
-        odds:homeQuote.odds, real:!!homeQuote.real, priority:homeQuote.real ? 1.4 : -1.2, source:homeQuote.source || 'estimare calibrată', marketKey:'home_o05',
+        odds:homeQuote.odds, real:!!homeQuote.real, priority:homeQuote.real ? 0.8 : -4.5, source:homeQuote.source || 'estimare calibrată', marketKey:'home_o05',
         reason:'xG gazde ' + n(m.xgHome,0).toFixed(2) + ' ⇒ model gol ' + pct(homeGoalProb,1) + '. Cotă ' + (homeQuote.real ? 'din API' : 'estimare strictă: minim 88% și cotă ≤1.16') + '.'
       });
     }
@@ -411,17 +492,17 @@ function buildCandidatesForMatch(m, context){
   if(awayGoalProb >= 75){
     var awayQuote = getTeamO05MarketQuote(m, 'away', awayGoalProb);
     var awayP = awayQuote.prob || awayGoalProb;
-    if((awayQuote.real && awayP >= 82 && awayQuote.odds <= 1.22) || (!awayQuote.real && awayP >= 88 && awayQuote.odds <= 1.16)){
+    if((awayQuote.real && awayP >= 90 && awayQuote.odds <= 1.16) || (!awayQuote.real && awayP >= 93 && awayQuote.odds <= 1.09)){
       addCandidate(out,m,{
         market:'away_o05', label:(m.away || 'Oaspeți') + ' marchează 0.5+', short:'2-over 0.5 ⚽', prob:awayP,
-        odds:awayQuote.odds, real:!!awayQuote.real, priority:awayQuote.real ? 1.2 : -1.4, source:awayQuote.source || 'estimare calibrată', marketKey:'away_o05',
+        odds:awayQuote.odds, real:!!awayQuote.real, priority:awayQuote.real ? 0.8 : -4.5, source:awayQuote.source || 'estimare calibrată', marketKey:'away_o05',
         reason:'xG oaspeți ' + n(m.xgAway,0).toFixed(2) + ' ⇒ model gol ' + pct(awayGoalProb,1) + '. Cotă ' + (awayQuote.real ? 'din API' : 'estimare strictă: minim 88% și cotă ≤1.16') + '.'
       });
     }
   }
 
   var intervalProb = poissonTotalBetween(n(m.xgTotal,0), 1, 4);
-  if(intervalProb >= 86){
+  if(intervalProb >= 93){
     addCandidate(out,m,{
       market:'goals_1_4', label:'Interval total 1–4 goluri', short:'1–4 goluri', prob:intervalProb,
       odds:fairOddsFromProb(intervalProb), real:false, priority:0.4, source:'fair din xG',
@@ -498,8 +579,9 @@ function prepareVipPool(candidates, layer){
     var mk = normalizeMarketKey(c.marketKey || c.market || c.short || c.label || '');
     var isTeamGoal = mk === 'home_o05' || mk === 'away_o05' || mk.indexOf('1-over 0.5') === 0 || mk.indexOf('2-over 0.5') === 0;
     // VIP trebuie să fie foarte conservator: estimările fără cotă reală intră doar dacă sunt ultra low-odds.
-    if(!c.real && isTeamGoal && (c.odds > 1.16 || c.prob < 88)) return;
-    if(!c.real && !isTeamGoal && (c.odds > 1.22 || c.prob < 86)) return;
+    if(c.health && c.health.penalty >= 8) return;
+    if(!c.real && isTeamGoal && (c.odds > 1.09 || c.prob < 93)) return;
+    if(!c.real && !isTeamGoal && (c.odds > 1.09 || c.prob < 93)) return;
     var id = String(c.eventId || '');
     if(!id) return;
     if(!byEvent[id]) byEvent[id] = [];
@@ -588,10 +670,10 @@ function sortVipCombos(a,b){
 }
 function buildVip(candidates){
   var layers = [
-    {name:'AI Ultra', minProb:88, maxOdds:1.20, limit:30, rank:18, reason:'doar cote/eveniment ≤1.20 și probabilitate foarte ridicată'},
-    {name:'AI Safe+', minProb:84, maxOdds:1.23, limit:34, rank:12, reason:'relaxare mică pentru a atinge intervalul fără picior scump'},
-    {name:'AI Balanced', minProb:78, maxOdds:1.28, limit:38, rank:6, reason:'echilibru între cotă totală 1.30–1.50 și probabilitate combinată'},
-    {name:'AI Adaptive', minProb:72, maxOdds:1.35, limit:42, rank:0, reason:'folosit doar când oferta safe strictă nu poate construi bilet în interval'}
+    {name:'AI Ultra Survival', minProb:92, maxOdds:1.15, limit:24, rank:22, reason:'survival-first: doar picioare foarte scurte, probabilitate ridicată și risc redus'},
+    {name:'AI Safe Survival', minProb:90, maxOdds:1.18, limit:28, rank:16, reason:'relaxare mică, dar fără picioare scumpe'},
+    {name:'AI Conservative', minProb:88, maxOdds:1.22, limit:32, rank:10, reason:'folosit doar dacă nu există variantă ultra, cu prob. combinată minimă'},
+    {name:'AI No-Force', minProb:86, maxOdds:1.24, limit:34, rank:4, reason:'fallback defensiv; dacă nu trece pragul, VIP rămâne gol'}
   ];
 
   var globalBest = null;
@@ -601,7 +683,7 @@ function buildVip(candidates){
     var layer = layers[li];
     var pool = prepareVipPool(candidates, layer);
     if(!pool.length) continue;
-    var scored = enumerateVipCombos(pool, layer).filter(function(c){ return c.soft || c.inTarget; }).sort(sortVipCombos);
+    var scored = enumerateVipCombos(pool, layer).filter(function(c){ return (c.soft || c.inTarget) && c.stats && c.stats.prob >= 76; }).sort(sortVipCombos);
     if(!scored.length) continue;
 
     if(!globalBest || sortVipCombos(scored[0], globalBest) < 0) globalBest = scored[0];
@@ -617,7 +699,7 @@ function buildVip(candidates){
   if(globalBest) return globalBest;
 
   // ultimă protecție: dacă nu există combo valid, afișăm cel mai bun singur eveniment, dar marcat explicit ca fallback
-  var emergency = candidates.filter(function(c){ return c && c.prob >= 80 && c.odds >= 1.01 && c.odds <= 1.35; }).sort(function(a,b){
+  var emergency = candidates.filter(function(c){ return c && c.real && c.prob >= 91 && c.odds >= 1.01 && c.odds <= 1.18; }).sort(function(a,b){
     var sa = vipLegScore(a), sb = vipLegScore(b);
     if(sb !== sa) return sb - sa;
     return a.odds - b.odds;
@@ -699,7 +781,8 @@ function ensureBetSafeDatasets(){
     {path:'data/events.json', label:'events.json'},
     {path:'data/recommendation_log.json', label:'recommendation_log.json'},
     {path:'data/history_engine.json', label:'history_engine.json'},
-    {path:'data/meciuri_visible_history.json', label:'meciuri_visible_history.json'}
+    {path:'data/meciuri_visible_history.json', label:'meciuri_visible_history.json'},
+    {path:'data/clv_tracker.json', label:'clv_tracker.json'}
   ];
   Promise.all(files.map(function(f){
     return fetchJsonBetSafe(f.path).then(function(data){
@@ -779,16 +862,32 @@ function markNeedsScore(entry, reason){
 
 function listSources(){
   var out = [];
-  function add(arr,label){
-    if(!Array.isArray(arr)) return;
-    arr.forEach(function(x){ if(x && typeof x === 'object'){ x.__bsSource = x.__bsSource || label; out.push(x); } });
+  var seen = {};
+  function push(x,label){
+    if(!x || typeof x !== 'object') return;
+    var key = (sourceEventId(x) || '') + '|' + sourceHome(x) + '|' + sourceAway(x) + '|' + sourceDateRaw(x) + '|' + JSON.stringify(scorePairFromSource(x));
+    if(seen[key]) return;
+    seen[key] = true;
+    x.__bsSource = x.__bsSource || label;
+    out.push(x);
   }
-  add(W.ALL_MATCHES, 'meciuri');
-  add(W.ALL_EVENTS, 'events');
-  add(W.HISTORY_ENGINE, 'history');
-  add(W.RECOMMENDATION_LOG, 'log');
-  add(BETSAFE_DATASETS.rows, 'bet_safe_data');
-  add(W.__BETSAFE_SETTLEMENT_SOURCES, 'bet_safe_extra');
+  function walk(v,label,depth){
+    if(!v || depth > 5) return;
+    if(Array.isArray(v)){ v.forEach(function(x){ walk(x,label,depth+1); }); return; }
+    if(typeof v !== 'object') return;
+    var hasShape = sourceEventId(v) != null || sourceHome(v) || sourceAway(v) || scorePairFromSource(v).homeScore != null || v.market || v.market_key || v.prediction;
+    if(hasShape) push(v,label);
+    Object.keys(v).forEach(function(k){
+      if(v[k] && typeof v[k] === 'object') walk(v[k],label,depth+1);
+    });
+  }
+  walk(W.ALL_MATCHES, 'meciuri',0);
+  walk(W.ALL_EVENTS, 'events',0);
+  walk(W.HISTORY_ENGINE, 'history',0);
+  walk(W.RECOMMENDATION_LOG, 'log',0);
+  walk(W.TRACKING_LOG, 'tracking',0);
+  walk(BETSAFE_DATASETS.rows, 'bet_safe_data',0);
+  walk(W.__BETSAFE_SETTLEMENT_SOURCES, 'bet_safe_extra',0);
   return out;
 }
 function normName(v){ return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
@@ -837,7 +936,7 @@ function findSourceForEntry(entry){
     var sc = sourceScore(src, entry);
     if(sc > bestScore){ bestScore = sc; best = src; }
   });
-  return bestScore >= 170 ? best : null;
+  return bestScore >= 130 ? best : null;
 }
 function settleEntry(entry){
   if(!entry) return entry;
@@ -870,6 +969,14 @@ function settleEntry(entry){
       entry.settledAt = entry.settledAt || new Date().toISOString();
       return entry;
     }
+  }
+  var sr = String(src.status || src.result || src.outcome || '').toLowerCase();
+  if(sr === 'win' || sr === 'won' || sr === 'loss' || sr === 'lose' || sr === 'lost'){
+    entry.result = (sr === 'win' || sr === 'won') ? 'win' : 'loss';
+    entry.matchStatus = 'finished';
+    entry.autoSource = src.__bsSource || 'source-status';
+    entry.settledAt = entry.settledAt || new Date().toISOString();
+    return entry;
   }
   if(isFinishedStatus(st) && (sp.homeScore == null || sp.awayScore == null)){
     return markNeedsScore(entry, src.__bsSource || 'finished fără scor');
@@ -1052,7 +1159,7 @@ function serializeVipCandidate(c){
   };
 }
 function isLockableVip(vip){
-  return !!(vip && Array.isArray(vip.items) && vip.items.length >= 2 && vip.inTarget && n(vip.stats && vip.stats.odds,0) >= 1.30 && n(vip.stats && vip.stats.odds,0) <= 1.50);
+  return !!(vip && Array.isArray(vip.items) && vip.items.length >= 2 && vip.inTarget && n(vip.stats && vip.stats.prob,0) >= 76 && n(vip.stats && vip.stats.odds,0) >= 1.30 && n(vip.stats && vip.stats.odds,0) <= 1.50);
 }
 function loadVipLocks(){
   try{
@@ -1243,7 +1350,7 @@ function renderHero(key){
   return '<div class="bet-safe-hero">' +
       '<div class="bet-safe-hero-top">' +
         '<div><div class="bet-safe-title"><span class="bet-safe-title-badge">🛡️</span><span>Bet Safe</span></div>' +
-        '<div class="bet-safe-sub">Listă construită din meciurile din aplicație pentru ziua selectată. Caută piețe cu risc mic: 1X/X2, Under 3.5, Over 1.5 și doar estimări xG strict filtrate. VIP folosește un motor decizional AI heuristic: testează combinații de 1–3 evenimente, caută întâi intervalul 1.30–1.50, apoi maximizează probabilitatea și evită piciorul scump.</div></div>' +
+        '<div class="bet-safe-sub">Bet Safe V9 este survival-first: filtrează agresiv piețele cu loss recent, nu forțează VIP și preferă skip dacă oferta nu trece pragurile. Targetul de cotă este secundar; prioritatea este seria WIN.</div></div>' +
         '<div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><span class="bet-safe-pill green">Piramidă friendly</span><span class="bet-safe-pill gold">VIP low odds</span></div>' +
       '</div>' +
       '<div class="bet-safe-view-tabs">' +
