@@ -68,12 +68,11 @@ jobs:
               ]
               d['shortcuts'] = [
                   {'name':'Meciuri azi','short_name':'Meciuri','description':'Vezi meciurile cu cote și predicții','url':'./index.html?v=veyra#meciuri','icons':[{'src':'icon-192.png?v=20260509veyra5','sizes':'192x192'}]},
-                  {'name':'Piramidă Daily','short_name':'Piramidă','description':'Reinvestire în etape cu selecții AI','url':'./index.html?v=veyra#piramida','icons':[{'src':'icon-192.png?v=20260509veyra5','sizes':'192x192'}]},
               ]
               man.write_text(json.dumps(d, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
           readme = root / 'README.md'
-          readme.write_text('# VEYRA\n\nSports Analytics AI · ML5 predictions · performance tracking · pyramid strategy dashboard.\n\nLive app: https://balty1991.github.io/VEYRA/\n', encoding='utf-8')
+          readme.write_text('# VEYRA\n\nSports Analytics AI · ML5 predictions · performance tracking.\n\nLive app: https://balty1991.github.io/VEYRA/\n', encoding='utf-8')
 
           sw = root / 'sw.js'
           if sw.exists():
