@@ -34,9 +34,24 @@
     } catch(e) {}
   }
 
+  function loadTruthGuardV6Patch(){
+    if (window.__VEYRA_TRUTHGUARD_V6_LOADER__) return;
+    window.__VEYRA_TRUTHGUARD_V6_LOADER__ = true;
+    try {
+      var s = document.createElement('script');
+      s.defer = true;
+      s.src = './assets/truthguard_v6_runtime_patch.js?v=20260512truthguardv6';
+      document.head.appendChild(s);
+    } catch(e) {}
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', neutralizeDashboardOnly);
+    document.addEventListener('DOMContentLoaded', function(){
+      neutralizeDashboardOnly();
+      loadTruthGuardV6Patch();
+    });
   } else {
     neutralizeDashboardOnly();
+    loadTruthGuardV6Patch();
   }
 })();
