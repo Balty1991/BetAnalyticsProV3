@@ -15,12 +15,10 @@
       var src = '';
       try { src = String(fn || ''); } catch(e) {}
 
-      // Legacy daily dashboard refresh: it rendered Top 2 / Dashboard blocks every day.
       if (ms === 60000 && (name === 'checkDailyRefresh' || src.indexOf('checkDailyRefresh') >= 0)) {
         console.info('[BA] skipped legacy checkDailyRefresh interval');
         return 0;
       }
-      // Keep app data auto-refresh active. doRefresh must remain active; external cron cadence is 30 minutes.
 
       return originalSetInterval.apply(this, arguments);
     };
@@ -34,24 +32,9 @@
     } catch(e) {}
   }
 
-  function loadTruthGuardV6Patch(){
-    if (window.__VEYRA_TRUTHGUARD_V6_LOADER__) return;
-    window.__VEYRA_TRUTHGUARD_V6_LOADER__ = true;
-    try {
-      var s = document.createElement('script');
-      s.defer = true;
-      s.src = './assets/truthguard_v6_runtime_patch.js?v=20260512truthguardv6';
-      document.head.appendChild(s);
-    } catch(e) {}
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){
-      neutralizeDashboardOnly();
-      loadTruthGuardV6Patch();
-    });
+    document.addEventListener('DOMContentLoaded', neutralizeDashboardOnly);
   } else {
     neutralizeDashboardOnly();
-    loadTruthGuardV6Patch();
   }
 })();
