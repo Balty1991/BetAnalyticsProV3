@@ -45,15 +45,11 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
 <link rel="stylesheet" href="./assets/app.css?v=20260509veyra6"/>
 <link rel="stylesheet" href="./assets/supreme_engine_v5.css?v=20260511v5"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
-<link rel="stylesheet" href="./assets/pyramid_daily.css?v=20260509pyr1"/>
-<link rel="stylesheet" href="./assets/betsafe.css?v=20260512safe8"/>
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
 <script defer src="./assets/app.js?v=20260509autorefresh30"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260511v5"></script>
-<script defer src="./assets/pyramid_daily_runtime.js?v=20260511pyr-row2"></script>
-<script defer src="./assets/betsafe_runtime.js?v=20260512safe8"></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Sari la conținutul principal</a>
@@ -124,14 +120,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="closeDesktopMore()">Închide</button>
   </div>
   <div class="more-grid">
-    <button class="more-card-btn" onclick="switchTab('piramida');closeDesktopMore()">
-      <span class="more-card-title">🧗 Piramidă Daily</span>
-      <span class="more-card-sub">Reinvestire în etape.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('betsafe');closeDesktopMore()">
-      <span class="more-card-title">🛡️ Bet Safe</span>
-      <span class="more-card-sub">Tips safe azi + VIP combo 1.30–1.50 + istoric 7 zile, construit din date API, xG și piețe cu risc mic.</span>
-    </button>
     <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
       <span class="more-card-title">🔬 Analiză ML5</span>
       <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Top picks cu breakdown complet.</span>
@@ -452,75 +440,7 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
     <div id="ml5-root" style="padding:16px 0 80px"></div>
   </div>
 
-  
-
-
-  <div class="tab-content" id="tab-piramida">
-    <div class="pyramid-shell">
-      <div class="pyramid-hero">
-        <div class="pyramid-title">🧗 Piramidă Daily <span class="sec-badge" id="pyramid-picks-badge">—</span></div>
-        <div class="pyramid-actions">
-          <button class="btn btn-primary" onclick="refreshPyramidDaily()">🔄 Recalculează pick-uri</button>
-          <button class="btn btn-green" onclick="createPyramidDailySession()">✅ Pornește sesiune</button>
-          <button class="btn" onclick="savePyramidDailySettings()">💾 Salvează setări</button>
-        </div>
-      </div>
-
-      <div class="pyramid-grid">
-        <div class="pyramid-panel">
-          <div class="pyramid-panel-title"><span>🎯 Evenimentele zilei</span><span id="pyramid-ticket-summary" style="font-size:11px;color:var(--muted);font-weight:700">—</span></div>
-          <div id="pyramid-picks-list"></div>
-        </div>
-
-        <div class="pyramid-panel">
-          <div class="pyramid-panel-title">⚙️ Parametri piramidă</div>
-          <div class="pyramid-form">
-            <div>
-              <label class="pyramid-label">Miză inițială</label>
-              <input id="pyramid-stake" class="pyramid-input" type="number" min="1" step="1" onchange="savePyramidDailySettings()">
-            </div>
-            <div>
-              <label class="pyramid-label">Cotă țintă/pas</label>
-              <input id="pyramid-target-odds" class="pyramid-input" type="number" min="1.10" max="100" step="0.01" onchange="savePyramidDailySettings()">
-            </div>
-            <div>
-              <label class="pyramid-label">Pași</label>
-              <input id="pyramid-steps" class="pyramid-input" type="number" min="1" max="30" step="1" onchange="savePyramidDailySettings()">
-            </div>
-            <div>
-              <label class="pyramid-label">Profil</label>
-              <select id="pyramid-profile" class="pyramid-select" onchange="savePyramidDailySettings()">
-                <option value="ultra">Ultra safe</option>
-                <option value="safe">Safe</option>
-                <option value="balanced">Balanced</option>
-              </select>
-            </div>
-            <div>
-              <label class="pyramid-label">Zi</label>
-              <select id="pyramid-day-mode" class="pyramid-select" onchange="savePyramidDailySettings()">
-                <option value="today">Azi</option>
-                <option value="tomorrow">Mâine</option>
-              </select>
-            </div>
-          </div>
-          <div id="pyramid-plan"></div>
-        </div>
-      </div>
-
-      <div class="pyramid-panel">
-        <div class="pyramid-panel-title">📒 Monitorizare sesiuni piramidă</div>
-        <div id="pyramid-session-stats"></div>
-        <div id="pyramid-session-list"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- end tab-charts -->
-
-  <!-- ===== BET SAFE ===== -->
-  <div class="tab-content" id="tab-betsafe">
-    <div id="betsafe-root" style="padding:0 0 80px"></div>
-  </div>
 
   <!-- ===== CLV TRACKER ===== -->
   <div class="tab-content" id="tab-clv">
@@ -553,8 +473,6 @@ body{font-family:var(--font-sans);min-height:100vh;overflow-x:hidden;-webkit-fon
   </button>
 </nav>
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
-  <button class="mobile-sheet-btn" onclick="switchTab('piramida');closeMobileMore()"><span class="sheet-btn-title">🧗 Piramidă Daily</span><small class="sheet-btn-sub">Reinvestire în etape</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('betsafe');closeMobileMore()"><span class="sheet-btn-title">🛡️ Bet Safe</span><small class="sheet-btn-sub">Tips safe + VIP AI 1.30–1.50 + istoric</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 Motor de Predicții Unificat</span><small class="sheet-btn-sub">Kelly + AI Memory + SmartBet · Scor unic de acuratețe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
