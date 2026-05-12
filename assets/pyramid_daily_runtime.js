@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__PyramidDailyRuntimeV16) return;
-window.__PyramidDailyRuntimeV16 = true;
+if(window.__PyramidDailyRuntimeV18) return;
+window.__PyramidDailyRuntimeV18 = true;
 
 var W = window;
 var D = document;
@@ -236,10 +236,10 @@ function hideUnusedControls(){
 ========================================================= */
 
 function injectCompactCss(){
-  if(D.getElementById('pyramid-daily-compact-v16')) return;
+  if(D.getElementById('pyramid-daily-compact-v18')) return;
 
   var style = D.createElement('style');
-  style.id = 'pyramid-daily-compact-v16';
+  style.id = 'pyramid-daily-compact-v18';
   style.textContent = `
 #tab-piramida{
   overflow-x:hidden!important;
@@ -1298,29 +1298,33 @@ function scoreCandidate(c){
 }
 
 /* =========================================================
-   SMART TARGET ENGINE
+   SMART TARGET ENGINE · V18 SURVIVAL GUARD
+   - NU mai forțează cota țintă dacă probabilitatea scade prea mult.
+   - Max 3 evenimente.
+   - Penalizează automat piețele/ligile care au produs pierderi în sesiunile locale.
+   - Penalizează cardurile cu semnal RISC / SKIP / EVITĂ / fragil.
 ========================================================= */
 
 function filterCfg(tier){
   var cfg = {
-    minProb:64,
-    minAi:63,
-    maxSingleOdds:1.95,
-    minEdge:-4
+    minProb:72,
+    minAi:70,
+    maxSingleOdds:1.72,
+    minEdge:0
   };
 
   if(tier === 1){
-    cfg.minProb -= 4;
-    cfg.minAi -= 4;
-    cfg.maxSingleOdds += .18;
-    cfg.minEdge -= 2;
+    cfg.minProb -= 3;
+    cfg.minAi -= 3;
+    cfg.maxSingleOdds += .10;
+    cfg.minEdge -= 1;
   }
 
   if(tier === 2){
-    cfg.minProb -= 8;
-    cfg.minAi -= 8;
-    cfg.maxSingleOdds += .35;
-    cfg.minEdge -= 4;
+    cfg.minProb -= 6;
+    cfg.minAi -= 6;
+    cfg.maxSingleOdds += .18;
+    cfg.minEdge -= 2;
   }
 
   return cfg;
@@ -1353,15 +1357,149 @@ function allowedWindow(c,s,relaxed){
 
   return relaxed ? true : c.dateKey === todayKeyFrom(new Date());
 }
+function riskTextFor(c){
+  return [
+    c.verdict,
+    c.risk,
+    c.riskLabel,
+    c.risk_level,
+    c.riskLevel,
+    c.recommendation,
+    c.recommendationLabel,
+    c.signal,
+    c.signalLabel,
+    c.audit_verdict,
+    c.auditVerdict,
+    c.cardVerdict,
+    c.safetyLabel,
+    c.badge,
+    c.note,
+    c.notes,
+    c.summary,
+    c.description,
+    c.market_status,
+    c.marketStatus
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+function explicitRiskPenalty(c){
+  var t = riskTextFor(c);
+  var p = 0;
+
+  if(/evit|skip|nu paria|nu intra|avoid/.test(t)) p += 34;
+  if(/risc|risk|fragil|volatil|instabil|stake mic|miz[aă] mic[aă]/.test(t)) p += 22;
+  if(/negativ|negative|clv\s*-|roi\s*-|bt\s*-/.test(t)) p += 12;
+  if(/pareaz|pariaz|safe|ok|strong|buy|value/.test(t)) p -= 7;
+
+  return clamp(p,0,45);
+}
+function marketBucket(c){
+  return String(c.marketKey || c.displayMarket || c.market || '').toLowerCase();
+}
+function leagueBucket(c){
+  return String(c.league || '').toLowerCase();
+}
+function oddsBucket(o){
+  o = n(o,0);
+  if(o < 1.25) return '<1.25';
+  if(o < 1.40) return '1.25-1.39';
+  if(o < 1.55) return '1.40-1.54';
+  if(o < 1.75) return '1.55-1.74';
+  return '1.75+';
+}
+function pyramidMemory(){
+  var mem = {market:{},league:{},odds:{},recentLosses:0,total:0,losses:0,wins:0};
+  var arr = [];
+  try{ arr = getSessions(); }catch(e){ arr = []; }
+  if(!Array.isArray(arr)) arr = [];
+
+  arr.slice(0,30).forEach(function(s,idx){
+    var lost = s.status === 'lost' || s.status === 'lose';
+    var won = s.status === 'completed' || s.status === 'win' || s.status === 'cashout';
+    if(!lost && !won) return;
+
+    mem.total++;
+    if(lost) mem.losses++;
+    if(won) mem.wins++;
+    if(lost && idx < 8) mem.recentLosses++;
+
+    var hist = Array.isArray(s.history) ? s.history : [];
+    var picks = hist.length ? hist.reduce(function(a,h){ return a.concat(h.picks || []); },[]) : (s.picks || []);
+    if(!picks.length) picks = s.picks || [];
+
+    picks.forEach(function(p){
+      var mk = marketBucket(p);
+      var lg = leagueBucket(p);
+      var ob = oddsBucket(p.odds || s.lastDailyOdds || s.targetOdds);
+
+      if(mk){
+        mem.market[mk] = mem.market[mk] || {w:0,l:0};
+        lost ? mem.market[mk].l++ : mem.market[mk].w++;
+      }
+      if(lg){
+        mem.league[lg] = mem.league[lg] || {w:0,l:0};
+        lost ? mem.league[lg].l++ : mem.league[lg].w++;
+      }
+      if(ob){
+        mem.odds[ob] = mem.odds[ob] || {w:0,l:0};
+        lost ? mem.odds[ob].l++ : mem.odds[ob].w++;
+      }
+    });
+  });
+
+  return mem;
+}
+function bucketPenalty(bucket){
+  if(!bucket) return 0;
+  var sample = n(bucket.w,0) + n(bucket.l,0);
+  if(sample < 2) return 0;
+  var wr = bucket.w / sample;
+  if(bucket.l >= 3 && wr < .45) return 12;
+  if(bucket.l >= 2 && wr < .40) return 8;
+  if(bucket.l > bucket.w) return 4;
+  return 0;
+}
+function memoryPenalty(c,mem){
+  mem = mem || pyramidMemory();
+  var p = 0;
+  p += bucketPenalty(mem.market[marketBucket(c)]);
+  p += bucketPenalty(mem.league[leagueBucket(c)]);
+  p += bucketPenalty(mem.odds[oddsBucket(c.odds)]);
+
+  if(mem.recentLosses >= 3) p += 6;
+  else if(mem.recentLosses >= 2) p += 3;
+
+  return clamp(p,0,30);
+}
+function survivalFloor(s,legs){
+  var target = n(s && s.targetOdds,0);
+  var steps = n(s && s.steps,4);
+
+  var base = steps >= 6 ? 82 : steps >= 4 ? 76 : 72;
+
+  if(target >= 2.00) base += 2;
+  else if(target >= 1.70) base += 1;
+
+  if(legs === 1) return base;
+  if(legs === 2) return Math.max(70, base - 3);
+  return Math.max(66, base - 5);
+}
 function buildCandidatePool(s){
   var all = rawPool().map(normalize).filter(Boolean);
   var seen = {};
+  var mem = pyramidMemory();
 
   all = all.filter(function(c){
     var sig = c.eventKey + ':' + c.marketKey;
     if(seen[sig]) return false;
     seen[sig] = true;
     return true;
+  });
+
+  all.forEach(function(c){
+    c.explicitRiskPenalty = explicitRiskPenalty(c);
+    c.memoryPenalty = memoryPenalty(c,mem);
+    c.guardScore = n(c.ai.total,0) - c.explicitRiskPenalty - c.memoryPenalty;
+    c.guardProb = n(c.prob,0) - Math.max(0,c.explicitRiskPenalty * .35) - Math.max(0,c.memoryPenalty * .25);
   });
 
   var report = null;
@@ -1377,10 +1515,14 @@ function buildCandidatePool(s){
       if(c.prob < cfg.minProb) return false;
       if(c.ai.total < cfg.minAi) return false;
       if(c.edge < cfg.minEdge) return false;
+      if(c.explicitRiskPenalty >= 30) return false;
+      if(c.memoryPenalty >= 18) return false;
+      if(c.guardProb < cfg.minProb - 2) return false;
+      if(c.guardScore < cfg.minAi - 3) return false;
       return true;
     }).sort(function(a,b){
-      if(b.ai.total !== a.ai.total) return b.ai.total - a.ai.total;
-      if(b.prob !== a.prob) return b.prob - a.prob;
+      if(b.guardScore !== a.guardScore) return b.guardScore - a.guardScore;
+      if(b.guardProb !== a.guardProb) return b.guardProb - a.guardProb;
       return a.odds - b.odds;
     });
 
@@ -1389,7 +1531,9 @@ function buildCandidatePool(s){
       candidates:filtered.length,
       tier:tier,
       relaxed:relaxed,
-      cfg:cfg
+      cfg:cfg,
+      recentLosses:mem.recentLosses,
+      guard:'survival-first'
     };
 
     if(filtered.length){
@@ -1399,17 +1543,17 @@ function buildCandidatePool(s){
 
   return {
     pool:[],
-    report:report || {raw:all.length,candidates:0,tier:2,relaxed:true}
+    report:report || {raw:all.length,candidates:0,tier:2,relaxed:true,guard:'survival-first'}
   };
 }
 function comboOdds(picks){
   return picks.reduce(function(a,p){ return a * n(p.odds,1); },1);
 }
 function comboProb(picks){
-  return picks.reduce(function(a,p){ return a * (n(p.prob,0) / 100); },1) * 100;
+  return picks.reduce(function(a,p){ return a * (n(p.guardProb || p.prob,0) / 100); },1) * 100;
 }
 function avgAi(picks){
-  return picks.reduce(function(a,p){ return a + n(p.ai.total,0); },0) / (picks.length || 1);
+  return picks.reduce(function(a,p){ return a + n(p.guardScore || p.ai.total,0); },0) / (picks.length || 1);
 }
 function avgStability(picks){
   return picks.reduce(function(a,p){ return a + n(p.ai.stability,0); },0) / (picks.length || 1);
@@ -1418,11 +1562,14 @@ function comboPenalty(picks){
   var penalty = 0;
 
   for(var i=0;i<picks.length;i++){
+    penalty += n(picks[i].explicitRiskPenalty,0);
+    penalty += n(picks[i].memoryPenalty,0);
+
     for(var j=i+1;j<picks.length;j++){
-      if(correlated(picks[i],picks[j])) penalty += 34;
-      if(String(picks[i].league || '') === String(picks[j].league || '')) penalty += 5;
-      if(picks[i].marketKey === picks[j].marketKey) penalty += 3;
-      if(picks[i].eventMs && picks[j].eventMs && Math.abs(picks[i].eventMs - picks[j].eventMs) < 2 * 36e5) penalty += 4;
+      if(correlated(picks[i],picks[j])) penalty += 40;
+      if(String(picks[i].league || '') === String(picks[j].league || '')) penalty += 8;
+      if(picks[i].marketKey === picks[j].marketKey) penalty += 5;
+      if(picks[i].eventMs && picks[j].eventMs && Math.abs(picks[i].eventMs - picks[j].eventMs) < 2 * 36e5) penalty += 6;
     }
   }
 
@@ -1433,22 +1580,22 @@ function targetFit(odds,target){
 
   var min = target * .97;
   var idealLow = target * .99;
-  var idealHigh = target * 1.08;
-  var max = target * 1.22;
+  var idealHigh = target * 1.07;
+  var max = target * 1.16;
 
   if(odds >= idealLow && odds <= idealHigh){
-    return 100 - Math.abs(odds - target) * 40;
+    return 100 - Math.abs(odds - target) * 35;
   }
 
   if(odds >= min && odds <= max){
-    return 82 - Math.abs(odds - target) * 48;
+    return 82 - Math.abs(odds - target) * 42;
   }
 
   if(odds < min){
-    return 58 - (min - odds) * 95;
+    return 52 - (min - odds) * 90;
   }
 
-  return 50 - (odds - max) * 80;
+  return 44 - (odds - max) * 85;
 }
 function reachedTarget(odds,target){
   if(!target) return true;
@@ -1463,41 +1610,28 @@ function comboQuality(picks,s){
   var penalty = comboPenalty(picks);
   var hasTarget = !!s.targetOdds;
   var fit = targetFit(odds,s.targetOdds);
+  var floor = survivalFloor(s,picks.length);
 
   var legBias = 0;
+  if(picks.length === 1) legBias = 12;
+  else if(picks.length === 2) legBias = 1;
+  else legBias = -10;
 
-  if(hasTarget){
-    legBias = -Math.max(0, picks.length - 1) * 1.4;
+  if(hasTarget && picks.length === 1 && odds < s.targetOdds * .90) legBias -= 10;
+  if(hasTarget && reachedTarget(odds,s.targetOdds)) legBias += 5;
 
-    if(picks.length === 1 && odds < s.targetOdds * .92){
-      legBias -= 12;
-    }
-  }else{
-    if(picks.length === 1) legBias = 9;
-    else if(picks.length === 2) legBias = 2;
-    else legBias = -Math.max(2, picks.length - 2) * 4;
-  }
+  var survivalGap = Math.max(0, floor - prob);
+  var targetWeight = hasTarget ? .10 : .03;
 
-  var score;
-
-  if(hasTarget){
-    score =
-      prob * .35 +
-      ai * .24 +
-      stability * .14 +
-      clamp(fit,0,100) * .22 +
-      clamp(50 + edge * 4,0,100) * .05 +
-      legBias -
-      penalty;
-  }else{
-    score =
-      prob * .42 +
-      ai * .28 +
-      stability * .22 +
-      clamp(50 + edge * 4,0,100) * .08 +
-      legBias -
-      penalty;
-  }
+  var score =
+    prob * .45 +
+    ai * .25 +
+    stability * .16 +
+    clamp(fit,0,100) * targetWeight +
+    clamp(50 + edge * 4,0,100) * .04 +
+    legBias -
+    penalty -
+    survivalGap * 2.4;
 
   return {
     picks:picks,
@@ -1509,7 +1643,9 @@ function comboQuality(picks,s){
     penalty:penalty,
     fit:fit,
     score:score,
-    reached:reachedTarget(odds,s.targetOdds)
+    floor:floor,
+    reached:reachedTarget(odds,s.targetOdds),
+    survivalOk:prob >= floor
   };
 }
 function combinations(arr,k,limit){
@@ -1547,42 +1683,18 @@ function combinations(arr,k,limit){
 function dynamicMaxLegs(s,pool){
   var target = n(s && s.targetOdds,0);
   var size = Array.isArray(pool) ? pool.length : 0;
-
   if(!size) return 0;
-  if(!target) return Math.min(size,4);
 
-  if(target >= 25) return Math.min(size,12);
-  if(target >= 10) return Math.min(size,10);
-  if(target >= 6) return Math.min(size,8);
-  if(target >= 3) return Math.min(size,6);
-  return Math.min(size,5);
-}
-function probabilityFloorForLegs(legs,s){
-  var target = n(s && s.targetOdds,0);
-
-  if(target >= 10){
-    if(legs <= 2) return 18;
-    if(legs <= 4) return 5;
-    return 1.5;
-  }
-
-  if(target >= 6){
-    if(legs <= 2) return 24;
-    if(legs <= 4) return 8;
-    return 3;
-  }
-
-  if(legs === 1) return 0;
-  if(legs === 2) return target ? 30 : 38;
-  if(legs === 3) return target ? 18 : 25;
-  if(legs === 4) return target ? 10 : 16;
-  if(legs === 5) return target ? 6 : 10;
-  return target ? 2.5 : 6;
+  // Pentru piramidă, mai multe selecții cresc exponențial riscul.
+  // 3 este maximul operațional; dacă targetul nu poate fi atins în 3, mai bine skip.
+  if(target >= 1.75) return Math.min(size,3);
+  if(target >= 1.45) return Math.min(size,2);
+  return 1;
 }
 function buildDynamicVariants(scan,s,maxLegs){
   var variants = [];
   var level = [{picks:[], lastIndex:-1}];
-  var keepPerLevel = 380;
+  var keepPerLevel = 180;
 
   for(var legs=1; legs<=maxLegs; legs++){
     var next = [];
@@ -1604,8 +1716,9 @@ function buildDynamicVariants(scan,s,maxLegs){
         var picks = base.picks.concat(candidate);
         var q = comboQuality(picks,s);
 
-        if(q.penalty >= 34) continue;
-        if(q.prob < probabilityFloorForLegs(legs,s)) continue;
+        if(q.penalty >= 30) continue;
+        if(!q.survivalOk) continue;
+        if(legs === 3 && q.prob < 68) continue;
 
         variants.push(q);
         next.push({picks:picks,lastIndex:i,q:q});
@@ -1626,7 +1739,7 @@ function buildDynamicVariants(scan,s,maxLegs){
 }
 function aiDecidePicks(s){
   if(!hasUserCriteria(s)){
-    ACTIVE_REPORT = {raw:0,candidates:0,reason:'Aștept criterii de filtrare.',mode:'waiting'};
+    ACTIVE_REPORT = {raw:0,candidates:0,reason:'Aștept criterii de filtrare.',mode:'waiting',guard:'survival-first'};
     return [];
   }
 
@@ -1635,28 +1748,24 @@ function aiDecidePicks(s){
   var report = built.report || {};
   var hasTarget = !!s.targetOdds;
 
-  report.mode = hasTarget ? 'target' : 'auto-risk';
+  report.mode = hasTarget ? 'target-survival' : 'auto-risk';
 
   if(!pool.length){
-    report.reason = 'Nu există candidați valizi.';
+    report.reason = 'Nu există candidați valizi după filtrul survival.';
     ACTIVE_REPORT = report;
     return [];
   }
 
-  var scanSize = hasTarget ? 28 : 18;
-  var scan = pool.slice(0,scanSize);
+  var scan = pool.slice(0,hasTarget ? 24 : 16);
   var maxLegs = dynamicMaxLegs(s,scan);
   var variants = buildDynamicVariants(scan,s,maxLegs);
 
   if(!variants.length){
-    var single = comboQuality([pool[0]],s);
-
-    report.reason = 'Fallback pe cel mai bun single.';
-    report.selectedLegs = 1;
-    report.combo = single;
+    report.reason = 'Skip: nu există combinație care trece pragul minim de supraviețuire pentru piramidă.';
+    report.selectedLegs = 0;
+    report.combo = null;
     ACTIVE_REPORT = report;
-
-    return single.picks;
+    return [];
   }
 
   var chosen;
@@ -1668,24 +1777,20 @@ function aiDecidePicks(s){
       reached.sort(function(a,b){
         if(b.score !== a.score) return b.score - a.score;
         if(b.prob !== a.prob) return b.prob - a.prob;
-        return Math.abs(a.odds - s.targetOdds) - Math.abs(b.odds - s.targetOdds);
+        return a.odds - b.odds;
       });
 
       chosen = reached[0];
-      report.reason = 'AI a ales combinația cu probabilitate maximă care atinge cota țintă, folosind câte selecții sunt necesare.';
+      report.reason = 'AI Survival: target atins doar dacă probabilitatea trece pragul minim de serie.';
     }else{
       variants.sort(function(a,b){
-        var da = Math.abs(a.odds - s.targetOdds);
-        var db = Math.abs(b.odds - s.targetOdds);
-
-        if(da !== db) return da - db;
         if(b.score !== a.score) return b.score - a.score;
-
-        return b.prob - a.prob;
+        if(b.prob !== a.prob) return b.prob - a.prob;
+        return Math.abs(a.odds - s.targetOdds) - Math.abs(b.odds - s.targetOdds);
       });
 
       chosen = variants[0];
-      report.reason = 'AI nu a găsit target curat; a ales cea mai apropiată variantă productivă.';
+      report.reason = 'AI Survival: targetul nu e curat; a ales varianta mai sigură în loc să forțeze.';
     }
   }else{
     variants.sort(function(a,b){
@@ -1695,16 +1800,17 @@ function aiDecidePicks(s){
     });
 
     chosen = variants[0];
-    report.reason = 'Fără cotă țintă: AI a ales varianta cu risc minim și probabilitate maximă.';
+    report.reason = 'AI Survival: fără target, a ales varianta cu risc minim.';
   }
 
   report.raw = report.raw || rawPool().length;
   report.candidates = pool.length;
   report.selectedLegs = chosen.picks.length;
   report.combo = chosen;
+  report.survivalFloor = chosen.floor;
 
   if(report.relaxed){
-    report.reason += ' Filtrele au fost relaxate automat.';
+    report.reason += ' Filtrele au fost relaxate, dar pragul de survival a rămas activ.';
   }
 
   ACTIVE_REPORT = report;
