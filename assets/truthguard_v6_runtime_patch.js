@@ -7,6 +7,9 @@
   var TTL = 90 * 1000;
   var RENDER_DELAY = 420;
   var timer = null;
+  var MAX_DISPLAY_PICKS = 10;
+  var MIN_WATCH_SCORE = 58;
+  var MAX_WATCH_RISK = 0.52;
 
   var MARKET_RULES = {
     home_win:{minProb:0.50,minEdge:3.8,minEv:0.8,odds:[1.28,3.20],label:'Home Win'},
@@ -161,8 +164,11 @@
     if(odds && (odds < rule.odds[0] || odds > rule.odds[1])) blocks.push('cotă în afara ferestrei safe');
 
     var strict = blocks.length === 0 && score >= 82;
-    var action = strict ? 'PAREAZĂ' : (score >= 74 && blocks.length <= 2 ? 'RISC CONTROLAT' : 'EVITĂ');
-    var tier = score >= 92 && strict ? 'A+' : score >= 86 && strict ? 'A' : score >= 78 ? 'B' : 'C';
+    var fatal = (!odds || odds <= 1.01) || ev < -0.25 || risk > MAX_WATCH_RISK || quality < 0.42 || p < (rule.minProb - 0.12);
+    var riskControlled = !strict && !fatal && score >= 72 && blocks.length <= 3;
+    var watchList = !strict && !riskControlled && !fatal && score >= MIN_WATCH_SCORE && blocks.length <= 5;
+    var action = strict ? 'PAREAZĂ' : (riskControlled ? 'RISC CONTROLAT' : (watchList ? 'WATCHLIST' : 'EVITĂ'));
+    var tier = score >= 92 && strict ? 'A+' : score >= 86 && strict ? 'A' : score >= 78 ? 'B' : score >= 62 ? 'C' : 'D';
 
     s.market_key = mk;
     s.market_label = marketLabel(s);
@@ -194,12 +200,16 @@
     var list = rawSignals(data.ev || {}, data.ai || {})
       .map(scoreSignal)
       .sort(function(a,b){ return f(b.truth_score) - f(a.truth_score); });
-    var finalList = list.filter(function(s){ return s.truth_action !== 'EVITĂ'; });
-    // Motorul de acuratețe nu trebuie să arunce 32 de pick-uri brute: păstrează doar semnalele cu calitate reală.
-    var strict = list.filter(function(s){ return s.truth_strict; });
-    if(strict.length) finalList = strict.concat(finalList.filter(function(s){ return !s.truth_strict; })).slice(0,12);
-    else finalList = finalList.slice(0,8);
-    return { all:list, finalList:finalList };
+
+    var strict = list.filter(function(s){ return s.truth_action === 'PAREAZĂ'; });
+    var controlled = list.filter(function(s){ return s.truth_action === 'RISC CONTROLAT'; });
+    var watch = list.filter(function(s){ return s.truth_action === 'WATCHLIST'; });
+
+    // Afișare echilibrată: nu arătăm toate cele 32 brute, dar nici nu ascundem candidații utili.
+    // Ordine: validate stricte -> risc controlat -> watchlist. Evitatele rămân doar la contor.
+    var finalList = strict.concat(controlled).concat(watch).slice(0, MAX_DISPLAY_PICKS);
+
+    return { all:list, finalList:finalList, strict:strict, controlled:controlled, watch:watch };
   }
 
   function signalCard(s, idx){
@@ -222,7 +232,7 @@
           '<span class="tg6-chip">Consens '+pct(s.truth_agreement,0)+'</span>'+
           '<span class="tg6-chip">Surse '+esc(s.truth_sources)+'</span>'+
           '<span class="tg6-chip '+(s.truth_risk<=0.22?'tg6-good':s.truth_risk<=0.42?'tg6-warn':'tg6-bad')+'">Risk '+pct(s.truth_risk,0)+'</span>'+
-          '<span class="tg6-chip '+(s.truth_action==='PAREAZĂ'?'tg6-good':s.truth_action==='RISC CONTROLAT'?'tg6-warn':'tg6-bad')+'">'+esc(s.truth_action)+'</span>'+
+          '<span class="tg6-chip '+(s.truth_action==='PAREAZĂ'?'tg6-good':(s.truth_action==='RISC CONTROLAT'||s.truth_action==='WATCHLIST')?'tg6-warn':'tg6-bad')+'">'+esc(s.truth_action)+'</span>'+
         '</div>'+
         (blocks ? '<div class="tg6-reason">Blocaje: '+blocks+'</div>' : '<div class="tg6-reason tg6-ok">Validat strict: probabilitate + edge + EV + consens + risc trecute prin TruthGuard.</div>')+
       '</div>';
@@ -233,7 +243,10 @@
   function renderSummary(data, prepared){
     var list = prepared.all;
     var finalList = prepared.finalList;
-    var strict = list.filter(function(s){ return s.truth_strict; });
+    var strict = prepared.strict || list.filter(function(s){ return s.truth_action === 'PAREAZĂ'; });
+    var controlled = prepared.controlled || list.filter(function(s){ return s.truth_action === 'RISC CONTROLAT'; });
+    var watch = prepared.watch || list.filter(function(s){ return s.truth_action === 'WATCHLIST'; });
+    var validatedCount = strict.length + controlled.length;
     var elite = strict.filter(function(s){ return s.truth_score >= 92; });
     var avoided = list.filter(function(s){ return s.truth_action === 'EVITĂ'; });
     var avgConsensus = avg(finalList.length ? finalList : list, function(s){ return s.truth_agreement * 100; });
@@ -244,14 +257,14 @@
         '<div class="tg6-head">'+
           '<div>'+ 
             '<div class="tg6-title">🧠 VEYRA TruthGuard Engine v6</div>'+ 
-            '<div class="tg6-sub">Precision Governor peste Supreme v5: consens multi-sursă, EV real, risc lineup/context, piață și memorie AI. Afișează doar ce trece filtrele stricte.</div>'+ 
+            '<div class="tg6-sub">Precision Governor peste Supreme v5: consens multi-sursă, EV real, risc lineup/context, piață și memorie AI. Afișează validatele și candidații watchlist, dar separă clar riscul.</div>'+ 
           '</div>'+ 
           '<div class="tg6-badge">truthguard v6</div>'+ 
         '</div>'+ 
         '<div class="tg6-kpis">'+
-          '<div class="tg6-kpi"><b>'+finalList.length+'</b><span>final picks</span><small>din '+list.length+' brute</small></div>'+ 
-          '<div class="tg6-kpi"><b>'+elite.length+'</b><span>Elite A+</span><small>scor ≥92</small></div>'+ 
-          '<div class="tg6-kpi"><b>'+avoided.length+'</b><span>evitate</span><small>capcane filtrate</small></div>'+ 
+          '<div class="tg6-kpi"><b>'+finalList.length+'</b><span>afișate</span><small>din '+list.length+' brute</small></div>'+  
+          '<div class="tg6-kpi"><b>'+validatedCount+'</b><span>validate/risc</span><small>'+strict.length+' stricte • '+controlled.length+' risc</small></div>'+  
+          '<div class="tg6-kpi"><b>'+avoided.length+'</b><span>evitate</span><small>'+watch.length+' watchlist</small></div>'+  
           '<div class="tg6-kpi"><b>'+num(avgConsensus,0)+'%</b><span>consens</span><small>medie surse</small></div>'+ 
         '</div>'+ 
         '<div class="tg6-matrix">'+
@@ -268,7 +281,7 @@
       var text = title ? String(title.textContent || '') : '';
       if(text.indexOf('Motor de Predicții Unificat') >= 0 || text.indexOf('VEYRA Supreme') >= 0 || text.indexOf('TruthGuard') >= 0){
         if(title) title.textContent = '🧠 VEYRA TruthGuard Engine v6';
-        if(sub) sub.innerHTML = '<span style="color:var(--acc);font-weight:900">'+prepared.finalList.length+' final picks</span> • '+prepared.all.length+' brute scanate • '+prepared.all.filter(function(s){return s.truth_action==='EVITĂ';}).length+' evitate';
+        if(sub) sub.innerHTML = '<span style="color:var(--acc);font-weight:900">'+prepared.finalList.length+' afișate</span> • '+((prepared.strict||[]).length+(prepared.controlled||[]).length)+' validate/risc • '+prepared.all.length+' scanate';
       }
     });
   }
@@ -301,12 +314,17 @@
       if(prepared.finalList.length){
         list.innerHTML = '<div class="tg6-list">' + prepared.finalList.map(signalCard).join('') + '</div>';
       }else{
-        list.innerHTML = '<div class="tg6-empty">TruthGuard v6 nu a găsit încă semnale suficient de curate. Asta este intenționat: când datele nu trec probabilitate + edge + EV + risc, motorul preferă să nu recomande.</div>';
+        list.innerHTML = '<div class="tg6-empty">TruthGuard v6 nu a găsit încă semnale suficient de curate pentru afișare. Când apar candidate cu scor minim, le va afișa ca validate, risc controlat sau watchlist.</div>';
       }
-      if(meta) meta.textContent = prepared.finalList.length + ' finale validate • ' + prepared.all.length + ' scanate';
+      if(meta) meta.textContent = ((prepared.strict||[]).length + (prepared.controlled||[]).length) + ' validate/risc • ' + prepared.finalList.length + ' afișate • ' + prepared.all.length + ' scanate';
       if(updated) updated.textContent = 'Actualizat: ' + fmtDateTime((data.ev && data.ev.updated_at) || (data.ai && data.ai.updated_at) || '');
       var title = root.querySelector('.section div[style*="font-size:16px"]');
       if(title) title.textContent = '🧠 VEYRA TruthGuard Engine v6';
+      var listTitle = root.querySelector('#unified-picks-list') && root.querySelector('#unified-picks-list').closest('.section');
+      if(listTitle){
+        var h = listTitle.querySelector('div[style*="font-size:13px"]');
+        if(h) h.textContent = '🏆 Predicții afișate — TruthGuard v6';
+      }
       updateMoreMenu(prepared);
     }).finally(function(){
       setTimeout(function(){ STATE.rendering = false; }, 140);
