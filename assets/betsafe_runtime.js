@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-if(window.__VeyraBetSafeRuntimeV7) return;
-window.__VeyraBetSafeRuntimeV7 = true;
+if(window.__VeyraBetSafeRuntimeV8) return;
+window.__VeyraBetSafeRuntimeV8 = true;
 
 var W = window;
 var D = document;
@@ -10,6 +10,7 @@ var STORAGE = 'veyra_bet_safe_state_v2';
 var HISTORY_STORAGE = 'veyra_bet_safe_history_v2';
 var VIP_LOCK_STORAGE = 'veyra_bet_safe_vip_daily_lock_v3';
 var state = readState();
+var BETSAFE_DATASETS = {started:false, loaded:false, rows:[], error:null};
 
 function readState(){
   try{
@@ -191,18 +192,21 @@ function shortDateLabel(key){
   return d.toLocaleDateString('ro-RO', {day:'2-digit', month:'2-digit'});
 }
 function eventMs(m){
-  var raw = m && (m.date || m.event_date || m.eventDate || m.start_time || m.kickoff || m.created_at || '');
+  var raw = sourceDateRaw(m);
   var ms = raw ? new Date(raw).getTime() : NaN;
   return isFinite(ms) ? ms : null;
 }
 function matchDateKey(m){
   if(m && m.dateKey) return String(m.dateKey);
-  var raw = m && (m.date || m.event_date || m.eventDate || m.start_time || m.kickoff || m.created_at || '');
+  var raw = sourceDateRaw(m);
   if(typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0,10);
   var ms = eventMs(m);
   return ms ? dayKeyFromDate(new Date(ms)) : '';
 }
-function statusText(m){ return String((m && (m.status || m.matchStatus || m.period)) || '').toLowerCase(); }
+function statusText(m){
+  var ev = rawEventOf(m || {});
+  return String(((m && (m.status || m.matchStatus || m.period || m.match_status)) || (ev && (ev.status || ev.matchStatus || ev.period || ev.match_status)) || '')).toLowerCase();
+}
 function isVoidStatus(s){
   s = String(s || '').toLowerCase();
   return ['cancelled','canceled','postponed','abandoned','void','anulat'].indexOf(s) >= 0;
@@ -231,13 +235,72 @@ function leagueLabel(m){
   var l = (m && m.league) || 'Liga necunoscută';
   return flag + ' ' + l;
 }
+function pickFirst(obj, keys){
+  if(!obj || typeof obj !== 'object') return null;
+  for(var i=0;i<(keys||[]).length;i++){
+    var v = obj[keys[i]];
+    if(v != null && v !== '') return v;
+  }
+  return null;
+}
+function sourceEventId(src){
+  if(!src || typeof src !== 'object') return null;
+  var ev = rawEventOf(src);
+  var v = pickFirst(src, ['eventId','event_id','eventID','fixture_id','match_id']);
+  if(v == null && ev) v = pickFirst(ev, ['eventId','event_id','id','fixture_id','match_id']);
+  if(v == null && src.id != null && (src.home_team != null || src.away_team != null || src.home != null || src.away != null)) v = src.id;
+  return v == null ? null : String(v);
+}
+function sourceHome(src){
+  var ev = rawEventOf(src);
+  var v = pickFirst(src, ['home','home_team','homeTeam','localteam','local_team','team_home']);
+  if(v && typeof v === 'object') v = v.name || v.short_name || v.shortName || v.title;
+  if(v == null && ev){
+    v = pickFirst(ev, ['home','home_team','homeTeam','localteam','local_team','team_home']);
+    if(v && typeof v === 'object') v = v.name || v.short_name || v.shortName || v.title;
+    if(v == null && ev.home_team_obj) v = ev.home_team_obj.name || ev.home_team_obj.short_name;
+  }
+  return v == null ? '' : String(v);
+}
+function sourceAway(src){
+  var ev = rawEventOf(src);
+  var v = pickFirst(src, ['away','away_team','awayTeam','visitorteam','visitor_team','team_away']);
+  if(v && typeof v === 'object') v = v.name || v.short_name || v.shortName || v.title;
+  if(v == null && ev){
+    v = pickFirst(ev, ['away','away_team','awayTeam','visitorteam','visitor_team','team_away']);
+    if(v && typeof v === 'object') v = v.name || v.short_name || v.shortName || v.title;
+    if(v == null && ev.away_team_obj) v = ev.away_team_obj.name || ev.away_team_obj.short_name;
+  }
+  return v == null ? '' : String(v);
+}
+function sourceDateRaw(src){
+  var ev = rawEventOf(src);
+  return pickFirst(src, ['date','event_date','eventDate','start_time','kickoff','match_time','created_at','prediction_created_at']) ||
+         (ev ? pickFirst(ev, ['date','event_date','eventDate','start_time','kickoff','match_time','created_at']) : '');
+}
 function scorePairFromSource(src){
   if(!src) return {homeScore:null, awayScore:null};
-  var h = src.homeScore; if(h == null) h = src.home_score; if(h == null) h = src.home_goals; if(h == null) h = src.score_home; if(h == null) h = src.goals_home;
-  var a = src.awayScore; if(a == null) a = src.away_score; if(a == null) a = src.away_goals; if(a == null) a = src.score_away; if(a == null) a = src.goals_away;
-  if((h == null || a == null) && typeof src.score === 'string'){
-    var m = src.score.match(/(\d+)\s*[-:]\s*(\d+)/);
-    if(m){ h = h == null ? m[1] : h; a = a == null ? m[2] : a; }
+  var ev = rawEventOf(src);
+  var objs = [src, ev, src.result, src.fulltime, src.ft, ev && ev.result, ev && ev.fulltime, ev && ev.ft].filter(Boolean);
+  var h = null, a = null;
+  var hKeys = ['homeScore','home_score','home_goals','score_home','goals_home','homeScoreFT','home_score_ft','ft_home','home_ft','home_score_fulltime'];
+  var aKeys = ['awayScore','away_score','away_goals','score_away','goals_away','awayScoreFT','away_score_ft','ft_away','away_ft','away_score_fulltime'];
+  for(var i=0;i<objs.length;i++){
+    if(h == null) h = pickFirst(objs[i], hKeys);
+    if(a == null) a = pickFirst(objs[i], aKeys);
+  }
+  var scoreKeys = ['score','ft_score','full_time_score','fulltime_score','final_score','result_score'];
+  if(h == null || a == null){
+    for(var j=0;j<objs.length;j++){
+      for(var k=0;k<scoreKeys.length;k++){
+        var sv = objs[j] && objs[j][scoreKeys[k]];
+        if(typeof sv === 'string'){
+          var mm = sv.match(/(\d+)\s*[-:]\s*(\d+)/);
+          if(mm){ if(h == null) h = mm[1]; if(a == null) a = mm[2]; break; }
+        }
+      }
+      if(h != null && a != null) break;
+    }
   }
   h = h == null || h === '' ? null : Number(h);
   a = a == null || a === '' ? null : Number(a);
@@ -600,40 +663,171 @@ function marketResult(marketKey, h, a){
   if(compact === 'goals_1_4' || compact === '1_4_goals' || k.indexOf('1–4') >= 0 || k.indexOf('1-4') >= 0) return total >= 1 && total <= 4 ? 'win' : 'loss';
   return 'pending';
 }
+
+function normalizeRowsFromDataset(data){
+  var rows = [];
+  function walk(x){
+    if(!x) return;
+    if(Array.isArray(x)){ x.forEach(walk); return; }
+    if(typeof x !== 'object') return;
+    if(Array.isArray(x.results)){ walk(x.results); return; }
+    if(Array.isArray(x.data)){ walk(x.data); return; }
+    if(Array.isArray(x.matches)){ walk(x.matches); return; }
+    if(Array.isArray(x.events)){ walk(x.events); return; }
+    if(Array.isArray(x.picks)){ walk(x.picks); return; }
+    if(x.history && typeof x.history === 'object'){ walk(x.history); return; }
+    if(x.days && typeof x.days === 'object'){ walk(x.days); return; }
+    var hasMatchShape = sourceEventId(x) != null || sourceHome(x) || sourceAway(x) || scorePairFromSource(x).homeScore != null || x.market || x.market_key;
+    if(hasMatchShape){ rows.push(x); return; }
+    Object.keys(x).forEach(function(k){ if(x[k] && typeof x[k] === 'object') walk(x[k]); });
+  }
+  walk(data);
+  return rows;
+}
+function fetchJsonBetSafe(path){
+  var url1 = './' + path.replace(/^\/+/, '') + (path.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
+  var url2 = '/' + path.replace(/^\/+/, '') + (path.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
+  function go(url){
+    return fetch(url, {cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error(String(r.status)); return r.json(); });
+  }
+  return go(url1).catch(function(){ return go(url2); });
+}
+function ensureBetSafeDatasets(){
+  if(BETSAFE_DATASETS.started) return;
+  BETSAFE_DATASETS.started = true;
+  var files = [
+    {path:'data/events.json', label:'events.json'},
+    {path:'data/recommendation_log.json', label:'recommendation_log.json'},
+    {path:'data/history_engine.json', label:'history_engine.json'},
+    {path:'data/meciuri_visible_history.json', label:'meciuri_visible_history.json'}
+  ];
+  Promise.all(files.map(function(f){
+    return fetchJsonBetSafe(f.path).then(function(data){
+      return normalizeRowsFromDataset(data).map(function(row){ row.__bsSource = row.__bsSource || f.label; return row; });
+    }).catch(function(){ return []; });
+  })).then(function(chunks){
+    BETSAFE_DATASETS.rows = chunks.reduce(function(acc,x){ return acc.concat(x || []); }, []);
+    BETSAFE_DATASETS.loaded = true;
+    try{ W.__BETSAFE_SETTLEMENT_SOURCES = BETSAFE_DATASETS.rows; }catch(e){}
+    setTimeout(renderMain, 0);
+  }).catch(function(err){
+    BETSAFE_DATASETS.error = err;
+    BETSAFE_DATASETS.loaded = true;
+  });
+}
+function nameTokens(v){
+  var s = normName(v)
+    .replace(/\bfc\b|\bafc\b|\bsc\b|\bcf\b|\bcd\b|\bclub\b|\bfk\b|\bif\b|\b04\b/g,' ')
+    .replace(/\bcp\b/g,'sporting')
+    .replace(/\blisbon\b/g,'lisboa')
+    .replace(/\bguimaraes\b/g,'vitoria')
+    .replace(/\bguimaraens\b/g,'vitoria')
+    .replace(/\bunirea\s+slobozia\b/g,'slobozia')
+    .replace(/\bafc\s+unirea\s+04\s+slobozia\b/g,'slobozia')
+    .replace(/\bman\s*city\b/g,'manchester city')
+    .replace(/\bspurs\b/g,'tottenham')
+    .replace(/\s+/g,' ').trim();
+  return s ? s.split(' ').filter(function(t){ return t.length > 1; }) : [];
+}
+function nameMatchScore(a,b){
+  var an = normName(a), bn = normName(b);
+  if(!an || !bn) return 0;
+  if(an === bn) return 115;
+  if((an.length >= 5 && bn.indexOf(an) >= 0) || (bn.length >= 5 && an.indexOf(bn) >= 0)) return 82;
+  var at = nameTokens(a), bt = nameTokens(b);
+  if(!at.length || !bt.length) return 0;
+  var set = {}; at.forEach(function(t){ set[t]=1; });
+  var common = 0; bt.forEach(function(t){ if(set[t]) common++; });
+  var ratio = common / Math.max(1, Math.min(at.length, bt.length));
+  if(ratio >= 1) return 78;
+  if(ratio >= 0.67) return 66;
+  if(ratio >= 0.5) return 48;
+  return 0;
+}
+function entryKickoffMs(entry){
+  var raw = (entry && (entry.eventDate || entry.date || entry.event_date || entry.eventDateRaw)) || '';
+  var ms = raw ? new Date(raw).getTime() : NaN;
+  if(isFinite(ms)) return ms;
+  var dk = entry && entry.dateKey;
+  var tl = String((entry && entry.timeLabel) || '').match(/(\d{1,2})[:.](\d{2})/);
+  if(dk && tl){
+    var p = String(dk).split('-').map(Number);
+    if(p.length === 3){
+      var d = new Date(p[0], p[1]-1, p[2], Number(tl[1]), Number(tl[2]), 0);
+      if(isFinite(d.getTime())) return d.getTime();
+    }
+  }
+  return NaN;
+}
+function isPastEntry(entry){
+  var ms = entryKickoffMs(entry);
+  if(isFinite(ms)) return Date.now() > ms + 4 * 60 * 60 * 1000;
+  if(entry && entry.dateKey){
+    var today = dayKeyFromDate(new Date());
+    return String(entry.dateKey) < today;
+  }
+  return false;
+}
+function markNeedsScore(entry, reason){
+  if(!entry) return entry;
+  if(['win','loss','lose','anulat','void'].indexOf(String(entry.result || '').toLowerCase()) >= 0) return entry;
+  entry.result = 'needs_score';
+  entry.matchStatus = 'no_score';
+  entry.autoSource = reason || 'no_score';
+  return entry;
+}
+
 function listSources(){
   var out = [];
-  if(Array.isArray(W.ALL_MATCHES)) out = out.concat(W.ALL_MATCHES.map(function(x){ x.__bsSource = x.__bsSource || 'meciuri'; return x; }));
-  if(Array.isArray(W.ALL_EVENTS)) out = out.concat(W.ALL_EVENTS.map(function(x){ x.__bsSource = x.__bsSource || 'events'; return x; }));
-  if(Array.isArray(W.HISTORY_ENGINE)) out = out.concat(W.HISTORY_ENGINE.map(function(x){ x.__bsSource = x.__bsSource || 'history'; return x; }));
-  if(Array.isArray(W.RECOMMENDATION_LOG)) out = out.concat(W.RECOMMENDATION_LOG.map(function(x){ x.__bsSource = x.__bsSource || 'log'; return x; }));
+  function add(arr,label){
+    if(!Array.isArray(arr)) return;
+    arr.forEach(function(x){ if(x && typeof x === 'object'){ x.__bsSource = x.__bsSource || label; out.push(x); } });
+  }
+  add(W.ALL_MATCHES, 'meciuri');
+  add(W.ALL_EVENTS, 'events');
+  add(W.HISTORY_ENGINE, 'history');
+  add(W.RECOMMENDATION_LOG, 'log');
+  add(BETSAFE_DATASETS.rows, 'bet_safe_data');
+  add(W.__BETSAFE_SETTLEMENT_SOURCES, 'bet_safe_extra');
   return out;
 }
 function normName(v){ return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }
 function sourceScore(src, entry){
   if(!src || !entry) return -999;
   var sc = 0;
-  var srcId = src.eventId != null ? src.eventId : (src.event_id != null ? src.event_id : src.id);
-  if(entry.eventId != null && srcId != null && String(entry.eventId) === String(srcId)) sc += 1000;
-  var sh = normName(src.home || src.home_team || src.localteam || '');
-  var sa = normName(src.away || src.away_team || src.visitorteam || '');
-  var eh = normName(entry.home || '');
-  var ea = normName(entry.away || '');
-  if(sh && eh && sh === eh) sc += 110;
-  if(sa && ea && sa === ea) sc += 110;
+  var srcId = sourceEventId(src);
+  if(entry.eventId != null && srcId != null && String(entry.eventId) === String(srcId)) sc += 1200;
+
+  var sh = sourceHome(src);
+  var sa = sourceAway(src);
+  var eh = entry.home || '';
+  var ea = entry.away || '';
+  var hs = nameMatchScore(sh, eh);
+  var as = nameMatchScore(sa, ea);
+  sc += hs + as;
+
   var sd = matchDateKey(src);
-  if(sd && entry.dateKey && sd === entry.dateKey) sc += 50;
-  var srcMarket = normalizeMarketKey(src.market_key || src.marketKey || src.market || '');
+  if(sd && entry.dateKey && sd === entry.dateKey) sc += 70;
+  else if(sd && entry.dateKey && sd !== entry.dateKey) sc -= 90;
+
+  var srcMarket = normalizeMarketKey(src.market_key || src.marketKey || src.market || src.bet || src.prediction || '');
   var entryMarket = normalizeMarketKey(entry.marketKey || entry.market || entry.short || entry.label || '');
   if(srcMarket && entryMarket){
-    if(srcMarket === entryMarket) sc += 55;
-    else if((srcMarket === 'over15' && entryMarket.indexOf('over 1.5') >= 0) || (srcMarket === 'under35' && entryMarket.indexOf('under 3.5') >= 0)) sc += 35;
-    else sc -= 8;
+    var srcCompact = srcMarket.replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    var entryCompact = entryMarket.replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    if(srcCompact === entryCompact || srcMarket === entryMarket) sc += 55;
+    else if((srcCompact === 'over15' && entryMarket.indexOf('over 1.5') >= 0) || (srcCompact === 'under35' && entryMarket.indexOf('under 3.5') >= 0)) sc += 35;
+    else sc -= 10;
   }
+
   var st = statusText(src);
-  if(isFinishedStatus(st)) sc += 18;
-  if(isVoidStatus(st)) sc += 18;
+  if(isFinishedStatus(st)) sc += 20;
+  if(isVoidStatus(st)) sc += 20;
   var sp = scorePairFromSource(src);
-  if(sp.homeScore != null && sp.awayScore != null) sc += 30;
+  if(sp.homeScore != null && sp.awayScore != null) sc += 80;
+
+  // fără eventId, cerem minim potrivire decentă pe ambele echipe; altfel riscăm să luăm alt meci din aceeași ligă.
+  if(!(entry.eventId != null && srcId != null && String(entry.eventId) === String(srcId)) && (hs < 45 || as < 45)) sc -= 260;
   return sc;
 }
 function findSourceForEntry(entry){
@@ -648,12 +842,12 @@ function findSourceForEntry(entry){
 function settleEntry(entry){
   if(!entry) return entry;
 
-  // Nu folosim getAutoSettlementForPick aici. În app-ul principal acel helper poate întoarce row.won
-  // din recommendation_log pentru altă piață a aceluiași meci. Asta marca greșit, de exemplu:
-  // 1-over 0.5 la scor 0-0 ca WIN sau Benfica 2-2 / 1-over 0.5 ca LOSS.
-  // Bet Safe își calculează statusul strict din scor + piața exactă.
+  // Nu folosim getAutoSettlementForPick aici. Bet Safe validează strict: scor final + piața exactă.
+  // În plus, încărcăm direct fișierele de istoric; altfel unele meciuri vechi rămâneau PENDING dacă userul nu intrase în alte taburi.
   var src = findSourceForEntry(entry);
-  if(!src){ entry.result = entry.result || 'pending'; return entry; }
+  if(!src){
+    return isPastEntry(entry) ? markNeedsScore(entry, 'fără scor în API') : (entry.result = entry.result || 'pending', entry);
+  }
   var st = statusText(src);
   var sp = scorePairFromSource(src);
   entry.matchStatus = st || entry.matchStatus || 'pending';
@@ -667,15 +861,23 @@ function settleEntry(entry){
     entry.settledAt = entry.settledAt || new Date().toISOString();
     return entry;
   }
-  if(isFinishedStatus(st) || (sp.homeScore != null && sp.awayScore != null && String(st).indexOf('live') < 0)){
-    var res = marketResult(entry.marketKey || entry.market, sp.homeScore, sp.awayScore);
-    entry.result = res === 'lose' ? 'loss' : res;
-    entry.matchStatus = 'finished';
-    entry.autoSource = src.__bsSource || 'source';
-    if(entry.result !== 'pending') entry.settledAt = entry.settledAt || new Date().toISOString();
-  }else{
-    entry.result = entry.result || 'pending';
+  if(sp.homeScore != null && sp.awayScore != null){
+    var res = marketResult(entry.marketKey || entry.market || entry.short || entry.label, sp.homeScore, sp.awayScore);
+    if(res && res !== 'pending'){
+      entry.result = res === 'lose' ? 'loss' : res;
+      entry.matchStatus = 'finished';
+      entry.autoSource = src.__bsSource || 'source';
+      entry.settledAt = entry.settledAt || new Date().toISOString();
+      return entry;
+    }
   }
+  if(isFinishedStatus(st) && (sp.homeScore == null || sp.awayScore == null)){
+    return markNeedsScore(entry, src.__bsSource || 'finished fără scor');
+  }
+  if(isPastEntry(entry) && (sp.homeScore == null || sp.awayScore == null)){
+    return markNeedsScore(entry, src.__bsSource || 'scor lipsă după meci');
+  }
+  entry.result = entry.result || 'pending';
   return entry;
 }
 function loadHistory(){
@@ -773,8 +975,9 @@ function syncHistory(currentCandidates, currentVip){
       day.vip.picks = day.vip.picks.map(settleEntry);
       var rs = day.vip.picks.map(function(p){ return p.result || 'pending'; });
       if(rs.some(function(r){ return r === 'loss' || r === 'lose'; })) day.vip.result = 'loss';
+      else if(rs.some(function(r){ return r === 'needs_score' || r === 'needs_result' || r === 'no_score'; })) day.vip.result = 'needs_score';
       else if(rs.some(function(r){ return r === 'pending' || !r; })) day.vip.result = 'pending';
-      else if(rs.length && rs.every(function(r){ return r === 'win' || r === 'anulat'; })) day.vip.result = 'win';
+      else if(rs.length && rs.every(function(r){ return r === 'win' || r === 'anulat' || r === 'void'; })) day.vip.result = 'win';
       else day.vip.result = 'pending';
     }
     hist[k] = day;
@@ -790,6 +993,7 @@ function resultLabel(res){
   if(res === 'win') return 'WIN';
   if(res === 'loss' || res === 'lose') return 'LOSS';
   if(res === 'anulat' || res === 'void') return 'VOID';
+  if(res === 'needs_score' || res === 'needs_result' || res === 'no_score') return 'NO SCORE';
   return 'PENDING';
 }
 function resultClass(res){
@@ -797,6 +1001,7 @@ function resultClass(res){
   if(res === 'win') return 'win';
   if(res === 'loss' || res === 'lose') return 'loss';
   if(res === 'anulat' || res === 'void') return 'void';
+  if(res === 'needs_score' || res === 'needs_result' || res === 'no_score') return 'needs';
   return 'pending';
 }
 function daySummary(day){
@@ -804,7 +1009,7 @@ function daySummary(day){
   var settled = rows.filter(function(p){ return ['win','loss','lose','anulat','void'].indexOf(String(p.result || '').toLowerCase()) >= 0; });
   var wins = rows.filter(function(p){ return String(p.result || '').toLowerCase() === 'win'; }).length;
   var losses = rows.filter(function(p){ return ['loss','lose'].indexOf(String(p.result || '').toLowerCase()) >= 0; }).length;
-  var pending = rows.filter(function(p){ return !p.result || String(p.result).toLowerCase() === 'pending'; }).length;
+  var pending = rows.filter(function(p){ var r=String(p.result||'').toLowerCase(); return !r || r === 'pending' || r === 'needs_score' || r === 'needs_result' || r === 'no_score'; }).length;
   var roi = 0;
   settled.forEach(function(p){
     var r = String(p.result || '').toLowerCase();
@@ -890,7 +1095,7 @@ function getOrCreateDailyVip(dateKey, freshVip){
   }
   if(isLockableVip(freshVip)){
     locks[dateKey] = {
-      version:'v7',
+      version:'v8',
       dateKey:dateKey,
       lockedAt:new Date().toISOString(),
       odds:freshVip.stats.odds,
@@ -1030,7 +1235,7 @@ function renderHistory(hist){
     '<div class="bet-safe-panel">' +
       '<div class="bet-safe-panel-head"><div><div class="bet-safe-panel-title">👑 Monitorizare VIP</div><div class="bet-safe-panel-sub">Biletul VIP salvat pentru ziua selectată.</div></div></div>' +
       renderHistoryVip(day.vip) +
-      '<div class="bet-safe-disclaimer"><b>Actualizare automată:</b> secțiunea caută scorurile în ALL_MATCHES, ALL_EVENTS, HISTORY_ENGINE și RECOMMENDATION_LOG. Dacă API-ul nu a adus încă rezultatul final, rămâne PENDING.</div>' +
+      '<div class="bet-safe-disclaimer"><b>Actualizare automată:</b> secțiunea caută scorurile în ALL_MATCHES, ALL_EVENTS, HISTORY_ENGINE și RECOMMENDATION_LOG. Dacă meciul a trecut și API-ul nu oferă scor final, îl marchează NO SCORE ca să nu pară încă în așteptare.</div>' +
     '</div>' +
   '</div>';
 }
@@ -1053,6 +1258,7 @@ function renderHero(key){
     '</div>';
 }
 function renderMain(){
+  ensureBetSafeDatasets();
   var root = D.getElementById('betsafe-root');
   if(!root) return;
 
