@@ -36,7 +36,7 @@ man=ROOT/'manifest.json'
 if man.exists():
     d=json.loads(man.read_text(encoding='utf-8'))
     d['name']='VEYRA · Sports Analytics AI'; d['short_name']='VEYRA'; d['description']='Sports analytics, predicții AI, ML5, tracking și istoric de performanță.'; d['background_color']='#030812'; d['theme_color']='#06080F'
-    d['shortcuts']=[{'name':'Meciuri azi','short_name':'Meciuri','description':'Vezi meciurile cu cote și predicții','url':'index.html?v=aurora#meciuri','icons':[{'src':'icon-192.png','sizes':'192x192'}]},{'name':'Piramidă Daily','short_name':'Piramidă','description':'Reinvestire în etape cu selecții AI','url':'index.html?v=aurora#piramida','icons':[{'src':'icon-192.png','sizes':'192x192'}]}]
+    d['shortcuts']=[{'name':'Meciuri azi','short_name':'Meciuri','description':'Vezi meciurile cu cote și predicții','url':'index.html?v=aurora#meciuri','icons':[{'src':'icon-192.png','sizes':'192x192'}]}]
     w('manifest.json', json.dumps(d, ensure_ascii=False, indent=2)+'\n')
 rd=ROOT/'README.md'
 if rd.exists(): w('README.md', rd.read_text(encoding='utf-8').replace('BetAnalytics Pro','VEYRA').replace('BetAnalytics','VEYRA'))
