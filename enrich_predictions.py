@@ -302,23 +302,70 @@ def enrich_entry(entry, blacklist):
 def merge_ev_signals(path):
     raw = load_json(path, {})
     sigs = raw.get("signals", []) if isinstance(raw, dict) else []
-    return {str(s.get("event_id")): s for s in sigs if s.get("event_id")}
+    out = {}
+    for sig in sigs:
+        if not isinstance(sig, dict):
+            continue
+        eid = sig.get("event_id")
+        if eid is None or eid == "":
+            continue
+        out[str(eid)] = sig
+    return out
+
+def _catboost_event_candidates(entry):
+    """
+    ev_signals_v2.json este indexat pe event_id.
+    În predictions.json câmpul `id` poate fi prediction_id, deci NU trebuie
+    folosit primul. Ordinea corectă este: event_id direct → event.id → fallback id.
+    """
+    candidates = []
+
+    def add(value):
+        if value is None or value == "":
+            return
+        key = str(value)
+        if key not in candidates:
+            candidates.append(key)
+
+    add(entry.get("event_id"))
+    ev = entry.get("event")
+    if isinstance(ev, dict):
+        add(ev.get("id"))
+        add(ev.get("event_id"))
+    add(entry.get("fixture_id"))
+    add(entry.get("match_id"))
+    # fallback ultim: în unele payload-uri vechi `id` chiar era event_id
+    add(entry.get("id"))
+    return candidates
 
 def apply_catboost(entry, signals_map):
-    sig = signals_map.get(str(entry.get("id") or entry.get("event_id") or ""))
-    if not sig: return entry
+    sig = None
+    matched_event_id = None
+    for candidate in _catboost_event_candidates(entry):
+        sig = signals_map.get(candidate)
+        if sig:
+            matched_event_id = candidate
+            break
+    if not sig:
+        return entry
+
+    entry["catboost_event_id"]  = matched_event_id
     entry["catboost_signal"]    = sig.get("signal")
     entry["catboost_market"]    = sig.get("market")
     entry["catboost_score"]     = sig.get("score")
     entry["catboost_ev_pct"]    = sig.get("ev_pct")
     entry["catboost_kelly_pct"] = sig.get("kelly_pct")
     entry["catboost_edge_pp"]   = sig.get("edge_pp")
+    entry["catboost_prob"]      = sig.get("final_prob") or sig.get("adjusted_prob") or sig.get("model_prob")
+    entry["catboost_risk_tier"] = sig.get("risk_tier")
+    entry["catboost_rationale"] = sig.get("rationale")
     return entry
 
 # ─── build_status.json ────────────────────────────────────────────────────────
 
 def write_build_status(n_total, n_enriched, n_safe, n_value, n_balanced,
-                       blacklisted_markets, n_poisson, errors):
+                       blacklisted_markets, n_poisson, errors,
+                       n_catboost_applied=0, n_catboost_available=0):
     try:
         import re
         html = Path("index.html").read_text(encoding="utf-8")
@@ -335,6 +382,8 @@ def write_build_status(n_total, n_enriched, n_safe, n_value, n_balanced,
         "value_picks":         n_value,
         "balanced_picks":      n_balanced,
         "poisson_enriched":    n_poisson,
+        "catboost_signals_available": n_catboost_available,
+        "catboost_signals_applied":   n_catboost_applied,
         "blacklisted_markets": blacklisted_markets,
         "errors":              errors[:20],
         "status":              "ok" if not errors else "partial",
@@ -364,7 +413,7 @@ def main():
 
     enriched_list = []
     errors = []
-    n_safe = n_value = n_balanced = n_poisson = 0
+    n_safe = n_value = n_balanced = n_poisson = n_catboost = 0
 
     for entry in predictions:
         if not isinstance(entry, dict): continue
@@ -377,6 +426,7 @@ def main():
             elif tier == "Value":    n_value += 1
             elif tier == "Balanced": n_balanced += 1
             if e.get("poisson_metrics"): n_poisson += 1
+            if e.get("catboost_signal"): n_catboost += 1
         except Exception as exc:
             eid = entry.get("id") or "?"
             errors.append(f"id={eid}: {exc}")
@@ -390,12 +440,15 @@ def main():
         else: save_json(pred_path, enriched_list)
 
     print(f"Gata: {len(enriched_list)} | Safe={n_safe} Value={n_value} "
-          f"Balanced={n_balanced} | Poisson={n_poisson}/{len(enriched_list)}")
+          f"Balanced={n_balanced} | Poisson={n_poisson}/{len(enriched_list)} "
+          f"| CatBoost={n_catboost}/{len(signals_map)}")
     if errors: print(f"  Erori: {errors[:3]}")
 
     write_build_status(len(predictions), len(enriched_list),
                        n_safe, n_value, n_balanced,
-                       list(blacklist.keys()), n_poisson, errors)
+                       list(blacklist.keys()), n_poisson, errors,
+                       n_catboost_applied=n_catboost,
+                       n_catboost_available=len(signals_map))
 
     print("\nTop 5:")
     top = sorted([e for e in enriched_list if e.get("best_market")

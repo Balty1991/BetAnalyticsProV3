@@ -31,6 +31,7 @@ DATA_DIR   = Path("data")
 OUT_PATH   = DATA_DIR / "referee_stats.json"
 DELAY      = float(os.environ.get("DELAY_MS", "250")) / 1000.0
 PAGE_SIZE  = 200
+TREND_LIMIT = int(os.environ.get("REFEREE_TREND_LIMIT", "200"))
 
 HEADERS = {"Authorization": f"Token {TOKEN}"}
 
@@ -121,6 +122,13 @@ def build_referee_stats(referees):
             "avg_goals":           avg_goals,
             "avg_fouls":           avg_fouls,
             "style":               style,
+            # Trend recent: se completează mai jos dacă endpoint-ul /matches/ oferă date.
+            # Cheile există mereu ca fetch_data.py să aibă schemă stabilă.
+            "recent_yellow_avg":   None,
+            "recent_goals_avg":    None,
+            "yellow_trend":        None,
+            "goals_trend":         None,
+            "trend_matches":       0,
             # Flag-uri utile pentru UI și ML
             "is_strict":           avg_yellow >= 4.5 if avg_yellow else None,
             "is_high_goals":       avg_goals >= 2.8 if avg_goals else None,
@@ -205,6 +213,26 @@ def print_summary(stats):
         print(f"    {r['name']} ({r['country']}): {r['avg_goals']} gol/meci, {r['avg_yellow']} galben/meci, {r['matches']} meciuri")
 
 
+def _nested_get_number(obj, keys):
+    """Caută tolerant o valoare numerică în dicturi/listuri nested."""
+    if isinstance(obj, dict):
+        for key in keys:
+            if key in obj and obj.get(key) is not None:
+                try:
+                    return float(obj.get(key))
+                except Exception:
+                    pass
+        for value in obj.values():
+            found = _nested_get_number(value, keys)
+            if found is not None:
+                return found
+    elif isinstance(obj, list):
+        for item in obj:
+            found = _nested_get_number(item, keys)
+            if found is not None:
+                return found
+    return None
+
 def fetch_referee_recent_trend(referee_id: int, career_avg_yellow: float, career_avg_goals: float) -> dict:
     """
     Fetchez ultimele 10 meciuri ale unui arbitru de la /api/v2/referees/{id}/matches/
@@ -219,25 +247,31 @@ def fetch_referee_recent_trend(referee_id: int, career_avg_yellow: float, career
     """
     url = f"{V2_BASE}/referees/{referee_id}/matches/?limit=10"
     try:
-        resp = requests.get(url, headers={"Authorization": f"Token {TOKEN}"}, timeout=10)
+        resp = requests.get(url, headers={"Authorization": f"Token {TOKEN}"}, timeout=15)
         if resp.status_code != 200:
             return {}
         data = resp.json()
     except Exception:
         return {}
 
-    matches = data.get("results") or data if isinstance(data, list) else []
+    if isinstance(data, dict):
+        matches = data.get("results") or data.get("matches") or []
+    elif isinstance(data, list):
+        matches = data
+    else:
+        matches = []
     if not matches:
         return {}
 
-    # Ultimele 5 meciuri cu date complete
+    # Ultimele 5 meciuri cu date complete. Schema API poate varia, de aceea cautăm nested.
     recent = []
+    yellow_keys = ("yellow_cards", "yellow", "total_yellow", "yellowcards", "cards_yellow")
+    goal_keys = ("goals", "total_goals", "ft_goals", "score_total")
     for m in matches[:5]:
-        stats = m.get("stats") or m
-        yellow = stats.get("yellow_cards") or stats.get("yellow") or stats.get("total_yellow")
-        goals  = stats.get("goals") or stats.get("total_goals")
+        yellow = _nested_get_number(m, yellow_keys)
+        goals = _nested_get_number(m, goal_keys)
         if yellow is not None and goals is not None:
-            recent.append({"yellow": float(yellow), "goals": float(goals)})
+            recent.append({"yellow": yellow, "goals": goals})
 
     if not recent:
         return {}
@@ -248,8 +282,8 @@ def fetch_referee_recent_trend(referee_id: int, career_avg_yellow: float, career
     return {
         "recent_yellow_avg": recent_yellow,
         "recent_goals_avg":  recent_goals,
-        "yellow_trend":      round(recent_yellow - (career_avg_yellow or 0), 3),
-        "goals_trend":       round(recent_goals  - (career_avg_goals  or 0), 3),
+        "yellow_trend":      round(recent_yellow - (career_avg_yellow or 0), 3) if career_avg_yellow is not None else None,
+        "goals_trend":       round(recent_goals  - (career_avg_goals  or 0), 3) if career_avg_goals is not None else None,
         "trend_matches":     len(recent),
     }
 
@@ -267,9 +301,9 @@ def main():
     print(f"\nStatistici construite pentru {len(stats)} arbitri:")
     print_summary(stats)
 
-    # Adaugă trend recent pentru primii 200 arbitri (cei cu cele mai multe meciuri)
-    # Rate-limit friendly: max 200 calls, sleep 0.3s
-    top_refs = sorted(stats.items(), key=lambda x: -(x[1].get("matches") or 0))[:200]
+    # Adaugă trend recent pentru arbitrii cei mai relevanți.
+    # Rate-limit friendly: default max 200 calls, configurabil prin REFEREE_TREND_LIMIT.
+    top_refs = sorted(stats.items(), key=lambda x: -(x[1].get("matches") or 0))[:max(0, TREND_LIMIT)]
     print(f"\nFetching trend recent pentru {len(top_refs)} arbitri (top by matches)...")
     trend_count = 0
     for ref_id, ref_data in top_refs:
