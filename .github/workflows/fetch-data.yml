@@ -36,16 +36,44 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Fetch referee stats (weekly cache)
+      - name: Fetch referee stats (weekly cache + trend repair)
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          REFEREE_TREND_LIMIT: '200'
         run: |
-          # Rulăm doar dacă fișierul lipsește sau e mai vechi de 7 zile
-          if [ ! -f data/referee_stats.json ] || [ "$(find data/referee_stats.json -mtime +7)" != "" ]; then
-            echo "Fetching referee stats..."
-            python fetch_referee_stats.py
+          NEED_REFRESH=0
+          if [ ! -f data/referee_stats.json ]; then
+            echo "Referee stats missing."
+            NEED_REFRESH=1
+          elif [ "$(find data/referee_stats.json -mtime +7)" != "" ]; then
+            echo "Referee stats older than 7 days."
+            NEED_REFRESH=1
           else
-            echo "Referee stats cache valid (< 7 zile), skip fetch."
+            python - <<'PY' || NEED_REFRESH=1
+          import json, sys
+          from pathlib import Path
+          path = Path('data/referee_stats.json')
+          try:
+              data = json.loads(path.read_text(encoding='utf-8'))
+          except Exception:
+              sys.exit(1)
+          refs = data.get('referees') or {}
+          if not refs:
+              sys.exit(1)
+          sample = list(refs.values())[:80]
+          has_trend_schema = any(isinstance(r, dict) and ('yellow_trend' in r or 'goals_trend' in r) for r in sample)
+          if not has_trend_schema:
+              print('Referee stats cache has no trend schema; refresh needed.')
+              sys.exit(1)
+          print('Referee stats cache valid and trend schema present.')
+          PY
+          fi
+
+          if [ "$NEED_REFRESH" = "1" ]; then
+            echo "Fetching referee stats with recent trend..."
+            timeout 900s python -u fetch_referee_stats.py || echo "Referee stats refresh failed/timed out; non-fatal."
+          else
+            echo "Referee stats cache valid (< 7 zile) and trend-ready; skip fetch."
           fi
 
       - name: Fetch lineups for today's matches

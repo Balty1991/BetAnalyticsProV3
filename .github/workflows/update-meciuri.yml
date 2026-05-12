@@ -35,7 +35,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install requests catboost scikit-learn pandas numpy scipy
 
       - name: Fetch current data
         id: fetch_current
@@ -47,16 +47,38 @@ jobs:
           timeout 2400s python -u fetch_data.py
           echo "Finished fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
+      - name: VEYRA Supreme v5 — current CatBoost signals
+        id: predict_current
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          PYTHONUNBUFFERED: '1'
+        run: |
+          status="skipped"
+          if [ -f predict_current.py ]; then
+            echo "Starting predict_current.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            if timeout 900s python -u predict_current.py; then
+              status="success"
+            else
+              status="failed_or_timeout"
+              echo "predict_current.py failed/timed out; non-fatal, enrich will use any existing ev_signals_v2.json."
+            fi
+            echo "Finished predict_current.py with status=$status at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          else
+            echo "predict_current.py missing; skip CatBoost current signals."
+          fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
       - name: Optional enrich
         id: enrich_current
         run: |
           if [ -f enrich_predictions.py ]; then
-            timeout 300s python -u enrich_predictions.py || echo "Optional enrich skipped or timed out; non-fatal."
+            timeout 420s python -u enrich_predictions.py || echo "Optional enrich skipped or timed out; non-fatal."
           fi
 
       - name: Update meta marker
         env:
           FETCH_STATUS: ${{ steps.fetch_current.outcome }}
+          PREDICT_STATUS: ${{ steps.predict_current.outputs.status }}
           ENRICH_STATUS: ${{ steps.enrich_current.outcome }}
         run: |
           python - <<'PY'
@@ -77,6 +99,7 @@ jobs:
           meta['update_workflow'] = 'update-meciuri'
           meta['workflow_results'] = {
               'fetch_data': os.environ.get('FETCH_STATUS', 'unknown'),
+              'predict_current': os.environ.get('PREDICT_STATUS', 'unknown'),
               'enrich_predictions': os.environ.get('ENRICH_STATUS', 'unknown'),
               'build_api_events_index': 'skipped_in_fast_update'
           }
