@@ -50,7 +50,7 @@ jobs:
           timeout 2400s python -u fetch_data.py
           echo "Finished fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
-      - name: VEYRA Supreme v5 — stats/incidents/shotmap cache
+      - name: VEYRA Supreme v5 — stats/incidents/shotmap/player cache
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
           PYTHONUNBUFFERED: '1'
@@ -59,8 +59,8 @@ jobs:
           STATS_SLEEP_SECONDS: '0.15'
         run: |
           if [ -f fetch_stats_incidents_cache.py ]; then
-            echo "Fetching v2 stats/incidents/shotmap priority cache at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            timeout 600s python -u fetch_stats_incidents_cache.py || echo "Stats/incidents/shotmap cache skipped/timed out; non-fatal."
+            echo "Fetching v2 stats/incidents/shotmap/player-stats priority cache at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            timeout 600s python -u fetch_stats_incidents_cache.py || echo "Stats/incidents/shotmap/player-stats cache skipped/timed out; non-fatal."
           else
             echo "fetch_stats_incidents_cache.py missing; skip stats cache."
           fi
