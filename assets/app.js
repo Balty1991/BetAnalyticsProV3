@@ -30,7 +30,7 @@ var MODEL_BENCHMARKS = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
-var MATCHES_PAGE_SIZE = 25;        // câte carduri se afișează per batch
+var MATCHES_PAGE_SIZE = 9999;      // afișează toate cardurile filtrate; evită diferența între count și lista vizibilă
 var MATCHES_RENDERED_COUNT = 0;    // câte carduri sunt acum în DOM
 var MATCHES_FILTERED_CACHE = [];   // lista filtrată curentă (pentru load more)
 var MATCHES_SCROLL_OBSERVER = null; // IntersectionObserver sentinel
@@ -1548,7 +1548,7 @@ function getBetVerdict(match, bet) {
   function watch(sub, score){
     return verdict('watch', '👀 WATCH', sub || 'Semnal bun, dar cu avertisment', '#f59e0b', 'rgba(245,158,11,.10)', 'rgba(245,158,11,.32)', score || 2);
   }
-  function bet(sub, score){
+  function markBet(sub, score){
     return verdict('bet', '✅ PARIAZA', sub || 'Semnal curat', '#22c55e', 'rgba(16,185,129,.12)', 'rgba(16,185,129,.34)', score || 4);
   }
 
@@ -1588,7 +1588,7 @@ function getBetVerdict(match, bet) {
     if (cbPositive) subParts.push('CB confirmă');
     if (underControlled) subParts.push('xG controlat');
     if (weakConsensus) subParts.push('consens slab');
-    return bet(subParts.join(' • '), 5);
+    return markBet(subParts.join(' • '), 5);
   }
 
   // Cazuri bune, dar nu suficient de curate pentru PARIAZĂ.
@@ -1614,7 +1614,7 @@ function getBetVerdict(match, bet) {
   if (btMktOk)             signals++;
   if (bucketOk)            signals++;
 
-  if (signals >= 4 && adjProb >= 80) return bet('Semnale pozitive (' + signals + '/5)', signals);
+  if (signals >= 4 && adjProb >= 80) return markBet('Semnale pozitive (' + signals + '/5)', signals);
   if (signals >= 3 && edgePct >= edgeBonusSig && adjProb >= 78) return watch(signals + '/5 semnale + edge solid', signals);
   if (signals >= 2) return watch(signals + '/5 semnale — mixt', signals);
   return avoid('Semnale insuficiente (' + signals + '/5)', signals);
@@ -7377,14 +7377,15 @@ function renderMatches(){
     var m17KellyPill = b && m17Kelly > 0 ? '<span class="m17-pill m17-kelly">Kelly '+m17Kelly.toFixed(1)+'%</span>' : '';
     var m17WhyText = shortWhy || 'Context statistic activ';
     var m17MarketLine = bestMarketLine ? '<div class="m17-market-line">'+htmlEsc(bestMarketLine)+'</div>' : '';
-    var m17IndexBadge = displayIndex ? ('<span class="m17-index-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:22px;padding:0 8px;margin-right:8px;border-radius:999px;background:rgba(94,234,212,.12);border:1px solid rgba(94,234,212,.30);color:#7ff7e6;font-size:11px;font-weight:900;letter-spacing:.03em;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);flex:0 0 auto;">#'+displayIndex+'</span>') : '';
+    var m17IndexBadge = displayIndex ? ('<span class="m17-index-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;border-radius:999px;background:linear-gradient(135deg,rgba(94,234,212,.18),rgba(15,23,42,.58));border:1px solid rgba(94,234,212,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 6px 18px rgba(34,211,238,.10);color:#d9fffa;font-size:12px;font-weight:900;letter-spacing:.02em;line-height:1;font-variant-numeric:tabular-nums;flex:0 0 auto;">#'+displayIndex+'</span>') : '';
 
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 match-card-m17 '+verdictClass+' '+m17RiskClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
       '<div class="m17-topline">'+
-        '<div class="m17-league">'+m17IndexBadge+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
+        '<div class="m17-league">'+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
         '<div class="m17-time"><span class="m17-date">'+htmlEsc(kickoffDateLabel)+'</span><strong class="m17-hour">'+htmlEsc(kickoffTimeLabel)+'</strong><b class="m17-countdown">'+htmlEsc(countdown)+'</b></div>'+
       '</div>'+
       '<div class="m17-meta-row">'+
+        m17IndexBadge+
         '<span class="m17-country">🌍 '+htmlEsc(m.country || '—')+'</span>'+
         '<span class="m17-pill m17-state">'+htmlEsc(state.label || 'Analiză')+'</span>'+m17ScorePill+m17CalibPill+m17ContextPills+
       '</div>'+
@@ -7492,7 +7493,7 @@ function renderMatches(){
       if(extra){ var tmp = document.createElement('div'); tmp.innerHTML = extra; while(tmp.firstChild) container.appendChild(tmp.firstChild); }
     } else {
       var grid = container.querySelector('#matches-grid-inner');
-      if(grid){ grid.innerHTML += nextBatch.map(renderCard).join(''); }
+      if(grid){ grid.innerHTML += nextBatch.map(function(m){ return renderCard(m, m && m._renderNumber); }).join(''); }
     }
 
     // Actualizează sau elimină sentinela
