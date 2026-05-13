@@ -1548,7 +1548,7 @@ function getBetVerdict(match, bet) {
   function watch(sub, score){
     return verdict('watch', '👀 WATCH', sub || 'Semnal bun, dar cu avertisment', '#f59e0b', 'rgba(245,158,11,.10)', 'rgba(245,158,11,.32)', score || 2);
   }
-  function bet(sub, score){
+  function markBet(sub, score){
     return verdict('bet', '✅ PARIAZA', sub || 'Semnal curat', '#22c55e', 'rgba(16,185,129,.12)', 'rgba(16,185,129,.34)', score || 4);
   }
 
@@ -1588,7 +1588,7 @@ function getBetVerdict(match, bet) {
     if (cbPositive) subParts.push('CB confirmă');
     if (underControlled) subParts.push('xG controlat');
     if (weakConsensus) subParts.push('consens slab');
-    return bet(subParts.join(' • '), 5);
+    return markBet(subParts.join(' • '), 5);
   }
 
   // Cazuri bune, dar nu suficient de curate pentru PARIAZĂ.
@@ -1614,7 +1614,7 @@ function getBetVerdict(match, bet) {
   if (btMktOk)             signals++;
   if (bucketOk)            signals++;
 
-  if (signals >= 4 && adjProb >= 80) return bet('Semnale pozitive (' + signals + '/5)', signals);
+  if (signals >= 4 && adjProb >= 80) return markBet('Semnale pozitive (' + signals + '/5)', signals);
   if (signals >= 3 && edgePct >= edgeBonusSig && adjProb >= 78) return watch(signals + '/5 semnale + edge solid', signals);
   if (signals >= 2) return watch(signals + '/5 semnale — mixt', signals);
   return avoid('Semnale insuficiente (' + signals + '/5)', signals);
