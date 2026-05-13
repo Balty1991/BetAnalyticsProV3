@@ -309,7 +309,12 @@ def merge_ev_signals(path):
         eid = sig.get("event_id")
         if eid is None or eid == "":
             continue
-        out[str(eid)] = sig
+        key = str(eid)
+        # Dacă există mai multe piețe pe același eveniment, păstrăm semnalul cu scorul cel mai mare.
+        # În varianta veche, ultimul semnal putea suprascrie unul mai bun și crea badge-uri CB nealiniate.
+        prev = out.get(key)
+        if prev is None or _f(sig.get("score"), 0.0) > _f(prev.get("score"), 0.0):
+            out[key] = sig
     return out
 
 def _catboost_event_candidates(entry):
@@ -352,6 +357,7 @@ def apply_catboost(entry, signals_map):
     entry["catboost_event_id"]  = matched_event_id
     entry["catboost_signal"]    = sig.get("signal")
     entry["catboost_market"]    = sig.get("market")
+    entry["catboost_market_label"] = sig.get("market_label")
     entry["catboost_score"]     = sig.get("score")
     entry["catboost_ev_pct"]    = sig.get("ev_pct")
     entry["catboost_kelly_pct"] = sig.get("kelly_pct")
@@ -359,6 +365,34 @@ def apply_catboost(entry, signals_map):
     entry["catboost_prob"]      = sig.get("final_prob") or sig.get("adjusted_prob") or sig.get("model_prob")
     entry["catboost_risk_tier"] = sig.get("risk_tier")
     entry["catboost_rationale"] = sig.get("rationale")
+
+    # Pasul 5: expunem spre UI contextul Stats + Player Impact, ca verdictul să nu mai fie opac.
+    passthrough = {
+        "supreme_adjusted_prob": "adjusted_prob",
+        "supreme_final_prob": "final_prob",
+        "supreme_edge_pp": "edge_pp",
+        "supreme_fair_odds": "fair_odds",
+        "supreme_quality_gate": "quality_gate",
+        "supreme_data_quality_score": "data_quality_score",
+        "supreme_agreement": "agreement",
+        "supreme_reliability": "reliability",
+        "supreme_lineup_risk": "lineup_risk",
+        "supreme_context_risk": "context_risk",
+        "stats_profile_prob": "stats_profile_prob",
+        "stats_context_bonus": "stats_context_bonus",
+        "player_context_bonus": "player_context_bonus",
+        "player_availability_risk": "player_availability_risk",
+        "player_rating_diff_form5": "player_rating_diff_form5",
+        "player_attack_xg_sum_form5": "player_attack_xg_sum_form5",
+        "player_attack_xg_diff_form5": "player_attack_xg_diff_form5",
+        "market_bookmakers_count": "bookmakers_count",
+        "market_movement_balance": "movement_balance",
+        "market_odds_dispersion": "odds_dispersion",
+        "market_best_bookmaker": "best_bookmaker",
+    }
+    for out_key, sig_key in passthrough.items():
+        if sig.get(sig_key) is not None:
+            entry[out_key] = sig.get(sig_key)
     return entry
 
 # ─── build_status.json ────────────────────────────────────────────────────────
