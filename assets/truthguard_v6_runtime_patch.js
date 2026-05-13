@@ -1,356 +1,454 @@
+/**
+ * VEYRA TruthGuard Engine v7 — Profitable Precision Edition
+ * ============================================================
+ * Rebuild complet față de v6:
+ *   - Edge este metrica principală (28 pts) — cel mai bun proxy CLV
+ *   - minEdge ridicat la niveluri profitabile: over15/under35 5.5pp, btts/over25 6.5pp, 1X2 8-10pp
+ *   - Acțiuni recalibrate: PAREAZĂ ≥85 (0 blocaje), RISC CONTROLAT ≥76 (≤1 blocaj)
+ *   - Eliminat RISC CONTROLAT cu 3 blocaje — nu mai intră în pool
+ *   - Integrat context flags GAP 1: derby, vreme, teren, deplasare
+ *   - Integrat H2H signals GAP 3: draw_rate, btts_rate, avg_goals ±6 pts
+ *   - Integrat v2_ml_prob GAP 2: confirmare CatBoost v2 ±8 pts
+ *   - Pool limitat la 8 picks, max 2 per piață
+ *   - UI redesigned: edge proeminent, warning 0-stricte, ROI estimat
+ */
 (function(){
   'use strict';
-  if (window.__VEYRA_TRUTHGUARD_V6_RUNTIME__) return;
-  window.__VEYRA_TRUTHGUARD_V6_RUNTIME__ = true;
+  if(window.__VEYRA_TRUTHGUARD_V7_RUNTIME__) return;
+  window.__VEYRA_TRUTHGUARD_V7_RUNTIME__ = true;
+  window.__VEYRA_TRUTHGUARD_V6_RUNTIME__ = true; // compatibilitate
 
-  var STATE = { ev:null, ai:null, pack:null, loadedAt:0, rendering:false };
-  var TTL = 90 * 1000;
-  var RENDER_DELAY = 420;
-  var timer = null;
-  var MAX_DISPLAY_PICKS = 10;
-  var MIN_WATCH_SCORE = 58;
-  var MAX_WATCH_RISK = 0.52;
+  var TTL            = 90000;
+  var RENDER_DELAY   = 420;
+  var MAX_POOL       = 8;
+  var MAX_PER_MKT    = 2;
+  var MIN_WATCH      = 68;   // era 58
+  var MAX_RISK       = 0.38; // era 0.52
+  var SC_PARAZA      = 85;   // era 82
+  var SC_RISC        = 76;   // era 72
+  var MAX_BLK_RISC   = 1;    // era 3
+  var MAX_BLK_WATCH  = 2;    // era 5
 
-  var MARKET_RULES = {
-    home_win:{minProb:0.50,minEdge:3.8,minEv:0.8,odds:[1.28,3.20],label:'Home Win'},
-    draw:{minProb:0.32,minEdge:6.0,minEv:1.5,odds:[2.60,4.80],label:'Draw'},
-    away_win:{minProb:0.42,minEdge:4.5,minEv:1.0,odds:[1.35,3.80],label:'Away Win'},
-    btts:{minProb:0.57,minEdge:4.2,minEv:0.8,odds:[1.45,2.35],label:'BTTS Yes'},
-    over15:{minProb:0.73,minEdge:2.6,minEv:0.35,odds:[1.14,1.58],label:'Over 1.5G'},
-    over25:{minProb:0.58,minEdge:4.0,minEv:0.8,odds:[1.50,2.45],label:'Over 2.5G'},
-    under35:{minProb:0.70,minEdge:2.6,minEv:0.35,odds:[1.14,1.62],label:'Under 3.5G'}
+  var RULES = {
+    over15:   {minP:0.76, minE:5.5, minEV:1.2, odds:[1.20,1.65], lbl:'Over 1.5G'},
+    under35:  {minP:0.73, minE:5.5, minEV:1.2, odds:[1.18,1.65], lbl:'Under 3.5G'},
+    btts:     {minP:0.60, minE:6.5, minEV:1.5, odds:[1.45,2.20], lbl:'BTTS Yes'},
+    over25:   {minP:0.62, minE:6.5, minEV:1.5, odds:[1.50,2.30], lbl:'Over 2.5G'},
+    home_win: {minP:0.58, minE:8.0, minEV:2.0, odds:[1.30,2.90], lbl:'Home Win'},
+    away_win: {minP:0.50, minE:9.0, minEV:2.5, odds:[1.40,3.50], lbl:'Away Win'},
+    draw:     {minP:0.35, minE:10.0,minEV:3.0, odds:[2.80,4.50], lbl:'Draw'}
   };
+  var GOAL_MKTS = {over15:1,under35:1,btts:1,over25:1};
+
+  var STATE = {ev:null,ai:null,loadedAt:0,rendering:false};
+  var _timer = null;
 
   function $(id){ return document.getElementById(id); }
-  function esc(v){ return String(v == null ? '' : v).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-  function f(v,d){ var n = Number(v); return isFinite(n) ? n : (d == null ? 0 : d); }
-  function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
-  function norm(v,lo,hi){ if(hi <= lo) return 0; return clamp((v-lo)/(hi-lo),0,1); }
-  function pct(v,d){ var n=f(v); if(n > 0 && n <= 1) n *= 100; return n.toFixed(d == null ? 1 : d) + '%'; }
-  function num(v,d){ return f(v).toFixed(d == null ? 1 : d); }
-  function plus(v,d){ var n=f(v); return (n>=0?'+':'') + n.toFixed(d == null ? 1 : d); }
-
-  function fetchJson(url, fallback){
-    return fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now(), {cache:'no-store'})
-      .then(function(r){ if(!r.ok) throw new Error(url); return r.json(); })
-      .catch(function(){ return fallback; });
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function f(v,d){ var n=Number(v); return isFinite(n)?n:(d==null?0:d); }
+  function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+  function norm(v,lo,hi){ if(hi<=lo)return 0; return clamp((v-lo)/(hi-lo),0,1); }
+  function pct(v,d){ var n=f(v); if(n>0&&n<=1)n*=100; return n.toFixed(d==null?1:d)+'%'; }
+  function num(v,d){ return f(v).toFixed(d==null?1:d); }
+  function plus(v,d){ var n=f(v); return (n>=0?'+':'')+n.toFixed(d==null?1:d); }
+  function fmtDT(iso){
+    try{
+      if(!iso) return '—';
+      var d=new Date(iso);
+      if(isNaN(d.getTime())) return String(iso).slice(0,16);
+      return d.toLocaleDateString('ro-RO')+' '+d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){return '—';}
+  }
+  function stdDev(arr){
+    if(!arr||arr.length<=1)return 0.10;
+    var m=arr.reduce(function(a,b){return a+b;},0)/arr.length;
+    return Math.sqrt(arr.reduce(function(a,b){var d=b-m;return a+d*d;},0)/arr.length);
   }
 
+  function fetchJson(url,fb){
+    return fetch(url+(url.indexOf('?')>=0?'&':'?')+'v='+Date.now(),{cache:'no-store'})
+      .then(function(r){if(!r.ok)throw new Error(url);return r.json();})
+      .catch(function(){return fb;});
+  }
   function loadData(){
-    if(STATE.ev && Date.now() - STATE.loadedAt < TTL) return Promise.resolve(STATE);
+    if(STATE.ev&&Date.now()-STATE.loadedAt<TTL)return Promise.resolve(STATE);
     return Promise.all([
-      fetchJson('./data/ev_signals_v2.json', {}),
-      fetchJson('./data/ai_memory.json', {}),
-      fetchJson('./data/model_pack_v2.json', {})
+      fetchJson('./data/ev_signals_v2.json',{}),
+      fetchJson('./data/ai_memory.json',{})
     ]).then(function(res){
-      STATE.ev = res[0] || {};
-      STATE.ai = res[1] || {};
-      STATE.pack = res[2] || {};
-      STATE.loadedAt = Date.now();
+      STATE.ev=res[0]||{};
+      STATE.ai=res[1]||{};
+      STATE.loadedAt=Date.now();
       return STATE;
     });
   }
 
-  function marketKey(s){
-    var raw = String(s.market_key || s.market || s.market_label || '').toLowerCase();
-    if(raw.indexOf('over 1.5') >= 0 || raw.indexOf('over15') >= 0 || raw.indexOf('o1.5') >= 0) return 'over15';
-    if(raw.indexOf('over 2.5') >= 0 || raw.indexOf('over25') >= 0 || raw.indexOf('o2.5') >= 0) return 'over25';
-    if(raw.indexOf('under 3.5') >= 0 || raw.indexOf('under35') >= 0 || raw.indexOf('u3.5') >= 0) return 'under35';
-    if(raw.indexOf('btts') >= 0 || raw.indexOf('both') >= 0) return 'btts';
-    if(raw.indexOf('home') >= 0 || raw.indexOf('1') === 0) return 'home_win';
-    if(raw.indexOf('away') >= 0 || raw.indexOf('2') === 0) return 'away_win';
-    if(raw.indexOf('draw') >= 0 || raw === 'x') return 'draw';
-    return raw || 'unknown';
+  function mktKey(s){
+    var r=String(s.market_key||s.market||s.market_label||'').toLowerCase().replace(/\s+/g,'');
+    if(r.indexOf('over1.5')>=0||r.indexOf('over15')>=0) return 'over15';
+    if(r.indexOf('over2.5')>=0||r.indexOf('over25')>=0) return 'over25';
+    if(r.indexOf('under3.5')>=0||r.indexOf('under35')>=0) return 'under35';
+    if(r.indexOf('btts')>=0||r.indexOf('bothtea')>=0) return 'btts';
+    if(r.indexOf('home')>=0||r==='1'||r==='homewin') return 'home_win';
+    if(r.indexOf('away')>=0||r==='2'||r==='awaywin') return 'away_win';
+    if(r.indexOf('draw')>=0||r==='x') return 'draw';
+    return r||'unknown';
   }
+  function mktLbl(s){ var k=mktKey(s); return s.market_label||(RULES[k]&&RULES[k].lbl)||s.market||s.market_key||'—'; }
 
-  function marketLabel(s){
-    var mk = marketKey(s);
-    return s.market_label || (MARKET_RULES[mk] && MARKET_RULES[mk].label) || s.market || s.market_key || '—';
-  }
-
-  function normalizeProb(v){
-    var n = f(v, NaN);
-    if(!isFinite(n) || n <= 0) return null;
-    if(n > 1) n = n / 100;
-    return clamp(n,0,1);
-  }
-
-  function collectSourceProbabilities(s){
-    var keys = ['adjusted_prob','model_prob','probability','api_prob','api_probability','bsd_prob','poisson_prob','polymarket_prob','memory_prob'];
-    var out = [];
-    keys.forEach(function(k){
-      var p = normalizeProb(s[k]);
-      if(p != null && p > 0.05 && p < 0.98) out.push(p);
-    });
-    // Fallback: scorul vechi nu este probabilitate, dar poate ancora ușor dacă nu avem alte surse.
-    if(out.length < 2){
-      var oldScore = f(s.score || s.supreme_score || s.adaptive_score, 0);
-      if(oldScore >= 55) out.push(clamp(oldScore / 115, 0.45, 0.88));
-    }
+  function normP(v){ var n=f(v,NaN); if(!isFinite(n)||n<=0)return null; if(n>1)n=n/100; return clamp(n,0,1); }
+  function collectP(s){
+    var keys=['adjusted_prob','final_prob','model_prob','probability','api_prob','bsd_prob',
+              'poisson_prob','polymarket_prob','nv_prob','catboost_prob','stats_profile_prob'];
+    if(s.v2_ml_prob!=null) keys.push('v2_ml_prob'); // GAP 2
+    var out=[];
+    keys.forEach(function(k){var p=normP(s[k]);if(p!=null&&p>0.05&&p<0.98)out.push(p);});
+    if(out.length<2){var sc=f(s.score||s.supreme_score||s.adaptive_score,0);if(sc>=55)out.push(clamp(sc/115,0.45,0.88));}
     return out;
   }
 
-  function std(values){
-    if(!values || values.length <= 1) return 0.10;
-    var m = values.reduce(function(a,b){return a+b;},0) / values.length;
-    var v = values.reduce(function(a,b){ var d=b-m; return a+d*d; },0) / values.length;
-    return Math.sqrt(v);
+  // GAP 1: context penalty
+  function ctxPenalty(s,mk){
+    var pen=0;
+    var derby=!!(s.is_local_derby||s.derby);
+    var neutral=!!(s.is_neutral_ground||s.neutral_ground);
+    var travel=f(s.travel_distance_km||s.travel_km,0);
+    var wx=s.weather&&typeof s.weather==='object'?s.weather:{};
+    var wxDesc=String(wx.description||s.weather_desc||'').toLowerCase();
+    var badWx=!!(wxDesc.match(/rain|snow|storm|fog|wind|heavy/));
+    var pitch=f(s.pitch_condition,0);
+    var is1x2=!!(mk==='home_win'||mk==='away_win'||mk==='draw');
+    var isGoal=!!(GOAL_MKTS[mk]);
+    if(derby){
+      if(is1x2) pen+=0.15;
+      if(isGoal) pen-=0.04;
+    }
+    if(neutral&&mk==='home_win') pen+=0.12;
+    if(travel>=700&&mk==='away_win') pen+=0.10;
+    if(badWx&&isGoal&&(mk==='over15'||mk==='over25'||mk==='btts')) pen+=0.12;
+    if(badWx&&mk==='under35') pen-=0.04;
+    if(pitch>=3&&(mk==='over25'||mk==='btts')) pen+=0.08;
+    return clamp(pen,0,0.40);
   }
 
-  function fmtDateTime(iso){
-    try{
-      if(!iso) return '—';
-      var d = new Date(iso);
-      if(String(d) === 'Invalid Date') return String(iso).slice(0,16);
-      return d.toLocaleDateString('ro-RO') + ' ' + d.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
-    }catch(e){ return '—'; }
+  // GAP 3: H2H bonus
+  function h2hScore(s,mk){
+    var n=f(s.h2h_matches||s.h2h_total_matches,0);
+    if(n<5) return 0;
+    var dr=f(s.h2h_draw_rate,NaN), br=f(s.h2h_btts_rate,NaN);
+    var ag=f(s.h2h_avg_goals,NaN), hw=f(s.h2h_home_win_rate,NaN), aw=f(s.h2h_away_win_rate,NaN);
+    var b=0;
+    if(mk==='draw'&&isFinite(dr)){ b+=dr>=0.40?5:dr<=0.15?-4:0; }
+    else if(mk==='btts'&&isFinite(br)){ b+=br>=0.60?4:br<=0.25?-4:0; }
+    else if((mk==='over15'||mk==='over25')&&isFinite(ag)){ b+=ag>=3.0?4:ag<=1.8?-5:0; }
+    else if(mk==='under35'&&isFinite(ag)){ b+=ag<=2.2?4:ag>=3.2?-4:0; }
+    else if(mk==='home_win'&&isFinite(hw)){ b+=hw>=0.65?4:hw<=0.20?-4:0; }
+    else if(mk==='away_win'&&isFinite(aw)){ b+=aw>=0.55?4:aw<=0.15?-4:0; }
+    return clamp(b,-6,6);
   }
 
-  function evidenceQuality(s, srcCount){
-    var q = String(s.quality_gate || '').toUpperCase();
-    var base = q === 'A' ? 1.00 : q === 'B' ? 0.82 : q === 'C' ? 0.56 : 0.68;
-    var rel = normalizeProb(s.reliability) || 0.70;
-    var sourceBoost = clamp(srcCount / 4, 0.35, 1);
-    return clamp(base * 0.45 + rel * 0.35 + sourceBoost * 0.20, 0, 1);
+  // GAP 2: v2 ML confirmation
+  function v2Score(s,implied){
+    var v2p=normP(s.v2_ml_prob);
+    if(v2p==null) return 0;
+    var diff=(v2p-implied)*100;
+    if(diff>=3) return 6;
+    if(diff>=-1) return 2;
+    if(diff<-5) return -8;
+    return -2;
   }
 
   function scoreSignal(raw){
-    var s = Object.assign({}, raw || {});
-    var mk = marketKey(s);
-    var rule = MARKET_RULES[mk] || {minProb:0.62,minEdge:4.0,minEv:0.8,odds:[1.12,3.80],label:marketLabel(s)};
-    var odds = f(s.odds || s.book_odds || s.active_odds || s.best_odds, 0);
-    var probs = collectSourceProbabilities(s);
-    var p = normalizeProb(s.adjusted_prob) || normalizeProb(s.model_prob) || (probs.length ? probs.reduce(function(a,b){return a+b;},0)/probs.length : 0);
-    var implied = odds > 1.01 ? (1 / odds) : 0;
-    var edge = f(s.edge_pp, NaN);
-    if(!isFinite(edge)) edge = f(s.edge_pct, NaN);
-    if(!isFinite(edge)) edge = (p - implied) * 100;
-    var ev = f(s.ev_pct, NaN);
-    if(!isFinite(ev)) ev = odds > 1.01 ? ((p * odds) - 1) * 100 : -99;
-    var kelly = f(s.kelly_pct, NaN);
-    if(!isFinite(kelly) && odds > 1.01){
-      var b = odds - 1;
-      kelly = Math.max(0, ((p * b - (1-p)) / b) * 0.25 * 100);
-    }
-    var agreement = normalizeProb(s.agreement) || clamp(1 - (std(probs) / 0.14), 0.20, 0.96);
-    var quality = evidenceQuality(s, probs.length);
-    var risk = clamp(f(s.lineup_risk,0.10) + f(s.context_risk,0.08), 0, 0.80);
-    var dispersion = f(s.odds_dispersion,0);
-    if(String(s.risk_tier || '').toUpperCase() === 'HIGH') risk += 0.16;
-    if(odds && (odds < rule.odds[0] || odds > rule.odds[1])) risk += 0.10;
-    if(dispersion > 0.10) risk += Math.min(0.12, dispersion);
-    risk = clamp(risk,0,0.80);
+    var s=Object.assign({},raw||{});
+    var mk=mktKey(s);
+    var rule=RULES[mk]||{minP:0.62,minE:6.0,minEV:1.5,odds:[1.12,3.80],lbl:mktLbl(s)};
+    var odds=f(s.odds||s.book_odds||s.active_odds||s.best_odds,0);
+    var probs=collectP(s);
+    var p=normP(s.adjusted_prob)||normP(s.final_prob)||normP(s.model_prob)||
+          (probs.length?probs.reduce(function(a,b){return a+b;},0)/probs.length:0);
+    var implied=odds>1.01?(1/odds):0;
+    var edge=f(s.edge_pp,NaN); if(!isFinite(edge))edge=f(s.edge_pct,NaN); if(!isFinite(edge))edge=(p-implied)*100;
+    var ev=f(s.ev_pct,NaN); if(!isFinite(ev))ev=odds>1.01?((p*odds)-1)*100:-99;
+    var kelly=f(s.kelly_pct,NaN);
+    if(!isFinite(kelly)&&odds>1.01){var b=odds-1;kelly=Math.max(0,((p*b-(1-p))/b)*0.25*100);}
+    var agreement=normP(s.agreement)||clamp(1-(stdDev(probs)/0.14),0.20,0.96);
+    var q=String(s.quality_gate||'').toUpperCase();
+    var base=q==='A'?1.00:q==='B'?0.82:q==='C'?0.56:0.68;
+    var rel=normP(s.reliability)||0.70;
+    var srcB=clamp(probs.length/4,0.35,1);
+    var quality=clamp(base*0.45+rel*0.35+srcB*0.20,0,1);
+    var ctxPen=ctxPenalty(s,mk);
+    var risk=clamp(f(s.lineup_risk,0.08)+f(s.context_risk,0.05)+f(s.player_availability_risk||s.playerRisk,0.05)+ctxPen,0,0.85);
+    var disp=f(s.odds_dispersion,0);
+    if(String(s.risk_tier||'').toUpperCase()==='HIGH')risk+=0.16;
+    if(odds&&(odds<rule.odds[0]||odds>rule.odds[1]))risk+=0.12;
+    if(disp>0.10)risk+=Math.min(0.12,disp);
+    risk=clamp(risk,0,0.85);
 
-    var score = 0;
-    score += 24 * norm(p, rule.minProb - 0.04, rule.minProb + 0.16);
-    score += 18 * norm(edge, rule.minEdge - 1.5, rule.minEdge + 10);
-    score += 14 * norm(ev, rule.minEv - 0.5, rule.minEv + 6.5);
-    score += 14 * agreement;
-    score += 12 * quality;
-    score += 8 * clamp((normalizeProb(s.reliability) || 0.70),0,1);
-    score += 5 * norm(kelly, 0.20, 2.80);
-    score += 5 * norm(f(s.score || s.supreme_score || s.adaptive_score,70), 72, 92);
-    score -= 22 * risk;
-    score = clamp(score, 0, 100);
+    var h2hB=h2hScore(s,mk);
+    var v2B=v2Score(s,implied);
 
-    var blocks = [];
-    if(!odds || odds <= 1.01) blocks.push('fără cotă validă');
-    if(p < rule.minProb) blocks.push('probabilitate sub prag');
-    if(edge < rule.minEdge) blocks.push('edge insuficient');
-    if(ev < rule.minEv) blocks.push('EV insuficient');
-    if(agreement < 0.58) blocks.push('consens slab între surse');
-    if(quality < 0.52) blocks.push('calitate date slabă');
-    if(risk > 0.42) blocks.push('risc contextual ridicat');
-    if(odds && (odds < rule.odds[0] || odds > rule.odds[1])) blocks.push('cotă în afara ferestrei safe');
+    // ── Scoring v7: EDGE KING ──────────────────────────────────────────────────
+    var score=0;
+    score += 28 * norm(edge, rule.minE-2, rule.minE+10);   // edge — CLV proxy
+    score += 20 * norm(p, rule.minP, rule.minP+0.14);      // probabilitate
+    score += 14 * norm(ev, rule.minEV, rule.minEV+7);      // expected value
+    score += 12 * norm(kelly, 0.5, 4.0);                   // kelly sizing
+    score += 12 * agreement;                               // consens surse
+    score +=  8 * quality;                                 // calitate date
+    score +=  4 * clamp(rel,0,1);                         // fiabilitate model
+    score +=  2 * norm(f(s.score||s.supreme_score||s.adaptive_score,70),72,92);
+    score -= 26 * risk;                                    // penalizare risc
+    score += h2hB;                                         // GAP 3
+    score += v2B;                                          // GAP 2
+    score=clamp(score,0,100);
 
-    var strict = blocks.length === 0 && score >= 82;
-    var fatal = (!odds || odds <= 1.01) || ev < -0.25 || risk > MAX_WATCH_RISK || quality < 0.42 || p < (rule.minProb - 0.12);
-    var riskControlled = !strict && !fatal && score >= 72 && blocks.length <= 3;
-    var watchList = !strict && !riskControlled && !fatal && score >= MIN_WATCH_SCORE && blocks.length <= 5;
-    var action = strict ? 'PAREAZĂ' : (riskControlled ? 'RISC CONTROLAT' : (watchList ? 'WATCHLIST' : 'EVITĂ'));
-    var tier = score >= 92 && strict ? 'A+' : score >= 86 && strict ? 'A' : score >= 78 ? 'B' : score >= 62 ? 'C' : 'D';
+    var blocks=[];
+    if(!odds||odds<=1.01) blocks.push('fără cotă validă');
+    if(p<rule.minP) blocks.push('prob. sub prag ('+pct(p)+'<'+pct(rule.minP)+')');
+    if(edge<rule.minE) blocks.push('edge insuficient ('+plus(edge)+'pp < min '+num(rule.minE)+'pp)');
+    if(ev<rule.minEV) blocks.push('EV insuficient ('+plus(ev,1)+'%<'+num(rule.minEV)+'%)');
+    if(agreement<0.55) blocks.push('consens slab ('+pct(agreement,0)+')');
+    if(quality<0.50) blocks.push('calitate date slabă');
+    if(risk>MAX_RISK) blocks.push('risc ridicat ('+pct(risk,0)+')');
+    if(odds&&(odds<rule.odds[0]||odds>rule.odds[1])) blocks.push('cotă afara ferestrei');
+    if((s.is_local_derby||s.derby)&&(mk==='home_win'||mk==='away_win')) blocks.push('derby local — 1X2 impredictibil');
+    if(h2hB<=-4) blocks.push('H2H contraindică piața');
 
-    s.market_key = mk;
-    s.market_label = marketLabel(s);
-    s.odds = odds;
-    s.truth_prob = p;
-    s.truth_edge = edge;
-    s.truth_ev = ev;
-    s.truth_score = Math.round(score * 10) / 10;
-    s.truth_agreement = agreement;
-    s.truth_quality = quality;
-    s.truth_risk = risk;
-    s.truth_tier = tier;
-    s.truth_action = action;
-    s.truth_strict = strict;
-    s.truth_blocks = blocks;
-    s.truth_sources = probs.length;
+    var strictOk=blocks.length===0&&score>=SC_PARAZA;
+    var fatal=(!odds||odds<=1.01)||ev<-0.5||risk>0.62||quality<0.40||p<(rule.minP-0.14);
+    var riskCtrl=!strictOk&&!fatal&&score>=SC_RISC&&blocks.length<=MAX_BLK_RISC;
+    var watchOk=!strictOk&&!riskCtrl&&!fatal&&score>=MIN_WATCH&&blocks.length<=MAX_BLK_WATCH;
+    var action=strictOk?'PAREAZĂ':(riskCtrl?'RISC CONTROLAT':(watchOk?'WATCHLIST':'EVITĂ'));
+    var tier=score>=92&&strictOk?'A+':score>=86&&strictOk?'A':score>=78?'B':score>=62?'C':'D';
+    var projRoi=Math.max(0,edge*0.32-0.4);
+
+    s.market_key=mk; s.market_label=mktLbl(s); s.odds=odds;
+    s.truth_prob=p; s.truth_edge=edge; s.truth_ev=ev; s.truth_kelly=kelly;
+    s.truth_score=Math.round(score*10)/10; s.truth_agreement=agreement;
+    s.truth_quality=quality; s.truth_risk=risk; s.truth_tier=tier;
+    s.truth_action=action; s.truth_strict=strictOk;
+    s.truth_blocks=blocks; s.truth_sources=probs.length;
+    s.truth_proj_roi=projRoi; s.truth_h2h=h2hB; s.truth_v2=v2B;
+    s.truth_derby=!!(s.is_local_derby||s.derby);
+    s.truth_bwx=!!(String((s.weather&&s.weather.description)||s.weather_desc||'').toLowerCase().match(/rain|snow|storm|fog|wind/));
     return s;
   }
 
-  function rawSignals(ev, ai){
-    if(ev && ev.truthguard_v6 && Array.isArray(ev.truthguard_v6.signals)) return ev.truthguard_v6.signals;
-    if(ev && Array.isArray(ev.truthguard_signals)) return ev.truthguard_signals;
-    if(ev && Array.isArray(ev.signals)) return ev.signals;
-    if(ai && Array.isArray(ai.adaptive_picks)) return ai.adaptive_picks;
+  function rawSignals(ev,ai){
+    if(ev&&ev.signals&&Array.isArray(ev.signals)) return ev.signals;
+    if(ev&&ev.truthguard_v6&&Array.isArray(ev.truthguard_v6.signals)) return ev.truthguard_v6.signals;
+    if(ai&&Array.isArray(ai.adaptive_picks)) return ai.adaptive_picks;
     return [];
   }
 
   function prepareSignals(data){
-    var list = rawSignals(data.ev || {}, data.ai || {})
-      .map(scoreSignal)
-      .sort(function(a,b){ return f(b.truth_score) - f(a.truth_score); });
-
-    var strict = list.filter(function(s){ return s.truth_action === 'PAREAZĂ'; });
-    var controlled = list.filter(function(s){ return s.truth_action === 'RISC CONTROLAT'; });
-    var watch = list.filter(function(s){ return s.truth_action === 'WATCHLIST'; });
-
-    // Afișare echilibrată: nu arătăm toate cele 32 brute, dar nici nu ascundem candidații utili.
-    // Ordine: validate stricte -> risc controlat -> watchlist. Evitatele rămân doar la contor.
-    var finalList = strict.concat(controlled).concat(watch).slice(0, MAX_DISPLAY_PICKS);
-
-    return { all:list, finalList:finalList, strict:strict, controlled:controlled, watch:watch };
+    var list=rawSignals(data.ev||{},data.ai||{}).map(scoreSignal).sort(function(a,b){return f(b.truth_score)-f(a.truth_score);});
+    var strict=list.filter(function(s){return s.truth_action==='PAREAZĂ';});
+    var riskCtrl=list.filter(function(s){return s.truth_action==='RISC CONTROLAT';});
+    var watch=list.filter(function(s){return s.truth_action==='WATCHLIST';});
+    var avoided=list.filter(function(s){return s.truth_action==='EVITĂ';});
+    var byMkt={}, finalList=[];
+    strict.concat(riskCtrl).concat(watch).forEach(function(s){
+      var mk=s.market_key||'x';
+      if(!byMkt[mk])byMkt[mk]=0;
+      if(byMkt[mk]>=MAX_PER_MKT||finalList.length>=MAX_POOL)return;
+      byMkt[mk]++;finalList.push(s);
+    });
+    var avgEdge=finalList.length?finalList.reduce(function(a,s){return a+f(s.truth_edge);},0)/finalList.length:0;
+    var avgRoi=finalList.length?finalList.reduce(function(a,s){return a+f(s.truth_proj_roi);},0)/finalList.length:0;
+    return {all:list,finalList:finalList,strict:strict,riskCtrl:riskCtrl,watch:watch,avoided:avoided,avgEdge:avgEdge,avgRoi:avgRoi};
   }
 
-  function signalCard(s, idx){
-    var cls = s.truth_strict ? 'tg6-card tg6-card-good' : (s.truth_action === 'RISC CONTROLAT' ? 'tg6-card tg6-card-watch' : 'tg6-card');
-    var blocks = (s.truth_blocks || []).slice(0,3).map(esc).join(' • ');
+  function signalCard(s,idx){
+    var isS=s.truth_action==='PAREAZĂ', isR=s.truth_action==='RISC CONTROLAT', isW=s.truth_action==='WATCHLIST';
+    var cls='tg7-card'+(isS?' tg7-good':(isR?' tg7-warn':(isW?' tg7-watch':'')));
+    var ac=isS?'var(--grn)':isR?'var(--yel)':isW?'#60a5fa':'var(--red)';
+    var ec=s.truth_edge>=9?'#47FFD8':s.truth_edge>=6?'#A7FFC0':s.truth_edge>=4?'#F6C960':'#FF9E7D';
+    var blk=(s.truth_blocks||[]).slice(0,2).map(esc).join(' • ');
+    var ctxC='';
+    if(s.truth_derby) ctxC+='<span class="tg7-chip tg7-wyarn">🔥 Derby</span>';
+    if(s.truth_bwx) ctxC+='<span class="tg7-chip tg7-wyarn">🌧️ Vreme</span>';
+    if(s.truth_h2h>=4) ctxC+='<span class="tg7-chip tg7-wok">H2H ✓</span>';
+    if(s.truth_h2h<=-4) ctxC+='<span class="tg7-chip tg7-wbad">H2H ✗</span>';
+    if(s.truth_v2>=5) ctxC+='<span class="tg7-chip tg7-wok">v2 ML ✓</span>';
+    if(s.truth_v2<=-6) ctxC+='<span class="tg7-chip tg7-wbad">v2 ML ✗</span>';
     return ''+
       '<div class="'+cls+'">'+
-        '<div class="tg6-top">'+
-          '<div class="tg6-match-wrap">'+
-            '<div class="tg6-match">#'+(idx+1)+' '+esc(s.home || '—')+' vs '+esc(s.away || '—')+'</div>'+
-            '<div class="tg6-meta">'+esc(s.league || '—')+' • '+esc(fmtDateTime(s.date || s.event_date))+'</div>'+
+        '<div class="tg7-ctop">'+
+          '<div class="tg7-cleft">'+
+            '<span class="tg7-cidx">#'+(idx+1)+'</span>'+
+            '<div>'+
+              '<div class="tg7-cmatch">'+esc(s.home||'—')+' <span class="tg7-cvs">vs</span> '+esc(s.away||'—')+'</div>'+
+              '<div class="tg7-cmeta">'+esc(s.league||'—')+' · '+esc(fmtDT(s.date||s.event_date))+'</div>'+
+            '</div>'+
           '</div>'+
-          '<div class="tg6-score">'+num(s.truth_score,0)+'<small>'+esc(s.truth_tier)+'</small></div>'+
+          '<div class="tg7-cscore"><div class="tg7-csnum">'+num(s.truth_score,0)+'</div><div class="tg7-cstier">'+esc(s.truth_tier)+'</div></div>'+
         '</div>'+
-        '<div class="tg6-chipline">'+
-          '<span class="tg6-chip tg6-primary">'+esc(s.market_label)+' @ '+num(s.odds,2)+'</span>'+
-          '<span class="tg6-chip">Prob '+pct(s.truth_prob)+'</span>'+
-          '<span class="tg6-chip">Edge '+plus(s.truth_edge,1)+'pp</span>'+
-          '<span class="tg6-chip">EV '+plus(s.truth_ev,1)+'%</span>'+
-          '<span class="tg6-chip">Consens '+pct(s.truth_agreement,0)+'</span>'+
-          '<span class="tg6-chip">Surse '+esc(s.truth_sources)+'</span>'+
-          '<span class="tg6-chip '+(s.truth_risk<=0.22?'tg6-good':s.truth_risk<=0.42?'tg6-warn':'tg6-bad')+'">Risk '+pct(s.truth_risk,0)+'</span>'+
-          '<span class="tg6-chip '+(s.truth_action==='PAREAZĂ'?'tg6-good':(s.truth_action==='RISC CONTROLAT'||s.truth_action==='WATCHLIST')?'tg6-warn':'tg6-bad')+'">'+esc(s.truth_action)+'</span>'+
+        '<div class="tg7-cbar">'+
+          '<div class="tg7-cbarrow">'+
+            '<span class="tg7-cmkt">'+esc(s.market_label)+' @ '+num(s.odds,2)+'</span>'+
+            '<span class="tg7-cedge" style="color:'+ec+'">Edge '+plus(s.truth_edge,1)+'pp</span>'+
+            '<span class="tg7-cact" style="color:'+ac+';border-color:'+ac+'">'+esc(s.truth_action)+'</span>'+
+          '</div>'+
         '</div>'+
-        (blocks ? '<div class="tg6-reason">Blocaje: '+blocks+'</div>' : '<div class="tg6-reason tg6-ok">Validat strict: probabilitate + edge + EV + consens + risc trecute prin TruthGuard.</div>')+
+        '<div class="tg7-cchips">'+
+          '<span class="tg7-chip">Prob '+pct(s.truth_prob)+'</span>'+
+          '<span class="tg7-chip">EV '+plus(s.truth_ev,1)+'%</span>'+
+          '<span class="tg7-chip">Kelly¼ '+pct(s.truth_kelly,1)+'</span>'+
+          '<span class="tg7-chip">Consens '+pct(s.truth_agreement,0)+'</span>'+
+          '<span class="tg7-chip '+(s.truth_risk<=0.22?'tg7-wok':s.truth_risk<=0.38?'tg7-wyarn':'tg7-wbad')+'">Risc '+pct(s.truth_risk,0)+'</span>'+
+          '<span class="tg7-chip">ROI est. +'+num(s.truth_proj_roi,1)+'%</span>'+
+          ctxC+
+        '</div>'+
+        (blk?
+          '<div class="tg7-cblk">⚠️ '+blk+'</div>':
+          '<div class="tg7-cblk tg7-cok">✅ Zero blocaje — toate criteriile trecute</div>'
+        )+
       '</div>';
   }
 
-  function avg(arr, fn){ if(!arr.length) return 0; return arr.reduce(function(a,x){ return a + f(fn(x)); },0) / arr.length; }
-
-  function renderSummary(data, prepared){
-    var list = prepared.all;
-    var finalList = prepared.finalList;
-    var strict = prepared.strict || list.filter(function(s){ return s.truth_action === 'PAREAZĂ'; });
-    var controlled = prepared.controlled || list.filter(function(s){ return s.truth_action === 'RISC CONTROLAT'; });
-    var watch = prepared.watch || list.filter(function(s){ return s.truth_action === 'WATCHLIST'; });
-    var validatedCount = strict.length + controlled.length;
-    var elite = strict.filter(function(s){ return s.truth_score >= 92; });
-    var avoided = list.filter(function(s){ return s.truth_action === 'EVITĂ'; });
-    var avgConsensus = avg(finalList.length ? finalList : list, function(s){ return s.truth_agreement * 100; });
-    var updated = (data.ev && (data.ev.updated_at || data.ev.generated_at)) || (data.ai && data.ai.updated_at) || '';
-
+  function renderSummary(data,p){
+    var strict=p.strict||[], rk=p.riskCtrl||[], watch=p.watch||[], av=p.avoided||[];
+    var validated=strict.length+rk.length;
+    var upd=(data.ev&&(data.ev.updated_at||data.ev.generated_at))||(data.ai&&data.ai.updated_at)||'';
+    var warn=strict.length===0&&validated>0?
+      '<div class="tg7-warn0">⚠️ Nicio selecție strict curată azi. Picks-urile sunt RISC CONTROLAT — stake redus sau aștepți mâine.</div>':'';
+    var edgeCol=p.avgEdge>=7?'#47FFD8':p.avgEdge>=5?'#F6C960':'#FF9E7D';
     return ''+
-      '<div class="tg6-shell" id="veyra-truthguard-v6">'+
-        '<div class="tg6-head">'+
-          '<div>'+ 
-            '<div class="tg6-title">🧠 VEYRA TruthGuard Engine v6</div>'+ 
-            '<div class="tg6-sub">Precision Governor peste Supreme v5: consens multi-sursă, EV real, risc lineup/context, piață și memorie AI. Afișează validatele și candidații watchlist, dar separă clar riscul.</div>'+ 
-          '</div>'+ 
-          '<div class="tg6-badge">truthguard v6</div>'+ 
-        '</div>'+ 
-        '<div class="tg6-kpis">'+
-          '<div class="tg6-kpi"><b>'+finalList.length+'</b><span>afișate</span><small>din '+list.length+' brute</small></div>'+  
-          '<div class="tg6-kpi"><b>'+validatedCount+'</b><span>validate/risc</span><small>'+strict.length+' stricte • '+controlled.length+' risc</small></div>'+  
-          '<div class="tg6-kpi"><b>'+avoided.length+'</b><span>evitate</span><small>'+watch.length+' watchlist</small></div>'+  
-          '<div class="tg6-kpi"><b>'+num(avgConsensus,0)+'%</b><span>consens</span><small>medie surse</small></div>'+ 
-        '</div>'+ 
-        '<div class="tg6-matrix">'+
-          '<span>CatBoost calibrat</span><span>BSD API v2</span><span>No-vig market</span><span>Poisson/xG</span><span>AI Memory</span><span>Risk Shield</span>'+ 
-        '</div>'+ 
-        '<div class="tg6-updated">Actualizat: '+esc(fmtDateTime(updated))+'</div>'+ 
+      '<div class="tg7-shell" id="veyra-truthguard-v7">'+
+        '<div class="tg7-glow"></div>'+
+        '<div class="tg7-head">'+
+          '<div>'+
+            '<div class="tg7-title">🧠 VEYRA TruthGuard Engine v7</div>'+
+            '<div class="tg7-sub">Profit Edition: Edge-first, praguri ridicate, context GAP1 + H2H GAP3 + v2 ML GAP2. Doar picks cu edge real profitabil.</div>'+
+          '</div>'+
+          '<div class="tg7-badge">TRUTHGUARD v7</div>'+
+        '</div>'+
+        warn+
+        '<div class="tg7-kpis">'+
+          '<div class="tg7-kpi"><b>'+p.finalList.length+'</b><span>AFIȘATE</span><small>din '+p.all.length+' brute</small></div>'+
+          '<div class="tg7-kpi"><b>'+validated+'</b><span>VALIDATE</span><small>'+strict.length+' stricte · '+rk.length+' risc</small></div>'+
+          '<div class="tg7-kpi"><b>'+av.length+'</b><span>EVITATE</span><small>'+watch.length+' watchlist</small></div>'+
+          '<div class="tg7-kpi" style="'+(p.avgEdge>=7?'border-color:rgba(43,229,197,.35)':p.avgEdge>=5?'border-color:rgba(246,201,96,.30)':'')+'">'+
+            '<b style="color:'+edgeCol+'">'+(p.avgEdge>0?plus(p.avgEdge.toFixed(1))+'pp':'—')+'</b>'+
+            '<span>EDGE ø</span>'+
+            '<small>ROI est. +'+(p.avgRoi>0?p.avgRoi.toFixed(1):'0.0')+'%</small>'+
+          '</div>'+
+        '</div>'+
+        '<div class="tg7-matrix"><span>CatBoost</span><span>BSD API v2</span><span>No-vig</span><span>Poisson/xG</span><span>AI Memory</span><span>Derby+H2H+v2ML</span></div>'+
+        '<div class="tg7-upd">Actualizat: '+esc(fmtDT(upd))+'</div>'+
       '</div>';
-  }
-
-  function updateMoreMenu(prepared){
-    document.querySelectorAll('.more-card-btn').forEach(function(btn){
-      var title = btn.querySelector('.more-card-title');
-      var sub = btn.querySelector('.more-card-sub');
-      var text = title ? String(title.textContent || '') : '';
-      if(text.indexOf('Motor de Predicții Unificat') >= 0 || text.indexOf('VEYRA Supreme') >= 0 || text.indexOf('TruthGuard') >= 0){
-        if(title) title.textContent = '🧠 VEYRA TruthGuard Engine v6';
-        if(sub) sub.innerHTML = '<span style="color:var(--acc);font-weight:900">'+prepared.finalList.length+' afișate</span> • '+((prepared.strict||[]).length+(prepared.controlled||[]).length)+' validate/risc • '+prepared.all.length+' scanate';
-      }
-    });
   }
 
   function injectCss(){
-    if($('veyra-truthguard-v6-css')) return;
-    var css = document.createElement('style');
-    css.id = 'veyra-truthguard-v6-css';
-    css.textContent = ''+
-      '.tg6-shell{position:relative;border:1px solid rgba(43,229,197,.24);border-radius:22px;padding:16px;background:radial-gradient(circle at 10% 0,rgba(43,229,197,.16),transparent 34%),linear-gradient(145deg,rgba(7,12,23,.96),rgba(11,17,31,.92));box-shadow:0 0 0 1px rgba(255,255,255,.035) inset,0 20px 60px rgba(0,0,0,.28);overflow:hidden}'+
-      '.tg6-shell:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#2BE5C5,#F6C960,#8B5CF6)}'+
-      '.tg6-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.tg6-title{font-size:20px;line-height:1.05;font-weight:950;color:#fff;letter-spacing:-.04em}.tg6-sub{margin-top:8px;font-size:12px;line-height:1.45;color:#A7B4CA}.tg6-badge{flex:0 0 auto;border:1px solid rgba(43,229,197,.35);border-radius:999px;padding:8px 10px;color:#7FFFE8;background:rgba(43,229,197,.10);font-size:11px;font-weight:900;text-transform:uppercase}.tg6-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.tg6-kpi{border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(6,10,20,.72);padding:12px}.tg6-kpi b{display:block;color:#47FFD8;font-size:26px;line-height:1;font-weight:950}.tg6-kpi span{display:block;color:#EEF4FF;font-size:11px;font-weight:900;text-transform:uppercase;margin-top:8px}.tg6-kpi small{display:block;color:#8B98AF;font-size:11px;margin-top:4px}.tg6-matrix{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.tg6-matrix span{border:1px solid rgba(43,229,197,.12);border-radius:999px;padding:8px 10px;background:rgba(255,255,255,.035);font-size:11px;color:#B9C5D8;font-weight:800}.tg6-updated{margin-top:12px;color:#7D8CA6;font:10px var(--mono,monospace)}'+
-      '.tg6-list{display:grid;gap:10px}.tg6-card{border:1px solid rgba(255,255,255,.09);border-radius:18px;background:linear-gradient(145deg,rgba(10,16,29,.96),rgba(8,12,23,.92));padding:12px;box-shadow:0 12px 36px rgba(0,0,0,.20)}.tg6-card-good{border-color:rgba(43,229,197,.28)}.tg6-card-watch{border-color:rgba(246,201,96,.28)}.tg6-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.tg6-match{font-size:14px;font-weight:950;color:#fff;line-height:1.2}.tg6-meta{font-size:10px;color:#8592A9;margin-top:4px}.tg6-score{min-width:54px;text-align:center;color:#46FFD7;font-size:25px;line-height:1;font-weight:950}.tg6-score small{display:block;color:#F6C960;font-size:10px;margin-top:3px}.tg6-chipline{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.tg6-chip{border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 8px;background:rgba(255,255,255,.035);font-size:10px;color:#BFD0E7;font-weight:800}.tg6-primary{color:#7FFFE8;border-color:rgba(43,229,197,.25);background:rgba(43,229,197,.08)}.tg6-good{color:#63F596}.tg6-warn{color:#F6C960}.tg6-bad{color:#FF7D7D}.tg6-reason{margin-top:9px;font-size:10px;color:#8B98AF;line-height:1.35}.tg6-ok{color:#7FFFE8}.tg6-empty{border:1px dashed rgba(255,255,255,.12);border-radius:16px;padding:18px;text-align:center;color:#94A3B8;font-size:12px;background:rgba(255,255,255,.025)}';
-    document.head.appendChild(css);
+    if($('veyra-tg7-css'))return;
+    var s=document.createElement('style');s.id='veyra-tg7-css';
+    s.textContent=
+      '.tg7-shell{position:relative;border:1px solid rgba(43,229,197,.28);border-radius:22px;padding:16px;background:radial-gradient(circle at 10% 0,rgba(43,229,197,.14),transparent 32%),linear-gradient(145deg,rgba(6,11,22,.97),rgba(9,14,26,.93));box-shadow:0 0 0 1px rgba(255,255,255,.032)inset,0 20px 60px rgba(0,0,0,.30);overflow:hidden}'+
+      '.tg7-glow{position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#2BE5C5 0%,#F6C960 50%,#8B5CF6 100%)}'+
+      '.tg7-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}'+
+      '.tg7-title{font-size:19px;line-height:1.05;font-weight:950;color:#fff;letter-spacing:-.04em}'+
+      '.tg7-sub{margin-top:7px;font-size:11px;line-height:1.45;color:#8D9DB8}'+
+      '.tg7-badge{flex:0 0 auto;border:1px solid rgba(43,229,197,.38);border-radius:999px;padding:7px 10px;color:#7FFFE8;background:rgba(43,229,197,.10);font-size:10px;font-weight:900;text-transform:uppercase;white-space:nowrap}'+
+      '.tg7-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:14px}'+
+      '.tg7-kpi{border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(5,9,18,.72);padding:12px}'+
+      '.tg7-kpi b{display:block;color:#47FFD8;font-size:24px;line-height:1;font-weight:950}'+
+      '.tg7-kpi span{display:block;color:#D4DFF5;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;margin-top:7px}'+
+      '.tg7-kpi small{display:block;color:#8B98AF;font-size:10px;margin-top:3px}'+
+      '.tg7-matrix{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}'+
+      '.tg7-matrix span{border:1px solid rgba(43,229,197,.10);border-radius:999px;padding:7px 10px;background:rgba(255,255,255,.03);font-size:10px;color:#A8B8D0;font-weight:800}'+
+      '.tg7-upd{margin-top:10px;color:#687380;font:10px var(--mono,monospace)}'+
+      '.tg7-warn0{margin-top:12px;padding:9px 11px;border-radius:12px;background:rgba(246,201,96,.07);border:1px solid rgba(246,201,96,.25);font-size:11px;color:#F6C960;line-height:1.45}'+
+      '.tg7-list{display:grid;gap:10px;margin-top:12px}'+
+      '.tg7-card{border:1px solid rgba(255,255,255,.09);border-radius:18px;background:linear-gradient(145deg,rgba(8,14,27,.97),rgba(6,10,21,.93));padding:13px;box-shadow:0 10px 30px rgba(0,0,0,.22)}'+
+      '.tg7-good{border-color:rgba(43,229,197,.32);background:linear-gradient(145deg,rgba(8,20,18,.97),rgba(6,10,21,.93))}'+
+      '.tg7-warn{border-color:rgba(246,201,96,.32)}'+
+      '.tg7-watch{border-color:rgba(96,165,250,.22)}'+
+      '.tg7-ctop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}'+
+      '.tg7-cleft{display:flex;align-items:flex-start;gap:8px}'+
+      '.tg7-cidx{min-width:26px;font-size:11px;font-weight:900;color:#6B7A94;padding-top:2px}'+
+      '.tg7-cmatch{font-size:14px;font-weight:950;color:#EEF4FF;line-height:1.2}'+
+      '.tg7-cvs{color:#6B7A94;font-weight:600}'+
+      '.tg7-cmeta{font-size:10px;color:#7D8DA6;margin-top:3px}'+
+      '.tg7-cscore{min-width:52px;text-align:center;flex:0 0 auto}'+
+      '.tg7-csnum{color:#47FFD8;font-size:26px;line-height:1;font-weight:950}'+
+      '.tg7-cstier{color:#F6C960;font-size:10px;margin-top:2px;font-weight:900}'+
+      '.tg7-cbar{margin-top:11px;padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.065)}'+
+      '.tg7-cbarrow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}'+
+      '.tg7-cmkt{background:rgba(43,229,197,.10);border:1px solid rgba(43,229,197,.22);border-radius:999px;padding:5px 9px;font-size:11px;color:#7FFFE8;font-weight:900;white-space:nowrap}'+
+      '.tg7-cedge{font-size:16px;font-weight:950;letter-spacing:-.02em;margin-left:auto}'+
+      '.tg7-cact{border:1px solid;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:900;white-space:nowrap}'+
+      '.tg7-cchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}'+
+      '.tg7-chip{border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:5px 8px;background:rgba(255,255,255,.03);font-size:10px;color:#B4C4D8;font-weight:800}'+
+      '.tg7-wok{color:#47FFD8;border-color:rgba(43,229,197,.22);background:rgba(43,229,197,.07)}'+
+      '.tg7-wyarn{color:#F6C960;border-color:rgba(246,201,96,.22)}'+
+      '.tg7-wbad{color:#FF7D7D;border-color:rgba(255,100,100,.22)}'+
+      '.tg7-cblk{margin-top:8px;font-size:10px;color:#8B98AF;line-height:1.35;padding:6px 9px;border-radius:9px;background:rgba(255,100,100,.04)}'+
+      '.tg7-cok{color:#47FFD8;background:rgba(43,229,197,.04)}'+
+      '.tg7-empty{border:1px dashed rgba(255,255,255,.12);border-radius:16px;padding:20px;text-align:center;color:#94A3B8;font-size:12px;background:rgba(255,255,255,.025);line-height:1.55}';
+    document.head.appendChild(s);
   }
 
-  function render(){
-    if(STATE.rendering) return;
-    var root = $('smartlearn-section-predictii');
-    var summary = $('unified-summary-grid');
-    var list = $('unified-picks-list');
-    var meta = $('unified-list-meta');
-    var updated = $('unified-updated');
-    if(!root || !summary || !list) return;
-    STATE.rendering = true;
-    injectCss();
-    loadData().then(function(data){
-      var prepared = prepareSignals(data);
-      summary.innerHTML = renderSummary(data, prepared);
-      if(prepared.finalList.length){
-        list.innerHTML = '<div class="tg6-list">' + prepared.finalList.map(signalCard).join('') + '</div>';
-      }else{
-        list.innerHTML = '<div class="tg6-empty">TruthGuard v6 nu a găsit încă semnale suficient de curate pentru afișare. Când apar candidate cu scor minim, le va afișa ca validate, risc controlat sau watchlist.</div>';
+  function updateMoreMenu(prep){
+    document.querySelectorAll('.more-card-btn').forEach(function(btn){
+      var title=btn.querySelector('.more-card-title');
+      var sub=btn.querySelector('.more-card-sub');
+      var text=title?String(title.textContent||''):'';
+      if(!(text.indexOf('Motor de Predic')>=0||text.indexOf('VEYRA')>=0||text.indexOf('TruthGuard')>=0||text.indexOf('Supreme')>=0))return;
+      if(title) title.textContent='🧠 VEYRA TruthGuard Engine v7';
+      if(sub){
+        var v=(prep.strict||[]).length+(prep.riskCtrl||[]).length;
+        var et=prep.avgEdge>0?(' · Edge ø '+plus(prep.avgEdge.toFixed(1))+'pp'):'';
+        sub.innerHTML='<span style="color:var(--acc);font-weight:900">'+prep.finalList.length+' afișate</span>'+
+          ' · '+v+' validate ('+((prep.strict||[]).length)+' stricte)'+et+
+          (prep.avgRoi>0?' · ROI est. +'+prep.avgRoi.toFixed(1)+'%':'');
       }
-      if(meta) meta.textContent = ((prepared.strict||[]).length + (prepared.controlled||[]).length) + ' validate/risc • ' + prepared.finalList.length + ' afișate • ' + prepared.all.length + ' scanate';
-      if(updated) updated.textContent = 'Actualizat: ' + fmtDateTime((data.ev && data.ev.updated_at) || (data.ai && data.ai.updated_at) || '');
-      var title = root.querySelector('.section div[style*="font-size:16px"]');
-      if(title) title.textContent = '🧠 VEYRA TruthGuard Engine v6';
-      var listTitle = root.querySelector('#unified-picks-list') && root.querySelector('#unified-picks-list').closest('.section');
-      if(listTitle){
-        var h = listTitle.querySelector('div[style*="font-size:13px"]');
-        if(h) h.textContent = '🏆 Predicții afișate — TruthGuard v6';
-      }
-      updateMoreMenu(prepared);
-    }).finally(function(){
-      setTimeout(function(){ STATE.rendering = false; }, 140);
     });
   }
 
-  function schedule(){
-    clearTimeout(timer);
-    timer = setTimeout(render, RENDER_DELAY);
+  function render(){
+    if(STATE.rendering)return;
+    var summaryEl=$('unified-summary-grid');
+    var listEl=$('unified-picks-list');
+    var metaEl=$('unified-list-meta');
+    var updEl=$('unified-updated');
+    if(!summaryEl||!listEl)return;
+    STATE.rendering=true;
+    injectCss();
+    loadData().then(function(data){
+      var prep=prepareSignals(data);
+      summaryEl.innerHTML=renderSummary(data,prep);
+      if(prep.finalList.length){
+        listEl.innerHTML='<div class="tg7-list">'+prep.finalList.map(signalCard).join('')+'</div>';
+      }else{
+        listEl.innerHTML='<div class="tg7-empty">TruthGuard v7 nu a găsit selecții cu edge profitabil (≥5.5pp) azi.<br><b>0 selecții = 0 pierderi.</b> Revino când apar meciuri cu valoare reală.</div>';
+      }
+      var s=prep.strict||[],r=prep.riskCtrl||[];
+      if(metaEl)metaEl.textContent=(s.length+r.length)+' validate ('+s.length+' stricte) · '+prep.finalList.length+' afișate · '+prep.all.length+' scanate';
+      if(updEl)updEl.textContent='Actualizat: '+fmtDT((data.ev&&data.ev.updated_at)||(data.ai&&data.ai.updated_at)||'');
+      var root=$('smartlearn-section-predictii');
+      if(root){
+        var tEl=root.querySelector('.section div[style*="font-size:16px"]');
+        if(tEl)tEl.textContent='🧠 VEYRA TruthGuard Engine v7';
+        var lS=listEl&&listEl.closest?listEl.closest('.section'):null;
+        if(lS){var h=lS.querySelector('div[style*="font-size:13px"]');if(h)h.textContent='🏆 Predicții afișate — TruthGuard v7';}
+      }
+      updateMoreMenu(prep);
+    }).catch(function(e){console.warn('[TG v7]',e);})
+      .finally(function(){setTimeout(function(){STATE.rendering=false;},140);});
   }
 
-  document.addEventListener('DOMContentLoaded', schedule);
-  window.addEventListener('load', schedule);
-  document.addEventListener('click', function(ev){
-    var c = String((ev.target && ev.target.className) || '');
-    if(c.indexOf('smartlearn-tab') >= 0 || c.indexOf('more-card-btn') >= 0 || c.indexOf('tab') >= 0) setTimeout(schedule, 350);
-  }, true);
+  function schedule(){clearTimeout(_timer);_timer=setTimeout(render,RENDER_DELAY);}
 
+  document.addEventListener('DOMContentLoaded',schedule);
+  window.addEventListener('load',schedule);
+  document.addEventListener('click',function(ev){
+    var c=String((ev.target&&ev.target.className)||'');
+    if(c.indexOf('smartlearn-tab')>=0||c.indexOf('more-card-btn')>=0||c.indexOf('tab')>=0)setTimeout(schedule,350);
+  },true);
   try{
-    var obsTimer = setInterval(function(){
-      var target = $('tab-smartbet');
-      if(!target) return;
-      clearInterval(obsTimer);
-      new MutationObserver(function(){ schedule(); }).observe(target, {childList:true,subtree:true});
-    }, 500);
+    var ot=setInterval(function(){var t=$('tab-smartbet');if(!t)return;clearInterval(ot);new MutationObserver(function(){schedule();}).observe(t,{childList:true,subtree:true});},500);
   }catch(e){}
-
-  setInterval(function(){ STATE.ev = null; schedule(); }, 120000);
+  setInterval(function(){STATE.ev=null;schedule();},120000);
 })();

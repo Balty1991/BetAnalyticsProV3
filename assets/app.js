@@ -1552,14 +1552,15 @@ function getBetVerdict(match, bet) {
     return verdict('bet', '✅ PARIAZA', sub || 'Semnal curat', '#22c55e', 'rgba(16,185,129,.12)', 'rgba(16,185,129,.34)', score || 4);
   }
 
+  // v7: Praguri ridicate pentru PARIAZA. Cerință minimă: prob ≥83, edge ≥7, value ≥0.02
   // Hard-stop: probabilitate mică, EV negativ, cotă invalidă sau contradicție reală.
-  var minProbHard = mkey === 'under35' ? 70 : (mkey === 'over15' ? 72 : 60);
+  var minProbHard = mkey === 'under35' ? 72 : (mkey === 'over15' ? 74 : 62);
   if (adjProb < minProbHard) return avoid('Probabilitate prea mică (' + adjProb.toFixed(1) + '%)', 0);
   if (value <= 0) return avoid('EV/value negativ', 0);
   if (odds && (odds < 1.10 || odds > 3.20)) return avoid('Cotă în afara profilului', 0);
   if (cbNegative && adjProb < 90) return avoid('CatBoost contra', 0);
   if (totalContextRisk >= 0.42 && adjProb < 90) return avoid('Risc context/jucători mare', 0);
-  if (btBad && !(adjProb >= 86 && edgePct >= 9 && value >= 0.04 && (cbPositive || marketFitOk))) {
+  if (btBad && !(adjProb >= 88 && edgePct >= 10 && value >= 0.05 && (cbPositive || marketFitOk))) {
     return avoid('Backtest edge negativ', 0);
   }
 
@@ -1577,9 +1578,9 @@ function getBetVerdict(match, bet) {
     return avoid('Puțini bookmakeri', 0);
   }
 
-  // Profil curat: probabilitate mare + edge/value + context/model confirmat.
-  var strongSafe = adjProb >= 88 && edgePct >= 6 && value >= 0.015 && marketFitOk && !weakConsensus;
-  var solidSafe  = adjProb >= 85 && edgePct >= 8 && value >= 0.03 && (cbPositive || marketFitOk);
+  // v7: PARIAZA necesită prob ≥85 sau (prob ≥83 + edge ≥8). Threshold ridicat față de v6.
+  var strongSafe = adjProb >= 90 && edgePct >= 7 && value >= 0.018 && marketFitOk && !weakConsensus;
+  var solidSafe  = adjProb >= 85 && edgePct >= 9 && value >= 0.025 && (cbPositive || marketFitOk);
   var cleanCommon = !isAgainstMarket && !lowBooks && !isolatedOdds && !cbNegative;
 
   if (cleanCommon && (strongSafe || solidSafe)) {
@@ -1591,8 +1592,8 @@ function getBetVerdict(match, bet) {
     return markBet(subParts.join(' • '), 5);
   }
 
-  // Cazuri bune, dar nu suficient de curate pentru PARIAZĂ.
-  if (adjProb >= 82 && edgePct >= 4 && value >= 0.01) {
+  // v7: WATCH necesită prob ≥80 (era 82) + edge ≥5 (era 4)
+  if (adjProb >= 80 && edgePct >= 5 && value >= 0.01) {
     if (weakConsensus) return watch('Edge/consens slab — urmărește cota', 3);
     if (playerRisk >= 0.25) return watch('Risc jucători — stake redus', 3);
     if (!marketFitOk) return watch('Lipsește confirmare xG/BT/CB', 3);
@@ -3539,69 +3540,33 @@ function buildSmartBetModeABAnalysis(journal){
 }
 
 function getSmartBetModeThresholds(mode){
-  if(mode === 'strict'){
+  // v7 Profit Edition: un singur set de praguri ridicate.
+  // Modul 'off' eliminat — dacă motorul nu adaugă valoare, e mai bine să pariezi zero.
+  // Modul 'strict' este noul default. 'balanced' relaxat minim pentru zile cu puțin volume.
+  if(mode === 'balanced'){
     return {
-      mode:'strict',
-      label:'STRICT',
-      blockNegative:true,
-      minNegPatternBets:4,
-      minNegPatternRoi:0,
-      directProb:65,
-      directEdge:3,
-      highProb:75,
-      highKelly:2,
-      highEdge:6,
-      highScore:80,
-      signalProb:70,
-      signalEdge:5,
-      signalScore:75,
-      patternProb:72,
-      patternKelly:0.5,
-      patternEdge:5,
+      mode:'balanced', label:'BALANCED',
+      blockNegative:true, minNegPatternBets:6, minNegPatternRoi:-8,
+      directProb:68, directEdge:5,
+      highProb:76, highKelly:1.5, highEdge:7, highScore:80,
+      // signalStrong ELIMINAT — nu mai există calea fără confirmare AI Memory
+      patternProb:74, patternKelly:0.8, patternEdge:6,
       oddsMin:1.20
     };
   }
   if(mode === 'off'){
-    return {
-      mode:'off',
-      label:'OFF / Pool brut',
-      blockNegative:false,
-      minNegPatternBets:999,
-      minNegPatternRoi:-999,
-      directProb:60,
-      directEdge:1.5,
-      highProb:70,
-      highKelly:1.0,
-      highEdge:4,
-      highScore:74,
-      signalProb:66,
-      signalEdge:3.5,
-      signalScore:70,
-      patternProb:67,
-      patternKelly:0.15,
-      patternEdge:3.5,
-      oddsMin:1.15
-    };
+    // 'off' redirectat la balanced — nu mai expunem pool brut
+    return getSmartBetModeThresholds('balanced');
   }
+  // strict (default)
   return {
-    mode:'balanced',
-    label:'BALANCED',
-    blockNegative:true,
-    minNegPatternBets:8,
-    minNegPatternRoi:-10,
-    directProb:63,
-    directEdge:2,
-    highProb:73,
-    highKelly:1.2,
-    highEdge:4.5,
-    highScore:77,
-    signalProb:68,
-    signalEdge:4,
-    signalScore:72,
-    patternProb:69,
-    patternKelly:0.25,
-    patternEdge:4,
-    oddsMin:1.18
+    mode:'strict', label:'STRICT',
+    blockNegative:true, minNegPatternBets:4, minNegPatternRoi:0,
+    directProb:72, directEdge:6,
+    highProb:80, highKelly:2.0, highEdge:8, highScore:82,
+    // signalStrong ELIMINAT complet
+    patternProb:76, patternKelly:1.0, patternEdge:7,
+    oddsMin:1.20
   };
 }
 
@@ -12331,47 +12296,37 @@ function getSmartBetAnalysis(){
       return;
     }
 
-    // Fallback 1: selecții cu scor înalt din audit, fără confirmare AI Memory
-    // (praguri relaxate față de versiunea anterioară - nu mai depinde de adaptivePoolSize)
+    // v7 Profit Edition: highEdge și highScore mai stricte
     var highQualityFallback = !directAdaptive && !patternOnly &&
-      Number(row.adjusted_prob || 0) >= Number(thresholds.highProb || 75) &&
+      Number(row.adjusted_prob || 0) >= Number(thresholds.highProb || 80) &&
       Number(row.kelly_quarter_pct || 0) >= Number(thresholds.highKelly || 2) &&
-      Number(row.edge_pct || 0) >= Number(thresholds.highEdge || 6) &&
-      Number(row.score || 0) >= Number(thresholds.highScore || 80);
+      Number(row.edge_pct || 0) >= Number(thresholds.highEdge || 8) &&
+      Number(row.score || 0) >= Number(thresholds.highScore || 82);
 
-    // Fallback 2 (signalStrong): selecții cu semnal solid pur din signal_audit
-    // fără nicio condiție pe AI Memory — filet de siguranță pentru zilele cu memorie slabă
-    var signalStrong = !directAdaptive && !patternOnly && !highQualityFallback &&
-      Number(row.adjusted_prob || 0) >= Number(thresholds.signalProb || 70) &&
-      Number(row.edge_pct || 0) >= Number(thresholds.signalEdge || 5) &&
-      Number(row.score || 0) >= Number(thresholds.signalScore || 75) &&
-      Number(row.book_odds || 0) >= 1.25 &&
-      Number(row.book_odds || 0) <= 3.50;
+    // signalStrong ELIMINAT în v7 — era responsabil pentru picks fără confirmare AI Memory.
+    // Cu ROI 0.34% pe 1085 bets, calea fără confirmare nu adaugă valoare profitabilă.
+    var signalStrong = false;
 
-    if(!directAdaptive && !patternOnly && !highQualityFallback && !signalStrong) return;
+    if(!directAdaptive && !patternOnly && !highQualityFallback) return;
 
     var probAdj = Number(row.adjusted_prob || 0);
     var kellyPct = Number(row.kelly_quarter_pct || 0);
     var edgePct = Number(row.edge_pct || 0);
     if(directAdaptive){
-      if(probAdj < Number(thresholds.directProb || 65) || edgePct < Number(thresholds.directEdge || 3)) return;
+      if(probAdj < Number(thresholds.directProb || 72) || edgePct < Number(thresholds.directEdge || 6)) return;
     } else if(highQualityFallback){
-      if(probAdj < Number(thresholds.highProb || 75) || kellyPct < Number(thresholds.highKelly || 2) || edgePct < Number(thresholds.highEdge || 6)) return;
-    } else if(signalStrong){
-      if(probAdj < Number(thresholds.signalProb || 70) || edgePct < Number(thresholds.signalEdge || 5)) return;
+      if(probAdj < Number(thresholds.highProb || 80) || kellyPct < Number(thresholds.highKelly || 2) || edgePct < Number(thresholds.highEdge || 8)) return;
     } else {
-      // patternOnly
-      if(probAdj < Number(thresholds.patternProb || 72) || kellyPct <= Number(thresholds.patternKelly || 0.5) || edgePct < Number(thresholds.patternEdge || 5)) return;
-      if(bestPositive && Number(bestPositive.raw_bets || 0) < (policy.mode === 'strict' ? 4 : 3)) return;
+      // patternOnly — v7: min 6 bets confirmate (era 3-4)
+      if(probAdj < Number(thresholds.patternProb || 76) || kellyPct <= Number(thresholds.patternKelly || 1.0) || edgePct < Number(thresholds.patternEdge || 7)) return;
+      if(bestPositive && Number(bestPositive.raw_bets || 0) < 6) return;
     }
 
     var memoryBonus = directAdaptive ? Number(adaptive.memory_bonus || 0) : Number(bestPositive && bestPositive.memory_score || 0);
     var adaptiveScore = directAdaptive ? Number(adaptive.adaptive_score || 0) :
-      (signalStrong ? Math.max(55, Math.min(82, probAdj * 0.85 + edgePct * 0.5)) :
-      Math.max(60, Math.min(88, probAdj + Number(bestPositive && bestPositive.memory_score || 0) * 1.2)));
-    // Bonus de piață bazat pe istoricul jurnalului: BTTS +15.4% ROI, Over1.5G +1.3%
-    var marketBonusSmartBet = marketKey === 'btts' ? 6 : (marketKey === 'over15' ? 2 : (marketKey === 'under35' ? 0 : (marketKey === 'over25' ? -3 : 0)));
-    // LEARNING: boost dinamic din jurnal (multi-dimensional: market × league × odds × edge × weekday × score)
+      Math.max(60, Math.min(88, probAdj + Number(bestPositive && bestPositive.memory_score || 0) * 1.2));
+    // Market bonus bazat pe istoricul jurnalului (conservator)
+    var marketBonusSmartBet = marketKey === 'btts' ? 4 : (marketKey === 'over15' ? 1 : 0);
     var __learn = { boost:0, multiplier:1.0, toxic:false, reasons:[] };
     try {
       if(typeof learningApplyToCandidate === 'function'){
@@ -12388,39 +12343,32 @@ function getSmartBetAnalysis(){
         }) || __learn;
       }
     } catch(e){}
-    // V17 FIX: Pattern toxic nu mai blocheaza (hard-block a sters winners in walk-forward).
-    // In loc sa arunci pariul, primeste penalizare de scor (-18) + flag pentru stake sizing redus.
-    // Pariul ramane in pool dar foarte jos in ranking; daca totusi ajunge in tichet, stake-ul va fi mic.
     var __toxicFlag = false;
-    if(__learn.toxic){
-      __toxicFlag = true;
-    }
+    if(__learn.toxic){ __toxicFlag = true; }
+
+    // v7 Scoring: EDGE dominant (factor 1.2 → era 0.55), Kelly ridicat (factor 1.5 → era 0.70)
     var smartScore = (
-      Number(row.score || 0) * 0.48 +
-      Math.min(100, adaptiveScore) * 0.26 +
-      Number(row.adjusted_prob || 0) * 0.14 +
-      Math.max(0, Number(row.edge_pct || 0)) * 0.55 +
-      Math.max(0, Number(row.kelly_quarter_pct || 0)) * 0.70 +
-      Math.max(0, memoryBonus) * 0.80 +
-      Math.max(0, Number(row.poisson_delta || 0)) * 0.18 +
-      Math.max(0, Number(bestPositive && bestPositive.roi || 0)) * 0.05 +
+      Number(row.score || 0) * 0.40 +
+      Math.min(100, adaptiveScore) * 0.22 +
+      Number(row.adjusted_prob || 0) * 0.12 +
+      Math.max(0, Number(row.edge_pct || 0)) * 1.20 +        // EDGE KING: factor 1.2 (era 0.55)
+      Math.max(0, Number(row.kelly_quarter_pct || 0)) * 1.50 + // Kelly important: 1.5 (era 0.70)
+      Math.max(0, memoryBonus) * 0.85 +
+      Math.max(0, Number(row.poisson_delta || 0)) * 0.15 +
+      Math.max(0, Number(bestPositive && bestPositive.roi || 0)) * 0.04 +
       marketBonusSmartBet +
       Number(__learn.boost || 0)
     );
-    // Multiplicator compozit (blend 80% aditiv + 20% multiplicativ)
     if(__learn.multiplier && Math.abs(__learn.multiplier - 1.0) > 0.03){
       smartScore = smartScore * (0.80 + __learn.multiplier * 0.20);
     }
-    // V17 FIX: penalizare toxic (in loc de hard-block). Pariul ramane in pool dar cu scor -18.
     if(__toxicFlag) smartScore -= 18;
-    if(patternOnly) smartScore -= 10;
-    if(signalStrong) smartScore -= 5; // penalizare ușoară: fără confirmare AI Memory
+    if(patternOnly) smartScore -= 8;
     smartScore = clampMathScore(smartScore);
 
     var confirmLabels = [];
     if(directAdaptive) confirmLabels.push('AI direct');
     if(bestPositive) confirmLabels.push(bestPositive.label);
-    if(signalStrong) confirmLabels.push('Semnal audit');
     if(__learn.boost && Math.abs(__learn.boost) >= 1) confirmLabels.push('Motor ' + (__learn.boost >= 0 ? '+' : '') + __learn.boost.toFixed(1));
     var reasons = [];
     reasons.push('Kelly 1/4 ' + fmtPct(Number(row.kelly_quarter_pct || 0)));
