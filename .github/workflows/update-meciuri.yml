@@ -66,6 +66,32 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Player quality profiles cache
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          PYTHONUNBUFFERED: '1'
+        run: |
+          if [ -f fetch_player_profiles_cache.py ]; then
+            echo "Starting fetch_player_profiles_cache.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            timeout 480s python -u fetch_player_profiles_cache.py || echo "Player profiles cache skipped/timed out; non-fatal."
+          else
+            echo "fetch_player_profiles_cache.py missing; skip."
+          fi
+        continue-on-error: true
+
+      - name: Social news risk cache
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          PYTHONUNBUFFERED: '1'
+        run: |
+          if [ -f fetch_social_news_cache.py ]; then
+            echo "Starting fetch_social_news_cache.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            timeout 300s python -u fetch_social_news_cache.py || echo "Social news cache skipped/timed out; non-fatal."
+          else
+            echo "fetch_social_news_cache.py missing; skip."
+          fi
+        continue-on-error: true
+
       - name: VEYRA Supreme v5 — current CatBoost signals
         id: predict_current
         env:
