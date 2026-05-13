@@ -9,6 +9,9 @@ on:
     paths:
       - '.run-fetch'
       - 'fetch_data.py'
+      - 'predict_current.py'
+      - 'fetch_stats_incidents_cache.py'
+      - 'feature_engineering.py'
       - '.github/workflows/update-meciuri.yml'
 
 permissions:
@@ -46,6 +49,22 @@ jobs:
           echo "Starting fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           timeout 2400s python -u fetch_data.py
           echo "Finished fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+      - name: VEYRA Supreme v5 — stats/incidents/shotmap cache
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          PYTHONUNBUFFERED: '1'
+          STATS_FETCH_LIMIT: '160'
+          STATS_RECENT_PER_TEAM: '6'
+          STATS_SLEEP_SECONDS: '0.15'
+        run: |
+          if [ -f fetch_stats_incidents_cache.py ]; then
+            echo "Fetching v2 stats/incidents/shotmap priority cache at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            timeout 600s python -u fetch_stats_incidents_cache.py || echo "Stats/incidents/shotmap cache skipped/timed out; non-fatal."
+          else
+            echo "fetch_stats_incidents_cache.py missing; skip stats cache."
+          fi
+        continue-on-error: true
 
       - name: VEYRA Supreme v5 — current CatBoost signals
         id: predict_current
