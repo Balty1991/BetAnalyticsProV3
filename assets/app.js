@@ -1563,6 +1563,19 @@ function getBettingCommonOkProfile(match, bet) {
   var risk = String(match.riskTier || bet.riskTier || '').toLowerCase();
   var books = Number(bet.bookmakersCount || bet.polymarketBookmakersCount || match.polymarketBookmakersCount || 0);
   var cb = String(match.catboostSignal || bet.catboostSignal || '').toUpperCase();
+  var consensusFlag = String(bet.consensusFlag || bet.oddsConsensusFlag || match.consensusFlag || '').toUpperCase();
+  var marketText = [
+    bet.consensusFlag, bet.oddsConsensusFlag, bet.marketFlag, bet.marketSignal, bet.marketLabel,
+    bet.why, bet.reason, bet.note, match.marketFlag, match.marketSignal, match.why
+  ].filter(Boolean).join(' ').toLowerCase();
+  var isAgainstMarket = !!(
+    bet.againstMarket === true || bet.isAgainstMarket === true ||
+    consensusFlag === 'AGAINST_MARKET' || consensusFlag === 'CONTRA_PIETEI' ||
+    marketText.indexOf('against_market') !== -1 ||
+    marketText.indexOf('against market') !== -1 ||
+    marketText.indexOf('contra pie') !== -1 ||
+    marketText.indexOf('contra piet') !== -1
+  );
 
   // Praguri comune pentru un pick pe care merită să-l vezi separat:
   // 1) deja a trecut verdictul final PARIAZĂ; 2) probabilitate mare;
@@ -1575,6 +1588,7 @@ function getBettingCommonOkProfile(match, bet) {
   if (risk === 'avoid') return { ok:false, reason:'risk tier avoid' };
   if (kelly && kelly > 8) return { ok:false, reason:'Kelly prea agresiv' };
   if (books && books < 6 && score < 90) return { ok:false, reason:'consens piață slab' };
+  if (isAgainstMarket) return { ok:false, reason:'contra pieței' };
   if (cb === 'SELL' || cb === 'AVOID') return { ok:false, reason:'CatBoost contra' };
 
   var tags = [];
