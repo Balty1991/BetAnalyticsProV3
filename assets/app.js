@@ -1492,56 +1492,132 @@ function benchmarkEdgeIsBad(marketKey, edgePct) {
 
 function getBetVerdict(match, bet) {
   if (!bet) return null;
-  var mkey    = String(bet.type || bet.marketKey || '');
+  var mkeyRaw = String(bet.type || bet.marketKey || '');
+  var mkey    = mkeyRaw.toLowerCase();
   var edgePct = Number(bet.edgePct || 0);
   var adjProb = Number(bet.adjProb || 0);
   var value   = Number(bet.value   || 0);
-  var bd      = getBenchmarkData(mkey, edgePct);
+  var odds    = Number(bet.odds || bet.bestOdds || bet.baseOdds || 0);
+  var bd      = getBenchmarkData(mkeyRaw, edgePct) || getBenchmarkData(mkey, edgePct);
   var btBad   = bd ? bd.edgeBad : false;
   var btMktOk = bd && bd.mktRoi !== null && bd.mktN >= 20 && bd.mktRoi >= 0;
   var bucketOk= bd && bd.bucketRoi !== null && bd.bucketN >= 5 && bd.bucketRoi >= 3;
-  if (btBad) {
-    return { state:'avoid', label:'\u274c EVITA', sub:'Edge bucket neprofitabil', bg:'rgba(239,68,68,.13)', border:'rgba(239,68,68,.35)', color:'#ef4444', score:0 };
+
+  var consensusFlag = String(bet.consensusFlag || bet.oddsConsensusFlag || (match && match.consensusFlag) || '').toUpperCase();
+  var marketText = [
+    bet.consensusFlag, bet.oddsConsensusFlag, bet.marketFlag, bet.marketSignal, bet.marketLabel,
+    bet.why, bet.reason, bet.note, match && match.marketFlag, match && match.marketSignal, match && match.why
+  ].filter(Boolean).join(' ').toLowerCase();
+  var isAgainstMarket = !!(
+    bet.againstMarket === true || bet.isAgainstMarket === true ||
+    consensusFlag === 'AGAINST_MARKET' || consensusFlag === 'CONTRA_PIETEI' ||
+    marketText.indexOf('against_market') !== -1 ||
+    marketText.indexOf('against market') !== -1 ||
+    marketText.indexOf('contra pie') !== -1 ||
+    marketText.indexOf('contra piet') !== -1
+  );
+  var books = Number(bet.bookmakersCount || bet.polymarketBookmakersCount || (match && match.polymarketBookmakersCount) || (match && match.bookmakersCount) || 0);
+  var lowBooks = consensusFlag === 'LOW_BOOKS' || (books > 0 && books < 6);
+  var isolatedOdds = consensusFlag === 'ISOLATED_ODDS';
+  var weakConsensus = consensusFlag === 'WEAK_CONSENSUS';
+
+  var cb = String((match && match.catboostSignal) || bet.catboostSignal || '').toUpperCase();
+  var cbPositive = cb.indexOf('BUY') !== -1 || cb === 'WATCH';
+  var cbNegative = cb === 'SELL' || cb === 'AVOID' || cb === 'NO BUY';
+
+  var likely = match ? parseLikelyScore(match.mostLikelyScore) : null;
+  var xgTotal = Number((match && match.xgTotal) || 0);
+  var whyText = String((match && match.why) || bet.trainingReason || (match && match.rationale) || '').toLowerCase();
+  var underControlled = mkey === 'under35' && (
+    whyText.indexOf('xg total controlat') !== -1 ||
+    (xgTotal > 0 && xgTotal <= 2.85) ||
+    (likely && likely.total <= 3)
+  );
+  var overControlled = (mkey === 'over15' || mkey === 'over25') && (xgTotal >= (mkey === 'over15' ? 2.05 : 2.35));
+  var marketFitOk = underControlled || overControlled || btMktOk || bucketOk || cbPositive;
+
+  var playerRisk = Number((match && (match.playerAvailabilityRisk != null ? match.playerAvailabilityRisk : match.player_availability_risk)) || 0);
+  var totalContextRisk = playerRisk + Number((match && match.contextRisk) || 0) + Number((match && match.lineupRisk) || 0);
+
+  function verdict(state, label, sub, color, bg, border, score){
+    return { state:state, label:label, sub:sub, bg:bg, border:border, color:color, score:score || 0 };
+  }
+  function avoid(sub, score){
+    return verdict('avoid', '❌ EVITA', sub || 'Risc peste prag', '#ef4444', 'rgba(239,68,68,.10)', 'rgba(239,68,68,.30)', score || 0);
+  }
+  function watch(sub, score){
+    return verdict('watch', '👀 WATCH', sub || 'Semnal bun, dar cu avertisment', '#f59e0b', 'rgba(245,158,11,.10)', 'rgba(245,158,11,.32)', score || 2);
+  }
+  function bet(sub, score){
+    return verdict('bet', '✅ PARIAZA', sub || 'Semnal curat', '#22c55e', 'rgba(16,185,129,.12)', 'rgba(16,185,129,.34)', score || 4);
   }
 
-  // ─── Praguri adaptive per piată ─────────────────────────────────────────────
-  // Piețele low-odds (under35, over15) au în mod normal edge 4-8pp și value 0.5-2%
-  // — pragurile fixe de 10pp / 5% erau calibrate pentru piețe high-odds și generau
-  //   EVITA artificial pe selecții tehnic corecte.
+  // Hard-stop: probabilitate mică, EV negativ, cotă invalidă sau contradicție reală.
+  var minProbHard = mkey === 'under35' ? 70 : (mkey === 'over15' ? 72 : 60);
+  if (adjProb < minProbHard) return avoid('Probabilitate prea mică (' + adjProb.toFixed(1) + '%)', 0);
+  if (value <= 0) return avoid('EV/value negativ', 0);
+  if (odds && (odds < 1.10 || odds > 3.20)) return avoid('Cotă în afara profilului', 0);
+  if (cbNegative && adjProb < 90) return avoid('CatBoost contra', 0);
+  if (totalContextRisk >= 0.42 && adjProb < 90) return avoid('Risc context/jucători mare', 0);
+  if (btBad && !(adjProb >= 86 && edgePct >= 9 && value >= 0.04 && (cbPositive || marketFitOk))) {
+    return avoid('Backtest edge negativ', 0);
+  }
+
+  // Avertismente de piață: nu le marcăm PARIAZĂ, dar nu le ascundem ca EVITĂ când cifrele sunt bune.
+  if (isAgainstMarket) {
+    if (adjProb >= 82 && edgePct >= 5 && value > 0) return watch('Contra pieței — doar value/stake redus', 2);
+    return avoid('Contra pieței', 0);
+  }
+  if (isolatedOdds) {
+    if (adjProb >= 85 && edgePct >= 7 && value >= 0.03) return watch('Cotă izolată — confirmă manual', 2);
+    return avoid('Cotă izolată', 0);
+  }
+  if (lowBooks) {
+    if (adjProb >= 84 && edgePct >= 7 && value >= 0.03) return watch('Puțini bookmakeri — nu e OK safe', 2);
+    return avoid('Puțini bookmakeri', 0);
+  }
+
+  // Profil curat: probabilitate mare + edge/value + context/model confirmat.
+  var strongSafe = adjProb >= 88 && edgePct >= 6 && value >= 0.015 && marketFitOk && !weakConsensus;
+  var solidSafe  = adjProb >= 85 && edgePct >= 8 && value >= 0.03 && (cbPositive || marketFitOk);
+  var cleanCommon = !isAgainstMarket && !lowBooks && !isolatedOdds && !cbNegative;
+
+  if (cleanCommon && (strongSafe || solidSafe)) {
+    var subParts = [];
+    if (adjProb >= 90) subParts.push('prob ≥90%'); else subParts.push('prob ≥85%');
+    if (cbPositive) subParts.push('CB confirmă');
+    if (underControlled) subParts.push('xG controlat');
+    if (weakConsensus) subParts.push('consens slab');
+    return bet(subParts.join(' • '), 5);
+  }
+
+  // Cazuri bune, dar nu suficient de curate pentru PARIAZĂ.
+  if (adjProb >= 82 && edgePct >= 4 && value >= 0.01) {
+    if (weakConsensus) return watch('Edge/consens slab — urmărește cota', 3);
+    if (playerRisk >= 0.25) return watch('Risc jucători — stake redus', 3);
+    if (!marketFitOk) return watch('Lipsește confirmare xG/BT/CB', 3);
+    return watch('Aproape OK — cere confirmare', 3);
+  }
+
+  // Fallback pe semnalele vechi, dar fără să suprascriem regulile de piață de mai sus.
   var edgeSig, valueSig, edgeBonusSig;
-  if (mkey === 'under35') {
-    edgeSig = 6;   valueSig = 0.01;  edgeBonusSig = 8;   // sub 1.30, value 1% e realist
-  } else if (mkey === 'over15') {
-    edgeSig = 7;   valueSig = 0.02;  edgeBonusSig = 9;
-  } else if (mkey === 'over25') {
-    edgeSig = 8;   valueSig = 0.03;  edgeBonusSig = 11;
-  } else if (mkey === 'btts') {
-    edgeSig = 7;   valueSig = 0.03;  edgeBonusSig = 10;
-  } else {
-    edgeSig = 9;   valueSig = 0.04;  edgeBonusSig = 12;  // homeWin / awayWin / draw
-  }
+  if (mkey === 'under35') { edgeSig = 6; valueSig = 0.01; edgeBonusSig = 8; }
+  else if (mkey === 'over15') { edgeSig = 7; valueSig = 0.02; edgeBonusSig = 9; }
+  else if (mkey === 'over25') { edgeSig = 8; valueSig = 0.03; edgeBonusSig = 11; }
+  else if (mkey === 'btts') { edgeSig = 7; valueSig = 0.03; edgeBonusSig = 10; }
+  else { edgeSig = 9; valueSig = 0.04; edgeBonusSig = 12; }
 
-  // 5 semnale market-adaptive
   var signals = 0;
-  if (edgePct >= edgeSig)  signals++;   // S1: edge suficient per piată
-  if (value  >= valueSig)  signals++;   // S2: value pozitiv per piată
-  if (adjProb >= 75)       signals++;   // S3: probabilitate ridicată
-  if (btMktOk)             signals++;   // S4: piată profitabilă istoric
-  if (bucketOk)            signals++;   // S5: edge bucket profitabil >= 3%
+  if (edgePct >= edgeSig)  signals++;
+  if (value  >= valueSig)  signals++;
+  if (adjProb >= 75)       signals++;
+  if (btMktOk)             signals++;
+  if (bucketOk)            signals++;
 
-  // PARIAZA: 4+ semnale SAU 3+ cu edge puternic
-  if (signals >= 4) {
-    return { state:'bet', label:'\u2705 PARIAZA', sub:'Semnale pozitive (' + signals + '/5)', bg:'rgba(16,185,129,.13)', border:'rgba(16,185,129,.35)', color:'#22c55e', score:signals };
-  }
-  if (signals >= 3 && edgePct >= edgeBonusSig) {
-    return { state:'bet', label:'\u2705 PARIAZA', sub:signals + '/5 semnale + edge solid', bg:'rgba(16,185,129,.10)', border:'rgba(16,185,129,.25)', color:'#22c55e', score:signals };
-  }
-  // RISC: 2-3 semnale mixte
-  if (signals >= 2) {
-    return { state:'risk', label:'\u26a0\ufe0f RISC', sub:signals + '/5 semnale', bg:'rgba(245,158,11,.10)', border:'rgba(245,158,11,.30)', color:'#f59e0b', score:signals };
-  }
-  // EVITA: 0-1 semnal
-  return { state:'avoid', label:'\u274c EVITA', sub:'Semnale insuficiente (' + signals + '/5)', bg:'rgba(239,68,68,.10)', border:'rgba(239,68,68,.28)', color:'#ef4444', score:signals };
+  if (signals >= 4 && adjProb >= 80) return bet('Semnale pozitive (' + signals + '/5)', signals);
+  if (signals >= 3 && edgePct >= edgeBonusSig && adjProb >= 78) return watch(signals + '/5 semnale + edge solid', signals);
+  if (signals >= 2) return watch(signals + '/5 semnale — mixt', signals);
+  return avoid('Semnale insuficiente (' + signals + '/5)', signals);
 }
 
 
@@ -1584,6 +1660,11 @@ function getBettingCommonOkProfile(match, bet) {
   if (edge < 3) return { ok:false, reason:'edge sub 3pp' };
   if (value < 0.005) return { ok:false, reason:'value sub 0.5%' };
   if (odds && (odds < 1.15 || odds > 2.40)) return { ok:false, reason:'cotă în afara zonei comune' };
+  if (consensusFlag === 'LOW_BOOKS') return { ok:false, reason:'puțini bookmakeri' };
+  if (consensusFlag === 'ISOLATED_ODDS') return { ok:false, reason:'cotă izolată' };
+  if (consensusFlag === 'WEAK_CONSENSUS') return { ok:false, reason:'edge/consens slab' };
+  var playerRiskOk = Number(match.playerAvailabilityRisk || match.player_availability_risk || 0);
+  if (playerRiskOk >= 0.25) return { ok:false, reason:'risc jucători' };
   if (tier === 'avoid' && score < 88) return { ok:false, reason:'ligă slabă fără scor suficient' };
   if (risk === 'avoid') return { ok:false, reason:'risk tier avoid' };
   if (kelly && kelly > 8) return { ok:false, reason:'Kelly prea agresiv' };
@@ -1639,7 +1720,7 @@ function getVerdictBlock(match, bet) {
     { label:'Motor', ok: !benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct),
       val:'', note: !benchmarkEdgeIsBad(String((bet||{}).type||(bet||{}).marketKey||''), edgePct) ? 'OK' : 'conflict' }
   ];
-  var stateClass = v.state === 'bet' ? 'bet' : (v.state === 'risk' ? 'risk' : 'avoid');
+  var stateClass = v.state === 'bet' ? 'bet' : ((v.state === 'risk' || v.state === 'watch') ? 'risk' : 'avoid');
   var rowsHtml = rows.map(function(r) {
     return '<div class="verdict-row ' + (r.ok ? 'ok' : 'bad') + '">' +
       '<div class="verdict-row-left"><span class="verdict-dot"></span><span class="verdict-label">' + r.label + '</span></div>' +
@@ -4574,6 +4655,21 @@ function analyzeMatch(raw){
     catboostScore  : raw.catboost_score != null ? Number(raw.catboost_score) : null,
     catboostEvPct  : raw.catboost_ev_pct != null ? Number(raw.catboost_ev_pct) : null,
     catboostKellyPct: raw.catboost_kelly_pct != null ? Number(raw.catboost_kelly_pct) : null,
+    supremeAdjustedProb: raw.supreme_adjusted_prob != null ? Number(raw.supreme_adjusted_prob) : null,
+    supremeFinalProb   : raw.supreme_final_prob != null ? Number(raw.supreme_final_prob) : null,
+    supremeAgreement   : raw.supreme_agreement != null ? Number(raw.supreme_agreement) : null,
+    supremeReliability : raw.supreme_reliability != null ? Number(raw.supreme_reliability) : null,
+    supremeDataQuality : raw.supreme_data_quality_score != null ? Number(raw.supreme_data_quality_score) : null,
+    lineupRisk         : raw.supreme_lineup_risk != null ? Number(raw.supreme_lineup_risk) : 0,
+    contextRisk        : raw.supreme_context_risk != null ? Number(raw.supreme_context_risk) : 0,
+    statsProfileProb   : raw.stats_profile_prob != null ? Number(raw.stats_profile_prob) : null,
+    statsContextBonus  : raw.stats_context_bonus != null ? Number(raw.stats_context_bonus) : null,
+    playerContextBonus : raw.player_context_bonus != null ? Number(raw.player_context_bonus) : null,
+    playerAvailabilityRisk: raw.player_availability_risk != null ? Number(raw.player_availability_risk) : 0,
+    playerRatingDiffForm5 : raw.player_rating_diff_form5 != null ? Number(raw.player_rating_diff_form5) : null,
+    playerAttackXgSumForm5: raw.player_attack_xg_sum_form5 != null ? Number(raw.player_attack_xg_sum_form5) : null,
+    playerAttackXgDiffForm5: raw.player_attack_xg_diff_form5 != null ? Number(raw.player_attack_xg_diff_form5) : null,
+    bookmakersCount    : raw.market_bookmakers_count != null ? Number(raw.market_bookmakers_count) : 0,
     v2Recommended  : !!raw.v2_recommended,
     xgdDiff        : raw.xgd_diff        != null ? Number(raw.xgd_diff)          : null,
     homeXgd        : raw.home_xgd        != null ? Number(raw.home_xgd)          : null,
