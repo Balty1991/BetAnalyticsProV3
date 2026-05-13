@@ -7377,12 +7377,11 @@ function renderMatches(){
     var m17KellyPill = b && m17Kelly > 0 ? '<span class="m17-pill m17-kelly">Kelly '+m17Kelly.toFixed(1)+'%</span>' : '';
     var m17WhyText = shortWhy || 'Context statistic activ';
     var m17MarketLine = bestMarketLine ? '<div class="m17-market-line">'+htmlEsc(bestMarketLine)+'</div>' : '';
-    var m17IndexBadge = displayIndex ? ('<div class="m17-index-badge" style="position:absolute;left:14px;top:14px;z-index:3;display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:28px;padding:0 10px;border-radius:999px;background:linear-gradient(135deg,rgba(94,234,212,.22),rgba(59,130,246,.18));border:1px solid rgba(94,234,212,.40);box-shadow:0 8px 24px rgba(34,211,238,.16);color:#dffcf8;font-size:12px;font-weight:900;letter-spacing:.04em;backdrop-filter:blur(10px);">#'+displayIndex+'</div>') : '';
+    var m17IndexBadge = displayIndex ? ('<span class="m17-index-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:22px;padding:0 8px;margin-right:8px;border-radius:999px;background:rgba(94,234,212,.12);border:1px solid rgba(94,234,212,.30);color:#7ff7e6;font-size:11px;font-weight:900;letter-spacing:.03em;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);flex:0 0 auto;">#'+displayIndex+'</span>') : '';
 
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 match-card-m17 '+verdictClass+' '+m17RiskClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
-      m17IndexBadge+
       '<div class="m17-topline">'+
-        '<div class="m17-league">'+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
+        '<div class="m17-league">'+m17IndexBadge+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
         '<div class="m17-time"><span class="m17-date">'+htmlEsc(kickoffDateLabel)+'</span><strong class="m17-hour">'+htmlEsc(kickoffTimeLabel)+'</strong><b class="m17-countdown">'+htmlEsc(countdown)+'</b></div>'+
       '</div>'+
       '<div class="m17-meta-row">'+
