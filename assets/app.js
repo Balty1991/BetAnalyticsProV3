@@ -30,7 +30,7 @@ var MODEL_BENCHMARKS = {};
 var BILETE = null;
 var CURRENT_FILTER = 'all';
 var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
-var MATCHES_PAGE_SIZE = 9999;      // afișează toate cardurile filtrate; evită diferența între count și lista vizibilă
+var MATCHES_PAGE_SIZE = 25;        // câte carduri se afișează per batch
 var MATCHES_RENDERED_COUNT = 0;    // câte carduri sunt acum în DOM
 var MATCHES_FILTERED_CACHE = [];   // lista filtrată curentă (pentru load more)
 var MATCHES_SCROLL_OBSERVER = null; // IntersectionObserver sentinel
@@ -1548,7 +1548,7 @@ function getBetVerdict(match, bet) {
   function watch(sub, score){
     return verdict('watch', '👀 WATCH', sub || 'Semnal bun, dar cu avertisment', '#f59e0b', 'rgba(245,158,11,.10)', 'rgba(245,158,11,.32)', score || 2);
   }
-  function markBet(sub, score){
+  function bet(sub, score){
     return verdict('bet', '✅ PARIAZA', sub || 'Semnal curat', '#22c55e', 'rgba(16,185,129,.12)', 'rgba(16,185,129,.34)', score || 4);
   }
 
@@ -1588,7 +1588,7 @@ function getBetVerdict(match, bet) {
     if (cbPositive) subParts.push('CB confirmă');
     if (underControlled) subParts.push('xG controlat');
     if (weakConsensus) subParts.push('consens slab');
-    return markBet(subParts.join(' • '), 5);
+    return bet(subParts.join(' • '), 5);
   }
 
   // Cazuri bune, dar nu suficient de curate pentru PARIAZĂ.
@@ -1614,7 +1614,7 @@ function getBetVerdict(match, bet) {
   if (btMktOk)             signals++;
   if (bucketOk)            signals++;
 
-  if (signals >= 4 && adjProb >= 80) return markBet('Semnale pozitive (' + signals + '/5)', signals);
+  if (signals >= 4 && adjProb >= 80) return bet('Semnale pozitive (' + signals + '/5)', signals);
   if (signals >= 3 && edgePct >= edgeBonusSig && adjProb >= 78) return watch(signals + '/5 semnale + edge solid', signals);
   if (signals >= 2) return watch(signals + '/5 semnale — mixt', signals);
   return avoid('Semnale insuficiente (' + signals + '/5)', signals);
@@ -6959,7 +6959,7 @@ function renderMatches(){
     return;
   }
 
-  function renderCard(m){
+  function renderCard(m, displayIndex){
     var b = m.bestBet || null;
     var motorMeta = m._motorMeta || getSmartBetStatusForMatch(m, b, smartBetLookup);
     var state = getAnalysisStateMeta(m.analysisState);
@@ -7377,8 +7377,10 @@ function renderMatches(){
     var m17KellyPill = b && m17Kelly > 0 ? '<span class="m17-pill m17-kelly">Kelly '+m17Kelly.toFixed(1)+'%</span>' : '';
     var m17WhyText = shortWhy || 'Context statistic activ';
     var m17MarketLine = bestMarketLine ? '<div class="m17-market-line">'+htmlEsc(bestMarketLine)+'</div>' : '';
+    var m17IndexBadge = displayIndex ? ('<div class="m17-index-badge" style="position:absolute;left:14px;top:14px;z-index:3;display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:28px;padding:0 10px;border-radius:999px;background:linear-gradient(135deg,rgba(94,234,212,.22),rgba(59,130,246,.18));border:1px solid rgba(94,234,212,.40);box-shadow:0 8px 24px rgba(34,211,238,.16);color:#dffcf8;font-size:12px;font-weight:900;letter-spacing:.04em;backdrop-filter:blur(10px);">#'+displayIndex+'</div>') : '';
 
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 match-card-m17 '+verdictClass+' '+m17RiskClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
+      m17IndexBadge+
       '<div class="m17-topline">'+
         '<div class="m17-league">'+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
         '<div class="m17-time"><span class="m17-date">'+htmlEsc(kickoffDateLabel)+'</span><strong class="m17-hour">'+htmlEsc(kickoffTimeLabel)+'</strong><b class="m17-countdown">'+htmlEsc(countdown)+'</b></div>'+
@@ -7418,8 +7420,9 @@ function renderMatches(){
 
   function buildBatchHtml(startIdx, count){
     // Wrapper defensiv — dacă renderCard aruncă pentru un match, îl sare
-    var _safeRenderCard = function(m){ try { return renderCard(m) || ''; } catch(e) { console.error('renderCard error:', e && e.message); return ''; } };
+    var _safeRenderCard = function(m){ try { return renderCard(m, m && m._renderNumber) || ''; } catch(e) { console.error('renderCard error:', e && e.message); return ''; } };
     var slice = MATCHES_FILTERED_CACHE.slice(startIdx, startIdx + count);
+    slice.forEach(function(m, idx){ if(m && typeof m === 'object') m._renderNumber = startIdx + idx + 1; });
     if(sort === 'date'){
       var html = '';
       var groups = {};
