@@ -64,8 +64,9 @@ except Exception:  # pragma: no cover
 try:
     from feature_engineering import (
         load_warehouse, form_features, diff_features, h2h_features, xg_features,
-        odds_features, context_features, stats_features, incidents_features,
+        odds_features, context_features, stats_features, incidents_features, shotmap_features,
         build_league_baselines, elo_expected, _parse_dt, _f as fe_float,
+        poisson_over, poisson_under, poisson_btts, poisson_1x2,
         ELO_START, ELO_K,
     )
 except Exception as exc:  # pragma: no cover
@@ -715,7 +716,7 @@ def normalize_prob(v: Any) -> Optional[float]:
     return round(clamp(f, 0.0, 1.0), 6)
 
 
-def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any]], league_baselines, team_index, pair_rows, stats_cache, incidents_cache, elo_cache, hist_rows_sorted):
+def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any]], league_baselines, team_index, pair_rows, stats_cache, incidents_cache, shotmap_cache, elo_cache, hist_rows_sorted):
     cutoff = str(row.get("date") or "")[:10]
     hid, aid = row.get("home_team_id"), row.get("away_team_id")
     home_hist = get_team_history(team_index, hid, cutoff, limit=30)
@@ -739,6 +740,8 @@ def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any
     feats.update(elo_snap)
     if stats_cache:
         feats.update(stats_features(home_hist, away_hist, stats_cache))
+    if shotmap_cache:
+        feats.update(shotmap_features(home_hist, away_hist, shotmap_cache))
     if incidents_cache:
         feats.update(incidents_features(home_hist, away_hist, incidents_cache))
     h_pre = feats.get("home_matches_pre", 0) or 0
@@ -747,6 +750,9 @@ def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any
     quality = 35.0 + min(25.0, min(h_pre, a_pre) * 3.0)
     quality += 12.0 if row.get("odds_home") and row.get("odds_draw") and row.get("odds_away") else 0.0
     quality += 10.0 if feats.get("xg_sum") is not None or feats.get("xg_form_sum_5") is not None else 0.0
+    quality += 4.0 if feats.get("xg_stats_sum_form5") is not None else 0.0
+    quality += 4.0 if feats.get("xg_shotmap_sum_form5") is not None else 0.0
+    quality += 3.0 if feats.get("home_early_goal_rate5") is not None or feats.get("away_early_goal_rate5") is not None else 0.0
     quality += min(18.0, float(base_matches or 0) / 10.0)
     feats["data_quality_score"] = round(clamp(quality, 0.0, 100.0), 2)
     feats["eligible_min3"] = 1 if (h_pre >= 3 and a_pre >= 3) else 0
@@ -859,7 +865,77 @@ def poisson_probability(feat: Dict[str, Any], row: Dict[str, Any], pred: Optiona
     return normalize_prob(feat.get(feature_key)) if feature_key else None
 
 
-def blend_probability(cat_prob: float, nv_prob: Optional[float], api_prob: Optional[float], pois_prob: Optional[float], poly_prob: Optional[float], wfv_auc: Any, ece: Any, quality_score: Any) -> Tuple[float, Dict[str, Any]]:
+def _mean_non_null(values: Iterable[Any]) -> Optional[float]:
+    vals = [_f(v, None) for v in values if v is not None]
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals) / len(vals), 6) if vals else None
+
+
+def stats_profile_probability(feat: Dict[str, Any], market_key: str) -> Optional[float]:
+    """
+    Probabilitate auxiliară din stats/incidents/shotmap.
+    Nu înlocuiește CatBoost; intră ca sursă separată în blend doar când există date reale.
+    """
+    hxg = _mean_non_null([
+        feat.get("home_shotmap_xg_form5"),
+        feat.get("home_xg_stats_form5"),
+        feat.get("home_xg_form_5"),
+    ])
+    axg = _mean_non_null([
+        feat.get("away_shotmap_xg_form5"),
+        feat.get("away_xg_stats_form5"),
+        feat.get("away_xg_form_5"),
+    ])
+    if hxg is None or axg is None:
+        return None
+
+    # Ajustări mici din calitatea șuturilor și big chances; plafonate ca să nu supraînvețe din sample mic.
+    h_xgps = _f(feat.get("home_xg_per_shot_form5"), 0.0)
+    a_xgps = _f(feat.get("away_xg_per_shot_form5"), 0.0)
+    h_big = _f(feat.get("home_big_chances_form5"), 0.0)
+    a_big = _f(feat.get("away_big_chances_form5"), 0.0)
+    h_sot_ratio = _f(feat.get("home_sot_ratio_form5"), 0.0)
+    a_sot_ratio = _f(feat.get("away_sot_ratio_form5"), 0.0)
+
+    hxg = clamp(hxg + clamp((h_xgps - 0.10) * 0.9, -0.08, 0.12) + clamp((h_big - 1.0) * 0.055, -0.08, 0.14) + clamp((h_sot_ratio - 0.32) * 0.20, -0.05, 0.08), 0.15, 3.8)
+    axg = clamp(axg + clamp((a_xgps - 0.10) * 0.9, -0.08, 0.12) + clamp((a_big - 1.0) * 0.055, -0.08, 0.14) + clamp((a_sot_ratio - 0.32) * 0.20, -0.05, 0.08), 0.15, 3.8)
+
+    if market_key == "over15":
+        p = poisson_over(hxg, axg, 1.5)
+    elif market_key == "over25":
+        p = poisson_over(hxg, axg, 2.5)
+    elif market_key == "under35":
+        p = poisson_under(hxg, axg, 3.5)
+    elif market_key == "btts":
+        p = poisson_btts(hxg, axg)
+    else:
+        ph, pd, pa = poisson_1x2(hxg, axg)
+        p = {"home_win": ph, "draw": pd, "away_win": pa}.get(market_key)
+    return normalize_prob(p)
+
+
+def stats_context_bonus(feat: Dict[str, Any], market_key: str) -> float:
+    """Mic bonus/penalty de scor din consensul stats + incidents, nu din live."""
+    bonus = 0.0
+    if feat.get("xg_shotmap_sum_form5") is not None:
+        bonus += 1.0
+    if feat.get("xg_stats_sum_form5") is not None:
+        bonus += 0.8
+    if feat.get("home_early_goal_rate5") is not None or feat.get("away_early_goal_rate5") is not None:
+        bonus += 0.4
+
+    total_cards = _f(feat.get("home_total_yellow_avg5"), 0.0)
+    red_risk = abs(_f(feat.get("home_red_card_risk_diff5"), 0.0))
+    if market_key in {"under35", "draw"} and (total_cards >= 5.5 or red_risk >= 0.25):
+        bonus -= 1.2
+    if market_key in {"over15", "over25", "btts"}:
+        bc_sum = _f(feat.get("home_big_chances_form5"), 0.0) + _f(feat.get("away_big_chances_form5"), 0.0)
+        if bc_sum >= 2.4:
+            bonus += 1.0
+    return round(clamp(bonus, -2.5, 3.0), 2)
+
+
+def blend_probability(cat_prob: float, nv_prob: Optional[float], api_prob: Optional[float], pois_prob: Optional[float], poly_prob: Optional[float], stats_prob: Optional[float], wfv_auc: Any, ece: Any, quality_score: Any) -> Tuple[float, Dict[str, Any]]:
     rel = reliability_factor(wfv_auc, ece, quality_score)
     weights = {"catboost": 0.38 + 0.25 * rel}
     if api_prob is not None:
@@ -868,6 +944,8 @@ def blend_probability(cat_prob: float, nv_prob: Optional[float], api_prob: Optio
         weights["poisson"] = 0.12
     if poly_prob is not None:
         weights["polymarket"] = 0.10
+    if stats_prob is not None:
+        weights["stats_profile"] = 0.09
     if nv_prob is not None:
         weights["market"] = 0.11
     values = {"catboost": cat_prob}
@@ -877,6 +955,8 @@ def blend_probability(cat_prob: float, nv_prob: Optional[float], api_prob: Optio
         values["poisson"] = pois_prob
     if poly_prob is not None:
         values["polymarket"] = poly_prob
+    if stats_prob is not None:
+        values["stats_profile"] = stats_prob
     if nv_prob is not None:
         values["market"] = nv_prob
     total_w = sum(weights[k] for k in values)
@@ -953,6 +1033,13 @@ def main():
     team_index, pair_rows = build_history_indexes(hist_rows_sorted)
     stats_cache = load_json(DATA_DIR / "stats_cache.json", {}) or {}
     incidents_cache = load_json(DATA_DIR / "incidents_cache.json", {}) or {}
+    shotmap_cache = load_json(DATA_DIR / "shotmap_cache.json", {}) or {}
+    cache_counts = {
+        "stats": len([v for v in stats_cache.values() if v]) if isinstance(stats_cache, dict) else 0,
+        "incidents": len([v for v in incidents_cache.values() if v]) if isinstance(incidents_cache, dict) else 0,
+        "shotmap": len([v for v in shotmap_cache.values() if v]) if isinstance(shotmap_cache, dict) else 0,
+    }
+    print(f"Cache v2 stats/incidents/shotmap: {cache_counts}")
     elo_cache: Dict[str, Dict[Any, float]] = {}
 
     current_rows, feats_list, pred_refs = [], [], []
@@ -965,7 +1052,7 @@ def main():
         row = normalize_current_row(ev, pred)
         apply_v2_bundle_to_row(row, bundle)
         try:
-            feats = build_features_for_current(row, pred, league_baselines, team_index, pair_rows, stats_cache, incidents_cache, elo_cache, hist_rows_sorted)
+            feats = build_features_for_current(row, pred, league_baselines, team_index, pair_rows, stats_cache, incidents_cache, shotmap_cache, elo_cache, hist_rows_sorted)
         except Exception as exc:
             print(f"  WARN features {row.get('event_id')}: {exc}")
             feats = {"event_id": row.get("event_id"), "league": row.get("league", "Unknown"), "home_streak_type": "N", "away_streak_type": "N", "data_quality_score": 35}
@@ -1001,7 +1088,8 @@ def main():
             api_p = api_probability(row, pred, market_key)
             pois_p = poisson_probability(feat, row, pred, market_key)
             poly_p = polymarket_probability(row, market_key)
-            final_p, blend_meta = blend_probability(cat_prob, nv_p, api_p, pois_p, poly_p, wfv_auc, ece, feat.get("data_quality_score"))
+            stats_p = stats_profile_probability(feat, market_key)
+            final_p, blend_meta = blend_probability(cat_prob, nv_p, api_p, pois_p, poly_p, stats_p, wfv_auc, ece, feat.get("data_quality_score"))
 
             if final_p < PROB_MIN_BY_MARKET.get(market_key, 0.48):
                 continue
@@ -1020,8 +1108,9 @@ def main():
             lineup_risk = lineup_risk_score(row)
             context_risk = context_risk_score(row)
             market_bonus = market_intel_bonus(odds_meta)
+            stats_bonus = stats_context_bonus(feat, market_key)
             score = smartbet_score(final_p, edge_pp, evp, kelly_pct, rel, agreement)
-            score = round(clamp(score * (1.0 - lineup_risk * 0.18 - context_risk * 0.16) + market_bonus, 0.0, 100.0), 1)
+            score = round(clamp(score * (1.0 - lineup_risk * 0.18 - context_risk * 0.16) + market_bonus + stats_bonus, 0.0, 100.0), 1)
             # Gating suplimentar: nu ridicăm semnale premium când datele sunt subțiri, contextul e riscant sau modelele nu se confirmă.
             if _f(feat.get("data_quality_score"), 0) < 52 and score < 70:
                 continue
@@ -1053,6 +1142,7 @@ def main():
                 "api_prob": round(api_p, 6) if api_p is not None else None,
                 "poisson_prob": round(pois_p, 6) if pois_p is not None else None,
                 "polymarket_prob": round(poly_p, 6) if poly_p is not None else None,
+                "stats_profile_prob": round(stats_p, 6) if stats_p is not None else None,
                 "odds": odds,
                 "best_bookmaker": best_bookmaker,
                 "bookmakers_count": odds_meta.get("bookmakers_count") if isinstance(odds_meta, dict) else None,
@@ -1073,12 +1163,13 @@ def main():
                 "lineup_risk": lineup_risk,
                 "context_risk": context_risk,
                 "market_intel_bonus": market_bonus,
+                "stats_context_bonus": stats_bonus,
                 "score": score,
                 "risk_tier": tier,
                 "signal": "STRONG BUY" if score >= 82 else ("BUY" if score >= 70 else "WATCH"),
                 "model_version": "veyra-supreme-engine-v5",
                 "blend": blend_meta,
-                "rationale": f"{info['label']}: p_final={final_p*100:.1f}% (CatBoost {cat_prob*100:.1f}%, market {nv_p*100:.1f}%, API {(api_p*100 if api_p is not None else 0):.1f}%" + (f", Poisson {pois_p*100:.1f}%" if pois_p is not None else "") + (f", Polymarket {poly_p*100:.1f}%" if poly_p is not None else "") + f"), edge {edge_pp:+.1f}pp, EV {evp:+.1f}%, Kelly¼ {kelly_pct:.2f}%, acord {agreement*100:.0f}%, risk lineup/context {lineup_risk:.2f}/{context_risk:.2f}.",
+                "rationale": f"{info['label']}: p_final={final_p*100:.1f}% (CatBoost {cat_prob*100:.1f}%, market {nv_p*100:.1f}%, API {(api_p*100 if api_p is not None else 0):.1f}%" + (f", Poisson {pois_p*100:.1f}%" if pois_p is not None else "") + (f", Polymarket {poly_p*100:.1f}%" if poly_p is not None else "") + (f", StatsProfile {stats_p*100:.1f}%" if stats_p is not None else "") + f"), edge {edge_pp:+.1f}pp, EV {evp:+.1f}%, Kelly¼ {kelly_pct:.2f}%, acord {agreement*100:.0f}%, risk lineup/context {lineup_risk:.2f}/{context_risk:.2f}.",
             })
 
     signals.sort(key=lambda x: (x.get("score", 0), x.get("final_prob", 0), x.get("edge_pp", 0)), reverse=True)
@@ -1098,11 +1189,12 @@ def main():
             "low_risk_count": len(low_risk),
             "avg_score": avg_score,
             "avg_agreement_pct": round(avg_agreement * 100, 1),
-            "sources": ["CatBoost", "BSD API v2", "Market no-vig", "Odds comparison", "Poisson", "Polymarket", "AI Memory", "Risk Shield"],
+            "sources": ["CatBoost", "BSD API v2", "Market no-vig", "Odds comparison", "Poisson", "Polymarket", "Stats/Shotmap/Incidents", "AI Memory", "Risk Shield"],
+            "cache_counts": cache_counts,
             "vip_rule": "VIP folosește doar scor ridicat, acord între surse, risc controlat și cotă totală 1.30–1.50."
         },
         "quality_policy": {
-            "probability": "CatBoost calibrat + BSD Predictions v2 + no-vig market + odds comparison + Polymarket + Poisson cu shrink pe dezacord",
+            "probability": "CatBoost calibrat + BSD Predictions v2 + no-vig market + odds comparison + Polymarket + Poisson + StatsProfile din stats/shotmap/incidents cu shrink pe dezacord",
             "gates": "prob_min/edge_min/EV/Kelly/data-quality/agreement/WFV/lineup-risk/context-risk",
         },
         "signals": signals,
