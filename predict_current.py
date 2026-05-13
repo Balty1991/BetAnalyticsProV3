@@ -343,17 +343,124 @@ def market_outcome_codes(market_key: str) -> Tuple[List[str], List[str]]:
     }.get(market_key, ([market_key], [market_key]))
 
 
+def _lookup_case_insensitive(mapping: Dict[str, Any], key: str) -> Any:
+    """Returnează valoarea pentru key indiferent de capitalizare."""
+    if not isinstance(mapping, dict):
+        return None
+    if key in mapping:
+        return mapping.get(key)
+    key_l = str(key).lower()
+    for k, v in mapping.items():
+        if str(k).lower() == key_l:
+            return v
+    return None
+
+
+def odds_comparison_selection(market_key: str) -> Tuple[str, str]:
+    """Mapare directă către schema reală BSD v2 odds/comparison: markets -> market -> outcome."""
+    return {
+        "home_win": ("1x2", "HOME"),
+        "draw": ("1x2", "DRAW"),
+        "away_win": ("1x2", "AWAY"),
+        "btts": ("btts", "yes"),
+        "over15": ("over_under_15", "over"),
+        "over25": ("over_under_25", "over"),
+        "under35": ("over_under_35", "under"),
+    }.get(market_key, (market_key, market_key))
+
+
+def _odds_meta_from_rows(rows: List[Dict[str, Any]], fallback_odds: float, outcome_node: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Agregă best odds + mișcare + dispersie pentru o selecție."""
+    outcome_node = outcome_node if isinstance(outcome_node, dict) else {}
+    clean_rows = []
+    for r in rows or []:
+        odd = _f(r.get("decimal_odds") or r.get("odds") or r.get("price") or r.get("best_odds"), 0.0)
+        if odd <= 1.01:
+            continue
+        slug = r.get("bookmaker_slug") or r.get("bookmaker") or r.get("slug")
+        name = r.get("bookmaker_name") or r.get("bookmaker") or slug
+        clean_rows.append({
+            "decimal_odds": odd,
+            "bookmaker_slug": slug,
+            "bookmaker_name": name,
+            "movement": str(r.get("movement") or "").upper(),
+            "previous_decimal_odds": _f(r.get("previous_decimal_odds"), 0.0),
+            "is_max_quote": bool(r.get("is_max_quote")),
+        })
+    if not clean_rows:
+        return {"active_odds": fallback_odds}
+    clean_rows.sort(key=lambda x: x["decimal_odds"], reverse=True)
+    odds_values = [r["decimal_odds"] for r in clean_rows]
+    best = clean_rows[0]
+    best_odds = _f(outcome_node.get("best_odds"), best["decimal_odds"])
+    best_bookmaker = (
+        outcome_node.get("best_bookmaker_name")
+        or outcome_node.get("best_bookmaker_slug")
+        or best.get("bookmaker_name")
+        or best.get("bookmaker_slug")
+    )
+    shortening = sum(1 for r in clean_rows if r.get("movement") == "SHORTENING")
+    drifting = sum(1 for r in clean_rows if r.get("movement") == "DRIFTING")
+    avg = sum(odds_values) / len(odds_values)
+    dispersion = (max(odds_values) - min(odds_values)) / avg if avg else 0.0
+    bookmakers_count = len({
+        r.get("bookmaker_slug") or r.get("bookmaker_name")
+        for r in clean_rows
+        if r.get("bookmaker_slug") or r.get("bookmaker_name")
+    }) or len(clean_rows)
+    return {
+        "active_odds": round(best_odds, 3),
+        "best_odds": round(best_odds, 3),
+        "best_bookmaker": best_bookmaker,
+        "bookmakers_count": bookmakers_count,
+        "movement_shortening": shortening,
+        "movement_drifting": drifting,
+        "movement_balance": shortening - drifting,
+        "odds_dispersion": round(dispersion, 4),
+        "comparison_rows": len(clean_rows),
+    }
+
+
 def odds_comparison_meta(row: Dict[str, Any], market_key: str, fallback_odds: float) -> Dict[str, Any]:
     """Extrage best price, count bookmakers, movement și dispersie din /odds/comparison/."""
     comp = row.get("v2_odds_comparison")
     if not isinstance(comp, dict):
         return {"active_odds": fallback_odds}
+
+    # Schema BSD v2 reală: {markets: {"1x2": {"HOME": {...bookmakers...}}}}.
+    # Aceasta este calea principală; vechiul parser generic nu prindea selecțiile 1x2/OU/BTTS.
+    markets = comp.get("markets") if isinstance(comp.get("markets"), dict) else {}
+    direct_market, direct_outcome = odds_comparison_selection(market_key)
+    market_node = _lookup_case_insensitive(markets, direct_market)
+    outcome_node = _lookup_case_insensitive(market_node, direct_outcome) if isinstance(market_node, dict) else None
+    if isinstance(outcome_node, dict):
+        rows = []
+        bookmakers = outcome_node.get("bookmakers") if isinstance(outcome_node.get("bookmakers"), dict) else {}
+        for slug, payload in bookmakers.items():
+            if not isinstance(payload, dict):
+                continue
+            r = dict(payload)
+            r.setdefault("bookmaker_slug", slug)
+            r.setdefault("bookmaker_name", str(slug).replace("-", " ").title())
+            rows.append(r)
+        # În unele răspunsuri poate exista doar best_odds, fără lista completă de bookmakers.
+        if not rows and outcome_node.get("best_odds") is not None:
+            rows.append({
+                "decimal_odds": outcome_node.get("best_odds"),
+                "bookmaker_slug": outcome_node.get("best_bookmaker_slug"),
+                "bookmaker_name": outcome_node.get("best_bookmaker_name"),
+            })
+        meta = _odds_meta_from_rows(rows, fallback_odds, outcome_node)
+        if _f(meta.get("active_odds"), 0.0) > 1.01:
+            return meta
+
+    # Fallback tolerant pentru eventuale forme viitoare/vechi în care fiecare cotă vine ca rând separat.
     market_aliases, outcome_aliases = market_outcome_codes(market_key)
     market_aliases_l = {str(x).lower() for x in market_aliases}
     outcome_aliases_l = {str(x).lower() for x in outcome_aliases}
     rows = []
     for d in _walk_dicts(comp):
-        odd = _f(d.get("decimal_odds") or d.get("odds") or d.get("price"), 0.0)
+        odd = _f(d.get("decimal_odds") or d.get("odds") or d.get("price") or d.get("best_odds"), 0.0)
         if odd <= 1.01:
             continue
         market = str(d.get("market") or d.get("market_key") or d.get("type") or "").lower()
@@ -361,36 +468,22 @@ def odds_comparison_meta(row: Dict[str, Any], market_key: str, fallback_odds: fl
         text = " ".join(str(d.get(k) or "") for k in ("outcome_name", "name", "label", "title")).lower()
         market_ok = (not market) or any(a in market for a in market_aliases_l)
         outcome_ok = (not outcome and any(a in text for a in outcome_aliases_l)) or outcome in outcome_aliases_l or any(a in outcome for a in outcome_aliases_l)
-        if not market_ok or not outcome_ok:
-            continue
-        rows.append({
-            "decimal_odds": odd,
-            "bookmaker_slug": d.get("bookmaker_slug") or d.get("bookmaker") or d.get("slug"),
-            "bookmaker_name": d.get("bookmaker_name") or d.get("bookmaker"),
-            "movement": str(d.get("movement") or "").upper(),
-            "previous_decimal_odds": _f(d.get("previous_decimal_odds"), 0.0),
-            "is_max_quote": bool(d.get("is_max_quote")),
-        })
-    if not rows:
-        return {"active_odds": fallback_odds}
-    rows.sort(key=lambda x: x["decimal_odds"], reverse=True)
-    odds_values = [r["decimal_odds"] for r in rows]
-    best = rows[0]
-    shortening = sum(1 for r in rows if r.get("movement") == "SHORTENING")
-    drifting = sum(1 for r in rows if r.get("movement") == "DRIFTING")
-    avg = sum(odds_values) / len(odds_values)
-    dispersion = (max(odds_values) - min(odds_values)) / avg if avg else 0.0
+        if market_ok and outcome_ok:
+            rows.append(d)
+    return _odds_meta_from_rows(rows, fallback_odds)
+
+
+def polymarket_selection(market_key: str) -> Tuple[str, str]:
+    """Mapare directă către schema Polymarket cache-uită de BSD v2."""
     return {
-        "active_odds": round(best["decimal_odds"], 3),
-        "best_odds": round(best["decimal_odds"], 3),
-        "best_bookmaker": best.get("bookmaker_name") or best.get("bookmaker_slug"),
-        "bookmakers_count": len({r.get("bookmaker_slug") or r.get("bookmaker_name") for r in rows if r.get("bookmaker_slug") or r.get("bookmaker_name")}) or len(rows),
-        "movement_shortening": shortening,
-        "movement_drifting": drifting,
-        "movement_balance": shortening - drifting,
-        "odds_dispersion": round(dispersion, 4),
-        "comparison_rows": len(rows),
-    }
+        "home_win": ("1x2", "home"),
+        "draw": ("1x2", "draw"),
+        "away_win": ("1x2", "away"),
+        "btts": ("btts", "yes"),
+        "over15": ("over_under", "over_15"),
+        "over25": ("over_under", "over_25"),
+        "under35": ("over_under", "under_35"),
+    }.get(market_key, (market_key, market_key))
 
 
 def polymarket_probability(row: Dict[str, Any], market_key: str) -> Optional[float]:
@@ -398,11 +491,23 @@ def polymarket_probability(row: Dict[str, Any], market_key: str) -> Optional[flo
     pm = row.get("v2_polymarket")
     if not isinstance(pm, (dict, list)):
         return None
+
+    # Schema curentă: {markets: {"1x2": {home/draw/away}, "over_under": {over_15...}}}.
+    if isinstance(pm, dict):
+        markets = pm.get("markets") if isinstance(pm.get("markets"), dict) else {}
+        direct_market, direct_outcome = polymarket_selection(market_key)
+        market_node = _lookup_case_insensitive(markets, direct_market)
+        if isinstance(market_node, dict):
+            prob = normalize_prob(_lookup_case_insensitive(market_node, direct_outcome))
+            if prob is not None and 0 < prob < 1:
+                return round(prob, 6)
+
+    # Fallback pentru forme alternative cu liste/outcomes.
     _, outcome_aliases = market_outcome_codes(market_key)
     outcome_aliases_l = {str(x).lower() for x in outcome_aliases}
     market_words = {
         "home_win": ["home", "winner", "match"], "draw": ["draw"], "away_win": ["away", "winner", "match"],
-        "btts": ["btts", "both teams"], "over15": ["over 1.5", "over15"], "over25": ["over 2.5", "over25"], "under35": ["under 3.5", "under35"],
+        "btts": ["btts", "both teams"], "over15": ["over 1.5", "over15", "over_15"], "over25": ["over 2.5", "over25", "over_25"], "under35": ["under 3.5", "under35", "under_35"],
     }.get(market_key, [market_key])
     best = None
     for d in _walk_dicts(pm):
