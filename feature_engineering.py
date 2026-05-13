@@ -868,6 +868,75 @@ def shotmap_features(home_hist, away_hist, shotmap_cache: dict) -> dict:
     return feats
 
 
+# ─── PlayerStats features (din player_stats_cache.json — /events/{id}/player-stats/) ─
+def player_stats_features(home_hist, away_hist, player_stats_cache: dict) -> dict:
+    """Features din statisticile per-jucător: rating, xG/xA, șuturi, key passes, portar.
+
+    Se agregă side-aware pe ultimele 5 meciuri disponibile, fără live și fără leakage.
+    """
+    feats = {}
+
+    def _get(hist, home_field, away_field, window=5):
+        vals = []
+        for m in hist[-int(window):]:
+            eid = str(m.get("event_id", ""))
+            item = player_stats_cache.get(eid) if isinstance(player_stats_cache, dict) else None
+            if item:
+                field = home_field if m.get("is_home") == 1 else away_field
+                v = item.get(field)
+                if v is not None and _f(v, -1) >= 0:
+                    vals.append(float(v))
+        return round(sum(vals) / len(vals), 4) if vals else None
+
+    pairs = [
+        ("player_rating", "home_player_rating_avg", "away_player_rating_avg"),
+        ("player_rating_top5", "home_player_rating_top5", "away_player_rating_top5"),
+        ("player_xg", "home_player_xg_sum", "away_player_xg_sum"),
+        ("player_xa", "home_player_xa_sum", "away_player_xa_sum"),
+        ("player_attack_xg", "home_player_attack_xg", "away_player_attack_xg"),
+        ("player_top3_xg", "home_player_top3_xg", "away_player_top3_xg"),
+        ("player_shots", "home_player_shots", "away_player_shots"),
+        ("player_sot", "home_player_sot", "away_player_sot"),
+        ("player_key_pass", "home_player_key_pass", "away_player_key_pass"),
+        ("player_pass_accuracy", "home_player_pass_accuracy", "away_player_pass_accuracy"),
+        ("player_tackles", "home_player_tackles", "away_player_tackles"),
+        ("player_interceptions", "home_player_interceptions", "away_player_interceptions"),
+        ("player_yellow_cards", "home_player_yellow_cards", "away_player_yellow_cards"),
+        ("player_red_cards", "home_player_red_cards", "away_player_red_cards"),
+        ("keeper_saves", "home_keeper_saves", "away_keeper_saves"),
+    ]
+    for short, hf, af in pairs:
+        feats[f"home_{short}_form5"] = _get(home_hist, hf, af)
+        feats[f"away_{short}_form5"] = _get(away_hist, hf, af)
+        h = feats.get(f"home_{short}_form5")
+        a = feats.get(f"away_{short}_form5")
+        feats[f"player_{short}_diff_form5"] = round((h or 0) - (a or 0), 4) if h is not None and a is not None else None
+
+    hxg = feats.get("home_player_attack_xg_form5")
+    axg = feats.get("away_player_attack_xg_form5")
+    if hxg is not None and axg is not None:
+        feats["player_attack_xg_sum_form5"] = round(hxg + axg, 4)
+        feats["player_attack_xg_diff_form5"] = round(hxg - axg, 4)
+        feats["poisson_prob_over15_player5"] = poisson_over(hxg, axg, 1.5)
+        feats["poisson_prob_over25_player5"] = poisson_over(hxg, axg, 2.5)
+        feats["poisson_prob_under35_player5"] = poisson_under(hxg, axg, 3.5)
+        feats["poisson_prob_btts_player5"] = poisson_btts(hxg, axg)
+        ph, pd, pa = poisson_1x2(hxg, axg)
+        feats["poisson_prob_home_player5"] = ph
+        feats["poisson_prob_draw_player5"] = pd
+        feats["poisson_prob_away_player5"] = pa
+    else:
+        feats["player_attack_xg_sum_form5"] = None
+        feats["player_attack_xg_diff_form5"] = None
+        for k in ["over15", "over25", "under35", "btts", "home", "draw", "away"]:
+            feats[f"poisson_prob_{k}_player5"] = None
+
+    hrat = feats.get("home_player_rating_form5")
+    arat = feats.get("away_player_rating_form5")
+    feats["player_rating_diff_form5"] = round((hrat or 0) - (arat or 0), 4) if hrat is not None and arat is not None else None
+    return feats
+
+
 # ─── Incidents features (din incidents_cache.json — /events/{id}/incidents/) ──
 def incidents_features(home_hist, away_hist, incidents_cache: dict) -> dict:
     """
@@ -911,7 +980,7 @@ def incidents_features(home_hist, away_hist, incidents_cache: dict) -> dict:
 
 # ─── Asamblare rând features ──────────────────────────────────────────────────
 def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline,
-                      stats_cache=None, incidents_cache=None, shotmap_cache=None, elo_snapshot=None):
+                      stats_cache=None, incidents_cache=None, shotmap_cache=None, player_stats_cache=None, elo_snapshot=None):
     home_hist = h_snap
     away_hist = a_snap
     hid       = row.get("home_team_id")
@@ -974,6 +1043,8 @@ def build_feature_row(row, h_snap, a_snap, h2h_snap, league_baseline,
         feats.update(stats_features(home_hist, away_hist, stats_cache))
     if shotmap_cache:
         feats.update(shotmap_features(home_hist, away_hist, shotmap_cache))
+    if player_stats_cache:
+        feats.update(player_stats_features(home_hist, away_hist, player_stats_cache))
 
     # G) Incidents features (early/late goals, cards)
     if incidents_cache:
@@ -1018,9 +1089,11 @@ def main():
     stats_cache     = _load_cache(DATA_DIR / "stats_cache.json")
     incidents_cache = _load_cache(DATA_DIR / "incidents_cache.json")
     shotmap_cache   = _load_cache(DATA_DIR / "shotmap_cache.json")
+    player_stats_cache = _load_cache(DATA_DIR / "player_stats_cache.json")
     print(f"Stats cache: {len([v for v in stats_cache.values() if v])} entries valide")
     print(f"Incidents cache: {len([v for v in incidents_cache.values() if v])} entries valide")
     print(f"Shotmap cache: {len([v for v in shotmap_cache.values() if v])} entries valide")
+    print(f"PlayerStats cache: {len([v for v in player_stats_cache.values() if v])} entries valide")
 
     # 2. Sortare cronologică (OBLIGATORIE pentru no-leakage)
     rows_sorted = sorted(rows, key=lambda r: r.get("date", ""))
@@ -1062,6 +1135,7 @@ def main():
             stats_cache=stats_cache,
             incidents_cache=incidents_cache,
             shotmap_cache=shotmap_cache,
+            player_stats_cache=player_stats_cache,
             elo_snapshot=elo_snaps.get(eid, {}),
         )
         feature_rows.append(feat_row)
@@ -1074,7 +1148,7 @@ def main():
     feat_cols  = [k for k in feature_rows[0] if k.startswith(("home_","away_","form_","h2h_",
                  "goals_","btts_","over2","under","xg_","poisson","nv_","odds_","api_",
                  "league_","rest_","month","day_","hour_","season_year","close_","heavy_",
-                 "venue_","elo_","data_quality","ref_","shotmap_"))]
+                 "venue_","elo_","data_quality","ref_","shotmap_","player_","keeper_"))]
 
     summary = {
         "updated_at":        datetime.now(timezone.utc).isoformat(),

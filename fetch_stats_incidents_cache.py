@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fetch_stats_incidents_cache.py — VEYRA Supreme | Stats + Incidents + Shotmap Cache
+fetch_stats_incidents_cache.py — VEYRA Supreme | Stats + Incidents + Shotmap + PlayerStats Cache
 =================================================================================
 Fetchează /api/v2/events/{id}/stats/ și /api/v2/events/{id}/incidents/ pentru
 meciurile istorice din warehouse și salvează cache-uri persistente.
@@ -11,9 +11,10 @@ Pasul 2 upgrade:
   - păstrează rularea incrementală și rate-limit friendly.
 
 Output:
-  data/stats_cache.json     → statistici agregate home/away
-  data/incidents_cache.json → timing goluri + cartonașe
-  data/shotmap_cache.json   → xG/șut, big chances, open-play/set-piece xG
+  data/stats_cache.json        → statistici agregate home/away
+  data/incidents_cache.json    → timing goluri + cartonașe
+  data/shotmap_cache.json      → xG/șut, big chances, open-play/set-piece xG
+  data/player_stats_cache.json → rating/xG/xA/șuturi/pase per echipă din player-stats
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ WAREHOUSE = DATA_DIR / "warehouse"
 STATS_CACHE_PATH = DATA_DIR / "stats_cache.json"
 INCIDENTS_CACHE_PATH = DATA_DIR / "incidents_cache.json"
 SHOTMAP_CACHE_PATH = DATA_DIR / "shotmap_cache.json"
+PLAYER_STATS_CACHE_PATH = DATA_DIR / "player_stats_cache.json"
 EVENTS_PATH = DATA_DIR / "events.json"
 
 API_BASE = "https://sports.bzzoiro.com"
@@ -380,6 +382,131 @@ def normalize_incidents(raw: Dict[str, Any], event_id: int) -> Optional[Dict[str
     }
 
 
+def normalize_player_stats(raw: Dict[str, Any], event_id: int, home_team_id: Any = None, away_team_id: Any = None) -> Optional[Dict[str, Any]]:
+    """Normalizează /events/{id}/player-stats/ în indicatori team-side-aware.
+
+    Folosește home_team_id/away_team_id din warehouse ca să nu ghicească partea.
+    Păstrează și un eșantion compact de jucători pentru Player Impact Risk.
+    """
+    rows = _event_list_payload(raw, "player_stats")
+    if not rows:
+        return None
+
+    home_id = str(home_team_id or "")
+    away_id = str(away_team_id or "")
+    team_ids = []
+    for item in rows:
+        tid = str(item.get("team_id") or (item.get("team") or {}).get("id") or "")
+        if tid and tid not in team_ids:
+            team_ids.append(tid)
+    if not home_id and team_ids:
+        home_id = team_ids[0]
+    if not away_id and len(team_ids) > 1:
+        away_id = team_ids[1]
+
+    sides = {
+        "home": {"players": [], "minutes": 0.0, "rating_weight": 0.0, "rating_minutes": 0.0, "xg": 0.0, "xa": 0.0, "shots": 0.0, "sot": 0.0, "key_pass": 0.0, "passes": 0.0, "accurate_pass": 0.0, "tackles": 0.0, "interceptions": 0.0, "yellows": 0.0, "reds": 0.0, "saves": 0.0, "keepers": 0},
+        "away": {"players": [], "minutes": 0.0, "rating_weight": 0.0, "rating_minutes": 0.0, "xg": 0.0, "xa": 0.0, "shots": 0.0, "sot": 0.0, "key_pass": 0.0, "passes": 0.0, "accurate_pass": 0.0, "tackles": 0.0, "interceptions": 0.0, "yellows": 0.0, "reds": 0.0, "saves": 0.0, "keepers": 0},
+    }
+
+    def _side_for(item: Dict[str, Any]) -> Optional[str]:
+        tid = str(item.get("team_id") or (item.get("team") or {}).get("id") or "")
+        if home_id and tid == home_id:
+            return "home"
+        if away_id and tid == away_id:
+            return "away"
+        if item.get("is_home") is not None:
+            return "home" if _boolish(item.get("is_home")) else "away"
+        return None
+
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        side = _side_for(item)
+        if not side:
+            continue
+        bucket = sides[side]
+        minutes = _num(item.get("minutes_played") or item.get("minutes"), 0.0)
+        rating = _num(item.get("rating"), 0.0)
+        xg = _num(item.get("expected_goals") or item.get("xg"), 0.0)
+        xa = _num(item.get("expected_assists") or item.get("xa"), 0.0)
+        shots = _num(item.get("total_shots") or item.get("shots"), 0.0)
+        sot = _num(item.get("shots_on_target") or item.get("sot"), 0.0)
+        key_pass = _num(item.get("key_pass") or item.get("key_passes"), 0.0)
+        passes = _num(item.get("total_pass") or item.get("passes"), 0.0)
+        accurate = _num(item.get("accurate_pass") or item.get("accurate_passes"), 0.0)
+        tackles = _num(item.get("total_tackle") or item.get("tackles"), 0.0)
+        interceptions = _num(item.get("interception") or item.get("interceptions"), 0.0)
+        saves = _num(item.get("saves"), 0.0)
+        position = str(item.get("position") or item.get("specific_position") or "").upper()
+
+        bucket["players"].append({
+            "player_id": item.get("player_id") or item.get("id"),
+            "team_id": item.get("team_id"),
+            "position": position,
+            "minutes": round(minutes, 2),
+            "rating": round(rating, 3) if rating else None,
+            "xg": round(xg, 4),
+            "xa": round(xa, 4),
+            "shots": round(shots, 2),
+            "sot": round(sot, 2),
+            "key_pass": round(key_pass, 2),
+        })
+        bucket["minutes"] += minutes
+        if rating > 0 and minutes > 0:
+            bucket["rating_weight"] += rating * minutes
+            bucket["rating_minutes"] += minutes
+        bucket["xg"] += xg
+        bucket["xa"] += xa
+        bucket["shots"] += shots
+        bucket["sot"] += sot
+        bucket["key_pass"] += key_pass
+        bucket["passes"] += passes
+        bucket["accurate_pass"] += accurate
+        bucket["tackles"] += tackles
+        bucket["interceptions"] += interceptions
+        bucket["yellows"] += _num(item.get("yellow_card") or item.get("yellow_cards"), 0.0)
+        bucket["reds"] += _num(item.get("red_card") or item.get("red_cards"), 0.0)
+        if saves > 0 or position == "G":
+            bucket["saves"] += saves
+            bucket["keepers"] += 1
+
+    def _pack(prefix: str, bucket: Dict[str, Any]) -> Dict[str, Any]:
+        players = bucket["players"]
+        if not players:
+            return {}
+        top_xg = sorted([_num(p.get("xg"), 0.0) for p in players], reverse=True)[:3]
+        top_rating = sorted([_num(p.get("rating"), 0.0) for p in players if p.get("rating") is not None], reverse=True)[:5]
+        attack_rows = [p for p in players if str(p.get("position") or "").upper() in {"F", "M", "AM", "FW", "ST", "LW", "RW"}]
+        attack_xg = sum(_num(p.get("xg"), 0.0) for p in attack_rows) if attack_rows else bucket["xg"]
+        pass_accuracy = _safe_div(bucket["accurate_pass"], bucket["passes"])
+        return {
+            f"{prefix}_player_count": len(players),
+            f"{prefix}_player_minutes_sum": round(bucket["minutes"], 2),
+            f"{prefix}_player_rating_avg": round(bucket["rating_weight"] / bucket["rating_minutes"], 4) if bucket["rating_minutes"] else None,
+            f"{prefix}_player_rating_top5": round(sum(top_rating) / len(top_rating), 4) if top_rating else None,
+            f"{prefix}_player_xg_sum": round(bucket["xg"], 4),
+            f"{prefix}_player_xa_sum": round(bucket["xa"], 4),
+            f"{prefix}_player_attack_xg": round(attack_xg, 4),
+            f"{prefix}_player_top3_xg": round(sum(top_xg), 4) if top_xg else 0.0,
+            f"{prefix}_player_shots": round(bucket["shots"], 2),
+            f"{prefix}_player_sot": round(bucket["sot"], 2),
+            f"{prefix}_player_key_pass": round(bucket["key_pass"], 2),
+            f"{prefix}_player_pass_accuracy": pass_accuracy,
+            f"{prefix}_player_tackles": round(bucket["tackles"], 2),
+            f"{prefix}_player_interceptions": round(bucket["interceptions"], 2),
+            f"{prefix}_player_yellow_cards": round(bucket["yellows"], 2),
+            f"{prefix}_player_red_cards": round(bucket["reds"], 2),
+            f"{prefix}_keeper_saves": round(bucket["saves"], 2),
+            f"{prefix}_players": sorted(players, key=lambda p: (_num(p.get("minutes"), 0.0), _num(p.get("rating"), 0.0), _num(p.get("xg"), 0.0)), reverse=True)[:18],
+        }
+
+    packed = {"event_id": event_id, "home_team_id": home_id, "away_team_id": away_id}
+    packed.update(_pack("home", sides["home"]))
+    packed.update(_pack("away", sides["away"]))
+    return packed if packed.get("home_player_count") or packed.get("away_player_count") else None
+
+
 def load_json(path: Path, default: Any) -> Any:
     if not path.exists():
         return default
@@ -441,6 +568,18 @@ def load_warehouse_rows() -> List[Dict[str, Any]]:
     return rows
 
 
+
+
+def get_warehouse_team_map() -> Dict[int, Tuple[str, str]]:
+    out: Dict[int, Tuple[str, str]] = {}
+    for row in load_warehouse_rows():
+        try:
+            eid = int(row.get("event_id"))
+        except Exception:
+            continue
+        out[eid] = (str(row.get("home_team_id") or ""), str(row.get("away_team_id") or ""))
+    return out
+
 def get_ordered_warehouse_event_ids() -> List[int]:
     """Prioritate: ultimele meciuri ale echipelor din oferta curentă, apoi restul recent."""
     rows = load_warehouse_rows()
@@ -483,6 +622,7 @@ def main() -> None:
     token = _get_token()
 
     ordered_ids = get_ordered_warehouse_event_ids()
+    team_map = get_warehouse_team_map()
     if not ordered_ids:
         print("Nu există event_id-uri în warehouse.")
         return
@@ -492,23 +632,26 @@ def main() -> None:
     stats_cache = load_json(STATS_CACHE_PATH, {}) or {}
     incidents_cache = load_json(INCIDENTS_CACHE_PATH, {}) or {}
     shotmap_cache = load_json(SHOTMAP_CACHE_PATH, {}) or {}
+    player_stats_cache = load_json(PLAYER_STATS_CACHE_PATH, {}) or {}
 
     missing_stats = warehouse_id_set - {int(k) for k, v in stats_cache.items() if v}
     missing_incidents = warehouse_id_set - {int(k) for k, v in incidents_cache.items() if v}
     missing_shotmap = warehouse_id_set - {int(k) for k, v in shotmap_cache.items() if v}
+    missing_player_stats = warehouse_id_set - {int(k) for k, v in player_stats_cache.items() if v}
 
-    print(f"Stats lipsă:     {len(missing_stats)}")
-    print(f"Incidents lipsă: {len(missing_incidents)}")
-    print(f"Shotmap lipsă:   {len(missing_shotmap)}")
+    print(f"Stats lipsă:        {len(missing_stats)}")
+    print(f"Incidents lipsă:    {len(missing_incidents)}")
+    print(f"Shotmap lipsă:      {len(missing_shotmap)}")
+    print(f"PlayerStats lipsă:  {len(missing_player_stats)}")
 
-    if not (missing_stats or missing_incidents or missing_shotmap):
+    if not (missing_stats or missing_incidents or missing_shotmap or missing_player_stats):
         print("✅ Cache complet, nimic de fetched.")
         return
 
-    to_fetch = [eid for eid in ordered_ids if eid in missing_stats or eid in missing_incidents or eid in missing_shotmap][:MAX_FETCH_PER_RUN]
+    to_fetch = [eid for eid in ordered_ids if eid in missing_stats or eid in missing_incidents or eid in missing_shotmap or eid in missing_player_stats][:MAX_FETCH_PER_RUN]
     print(f"Fetchez {len(to_fetch)} events (limit={MAX_FETCH_PER_RUN}, recent/team={RECENT_PER_TEAM})...")
 
-    fetched_stats = fetched_incidents = fetched_shotmap = errors = 0
+    fetched_stats = fetched_incidents = fetched_shotmap = fetched_player_stats = errors = 0
 
     for index, eid in enumerate(to_fetch, start=1):
         eid_str = str(eid)
@@ -543,20 +686,35 @@ def main() -> None:
                 errors += 1
             time.sleep(SLEEP_BETWEEN_CALLS)
 
+        if eid in missing_player_stats:
+            raw_players = _get(f"{API_BASE}/api/v2/events/{eid}/player-stats/", token)
+            if raw_players:
+                home_id, away_id = team_map.get(eid, ("", ""))
+                normalized_players = normalize_player_stats(raw_players, eid, home_id, away_id)
+                player_stats_cache[eid_str] = normalized_players
+                fetched_player_stats += 1 if normalized_players else 0
+            else:
+                player_stats_cache[eid_str] = None
+                errors += 1
+            time.sleep(SLEEP_BETWEEN_CALLS)
+
         if index % 50 == 0:
-            print(f"  [{index}/{len(to_fetch)}] stats={fetched_stats} shotmap={fetched_shotmap} incidents={fetched_incidents} errors={errors}")
+            print(f"  [{index}/{len(to_fetch)}] stats={fetched_stats} shotmap={fetched_shotmap} incidents={fetched_incidents} player_stats={fetched_player_stats} errors={errors}")
             save_cache(stats_cache, STATS_CACHE_PATH)
             save_cache(shotmap_cache, SHOTMAP_CACHE_PATH)
             save_cache(incidents_cache, INCIDENTS_CACHE_PATH)
+            save_cache(player_stats_cache, PLAYER_STATS_CACHE_PATH)
 
     save_cache(stats_cache, STATS_CACHE_PATH)
     save_cache(shotmap_cache, SHOTMAP_CACHE_PATH)
     save_cache(incidents_cache, INCIDENTS_CACHE_PATH)
+    save_cache(player_stats_cache, PLAYER_STATS_CACHE_PATH)
 
-    print(f"\n✅ Done: stats={fetched_stats} shotmap={fetched_shotmap} incidents={fetched_incidents} errors={errors}")
-    print(f"   Cache stats:     {len([v for v in stats_cache.values() if v])} valid")
-    print(f"   Cache shotmap:   {len([v for v in shotmap_cache.values() if v])} valid")
-    print(f"   Cache incidents: {len([v for v in incidents_cache.values() if v])} valid")
+    print(f"\n✅ Done: stats={fetched_stats} shotmap={fetched_shotmap} incidents={fetched_incidents} player_stats={fetched_player_stats} errors={errors}")
+    print(f"   Cache stats:        {len([v for v in stats_cache.values() if v])} valid")
+    print(f"   Cache shotmap:      {len([v for v in shotmap_cache.values() if v])} valid")
+    print(f"   Cache incidents:    {len([v for v in incidents_cache.values() if v])} valid")
+    print(f"   Cache player_stats: {len([v for v in player_stats_cache.values() if v])} valid")
 
 
 if __name__ == "__main__":

@@ -64,7 +64,7 @@ except Exception:  # pragma: no cover
 try:
     from feature_engineering import (
         load_warehouse, form_features, diff_features, h2h_features, xg_features,
-        odds_features, context_features, stats_features, incidents_features, shotmap_features,
+        odds_features, context_features, stats_features, incidents_features, shotmap_features, player_stats_features,
         build_league_baselines, elo_expected, _parse_dt, _f as fe_float,
         poisson_over, poisson_under, poisson_btts, poisson_1x2,
         ELO_START, ELO_K,
@@ -548,6 +548,117 @@ def lineup_risk_score(row: Dict[str, Any]) -> float:
     return round(clamp(base + min(0.14, missing_count * 0.018), 0.0, 0.35), 4)
 
 
+
+
+def build_player_form_index(player_stats_cache: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
+    """Index compact player_id → impact mediu din player_stats_cache."""
+    agg: Dict[str, Dict[str, float]] = {}
+    if not isinstance(player_stats_cache, dict):
+        return agg
+    for item in player_stats_cache.values():
+        if not isinstance(item, dict):
+            continue
+        for side in ("home", "away"):
+            players = item.get(f"{side}_players") or []
+            if not isinstance(players, list):
+                continue
+            for player in players:
+                if not isinstance(player, dict):
+                    continue
+                pid = str(player.get("player_id") or "")
+                if not pid:
+                    continue
+                minutes = _f(player.get("minutes"), 0.0)
+                rating = _f(player.get("rating"), 0.0)
+                xg = _f(player.get("xg"), 0.0)
+                xa = _f(player.get("xa"), 0.0)
+                kp = _f(player.get("key_pass"), 0.0)
+                bucket = agg.setdefault(pid, {"matches": 0.0, "minutes": 0.0, "rating_sum": 0.0, "xg": 0.0, "xa": 0.0, "key_pass": 0.0})
+                bucket["matches"] += 1.0
+                bucket["minutes"] += minutes
+                if rating > 0:
+                    bucket["rating_sum"] += rating
+                bucket["xg"] += xg
+                bucket["xa"] += xa
+                bucket["key_pass"] += kp
+    out: Dict[str, Dict[str, float]] = {}
+    for pid, a in agg.items():
+        m = max(1.0, a.get("matches", 0.0))
+        avg_rating = a.get("rating_sum", 0.0) / m if a.get("rating_sum", 0.0) else 0.0
+        avg_minutes = a.get("minutes", 0.0) / m
+        avg_xg = a.get("xg", 0.0) / m
+        avg_xa = a.get("xa", 0.0) / m
+        avg_kp = a.get("key_pass", 0.0) / m
+        impact = 0.0
+        impact += clamp((avg_minutes - 35.0) / 55.0, 0.0, 1.0) * 0.04
+        impact += clamp((avg_rating - 6.6) / 1.2, 0.0, 1.0) * 0.035
+        impact += clamp((avg_xg + avg_xa - 0.18) / 0.45, 0.0, 1.0) * 0.045
+        impact += clamp(avg_kp / 2.2, 0.0, 1.0) * 0.02
+        out[pid] = {
+            "avg_rating": round(avg_rating, 4),
+            "avg_minutes": round(avg_minutes, 2),
+            "avg_xg": round(avg_xg, 4),
+            "avg_xa": round(avg_xa, 4),
+            "avg_key_pass": round(avg_kp, 4),
+            "impact": round(clamp(impact, 0.0, 0.14), 4),
+        }
+    return out
+
+
+def player_availability_risk(row: Dict[str, Any], player_form_index: Dict[str, Dict[str, float]]) -> float:
+    """Risc suplimentar când lipsesc jucători cu impact istoric; fallback pe număr lipsă."""
+    lu = row.get("v2_lineups")
+    if not isinstance(lu, dict):
+        return 0.0
+    unavailable = lu.get("unavailable_players") if isinstance(lu.get("unavailable_players"), dict) else {}
+    if not unavailable:
+        return 0.0
+    risk = 0.0
+    missing = 0
+    for side in ("home", "away"):
+        players = unavailable.get(side)
+        if not isinstance(players, list):
+            continue
+        for player in players:
+            if not isinstance(player, dict):
+                continue
+            missing += 1
+            pid = str(player.get("id") or player.get("player_id") or "")
+            risk += _f((player_form_index.get(pid) or {}).get("impact"), 0.018)
+    if missing and risk <= 0:
+        risk = missing * 0.018
+    return round(clamp(risk, 0.0, 0.24), 4)
+
+
+def player_context_bonus(feat: Dict[str, Any], market_key: str) -> float:
+    """Bonus/penalty de scor din forma jucătorilor: rating, xG/xA, key passes, portar."""
+    bonus = 0.0
+    rating_diff = _f(feat.get("player_rating_diff_form5"), 0.0)
+    attack_sum = feat.get("player_attack_xg_sum_form5")
+    attack_diff = _f(feat.get("player_attack_xg_diff_form5"), 0.0)
+    top3_sum = _f(feat.get("home_player_top3_xg_form5"), 0.0) + _f(feat.get("away_player_top3_xg_form5"), 0.0)
+    key_pass_sum = _f(feat.get("home_player_key_pass_form5"), 0.0) + _f(feat.get("away_player_key_pass_form5"), 0.0)
+    keeper_saves_sum = _f(feat.get("home_keeper_saves_form5"), 0.0) + _f(feat.get("away_keeper_saves_form5"), 0.0)
+    if attack_sum is not None:
+        bonus += 0.8
+    if market_key in {"over15", "over25", "btts"}:
+        if _f(attack_sum, 0.0) >= 2.2 or top3_sum >= 1.35 or key_pass_sum >= 6.0:
+            bonus += 1.0
+        if _f(attack_sum, 0.0) <= 1.05 and key_pass_sum <= 3.2:
+            bonus -= 0.8
+    if market_key == "under35":
+        if _f(attack_sum, 0.0) <= 1.45 and top3_sum <= 0.95:
+            bonus += 0.9
+        if _f(attack_sum, 0.0) >= 2.55 or top3_sum >= 1.65:
+            bonus -= 1.1
+    if market_key in {"home_win", "away_win"}:
+        side_dir = 1.0 if market_key == "home_win" else -1.0
+        bonus += clamp(rating_diff * side_dir * 1.4, -1.0, 1.0)
+        bonus += clamp(attack_diff * side_dir * 0.8, -0.8, 0.8)
+    if market_key in {"under35", "draw"} and keeper_saves_sum >= 5.5:
+        bonus += 0.35
+    return round(clamp(bonus, -2.5, 3.2), 2)
+
 def context_risk_score(row: Dict[str, Any]) -> float:
     risk = 0.0
     if row.get("is_local_derby"):
@@ -716,7 +827,7 @@ def normalize_prob(v: Any) -> Optional[float]:
     return round(clamp(f, 0.0, 1.0), 6)
 
 
-def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any]], league_baselines, team_index, pair_rows, stats_cache, incidents_cache, shotmap_cache, elo_cache, hist_rows_sorted):
+def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any]], league_baselines, team_index, pair_rows, stats_cache, incidents_cache, shotmap_cache, player_stats_cache, elo_cache, hist_rows_sorted):
     cutoff = str(row.get("date") or "")[:10]
     hid, aid = row.get("home_team_id"), row.get("away_team_id")
     home_hist = get_team_history(team_index, hid, cutoff, limit=30)
@@ -742,6 +853,8 @@ def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any
         feats.update(stats_features(home_hist, away_hist, stats_cache))
     if shotmap_cache:
         feats.update(shotmap_features(home_hist, away_hist, shotmap_cache))
+    if player_stats_cache:
+        feats.update(player_stats_features(home_hist, away_hist, player_stats_cache))
     if incidents_cache:
         feats.update(incidents_features(home_hist, away_hist, incidents_cache))
     h_pre = feats.get("home_matches_pre", 0) or 0
@@ -752,6 +865,7 @@ def build_features_for_current(row: Dict[str, Any], pred: Optional[Dict[str, Any
     quality += 10.0 if feats.get("xg_sum") is not None or feats.get("xg_form_sum_5") is not None else 0.0
     quality += 4.0 if feats.get("xg_stats_sum_form5") is not None else 0.0
     quality += 4.0 if feats.get("xg_shotmap_sum_form5") is not None else 0.0
+    quality += 3.0 if feats.get("player_attack_xg_sum_form5") is not None or feats.get("home_player_rating_form5") is not None else 0.0
     quality += 3.0 if feats.get("home_early_goal_rate5") is not None or feats.get("away_early_goal_rate5") is not None else 0.0
     quality += min(18.0, float(base_matches or 0) / 10.0)
     feats["data_quality_score"] = round(clamp(quality, 0.0, 100.0), 2)
@@ -880,11 +994,13 @@ def stats_profile_probability(feat: Dict[str, Any], market_key: str) -> Optional
         feat.get("home_shotmap_xg_form5"),
         feat.get("home_xg_stats_form5"),
         feat.get("home_xg_form_5"),
+        feat.get("home_player_attack_xg_form5"),
     ])
     axg = _mean_non_null([
         feat.get("away_shotmap_xg_form5"),
         feat.get("away_xg_stats_form5"),
         feat.get("away_xg_form_5"),
+        feat.get("away_player_attack_xg_form5"),
     ])
     if hxg is None or axg is None:
         return None
@@ -896,9 +1012,13 @@ def stats_profile_probability(feat: Dict[str, Any], market_key: str) -> Optional
     a_big = _f(feat.get("away_big_chances_form5"), 0.0)
     h_sot_ratio = _f(feat.get("home_sot_ratio_form5"), 0.0)
     a_sot_ratio = _f(feat.get("away_sot_ratio_form5"), 0.0)
+    h_key_pass = _f(feat.get("home_player_key_pass_form5"), 0.0)
+    a_key_pass = _f(feat.get("away_player_key_pass_form5"), 0.0)
+    h_rating = _f(feat.get("home_player_rating_form5"), 0.0)
+    a_rating = _f(feat.get("away_player_rating_form5"), 0.0)
 
-    hxg = clamp(hxg + clamp((h_xgps - 0.10) * 0.9, -0.08, 0.12) + clamp((h_big - 1.0) * 0.055, -0.08, 0.14) + clamp((h_sot_ratio - 0.32) * 0.20, -0.05, 0.08), 0.15, 3.8)
-    axg = clamp(axg + clamp((a_xgps - 0.10) * 0.9, -0.08, 0.12) + clamp((a_big - 1.0) * 0.055, -0.08, 0.14) + clamp((a_sot_ratio - 0.32) * 0.20, -0.05, 0.08), 0.15, 3.8)
+    hxg = clamp(hxg + clamp((h_xgps - 0.10) * 0.9, -0.08, 0.12) + clamp((h_big - 1.0) * 0.055, -0.08, 0.14) + clamp((h_sot_ratio - 0.32) * 0.20, -0.05, 0.08) + clamp((h_key_pass - 3.0) * 0.025, -0.06, 0.09) + clamp((h_rating - 6.8) * 0.08, -0.05, 0.08), 0.15, 3.8)
+    axg = clamp(axg + clamp((a_xgps - 0.10) * 0.9, -0.08, 0.12) + clamp((a_big - 1.0) * 0.055, -0.08, 0.14) + clamp((a_sot_ratio - 0.32) * 0.20, -0.05, 0.08) + clamp((a_key_pass - 3.0) * 0.025, -0.06, 0.09) + clamp((a_rating - 6.8) * 0.08, -0.05, 0.08), 0.15, 3.8)
 
     if market_key == "over15":
         p = poisson_over(hxg, axg, 1.5)
@@ -1034,12 +1154,15 @@ def main():
     stats_cache = load_json(DATA_DIR / "stats_cache.json", {}) or {}
     incidents_cache = load_json(DATA_DIR / "incidents_cache.json", {}) or {}
     shotmap_cache = load_json(DATA_DIR / "shotmap_cache.json", {}) or {}
+    player_stats_cache = load_json(DATA_DIR / "player_stats_cache.json", {}) or {}
     cache_counts = {
         "stats": len([v for v in stats_cache.values() if v]) if isinstance(stats_cache, dict) else 0,
         "incidents": len([v for v in incidents_cache.values() if v]) if isinstance(incidents_cache, dict) else 0,
         "shotmap": len([v for v in shotmap_cache.values() if v]) if isinstance(shotmap_cache, dict) else 0,
+        "player_stats": len([v for v in player_stats_cache.values() if v]) if isinstance(player_stats_cache, dict) else 0,
     }
-    print(f"Cache v2 stats/incidents/shotmap: {cache_counts}")
+    print(f"Cache v2 stats/incidents/shotmap/player_stats: {cache_counts}")
+    player_form_index = build_player_form_index(player_stats_cache)
     elo_cache: Dict[str, Dict[Any, float]] = {}
 
     current_rows, feats_list, pred_refs = [], [], []
@@ -1052,7 +1175,7 @@ def main():
         row = normalize_current_row(ev, pred)
         apply_v2_bundle_to_row(row, bundle)
         try:
-            feats = build_features_for_current(row, pred, league_baselines, team_index, pair_rows, stats_cache, incidents_cache, shotmap_cache, elo_cache, hist_rows_sorted)
+            feats = build_features_for_current(row, pred, league_baselines, team_index, pair_rows, stats_cache, incidents_cache, shotmap_cache, player_stats_cache, elo_cache, hist_rows_sorted)
         except Exception as exc:
             print(f"  WARN features {row.get('event_id')}: {exc}")
             feats = {"event_id": row.get("event_id"), "league": row.get("league", "Unknown"), "home_streak_type": "N", "away_streak_type": "N", "data_quality_score": 35}
@@ -1107,10 +1230,12 @@ def main():
             agreement = blend_meta["agreement"]
             lineup_risk = lineup_risk_score(row)
             context_risk = context_risk_score(row)
+            player_risk = player_availability_risk(row, player_form_index)
             market_bonus = market_intel_bonus(odds_meta)
             stats_bonus = stats_context_bonus(feat, market_key)
+            player_bonus = player_context_bonus(feat, market_key)
             score = smartbet_score(final_p, edge_pp, evp, kelly_pct, rel, agreement)
-            score = round(clamp(score * (1.0 - lineup_risk * 0.18 - context_risk * 0.16) + market_bonus + stats_bonus, 0.0, 100.0), 1)
+            score = round(clamp(score * (1.0 - lineup_risk * 0.18 - context_risk * 0.16 - player_risk * 0.20) + market_bonus + stats_bonus + player_bonus, 0.0, 100.0), 1)
             # Gating suplimentar: nu ridicăm semnale premium când datele sunt subțiri, contextul e riscant sau modelele nu se confirmă.
             if _f(feat.get("data_quality_score"), 0) < 52 and score < 70:
                 continue
@@ -1118,7 +1243,7 @@ def main():
                 continue
             if agreement < 0.38 and score < 72:
                 continue
-            if (lineup_risk + context_risk) >= 0.38 and score < 76:
+            if (lineup_risk + context_risk + player_risk) >= 0.42 and score < 76:
                 continue
 
             interval = round((1.0 - agreement) * 9.0 + (1.0 - rel) * 8.0, 2)
@@ -1164,18 +1289,23 @@ def main():
                 "context_risk": context_risk,
                 "market_intel_bonus": market_bonus,
                 "stats_context_bonus": stats_bonus,
+                "player_context_bonus": player_bonus,
+                "player_availability_risk": player_risk,
+                "player_rating_diff_form5": feat.get("player_rating_diff_form5"),
+                "player_attack_xg_sum_form5": feat.get("player_attack_xg_sum_form5"),
+                "player_attack_xg_diff_form5": feat.get("player_attack_xg_diff_form5"),
                 "score": score,
                 "risk_tier": tier,
                 "signal": "STRONG BUY" if score >= 82 else ("BUY" if score >= 70 else "WATCH"),
                 "model_version": "veyra-supreme-engine-v5",
                 "blend": blend_meta,
-                "rationale": f"{info['label']}: p_final={final_p*100:.1f}% (CatBoost {cat_prob*100:.1f}%, market {nv_p*100:.1f}%, API {(api_p*100 if api_p is not None else 0):.1f}%" + (f", Poisson {pois_p*100:.1f}%" if pois_p is not None else "") + (f", Polymarket {poly_p*100:.1f}%" if poly_p is not None else "") + (f", StatsProfile {stats_p*100:.1f}%" if stats_p is not None else "") + f"), edge {edge_pp:+.1f}pp, EV {evp:+.1f}%, Kelly¼ {kelly_pct:.2f}%, acord {agreement*100:.0f}%, risk lineup/context {lineup_risk:.2f}/{context_risk:.2f}.",
+                "rationale": f"{info['label']}: p_final={final_p*100:.1f}% (CatBoost {cat_prob*100:.1f}%, market {nv_p*100:.1f}%, API {(api_p*100 if api_p is not None else 0):.1f}%" + (f", Poisson {pois_p*100:.1f}%" if pois_p is not None else "") + (f", Polymarket {poly_p*100:.1f}%" if poly_p is not None else "") + (f", StatsProfile {stats_p*100:.1f}%" if stats_p is not None else "") + f"), edge {edge_pp:+.1f}pp, EV {evp:+.1f}%, Kelly¼ {kelly_pct:.2f}%, acord {agreement*100:.0f}%, risk lineup/context/player {lineup_risk:.2f}/{context_risk:.2f}/{player_risk:.2f}.",
             })
 
     signals.sort(key=lambda x: (x.get("score", 0), x.get("final_prob", 0), x.get("edge_pp", 0)), reverse=True)
     elite = [s for s in signals if s.get("score", 0) >= 82]
     a_quality = [s for s in signals if str(s.get("quality_gate", "")).upper() == "A"]
-    low_risk = [s for s in signals if (float(s.get("lineup_risk") or 0) + float(s.get("context_risk") or 0)) <= 0.22]
+    low_risk = [s for s in signals if (float(s.get("lineup_risk") or 0) + float(s.get("context_risk") or 0) + float(s.get("player_availability_risk") or 0)) <= 0.24]
     avg_score = round(sum(float(s.get("score") or 0) for s in signals) / len(signals), 2) if signals else 0
     avg_agreement = round(sum(float(s.get("agreement") or 0) for s in signals) / len(signals), 4) if signals else 0
     out = {
@@ -1189,13 +1319,13 @@ def main():
             "low_risk_count": len(low_risk),
             "avg_score": avg_score,
             "avg_agreement_pct": round(avg_agreement * 100, 1),
-            "sources": ["CatBoost", "BSD API v2", "Market no-vig", "Odds comparison", "Poisson", "Polymarket", "Stats/Shotmap/Incidents", "AI Memory", "Risk Shield"],
+            "sources": ["CatBoost", "BSD API v2", "Market no-vig", "Odds comparison", "Poisson", "Polymarket", "Stats/Shotmap/Incidents", "PlayerStats", "AI Memory", "Risk Shield"],
             "cache_counts": cache_counts,
             "vip_rule": "VIP folosește doar scor ridicat, acord între surse, risc controlat și cotă totală 1.30–1.50."
         },
         "quality_policy": {
-            "probability": "CatBoost calibrat + BSD Predictions v2 + no-vig market + odds comparison + Polymarket + Poisson + StatsProfile din stats/shotmap/incidents cu shrink pe dezacord",
-            "gates": "prob_min/edge_min/EV/Kelly/data-quality/agreement/WFV/lineup-risk/context-risk",
+            "probability": "CatBoost calibrat + BSD Predictions v2 + no-vig market + odds comparison + Polymarket + Poisson + StatsProfile + PlayerStats cu shrink pe dezacord",
+            "gates": "prob_min/edge_min/EV/Kelly/data-quality/agreement/WFV/lineup-risk/context-risk/player-risk",
         },
         "signals": signals,
     }
