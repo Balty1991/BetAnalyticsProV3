@@ -10,11 +10,17 @@ curente din data/events.json, fără să umfle fetch_data.py:
 - /api/v2/events/{id}/odds/             -> consensus odds v2
 - /api/v2/events/{id}/odds/comparison/  -> multi-bookmaker, best price, movement, dispersion
 - /api/v2/events/{id}/polymarket/       -> prediction-market implied probabilities, când există
-- /api/v2/events/{id}/prediction/       -> BSD CatBoost v2 grouped markets
+- /api/v2/events/{id}/prediction/       -> BSD CatBoost v2 grouped markets (GAP 2)
 - /api/v2/events/{id}/lineups/          -> confirmed/predicted/unavailable + unavailable players
 - /api/v2/events/{id}/metadata/         -> pre-match facts, jerseys, preview
+- /api/v2/events/{id}/h2h/              -> head-to-head: draw_rate, btts_rate, avg_goals (GAP 3)
 - /api/v2/referees/{id}/                -> referee aggregates, dacă event detail are referee_id
 - /api/v2/managers/{id}/                -> manager/tactical profile, dacă event detail are coach IDs
+
+GAP 1: context flags (derby/neutral/travel/weather/pitch) sunt citite de fetch_data.py
+        din bundle["detail"] prin V2_ENRICHMENT_CACHE.
+GAP 2: probabilitățile BSD v2 ML sunt citite din bundle["prediction"] prin get_v2_ml_probability().
+GAP 3: H2H stats sunt normalizate din bundle["h2h"] și aplicate în v2_score_adjustment().
 
 Output:
   data/v2_enrichment_cache.json
@@ -137,6 +143,83 @@ def safe_get(path: str, token: str) -> Any:
     return data
 
 
+def normalize_h2h(raw: Any) -> Optional[Dict[str, Any]]:
+    """
+    GAP 3 — Normalizează răspunsul H2H din /api/v2/events/{id}/h2h/ (sau alte formate).
+
+    BSD poate returna H2H în mai multe formate. Extragem:
+      total_matches, home_wins, draws, away_wins,
+      draw_rate, home_win_rate, away_win_rate, btts_rate, avg_goals.
+
+    Returnează None dacă datele sunt insuficiente (< 3 meciuri).
+    """
+    if not isinstance(raw, dict):
+        return None
+
+    # Suport format direct (flat)
+    matches = raw.get("results") or raw.get("matches") or raw.get("h2h") or []
+
+    # Format top-level stats (unele API-uri returnează direct agregate)
+    if not isinstance(matches, list):
+        total = int(raw.get("total_matches") or raw.get("total") or 0)
+        if total < 3:
+            return None
+        return {
+            "total_matches":   total,
+            "home_wins":       int(raw.get("home_wins") or 0),
+            "draws":           int(raw.get("draws") or 0),
+            "away_wins":       int(raw.get("away_wins") or 0),
+            "draw_rate":       raw.get("draw_rate"),
+            "home_win_rate":   raw.get("home_win_rate"),
+            "away_win_rate":   raw.get("away_win_rate"),
+            "btts_rate":       raw.get("btts_rate"),
+            "avg_goals":       raw.get("avg_goals"),
+        }
+
+    # Format list — calculăm statisticile din meciuri individuale
+    if len(matches) < 3:
+        return None
+
+    home_wins = draws = away_wins = 0
+    btts_count = goals_total = 0
+    # Păstrăm ultimele 10 meciuri pentru relevanță
+    for m in matches[:10]:
+        if not isinstance(m, dict):
+            continue
+        hs = m.get("home_score") if m.get("home_score") is not None else m.get("score_home")
+        aw = m.get("away_score") if m.get("away_score") is not None else m.get("score_away")
+        try:
+            hs = int(hs); aw = int(aw)
+        except Exception:
+            continue
+        total = hs + aw
+        goals_total += total
+        if hs > aw:
+            home_wins += 1
+        elif hs == aw:
+            draws += 1
+        else:
+            away_wins += 1
+        if hs > 0 and aw > 0:
+            btts_count += 1
+
+    played = home_wins + draws + away_wins
+    if played < 3:
+        return None
+
+    return {
+        "total_matches":   played,
+        "home_wins":       home_wins,
+        "draws":           draws,
+        "away_wins":       away_wins,
+        "draw_rate":       round(draws / played, 3),
+        "home_win_rate":   round(home_wins / played, 3),
+        "away_win_rate":   round(away_wins / played, 3),
+        "btts_rate":       round(btts_count / played, 3),
+        "avg_goals":       round(goals_total / played, 2),
+    }
+
+
 def fetch_event_bundle(eid: str, token: str) -> Dict[str, Any]:
     bundle: Dict[str, Any] = {"event_id": eid, "fetched_at": now_iso()}
 
@@ -148,6 +231,12 @@ def fetch_event_bundle(eid: str, token: str) -> Dict[str, Any]:
     bundle["prediction"] = safe_get(f"events/{eid}/prediction/", token)
     bundle["lineups"] = safe_get(f"events/{eid}/lineups/", token)
     bundle["metadata"] = safe_get(f"events/{eid}/metadata/", token)
+
+    # GAP 3 — H2H head-to-head: istoric direct între cele două echipe
+    # Endpoint posibil: /api/v2/events/{id}/h2h/
+    # Graceful: returnează None dacă endpoint-ul nu există (404/400)
+    h2h_raw = safe_get(f"events/{eid}/h2h/", token)
+    bundle["h2h"] = normalize_h2h(h2h_raw)
 
     # Context agregat: arbitru și manageri. Se iau din event detail, când există.
     if isinstance(detail, dict):
