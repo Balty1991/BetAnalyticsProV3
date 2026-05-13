@@ -677,6 +677,103 @@ def context_risk_score(row: Dict[str, Any]) -> float:
     return round(clamp(risk, 0.0, 0.28), 4)
 
 
+def player_quality_risk(row: Dict[str, Any], quality_scores: Dict) -> float:
+    """
+    Risc bazat pe CALITATEA jucătorilor absenți (nu doar numărul).
+    Suplimentează lineup_risk_score() cu informații din player_profiles_cache.
+    attacking/defending 75+ = jucător cheie; absența lui crește riscul.
+    """
+    if not quality_scores:
+        return 0.0
+    eid = str(row.get("event_id") or "")
+    q = quality_scores.get(eid) or {}
+    if not q:
+        return 0.0
+    h_missing_atk = _f(q.get("home_missing_atk_quality"), 0)
+    a_missing_atk = _f(q.get("away_missing_atk_quality"), 0)
+    h_missing_def = _f(q.get("home_missing_def_quality"), 0)
+    a_missing_def = _f(q.get("away_missing_def_quality"), 0)
+    max_missing = max(h_missing_atk, a_missing_atk, h_missing_def, a_missing_def)
+    if max_missing >= 80:
+        return 0.12   # jucător foarte valoros absent
+    elif max_missing >= 70:
+        return 0.08
+    elif max_missing >= 55:
+        return 0.04
+    return 0.0
+
+
+def news_context_risk(row: Dict[str, Any], social_events: Dict) -> float:
+    """
+    Risc din știri pre-meci: accidentări anunțate, suspendări, incertitudine lot.
+    Sursa: social_news_cache.json generat de fetch_social_news_cache.py.
+    """
+    if not social_events:
+        return 0.0
+    eid = str(row.get("event_id") or "")
+    news = social_events.get(eid) or {}
+    if not news:
+        return 0.0
+    return round(clamp(_f(news.get("news_risk_score"), 0) * 0.35, 0.0, 0.18), 4)
+
+
+def venue_market_bonus(venue: Optional[Dict], market_key: str) -> float:
+    """
+    Bonus/penalizare bazat pe caracteristicile stadionului.
+    Sursa: v2_enrichment_cache.json → bundle["venue"] (fetch_v2_enrichment_cache.py).
+
+    - Suprafață artificială → ~5% mai multe goluri (cercetare UEFA) → +over, -under
+    - Stadion mare (50k+) → avantaj gazdă mai puternic → +homeWin
+    - Stadion mic (<8k) → avantaj gazdă mai redus → -homeWin
+    """
+    if not isinstance(venue, dict):
+        return 0.0
+    bonus = 0.0
+    surface = str(venue.get("surface") or venue.get("pitch_type") or "").lower()
+    capacity = _f(venue.get("capacity"), 0)
+
+    if "artificial" in surface or "turf" in surface or "synthetic" in surface:
+        if market_key in ("over15", "over25", "btts"):
+            bonus += 0.4
+        elif market_key == "under35":
+            bonus -= 0.3
+
+    if capacity >= 50000 and market_key == "homeWin":
+        bonus += 0.3
+    elif capacity <= 8000 and market_key == "homeWin":
+        bonus -= 0.2
+
+    return round(clamp(bonus, -1.5, 1.5), 2)
+
+
+def lineup_quality_bonus(row: Dict[str, Any], quality_scores: Dict, market_key: str) -> float:
+    """
+    Bonus/penalizare bazat pe diferența calitativă a loturilor.
+    lineup_attack_diff > 10 → gazda are atacanți net superiori → bonus homeWin/over
+    """
+    if not quality_scores:
+        return 0.0
+    eid = str(row.get("event_id") or "")
+    q = quality_scores.get(eid) or {}
+    if not q:
+        return 0.0
+    atk_diff = _f(q.get("lineup_attack_diff"), 0)
+    def_diff = _f(q.get("lineup_defense_diff"), 0)
+    bonus = 0.0
+    if market_key == "homeWin":
+        if atk_diff >= 12:   bonus += 0.6
+        elif atk_diff >= 6:  bonus += 0.3
+        elif atk_diff <= -12: bonus -= 0.4
+    elif market_key == "awayWin":
+        if atk_diff <= -12:  bonus += 0.6
+        elif atk_diff <= -6: bonus += 0.3
+    elif market_key in ("over25", "over15", "btts"):
+        # Echipele echilibrate calitativ = meciuri mai deschise
+        if abs(atk_diff) <= 4 and abs(def_diff) <= 4:
+            bonus += 0.2
+    return round(clamp(bonus, -1.5, 1.5), 2)
+
+
 def market_intel_bonus(odds_meta: Dict[str, Any]) -> float:
     if not isinstance(odds_meta, dict):
         return 0.0
@@ -1155,11 +1252,19 @@ def main():
     incidents_cache = load_json(DATA_DIR / "incidents_cache.json", {}) or {}
     shotmap_cache = load_json(DATA_DIR / "shotmap_cache.json", {}) or {}
     player_stats_cache = load_json(DATA_DIR / "player_stats_cache.json", {}) or {}
+    # Surse noi: calitate jucători, news risk, venue
+    player_profiles_cache = load_json(DATA_DIR / "player_profiles_cache.json", {}) or {}
+    social_news_cache_raw  = load_json(DATA_DIR / "social_news_cache.json", {}) or {}
+    # Normalizăm structura celor 2 cache-uri noi
+    _pp_quality  = player_profiles_cache.get("quality_scores") or {} if isinstance(player_profiles_cache, dict) else {}
+    _social_evts = social_news_cache_raw.get("events") or {} if isinstance(social_news_cache_raw, dict) else {}
     cache_counts = {
         "stats": len([v for v in stats_cache.values() if v]) if isinstance(stats_cache, dict) else 0,
         "incidents": len([v for v in incidents_cache.values() if v]) if isinstance(incidents_cache, dict) else 0,
         "shotmap": len([v for v in shotmap_cache.values() if v]) if isinstance(shotmap_cache, dict) else 0,
         "player_stats": len([v for v in player_stats_cache.values() if v]) if isinstance(player_stats_cache, dict) else 0,
+        "player_profiles": len([v for v in _pp_quality.values() if v]) if isinstance(_pp_quality, dict) else 0,
+        "social_news": len([v for v in _social_evts.values() if v]) if isinstance(_social_evts, dict) else 0,
     }
     print(f"Cache v2 stats/incidents/shotmap/player_stats: {cache_counts}")
     player_form_index = build_player_form_index(player_stats_cache)
@@ -1231,11 +1336,27 @@ def main():
             lineup_risk = lineup_risk_score(row)
             context_risk = context_risk_score(row)
             player_risk = player_availability_risk(row, player_form_index)
+            # Surse noi: calitate jucători (GAP player_detail), news risk (GAP social_items), venue (GAP venue)
+            pq_risk   = player_quality_risk(row, _pp_quality)
+            news_risk = news_context_risk(row, _social_evts)
+            venue_data = bundle.get("venue") if isinstance(bundle, dict) else None
+            venue_bonus_val = venue_market_bonus(venue_data, market_key)
+            lq_bonus_val    = lineup_quality_bonus(row, _pp_quality, market_key)
             market_bonus = market_intel_bonus(odds_meta)
             stats_bonus = stats_context_bonus(feat, market_key)
             player_bonus = player_context_bonus(feat, market_key)
             score = smartbet_score(final_p, edge_pp, evp, kelly_pct, rel, agreement)
-            score = round(clamp(score * (1.0 - lineup_risk * 0.18 - context_risk * 0.16 - player_risk * 0.20) + market_bonus + stats_bonus + player_bonus, 0.0, 100.0), 1)
+            score = round(clamp(
+                score * (1.0
+                         - lineup_risk  * 0.18
+                         - context_risk * 0.16
+                         - player_risk  * 0.20
+                         - pq_risk      * 0.12   # calitate jucători absenți
+                         - news_risk    * 0.10)  # risc din știri pre-meci
+                + market_bonus + stats_bonus + player_bonus
+                + venue_bonus_val + lq_bonus_val,  # bonusuri calitative
+                0.0, 100.0
+            ), 1)
             # Gating suplimentar: nu ridicăm semnale premium când datele sunt subțiri, contextul e riscant sau modelele nu se confirmă.
             if _f(feat.get("data_quality_score"), 0) < 52 and score < 70:
                 continue
@@ -1291,6 +1412,11 @@ def main():
                 "stats_context_bonus": stats_bonus,
                 "player_context_bonus": player_bonus,
                 "player_availability_risk": player_risk,
+                "player_quality_risk": pq_risk,
+                "news_risk_score": round(news_risk / 0.35, 3) if news_risk else 0.0,
+                "venue_bonus": venue_bonus_val,
+                "lineup_quality_bonus": lq_bonus_val,
+                "venue_surface": (venue_data or {}).get("surface") if venue_data else None,
                 "player_rating_diff_form5": feat.get("player_rating_diff_form5"),
                 "player_attack_xg_sum_form5": feat.get("player_attack_xg_sum_form5"),
                 "player_attack_xg_diff_form5": feat.get("player_attack_xg_diff_form5"),

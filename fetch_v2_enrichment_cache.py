@@ -238,7 +238,7 @@ def fetch_event_bundle(eid: str, token: str) -> Dict[str, Any]:
     h2h_raw = safe_get(f"events/{eid}/h2h/", token)
     bundle["h2h"] = normalize_h2h(h2h_raw)
 
-    # Context agregat: arbitru și manageri. Se iau din event detail, când există.
+    # Context agregat: arbitru, manageri și venue.
     if isinstance(detail, dict):
         ref_id = detail.get("referee_id")
         if ref_id:
@@ -251,9 +251,20 @@ def fetch_event_bundle(eid: str, token: str) -> Dict[str, Any]:
             if mid:
                 managers[key] = safe_get(f"managers/{mid}/", token)
         bundle["managers"] = managers
+
+        # VENUE: stadion, suprafață (natural/artificial), capacitate, dimensiuni
+        # Folosit în predict_current.py pentru venue_market_bonus() și risc context
+        venue_id = detail.get("venue_id") or detail.get("venue", {}) if isinstance(detail.get("venue"), dict) else None
+        if not venue_id and isinstance(detail.get("venue"), dict):
+            venue_id = detail["venue"].get("id")
+        if venue_id:
+            bundle["venue"] = safe_get(f"venues/{venue_id}/", token)
+        else:
+            bundle["venue"] = None
     else:
         bundle["referee"] = None
         bundle["managers"] = {}
+        bundle["venue"] = None
 
     return bundle
 
