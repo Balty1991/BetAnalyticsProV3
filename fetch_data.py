@@ -952,6 +952,28 @@ def build_candidate(row, market_key, require_outcome=True) -> Optional[Dict[str,
     }
 
 
+def odds_in_ranges(odds: Optional[float], ranges: List) -> bool:
+    """
+    Returnează True dacă odds-ul cade într-unul din intervalele de excludere.
+    ranges = lista de [lo, hi] sau (lo, hi). Ex: [[1.26, 1.44], [2.05, 2.20]]
+    Folosit în qualifies_for_strategy pentru 'exclude_odds_ranges'.
+    """
+    if not odds or not ranges:
+        return False
+    try:
+        v = float(odds)
+    except (TypeError, ValueError):
+        return False
+    for r in ranges:
+        try:
+            lo, hi = float(r[0]), float(r[1])
+            if lo <= v <= hi:
+                return True
+        except Exception:
+            continue
+    return False
+
+
 def qualifies_for_strategy(candidate, strategy_cfg):
     if not candidate:
         return False
