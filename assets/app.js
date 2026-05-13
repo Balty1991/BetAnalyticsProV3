@@ -1544,6 +1544,53 @@ function getBetVerdict(match, bet) {
   return { state:'avoid', label:'\u274c EVITA', sub:'Semnale insuficiente (' + signals + '/5)', bg:'rgba(239,68,68,.10)', border:'rgba(239,68,68,.28)', color:'#ef4444', score:signals };
 }
 
+
+function getBettingCommonOkProfile(match, bet) {
+  if (!match || !bet) return { ok:false, reason:'fără selecție' };
+  if (match.analysisState !== 'ELIGIBLE') return { ok:false, reason:'meci neeligibil' };
+
+  var verdict = getBetVerdict(match, bet);
+  if (!verdict || verdict.state !== 'bet') return { ok:false, reason:'nu are verdict PARIAZĂ' };
+
+  var prob  = Number(bet.adjProb || bet.prob || 0);
+  var edge  = Number(bet.edgePct || 0);
+  var value = Number(bet.value || 0);
+  var odds  = Number(bet.odds || bet.baseOdds || bet.bestOdds || 0);
+  var score = Number(match.smartScore || bet.score || 0);
+  var kelly = Number(bet.kellyPct || bet.kelly_pct || bet.kellyQuarterPct || 0);
+  var market = String(bet.type || bet.marketKey || '').toLowerCase();
+  var tier = String(match.leagueTier || 'neutral').toLowerCase();
+  var risk = String(match.riskTier || bet.riskTier || '').toLowerCase();
+  var books = Number(bet.bookmakersCount || bet.polymarketBookmakersCount || match.polymarketBookmakersCount || 0);
+  var cb = String(match.catboostSignal || bet.catboostSignal || '').toUpperCase();
+
+  // Praguri comune pentru un pick pe care merită să-l vezi separat:
+  // 1) deja a trecut verdictul final PARIAZĂ; 2) probabilitate mare;
+  // 3) edge/value real; 4) cotă jucabilă; 5) fără risc evident de ligă/profil.
+  if (prob < 85) return { ok:false, reason:'probabilitate sub 85%' };
+  if (edge < 3) return { ok:false, reason:'edge sub 3pp' };
+  if (value < 0.005) return { ok:false, reason:'value sub 0.5%' };
+  if (odds && (odds < 1.15 || odds > 2.40)) return { ok:false, reason:'cotă în afara zonei comune' };
+  if (tier === 'avoid' && score < 88) return { ok:false, reason:'ligă slabă fără scor suficient' };
+  if (risk === 'avoid') return { ok:false, reason:'risk tier avoid' };
+  if (kelly && kelly > 8) return { ok:false, reason:'Kelly prea agresiv' };
+  if (books && books < 6 && score < 90) return { ok:false, reason:'consens piață slab' };
+  if (cb === 'SELL' || cb === 'AVOID') return { ok:false, reason:'CatBoost contra' };
+
+  var tags = [];
+  tags.push('PARIAZĂ');
+  tags.push('Prob ' + prob.toFixed(1) + '%');
+  tags.push('Edge +' + edge.toFixed(1) + 'pp');
+  if (value) tags.push('Value +' + (value * 100).toFixed(1) + '%');
+  if (books) tags.push(books + ' case');
+  if (market) tags.push(market);
+  return { ok:true, reason:tags.join(' • '), prob:prob, edge:edge, value:value, odds:odds, score:score };
+}
+
+function isBettingCommonOkMatch(match, bet) {
+  return getBettingCommonOkProfile(match, bet).ok === true;
+}
+
 function getVerdictPill(match, bet) {
   var v = getBetVerdict(match, bet);
   if (!v) return '';
@@ -6328,7 +6375,9 @@ function setFilter(f, btn){
   clearMatchFocus();
   CURRENT_FILTER = f;
   document.querySelectorAll('.filter-btn,.mf-chip,.mx20-chip,.mx21-chip,.ba-market-chip').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
+  if(btn && btn.classList) btn.classList.add('active');
+  // Profilul "OK Pariere" trebuie sa arate cele mai curate intrari primele, nu doar cronologic.
+  if(f === 'bet_ok' && $('sort-select')) $('sort-select').value = 'score';
   renderMatches();
 }
 
@@ -6604,6 +6653,7 @@ function renderMatches(){
       if(CURRENT_FILTER === 'moderate' && !(m.analysisState === 'ELIGIBLE' && m.verdict === 'moderate')) return false;
       if(CURRENT_FILTER === 'value' && !(m.analysisState === 'ELIGIBLE' && (m.riskTier === 'Value' || (b && b.value >= 0.08 && Number(b.edgePct || 0) >= 3)))) return false;
       if(CURRENT_FILTER === 'balanced' && !(m.analysisState === 'ELIGIBLE' && (m.riskTier === 'Balanced' || m.riskTier === 'Safe' || m.riskTier === 'Value'))) return false;
+      if(CURRENT_FILTER === 'bet_ok' && !isBettingCommonOkMatch(m, b)) return false;
       // Filtre pe piață: verificam in TOATE candidatii eligibili, nu doar bestBet
       // (altfel un meci cu Over 1.5 valid dar BTTS si mai bun nu mai apare la "Over 1.5")
       function hasEligibleType(match, t){
@@ -6787,8 +6837,8 @@ function renderMatches(){
     return new Date(a.date) - new Date(b.date);
   });
 
-  var fullCountText = MATCH_FOCUS_KEY ? ('Meci selectat din Dashboard • ' + filtered.length + ' rezultat') : (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Lista ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Lista cu cote • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'motor_validated' ? ('Validate Motor • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri'))));
-  var compactCountText = MATCH_FOCUS_KEY ? (filtered.length + (filtered.length === 1 ? ' rezultat' : ' rezultate')) : (CURRENT_FILTER === 'motor_validated' ? (filtered.length + ' validate') : (CURRENT_FILTER === 'dashboard_ml_sync' ? ('ML sync • ' + filtered.length) : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Cu cote • ' + filtered.length) : (filtered.length + ' meciuri'))));
+  var fullCountText = MATCH_FOCUS_KEY ? ('Meci selectat din Dashboard • ' + filtered.length + ' rezultat') : (CURRENT_FILTER === 'dashboard_ml_sync' ? ('Lista ML sync • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Lista cu cote • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'motor_validated' ? ('Validate Motor • ' + filtered.length + ' meciuri') : (CURRENT_FILTER === 'bet_ok' ? ('OK Pariere • ' + filtered.length + ' meciuri') : (filtered.length + ' meciuri')))));
+  var compactCountText = MATCH_FOCUS_KEY ? (filtered.length + (filtered.length === 1 ? ' rezultat' : ' rezultate')) : (CURRENT_FILTER === 'bet_ok' ? (filtered.length + ' OK') : (CURRENT_FILTER === 'motor_validated' ? (filtered.length + ' validate') : (CURRENT_FILTER === 'dashboard_ml_sync' ? ('ML sync • ' + filtered.length) : (CURRENT_FILTER === 'dashboard_with_odds' ? ('Cu cote • ' + filtered.length) : (filtered.length + ' meciuri')))));
   var countEl = $('filter-count');
   if(countEl){
     countEl.textContent = (window.innerWidth <= 768 ? compactCountText : fullCountText);
