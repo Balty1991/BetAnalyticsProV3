@@ -677,6 +677,54 @@ def context_risk_score(row: Dict[str, Any]) -> float:
     return round(clamp(risk, 0.0, 0.28), 4)
 
 
+def _extract_v2_ml_prob(bundle: Optional[Dict], market_key: str) -> Optional[float]:
+    """Extrage probabilitatea ML v2 BSD din bundle['prediction'] pentru o piață."""
+    if not isinstance(bundle, dict):
+        return None
+    pred = bundle.get("prediction")
+    if not isinstance(pred, dict):
+        return None
+    def _to_pct(v):
+        try:
+            n = float(v)
+        except Exception:
+            return None
+        if not (0 < n <= 100) and not (0 < n <= 1):
+            return None
+        return round(n * 100.0 if n <= 1.0 else n, 2)
+    FLAT = {
+        "homeWin": ("prob_home_win", False), "draw": ("prob_draw", False),
+        "awayWin": ("prob_away_win", False), "over15": ("prob_over_15", False),
+        "under15": ("prob_over_15", True),   "over25": ("prob_over_25", False),
+        "under25": ("prob_over_25", True),   "under35": ("prob_over_35", True),
+        "btts":    ("prob_btts_yes", False),
+    }
+    if market_key in FLAT:
+        field, invert = FLAT[market_key]
+        val = pred.get(field)
+        if val is not None:
+            p = _to_pct(val)
+            if p is not None:
+                return round(100.0 - p, 2) if invert else p
+    markets = pred.get("markets") or pred.get("grouped_markets") or {}
+    if isinstance(markets, dict):
+        GROUPED = {
+            "homeWin": ("1x2","HOME"), "draw": ("1x2","DRAW"), "awayWin": ("1x2","AWAY"),
+            "over15": ("over_under_15","over"), "under15": ("over_under_15","under"),
+            "over25": ("over_under_25","over"), "under25": ("over_under_25","under"),
+            "under35": ("over_under_35","under"), "btts": ("btts","yes"),
+        }
+        if market_key in GROUPED:
+            mkt_name, outcome = GROUPED[market_key]
+            mkt_block = markets.get(mkt_name)
+            if isinstance(mkt_block, dict):
+                val = mkt_block.get(outcome) or next(
+                    (v for k, v in mkt_block.items() if str(k).lower() == outcome.lower()), None)
+                if val is not None:
+                    return _to_pct(val)
+    return None
+
+
 def player_quality_risk(row: Dict[str, Any], quality_scores: Dict) -> float:
     """
     Risc bazat pe CALITATEA jucătorilor absenți (nu doar numărul).
@@ -1342,6 +1390,7 @@ def main():
             venue_data = bundle.get("venue") if isinstance(bundle, dict) else None
             venue_bonus_val = venue_market_bonus(venue_data, market_key)
             lq_bonus_val    = lineup_quality_bonus(row, _pp_quality, market_key)
+            v2_ml_prob_val  = _extract_v2_ml_prob(bundle, market_key) if isinstance(bundle, dict) else None
             market_bonus = market_intel_bonus(odds_meta)
             stats_bonus = stats_context_bonus(feat, market_key)
             player_bonus = player_context_bonus(feat, market_key)
@@ -1417,6 +1466,18 @@ def main():
                 "venue_bonus": venue_bonus_val,
                 "lineup_quality_bonus": lq_bonus_val,
                 "venue_surface": (venue_data or {}).get("surface") if venue_data else None,
+                "v2_ml_prob": v2_ml_prob_val,
+                "is_local_derby": bool(row.get("is_local_derby")),
+                "is_neutral_ground": bool(row.get("is_neutral_ground")),
+                "travel_distance_km": row.get("travel_distance_km"),
+                "weather": row.get("weather"),
+                "pitch_condition": row.get("pitch_condition"),
+                "h2h_matches": row.get("h2h_matches"),
+                "h2h_draw_rate": row.get("h2h_draw_rate"),
+                "h2h_btts_rate": row.get("h2h_btts_rate"),
+                "h2h_avg_goals": row.get("h2h_avg_goals"),
+                "h2h_home_win_rate": row.get("h2h_home_win_rate"),
+                "h2h_away_win_rate": row.get("h2h_away_win_rate"),
                 "player_rating_diff_form5": feat.get("player_rating_diff_form5"),
                 "player_attack_xg_sum_form5": feat.get("player_attack_xg_sum_form5"),
                 "player_attack_xg_diff_form5": feat.get("player_attack_xg_diff_form5"),
