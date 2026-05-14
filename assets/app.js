@@ -7384,28 +7384,31 @@ function renderMatches(){
   if(MATCHES_SCROLL_OBSERVER){ try{ MATCHES_SCROLL_OBSERVER.disconnect(); }catch(e){} MATCHES_SCROLL_OBSERVER = null; }
 
   function buildBatchHtml(startIdx, count){
-    // Wrapper defensiv — dacă renderCard aruncă, sare meciul fără a afecta restul
     var slice = MATCHES_FILTERED_CACHE.slice(startIdx, startIdx + count);
 
-    // Pas 1: randăm fără număr, colectăm HTML real
-    var htmlArr = slice.map(function(m){
+    // Pas 1: pre-asignăm un număr sentinel (99000+idx) ca să fie truthy în renderCard
+    // Astfel m17IndexBadge se generează, și îl vom înlocui cu numărul real după
+    var SENTINEL_BASE = 99000;
+    slice.forEach(function(m, idx){ if(m && typeof m === 'object') m._renderNumber = SENTINEL_BASE + idx; });
+
+    // Pas 2: randăm cu sentinel — dacă aruncă, card-ul e gol și nu consumă număr
+    var htmlArr = slice.map(function(m, idx){
       if(!m || typeof m !== 'object') return '';
-      try { return renderCard(m, null) || ''; }
-      catch(e){ console.error('[VEYRA] renderCard err:', m.home, '-', m.away, '|', e && e.message); return ''; }
+      try { return renderCard(m, SENTINEL_BASE + idx) || ''; }
+      catch(e){ console.error('[VEYRA] renderCard err:', m && m.home, '-', m && m.away, '|', e && e.message); return ''; }
     });
 
-    // Pas 2: numerotare globală — incrementăm DOAR pentru carduri non-goale
+    // Pas 3: numerotare reală — incrementăm DOAR pentru carduri randate cu succes
     var globalNum = startIdx;
-    htmlArr = htmlArr.map(function(html){
+    htmlArr = htmlArr.map(function(html, idx){
       if(!html) return '';
       globalNum++;
-      // Injectăm numărul corect în badge-ul deja randat
-      return html.replace(/(class="m17-index-badge"[^>]*>)#\d+/, function(m){ return m.replace(/#\d+/, '#' + globalNum); });
+      var sentinel = SENTINEL_BASE + idx;
+      // Înlocuim sentinel-ul cu numărul real în badge
+      var replaced = html.split('#' + sentinel).join('#' + globalNum);
+      if(slice[idx] && typeof slice[idx] === 'object') slice[idx]._renderNumber = globalNum;
+      return replaced;
     });
-
-    // Pas 3: actualizăm _renderNumber pe obiectele match pentru consistență
-    var gi = startIdx;
-    slice.forEach(function(m, i){ if(m && typeof m === 'object' && htmlArr[i]) { gi++; m._renderNumber = gi; } });
 
     if(sort === 'date'){
       var html = '';
