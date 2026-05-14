@@ -243,7 +243,15 @@
   }
 
   function prepareSignals(data){
-    var list=rawSignals(data.ev||{},data.ai||{}).map(scoreSignal).sort(function(a,b){return f(b.truth_score)-f(a.truth_score);});
+    var raw=rawSignals(data.ev||{},data.ai||{}).map(scoreSignal);
+
+    // FIX: deduplicate by event_id + market_key — același meci+piață apărea de 2 ori
+    var deduped={};
+    raw.forEach(function(s){
+      var key=String(s.event_id||s.id||'')+'__'+String(s.market_key||s.market||'');
+      if(!deduped[key]||f(s.truth_score)>f(deduped[key].truth_score)) deduped[key]=s;
+    });
+    var list=Object.values(deduped).sort(function(a,b){return f(b.truth_score)-f(a.truth_score);});
     var strict=list.filter(function(s){return s.truth_action==='PAREAZĂ';});
     var riskCtrl=list.filter(function(s){return s.truth_action==='RISC CONTROLAT';});
     var watch=list.filter(function(s){return s.truth_action==='WATCHLIST';});
@@ -391,20 +399,35 @@
   }
 
   function updateMoreMenu(prep){
-    document.querySelectorAll('.more-card-btn').forEach(function(btn){
-      var title=btn.querySelector('.more-card-title');
-      var sub=btn.querySelector('.more-card-sub');
-      var text=title?String(title.textContent||''):'';
-      if(!(text.indexOf('Motor de Predic')>=0||text.indexOf('VEYRA')>=0||text.indexOf('TruthGuard')>=0||text.indexOf('Supreme')>=0))return;
-      if(title) title.textContent='🧠 VEYRA TruthGuard Engine v7';
-      if(sub){
-        var v=(prep.strict||[]).length+(prep.riskCtrl||[]).length;
-        var et=prep.avgEdge>0?(' · Edge ø '+plus(prep.avgEdge.toFixed(1))+'pp'):'';
-        sub.innerHTML='<span style="color:var(--acc);font-weight:900">'+prep.finalList.length+' afișate</span>'+
-          ' · '+v+' validate ('+((prep.strict||[]).length)+' stricte)'+et+
-          (prep.avgRoi>0?' · ROI est. +'+prep.avgRoi.toFixed(1)+'%':'');
+    // Stocăm prep global pentru retry-uri — app.js suprascrie cardul la re-render
+    window.__TG7_PREP__ = prep;
+    function _doUpdate(){
+      document.querySelectorAll('.more-card-btn').forEach(function(btn){
+        var title=btn.querySelector('.more-card-title');
+        var sub=btn.querySelector('.more-card-sub');
+        var text=title?String(title.textContent||''):'';
+        if(!(text.indexOf('Motor de Predic')>=0||text.indexOf('VEYRA')>=0||text.indexOf('TruthGuard')>=0||text.indexOf('Supreme')>=0)) return;
+        if(title) title.textContent='🧠 VEYRA TruthGuard Engine v7';
+        if(sub){
+          var v=(prep.strict||[]).length+(prep.riskCtrl||[]).length;
+          var et=prep.avgEdge>0?(' · Edge ø '+plus(prep.avgEdge.toFixed(1))+'pp'):'';
+          sub.innerHTML='<span style="color:var(--acc);font-weight:900">'+prep.finalList.length+' afișate</span>'+
+            ' · '+v+' validate ('+((prep.strict||[]).length)+' stricte)'+et+
+            (prep.avgRoi>0?' · ROI est. +'+prep.avgRoi.toFixed(1)+'%':'');
+        }
+      });
+    }
+    _doUpdate();
+    setTimeout(_doUpdate, 600);
+    setTimeout(_doUpdate, 1800);
+    // MutationObserver: re-aplică la fiecare re-render al more-menu
+    try{
+      var moreRoot=document.querySelector('.more-menu-list,.more-cards,.more-section,[class*="more-card"]');
+      if(moreRoot&&!moreRoot.__tg7obs){
+        moreRoot.__tg7obs=true;
+        new MutationObserver(function(){ setTimeout(_doUpdate,80); }).observe(moreRoot,{childList:true,subtree:true});
       }
-    });
+    }catch(e){}
   }
 
   function render(){
