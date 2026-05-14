@@ -389,6 +389,19 @@ def apply_catboost(entry, signals_map):
         "market_movement_balance": "movement_balance",
         "market_odds_dispersion": "odds_dispersion",
         "market_best_bookmaker": "best_bookmaker",
+        # Context flags noi — pentru TruthGuard v7 chips și scoring
+        "supreme_player_quality_risk": "player_quality_risk",
+        "supreme_news_risk_score": "news_risk_score",
+        "supreme_venue_surface": "venue_surface",
+        "supreme_venue_bonus": "venue_bonus",
+        "supreme_lineup_quality_bonus": "lineup_quality_bonus",
+        "supreme_v2_ml_prob": "v2_ml_prob",
+        "supreme_is_local_derby": "is_local_derby",
+        "supreme_is_neutral_ground": "is_neutral_ground",
+        "supreme_h2h_draw_rate": "h2h_draw_rate",
+        "supreme_h2h_btts_rate": "h2h_btts_rate",
+        "supreme_h2h_avg_goals": "h2h_avg_goals",
+        "supreme_h2h_matches": "h2h_matches",
     }
     for out_key, sig_key in passthrough.items():
         if sig.get(sig_key) is not None:
