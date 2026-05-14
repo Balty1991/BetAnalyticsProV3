@@ -7384,30 +7384,50 @@ function renderMatches(){
   if(MATCHES_SCROLL_OBSERVER){ try{ MATCHES_SCROLL_OBSERVER.disconnect(); }catch(e){} MATCHES_SCROLL_OBSERVER = null; }
 
   function buildBatchHtml(startIdx, count){
-    // Wrapper defensiv — dacă renderCard aruncă pentru un match, îl sare
-    var _safeRenderCard = function(m){ try { return renderCard(m, m && m._renderNumber) || ''; } catch(e) { console.error('renderCard error:', e && e.message); return ''; } };
+    // Wrapper defensiv — dacă renderCard aruncă, sare meciul fără a afecta restul
     var slice = MATCHES_FILTERED_CACHE.slice(startIdx, startIdx + count);
-    slice.forEach(function(m, idx){ if(m && typeof m === 'object') m._renderNumber = startIdx + idx + 1; });
+
+    // Pas 1: randăm fără număr, colectăm HTML real
+    var htmlArr = slice.map(function(m){
+      if(!m || typeof m !== 'object') return '';
+      try { return renderCard(m, null) || ''; }
+      catch(e){ console.error('[VEYRA] renderCard err:', m.home, '-', m.away, '|', e && e.message); return ''; }
+    });
+
+    // Pas 2: numerotare globală — incrementăm DOAR pentru carduri non-goale
+    var globalNum = startIdx;
+    htmlArr = htmlArr.map(function(html){
+      if(!html) return '';
+      globalNum++;
+      // Injectăm numărul corect în badge-ul deja randat
+      return html.replace(/(class="m17-index-badge"[^>]*>)#\d+/, function(m){ return m.replace(/#\d+/, '#' + globalNum); });
+    });
+
+    // Pas 3: actualizăm _renderNumber pe obiectele match pentru consistență
+    var gi = startIdx;
+    slice.forEach(function(m, i){ if(m && typeof m === 'object' && htmlArr[i]) { gi++; m._renderNumber = gi; } });
+
     if(sort === 'date'){
       var html = '';
       var groups = {};
       var groupOrder = [];
-      slice.forEach(function(m){
-        if(!groups[m.dateLabel]){ groups[m.dateLabel] = []; groupOrder.push(m.dateLabel); }
-        groups[m.dateLabel].push(m);
+      slice.forEach(function(m, i){
+        if(!m || !htmlArr[i]) return;
+        var dk = m.dateLabel || 'unknown';
+        if(!groups[dk]){ groups[dk] = []; groupOrder.push(dk); }
+        groups[dk].push(htmlArr[i]);
       });
       groupOrder.forEach(function(date){
-        // Check if group div already exists (for appending)
         var existingGroup = container.querySelector('[data-date-group="' + date + '"]');
         if(existingGroup && startIdx > 0){
-          existingGroup.querySelector('.matches-grid').innerHTML += groups[date].map(_safeRenderCard).join('');
+          existingGroup.querySelector('.matches-grid').innerHTML += groups[date].join('');
         } else {
-          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">📅 ' + date + '</div><div class="matches-grid">' + groups[date].map(_safeRenderCard).join('') + '</div></div>';
+          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">📅 ' + date + '</div><div class="matches-grid">' + groups[date].join('') + '</div></div>';
         }
       });
       return html;
     }
-    return slice.map(_safeRenderCard).join('');
+    return htmlArr.join('');
   }
 
   // Render primul batch.
@@ -7446,6 +7466,20 @@ function renderMatches(){
     container.innerHTML = '<div class="matches-grid" id="matches-grid-inner">' + firstBatch + '</div>';
   }
   MATCHES_RENDERED_COUNT = Math.min(MATCHES_PAGE_SIZE, MATCHES_FILTERED_CACHE.length);
+
+  // FIX: actualizăm contorul cu numărul REAL de carduri randate
+  // (unele pot eșua silențios → count afișat = count vizibil)
+  try {
+    var _realCount = container.querySelectorAll('.match-card').length;
+    if(_realCount > 0 && _realCount !== filtered.length){
+      var _fc = $('filter-count');
+      if(_fc){
+        var _label = CURRENT_FILTER === 'motor_validated' ? ' validate' : CURRENT_FILTER === 'bet_ok' ? ' OK' : ' meciuri';
+        _fc.textContent = _realCount + _label;
+        _fc.title = _realCount + ' meciuri afișate (' + filtered.length + ' în total, ' + (filtered.length - _realCount) + ' cu eroare de randare)';
+      }
+    }
+  } catch(_e){}
 
   // Funcție pentru a adăuga batch-ul următor
   function appendNextBatch(){
