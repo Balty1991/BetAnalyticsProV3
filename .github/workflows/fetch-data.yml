@@ -98,6 +98,18 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Team form cache
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          if [ -f fetch_team_form_cache.py ]; then
+            echo "Fetching team form cache at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            timeout 360s python -u fetch_team_form_cache.py || echo "Team form cache skipped/timed out; non-fatal."
+          else
+            echo "fetch_team_form_cache.py missing; skip."
+          fi
+        continue-on-error: true
+
       - name: Verify cached data exists
         run: |
           test -f data/predictions.json
