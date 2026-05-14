@@ -61,6 +61,28 @@ REFEREE_STATS: Dict[int, Any] = {}  # populat lazy în main()
 
 V2_ENRICHMENT_CACHE: Dict[str, Any] = {}  # populat lazy în main()
 
+TEAM_FORM_CACHE: Dict[str, Any] = {}  # populat lazy în main() din team_form_cache.json
+
+
+def load_team_form_cache() -> Dict[str, Any]:
+    """
+    Încarcă data/team_form_cache.json generat de fetch_team_form_cache.py.
+    Returnează dict {team_id (str): form_dict} cu form_score, form_string etc.
+    """
+    path = os.path.join(DATA_DIR, "team_form_cache.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        teams = data.get("teams") or {}
+        if isinstance(teams, dict):
+            return {str(k): v for k, v in teams.items()}
+        return {}
+    except Exception as e:
+        print(f"[TeamForm] load failed (non-fatal): {e}")
+        return {}
+
 
 def load_v2_enrichment_cache() -> Dict[str, Any]:
     """
@@ -3567,6 +3589,22 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
             row["h2h_btts_rate"]     = None
             row["h2h_avg_goals"]     = None
 
+        # ── GAP team form: forma directă W/D/L per echipă ──────────────────
+        home_id_str = str(event.get("home_team_id") or event.get("home_id") or "")
+        away_id_str = str(event.get("away_team_id") or event.get("away_id") or "")
+        home_form = TEAM_FORM_CACHE.get(home_id_str) or {}
+        away_form = TEAM_FORM_CACHE.get(away_id_str) or {}
+        row["home_form_score"]  = home_form.get("form_score")
+        row["away_form_score"]  = away_form.get("form_score")
+        row["home_form_string"] = home_form.get("form_string")
+        row["away_form_string"] = away_form.get("form_string")
+        row["home_avg_goals_scored"] = home_form.get("avg_goals_scored_last5")
+        row["away_avg_goals_scored"] = away_form.get("avg_goals_scored_last5")
+        row["home_avg_goals_conceded"] = home_form.get("avg_goals_conceded_last5")
+        row["away_avg_goals_conceded"] = away_form.get("avg_goals_conceded_last5")
+        row["home_team_id"] = home_id_str
+        row["away_team_id"] = away_id_str
+
         # ─── Funfacts pre-meci ─────────────────────────────────────────────
         if event_id:
             row["funfacts"] = []
@@ -3732,6 +3770,42 @@ def v2_score_adjustment(row, market_key):
             elif h2h_away_win_rate <= 0.15:
                 delta -= 1.5
 
+    # ── Team form: W/D/L ultimele 5 meciuri ─────────────────────────────────
+    h_form = float(row.get("home_form_score") or 50.0)
+    a_form = float(row.get("away_form_score") or 50.0)
+    # Folosim form_score doar dacă avem date reale (diferit de 50.0 default)
+    has_form = (row.get("home_form_score") is not None or row.get("away_form_score") is not None)
+    if has_form:
+        form_diff = h_form - a_form
+        avg_form  = (h_form + a_form) / 2
+        if market_key == "homeWin":
+            if form_diff >= 30:    delta += 2.0
+            elif form_diff >= 18:  delta += 1.0
+            elif form_diff <= -30: delta -= 1.5
+            elif form_diff <= -18: delta -= 0.8
+        elif market_key == "awayWin":
+            if form_diff <= -30:   delta += 2.0
+            elif form_diff <= -18: delta += 1.0
+            elif form_diff >= 30:  delta -= 1.5
+            elif form_diff >= 18:  delta -= 0.8
+        elif market_key == "draw":
+            if abs(form_diff) <= 10 and 40 <= avg_form <= 65:
+                delta += 1.0
+        elif market_key in {"over25", "btts"}:
+            h_atk = float(row.get("home_avg_goals_scored") or 0)
+            a_atk = float(row.get("away_avg_goals_scored") or 0)
+            if h_atk >= 1.8 and a_atk >= 1.4:
+                delta += 1.5
+            elif h_atk <= 0.8 and a_atk <= 0.8:
+                delta -= 1.5
+        elif market_key == "under35":
+            h_def = float(row.get("home_avg_goals_conceded") or 0)
+            a_def = float(row.get("away_avg_goals_conceded") or 0)
+            if h_def <= 0.8 and a_def <= 0.8:
+                delta += 1.5
+            elif h_def >= 1.8 and a_def >= 1.8:
+                delta -= 1.5
+
     return round(delta, 2)
 
 
@@ -3767,12 +3841,15 @@ def main():
         REFEREE_STATS = load_referee_stats()
         print(f"[V2] Referee stats loaded: {len(REFEREE_STATS)} arbitri din cache")
 
-        # 0a. V2 Enrichment cache — load din cache local (generat de fetch_v2_enrichment_cache.py)
-        # Conține: context flags (derby/neutral/travel/weather/pitch), BSD v2 ML predictions,
-        # H2H stats — toate cele 3 gap-uri citesc din acest cache.
+        # 0a. V2 Enrichment cache
         global V2_ENRICHMENT_CACHE
         V2_ENRICHMENT_CACHE = load_v2_enrichment_cache()
         print(f"[V2Cache] Loaded {len(V2_ENRICHMENT_CACHE)} event bundles din v2_enrichment_cache.json")
+
+        # 0b. Team form cache — forma directă W/D/L per echipă
+        global TEAM_FORM_CACHE
+        TEAM_FORM_CACHE = load_team_form_cache()
+        print(f"[TeamForm] Loaded {len(TEAM_FORM_CACHE)} echipe din team_form_cache.json")
 
         # 0b. Lineup data — load din cache local (generat de fetch_lineups_today.py)
         global LINEUPS_TODAY
