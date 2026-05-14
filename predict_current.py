@@ -822,6 +822,136 @@ def lineup_quality_bonus(row: Dict[str, Any], quality_scores: Dict, market_key: 
     return round(clamp(bonus, -1.5, 1.5), 2)
 
 
+def _extract_manager_tactical(manager_raw: Any) -> Dict[str, Any]:
+    """Extrage pressing_intensity, defensive_line din profilul managerului BSD."""
+    if not isinstance(manager_raw, dict):
+        return {}
+    data = manager_raw.get("manager") or manager_raw.get("data") or manager_raw
+    if not isinstance(data, dict):
+        return {}
+    def _fopt(v):
+        try: return float(v)
+        except Exception: return None
+    press = _fopt(data.get("pressing_intensity") or data.get("press_intensity") or
+                  data.get("pressing") or data.get("press"))
+    defline = str(data.get("defensive_line") or data.get("def_line") or "").lower() or None
+    return {
+        "pressing_intensity": press,
+        "defensive_line":     defline,
+        "preferred_formation": data.get("preferred_formation") or data.get("formation"),
+        "over25_rate": _fopt(data.get("over25_pct") or data.get("over_25_rate")),
+        "btts_rate":   _fopt(data.get("btts_pct")   or data.get("btts_rate")),
+        "cs_rate":     _fopt(data.get("clean_sheet_pct") or data.get("cs_rate")),
+    }
+
+
+def tactical_match_bonus(row: Dict[str, Any], market_key: str) -> float:
+    """
+    Bonus din pressing_intensity și defensive_line ale antrenorilor.
+    Date din row['v2_managers'] → bundle['managers'] (fetch_v2_enrichment_cache.py).
+    High press ambii → joc deschis → over/btts +. Low press ambii → under35 +.
+    """
+    managers_raw = row.get("v2_managers") or {}
+    if not isinstance(managers_raw, dict):
+        return 0.0
+    home_tac = _extract_manager_tactical(managers_raw.get("home_coach_id") or {})
+    away_tac = _extract_manager_tactical(managers_raw.get("away_coach_id") or {})
+    home_press = home_tac.get("pressing_intensity")
+    away_press = away_tac.get("pressing_intensity")
+    home_def   = home_tac.get("defensive_line")
+    away_def   = away_tac.get("defensive_line")
+    bonus = 0.0
+    if home_press is not None and away_press is not None:
+        avg_press  = (home_press + away_press) / 2
+        press_diff = home_press - away_press
+        if market_key in ("over15", "over25", "btts"):
+            if avg_press >= 0.70:   bonus += 0.50
+            elif avg_press >= 0.55: bonus += 0.25
+            elif avg_press <= 0.35: bonus -= 0.30
+        elif market_key == "under35":
+            if avg_press <= 0.35:   bonus += 0.40
+            elif avg_press >= 0.70: bonus -= 0.25
+        elif market_key == "homeWin":
+            if press_diff >= 0.25:  bonus += 0.35
+            elif press_diff <= -0.25: bonus -= 0.25
+        elif market_key == "awayWin":
+            if press_diff <= -0.25: bonus += 0.35
+            elif press_diff >= 0.25: bonus -= 0.25
+    if home_def and away_def:
+        both_high = (home_def == "high" and away_def == "high")
+        both_low  = (home_def == "low"  and away_def == "low")
+        if market_key in ("over25", "btts"):
+            if both_high: bonus += 0.30
+            elif both_low: bonus -= 0.30
+        elif market_key == "under35":
+            if both_low:   bonus += 0.30
+            elif both_high: bonus -= 0.20
+        elif market_key == "homeWin":
+            if home_def == "high" and away_def == "low": bonus += 0.20
+        elif market_key == "awayWin":
+            if away_def == "high" and home_def == "low": bonus += 0.20
+    return round(clamp(bonus, -1.5, 1.5), 2)
+
+
+def team_form_bonus(row: Dict[str, Any], form_cache: Dict, market_key: str) -> float:
+    """
+    Bonus din forma directă W/D/L ultimele 5 meciuri.
+    Date din team_form_cache.json (fetch_team_form_cache.py).
+    form_score 0-100: 100=5V, 50=3V1E1Î, 0=5Î.
+    """
+    if not form_cache:
+        return 0.0
+    home_id = str(row.get("home_team_id") or row.get("home_api_id") or row.get("home_id") or "")
+    away_id = str(row.get("away_team_id") or row.get("away_api_id") or row.get("away_id") or "")
+    hf = form_cache.get(home_id) or {}
+    af = form_cache.get(away_id) or {}
+    if not hf and not af:
+        return 0.0
+    h_sc = _f(hf.get("form_score"), 50.0)
+    a_sc = _f(af.get("form_score"), 50.0)
+    diff = h_sc - a_sc
+    avg  = (h_sc + a_sc) / 2
+    bonus = 0.0
+    if market_key == "homeWin":
+        if diff >= 30:    bonus += 0.60
+        elif diff >= 18:  bonus += 0.35
+        elif diff >= 8:   bonus += 0.15
+        elif diff <= -30: bonus -= 0.45
+        elif diff <= -18: bonus -= 0.25
+    elif market_key == "awayWin":
+        if diff <= -30:   bonus += 0.60
+        elif diff <= -18: bonus += 0.35
+        elif diff <= -8:  bonus += 0.15
+        elif diff >= 30:  bonus -= 0.45
+        elif diff >= 18:  bonus -= 0.25
+    elif market_key == "draw":
+        if abs(diff) <= 10 and 40 <= avg <= 65:
+            bonus += 0.25
+    elif market_key in ("over25", "btts"):
+        h_atk = _f(hf.get("avg_goals_scored_last5"), 0)
+        a_atk = _f(af.get("avg_goals_scored_last5"), 0)
+        if h_atk >= 1.8 and a_atk >= 1.4:   bonus += 0.40
+        elif h_atk >= 1.5 and a_atk >= 1.2: bonus += 0.20
+        elif h_atk <= 0.8 and a_atk <= 0.8: bonus -= 0.35
+        if market_key == "btts":
+            h_btts = _f(hf.get("btts_last5"), 0)
+            a_btts = _f(af.get("btts_last5"), 0)
+            if h_btts >= 4 and a_btts >= 3: bonus += 0.30
+    elif market_key == "over15":
+        h_atk = _f(hf.get("avg_goals_scored_last5"), 0)
+        a_atk = _f(af.get("avg_goals_scored_last5"), 0)
+        if h_atk + a_atk >= 3.5: bonus += 0.25
+    elif market_key == "under35":
+        h_def = _f(hf.get("avg_goals_conceded_last5"), 0)
+        a_def = _f(af.get("avg_goals_conceded_last5"), 0)
+        if h_def <= 0.8 and a_def <= 0.8:   bonus += 0.40
+        elif h_def >= 1.8 and a_def >= 1.8: bonus -= 0.35
+        h_cs = _f(hf.get("clean_sheets_last5"), 0)
+        a_cs = _f(af.get("clean_sheets_last5"), 0)
+        if h_cs >= 3 and a_cs >= 3: bonus += 0.20
+    return round(clamp(bonus, -1.5, 1.5), 2)
+
+
 def market_intel_bonus(odds_meta: Dict[str, Any]) -> float:
     if not isinstance(odds_meta, dict):
         return 0.0
@@ -1303,9 +1433,10 @@ def main():
     # Surse noi: calitate jucători, news risk, venue
     player_profiles_cache = load_json(DATA_DIR / "player_profiles_cache.json", {}) or {}
     social_news_cache_raw  = load_json(DATA_DIR / "social_news_cache.json", {}) or {}
-    # Normalizăm structura celor 2 cache-uri noi
+    team_form_cache_raw    = load_json(DATA_DIR / "team_form_cache.json", {}) or {}
     _pp_quality  = player_profiles_cache.get("quality_scores") or {} if isinstance(player_profiles_cache, dict) else {}
     _social_evts = social_news_cache_raw.get("events") or {} if isinstance(social_news_cache_raw, dict) else {}
+    _team_form   = team_form_cache_raw.get("teams") or {} if isinstance(team_form_cache_raw, dict) else {}
     cache_counts = {
         "stats": len([v for v in stats_cache.values() if v]) if isinstance(stats_cache, dict) else 0,
         "incidents": len([v for v in incidents_cache.values() if v]) if isinstance(incidents_cache, dict) else 0,
@@ -1313,6 +1444,7 @@ def main():
         "player_stats": len([v for v in player_stats_cache.values() if v]) if isinstance(player_stats_cache, dict) else 0,
         "player_profiles": len([v for v in _pp_quality.values() if v]) if isinstance(_pp_quality, dict) else 0,
         "social_news": len([v for v in _social_evts.values() if v]) if isinstance(_social_evts, dict) else 0,
+        "team_form": len([v for v in _team_form.values() if v]) if isinstance(_team_form, dict) else 0,
     }
     print(f"Cache v2 stats/incidents/shotmap/player_stats: {cache_counts}")
     player_form_index = build_player_form_index(player_stats_cache)
@@ -1391,6 +1523,8 @@ def main():
             venue_bonus_val = venue_market_bonus(venue_data, market_key)
             lq_bonus_val    = lineup_quality_bonus(row, _pp_quality, market_key)
             v2_ml_prob_val  = _extract_v2_ml_prob(bundle, market_key) if isinstance(bundle, dict) else None
+            tactical_bonus_val = tactical_match_bonus(row, market_key)
+            form_bonus_val     = team_form_bonus(row, _team_form, market_key)
             market_bonus = market_intel_bonus(odds_meta)
             stats_bonus = stats_context_bonus(feat, market_key)
             player_bonus = player_context_bonus(feat, market_key)
@@ -1400,10 +1534,11 @@ def main():
                          - lineup_risk  * 0.18
                          - context_risk * 0.16
                          - player_risk  * 0.20
-                         - pq_risk      * 0.12   # calitate jucători absenți
-                         - news_risk    * 0.10)  # risc din știri pre-meci
+                         - pq_risk      * 0.12
+                         - news_risk    * 0.10)
                 + market_bonus + stats_bonus + player_bonus
-                + venue_bonus_val + lq_bonus_val,  # bonusuri calitative
+                + venue_bonus_val + lq_bonus_val
+                + tactical_bonus_val + form_bonus_val,
                 0.0, 100.0
             ), 1)
             # Gating suplimentar: nu ridicăm semnale premium când datele sunt subțiri, contextul e riscant sau modelele nu se confirmă.
@@ -1465,6 +1600,12 @@ def main():
                 "news_risk_score": round(news_risk / 0.35, 3) if news_risk else 0.0,
                 "venue_bonus": venue_bonus_val,
                 "lineup_quality_bonus": lq_bonus_val,
+                "tactical_match_bonus": tactical_bonus_val,
+                "team_form_bonus": form_bonus_val,
+                "home_form_score": _team_form.get(str(row.get("home_team_id") or row.get("home_id") or ""), {}).get("form_score"),
+                "away_form_score": _team_form.get(str(row.get("away_team_id") or row.get("away_id") or ""), {}).get("form_score"),
+                "home_form_string": _team_form.get(str(row.get("home_team_id") or row.get("home_id") or ""), {}).get("form_string"),
+                "away_form_string": _team_form.get(str(row.get("away_team_id") or row.get("away_id") or ""), {}).get("form_string"),
                 "venue_surface": (venue_data or {}).get("surface") if venue_data else None,
                 "v2_ml_prob": v2_ml_prob_val,
                 "is_local_derby": bool(row.get("is_local_derby")),

@@ -402,6 +402,12 @@ def apply_catboost(entry, signals_map):
         "supreme_h2h_btts_rate": "h2h_btts_rate",
         "supreme_h2h_avg_goals": "h2h_avg_goals",
         "supreme_h2h_matches": "h2h_matches",
+        "supreme_tactical_match_bonus": "tactical_match_bonus",
+        "supreme_team_form_bonus": "team_form_bonus",
+        "supreme_home_form_score": "home_form_score",
+        "supreme_away_form_score": "away_form_score",
+        "supreme_home_form_string": "home_form_string",
+        "supreme_away_form_string": "away_form_string",
     }
     for out_key, sig_key in passthrough.items():
         if sig.get(sig_key) is not None:
