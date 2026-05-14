@@ -274,13 +274,56 @@
     var ac=isS?'var(--grn)':isR?'var(--yel)':isW?'#60a5fa':'var(--red)';
     var ec=s.truth_edge>=9?'#47FFD8':s.truth_edge>=6?'#A7FFC0':s.truth_edge>=4?'#F6C960':'#FF9E7D';
     var blk=(s.truth_blocks||[]).slice(0,2).map(esc).join(' • ');
+
+    // ── Context chips ─────────────────────────────────────────────────────
     var ctxC='';
     if(s.truth_derby) ctxC+='<span class="tg7-chip tg7-wyarn">🔥 Derby</span>';
-    if(s.truth_bwx) ctxC+='<span class="tg7-chip tg7-wyarn">🌧️ Vreme</span>';
-    if(s.truth_h2h>=4) ctxC+='<span class="tg7-chip tg7-wok">H2H ✓</span>';
-    if(s.truth_h2h<=-4) ctxC+='<span class="tg7-chip tg7-wbad">H2H ✗</span>';
-    if(s.truth_v2>=5) ctxC+='<span class="tg7-chip tg7-wok">v2 ML ✓</span>';
-    if(s.truth_v2<=-6) ctxC+='<span class="tg7-chip tg7-wbad">v2 ML ✗</span>';
+    if(s.truth_bwx)   ctxC+='<span class="tg7-chip tg7-wyarn">🌧️ Vreme</span>';
+    if(s.truth_h2h>=4)   ctxC+='<span class="tg7-chip tg7-wok">H2H ✓</span>';
+    if(s.truth_h2h<=-4)  ctxC+='<span class="tg7-chip tg7-wbad">H2H ✗</span>';
+    if(s.truth_v2>=5)    ctxC+='<span class="tg7-chip tg7-wok">v2 ML ✓</span>';
+    if(s.truth_v2<=-6)   ctxC+='<span class="tg7-chip tg7-wbad">v2 ML ✗</span>';
+    // Line movement (bani sharp)
+    var mvBal=f(s.movement_balance,NaN);
+    if(isFinite(mvBal)&&Math.abs(mvBal)>=3){
+      ctxC+='<span class="tg7-chip '+(mvBal>0?'tg7-wok':'tg7-wyarn')+'">'+(mvBal>0?'📈':'📉')+(Math.abs(mvBal)>=8?' Sharp':' Mișcare')+' '+plus(mvBal,0)+'</span>';
+    }
+    // Model dominant din blend
+    var blendW=(s.blend&&s.blend.weights)||{};
+    var topMk='',topMw=0;
+    var mnames={'catboost':'CatBoost','api':'BSD API','poisson':'Poisson','stats_profile':'Stats','market':'Market'};
+    Object.keys(blendW).forEach(function(k){var w=f(blendW[k],0);if(w>topMw){topMw=w;topMk=k;}});
+    if(topMk&&topMw>=0.35) ctxC+='<span class="tg7-chip" title="Model dominant">'+esc(mnames[topMk]||topMk)+' '+(topMw*100).toFixed(0)+'%</span>';
+    // Data quality
+    var dq=f(s.data_quality_score,NaN);
+    if(isFinite(dq)&&dq>=80) ctxC+='<span class="tg7-chip '+(dq>=90?'tg7-wok':'')+'">Q '+dq.toFixed(0)+'</span>';
+    // Tactic (pressing / defensive line)
+    var tactB=f(s.tactical_match_bonus,NaN);
+    if(isFinite(tactB)&&Math.abs(tactB)>=0.3) ctxC+='<span class="tg7-chip '+(tactB>0?'tg7-wok':'tg7-wyarn')+'" title="Pressing/linie defensivă">⚙️ '+(tactB>0?'+':'')+tactB.toFixed(1)+'</span>';
+    // News risk
+    var nRisk=f(s.news_risk_score,NaN);
+    if(isFinite(nRisk)&&nRisk>=0.30) ctxC+='<span class="tg7-chip tg7-wyarn" title="Știri risc pre-meci">📰 '+pct(nRisk,0)+'</span>';
+
+    // ── Forma echipelor (WWDLL) ──────────────────────────────────────────
+    var hForm=String(s.home_form_string||s.home_form||'');
+    var aForm=String(s.away_form_string||s.away_form||'');
+    var formRow='';
+    if(hForm||aForm){
+      function _fStr(str,lbl){
+        if(!str) return '';
+        var cells=str.slice(0,5).split('').map(function(c){
+          var col=c==='W'?'#47FFD8':c==='D'?'#F6C960':'#FF7D7D';
+          return '<b style="color:'+col+'">'+c+'</b>';
+        }).join(' ');
+        return '<span style="color:#8B98AF;font-size:10px;margin-right:3px">'+esc(lbl)+'</span>'+cells;
+      }
+      formRow='<div class="tg7-form-row">'+
+        _fStr(hForm,s.home||'H')+
+        (hForm&&aForm?'<span style="color:#4A5568;margin:0 6px">·</span>':'')+
+        _fStr(aForm,s.away||'A')+
+      '</div>';
+    }
+
     return ''+
       '<div class="'+cls+'">'+
         '<div class="tg7-ctop">'+
@@ -293,6 +336,7 @@
           '</div>'+
           '<div class="tg7-cscore"><div class="tg7-csnum">'+num(s.truth_score,0)+'</div><div class="tg7-cstier">'+esc(s.truth_tier)+'</div></div>'+
         '</div>'+
+        formRow+
         '<div class="tg7-cbar">'+
           '<div class="tg7-cbarrow">'+
             '<span class="tg7-cmkt">'+esc(s.market_label)+' @ '+num(s.odds,2)+'</span>'+
@@ -394,6 +438,8 @@
       '.tg7-wbad{color:#FF7D7D;border-color:rgba(255,100,100,.22)}'+
       '.tg7-cblk{margin-top:8px;font-size:10px;color:#8B98AF;line-height:1.35;padding:6px 9px;border-radius:9px;background:rgba(255,100,100,.04)}'+
       '.tg7-cok{color:#47FFD8;background:rgba(43,229,197,.04)}'+
+      '.tg7-form-row{display:flex;align-items:center;gap:4px;margin-top:9px;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.025);font-size:11px;flex-wrap:wrap}'+
+      '.tg7-form-team{display:flex;align-items:center;gap:4px}'+
       '.tg7-empty{border:1px dashed rgba(255,255,255,.12);border-radius:16px;padding:20px;text-align:center;color:#94A3B8;font-size:12px;background:rgba(255,255,255,.025);line-height:1.55}';
     document.head.appendChild(s);
   }
