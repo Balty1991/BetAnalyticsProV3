@@ -118,8 +118,7 @@
   }
 
   function renderStatusPanel(){
-    return; // Dashboard gol — va fi recreat ulterior
-  }
+    var dash = $('tab-dashboard');
     var host = $('dashboard-modern-shell') || dash;
     if(!dash || !host) return;
 
