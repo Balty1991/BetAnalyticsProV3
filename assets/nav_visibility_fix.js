@@ -1,79 +1,72 @@
 // ==========================================================
-// VEYRA — Nav Visibility Fix
-// Menține meniul peste fundal/carduri și mută navigarea sus când
-// bara mobilă de jos este acoperită de browser sau în mod desktop.
+// VEYRA — Nav Visibility Fix v2
+// Pe desktop: meniu sticky sus. Pe mobil: bara de jos MEREU jos.
 // ==========================================================
 (function(){
   var root = document.documentElement;
   var body = document.body;
-  var raf = 0;
+  var raf  = 0;
 
   function px(n){ return Math.max(0, Math.ceil(Number(n) || 0)) + 'px'; }
-
-  function setImportant(el, prop, val){
+  function setI(el, prop, val){
     if(!el) return;
     try{ el.style.setProperty(prop, val, 'important'); }catch(e){}
   }
 
-  function isMobileUA(){
-    return /Android|iPhone|iPad|iPod|Mobile|CriOS|FxiOS|EdgA|OPR\//i.test(navigator.userAgent || '');
-  }
-
   function updateNav(){
-    raf = 0;
+    raf  = 0;
     body = document.body;
     if(!body) return;
 
     var header = document.querySelector('.header');
-    var tabs = document.querySelector('nav.tabs') || document.querySelector('.tabs');
-    var mobileNav = document.getElementById('mobile-nav') || document.querySelector('.mobile-nav');
+    var tabs   = document.querySelector('nav.tabs') || document.querySelector('.tabs');
+    var mnav   = document.getElementById('mobile-nav') || document.querySelector('.mobile-nav');
+    var desktop = window.matchMedia && window.matchMedia('(min-width: 769px)').matches;
 
+    // ── Înălțime header ──────────────────────────────────
     var headerH = header ? (header.getBoundingClientRect().height || 92) : 92;
     root.style.setProperty('--veyra-header-h', px(headerH));
 
-    var desktopLayout = window.matchMedia && window.matchMedia('(min-width: 769px)').matches;
-    var mobileAgent = isMobileUA();
-    var vvH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    var layoutH = window.innerHeight || vvH;
-    var browserUiCutsViewport = !!(window.visualViewport && (layoutH - vvH > 28));
+    // ── Ștergem clasele care forțează meniu sus ──────────
+    body.classList.remove('veyra-force-top-menu');
+    body.classList.remove('veyra-bottom-nav-blocked');
 
-    var bottomBlocked = false;
-    if(mobileNav){
-      var cs = window.getComputedStyle(mobileNav);
-      if(cs.display !== 'none' && cs.visibility !== 'hidden'){
-        var r = mobileNav.getBoundingClientRect();
-        bottomBlocked = (r.bottom > vvH - 4) || (r.top >= vvH - 8) || (r.height < 24);
-      }
-    }
-
-    // Pe telefon în „desktop site”, CSS poate ascunde bara mobilă și bara top poate fi acoperită.
-    // Pe telefon normal, activăm top-menu doar dacă bara de jos intră sub UI-ul browserului.
-    var forceTop = desktopLayout || (mobileAgent && (bottomBlocked || browserUiCutsViewport));
-
-    body.classList.toggle('veyra-force-top-menu', !!forceTop);
-    body.classList.toggle('veyra-bottom-nav-blocked', !!(mobileAgent && (bottomBlocked || browserUiCutsViewport)));
-
+    // ── Tabs (nav.tabs) ───────────────────────────────────
     if(tabs){
-      setImportant(tabs, 'top', px(headerH));
-      setImportant(tabs, 'z-index', '29990');
-      if(forceTop || desktopLayout){
-        setImportant(tabs, 'display', 'flex');
-        setImportant(tabs, 'position', 'sticky');
-        setImportant(tabs, 'visibility', 'visible');
-        setImportant(tabs, 'opacity', '1');
+      setI(tabs, 'top',      px(headerH));
+      setI(tabs, 'z-index',  '29990');
+      if(desktop){
+        setI(tabs, 'display',    'flex');
+        setI(tabs, 'position',   'sticky');
+        setI(tabs, 'visibility', 'visible');
+        setI(tabs, 'opacity',    '1');
+      } else {
+        // Pe mobil ascundem nav.tabs — bara mobilă de jos e suficientă
+        setI(tabs, 'display', 'none');
       }
-      var tabsH = tabs.getBoundingClientRect().height || 56;
-      root.style.setProperty('--veyra-tabs-h', px(tabsH));
-      root.style.setProperty('--veyra-nav-panel-top', px(headerH + tabsH));
-    }else{
-      root.style.setProperty('--veyra-tabs-h', '56px');
-      root.style.setProperty('--veyra-nav-panel-top', px(headerH + 56));
+      var tabsH = tabs.getBoundingClientRect().height || 0;
+      root.style.setProperty('--veyra-tabs-h',        px(desktop ? tabsH : 0));
+      root.style.setProperty('--veyra-nav-panel-top', px(headerH + (desktop ? tabsH : 0)));
     }
 
-    if(mobileNav && forceTop){
-      setImportant(mobileNav, 'display', 'none');
-      setImportant(mobileNav, 'visibility', 'hidden');
-      setImportant(mobileNav, 'pointer-events', 'none');
+    // ── Mobile nav: mereu jos, mereu vizibil ─────────────
+    if(mnav && !desktop){
+      setI(mnav, 'display',          'flex');
+      setI(mnav, 'position',         'fixed');
+      setI(mnav, 'bottom',           '12px');
+      setI(mnav, 'left',             '12px');
+      setI(mnav, 'right',            '12px');
+      setI(mnav, 'z-index',          '9999');
+      setI(mnav, 'background',       'rgba(8,11,22,.92)');
+      setI(mnav, 'border-radius',    '22px');
+      setI(mnav, 'padding',          '6px');
+      setI(mnav, 'justify-content',  'space-around');
+      setI(mnav, 'align-items',      'stretch');
+      setI(mnav, 'visibility',       'visible');
+      setI(mnav, 'opacity',          '1');
+      setI(mnav, 'pointer-events',   'auto');
+    } else if(mnav && desktop){
+      setI(mnav, 'display', 'none');
     }
   }
 
@@ -84,19 +77,16 @@
 
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', schedule, {once:true});
-  }else{
-    schedule();
-  }
+  } else { schedule(); }
 
-  window.addEventListener('load', schedule);
-  window.addEventListener('resize', schedule);
-  window.addEventListener('orientationchange', function(){ setTimeout(schedule, 60); setTimeout(schedule, 360); });
+  window.addEventListener('load',              schedule);
+  window.addEventListener('resize',            schedule);
+  window.addEventListener('orientationchange', function(){ setTimeout(schedule,80); });
   if(window.visualViewport){
     window.visualViewport.addEventListener('resize', schedule);
-    window.visualViewport.addEventListener('scroll', schedule);
   }
 
-  // Câștigă peste scriptul vechi care setează display/z-index cu inline !important la câteva timeout-uri.
-  [50,150,350,800,1500,2500,3500,5000].forEach(function(t){ setTimeout(schedule, t); });
-  setInterval(schedule, 2000);
+  // Bătăi regulate — câștigăm orice race condition cu scripturi vechi
+  [50,150,400,900,1600,2600,3600,5000].forEach(function(t){ setTimeout(schedule, t); });
+  setInterval(schedule, 1500);
 })();
