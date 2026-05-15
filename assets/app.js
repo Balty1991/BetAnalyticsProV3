@@ -1067,8 +1067,6 @@ function renderMatchesTab(){
 function renderActiveTab(name, opts){
   opts = opts || {};
   if(name === 'dashboard'){
-    try { renderModernDashboard(); } catch(e){}
-    try { renderDashboardMonitor(); } catch(e){}
     markTabRendered('dashboard');
     return;
   }
@@ -13746,6 +13744,17 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(function(){ clearInterval(checkInterval); }, 8000);
 });
 
-// Dashboard renderers active — renderModernDashboard, renderDashboardMonitor, etc. sunt funcționale.
-window.__BA_DASHBOARD_REMOVED = false;
+// Dashboard renderers dezactivate — conținut va fi construit manual ulterior.
+(function(){
+  'use strict';
+  window.__BA_DASHBOARD_REMOVED = true;
+  var names = [
+    'renderModernDashboard','renderDashboardTab','renderDashboard','renderDashboardStats',
+    'renderDashboardVisuals','renderDashboardMonitor','renderTodayBest','renderTopPicks',
+    'renderTopSafe','renderFocusPanel','renderMarketPerformance','renderBacktestSummary'
+  ];
+  names.forEach(function(name){
+    try { window[name] = function(){ return null; }; } catch(e) {}
+  });
+})();
 
