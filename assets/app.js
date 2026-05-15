@@ -7429,8 +7429,12 @@ function renderMatches(){
           existingGroup.querySelector('.matches-grid').innerHTML += groups[date].join('');
         } else {
           var _dp = (date+'').match(/^(\w+)\s+(\d+)\s+(\w+)$/);
+          var _weekdayMap = { LUN:'LUNI', MAR:'MARTI', MIE:'MIERCURI', JOI:'JOI', VIN:'VINERI', SAM:'SAMBATA', DUM:'DUMINICA' };
+          var _weekdayShort = _dp ? ((_dp[1]||'').toUpperCase()) : '';
+          var _weekdayFull = _weekdayMap[_weekdayShort] || _weekdayShort;
+          var _monthFull = _dp ? ((_dp[3]||'').toUpperCase()) : '';
           var _dlHtml = _dp
-            ? '<span class="dl-badge"><b>'+(_dp[3]||'').toUpperCase()+'</b><em>'+_dp[2]+'</em></span><span class="dl-weekday">'+(_dp[1]||'').toUpperCase()+' '+_dp[2]+' '+(_dp[3]||'').toUpperCase()+'</span>'
+            ? '<span class="dl-badge"><b>'+_monthFull+'</b><em>'+_dp[2]+'</em></span><span class="dl-weekday">'+_weekdayFull+' '+_dp[2]+' '+_monthFull+'</span>'
             : '<span class="dl-weekday">'+date+'</span>';
           html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">'+_dlHtml+'</div><div class="matches-grid">' + groups[date].join('') + '</div></div>';
         }

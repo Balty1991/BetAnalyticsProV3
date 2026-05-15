@@ -109,3 +109,19 @@
     margin-top: 10px !important;
   }
 }
+
+
+/* Nume complet al zilei: puțin mai compact, să încapă elegant */
+#tab-meciuri .date-label .dl-weekday,
+.date-label .dl-weekday {
+  font-size: 11px !important;
+  letter-spacing: .14em !important;
+}
+
+@media (max-width: 768px) {
+  #tab-meciuri .date-label .dl-weekday,
+  .date-label .dl-weekday {
+    font-size: 10.5px !important;
+    letter-spacing: .12em !important;
+  }
+}
