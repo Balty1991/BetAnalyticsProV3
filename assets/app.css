@@ -7823,3 +7823,48 @@ button[onclick*="resetFilter"]:hover {
   .veyra-tagline-clean{max-width:158px !important;font-size:8px !important;letter-spacing:.14em !important;}
   .veyra-sync-row{font-size:9px !important;gap:5px !important;}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   NAVIGARE FINALĂ — override definitiv (ultima regulă CSS)
+   ═══════════════════════════════════════════════════════════ */
+
+/* DESKTOP (>768px): tabs vizibile, mobile-nav ascuns */
+@media (min-width: 769px) {
+  .tabs {
+    display: flex !important;
+    top: 92px !important;
+    position: sticky !important;
+    z-index: 48 !important;
+  }
+  .mobile-nav,
+  .mobile-sheet {
+    display: none !important;
+  }
+}
+
+/* MOBILE (≤768px): tabs ascunse, mobile-nav flotant vizibil */
+@media (max-width: 768px) {
+  .tabs {
+    display: none !important;
+  }
+  .mobile-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 12px !important;
+    left: 12px !important;
+    right: 12px !important;
+    z-index: 1000 !important;
+    background: rgba(8,11,22,.92) !important;
+    backdrop-filter: saturate(180%) blur(28px) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(28px) !important;
+    border: 1px solid rgba(43,229,197,.15) !important;
+    border-radius: 22px !important;
+    padding: 6px !important;
+    justify-content: space-around !important;
+    align-items: stretch !important;
+    box-shadow: 0 14px 40px rgba(0,0,0,.55) !important;
+  }
+  .main {
+    padding-bottom: 100px !important;
+  }
+}
