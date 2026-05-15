@@ -81,18 +81,15 @@
   }
 
   function displayedMeciuriCount(){
-    // Contorul din pagina Meciuri este sursa canonică după renderMatches().
-    // În app.js există un corector care poate ajusta #filter-count față de MATCHES_FILTERED_CACHE,
-    // deci citim întâi pastila afișată, nu cache-ul intern.
+    // Sursa canonică: contorul setat de renderMatches() la finalul randării reale.
+    // Acesta reflectă exact ce vede userul în tab-ul Meciuri (inclusiv corecția _realCount).
+    var fromGlobal = safeNum(W.__VEYRA_MECIURI_DISPLAYED_COUNT, 0);
+    if(fromGlobal > 0) return fromGlobal;
+    // Fallback: pastila din DOM (poate fi stale dacă renderMatches nu a rulat încă)
     var fromPill = countFromFilterPill();
-    if(fromPill > 0){
-      W.__VEYRA_MECIURI_DISPLAYED_COUNT = fromPill;
-      return fromPill;
-    }
-    if(safeNum(W.__VEYRA_MECIURI_DISPLAYED_COUNT, 0) > 0) return safeNum(W.__VEYRA_MECIURI_DISPLAYED_COUNT, 0);
+    if(fromPill > 0) return fromPill;
     var cache = W.MATCHES_FILTERED_CACHE;
     if(Array.isArray(cache) && cache.length){
-      W.__VEYRA_MECIURI_DISPLAYED_COUNT = cache.length;
       return cache.length;
     }
     return defaultMeciuriCount();
@@ -132,7 +129,6 @@
     var totalLoaded = totalMl;
     var shown = displayedMeciuriCount();
     var time = getStatusTime() || '—';
-    var validated = safeNum((W.SIGNAL_AUDIT && W.SIGNAL_AUDIT.count) || (W.SIGNAL_AUDIT && W.SIGNAL_AUDIT.rows && W.SIGNAL_AUDIT.rows.length), 0);
     var hs = historyState();
 
     var html = ''+
@@ -147,7 +143,6 @@
           tile('ball','Meciuri încărcate',String(totalLoaded || totalMl || 0),false)+
           tile('database','Flux date','<span class="vsys-pill">Stabil</span>',true)+
           tile('eye','Meciuri afișate',String(shown || 0),false)+
-          tile('shield','Predicții validate',String(validated || 0),false)+
           '<div class="vsys-tile vsys-wide"><div class="vsys-left"><div class="vsys-icon" aria-hidden="true">'+icon('sync')+'</div><div><div class="vsys-k">Istoric sincronizat</div><div class="vsys-v small">Monitorizare activă</div></div></div><span class="vsys-pill '+(hs.cls==='info'?'info':'')+'">'+htmlEsc(hs.label)+'</span></div>'+ 
         '</div>'+ 
         '<div class="vsys-note"><div class="vsys-note-icon" aria-hidden="true">'+icon('check')+'</div><div><strong>Sistemul funcționează normal.</strong><span>Dashboard-ul verifică API-ul, sincronizarea și numărul real de meciuri afișate.</span></div></div>'+ 
@@ -157,14 +152,14 @@
 
     var existing = $('dashboard-system-status');
     if(existing){
-      if(existing.getAttribute('data-vsys-sig') !== [totalLoaded,totalMl,shown,time,validated,hs.label].join('|')){
+      if(existing.getAttribute('data-vsys-sig') !== [totalLoaded,totalMl,shown,time,hs.label].join('|')){
         existing.outerHTML = html;
       }
     } else {
       host.insertAdjacentHTML('afterbegin', html);
     }
     var panel = $('dashboard-system-status');
-    if(panel) panel.setAttribute('data-vsys-sig', [totalLoaded,totalMl,shown,time,validated,hs.label].join('|'));
+    if(panel) panel.setAttribute('data-vsys-sig', [totalLoaded,totalMl,shown,time,hs.label].join('|'));
   }
 
   function tile(ic, label, value, rawValueHtml){

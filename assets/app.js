@@ -6919,6 +6919,8 @@ function renderMatches(){
     countEl.textContent = (window.innerWidth <= 768 ? compactCountText : fullCountText);
     countEl.title = fullCountText;
   }
+  // Sincronizăm contorul global imediat cu filtered.length (se va corecta mai jos cu _realCount)
+  window.__VEYRA_MECIURI_DISPLAYED_COUNT = filtered.length;
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
     return;
@@ -7482,6 +7484,8 @@ function renderMatches(){
         _fc.title = _realCount + ' meciuri afișate (' + filtered.length + ' în total, ' + (filtered.length - _realCount) + ' cu eroare de randare)';
       }
     }
+    // Sursa canonică pentru Dashboard Status — mereu reflectă ce vede userul în Meciuri
+    if(_realCount > 0) window.__VEYRA_MECIURI_DISPLAYED_COUNT = _realCount;
   } catch(_e){}
 
   // Funcție pentru a adăuga batch-ul următor
