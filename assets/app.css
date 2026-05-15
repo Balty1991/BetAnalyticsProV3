@@ -574,7 +574,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-heig
 .dashboard-insights-body{padding-top:12px}
 #dashboard-insights-body:not(.open), #matches-hub-body:not(.open){display:none}
 @media(max-width:768px){
-  .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px 12px;top:70px}
+  .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px 12px;top:84px}
   .tab{font-size:11px;padding:10px 6px;border-radius:12px}
   .main{padding:14px 12px 28px}
   .header{padding:10px 12px}
@@ -685,7 +685,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-heig
 
 /* ===== v17 UX refresh ===== */
 .main{max-width:1460px;margin:0 auto;padding-bottom:108px}
-.tabs{position:sticky;top:64px;z-index:48;background:rgba(8,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 16px}
+.tabs{position:sticky;top:92px;z-index:48;background:rgba(8,12,20,.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px 16px}
 .tab{font-size:12px;font-weight:800;border-radius:14px;padding:11px 14px;justify-content:center}
 .desktop-more-panel{display:none;max-width:1400px;margin:0 auto 14px;padding:14px 16px 0}
 .desktop-more-panel.show{display:block;position:fixed;left:0;right:0;bottom:0;top:var(--more-panel-top,140px);max-width:none;margin:0;padding:16px 16px 26px;background:rgba(8,12,20,.985);border-top:1px solid rgba(255,255,255,.06);overflow:auto;z-index:170}
@@ -1349,7 +1349,7 @@ button, input, select, textarea { font-family: inherit; }
 
 /* ── 6. NAVIGATION (DESKTOP) ────────────────────────────────── */
 .tabs {
-  position: sticky !important; top: 64px !important; z-index: 48 !important;
+  position: sticky !important; top: 92px !important; z-index: 48 !important;
   background: rgba(6,8,15,.82) !important;
   backdrop-filter: saturate(160%) blur(20px) !important;
   -webkit-backdrop-filter: saturate(160%) blur(20px) !important;
