@@ -491,6 +491,47 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
   <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
   <script src="./assets/clv_tracker_runtime.js?v=20260429clv1" defer></script>
   <script>
+  // NAV FIX — poziționare dinamică bazată pe înălțimea reală a header-ului
+  (function(){
+    function fixNav(){
+      var header = document.querySelector('.header');
+      var tabs   = document.querySelector('nav.tabs');
+      var mnav   = document.getElementById('mobile-nav');
+      var isMobile = window.innerWidth <= 768;
+
+      // Măsurăm înălțimea reală a header-ului
+      if(header && tabs){
+        var hh = Math.ceil(header.getBoundingClientRect().height) || 92;
+        tabs.style.setProperty('top', hh + 'px', 'important');
+      }
+
+      // Mobile nav: forțăm vizibilitate
+      if(mnav){
+        if(isMobile){
+          mnav.style.setProperty('display',   'flex',    'important');
+          mnav.style.setProperty('position',  'fixed',   'important');
+          mnav.style.setProperty('bottom',    '12px',    'important');
+          mnav.style.setProperty('left',      '12px',    'important');
+          mnav.style.setProperty('right',     '12px',    'important');
+          mnav.style.setProperty('z-index',   '9999',    'important');
+          mnav.style.setProperty('background','rgba(8,11,22,.92)', 'important');
+          mnav.style.setProperty('border-radius', '22px', 'important');
+          mnav.style.setProperty('padding',   '6px',     'important');
+          mnav.style.setProperty('justify-content','space-around','important');
+          mnav.style.setProperty('align-items','stretch','important');
+        } else {
+          mnav.style.setProperty('display', 'none', 'important');
+        }
+      }
+    }
+    // Rulăm la DOMContentLoaded, load și resize
+    document.addEventListener('DOMContentLoaded', fixNav);
+    window.addEventListener('load', fixNav);
+    window.addEventListener('resize', fixNav);
+    [100,300,700,1500,3000].forEach(function(d){ setTimeout(fixNav, d); });
+  })();
+  </script>
+  <script>
   // Actualizeaza ora ultimei sincronizari in header
   (function(){
     function updateSyncTime(){
@@ -499,7 +540,6 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
       var t = '';
       try { t = typeof getStatusDisplayTime === 'function' ? getStatusDisplayTime() : ''; } catch(e){}
       if(!t){
-        // Fallback: citeste din sb-text (contine "ora HH:MM")
         var sb = document.getElementById('sb-text');
         if(sb){ var m = (sb.textContent||sb.innerText||'').match(/ora\s+(\d{2}:\d{2})/); if(m) t = m[1]; }
       }
