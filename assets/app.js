@@ -7428,7 +7428,15 @@ function renderMatches(){
         if(existingGroup && startIdx > 0){
           existingGroup.querySelector('.matches-grid').innerHTML += groups[date].join('');
         } else {
-          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">📅 ' + date + '</div><div class="matches-grid">' + groups[date].join('') + '</div></div>';
+          // Construim iconița de calendar din dateLabel (ex: "Vin., 15.05")
+          var _months = ['','IAN','FEB','MAR','APR','MAI','IUN','IUL','AUG','SEP','OCT','NOI','DEC'];
+          var _parts = String(date).match(/(\d{1,2})\.(\d{2})/);
+          var _day = _parts ? _parts[1] : '';
+          var _mon = _parts ? _months[parseInt(_parts[2],10)] || '' : '';
+          var _wd  = String(date).split(/[,\.\s]/)[0].toUpperCase().replace(/[^A-ZĂÎȘȚ]/g,'');
+          var _sepIcon = '<div class="date-sep-icon" aria-hidden="true"><span class="dsi-mo">'+_mon+'</span><span class="dsi-dd">'+_day+'</span></div>';
+          var _sepText = '<span class="date-sep-text">'+_wd+' '+_day+' '+_mon+'</span>';
+          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label date-label-v2">'+_sepIcon+_sepText+'</div><div class="matches-grid">' + groups[date].join('') + '</div></div>';
         }
       });
       return html;
