@@ -7334,7 +7334,6 @@ function renderMatches(){
     var _cardVerdict = b ? getBetVerdict(m, b) : null;
     var m17VerdictPill = _cardVerdict ? '<span class="m17-pill" style="background:'+_cardVerdict.bg+';color:'+_cardVerdict.color+';border:1px solid '+_cardVerdict.border+';font-weight:800;font-size:10px">'+_cardVerdict.label+'</span>' : '';
     // Verdict PARIAZA/RISC/EVITA vizibil pe card (elimina contradictia cu detaliile)
-    var m17SourceRow = b ? '<div class="m17-source-row">'+sourceBadge+oddsSourceBadge+compareBadge+motorBadge+catboostBadge+ml5Badge+refBadge+lineupBadge+polyBadge+ageBadge+'</div>' : '';
     var m17Metrics = b ? ('<div class="m17-metric-strip">'+
       '<div class="m17-metric '+m17ProbClass+'"><span>Prob.</span><strong>'+fmtPct(m17AdjProb)+'</strong></div>'+
       '<div class="m17-metric '+m17EdgeClass+'"><span>Edge</span><strong>'+(m17Edge == null ? '—' : ((m17Edge >= 0 ? '+' : '')+m17Edge.toFixed(1)+'pp'))+'</strong></div>'+
@@ -7344,6 +7343,21 @@ function renderMatches(){
     var m17KellyPill = b && m17Kelly > 0 ? '<span class="m17-pill m17-kelly">Kelly '+m17Kelly.toFixed(1)+'%</span>' : '';
     var m17WhyText = shortWhy || 'Context statistic activ';
     var m17MarketLine = bestMarketLine ? '<div class="m17-market-line">'+htmlEsc(bestMarketLine)+'</div>' : '';
+
+    function m17InfoRow(label, cls, body){
+      return body ? '<div class="m17-info-row '+cls+'"><span class="m17-info-label">'+label+'</span><div class="m17-info-chips">'+body+'</div></div>' : '';
+    }
+    var m17RiskPill = b ? '<span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>' : '';
+    var m17DecisionPills = b ? (m17RiskPill + m17VerdictPill + m17ConsensusPill) : '';
+    var m17MarketPills = b ? (m17KellyPill + sourceBadge + oddsSourceBadge + compareBadge + m17MarketLine) : '';
+    var m17EnginePills = b ? (motorBadge + catboostBadge + ml5Badge + refBadge + lineupBadge + polyBadge + ageBadge + m17ContextPills + m17V2Pill) : '';
+    var m17GroupedRows = b ? (
+      '<div class="m17-info-board">' +
+        m17InfoRow('Decizie', 'm17-info-decision', m17DecisionPills) +
+        m17InfoRow('Piață', 'm17-info-market', m17MarketPills) +
+        m17InfoRow('Motor', 'm17-info-engine', m17EnginePills) +
+      '</div>'
+    ) : '';
     var m17IndexBadge = displayIndex ? ('<span class="m17-index-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;border-radius:999px;background:linear-gradient(135deg,rgba(94,234,212,.18),rgba(15,23,42,.58));border:1px solid rgba(94,234,212,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 6px 18px rgba(34,211,238,.10);color:#d9fffa;font-size:12px;font-weight:900;letter-spacing:.02em;line-height:1;font-variant-numeric:tabular-nums;flex:0 0 auto;">#'+displayIndex+'</span>') : '';
 
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 match-card-m17 '+verdictClass+' '+m17RiskClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
@@ -7367,9 +7381,7 @@ function renderMatches(){
       '<div class="m17-reco">'+
         '<div class="m17-reco-head"><div><div class="m17-reco-kicker">🎯 Recomandare</div><div class="m17-pick">'+htmlEsc(recLabel)+'</div></div><div class="m17-odd">'+(recOdd ? '@ '+recOdd : '—')+'</div></div>'+ 
         m17Metrics+
-        '<div class="m17-pill-row"><span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>'+m17KellyPill+m17VerdictPill+m17ConsensusPill+m17ContextPills+m17V2Pill+'</div>'+ 
-        m17SourceRow+
-        m17MarketLine+
+        m17GroupedRows+
       '</div>'+ 
       '<div class="m17-why"><span>De ce</span><strong>'+htmlEsc(m17WhyText)+'</strong></div>'+ 
       '<div class="m17-actions">'+
@@ -7429,8 +7441,12 @@ function renderMatches(){
           existingGroup.querySelector('.matches-grid').innerHTML += groups[date].join('');
         } else {
           var _dp = (date+'').match(/^(\w+)\s+(\d+)\s+(\w+)$/);
+          var _weekdayMap = { LUN:'LUNI', MAR:'MARTI', MIE:'MIERCURI', JOI:'JOI', VIN:'VINERI', SAM:'SAMBATA', DUM:'DUMINICA' };
+          var _weekdayShort = _dp ? ((_dp[1]||'').toUpperCase()) : '';
+          var _weekdayFull = _weekdayMap[_weekdayShort] || _weekdayShort;
+          var _monthFull = _dp ? ((_dp[3]||'').toUpperCase()) : '';
           var _dlHtml = _dp
-            ? '<span class="dl-badge"><b>'+(_dp[3]||'').toUpperCase()+'</b><em>'+_dp[2]+'</em></span><span class="dl-weekday">'+(_dp[1]||'').toUpperCase()+' '+_dp[2]+' '+(_dp[3]||'').toUpperCase()+'</span>'
+            ? '<span class="dl-badge"><b>'+_monthFull+'</b><em>'+_dp[2]+'</em></span><span class="dl-weekday">'+_weekdayFull+' '+_dp[2]+' '+_monthFull+'</span>'
             : '<span class="dl-weekday">'+date+'</span>';
           html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">'+_dlHtml+'</div><div class="matches-grid">' + groups[date].join('') + '</div></div>';
         }
