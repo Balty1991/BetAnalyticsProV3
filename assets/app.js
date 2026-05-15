@@ -7347,6 +7347,7 @@ function renderMatches(){
     var m17IndexBadge = displayIndex ? ('<span class="m17-index-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;border-radius:999px;background:linear-gradient(135deg,rgba(94,234,212,.18),rgba(15,23,42,.58));border:1px solid rgba(94,234,212,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 6px 18px rgba(34,211,238,.10);color:#d9fffa;font-size:12px;font-weight:900;letter-spacing:.02em;line-height:1;font-variant-numeric:tabular-nums;flex:0 0 auto;">#'+displayIndex+'</span>') : '';
 
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 match-card-m17 '+verdictClass+' '+m17RiskClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
+      '<div class="card-gold-sweep" aria-hidden="true"></div>'+
       '<div class="m17-topline">'+
         '<div class="m17-league">'+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
         '<div class="m17-time"><span class="m17-date">'+htmlEsc(kickoffDateLabel)+'</span><strong class="m17-hour">'+htmlEsc(kickoffTimeLabel)+'</strong><b class="m17-countdown">'+htmlEsc(countdown)+'</b></div>'+
