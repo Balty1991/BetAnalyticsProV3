@@ -1,0 +1,130 @@
+/* VEYRA — country moved next to index + bigger team names/crests */
+
+/* 1) Mută țara lângă #index și lasă ELIGIBLE dedesubt */
+#tab-meciuri .m17-meta-row,
+.m17-meta-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px 10px !important;
+  padding: 2px 2px 4px !important;
+}
+
+#tab-meciuri .m17-meta-row .m17-index-badge,
+.m17-meta-row .m17-index-badge {
+  order: 1 !important;
+  flex: 0 0 auto !important;
+}
+
+#tab-meciuri .m17-country,
+.m17-country {
+  order: 2 !important;
+  flex: 1 1 auto !important;
+  margin-right: 0 !important;
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 24px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: var(--c-text) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#tab-meciuri .m17-pill.m17-state,
+.m17-pill.m17-state {
+  order: 3 !important;
+  flex: 0 0 auto !important;
+}
+
+#tab-meciuri .m17-meta-row > .m17-pill:not(.m17-state),
+.m17-meta-row > .m17-pill:not(.m17-state) {
+  order: 4 !important;
+}
+
+/* 2) Mărește stemele și numele echipelor */
+#tab-meciuri .m17-teams,
+.m17-teams {
+  grid-template-columns: minmax(0,1fr) 34px minmax(0,1fr) !important;
+  gap: 9px !important;
+  padding: 7px 2px 4px !important;
+}
+
+#tab-meciuri .m17-team,
+.m17-team {
+  gap: 9px !important;
+}
+
+#tab-meciuri .m17-logo,
+.m17-logo {
+  width: 42px !important;
+  height: 42px !important;
+  flex: 0 0 42px !important;
+  min-width: 42px !important;
+  border-radius: 12px !important;
+}
+
+#tab-meciuri .m17-logo img,
+.m17-logo img {
+  max-width: 36px !important;
+  max-height: 36px !important;
+}
+
+#tab-meciuri .m17-team-name,
+#tab-meciuri .m17-team-name *,
+.m17-team-name,
+.m17-team-name * {
+  font-size: 17px !important;
+  line-height: 1.06 !important;
+  letter-spacing: -0.035em !important;
+}
+
+#tab-meciuri .m17-team-prob,
+.m17-team-prob {
+  font-size: 11px !important;
+  margin-top: 3px !important;
+}
+
+#tab-meciuri .m17-vs,
+.m17-vs {
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 380px) {
+  #tab-meciuri .m17-country,
+  .m17-country {
+    font-size: 13px !important;
+  }
+
+  #tab-meciuri .m17-logo,
+  .m17-logo {
+    width: 39px !important;
+    height: 39px !important;
+    flex: 0 0 39px !important;
+    min-width: 39px !important;
+  }
+
+  #tab-meciuri .m17-logo img,
+  .m17-logo img {
+    max-width: 33px !important;
+    max-height: 33px !important;
+  }
+
+  #tab-meciuri .m17-team-name,
+  #tab-meciuri .m17-team-name *,
+  .m17-team-name,
+  .m17-team-name * {
+    font-size: 15px !important;
+  }
+
+  #tab-meciuri .m17-vs,
+  .m17-vs {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+}
