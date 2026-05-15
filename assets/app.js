@@ -7363,13 +7363,15 @@ function renderMatches(){
     return '<div id="match-card-'+key+'" class="match-card match-card-v16 match-card-m17 '+verdictClass+' '+m17RiskClass+(MATCH_FOCUS_KEY === key ? ' match-card-focus' : '')+'">'+
       '<div class="card-gold-sweep" aria-hidden="true"></div>'+
       '<div class="m17-topline">'+
-        '<div class="m17-league">'+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
+        '<div class="m17-top-left">'+
+          '<div class="m17-league">'+leagueLogoWrap+'<span>'+htmlEsc(m.league || '—')+'</span></div>'+
+          '<div class="m17-country-top">🌍 '+htmlEsc(m.country || '—')+'</div>'+
+        '</div>'+
         '<div class="m17-time"><span class="m17-date">'+htmlEsc(kickoffDateLabel)+'</span><strong class="m17-hour">'+htmlEsc(kickoffTimeLabel)+'</strong><b class="m17-countdown">'+htmlEsc(countdown)+'</b></div>'+
       '</div>'+
-      '<div class="m17-meta-row">'+
+      '<div class="m17-meta-row m17-meta-row-compact">'+
         m17IndexBadge+
-        '<span class="m17-country">🌍 '+htmlEsc(m.country || '—')+'</span>'+
-        '<span class="m17-pill m17-state">'+htmlEsc(state.label || 'Analiză')+'</span>'+m17ScorePill+m17CalibPill+m17ContextPills+
+        m17ScorePill+m17CalibPill+m17ContextPills+
       '</div>'+
       '<div class="m17-teams">'+
         '<div class="m17-team home">'+hLogoWrap+'<div class="m17-team-copy"><div class="m17-team-name">'+htmlEsc(m.home || '—')+'</div><div class="m17-team-prob">'+homeProb.toFixed(0)+'%</div></div></div>'+
