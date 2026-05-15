@@ -1,5 +1,5 @@
-/* VEYRA — Recommendation card grouped layout
-   Ordonează zona Recomandare: decizie / piață / motor, cu spațiere compactă pe mobil. */
+/* VEYRA — Recommendation card v2
+   Mai ordonat fără sub-carduri grele: 3 rânduri compacte Decizie / Piață / Motor. */
 
 #tab-meciuri .m17-reco,
 .m17-reco {
@@ -15,7 +15,7 @@
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
   gap: 8px !important;
-  margin-bottom: 1px !important;
+  margin-bottom: 0 !important;
 }
 
 #tab-meciuri .m17-reco-kicker,
@@ -28,21 +28,24 @@
 #tab-meciuri .m17-pick,
 .m17-pick {
   margin-top: 2px !important;
-  font-size: 17px !important;
+  font-size: 18px !important;
   line-height: 1.02 !important;
 }
 
 #tab-meciuri .m17-odd,
 .m17-odd {
-  min-width: 66px !important;
+  min-width: 68px !important;
   text-align: center !important;
-  font-size: 17px !important;
+  font-size: 18px !important;
   padding: 7px 10px !important;
 }
 
+/* KPI-urile rămân sus, clare, pe un singur rând */
 #tab-meciuri .m17-metric-strip,
 .m17-metric-strip {
   margin-top: 2px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 5px !important;
 }
 
@@ -61,110 +64,161 @@
 #tab-meciuri .m17-metric strong,
 .m17-metric strong {
   margin-top: 3px !important;
-  font-size: 10px !important;
+  font-size: 10.5px !important;
 }
 
-/* Grupuri ordonate */
+/* Noua grupare: rânduri compacte, nu chenare mari */
+#tab-meciuri .m17-info-board,
+.m17-info-board {
+  display: grid !important;
+  gap: 4px !important;
+  margin-top: 1px !important;
+}
+
+#tab-meciuri .m17-info-row,
+.m17-info-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 22px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+#tab-meciuri .m17-info-label,
+.m17-info-label {
+  flex: 0 0 50px !important;
+  width: 50px !important;
+  max-width: 50px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  font-family: var(--mono, ui-monospace, monospace) !important;
+  font-size: 7.2px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+  color: rgba(247,185,85,.88) !important;
+  white-space: nowrap !important;
+  opacity: .95 !important;
+}
+
+#tab-meciuri .m17-info-label::after,
+.m17-info-label::after {
+  content: "" !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  height: 1px !important;
+  margin-left: 5px !important;
+  background: linear-gradient(90deg, rgba(247,185,85,.48), transparent) !important;
+}
+
+#tab-meciuri .m17-info-chips,
+.m17-info-chips {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  align-content: center !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+}
+
+#tab-meciuri .m17-info-chips > *,
+.m17-info-chips > * {
+  margin: 0 !important;
+}
+
+#tab-meciuri .m17-info-chips .m17-pill,
+.m17-info-chips .m17-pill,
+#tab-meciuri .m17-info-chips .card-reco-badge,
+.m17-info-chips .card-reco-badge,
+#tab-meciuri .m17-info-chips .source-chip,
+.m17-info-chips .source-chip,
+#tab-meciuri .m17-info-chips [class*="source-chip"],
+.m17-info-chips [class*="source-chip"] {
+  min-height: 20px !important;
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+/* Sursa cotei / best market nu mai ocupă rând uriaș; rămâne chip compact, dar poate curge pe linia următoare */
+#tab-meciuri .m17-info-chips .m17-market-line,
+.m17-info-chips .m17-market-line {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  border-top: 0 !important;
+  border: 1px solid rgba(45,212,145,.20) !important;
+  background: rgba(45,212,145,.065) !important;
+  font-size: 8.5px !important;
+  line-height: 1.2 !important;
+  color: #7df7c6 !important;
+}
+
+/* Stil subtil pe categorii */
+#tab-meciuri .m17-info-decision .m17-info-label,
+.m17-info-decision .m17-info-label {
+  color: rgba(247,185,85,.92) !important;
+}
+
+#tab-meciuri .m17-info-market .m17-info-label,
+.m17-info-market .m17-info-label {
+  color: rgba(94,234,212,.88) !important;
+}
+
+#tab-meciuri .m17-info-market .m17-info-label::after,
+.m17-info-market .m17-info-label::after {
+  background: linear-gradient(90deg, rgba(94,234,212,.42), transparent) !important;
+}
+
+#tab-meciuri .m17-info-engine .m17-info-label,
+.m17-info-engine .m17-info-label {
+  color: rgba(165,180,252,.90) !important;
+}
+
+#tab-meciuri .m17-info-engine .m17-info-label::after,
+.m17-info-engine .m17-info-label::after {
+  background: linear-gradient(90deg, rgba(165,180,252,.42), transparent) !important;
+}
+
+/* Compatibilitate: dacă browserul mai are HTML vechi din cache, îl forțăm tot compact */
 #tab-meciuri .m17-chip-group,
 .m17-chip-group {
-  display: grid !important;
-  grid-template-columns: 58px minmax(0, 1fr) !important;
-  align-items: start !important;
+  display: flex !important;
+  align-items: center !important;
   gap: 6px !important;
-  padding: 6px 7px !important;
-  border-radius: 13px !important;
-  background: rgba(255,255,255,.022) !important;
-  border: 1px solid rgba(255,255,255,.055) !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 #tab-meciuri .m17-group-label,
 .m17-group-label {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 22px !important;
-  padding: 0 7px !important;
-  border-radius: 999px !important;
-  font-family: var(--font-mono, ui-monospace, monospace) !important;
-  font-size: 7.5px !important;
-  font-weight: 950 !important;
-  letter-spacing: .10em !important;
-  text-transform: uppercase !important;
-  white-space: nowrap !important;
-  color: var(--m17-accent, #2be5c5) !important;
-  background: color-mix(in srgb, var(--m17-accent, #2be5c5) 12%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--m17-accent, #2be5c5) 24%, transparent) !important;
+  flex: 0 0 50px !important;
+  width: 50px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: rgba(247,185,85,.88) !important;
+  font-size: 7.2px !important;
+  letter-spacing: .12em !important;
 }
 
 #tab-meciuri .m17-chip-wrap,
 .m17-chip-wrap {
   display: flex !important;
-  align-items: center !important;
-  align-content: center !important;
   flex-wrap: wrap !important;
-  gap: 5px !important;
-  min-width: 0 !important;
-}
-
-#tab-meciuri .m17-chip-wrap > *,
-.m17-chip-wrap > * {
-  margin: 0 !important;
-}
-
-#tab-meciuri .m17-chip-wrap .m17-pill,
-.m17-chip-wrap .m17-pill,
-#tab-meciuri .m17-chip-wrap .card-reco-badge,
-.m17-chip-wrap .card-reco-badge,
-#tab-meciuri .m17-chip-wrap .source-chip,
-.m17-chip-wrap .source-chip,
-#tab-meciuri .m17-chip-wrap [class*="source-chip"],
-.m17-chip-wrap [class*="source-chip"] {
-  min-height: 22px !important;
-  padding: 3px 8px !important;
-  border-radius: 999px !important;
-  font-size: 8.5px !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-}
-
-#tab-meciuri .m17-chip-wrap .m17-market-line,
-.m17-chip-wrap .m17-market-line {
-  flex: 1 1 100% !important;
-  margin: 0 !important;
-  padding: 5px 8px !important;
-  border-radius: 999px !important;
-  border-top: 0 !important;
-  border: 1px solid rgba(45,212,145,.22) !important;
-  background: rgba(45,212,145,.07) !important;
-  font-size: 9px !important;
-  line-height: 1.2 !important;
-  color: #7df7c6 !important;
-}
-
-/* Culori subtile pe tipul grupului */
-#tab-meciuri .m17-group-decision,
-.m17-group-decision {
-  border-color: color-mix(in srgb, var(--m17-accent, #2be5c5) 18%, transparent) !important;
-}
-
-#tab-meciuri .m17-group-market .m17-group-label,
-.m17-group-market .m17-group-label {
-  color: #f7c66b !important;
-  background: rgba(247,185,85,.10) !important;
-  border-color: rgba(247,185,85,.25) !important;
-}
-
-#tab-meciuri .m17-group-engine .m17-group-label,
-.m17-group-engine .m17-group-label {
-  color: #a5b4fc !important;
-  background: rgba(99,102,241,.12) !important;
-  border-color: rgba(129,140,248,.25) !important;
-}
-
-/* Ascunde vechiul layout dacă rămâne în cache de la alte runtime-uri */
-#tab-meciuri .m17-reco > .m17-pill-row:empty,
-#tab-meciuri .m17-reco > .m17-source-row:empty {
-  display: none !important;
+  gap: 4px !important;
 }
 
 @media (max-width: 768px) {
@@ -177,69 +231,74 @@
 
   #tab-meciuri .m17-pick,
   .m17-pick {
-    font-size: 16.5px !important;
+    font-size: 17px !important;
   }
 
   #tab-meciuri .m17-odd,
   .m17-odd {
-    min-width: 62px !important;
-    font-size: 16px !important;
+    min-width: 64px !important;
+    font-size: 17px !important;
     padding: 6px 9px !important;
   }
 
-  #tab-meciuri .m17-metric-strip,
-  .m17-metric-strip {
-    gap: 4px !important;
+  #tab-meciuri .m17-info-board,
+  .m17-info-board {
+    gap: 3px !important;
   }
 
-  #tab-meciuri .m17-chip-group,
-  .m17-chip-group {
-    grid-template-columns: 54px minmax(0, 1fr) !important;
+  #tab-meciuri .m17-info-row,
+  .m17-info-row {
+    align-items: flex-start !important;
     gap: 5px !important;
-    padding: 5px 6px !important;
-    border-radius: 12px !important;
   }
 
-  #tab-meciuri .m17-group-label,
-  .m17-group-label {
+  #tab-meciuri .m17-info-label,
+  .m17-info-label {
+    flex-basis: 46px !important;
+    width: 46px !important;
+    max-width: 46px !important;
     min-height: 20px !important;
-    padding: 0 6px !important;
-    font-size: 7px !important;
-    letter-spacing: .07em !important;
+    padding-top: 6px !important;
+    font-size: 6.8px !important;
+    letter-spacing: .08em !important;
   }
 
-  #tab-meciuri .m17-chip-wrap,
-  .m17-chip-wrap {
-    gap: 4px !important;
+  #tab-meciuri .m17-info-chips,
+  .m17-info-chips {
+    gap: 3.5px !important;
   }
 
-  #tab-meciuri .m17-chip-wrap .m17-pill,
-  .m17-chip-wrap .m17-pill,
-  #tab-meciuri .m17-chip-wrap .card-reco-badge,
-  .m17-chip-wrap .card-reco-badge,
-  #tab-meciuri .m17-chip-wrap .source-chip,
-  .m17-chip-wrap .source-chip,
-  #tab-meciuri .m17-chip-wrap [class*="source-chip"],
-  .m17-chip-wrap [class*="source-chip"] {
-    min-height: 20px !important;
-    padding: 3px 7px !important;
-    font-size: 8px !important;
+  #tab-meciuri .m17-info-chips .m17-pill,
+  .m17-info-chips .m17-pill,
+  #tab-meciuri .m17-info-chips .card-reco-badge,
+  .m17-info-chips .card-reco-badge,
+  #tab-meciuri .m17-info-chips .source-chip,
+  .m17-info-chips .source-chip,
+  #tab-meciuri .m17-info-chips [class*="source-chip"],
+  .m17-info-chips [class*="source-chip"] {
+    min-height: 19px !important;
+    padding: 3px 6px !important;
+    font-size: 7.6px !important;
+  }
+
+  #tab-meciuri .m17-info-chips .m17-market-line,
+  .m17-info-chips .m17-market-line {
+    padding: 4px 7px !important;
+    font-size: 7.8px !important;
   }
 }
 
 @media (max-width: 380px) {
-  #tab-meciuri .m17-chip-group,
-  .m17-chip-group {
-    grid-template-columns: 1fr !important;
+  #tab-meciuri .m17-info-label,
+  .m17-info-label {
+    flex-basis: 42px !important;
+    width: 42px !important;
+    max-width: 42px !important;
+    font-size: 6.4px !important;
   }
 
-  #tab-meciuri .m17-group-label,
-  .m17-group-label {
-    justify-self: start !important;
-  }
-
-  #tab-meciuri .m17-chip-wrap .m17-market-line,
-  .m17-chip-wrap .m17-market-line {
-    font-size: 8px !important;
+  #tab-meciuri .m17-info-chips .m17-market-line,
+  .m17-info-chips .m17-market-line {
+    font-size: 7.2px !important;
   }
 }

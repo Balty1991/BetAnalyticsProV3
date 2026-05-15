@@ -7344,17 +7344,19 @@ function renderMatches(){
     var m17WhyText = shortWhy || 'Context statistic activ';
     var m17MarketLine = bestMarketLine ? '<div class="m17-market-line">'+htmlEsc(bestMarketLine)+'</div>' : '';
 
-    function m17Group(label, cls, body){
-      return body ? '<div class="m17-chip-group '+cls+'"><span class="m17-group-label">'+label+'</span><div class="m17-chip-wrap">'+body+'</div></div>' : '';
+    function m17InfoRow(label, cls, body){
+      return body ? '<div class="m17-info-row '+cls+'"><span class="m17-info-label">'+label+'</span><div class="m17-info-chips">'+body+'</div></div>' : '';
     }
     var m17RiskPill = b ? '<span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>' : '';
     var m17DecisionPills = b ? (m17RiskPill + m17VerdictPill + m17ConsensusPill) : '';
     var m17MarketPills = b ? (m17KellyPill + sourceBadge + oddsSourceBadge + compareBadge + m17MarketLine) : '';
     var m17EnginePills = b ? (motorBadge + catboostBadge + ml5Badge + refBadge + lineupBadge + polyBadge + ageBadge + m17ContextPills + m17V2Pill) : '';
     var m17GroupedRows = b ? (
-      m17Group('Decizie', 'm17-group-decision', m17DecisionPills) +
-      m17Group('Piață', 'm17-group-market', m17MarketPills) +
-      m17Group('Motor', 'm17-group-engine', m17EnginePills)
+      '<div class="m17-info-board">' +
+        m17InfoRow('Decizie', 'm17-info-decision', m17DecisionPills) +
+        m17InfoRow('Piață', 'm17-info-market', m17MarketPills) +
+        m17InfoRow('Motor', 'm17-info-engine', m17EnginePills) +
+      '</div>'
     ) : '';
     var m17IndexBadge = displayIndex ? ('<span class="m17-index-badge" style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;border-radius:999px;background:linear-gradient(135deg,rgba(94,234,212,.18),rgba(15,23,42,.58));border:1px solid rgba(94,234,212,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 6px 18px rgba(34,211,238,.10);color:#d9fffa;font-size:12px;font-weight:900;letter-spacing:.02em;line-height:1;font-variant-numeric:tabular-nums;flex:0 0 auto;">#'+displayIndex+'</span>') : '';
 
