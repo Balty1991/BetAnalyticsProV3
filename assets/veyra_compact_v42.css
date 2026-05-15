@@ -380,3 +380,19 @@
 #tab-meciuri .matches-grid {
   gap: 8px !important;
 }
+
+/* ── Extra: elimină orice pseudo-element parazit pe date-label ── */
+.date-label > *:not(.dl-badge):not(.dl-weekday) {
+  display: none !important;
+}
+/* Ascunde emoji 📅 text node dacă JS-ul vechi mai rulează cumva */
+.date-label {
+  font-size: 0 !important; /* ascunde text nodes directe */
+}
+.dl-badge,
+.dl-weekday {
+  font-size: revert !important; /* restaurează pentru elementele noastre */
+}
+.dl-badge b { font-size: 6.5px !important; }
+.dl-badge em { font-size: 14px !important; }
+.dl-weekday { font-size: 12px !important; }
