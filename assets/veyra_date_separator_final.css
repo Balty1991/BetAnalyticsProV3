@@ -1,0 +1,111 @@
+/* VEYRA — Date separator FINAL
+   Scop: data rămâne complet deasupra cardurilor, în stânga, fără suprapunere cu chenarul auriu. */
+
+#tab-meciuri .date-group,
+#tab-meciuri.active .date-group,
+.date-group {
+  position: relative !important;
+  display: block !important;
+  padding-top: 0 !important;
+  margin: 26px 0 18px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* Data este element separat, sus-stânga, nu peste card */
+#tab-meciuri .date-group > .date-label,
+#tab-meciuri.active .date-group > .date-label,
+.date-group > .date-label {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 30 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  max-width: calc(100% - 20px) !important;
+  margin: 0 0 18px 28px !important;
+  padding: 0 !important;
+  transform: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+/* Anulează orice pseudo-element vechi care desena linie/card peste dată */
+#tab-meciuri .date-group::before,
+#tab-meciuri .date-group::after,
+#tab-meciuri .date-group > .date-label::before,
+#tab-meciuri .date-group > .date-label::after,
+.date-group::before,
+.date-group::after,
+.date-group > .date-label::before,
+.date-group > .date-label::after {
+  content: none !important;
+  display: none !important;
+}
+
+#tab-meciuri .date-group > .matches-grid,
+#tab-meciuri.active .date-group > .matches-grid,
+.date-group > .matches-grid {
+  position: relative !important;
+  z-index: 1 !important;
+  display: grid !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  overflow: visible !important;
+}
+
+/* Separarea reală: primul card începe sub dată, nu în același strat */
+#tab-meciuri .date-group > .matches-grid > .match-card-m17:first-child,
+#tab-meciuri .date-group > .matches-grid > .match-card:first-child,
+#tab-meciuri .date-group > .matches-grid > .match-card-v16:first-child,
+.date-group > .matches-grid > .match-card-m17:first-child,
+.date-group > .matches-grid > .match-card:first-child,
+.date-group > .matches-grid > .match-card-v16:first-child {
+  margin-top: 8px !important;
+}
+
+/* Badge calendar + text, calibrat pentru stânga ecranului */
+#tab-meciuri .date-label .dl-badge,
+.date-label .dl-badge {
+  flex: 0 0 30px !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  transform: none !important;
+}
+
+#tab-meciuri .date-label .dl-weekday,
+.date-label .dl-weekday {
+  transform: none !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 768px) {
+  #tab-meciuri .date-group,
+  #tab-meciuri.active .date-group,
+  .date-group {
+    margin: 24px 0 16px !important;
+  }
+
+  #tab-meciuri .date-group > .date-label,
+  #tab-meciuri.active .date-group > .date-label,
+  .date-group > .date-label {
+    margin: 0 0 18px 30px !important;
+  }
+
+  #tab-meciuri .date-group > .matches-grid > .match-card-m17:first-child,
+  #tab-meciuri .date-group > .matches-grid > .match-card:first-child,
+  #tab-meciuri .date-group > .matches-grid > .match-card-v16:first-child,
+  .date-group > .matches-grid > .match-card-m17:first-child,
+  .date-group > .matches-grid > .match-card:first-child,
+  .date-group > .matches-grid > .match-card-v16:first-child {
+    margin-top: 10px !important;
+  }
+}
