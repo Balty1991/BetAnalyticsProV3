@@ -65,13 +65,35 @@
     return all.filter(function(m){ return m && m.analysisState === 'ELIGIBLE'; }).length || all.length;
   }
 
-  function displayedMeciuriCount(){
-    var cache = W.MATCHES_FILTERED_CACHE;
-    if(Array.isArray(cache) && cache.length) return cache.length;
+  function countFromFilterPill(){
     var fc = $('filter-count');
-    if(fc){
-      var m = String(fc.textContent || '').match(/(\d+)/);
-      if(m && Number(m[1]) > 0) return Number(m[1]);
+    if(!fc) return 0;
+    var m = String(fc.textContent || '').match(/(\d+)/);
+    return m ? safeNum(m[1], 0) : 0;
+  }
+
+  function getHeaderMlCount(){
+    var mlEl = $('hq-ml');
+    var fromHeader = mlEl ? safeNum(String(mlEl.textContent || '').replace(/[^0-9.-]/g,''), 0) : 0;
+    if(fromHeader > 0) return fromHeader;
+    var metrics = getStatusMetrics();
+    return safeNum(metrics.ml, Array.isArray(W.ALL_MATCHES) ? W.ALL_MATCHES.length : 0);
+  }
+
+  function displayedMeciuriCount(){
+    // Contorul din pagina Meciuri este sursa canonică după renderMatches().
+    // În app.js există un corector care poate ajusta #filter-count față de MATCHES_FILTERED_CACHE,
+    // deci citim întâi pastila afișată, nu cache-ul intern.
+    var fromPill = countFromFilterPill();
+    if(fromPill > 0){
+      W.__VEYRA_MECIURI_DISPLAYED_COUNT = fromPill;
+      return fromPill;
+    }
+    if(safeNum(W.__VEYRA_MECIURI_DISPLAYED_COUNT, 0) > 0) return safeNum(W.__VEYRA_MECIURI_DISPLAYED_COUNT, 0);
+    var cache = W.MATCHES_FILTERED_CACHE;
+    if(Array.isArray(cache) && cache.length){
+      W.__VEYRA_MECIURI_DISPLAYED_COUNT = cache.length;
+      return cache.length;
     }
     return defaultMeciuriCount();
   }
@@ -88,6 +110,7 @@
     fc.textContent = count + suffix;
     fc.title = count + ' meciuri afișate în categoria Meciuri';
     fc.setAttribute('aria-label', fc.title);
+    W.__VEYRA_MECIURI_DISPLAYED_COUNT = count;
   }
 
   function historyState(){
@@ -103,8 +126,10 @@
     if(!dash || !host) return;
 
     var metrics = getStatusMetrics();
-    var totalMl = safeNum(metrics.ml, Array.isArray(W.ALL_MATCHES) ? W.ALL_MATCHES.length : 0);
-    var totalLoaded = Array.isArray(W.ALL_MATCHES) && W.ALL_MATCHES.length ? W.ALL_MATCHES.length : totalMl;
+    var totalMl = getHeaderMlCount();
+    // Important: dashboard-ul trebuie să folosească aceeași sursă ca header-ul,
+    // nu ALL_MATCHES.length, pentru că ALL_MATCHES poate include meciuri brute/cache.
+    var totalLoaded = totalMl;
     var shown = displayedMeciuriCount();
     var time = getStatusTime() || '—';
     var validated = safeNum((W.SIGNAL_AUDIT && W.SIGNAL_AUDIT.count) || (W.SIGNAL_AUDIT && W.SIGNAL_AUDIT.rows && W.SIGNAL_AUDIT.rows.length), 0);
@@ -165,7 +190,7 @@
     }
     if(typeof W.renderMatches === 'function'){
       var oldRenderMatches = W.renderMatches;
-      W.renderMatches = function(){ var r = oldRenderMatches.apply(this, arguments); scheduleUpdate(40); return r; };
+      W.renderMatches = function(){ var r = oldRenderMatches.apply(this, arguments); scheduleUpdate(40); setTimeout(function(){ scheduleUpdate(0); }, 180); return r; };
     }
     if(typeof W.switchTab === 'function'){
       var oldSwitchTab = W.switchTab;
