@@ -7428,7 +7428,11 @@ function renderMatches(){
         if(existingGroup && startIdx > 0){
           existingGroup.querySelector('.matches-grid').innerHTML += groups[date].join('');
         } else {
-          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">📅 ' + date + '</div><div class="matches-grid">' + groups[date].join('') + '</div></div>';
+          var _dp = (date+'').match(/^(\w+)\s+(\d+)\s+(\w+)$/);
+          var _dlHtml = _dp
+            ? '<span class="dl-badge"><b>'+(_dp[3]||'').toUpperCase()+'</b><em>'+_dp[2]+'</em></span><span class="dl-weekday">'+(_dp[1]||'').toUpperCase()+' '+_dp[2]+' '+(_dp[3]||'').toUpperCase()+'</span>'
+            : '<span class="dl-weekday">'+date+'</span>';
+          html += '<div class="date-group" data-date-group="' + date + '"><div class="date-label">'+_dlHtml+'</div><div class="matches-grid">' + groups[date].join('') + '</div></div>';
         }
       });
       return html;
