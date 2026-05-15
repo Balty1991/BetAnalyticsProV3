@@ -1,0 +1,101 @@
+/* VEYRA — Team names + crest boost
+   Mărește puțin numele echipelor și stemele, fără să strice compactarea. */
+
+#tab-meciuri .m17-teams,
+.m17-teams {
+  grid-template-columns: minmax(0,1fr) 30px minmax(0,1fr) !important;
+  gap: 7px !important;
+}
+
+#tab-meciuri .m17-team,
+.m17-team {
+  gap: 7px !important;
+}
+
+#tab-meciuri .m17-logo,
+.m17-logo {
+  width: 38px !important;
+  height: 38px !important;
+  flex-basis: 38px !important;
+  min-width: 38px !important;
+  border-radius: 11px !important;
+}
+
+#tab-meciuri .m17-logo img,
+.m17-logo img {
+  max-width: 32px !important;
+  max-height: 32px !important;
+}
+
+#tab-meciuri .m17-team-name,
+#tab-meciuri .m17-team-name *,
+.m17-team-name,
+.m17-team-name * {
+  font-size: 15px !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.03em !important;
+}
+
+#tab-meciuri .m17-team-prob,
+.m17-team-prob {
+  font-size: 10.5px !important;
+  margin-top: 2px !important;
+}
+
+#tab-meciuri .m17-vs,
+.m17-vs {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 11px !important;
+}
+
+@media (min-width: 430px) {
+  #tab-meciuri .m17-logo,
+  .m17-logo {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px !important;
+    min-width: 40px !important;
+  }
+
+  #tab-meciuri .m17-logo img,
+  .m17-logo img {
+    max-width: 34px !important;
+    max-height: 34px !important;
+  }
+
+  #tab-meciuri .m17-team-name,
+  #tab-meciuri .m17-team-name *,
+  .m17-team-name,
+  .m17-team-name * {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  #tab-meciuri .m17-logo,
+  .m17-logo {
+    width: 36px !important;
+    height: 36px !important;
+    flex-basis: 36px !important;
+    min-width: 36px !important;
+  }
+
+  #tab-meciuri .m17-logo img,
+  .m17-logo img {
+    max-width: 30px !important;
+    max-height: 30px !important;
+  }
+
+  #tab-meciuri .m17-team-name,
+  #tab-meciuri .m17-team-name *,
+  .m17-team-name,
+  .m17-team-name * {
+    font-size: 14px !important;
+  }
+
+  #tab-meciuri .m17-team-prob,
+  .m17-team-prob {
+    font-size: 10px !important;
+  }
+}
