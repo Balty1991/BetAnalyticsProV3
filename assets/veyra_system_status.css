@@ -1,0 +1,113 @@
+/* VEYRA — Dashboard-only Status Sistem + Meciuri visible-count polish */
+:root{
+  --vsys-cyan:#2be5c5;
+  --vsys-cyan-2:#22d3ee;
+  --vsys-amber:#fbbf24;
+  --vsys-bg:rgba(5,12,22,.72);
+  --vsys-card:rgba(9,18,32,.78);
+  --vsys-border:rgba(43,229,197,.26);
+}
+
+/* Cotele nu mai apar în header; păstrăm doar ML + ora */
+#hq-odds{display:none!important}
+.veyra-sync-row{gap:7px!important}
+.veyra-sync-row span{white-space:nowrap}
+
+/* Badge-ul de număr din pagina Meciuri */
+.mx21-head #filter-count,
+.mx21-count#filter-count{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-height:36px!important;
+  padding:0 16px!important;
+  border-radius:999px!important;
+  background:linear-gradient(135deg,rgba(43,229,197,.16),rgba(15,23,42,.68))!important;
+  border:1px solid rgba(43,229,197,.58)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 0 0 1px rgba(43,229,197,.10),0 10px 26px rgba(43,229,197,.12)!important;
+  color:#9ffdf1!important;
+  font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace)!important;
+  font-size:13px!important;
+  font-weight:900!important;
+  letter-spacing:.02em!important;
+  text-transform:none!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.mx21-head #filter-count::before{content:'';width:7px;height:7px;border-radius:999px;background:var(--vsys-cyan);box-shadow:0 0 12px rgba(43,229,197,.9);margin-right:8px;display:none}
+
+/* Status Sistem apare doar în Dashboard, fiind injectat în #dashboard-modern-shell */
+#tab-meciuri #dashboard-system-status,
+#tab-smartbet #dashboard-system-status,
+#tab-ml5 #dashboard-system-status,
+#tab-clv #dashboard-system-status,
+#tab-performanta #dashboard-system-status{display:none!important}
+
+#dashboard-system-status{
+  position:relative;
+  overflow:hidden;
+  margin:0 0 14px;
+  padding:14px;
+  border-radius:24px;
+  border:1px solid var(--vsys-border);
+  background:
+    radial-gradient(circle at 0 0,rgba(43,229,197,.18),transparent 32%),
+    radial-gradient(circle at 100% 100%,rgba(34,211,238,.13),transparent 38%),
+    linear-gradient(135deg,rgba(8,14,26,.92),rgba(5,10,18,.94));
+  box-shadow:0 0 0 1px rgba(255,255,255,.035),0 18px 42px rgba(0,0,0,.30),0 0 34px rgba(43,229,197,.10);
+  isolation:isolate;
+}
+#dashboard-system-status::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(43,229,197,.07),transparent);
+  opacity:.75;
+  transform:translateX(-55%);
+  animation:vsysSweep 5.4s ease-in-out infinite;
+  z-index:-1;
+}
+@keyframes vsysSweep{0%,36%{transform:translateX(-70%);opacity:0}52%{opacity:.65}100%{transform:translateX(72%);opacity:0}}
+.vsys-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.08)}
+.vsys-pulse{width:38px;height:38px;border-radius:15px;display:grid;place-items:center;color:var(--vsys-cyan);background:rgba(43,229,197,.10);border:1px solid rgba(43,229,197,.23);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.vsys-title{font-size:17px;font-weight:950;letter-spacing:.18em;text-transform:uppercase;color:#f6fbff;line-height:1.05}
+.vsys-sub{margin-top:4px;font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace);font-size:11px;color:rgba(226,238,255,.64)}
+.vsys-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.vsys-tile{display:flex;align-items:center;gap:11px;min-height:82px;padding:11px;border-radius:16px;background:linear-gradient(135deg,rgba(15,26,43,.82),rgba(7,14,25,.82));border:1px solid rgba(148,163,184,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.vsys-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:14px;color:var(--vsys-cyan);background:rgba(43,229,197,.08);border:1px solid rgba(43,229,197,.20);flex:0 0 auto}
+.vsys-k{font-size:11px;color:rgba(226,238,255,.65);line-height:1.1}
+.vsys-v{margin-top:5px;font-size:22px;font-weight:950;color:#f8fbff;line-height:1;font-variant-numeric:tabular-nums}
+.vsys-v.small{font-size:14px}
+.vsys-pill{display:inline-flex;align-items:center;justify-content:center;min-height:26px;padding:0 12px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.02em;border:1px solid rgba(43,229,197,.28);background:rgba(16,185,129,.16);color:#73ffe9;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.vsys-pill.warn{border-color:rgba(251,191,36,.34);background:rgba(251,191,36,.10);color:#ffd36b}
+.vsys-pill.info{border-color:rgba(96,165,250,.32);background:rgba(96,165,250,.10);color:#bfdbfe}
+.vsys-wide{grid-column:1/-1;min-height:64px;justify-content:space-between}
+.vsys-wide .vsys-left{display:flex;align-items:center;gap:11px;min-width:0}
+.vsys-note{margin-top:12px;display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;border:1px solid rgba(43,229,197,.32);background:linear-gradient(135deg,rgba(43,229,197,.10),rgba(14,21,34,.80));color:rgba(232,250,255,.82)}
+.vsys-note strong{display:block;color:#76fff0;font-size:13px;margin-bottom:3px}
+.vsys-note span{font-size:11px;color:rgba(226,238,255,.70)}
+.vsys-note-icon{width:38px;height:38px;display:grid;place-items:center;flex:0 0 auto;border-radius:999px;border:1px solid rgba(43,229,197,.34);color:#70fff0;background:rgba(43,229,197,.08)}
+.vsys-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.vsys-chip{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 12px;border-radius:13px;border:1px solid rgba(43,229,197,.30);background:rgba(43,229,197,.08);color:#9ffff2;font-size:11px;font-weight:900;letter-spacing:.035em;text-transform:uppercase;white-space:nowrap}
+.vsys-chip.warn{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.08);color:#ffd36b}
+.vsys-foot{margin-top:11px;text-align:center;font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace);font-size:10px;color:rgba(226,238,255,.50)}
+@media(max-width:620px){
+  #dashboard-system-status{padding:12px;border-radius:22px;margin-left:0;margin-right:0}
+  .vsys-head{gap:10px;margin-bottom:10px;padding-bottom:10px}
+  .vsys-title{font-size:15px;letter-spacing:.16em}
+  .vsys-sub{font-size:10px}
+  .vsys-grid{gap:8px}
+  .vsys-tile{min-height:76px;padding:10px;gap:9px;border-radius:14px}
+  .vsys-icon{width:32px;height:32px;border-radius:12px}
+  .vsys-k{font-size:10.5px}
+  .vsys-v{font-size:20px}
+  .vsys-note{padding:11px;border-radius:14px}
+  .vsys-chip{flex:1 1 auto;justify-content:center;min-width:0;font-size:10px;padding:0 9px}
+  .mx21-head #filter-count,.mx21-count#filter-count{min-height:34px!important;padding:0 13px!important;font-size:12px!important}
+}
+@media(max-width:380px){
+  .vsys-grid{grid-template-columns:1fr}
+  .vsys-wide{grid-column:auto}
+  .vsys-title{font-size:14px;letter-spacing:.12em}
+}
