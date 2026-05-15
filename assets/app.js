@@ -428,6 +428,8 @@ function renderWinLossDistribution(targetId, stats){
   target.innerHTML = '<div class="visual-distribution"><div class="visual-dist-big">'+total+' bilete</div><div class="visual-dist-stack"><div class="visual-dist-seg" style="width:'+wp.toFixed(1)+'%;background:var(--grn)"></div><div class="visual-dist-seg" style="width:'+lp.toFixed(1)+'%;background:var(--red)"></div><div class="visual-dist-seg" style="width:'+pp.toFixed(1)+'%;background:var(--yel)"></div></div><div class="visual-dist-legend"><span class="visual-dist-pill">WIN '+(stats.win||0)+' • '+wp.toFixed(0)+'%</span><span class="visual-dist-pill">LOSS '+(stats.loss||0)+' • '+lp.toFixed(0)+'%</span><span class="visual-dist-pill">PENDING '+(stats.pending||0)+' • '+pp.toFixed(0)+'%</span></div></div>';
 }
 function renderDashboardVisuals(){
+  return; // Dashboard gol — va fi recreat ulterior
+}
   var cutoff = new Date(Date.now() - (21 * 86400000));
   var settledRows = getHistory21SettledRows(cutoff);
   var livePendingRows = getHistory21LivePendingRows();
@@ -462,8 +464,8 @@ function renderDashboardVisuals(){
 }
 
 function renderDashboardMonitor(){
-  var target = $('dashboard-monitor-grid');
-  if(!target) return;
+  return; // Dashboard gol — va fi recreat ulterior
+}
   var visibleMatches = (ALL_MATCHES || []).filter(function(m){ return m && passesSelectionFilter(m); });
   var eligible = visibleMatches.filter(function(m){ return m.bestBet && m.analysisState === 'ELIGIBLE'; });
   var premiumSingles = eligible.filter(function(m){ return Number(m.smartScore || 0) >= 88 && Number((m.bestBet || {}).edgePct || 0) >= 10; });
@@ -500,8 +502,8 @@ function renderDashboardMonitor(){
 
 
 function renderModernDashboard(){
-  var target = $('dashboard-modern-shell');
-  if(!target) return;
+  return; // Dashboard gol — va fi recreat ulterior
+}
 
   function esc(v){
     return String(v == null ? '' : v)
