@@ -30,20 +30,18 @@
 .date-group {
   position: relative !important;
   padding-top: 0 !important;
-  margin: 10px 0 12px !important;
+  margin: 18px 0 10px !important;
 }
 
 /* ─────────────────────────────────────────────────────────
-   1. DATE SEPARATOR — mutat puțin mai sus, clar în afara cardului
+   1. DATE SEPARATOR — un singur badge calendar curat
    ───────────────────────────────────────────────────────── */
 #tab-meciuri .date-label,
 .date-label {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
-  padding: 0 !important;
-  margin: 0 0 14px !important;
-  transform: translateY(-8px) !important;
+  padding: 4px 0 12px !important;
   background: transparent !important;
   border: none !important;
   font-family: var(--mono, ui-monospace, monospace) !important;
@@ -52,11 +50,6 @@
   left: auto !important;
   top: auto !important;
   width: auto !important;
-}
-
-#tab-meciuri .date-group > .matches-grid,
-.date-group > .matches-grid {
-  margin-top: -2px !important;
 }
 
 .dl-badge {
@@ -240,18 +233,4 @@
    ───────────────────────────────────────────────────────── */
 #tab-meciuri .matches-grid {
   gap: 8px !important;
-}
-
-
-/* Fix fin pe mobil: data mai sus, separată clar de primul card */
-@media (max-width: 768px) {
-  #tab-meciuri .date-group,
-  .date-group { margin: 8px 0 12px !important; }
-
-  #tab-meciuri .date-label,
-  .date-label {
-    gap: 9px !important;
-    margin: 0 0 12px !important;
-    transform: translateY(-10px) !important;
-  }
 }
