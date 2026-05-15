@@ -1,0 +1,139 @@
+/* ==========================================================
+   VEYRA — Nav Visibility Fix
+   Scop: meniul desktop/top să rămână mereu peste fundal/carduri,
+   iar pe telefon să apară sus dacă bara mobilă de jos este acoperită
+   de browser / mod desktop.
+   ========================================================== */
+
+:root{
+  --veyra-header-h: 92px;
+  --veyra-tabs-h: 56px;
+  --veyra-nav-panel-top: calc(var(--veyra-header-h) + var(--veyra-tabs-h));
+}
+
+.header{
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30000 !important;
+  isolation: isolate !important;
+}
+
+nav.tabs,
+.tabs{
+  position: sticky !important;
+  top: var(--veyra-header-h, 92px) !important;
+  z-index: 29990 !important;
+  isolation: isolate !important;
+  background:
+    linear-gradient(180deg, rgba(4,8,15,.98), rgba(6,12,22,.94)) !important;
+  backdrop-filter: saturate(170%) blur(22px) !important;
+  -webkit-backdrop-filter: saturate(170%) blur(22px) !important;
+  border-top: 1px solid rgba(43,229,197,.12) !important;
+  border-bottom: 1px solid rgba(43,229,197,.16) !important;
+  box-shadow:
+    0 10px 28px rgba(0,0,0,.38),
+    inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+.tabs::before{
+  content:"";
+  position:absolute;
+  left:16px;
+  right:16px;
+  top:0;
+  height:1px;
+  pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(43,229,197,.65), rgba(95,168,255,.35), transparent);
+}
+
+.main,
+.tab-content{
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Desktop real / mod desktop: meniul de sus trebuie să fie vizibil peste orice card. */
+@media (min-width: 769px){
+  nav.tabs,
+  .tabs{
+    display: flex !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+  .tabs::-webkit-scrollbar{display:none !important;}
+  .mobile-nav,
+  .mobile-sheet{
+    display: none !important;
+  }
+}
+
+/* Fallback activat din JS când Brave/Chrome acoperă bara de jos sau când modul desktop pe telefon dezactivează meniul mobil. */
+body.veyra-force-top-menu nav.tabs,
+body.veyra-force-top-menu .tabs,
+body.veyra-bottom-nav-blocked nav.tabs,
+body.veyra-bottom-nav-blocked .tabs{
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 10px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+}
+
+body.veyra-force-top-menu .tabs::-webkit-scrollbar,
+body.veyra-bottom-nav-blocked .tabs::-webkit-scrollbar{display:none !important;}
+
+body.veyra-force-top-menu .tab,
+body.veyra-bottom-nav-blocked .tab{
+  flex: 0 0 auto !important;
+  min-width: max-content !important;
+  height: 38px !important;
+  padding: 0 12px !important;
+  border-radius: 14px !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+body.veyra-force-top-menu .mobile-nav,
+body.veyra-force-top-menu .mobile-sheet,
+body.veyra-bottom-nav-blocked .mobile-nav,
+body.veyra-bottom-nav-blocked .mobile-sheet{
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.veyra-force-top-menu .main,
+body.veyra-bottom-nav-blocked .main{
+  padding-bottom: 28px !important;
+}
+
+/* Panoul „Mai mult” trebuie să pornească sub header + meniu, nu peste ele. */
+.desktop-more-panel.show{
+  top: var(--veyra-nav-panel-top, 148px) !important;
+  z-index: 29980 !important;
+}
+
+@media (max-width: 768px){
+  body.veyra-force-top-menu .desktop-more-panel.show,
+  body.veyra-bottom-nav-blocked .desktop-more-panel.show{
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: var(--veyra-nav-panel-top, 148px) !important;
+    overflow: auto !important;
+    padding: 14px 12px 22px !important;
+    background: rgba(6,8,15,.985) !important;
+    backdrop-filter: blur(24px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(130%) !important;
+  }
+}
