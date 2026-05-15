@@ -1,4 +1,4 @@
-/* VEYRA — country under league, no eligible badge, balanced team block */
+/* VEYRA — country under league, no eligible badge, balanced team block v3 */
 
 #tab-meciuri .m17-topline,
 .m17-topline {
@@ -52,18 +52,18 @@
   margin-right: auto !important;
 }
 
-/* balanced teams area: bigger crests, slightly smaller text, no overlap */
+/* balanced teams area: slightly smaller text, bigger crests, safer wrapping */
 #tab-meciuri .m17-teams,
 .m17-teams {
-  grid-template-columns: minmax(0,1fr) 32px minmax(0,1fr) !important;
-  gap: 8px !important;
+  grid-template-columns: minmax(0,1fr) 28px minmax(0,1fr) !important;
+  gap: 6px !important;
   padding: 2px 2px 4px !important;
   align-items: start !important;
 }
 
 #tab-meciuri .m17-team,
 .m17-team {
-  gap: 8px !important;
+  gap: 7px !important;
   align-items: center !important;
   min-width: 0 !important;
 }
@@ -72,31 +72,34 @@
 .m17-team-copy {
   min-width: 0 !important;
   flex: 1 1 auto !important;
+  max-width: 100% !important;
 }
 
 #tab-meciuri .m17-logo,
 .m17-logo {
-  width: 48px !important;
-  height: 48px !important;
-  flex: 0 0 48px !important;
-  min-width: 48px !important;
+  width: 46px !important;
+  height: 46px !important;
+  flex: 0 0 46px !important;
+  min-width: 46px !important;
   border-radius: 14px !important;
 }
 
 #tab-meciuri .m17-logo img,
 .m17-logo img {
-  max-width: 40px !important;
-  max-height: 40px !important;
+  max-width: 38px !important;
+  max-height: 38px !important;
 }
 
 #tab-meciuri .m17-team-name,
 #tab-meciuri .m17-team-name *,
 .m17-team-name,
 .m17-team-name * {
-  font-size: 16px !important;
-  line-height: 1.02 !important;
-  letter-spacing: -0.035em !important;
-  word-break: break-word !important;
+  font-size: 15px !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.03em !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
 }
 
 #tab-meciuri .m17-team-name,
@@ -105,6 +108,7 @@
   -webkit-line-clamp: 2 !important;
   -webkit-box-orient: vertical !important;
   overflow: hidden !important;
+  max-width: 100% !important;
 }
 
 #tab-meciuri .m17-team-prob,
@@ -115,9 +119,9 @@
 
 #tab-meciuri .m17-vs,
 .m17-vs {
-  width: 32px !important;
-  height: 32px !important;
-  font-size: 11px !important;
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 10px !important;
 }
 
 /* keep away side right-aligned and tidy */
@@ -149,8 +153,8 @@
 
   #tab-meciuri .m17-teams,
   .m17-teams {
-    grid-template-columns: minmax(0,1fr) 30px minmax(0,1fr) !important;
-    gap: 7px !important;
+    grid-template-columns: minmax(0,1fr) 26px minmax(0,1fr) !important;
+    gap: 5px !important;
   }
 
   #tab-meciuri .m17-logo,
@@ -171,13 +175,13 @@
   #tab-meciuri .m17-team-name *,
   .m17-team-name,
   .m17-team-name * {
-    font-size: 15px !important;
+    font-size: 14px !important;
   }
 
   #tab-meciuri .m17-vs,
   .m17-vs {
-    width: 30px !important;
-    height: 30px !important;
+    width: 26px !important;
+    height: 26px !important;
     font-size: 10px !important;
   }
 }
