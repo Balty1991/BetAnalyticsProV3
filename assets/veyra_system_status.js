@@ -127,7 +127,6 @@
     // Important: dashboard-ul trebuie să folosească aceeași sursă ca header-ul,
     // nu ALL_MATCHES.length, pentru că ALL_MATCHES poate include meciuri brute/cache.
     var totalLoaded = totalMl;
-    var shown = displayedMeciuriCount();
     var time = getStatusTime() || '—';
     var hs = historyState();
 
@@ -142,7 +141,7 @@
           tile('calendar','Ultima actualizare',htmlEsc(time),false)+
           tile('ball','Meciuri încărcate',String(totalLoaded || totalMl || 0),false)+
           tile('database','Flux date','<span class="vsys-pill">Stabil</span>',true)+
-          tile('eye','Meciuri afișate',String(shown || 0),false)+
+
           '<div class="vsys-tile vsys-wide"><div class="vsys-left"><div class="vsys-icon" aria-hidden="true">'+icon('sync')+'</div><div><div class="vsys-k">Istoric sincronizat</div><div class="vsys-v small">Monitorizare activă</div></div></div><span class="vsys-pill '+(hs.cls==='info'?'info':'')+'">'+htmlEsc(hs.label)+'</span></div>'+ 
         '</div>'+ 
         '<div class="vsys-note"><div class="vsys-note-icon" aria-hidden="true">'+icon('check')+'</div><div><strong>Sistemul funcționează normal.</strong><span>Dashboard-ul verifică API-ul, sincronizarea și numărul real de meciuri afișate.</span></div></div>'+ 
@@ -152,14 +151,14 @@
 
     var existing = $('dashboard-system-status');
     if(existing){
-      if(existing.getAttribute('data-vsys-sig') !== [totalLoaded,totalMl,shown,time,hs.label].join('|')){
+      if(existing.getAttribute('data-vsys-sig') !== [totalLoaded,totalMl,time,hs.label].join('|')){
         existing.outerHTML = html;
       }
     } else {
       host.insertAdjacentHTML('afterbegin', html);
     }
     var panel = $('dashboard-system-status');
-    if(panel) panel.setAttribute('data-vsys-sig', [totalLoaded,totalMl,shown,time,hs.label].join('|'));
+    if(panel) panel.setAttribute('data-vsys-sig', [totalLoaded,totalMl,time,hs.label].join('|'));
   }
 
   function tile(ic, label, value, rawValueHtml){
