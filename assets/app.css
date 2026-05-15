@@ -7874,34 +7874,38 @@ button[onclick*="resetFilter"]:hover {
 
 /* Border auriu */
 .match-card-v16.match-card-m17 {
-  border-color: rgba(215,165,40,.38) !important;
+  border-color: rgba(215,165,40,.42) !important;
   box-shadow:
-    0 0 0 1px rgba(215,165,40,.15),
-    0 0 24px rgba(215,165,40,.1),
-    0 0 50px rgba(215,165,40,.06),
+    0 0 0 1px rgba(215,165,40,.18),
+    0 0 30px rgba(215,165,40,.13),
+    0 0 60px rgba(215,165,40,.07),
     0 18px 40px rgba(0,0,0,.5) !important;
 }
 
-/* Dunga gold + glow triplu */
+/* Dunga gold + glow maxim */
 .match-card-m17::before {
   height: 3px !important;
   border-radius: 20px 20px 0 0 !important;
   background: linear-gradient(
     90deg,
     transparent            0%,
-    rgba(180,120,10,.2)   10%,
-    rgba(230,170,30,.65)  28%,
-    rgba(255,210,60,.95)  42%,
-    rgba(255,240,110,1)   50%,
-    rgba(255,210,60,.95)  58%,
-    rgba(230,170,30,.65)  72%,
-    rgba(180,120,10,.2)   90%,
-    transparent           100%
+    rgba(160,100,5,.15)    8%,
+    rgba(220,160,20,.55)   22%,
+    rgba(250,200,50,.9)    36%,
+    rgba(255,230,80,1)     44%,
+    rgba(255,250,140,1)    50%,
+    rgba(255,230,80,1)     56%,
+    rgba(250,200,50,.9)    64%,
+    rgba(220,160,20,.55)   78%,
+    rgba(160,100,5,.15)    92%,
+    transparent            100%
   ) !important;
   box-shadow:
-    0 0 8px  2px rgba(255,215,70,.7),
-    0 0 22px 5px rgba(245,185,40,.4),
-    0 0 50px 8px rgba(235,160,20,.18) !important;
+    0 0  6px  1px rgba(255,240,80,1),
+    0 0 14px  3px rgba(255,210,50,.85),
+    0 0 30px  6px rgba(245,180,30,.6),
+    0 0 60px 10px rgba(235,155,15,.3),
+    0 0 90px 14px rgba(220,130,10,.15) !important;
 }
 
 /* Reflexie difuza aurie in interiorul cardului */
@@ -7914,38 +7918,19 @@ button[onclick*="resetFilter"]:hover {
   z-index: 0 !important;
   background:
     radial-gradient(ellipse 70% 80px at 50% 0,
-      rgba(255,210,60,.14) 0%,
-      rgba(255,190,40,.05) 50%,
+      rgba(255,210,60,.16) 0%,
+      rgba(255,190,40,.06) 50%,
       transparent 100%
     ),
     radial-gradient(ellipse 30% 60px at 15% 0,
-      rgba(255,200,50,.09) 0%,
+      rgba(255,200,50,.1) 0%,
       transparent 70%
     ),
     radial-gradient(ellipse 30% 60px at 85% 0,
-      rgba(255,200,50,.07) 0%,
+      rgba(255,200,50,.08) 0%,
       transparent 70%
     ) !important;
 }
 
-/* Sweep animat */
-@keyframes veyra-gold-sweep {
-  0%   { transform: translateX(-120%); }
-  100% { transform: translateX(280%); }
-}
-.match-card-m17 .card-gold-sweep {
-  position: absolute !important;
-  top: 0 !important; left: 0 !important;
-  width: 45% !important; height: 100% !important;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255,215,60,.03) 40%,
-    rgba(255,215,60,.065) 50%,
-    rgba(255,215,60,.03) 60%,
-    transparent 100%
-  ) !important;
-  animation: veyra-gold-sweep 6s ease-in-out infinite !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
-}
+/* Sweep dezactivat */
+.match-card-m17 .card-gold-sweep { display: none !important; }
