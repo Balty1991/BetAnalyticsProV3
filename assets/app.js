@@ -4616,6 +4616,7 @@ function analyzeMatch(raw){
     polymarketDivergence: raw.polymarket_divergence != null ? Number(raw.polymarket_divergence) : null,
     polymarketMarket   : raw.polymarket_market     || null,
     funfacts           : Array.isArray(raw.funfacts) ? raw.funfacts : [],
+    aiPreview          : raw.ai_preview ? String(raw.ai_preview) : null,
     catboostMarket : raw.catboost_market || null,
     catboostScore  : raw.catboost_score != null ? Number(raw.catboost_score) : null,
     catboostEvPct  : raw.catboost_ev_pct != null ? Number(raw.catboost_ev_pct) : null,
@@ -7201,7 +7202,19 @@ function renderMatches(){
         // ─── Funfacts + Polymarket block (defensive) ────────────────────────────
     var funfactsBlock = '';
     var polyBlock = '';
+    var aiPreviewBlock = '';
     try {
+      if(m.aiPreview && typeof m.aiPreview === 'string' && m.aiPreview.length > 20){
+        // Procesam Markdown minimal: **bold** → <strong>, newline → <br>
+        var aiText = htmlEsc(m.aiPreview)
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/
+/g, '<br>');
+        aiPreviewBlock = '<div class="ai-preview-block">'+
+          '<div class="ai-preview-label">🤖 AI Preview BSD</div>'+
+          '<div class="ai-preview-text">'+aiText+'</div>'+
+        '</div>';
+      }
       if(m.funfacts && Array.isArray(m.funfacts) && m.funfacts.length > 0){
         var ffItems = m.funfacts.map(function(f){ return '<div class="funfact-item">💡 '+htmlEsc(String(f||''))+'</div>'; }).join('');
         if(ffItems) funfactsBlock = '<div class="funfacts-block">'+ffItems+'</div>';
@@ -7219,6 +7232,7 @@ function renderMatches(){
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      (aiPreviewBlock ? buildAnalysisSection('Preview meci', aiPreviewBlock, 'analysis-detail-preview-section') : '')+
       (funfactsBlock ? buildAnalysisSection('Context pre-meci', funfactsBlock + polyBlock, 'analysis-detail-funfacts-section') : (polyBlock ? buildAnalysisSection('', polyBlock, 'analysis-detail-poly-section') : ''))+
       (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';
@@ -7248,6 +7262,7 @@ function renderMatches(){
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
+      (aiPreviewBlock ? buildAnalysisSection('Preview meci', aiPreviewBlock, 'analysis-detail-preview-section') : '')+
       (funfactsBlock ? buildAnalysisSection('Context pre-meci', funfactsBlock + polyBlock, 'analysis-detail-funfacts-section') : (polyBlock ? buildAnalysisSection('', polyBlock, 'analysis-detail-poly-section') : ''))+
       (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';

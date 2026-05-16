@@ -7934,3 +7934,27 @@ button[onclick*="resetFilter"]:hover {
 
 /* Sweep dezactivat */
 .match-card-m17 .card-gold-sweep { display: none !important; }
+
+/* ── AI Preview BSD ─────────────────────────────────────────────── */
+.ai-preview-block {
+  background: linear-gradient(135deg, rgba(99,102,241,.08) 0%, rgba(139,92,246,.06) 100%);
+  border: 1px solid rgba(99,102,241,.20);
+  border-left: 3px solid #818cf8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.ai-preview-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #818cf8;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.ai-preview-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--c-text, #e2e8f0);
+  opacity: .90;
+}
