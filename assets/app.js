@@ -1580,7 +1580,7 @@ function getBetVerdict(match, bet) {
 
   // v7: PARIAZA necesită prob ≥85 sau (prob ≥83 + edge ≥8). Threshold ridicat față de v6.
   var strongSafe = adjProb >= 90 && edgePct >= 7 && value >= 0.018 && marketFitOk && !weakConsensus;
-  var solidSafe  = adjProb >= 85 && edgePct >= 9 && value >= 0.025 && (cbPositive || marketFitOk);
+  var solidSafe  = adjProb >= 82 && edgePct >= 8 && value >= 0.018 && (cbPositive || marketFitOk);
   var cleanCommon = !isAgainstMarket && !lowBooks && !isolatedOdds && !cbNegative;
 
   if (cleanCommon && (strongSafe || solidSafe)) {
@@ -1657,7 +1657,7 @@ function getBettingCommonOkProfile(match, bet) {
   // Praguri comune pentru un pick pe care merită să-l vezi separat:
   // 1) deja a trecut verdictul final PARIAZĂ; 2) probabilitate mare;
   // 3) edge/value real; 4) cotă jucabilă; 5) fără risc evident de ligă/profil.
-  if (prob < 85) return { ok:false, reason:'probabilitate sub 85%' };
+  if (prob < 80) return { ok:false, reason:'probabilitate sub 80%' };
   if (edge < 3) return { ok:false, reason:'edge sub 3pp' };
   if (value < 0.005) return { ok:false, reason:'value sub 0.5%' };
   if (odds && (odds < 1.15 || odds > 2.40)) return { ok:false, reason:'cotă în afara zonei comune' };
