@@ -127,14 +127,6 @@ def load_lineups_today() -> Dict[str, Any]:
 
 LINEUPS_TODAY: Dict[str, Any] = {}  # populat lazy în main()
 
-# Restricții weekday bazate pe istoricul jurnalului (950 pariuri settled)
-# ROI simulat după filtrare: +7.10% vs +0.45% fără filtru (+6.65pp)
-# Sunt excluse combinațiile market+zi cu ROI < -8% și min 15 pariuri
-WEEKDAY_RESTRICTIONS = {
-    "under35": {2, 3, 4, 6},   # Miercuri -22%, Joi -10.1%, Vineri -18.4%, Duminică -13%
-    "over15":  {0, 3, 4},       # Luni -12.7%, Joi -10.4%, Vineri -9%
-}
-
 # ─── Line Movement Filter (bazat pe CLV Buckets) ──────────────────────────────
 # CLV ≤-5% bucket: ROI -12.29% pe 51 pick-uri → excludem
 # from_open_pct > 5.3% ≈ CLV < -5% (calcul invers din formula CLV)
@@ -1046,19 +1038,6 @@ def qualifies_for_strategy(candidate, strategy_cfg):
     # CLV ≤-5% bucket: ROI -12.29% pe 51 pick-uri — nu merită pariat
     if candidate.get("line_move_signal") == "DRIFTING":
         return False
-
-    # Filtru weekday bazat pe jurnal (ROI +6.65pp la aplicare)
-    market_key_wd = candidate.get("market_key") or ""
-    event_date_wd = candidate.get("date") or candidate.get("event_date") or ""
-    if market_key_wd in WEEKDAY_RESTRICTIONS and event_date_wd:
-        try:
-            from datetime import datetime as _dt
-            _event_dt = _dt.fromisoformat(str(event_date_wd).replace("Z", "+00:00"))
-            _weekday = _event_dt.weekday()  # 0=Luni ... 6=Duminică
-            if _weekday in WEEKDAY_RESTRICTIONS[market_key_wd]:
-                return False
-        except Exception:
-            pass
 
     return True
 
@@ -2565,8 +2544,16 @@ def build_ui_live_candidate(row, market_key):
     value = calc_value(prob, odds)
     if value <= 0:
         return None
-    if odds > 1.65:
+    # Ridicat de la 1.65 -> 2.00 pentru a permite BTTS si Over25 (avg cota 1.72/1.76)
+    # sa concureze cu Under35 — BTTS ROI +12%, Over25 ROI +13% erau sistematic eliminate
+    if odds > 2.00:
         return None
+    # Anti-flood Under35: impune min_edge 6pp inline inainte de calcule costisitoare
+    # Zona edge 5-7pp are ROI +3.6% (OK), sub 6pp nu justifica pick-ul
+    if market_key == "under35":
+        _mp_u35 = market_prob_from_row_event(row, event, market_key)
+        if _mp_u35 is not None and (prob - _mp_u35) < 6.0:
+            return None
 
     adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     market_prob = market_prob_from_row_event(row, event, market_key)
@@ -2750,7 +2737,77 @@ def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event
             "settled_at": None,
         })
 
-    rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
+        rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
+
+    # ── Diversity cap: max 40% din picks poate fi aceeasi piata ──────────────
+    # Previne dominarea Under35 (anterior 57-60%) cand BTTS/Over25 sunt mai profitabile.
+    # Algoritmul: prima trecere pastreaza picks in ordine cronologica;
+    # daca o piata depaseste 40% din total, surplusul e inlocuit cu urmatorul
+    # candidate disponibil pentru acel eveniment (alt market_key).
+    if rows:
+        total = len(rows)
+        MAX_MARKET_PCT = 0.40
+        cap = max(3, int(total * MAX_MARKET_PCT))
+        market_count = {}
+        kept = []
+        # Indexam candidates per event_id pentru fallback rapid
+        _cand_by_event = {}
+        for _row in predictions or []:
+            _ev = _row.get("event") or {}
+            if _ev.get("status") != "notstarted":
+                continue
+            _eid = None
+            for _mk in tracked_market_keys:
+                _c = build_ui_live_candidate(_row, _mk)
+                if _c:
+                    _eid = _c.get("event_id")
+                    _cand_by_event.setdefault(str(_eid), []).append(_c)
+        # Sort candidati per event dupa ticket_score
+        for _eid in _cand_by_event:
+            _cand_by_event[_eid].sort(key=lambda c: c.get("ticket_score") or 0, reverse=True)
+        for r in rows:
+            mk = r.get("market_key")
+            cnt = market_count.get(mk, 0)
+            if cnt < cap:
+                market_count[mk] = cnt + 1
+                kept.append(r)
+            else:
+                # Incearca sa gaseasca un alt market_key pentru acelasi eveniment
+                eid_str = str(r.get("event_id") or "")
+                fallback = None
+                for alt_c in (_cand_by_event.get(eid_str) or []):
+                    alt_mk = alt_c.get("market_key")
+                    if alt_mk != mk and market_count.get(alt_mk, 0) < cap:
+                        # Construieste row-ul similar cu pick alternativ
+                        fallback = dict(r)
+                        fallback["market"] = alt_c.get("market")
+                        fallback["market_key"] = alt_mk
+                        fallback["odds"] = alt_c.get("odds")
+                        fallback["model_prob"] = alt_c.get("model_prob")
+                        fallback["adjusted_prob"] = alt_c.get("adjusted_prob")
+                        fallback["market_prob"] = alt_c.get("market_prob")
+                        fallback["edge_pct"] = alt_c.get("edge_pct")
+                        fallback["value"] = alt_c.get("value")
+                        fallback["score"] = alt_c.get("ticket_score")
+                        fallback["api_prob"] = alt_c.get("api_prob")
+                        fallback["poisson_prob"] = alt_c.get("poisson_prob")
+                        fallback["poisson_delta"] = alt_c.get("poisson_delta")
+                        fallback["poisson_alert"] = alt_c.get("poisson_alert")
+                        fallback["confidence"] = alt_c.get("confidence")
+                        fallback["verdict"] = alt_c.get("verdict", "")
+                        fallback["risk_tier"] = alt_c.get("risk_tier", "")
+                        market_count[alt_mk] = market_count.get(alt_mk, 0) + 1
+                        break
+                if fallback:
+                    kept.append(fallback)
+                else:
+                    # Niciun alt market disponibil -> pastram originalul (mai bine decat nimic)
+                    market_count[mk] = cnt + 1
+                    kept.append(r)
+        kept.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
+        rows = kept
+    # ─────────────────────────────────────────────────────────────────────────
+
     return rows
 
 
