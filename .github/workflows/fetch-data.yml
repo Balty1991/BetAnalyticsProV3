@@ -110,6 +110,30 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Social news cache (risk layer pre-meci)
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          if [ -f fetch_social_news_cache.py ]; then
+            echo "Fetching social news cache la $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            timeout 300s python -u fetch_social_news_cache.py || echo "Social news cache skipped/timed out; non-fatal."
+          else
+            echo "fetch_social_news_cache.py missing; skip."
+          fi
+        continue-on-error: true
+
+      - name: Player profiles quality cache
+        env:
+          BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+        run: |
+          if [ -f fetch_player_profiles_cache.py ]; then
+            echo "Fetching player profiles cache la $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            timeout 300s python -u fetch_player_profiles_cache.py || echo "Player profiles cache skipped/timed out; non-fatal."
+          else
+            echo "fetch_player_profiles_cache.py missing; skip."
+          fi
+        continue-on-error: true
+
       - name: Verify cached data exists
         run: |
           test -f data/predictions.json
