@@ -29,11 +29,9 @@ DATA_DIR = "data"
 STATIC_REFRESH_HOURS = {0, 6, 12, 18}  # UTC
 LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
-# Fix 10: crescut de la 60 la 90 zile — cu logul incepand din 7 Apr, 60 zile
-# nu captau decat 38 zile de date efective. 90 zile asigura acoperire completa.
-HISTORY_LOOKBACK_DAYS = 90
+HISTORY_LOOKBACK_DAYS = 60
 HISTORY_MAX_ROWS = 2500
-RECOMMENDATION_LOG_MAX_ROWS = 5000
+UI_PICKS_LOG_MAX_ROWS = 50000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
@@ -61,54 +59,6 @@ def load_referee_stats() -> Dict[int, Any]:
 
 REFEREE_STATS: Dict[int, Any] = {}  # populat lazy în main()
 
-V2_ENRICHMENT_CACHE: Dict[str, Any] = {}  # populat lazy în main()
-
-TEAM_FORM_CACHE: Dict[str, Any] = {}  # populat lazy în main() din team_form_cache.json
-
-
-def load_team_form_cache() -> Dict[str, Any]:
-    """
-    Încarcă data/team_form_cache.json generat de fetch_team_form_cache.py.
-    Returnează dict {team_id (str): form_dict} cu form_score, form_string etc.
-    """
-    path = os.path.join(DATA_DIR, "team_form_cache.json")
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-        teams = data.get("teams") or {}
-        if isinstance(teams, dict):
-            return {str(k): v for k, v in teams.items()}
-        return {}
-    except Exception as e:
-        print(f"[TeamForm] load failed (non-fatal): {e}")
-        return {}
-
-
-def load_v2_enrichment_cache() -> Dict[str, Any]:
-    """
-    Încarcă data/v2_enrichment_cache.json generat de fetch_v2_enrichment_cache.py.
-    Returnează dict {event_id (str): bundle_dict} sau {} dacă fișierul lipsește.
-    Conține: detail (derby/neutral/travel/weather/pitch), prediction (BSD v2 ML),
-             h2h (head-to-head stats), referee, managers, lineups.
-    """
-    path = os.path.join(DATA_DIR, "v2_enrichment_cache.json")
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-        events = data.get("events") or {}
-        if isinstance(events, list):
-            return {str(e.get("event_id", "")): e for e in events if e.get("event_id")}
-        if isinstance(events, dict):
-            return {str(k): v for k, v in events.items()}
-        return {}
-    except Exception as e:
-        print(f"[V2Cache] load failed (non-fatal): {e}")
-        return {}
-
 
 def load_lineups_today() -> Dict[str, Any]:
     """
@@ -128,6 +78,14 @@ def load_lineups_today() -> Dict[str, Any]:
 
 
 LINEUPS_TODAY: Dict[str, Any] = {}  # populat lazy în main()
+
+# Restricții weekday bazate pe istoricul jurnalului (950 pariuri settled)
+# ROI simulat după filtrare: +7.10% vs +0.45% fără filtru (+6.65pp)
+# Sunt excluse combinațiile market+zi cu ROI < -8% și min 15 pariuri
+WEEKDAY_RESTRICTIONS = {
+    "under35": {2, 3, 4, 6},   # Miercuri -22%, Joi -10.1%, Vineri -18.4%, Duminică -13%
+    "over15":  {0, 3, 4},       # Luni -12.7%, Joi -10.4%, Vineri -9%
+}
 
 # ─── Line Movement Filter (bazat pe CLV Buckets) ──────────────────────────────
 # CLV ≤-5% bucket: ROI -12.29% pe 51 pick-uri → excludem
@@ -371,17 +329,7 @@ def poisson_market_probability(metrics, market_key):
     return metrics.get(market_key)
 
 
-def blend_model_probability(row, market_key, v2_ml_prob=None):
-    """
-    Blendează probabilitățile din trei surse:
-      - BSD v1 API (model principal)
-      - Poisson Dixon-Coles (model analitic local)
-      - BSD v2 ML CatBoost (GAP 2 — integrat din v2_enrichment_cache)
-
-    Cu 3 surse: v1 50% + Poisson 25% + v2 ML 25%
-    Cu 2 surse: v1 72% + Poisson 28% (comportament original)
-    Cu 1 sursă: v1 100%
-    """
+def blend_model_probability(row, market_key):
     api_prob = api_market_probability(row, market_key)
     metrics = build_poisson_metrics(row)
     poisson_prob = poisson_market_probability(metrics, market_key)
@@ -389,39 +337,19 @@ def blend_model_probability(row, market_key, v2_ml_prob=None):
     delta = None
     alert = False
     direction = "flat"
-
-    if poisson_prob is not None and v2_ml_prob is not None:
-        # ── Triple blend: v1 BSD 50% + Poisson 25% + v2 ML 25% ──────────────
-        delta = round(float(poisson_prob) - float(api_prob), 2)
-        alert = abs(delta) > 5.0
-        effective_prob = round(
-            api_prob * 0.50
-            + float(poisson_prob) * 0.25
-            + float(v2_ml_prob) * 0.25,
-            2
-        )
-        if delta > 5.0:
-            direction = "value"
-        elif delta < -5.0:
-            direction = "risk"
-    elif poisson_prob is not None:
-        # ── Dual blend: v1 72% + Poisson 28% (comportament original) ─────────
+    if poisson_prob is not None:
         delta = round(float(poisson_prob) - float(api_prob), 2)
         alert = abs(delta) > 5.0
         api_weight = 0.55 if alert else 0.72
         poisson_weight = 1.0 - api_weight
-        effective_prob = round(
-            (api_prob * api_weight) + (float(poisson_prob) * poisson_weight), 2
-        )
+        effective_prob = round((api_prob * api_weight) + (float(poisson_prob) * poisson_weight), 2)
         if delta > 5.0:
             direction = "value"
         elif delta < -5.0:
             direction = "risk"
-
     return {
         "api_prob": round(api_prob, 2),
         "poisson_prob": round(float(poisson_prob), 2) if poisson_prob is not None else None,
-        "v2_ml_prob": round(float(v2_ml_prob), 2) if v2_ml_prob is not None else None,
         "effective_prob": round(effective_prob, 2),
         "poisson_delta": delta,
         "poisson_alert": alert,
@@ -430,77 +358,7 @@ def blend_model_probability(row, market_key, v2_ml_prob=None):
     }
 
 
-def get_v2_ml_probability(event_id, market_key) -> Optional[float]:
-    """
-    GAP 2: Extrage probabilitatea ML v2 BSD din V2_ENRICHMENT_CACHE pentru un eveniment.
-    Suportă ambele formate returnate de /api/v2/events/{id}/prediction/:
-      - flat:    {prob_home_win: 0.55, prob_over_25: 0.62, ...}  (valori 0-1 sau 0-100)
-      - grouped: {markets: {1x2: {HOME: 0.55}, over_under_25: {over: 0.62}, ...}}
-    Returnează None dacă cache-ul lipsește sau probabilitatea nu e disponibilă.
-    """
-    if not event_id or not V2_ENRICHMENT_CACHE:
-        return None
-    bundle = V2_ENRICHMENT_CACHE.get(str(event_id)) or {}
-    prediction = bundle.get("prediction")
-    if not isinstance(prediction, dict):
-        return None
-
-    def _to_pct(v) -> Optional[float]:
-        try:
-            n = float(v)
-        except Exception:
-            return None
-        if not math.isfinite(n) or n < 0:
-            return None
-        # Valori 0-1 → convertim la procente
-        return round(n * 100.0 if n <= 1.0 else (100.0 if n > 100 else n), 2)
-
-    # ── Format flat (identic cu v1, câmpuri prob_*) ───────────────────────
-    FLAT_MAP = {
-        "homeWin": ("prob_home_win",  False),
-        "draw":    ("prob_draw",      False),
-        "awayWin": ("prob_away_win",  False),
-        "over15":  ("prob_over_15",   False),
-        "under15": ("prob_over_15",   True),   # inversat
-        "over25":  ("prob_over_25",   False),
-        "under25": ("prob_over_25",   True),   # inversat
-        "under35": ("prob_over_35",   True),   # inversat
-        "btts":    ("prob_btts_yes",  False),
-    }
-    if market_key in FLAT_MAP:
-        field, invert = FLAT_MAP[market_key]
-        val = prediction.get(field)
-        if val is not None:
-            p = _to_pct(val)
-            if p is not None:
-                return round(100.0 - p, 2) if invert else p
-
-    # ── Format grouped (markets nested) ──────────────────────────────────
-    markets = prediction.get("markets") or prediction.get("grouped_markets") or {}
-    if isinstance(markets, dict):
-        GROUPED_MAP = {
-            "homeWin":  ("1x2",            "HOME"),
-            "draw":     ("1x2",            "DRAW"),
-            "awayWin":  ("1x2",            "AWAY"),
-            "over15":   ("over_under_15",  "over"),
-            "under15":  ("over_under_15",  "under"),
-            "over25":   ("over_under_25",  "over"),
-            "under25":  ("over_under_25",  "under"),
-            "under35":  ("over_under_35",  "under"),
-            "btts":     ("btts",           "yes"),
-        }
-        if market_key in GROUPED_MAP:
-            mkt_name, outcome_code = GROUPED_MAP[market_key]
-            mkt_block = markets.get(mkt_name)
-            if isinstance(mkt_block, dict):
-                val = mkt_block.get(outcome_code)
-                if val is None:
-                    # Fallback case-insensitive
-                    val = next((v for k, v in mkt_block.items()
-                                if str(k).lower() == outcome_code.lower()), None)
-                if val is not None:
-                    return _to_pct(val)
-    return None
+def odds_in_ranges(odds, ranges):
     try:
         o = float(odds or 0)
     except Exception:
@@ -900,7 +758,7 @@ def build_candidate(row, market_key, require_outcome=True) -> Optional[Dict[str,
         pass
     # ──────────────────────────────────────────────────────────────────────────
 
-    prob_meta = blend_model_probability(row, market_key, v2_ml_prob=get_v2_ml_probability(event.get("id"), market_key))
+    prob_meta = blend_model_probability(row, market_key)
     prob = prob_meta.get("effective_prob")
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
     league_name = (event.get("league") or {}).get("name") or "Unknown"
@@ -935,7 +793,6 @@ def build_candidate(row, market_key, require_outcome=True) -> Optional[Dict[str,
         "prob": round(prob, 2),
         "api_prob": prob_meta.get("api_prob"),
         "poisson_prob": prob_meta.get("poisson_prob"),
-        "v2_ml_prob": prob_meta.get("v2_ml_prob"),
         "poisson_delta": prob_meta.get("poisson_delta"),
         "poisson_alert": bool(prob_meta.get("poisson_alert")),
         "poisson_direction": prob_meta.get("poisson_direction"),
@@ -966,28 +823,6 @@ def build_candidate(row, market_key, require_outcome=True) -> Optional[Dict[str,
         "most_likely_score": row.get("most_likely_score"),
         "v2_recommended": bool(row.get("v2_recommended")),
     }
-
-
-def odds_in_ranges(odds: Optional[float], ranges: List) -> bool:
-    """
-    Returnează True dacă odds-ul cade într-unul din intervalele de excludere.
-    ranges = lista de [lo, hi] sau (lo, hi). Ex: [[1.26, 1.44], [2.05, 2.20]]
-    Folosit în qualifies_for_strategy pentru 'exclude_odds_ranges'.
-    """
-    if not odds or not ranges:
-        return False
-    try:
-        v = float(odds)
-    except (TypeError, ValueError):
-        return False
-    for r in ranges:
-        try:
-            lo, hi = float(r[0]), float(r[1])
-            if lo <= v <= hi:
-                return True
-        except Exception:
-            continue
-    return False
 
 
 def qualifies_for_strategy(candidate, strategy_cfg):
@@ -1040,6 +875,19 @@ def qualifies_for_strategy(candidate, strategy_cfg):
     # CLV ≤-5% bucket: ROI -12.29% pe 51 pick-uri — nu merită pariat
     if candidate.get("line_move_signal") == "DRIFTING":
         return False
+
+    # Filtru weekday bazat pe jurnal (ROI +6.65pp la aplicare)
+    market_key_wd = candidate.get("market_key") or ""
+    event_date_wd = candidate.get("date") or candidate.get("event_date") or ""
+    if market_key_wd in WEEKDAY_RESTRICTIONS and event_date_wd:
+        try:
+            from datetime import datetime as _dt
+            _event_dt = _dt.fromisoformat(str(event_date_wd).replace("Z", "+00:00"))
+            _weekday = _event_dt.weekday()  # 0=Luni ... 6=Duminică
+            if _weekday in WEEKDAY_RESTRICTIONS[market_key_wd]:
+                return False
+        except Exception:
+            pass
 
     return True
 
@@ -1330,10 +1178,6 @@ def build_signal_audit(predictions, recommendation_log=None):
             "away_unavailable":  row.get("away_unavailable", []),
         })
 
-    # Fix 8: elimina under25 din Signal Audit (piata netrackuita in recommendation_log)
-    # under25 aparea din STRATEGIES["engine_overall"]["allowed"] care include sub-piete
-    # dar build_current_recommendation_rows nu trackuieste under25
-    rows = [r for r in rows if r.get("market_key") != "under25"]
     rows.sort(key=lambda x: (float(x.get("kelly_quarter_pct") or 0), float(x.get("edge_pct") or 0), float(x.get("score") or 0)), reverse=True)
     rows = rows[:SIGNAL_AUDIT_MAX_ROWS]
     return {
@@ -2541,7 +2385,7 @@ def build_ui_live_candidate(row, market_key):
     if hard_contradiction(row, market_key):
         return None
 
-    prob_meta = blend_model_probability(row, market_key, v2_ml_prob=get_v2_ml_probability(event.get("id"), market_key))
+    prob_meta = blend_model_probability(row, market_key)
     prob = prob_meta.get("effective_prob")
     confidence = normalize_confidence(row.get("confidence") if row.get("confidence") is not None else row.get("favorite_prob"))
     league_name = (event.get("league") or {}).get("name") or "Unknown"
@@ -2550,17 +2394,8 @@ def build_ui_live_candidate(row, market_key):
     value = calc_value(prob, odds)
     if value <= 0:
         return None
-    # Ridicat de la 1.65 -> 2.00 pentru a permite BTTS si Over25 (avg cota 1.72/1.76)
-    # sa concureze cu Under35 — BTTS ROI +12%, Over25 ROI +13% erau sistematic eliminate
-    if odds > 2.00:
+    if odds > 1.65:
         return None
-    # Under35 edge floor: zona 8-11pp are ROI -12% pe 153 bets settled.
-    # Singurele zone profitabile: 11-15pp (+7.9%) si 15+pp (+9.6%).
-    # Ridicat de la 6pp → 11pp pentru a elimina picks-urile din zona negativa.
-    if market_key == "under35":
-        _mp_u35 = market_prob_from_row_event(row, event, market_key)
-        if _mp_u35 is not None and (prob - _mp_u35) < 11.0:
-            return None
 
     adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     market_prob = market_prob_from_row_event(row, event, market_key)
@@ -2597,7 +2432,6 @@ def build_ui_live_candidate(row, market_key):
         "model_prob": round(prob, 2),
         "api_prob": prob_meta.get("api_prob"),
         "poisson_prob": prob_meta.get("poisson_prob"),
-        "v2_ml_prob": prob_meta.get("v2_ml_prob"),
         "poisson_delta": prob_meta.get("poisson_delta"),
         "poisson_alert": bool(prob_meta.get("poisson_alert")),
         "poisson_direction": prob_meta.get("poisson_direction"),
@@ -2744,77 +2578,7 @@ def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event
             "settled_at": None,
         })
 
-        rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
-
-    # ── Diversity cap: max 40% din picks poate fi aceeasi piata ──────────────
-    # Previne dominarea Under35 (anterior 57-60%) cand BTTS/Over25 sunt mai profitabile.
-    # Algoritmul: prima trecere pastreaza picks in ordine cronologica;
-    # daca o piata depaseste 40% din total, surplusul e inlocuit cu urmatorul
-    # candidate disponibil pentru acel eveniment (alt market_key).
-    if rows:
-        total = len(rows)
-        MAX_MARKET_PCT = 0.40
-        cap = max(3, int(total * MAX_MARKET_PCT))
-        market_count = {}
-        kept = []
-        # Indexam candidates per event_id pentru fallback rapid
-        _cand_by_event = {}
-        for _row in predictions or []:
-            _ev = _row.get("event") or {}
-            if _ev.get("status") != "notstarted":
-                continue
-            _eid = None
-            for _mk in tracked_market_keys:
-                _c = build_ui_live_candidate(_row, _mk)
-                if _c:
-                    _eid = _c.get("event_id")
-                    _cand_by_event.setdefault(str(_eid), []).append(_c)
-        # Sort candidati per event dupa ticket_score
-        for _eid in _cand_by_event:
-            _cand_by_event[_eid].sort(key=lambda c: c.get("ticket_score") or 0, reverse=True)
-        for r in rows:
-            mk = r.get("market_key")
-            cnt = market_count.get(mk, 0)
-            if cnt < cap:
-                market_count[mk] = cnt + 1
-                kept.append(r)
-            else:
-                # Incearca sa gaseasca un alt market_key pentru acelasi eveniment
-                eid_str = str(r.get("event_id") or "")
-                fallback = None
-                for alt_c in (_cand_by_event.get(eid_str) or []):
-                    alt_mk = alt_c.get("market_key")
-                    if alt_mk != mk and market_count.get(alt_mk, 0) < cap:
-                        # Construieste row-ul similar cu pick alternativ
-                        fallback = dict(r)
-                        fallback["market"] = alt_c.get("market")
-                        fallback["market_key"] = alt_mk
-                        fallback["odds"] = alt_c.get("odds")
-                        fallback["model_prob"] = alt_c.get("model_prob")
-                        fallback["adjusted_prob"] = alt_c.get("adjusted_prob")
-                        fallback["market_prob"] = alt_c.get("market_prob")
-                        fallback["edge_pct"] = alt_c.get("edge_pct")
-                        fallback["value"] = alt_c.get("value")
-                        fallback["score"] = alt_c.get("ticket_score")
-                        fallback["api_prob"] = alt_c.get("api_prob")
-                        fallback["poisson_prob"] = alt_c.get("poisson_prob")
-                        fallback["poisson_delta"] = alt_c.get("poisson_delta")
-                        fallback["poisson_alert"] = alt_c.get("poisson_alert")
-                        fallback["confidence"] = alt_c.get("confidence")
-                        fallback["verdict"] = alt_c.get("verdict", "")
-                        fallback["risk_tier"] = alt_c.get("risk_tier", "")
-                        market_count[alt_mk] = market_count.get(alt_mk, 0) + 1
-                        break
-                if fallback:
-                    kept.append(fallback)
-                else:
-                    # Niciun alt market disponibil -> pastram originalul (mai bine decat nimic)
-                    market_count[mk] = cnt + 1
-                    kept.append(r)
-        kept.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
-        rows = kept
-    # ─────────────────────────────────────────────────────────────────────────
-
+    rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
     return rows
 
 
@@ -2834,7 +2598,7 @@ def build_finished_event_index(predictions):
 
 
 
-def update_recommendation_log(existing_rows, current_rows, finished_events, settled_at_iso):
+def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at_iso):
     existing_rows = existing_rows or []
     by_event_id = {}
 
@@ -2914,7 +2678,7 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
 
     out = list(by_event_id.values())
     out.sort(key=lambda x: (x.get("logged_at") or x.get("prediction_created_at") or "", x.get("event_id") or 0), reverse=True)
-    return out[:RECOMMENDATION_LOG_MAX_ROWS]
+    return out[:UI_PICKS_LOG_MAX_ROWS]
 
 
 
@@ -3147,21 +2911,19 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
         reverse=True,
     )
-    # Fix 7: min_bets ridicat de la 4 la 10 pentru pattern-uri core (la n=4 CI95 e invalid)
     positive_candidates = sorted(
-        [r for r in flat_patterns if r.get("raw_bets", 0) >= 10 and r.get("memory_score", 0) > 0],
+        [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) > 0],
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
         reverse=True,
     )
     negative_candidates = sorted(
-        [r for r in flat_patterns if r.get("raw_bets", 0) >= 10 and r.get("memory_score", 0) < 0],
+        [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) < 0],
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0)),
     )
     positive_patterns = ai_select_diverse_patterns(positive_candidates, limit=12, max_per_market=2)
     negative_patterns = ai_select_diverse_patterns(negative_candidates, limit=12, max_per_market=2)
 
-    # Fix 7: min_bets default ridicat de la 4 la 8 pentru lookup in scoring
-    def lookup(kind, key, min_bets=8):
+    def lookup(kind, key, min_bets=4):
         row = final_patterns.get(kind, {}).get(key)
         if not row or int(row.get("raw_bets") or 0) < min_bets:
             return None
@@ -3182,18 +2944,17 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         core_bonus = 0.0
         context_impacts = []
 
-        # Fix 7: min_bets per check ridicate (6→10 core, 4→6 context)
         core_checks = [
-            ("market", market_key, 10, 0.60, market_label),
-            ("market_league", f"{market_key}|{league}", 8, 0.75, f"{market_label} în {league}"),
+            ("market", market_key, 6, 0.60, market_label),
+            ("market_league", f"{market_key}|{league}", 4, 0.75, f"{market_label} în {league}"),
         ]
         context_checks = [
-            ("market_odds", f"{market_key}|{odds_bucket}", 6, 0.28, f"{market_label} la cote {odds_bucket}"),
-            ("market_conf", f"{market_key}|{conf_bucket}", 6, 0.28, f"{market_label} la conf {conf_bucket}"),
-            ("market_edge", f"{market_key}|{edge_bucket}", 6, 0.22, f"{market_label} la edge {edge_bucket}"),
-            ("market_weekday", f"{market_key}|{weekday}", 8, 0.18, f"{market_label} în {weekday}"),
-            ("market_hour", f"{market_key}|{hour_bucket}", 8, 0.18, f"{market_label} în intervalul {hour_bucket}"),
-            ("market_source", f"{market_key}|{source_label}", 6, 0.15, f"{market_label} din sursa {source_label}"),
+            ("market_odds", f"{market_key}|{odds_bucket}", 4, 0.28, f"{market_label} la cote {odds_bucket}"),
+            ("market_conf", f"{market_key}|{conf_bucket}", 4, 0.28, f"{market_label} la conf {conf_bucket}"),
+            ("market_edge", f"{market_key}|{edge_bucket}", 4, 0.22, f"{market_label} la edge {edge_bucket}"),
+            ("market_weekday", f"{market_key}|{weekday}", 4, 0.18, f"{market_label} în {weekday}"),
+            ("market_hour", f"{market_key}|{hour_bucket}", 4, 0.18, f"{market_label} în intervalul {hour_bucket}"),
+            ("market_source", f"{market_key}|{source_label}", 4, 0.15, f"{market_label} din sursa {source_label}"),
         ]
 
         for kind, key, min_bets, weight, reason_label in core_checks:
@@ -3607,71 +3368,6 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
             row["bookmakers_probability"] = None
             row["polymarket_bookmakers_count"] = None
 
-        # ── GAP 1: Context flags din v2_enrichment_cache["detail"] ───────────
-        # derby, teren neutru, distanță deplasare, vreme, condiție teren
-        # Acestea influențează v2_score_adjustment() pentru picks curente.
-        v2_bundle = V2_ENRICHMENT_CACHE.get(str(event_id)) or {}
-        detail_v2 = v2_bundle.get("detail") or {}
-        row["is_local_derby"]     = bool(detail_v2.get("is_local_derby", False))
-        row["is_neutral_ground"]  = bool(detail_v2.get("is_neutral_ground", False))
-        row["travel_distance_km"] = detail_v2.get("travel_distance_km")
-        row["weather"]            = detail_v2.get("weather")
-        row["pitch_condition"]    = detail_v2.get("pitch_condition")
-        row["attendance"]         = detail_v2.get("attendance")
-
-        # ── GAP 3: H2H stats din v2_enrichment_cache["h2h"] ──────────────────
-        # head-to-head: draw_rate, btts_rate, avg_goals, win_rates
-        h2h_raw = v2_bundle.get("h2h") or {}
-        if isinstance(h2h_raw, dict):
-            h2h_total   = int(h2h_raw.get("total_matches") or h2h_raw.get("matches") or 0)
-            h2h_draws   = int(h2h_raw.get("draws") or 0)
-            h2h_hw      = int(h2h_raw.get("home_wins") or 0)
-            h2h_aw      = int(h2h_raw.get("away_wins") or 0)
-            row["h2h_matches"]       = h2h_total
-            row["h2h_home_wins"]     = h2h_hw
-            row["h2h_draws"]         = h2h_draws
-            row["h2h_away_wins"]     = h2h_aw
-            row["h2h_draw_rate"]     = (
-                h2h_raw.get("draw_rate")
-                or (round(h2h_draws / h2h_total, 3) if h2h_total else None)
-            )
-            row["h2h_home_win_rate"] = (
-                h2h_raw.get("home_win_rate")
-                or (round(h2h_hw / h2h_total, 3) if h2h_total else None)
-            )
-            row["h2h_away_win_rate"] = (
-                h2h_raw.get("away_win_rate")
-                or (round(h2h_aw / h2h_total, 3) if h2h_total else None)
-            )
-            row["h2h_btts_rate"]     = h2h_raw.get("btts_rate")
-            row["h2h_avg_goals"]     = h2h_raw.get("avg_goals")
-        else:
-            row["h2h_matches"]       = None
-            row["h2h_home_wins"]     = None
-            row["h2h_draws"]         = None
-            row["h2h_away_wins"]     = None
-            row["h2h_draw_rate"]     = None
-            row["h2h_home_win_rate"] = None
-            row["h2h_away_win_rate"] = None
-            row["h2h_btts_rate"]     = None
-            row["h2h_avg_goals"]     = None
-
-        # ── GAP team form: forma directă W/D/L per echipă ──────────────────
-        home_id_str = str(event.get("home_team_id") or event.get("home_id") or "")
-        away_id_str = str(event.get("away_team_id") or event.get("away_id") or "")
-        home_form = TEAM_FORM_CACHE.get(home_id_str) or {}
-        away_form = TEAM_FORM_CACHE.get(away_id_str) or {}
-        row["home_form_score"]  = home_form.get("form_score")
-        row["away_form_score"]  = away_form.get("form_score")
-        row["home_form_string"] = home_form.get("form_string")
-        row["away_form_string"] = away_form.get("form_string")
-        row["home_avg_goals_scored"] = home_form.get("avg_goals_scored_last5")
-        row["away_avg_goals_scored"] = away_form.get("avg_goals_scored_last5")
-        row["home_avg_goals_conceded"] = home_form.get("avg_goals_conceded_last5")
-        row["away_avg_goals_conceded"] = away_form.get("avg_goals_conceded_last5")
-        row["home_team_id"] = home_id_str
-        row["away_team_id"] = away_id_str
-
         # ─── Funfacts pre-meci ─────────────────────────────────────────────
         if event_id:
             row["funfacts"] = []
@@ -3685,15 +3381,8 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
                         for f in facts
                         if f.get("sentence") and len(f.get("sentence", "")) > 10
                     ][:3]  # max 3 funfacts
-                    # ai_preview: text narativ generat de BSD per meci
-                    # disponibil in ~70% din meciuri; mai bogat decat funfacts
-                    ai_prev = meta_data.get("ai_preview") or {}
-                    if isinstance(ai_prev, dict) and ai_prev.get("text"):
-                        row["ai_preview"] = str(ai_prev["text"])[:600]  # max 600 chars
-                    else:
-                        row["ai_preview"] = None
             except Exception:
-                row["ai_preview"] = None
+                pass
 
         # ───────────────────────────────────────────────────────────────────
 
@@ -3707,32 +3396,26 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
 
 def v2_score_adjustment(row, market_key):
     """
-    Delta scor bazat pe semnale v2 API.
+    Delta scor bazat pe semnale v2 API (manager stats + standings xGd).
     Returnează float adăugat la ticket_score în build_ui_live_candidate.
     Toate valorile None → delta 0 (graceful degradation).
-
-    Surse integrate:
-    - Manager stats (over25%, btts%, clean_sheet%) — original
-    - Standings xGd — original
-    - GAP 1: Context flags (derby, neutral, travel, weather, pitch)
-    - GAP 3: H2H head-to-head historical stats
     """
     delta = 0.0
 
-    # ── Bonus v2 recommended (confirmare dublă v1 + v2 API) ──────────────────
+    # Bonus dublă confirmare: v1 engine + v2 API recomandă același pick
     if row.get("v2_recommended"):
         delta += 1.5
 
-    home_o25  = float(row.get("home_mgr_over25_pct") or 0.0)
-    away_o25  = float(row.get("away_mgr_over25_pct") or 0.0)
-    home_btts = float(row.get("home_mgr_btts_pct")   or 0.0)
-    away_btts = float(row.get("away_mgr_btts_pct")   or 0.0)
-    home_cs   = float(row.get("home_mgr_cs_pct")     or 0.0)
-    away_cs   = float(row.get("away_mgr_cs_pct")     or 0.0)
-    xgd_diff  = row.get("xgd_diff")
+    home_o25 = float(row.get("home_mgr_over25_pct") or 0.0)
+    away_o25 = float(row.get("away_mgr_over25_pct") or 0.0)
+    home_btts = float(row.get("home_mgr_btts_pct") or 0.0)
+    away_btts = float(row.get("away_mgr_btts_pct") or 0.0)
+    home_cs  = float(row.get("home_mgr_cs_pct") or 0.0)
+    away_cs  = float(row.get("away_mgr_cs_pct") or 0.0)
+    xgd_diff = row.get("xgd_diff")  # pozitiv = avantaj echipă gazdă
 
-    # ── Manager stats ────────────────────────────────────────────────────────
     if market_key == "over25":
+        # Ambii antrenori produc statistici over 2.5 ridicate
         if home_o25 >= 60 and away_o25 >= 55:
             delta += 2.5
         elif home_o25 >= 55 or away_o25 >= 60:
@@ -3741,198 +3424,25 @@ def v2_score_adjustment(row, market_key):
         if home_o25 >= 55 and away_o25 >= 50:
             delta += 1.5
     elif market_key == "btts":
+        # Ambii antrenori cu BTTS % ridicat = meci deschis
         if home_btts >= 55 and away_btts >= 55:
             delta += 2.0
         elif home_btts >= 50 and away_btts >= 50:
             delta += 1.0
     elif market_key == "under35":
+        # Antrenori defensivi (clean sheet ridicat) → sub 3.5 mai probabil
         if home_cs >= 35 and away_cs >= 35:
             delta += 2.0
         elif home_cs >= 40 or away_cs >= 40:
             delta += 1.0
     elif market_key == "homeWin":
+        # xGd favorabil echipei gazdă din clasament
         if xgd_diff is not None and xgd_diff >= 0.3:
             delta += min(2.0, xgd_diff * 2.0)
     elif market_key == "awayWin":
+        # xGd favorabil echipei oaspete
         if xgd_diff is not None and xgd_diff <= -0.3:
             delta += min(2.0, abs(xgd_diff) * 2.0)
-
-    # ── GAP 1: Context flags (derby / vreme / deplasare / teren) ─────────────
-    # Citite în enrich_with_v2_signals() din v2_enrichment_cache["detail"]
-    if row.get("is_local_derby"):
-        # Derby = impredictibil; penalizăm piețe 1X2, ușor bonus over/btts
-        if market_key in {"homeWin", "awayWin"}:
-            delta -= 2.5
-        elif market_key in {"over15", "over25", "btts"}:
-            delta += 1.0
-
-    if row.get("is_neutral_ground"):
-        # Teren neutru = avantajul gazdei dispare
-        if market_key == "homeWin":
-            delta -= 2.0
-        elif market_key == "awayWin":
-            delta += 1.0
-
-    travel_km = float(row.get("travel_distance_km") or 0)
-    if travel_km >= 700:
-        # Deplasare lungă → oboseală oaspete
-        if market_key == "awayWin":
-            delta -= 2.0
-        elif market_key == "homeWin":
-            delta += 1.0
-
-    weather = row.get("weather") if isinstance(row.get("weather"), dict) else {}
-    weather_desc = str(weather.get("description") or "").lower()
-    if any(x in weather_desc for x in ("rain", "snow", "storm", "fog", "wind")):
-        # Vreme rea → mai puține goluri
-        if market_key in {"over15", "over25", "btts"}:
-            delta -= 2.0
-        elif market_key == "under35":
-            delta += 1.5
-
-    pitch_cond = float(row.get("pitch_condition") or 0)
-    if pitch_cond >= 3:
-        # Teren greu → joc mai lent, mai puține goluri
-        if market_key in {"over25", "btts"}:
-            delta -= 1.5
-        elif market_key == "under35":
-            delta += 1.0
-
-    # ── GAP 3: H2H head-to-head adjustments ─────────────────────────────────
-    # Citite în enrich_with_v2_signals() din v2_enrichment_cache["h2h"]
-    h2h_matches = int(row.get("h2h_matches") or 0)
-    if h2h_matches >= 5:
-        h2h_draw_rate     = float(row.get("h2h_draw_rate")     or 0)
-        h2h_btts_rate     = float(row.get("h2h_btts_rate")     or 0)
-        h2h_avg_goals     = float(row.get("h2h_avg_goals")     or 0)
-        h2h_home_win_rate = float(row.get("h2h_home_win_rate") or 0)
-        h2h_away_win_rate = float(row.get("h2h_away_win_rate") or 0)
-
-        if market_key == "draw":
-            if h2h_draw_rate >= 0.40:
-                delta += 2.0
-            elif h2h_draw_rate <= 0.15:
-                delta -= 1.5
-
-        elif market_key == "btts":
-            if h2h_btts_rate >= 0.60:
-                delta += 1.5
-            elif h2h_btts_rate <= 0.25:
-                delta -= 1.5
-
-        elif market_key in {"over15", "over25"}:
-            if h2h_avg_goals >= 3.0:
-                delta += 1.5
-            elif h2h_avg_goals <= 1.8:
-                delta -= 2.0
-
-        elif market_key == "under35":
-            if h2h_avg_goals <= 2.2:
-                delta += 1.5
-            elif h2h_avg_goals >= 3.2:
-                delta -= 2.0
-
-        elif market_key == "homeWin":
-            if h2h_home_win_rate >= 0.65:
-                delta += 1.5
-            elif h2h_home_win_rate <= 0.20:
-                delta -= 1.5
-
-        elif market_key == "awayWin":
-            if h2h_away_win_rate >= 0.55:
-                delta += 1.5
-            elif h2h_away_win_rate <= 0.15:
-                delta -= 1.5
-
-    # ── Team form: W/D/L ultimele 5 meciuri ─────────────────────────────────
-    h_form = float(row.get("home_form_score") or 50.0)
-    a_form = float(row.get("away_form_score") or 50.0)
-    # Folosim form_score doar dacă avem date reale (diferit de 50.0 default)
-    has_form = (row.get("home_form_score") is not None or row.get("away_form_score") is not None)
-    if has_form:
-        form_diff = h_form - a_form
-        avg_form  = (h_form + a_form) / 2
-        if market_key == "homeWin":
-            if form_diff >= 30:    delta += 2.0
-            elif form_diff >= 18:  delta += 1.0
-            elif form_diff <= -30: delta -= 1.5
-            elif form_diff <= -18: delta -= 0.8
-        elif market_key == "awayWin":
-            if form_diff <= -30:   delta += 2.0
-            elif form_diff <= -18: delta += 1.0
-            elif form_diff >= 30:  delta -= 1.5
-            elif form_diff >= 18:  delta -= 0.8
-        elif market_key == "draw":
-            if abs(form_diff) <= 10 and 40 <= avg_form <= 65:
-                delta += 1.0
-        elif market_key in {"over25", "btts"}:
-            h_atk = float(row.get("home_avg_goals_scored") or 0)
-            a_atk = float(row.get("away_avg_goals_scored") or 0)
-            if h_atk >= 1.8 and a_atk >= 1.4:
-                delta += 1.5
-            elif h_atk <= 0.8 and a_atk <= 0.8:
-                delta -= 1.5
-        elif market_key == "under35":
-            h_def = float(row.get("home_avg_goals_conceded") or 0)
-            a_def = float(row.get("away_avg_goals_conceded") or 0)
-            if h_def <= 0.8 and a_def <= 0.8:
-                delta += 1.5
-            elif h_def >= 1.8 and a_def >= 1.8:
-                delta -= 1.5
-
-    # ── Referee factor ───────────────────────────────────────────────────────
-    # Arbitrul influențează direct numărul de goluri și stilul meciului.
-    # Folosim trendul recent (ultimele ~10 meciuri) ca semnal principal,
-    # media carierei ca fallback. Ignorăm arbitrii cu < 10 meciuri (sample mic).
-    #
-    # Date disponibile (generate de fetch_referee_stats.py):
-    #   ref_avg_goals      — medie goluri per meci (carieră)
-    #   ref_recent_goals   — medie goluri per meci (ultimele ~10)
-    #   ref_avg_yellow     — medie galbene per meci
-    #   ref_recent_yellow  — medie galbene recente
-    #   ref_is_strict      — bool: ≥ 4.5 galbene/meci
-    #   ref_is_high_goals  — bool: ≥ 3.0 goluri/meci
-    #   ref_matches        — total meciuri arbitrate (filtru sample)
-    ref_matches    = int(row.get("ref_matches") or 0)
-    ref_avg_goals  = float(row.get("ref_avg_goals") or 0.0)
-    ref_recent_gls = float(row.get("ref_recent_goals") or ref_avg_goals)
-    ref_is_strict  = bool(row.get("ref_is_strict"))
-    ref_is_hi_gls  = bool(row.get("ref_is_high_goals"))
-
-    if ref_matches >= 10:
-        # Folosim trendul recent ca semnal principal; media carierei dacă lipsește
-        ref_eff = ref_recent_gls if ref_recent_gls > 0 else ref_avg_goals
-
-        if market_key in {"over25", "btts"}:
-            if ref_is_hi_gls or ref_eff >= 3.0:
-                delta += 1.5    # arbitru favorizează jocuri deschise
-            elif ref_eff >= 2.7:
-                delta += 0.8
-            elif ref_is_strict or ref_eff <= 2.1:
-                delta -= 1.5    # arbitru strict → mai puține goluri/situații
-            elif ref_eff <= 2.4:
-                delta -= 0.7
-
-        elif market_key == "over15":
-            if ref_is_hi_gls or ref_eff >= 2.8:
-                delta += 0.8
-            elif ref_is_strict or ref_eff <= 2.0:
-                delta -= 0.8
-
-        elif market_key == "under35":
-            if ref_is_strict or ref_eff <= 2.2:
-                delta += 1.5    # arbitru strict → probabilitate under mai mare
-            elif ref_eff <= 2.5:
-                delta += 0.7
-            elif ref_is_hi_gls or ref_eff >= 3.2:
-                delta -= 1.5
-            elif ref_eff >= 2.9:
-                delta -= 0.7
-
-        elif market_key in {"homeWin", "awayWin"}:
-            # Arbitrii stricți cresc variabilitatea → ușoară penalizare 1X2
-            if ref_is_strict:
-                delta -= 0.5
 
     return round(delta, 2)
 
@@ -3968,16 +3478,6 @@ def main():
         global REFEREE_STATS
         REFEREE_STATS = load_referee_stats()
         print(f"[V2] Referee stats loaded: {len(REFEREE_STATS)} arbitri din cache")
-
-        # 0a. V2 Enrichment cache
-        global V2_ENRICHMENT_CACHE
-        V2_ENRICHMENT_CACHE = load_v2_enrichment_cache()
-        print(f"[V2Cache] Loaded {len(V2_ENRICHMENT_CACHE)} event bundles din v2_enrichment_cache.json")
-
-        # 0b. Team form cache — forma directă W/D/L per echipă
-        global TEAM_FORM_CACHE
-        TEAM_FORM_CACHE = load_team_form_cache()
-        print(f"[TeamForm] Loaded {len(TEAM_FORM_CACHE)} echipe din team_form_cache.json")
 
         # 0b. Lineup data — load din cache local (generat de fetch_lineups_today.py)
         global LINEUPS_TODAY
@@ -4036,7 +3536,7 @@ def main():
         history_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past_history}&date_to={today}")
         history_predictions, _history_prep = dedupe_and_filter_predictions(history_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     history_rows = build_history_rows(history_predictions)
-    recommendation_log = load_existing_json("recommendation_log.json", [])
+    recommendation_log = load_existing_json("ui_picks_log.json", [])
     signal_audit = build_signal_audit(predictions, recommendation_log=recommendation_log)
     # ─── Line Move Filter: colectăm event-urile DRIFTING din log-ul anterior ──
     # Picks unde piața s-a mișcat >5.3% contra noastră (CLV ≤-5% → ROI -12.29%)
@@ -4049,7 +3549,7 @@ def main():
         print(f"[LineMove] {len(drifting_event_ids)} pick-uri DRIFTING excluse (drift >{LINE_MOVE_DRIFT_REJECT}%)")
     current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat(), drifting_event_ids=drifting_event_ids)
     finished_events = build_finished_event_index(history_predictions)
-    recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
+    recommendation_log = update_ui_picks_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
     ai_memory = build_ai_memory(current_recommendations, recommendation_log, history_rows, started_at)
     data_health = build_data_health(predictions, upcoming_prep)
     header_sync = build_header_sync_metrics(predictions)
@@ -4079,7 +3579,7 @@ def main():
     save_json(backtest, "backtest.json")
     save_json(history_rows, "history_engine.json")
     save_json(signal_audit, "signal_audit.json")
-    save_json(recommendation_log, "recommendation_log.json")
+    save_json(recommendation_log, "ui_picks_log.json")
     save_json(ai_memory, "ai_memory.json")
 
     meta = {
