@@ -31,7 +31,7 @@ LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
 HISTORY_LOOKBACK_DAYS = 60
 HISTORY_MAX_ROWS = 2500
-RECOMMENDATION_LOG_MAX_ROWS = 5000
+UI_PICKS_LOG_MAX_ROWS = 50000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
@@ -2598,7 +2598,7 @@ def build_finished_event_index(predictions):
 
 
 
-def update_recommendation_log(existing_rows, current_rows, finished_events, settled_at_iso):
+def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at_iso):
     existing_rows = existing_rows or []
     by_event_id = {}
 
@@ -2678,7 +2678,7 @@ def update_recommendation_log(existing_rows, current_rows, finished_events, sett
 
     out = list(by_event_id.values())
     out.sort(key=lambda x: (x.get("logged_at") or x.get("prediction_created_at") or "", x.get("event_id") or 0), reverse=True)
-    return out[:RECOMMENDATION_LOG_MAX_ROWS]
+    return out[:UI_PICKS_LOG_MAX_ROWS]
 
 
 
@@ -3536,7 +3536,7 @@ def main():
         history_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past_history}&date_to={today}")
         history_predictions, _history_prep = dedupe_and_filter_predictions(history_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     history_rows = build_history_rows(history_predictions)
-    recommendation_log = load_existing_json("recommendation_log.json", [])
+    recommendation_log = load_existing_json("ui_picks_log.json", [])
     signal_audit = build_signal_audit(predictions, recommendation_log=recommendation_log)
     # ─── Line Move Filter: colectăm event-urile DRIFTING din log-ul anterior ──
     # Picks unde piața s-a mișcat >5.3% contra noastră (CLV ≤-5% → ROI -12.29%)
@@ -3549,7 +3549,7 @@ def main():
         print(f"[LineMove] {len(drifting_event_ids)} pick-uri DRIFTING excluse (drift >{LINE_MOVE_DRIFT_REJECT}%)")
     current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat(), drifting_event_ids=drifting_event_ids)
     finished_events = build_finished_event_index(history_predictions)
-    recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
+    recommendation_log = update_ui_picks_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
     ai_memory = build_ai_memory(current_recommendations, recommendation_log, history_rows, started_at)
     data_health = build_data_health(predictions, upcoming_prep)
     header_sync = build_header_sync_metrics(predictions)
@@ -3579,7 +3579,7 @@ def main():
     save_json(backtest, "backtest.json")
     save_json(history_rows, "history_engine.json")
     save_json(signal_audit, "signal_audit.json")
-    save_json(recommendation_log, "recommendation_log.json")
+    save_json(recommendation_log, "ui_picks_log.json")
     save_json(ai_memory, "ai_memory.json")
 
     meta = {
