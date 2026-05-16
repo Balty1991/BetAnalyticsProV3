@@ -659,8 +659,7 @@
       { label: 'CatBoost v2', active: hasV2, color: 'cyan' },
       { label: 'AI Memory', active: hasMem, color: 'violet' },
       { label: 'Kelly Filter', active: hasAudit, color: 'green' },
-      { label: 'H2H Engine', active: true, color: 'amber' },
-      { label: 'Market Scanner', active: true, color: 'gold' }
+      { label: 'H2H Engine', active: true, color: 'amber' }
     ];
 
     section.innerHTML =
@@ -673,18 +672,19 @@
               '<span class="apex-vbadge">⚡ v1.0</span>' +
               (ts ? '<span class="apex-updated">' + esc(fmtDT(ts)) + '</span>' : '') +
             '</div>' +
-            '<div class="apex-model-strip apex-model-strip-hero">' +
-              modelChips.map(function (c) {
-                return '<div class="apex-model-chip ' + (c.active ? 'active ' + c.color : '') + '">' +
-                  '<span class="apex-chip-dot"></span>' + esc(c.label) + '</div>';
-              }).join('') +
-            '</div>' +
           '</div>' +
           '<div class="apex-hero-side">' +
+            '<div class="apex-hero-hud"></div>' +
             '<div class="apex-hero-ring">' +
               '<div class="apex-hero-score">' + esc(kpi.total ? String(kpi.avgScore) : '—') + '</div>' +
               '<div class="apex-hero-score-lbl">APEX</div>' +
             '</div>' +
+          '</div>' +
+          '<div class="apex-model-strip apex-model-strip-hero">' +
+            modelChips.map(function (c) {
+              return '<div class="apex-model-chip ' + (c.active ? 'active ' + c.color : '') + '">' +
+                '<span class="apex-chip-dot"></span>' + esc(c.label) + '</div>';
+            }).join('') +
           '</div>' +
         '</div>' +
       '</div>' +
