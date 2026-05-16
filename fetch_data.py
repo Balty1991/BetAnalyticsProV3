@@ -3684,8 +3684,15 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
                         for f in facts
                         if f.get("sentence") and len(f.get("sentence", "")) > 10
                     ][:3]  # max 3 funfacts
+                    # ai_preview: text narativ generat de BSD per meci
+                    # disponibil in ~70% din meciuri; mai bogat decat funfacts
+                    ai_prev = meta_data.get("ai_preview") or {}
+                    if isinstance(ai_prev, dict) and ai_prev.get("text"):
+                        row["ai_preview"] = str(ai_prev["text"])[:600]  # max 600 chars
+                    else:
+                        row["ai_preview"] = None
             except Exception:
-                pass
+                row["ai_preview"] = None
 
         # ───────────────────────────────────────────────────────────────────
 
