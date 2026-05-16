@@ -2554,11 +2554,12 @@ def build_ui_live_candidate(row, market_key):
     # sa concureze cu Under35 — BTTS ROI +12%, Over25 ROI +13% erau sistematic eliminate
     if odds > 2.00:
         return None
-    # Anti-flood Under35: impune min_edge 6pp inline inainte de calcule costisitoare
-    # Zona edge 5-7pp are ROI +3.6% (OK), sub 6pp nu justifica pick-ul
+    # Under35 edge floor: zona 8-11pp are ROI -12% pe 153 bets settled.
+    # Singurele zone profitabile: 11-15pp (+7.9%) si 15+pp (+9.6%).
+    # Ridicat de la 6pp → 11pp pentru a elimina picks-urile din zona negativa.
     if market_key == "under35":
         _mp_u35 = market_prob_from_row_event(row, event, market_key)
-        if _mp_u35 is not None and (prob - _mp_u35) < 6.0:
+        if _mp_u35 is not None and (prob - _mp_u35) < 11.0:
             return None
 
     adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
