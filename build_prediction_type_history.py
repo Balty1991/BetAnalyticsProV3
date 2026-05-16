@@ -199,7 +199,7 @@ def outcome_lookup() -> Dict[str, Dict[str, Any]]:
     # Full journal is used only as a settlement source for already-tracked picks.
     # It is not used to create history rows.
     journal = load_existing_json("recommendation_journal.json", []) or []
-    log = load_existing_json("recommendation_log.json", []) or []
+    log = load_existing_json("ui_picks_log.json", []) or []
     lookup: Dict[str, Dict[str, Any]] = {}
     for source in (journal, log):
         for row in source or []:

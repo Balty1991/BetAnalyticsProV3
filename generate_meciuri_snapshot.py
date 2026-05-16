@@ -33,7 +33,7 @@ from typing import Any, Dict, List, Optional
 DATA_DIR = Path("data")
 CANONICAL_FILE = DATA_DIR / "meciuri_visible_history.json"
 COMPAT_FILE = DATA_DIR / "meciuri_snapshot.json"
-LOG_FILE = DATA_DIR / "recommendation_log.json"
+LOG_FILE = DATA_DIR / "ui_picks_log.json"
 
 VERSION = 8
 SOURCE = "visible_meciuri_only"

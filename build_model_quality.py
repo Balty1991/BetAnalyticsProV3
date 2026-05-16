@@ -2,7 +2,7 @@
 """
 build_model_quality.py — Calibrare reală din predicții istorice.
 =================================================================
-Calculează Brier, log_loss, ECE per piață din recommendation_log.json
+Calculează Brier, log_loss, ECE per piață din ui_picks_log.json
 (predicțiile cu won != None = meciuri finalizate).
 """
 from __future__ import annotations
@@ -100,7 +100,7 @@ def build_recommendations(markets, backtest, n_closed):
 
 def main():
     print("=== BUILD MODEL QUALITY v2 ===")
-    log        = as_list(load_json(DATA_DIR/"recommendation_log.json", []))
+    log        = as_list(load_json(DATA_DIR/"ui_picks_log.json", []))
     wfv        = load_json(DATA_DIR/"wfv_results_v2.json", {}) or {}
     meta       = load_json(DATA_DIR/"meta.json", {})
     backtest   = load_json(DATA_DIR/"backtest.json", {}) or {}
