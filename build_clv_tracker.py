@@ -122,6 +122,12 @@ def process_pick(row: Dict) -> Optional[Dict]:
         ((closing_odds - opening_odds) / opening_odds) * 100.0, 4
     ) if opening_odds > 1.01 else 0.0
 
+    # CLV este credibil doar daca linia s-a miscat (opening != closing).
+    # Daca odds-ul nu s-a actualizat in log, CLV=0 nu inseamna ca am batut piata —
+    # inseamna ca nu avem date despre closing line reala.
+    # clv_reliable=True: linia s-a miscat cel putin 0.5% fata de opening.
+    clv_reliable = abs(line_move_pct) >= 0.5
+
     return {
         "event_id":       str(row.get("event_id") or ""),
         "date":           date_str,
@@ -135,6 +141,7 @@ def process_pick(row: Dict) -> Optional[Dict]:
         "closing_implied":closing_implied,
         "clv_pct":        clv,
         "clv_positive":   clv > 0.0,
+        "clv_reliable":   clv_reliable,
         "ev_at_pick_pct": ev,
         "model_prob":     round(model_prob, 2),
         "edge_pct":       _f(row.get("edge_pct"), 0.0),
@@ -170,20 +177,33 @@ def aggregate_stats(picks: List[Dict]) -> Dict:
     # Win rate
     win_rate = len(wins) / n * 100.0
 
+    reliable = [p for p in picks if p.get("clv_reliable")]
+    n_reliable = len(reliable)
+    avg_clv_reliable = round(sum(p["clv_pct"] for p in reliable) / n_reliable, 4) if n_reliable else None
+    roi_reliable = round(_calc_roi(reliable), 4) if n_reliable else None
+
     return {
-        "total_picks":      n,
-        "avg_clv_pct":      round(avg_clv, 4),
-        "median_clv_pct":   round(median_clv, 4),
-        "clv_positive_n":   len(clv_pos),
-        "clv_negative_n":   len(clv_neg),
-        "clv_positive_rate":round(len(clv_pos) / n, 4),
-        "avg_clv_wins":     round(sum(p["clv_pct"] for p in wins) / max(len(wins), 1), 4),
-        "avg_clv_losses":   round(sum(p["clv_pct"] for p in losses) / max(len(losses), 1), 4),
-        "win_rate_pct":     round(win_rate, 2),
-        "roi_flat_pct":     round(roi_pct, 4),
-        "max_clv_pct":      round(max(clv_vals), 4),
-        "min_clv_pct":      round(min(clv_vals), 4),
-        "std_clv_pct":      round(_std(clv_vals), 4),
+        "total_picks":           n,
+        "avg_clv_pct":           round(avg_clv, 4),
+        "median_clv_pct":        round(median_clv, 4),
+        "clv_positive_n":        len(clv_pos),
+        "clv_negative_n":        len(clv_neg),
+        "clv_positive_rate":     round(len(clv_pos) / n, 4),
+        "avg_clv_wins":          round(sum(p["clv_pct"] for p in wins) / max(len(wins), 1), 4),
+        "avg_clv_losses":        round(sum(p["clv_pct"] for p in losses) / max(len(losses), 1), 4),
+        "win_rate_pct":          round(win_rate, 2),
+        "roi_flat_pct":          round(roi_pct, 4),
+        "max_clv_pct":           round(max(clv_vals), 4),
+        "min_clv_pct":           round(min(clv_vals), 4),
+        "std_clv_pct":           round(_std(clv_vals), 4),
+        # Metrici pe picks cu miscare reala de linie (clv_reliable=True)
+        # Acestea sunt singurele statistici CLV credibile statistic.
+        # Cand opening_odds == closing_odds, CLV=0 nu inseamna ca am batut piata.
+        "reliable_n":            n_reliable,
+        "reliable_pct":          round(n_reliable / n, 4) if n else 0,
+        "avg_clv_reliable":      avg_clv_reliable,
+        "roi_reliable":          roi_reliable,
+        "proxy_warning":         n_reliable < n * 0.4,
     }
 
 
@@ -360,12 +380,24 @@ def build_diagnosis(summary: Dict, rolling: Dict) -> Dict:
         elif rolling_clv_val < avg_clv - 1.0:
             rolling_trend = "degradare recentă"
 
+    proxy_warning = summary.get("proxy_warning", False)
+    reliable_pct = summary.get("reliable_pct", 1.0)
+    proxy_note = ""
+    if proxy_warning:
+        proxy_note = (
+            f" ⚠️ Nota: doar {reliable_pct*100:.0f}% din pick-uri au miscare reala de linie "
+            f"(opening ≠ closing). CLV mediu calculat include pick-uri cu linie statica "
+            f"(CLV=0 artificial). Foloseste avg_clv_reliable pentru interpretare corecta."
+        )
+
     return {
         "signal":         signal,
-        "interpretation": interp,
+        "interpretation": interp + proxy_note,
         "action":         action,
         "confidence":     "high" if n >= 100 else "medium" if n >= 50 else "low",
         "rolling_trend":  rolling_trend,
+        "proxy_warning":  proxy_warning,
+        "reliable_pct":   round(reliable_pct * 100, 1),
     }
 
 

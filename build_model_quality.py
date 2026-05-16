@@ -114,10 +114,38 @@ def main():
     recs = build_recommendations(markets_data, bt, len(closed))
     credible = [m for m in markets_data.values() if m["credible"]]
     global_score = round(sum(m["score"] for m in credible)/len(credible),1) if credible else 45.0
+
+    # ── Aggregate overall (campuri cerute de UI si de predict_current.py) ──────
+    # Anterior aceste campuri erau None; acum se calculeaza din medie ponderata
+    # pe pietele cu date suficiente (credible=True, n >= MIN_SAMPLES).
+    overall_brier    = round(sum(m["brier"] for m in credible if m.get("brier") is not None) / len([m for m in credible if m.get("brier") is not None]), 4) if any(m.get("brier") is not None for m in credible) else None
+    overall_logloss  = round(sum(m["log_loss"] for m in credible if m.get("log_loss") is not None) / len([m for m in credible if m.get("log_loss") is not None]), 4) if any(m.get("log_loss") is not None for m in credible) else None
+    overall_ece      = round(sum(m["ece"] for m in credible if m.get("ece") is not None) / len([m for m in credible if m.get("ece") is not None]), 4) if any(m.get("ece") is not None for m in credible) else None
+    overall_n        = len(closed)
+    # Quality gate global bazat pe ECE agregat si scor
+    if overall_ece is not None and overall_ece <= 0.06 and global_score >= 75:
+        overall_calib_grade = "A"
+    elif overall_ece is not None and overall_ece <= 0.10 and global_score >= 60:
+        overall_calib_grade = "B"
+    else:
+        overall_calib_grade = "C"
+    # ──────────────────────────────────────────────────────────────────────────
+
     payload = {
         "updated_at":    datetime.now(timezone.utc).isoformat(),
         "quality_score": global_score,
         "quality_grade": quality_grade(global_score),
+        # Campuri overall - anterior None, acum populate
+        "overall_brier":             overall_brier,
+        "overall_log_loss":          overall_logloss,
+        "overall_ece":               overall_ece,
+        "overall_calibration_grade": overall_calib_grade,
+        "n_settled":                 overall_n,
+        "diagnosis": (
+            "Calibrare buna — modelele reflecta corect probabilitatile reale." if overall_calib_grade == "A"
+            else "Calibrare acceptabila — variante mici fata de probabilitatile reale." if overall_calib_grade == "B"
+            else "Calibrare problematica — verifica over15 si btts (ECE ridicat)."
+        ),
         "coverage":{"predictions":len(predictions),"ev_signals":len(ev_signals),"log_total":len(log),"log_closed":len(closed),"markets_audited":len(markets_data)},
         "freshness":     freshness,
         "markets":       list(markets_data.values()),

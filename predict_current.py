@@ -36,15 +36,20 @@ TARGETS = {
 
 PROB_MIN_BY_MARKET = {
     "home_win": 0.46, "draw": 0.28, "away_win": 0.30,
-    "btts": 0.48, "over15": 0.60, "over25": 0.48, "under35": 0.58,
+    # over15: WFV ECE=0.30 (grade D) → model slab calibrat pe zone de prob scazute.
+    # Ridicat la 0.66 pentru a pastra doar meci-urile cu semnal clar.
+    "btts": 0.48, "over15": 0.66, "over25": 0.48, "under35": 0.58,
 }
 EDGE_MIN_BY_MARKET = {
     "home_win": 3.0, "draw": 4.0, "away_win": 3.5,
-    "btts": 2.8, "over15": 1.8, "over25": 2.8, "under35": 1.8,
+    # over15: ridicat la 3.0 (de la 1.8) — filtru mai strict compensat calibrare slaba
+    # under35: ridicat la 2.5 (de la 1.8) — reduce dominanta
+    "btts": 2.8, "over15": 3.0, "over25": 2.8, "under35": 2.5,
 }
 EV_MIN_BY_MARKET = {
     "home_win": 0.4, "draw": 0.8, "away_win": 0.5,
-    "btts": 0.3, "over15": 0.15, "over25": 0.35, "under35": 0.15,
+    # over15: ridicat la 0.5 — EV pozitiv real, nu marginal
+    "btts": 0.3, "over15": 0.5, "over25": 0.35, "under35": 0.2,
 }
 ODDS_RANGE_BY_MARKET = {
     "home_win": (1.25, 4.50), "draw": (2.40, 5.50), "away_win": (1.25, 5.00),
@@ -1631,6 +1636,24 @@ def main():
             })
 
     signals.sort(key=lambda x: (x.get("score", 0), x.get("final_prob", 0), x.get("edge_pp", 0)), reverse=True)
+
+    # ── Diversity cap ML5: max 35% din signals poate fi aceeasi piata ──────────
+    # Previne dominarea under35 (75% inainte de fix) in outputul ML5.
+    # Algoritmul pastreaza ordinea de scor; surplusul de la o piata e eliminat,
+    # nu inlocuit (ML5 nu are candidates alternativi per eveniment ca fetch_data).
+    if signals:
+        _MAX_MARKET_SHARE = 0.35
+        _cap = max(3, int(len(signals) * _MAX_MARKET_SHARE))
+        _mkt_count: dict = {}
+        _kept = []
+        for _s in signals:
+            _mk = _s.get("market", "")
+            if _mkt_count.get(_mk, 0) < _cap:
+                _mkt_count[_mk] = _mkt_count.get(_mk, 0) + 1
+                _kept.append(_s)
+        signals = _kept
+    # ───────────────────────────────────────────────────────────────────────────
+
     elite = [s for s in signals if s.get("score", 0) >= 82]
     a_quality = [s for s in signals if str(s.get("quality_gate", "")).upper() == "A"]
     low_risk = [s for s in signals if (float(s.get("lineup_risk") or 0) + float(s.get("context_risk") or 0) + float(s.get("player_availability_risk") or 0)) <= 0.24]

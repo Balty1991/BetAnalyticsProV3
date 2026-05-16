@@ -412,6 +412,27 @@ def apply_catboost(entry, signals_map):
     for out_key, sig_key in passthrough.items():
         if sig.get(sig_key) is not None:
             entry[out_key] = sig.get(sig_key)
+
+    # ── Fix 6: Reconciliere verdict — ML5 ia prioritate cand e credibil ────────
+    # Problema anterioara: 65/84 predictii aveau risk_tier (Enrich) si
+    # catboost_risk_tier (ML5) in contradictie fara o regula clara de prioritate.
+    # Solutie: cand ML5 are scor >= 58 si quality_gate != C, verdictul ML5
+    # suprascrie verdictul Enrich in campul principal risk_tier.
+    # Campul 'enrich_risk_tier' pastreaza verdictul original Enrich pentru audit.
+    cb_score = float(sig.get("score") or 0)
+    cb_tier  = sig.get("risk_tier") or ""
+    cb_gate  = str(sig.get("quality_gate") or "").upper()
+    if cb_score >= 58 and cb_tier and cb_gate != "C":
+        entry["enrich_risk_tier"] = entry.get("risk_tier")   # pastreaza originalul
+        # Mapare tier ML5 → tier Enrich (limbaj comun)
+        ml5_to_enrich = {"Elite": "Safe", "Strong": "Safe", "Balanced": "Balanced", "Watch": "Balanced"}
+        entry["risk_tier"] = ml5_to_enrich.get(cb_tier, entry.get("risk_tier", "Avoid"))
+        entry["risk_tier_source"] = "ml5"
+    else:
+        entry["enrich_risk_tier"] = entry.get("risk_tier")
+        entry["risk_tier_source"] = "enrich"
+    # ───────────────────────────────────────────────────────────────────────────
+
     return entry
 
 # ─── build_status.json ────────────────────────────────────────────────────────

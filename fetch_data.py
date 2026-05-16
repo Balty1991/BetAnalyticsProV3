@@ -29,7 +29,9 @@ DATA_DIR = "data"
 STATIC_REFRESH_HOURS = {0, 6, 12, 18}  # UTC
 LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
-HISTORY_LOOKBACK_DAYS = 60
+# Fix 10: crescut de la 60 la 90 zile — cu logul incepand din 7 Apr, 60 zile
+# nu captau decat 38 zile de date efective. 90 zile asigura acoperire completa.
+HISTORY_LOOKBACK_DAYS = 90
 HISTORY_MAX_ROWS = 2500
 RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
@@ -1328,6 +1330,10 @@ def build_signal_audit(predictions, recommendation_log=None):
             "away_unavailable":  row.get("away_unavailable", []),
         })
 
+    # Fix 8: elimina under25 din Signal Audit (piata netrackuita in recommendation_log)
+    # under25 aparea din STRATEGIES["engine_overall"]["allowed"] care include sub-piete
+    # dar build_current_recommendation_rows nu trackuieste under25
+    rows = [r for r in rows if r.get("market_key") != "under25"]
     rows.sort(key=lambda x: (float(x.get("kelly_quarter_pct") or 0), float(x.get("edge_pct") or 0), float(x.get("score") or 0)), reverse=True)
     rows = rows[:SIGNAL_AUDIT_MAX_ROWS]
     return {
@@ -3140,19 +3146,21 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
         reverse=True,
     )
+    # Fix 7: min_bets ridicat de la 4 la 10 pentru pattern-uri core (la n=4 CI95 e invalid)
     positive_candidates = sorted(
-        [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) > 0],
+        [r for r in flat_patterns if r.get("raw_bets", 0) >= 10 and r.get("memory_score", 0) > 0],
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0), (x.get("raw_bets") or 0)),
         reverse=True,
     )
     negative_candidates = sorted(
-        [r for r in flat_patterns if r.get("raw_bets", 0) >= 4 and r.get("memory_score", 0) < 0],
+        [r for r in flat_patterns if r.get("raw_bets", 0) >= 10 and r.get("memory_score", 0) < 0],
         key=lambda x: ((x.get("memory_score") or 0), (x.get("roi") or 0)),
     )
     positive_patterns = ai_select_diverse_patterns(positive_candidates, limit=12, max_per_market=2)
     negative_patterns = ai_select_diverse_patterns(negative_candidates, limit=12, max_per_market=2)
 
-    def lookup(kind, key, min_bets=4):
+    # Fix 7: min_bets default ridicat de la 4 la 8 pentru lookup in scoring
+    def lookup(kind, key, min_bets=8):
         row = final_patterns.get(kind, {}).get(key)
         if not row or int(row.get("raw_bets") or 0) < min_bets:
             return None
@@ -3173,17 +3181,18 @@ def build_ai_memory(current_rows, recommendation_log, history_rows, now_utc):
         core_bonus = 0.0
         context_impacts = []
 
+        # Fix 7: min_bets per check ridicate (6→10 core, 4→6 context)
         core_checks = [
-            ("market", market_key, 6, 0.60, market_label),
-            ("market_league", f"{market_key}|{league}", 4, 0.75, f"{market_label} în {league}"),
+            ("market", market_key, 10, 0.60, market_label),
+            ("market_league", f"{market_key}|{league}", 8, 0.75, f"{market_label} în {league}"),
         ]
         context_checks = [
-            ("market_odds", f"{market_key}|{odds_bucket}", 4, 0.28, f"{market_label} la cote {odds_bucket}"),
-            ("market_conf", f"{market_key}|{conf_bucket}", 4, 0.28, f"{market_label} la conf {conf_bucket}"),
-            ("market_edge", f"{market_key}|{edge_bucket}", 4, 0.22, f"{market_label} la edge {edge_bucket}"),
-            ("market_weekday", f"{market_key}|{weekday}", 4, 0.18, f"{market_label} în {weekday}"),
-            ("market_hour", f"{market_key}|{hour_bucket}", 4, 0.18, f"{market_label} în intervalul {hour_bucket}"),
-            ("market_source", f"{market_key}|{source_label}", 4, 0.15, f"{market_label} din sursa {source_label}"),
+            ("market_odds", f"{market_key}|{odds_bucket}", 6, 0.28, f"{market_label} la cote {odds_bucket}"),
+            ("market_conf", f"{market_key}|{conf_bucket}", 6, 0.28, f"{market_label} la conf {conf_bucket}"),
+            ("market_edge", f"{market_key}|{edge_bucket}", 6, 0.22, f"{market_label} la edge {edge_bucket}"),
+            ("market_weekday", f"{market_key}|{weekday}", 8, 0.18, f"{market_label} în {weekday}"),
+            ("market_hour", f"{market_key}|{hour_bucket}", 8, 0.18, f"{market_label} în intervalul {hour_bucket}"),
+            ("market_source", f"{market_key}|{source_label}", 6, 0.15, f"{market_label} din sursa {source_label}"),
         ]
 
         for kind, key, min_bets, weight, reason_label in core_checks:

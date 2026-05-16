@@ -123,7 +123,18 @@ def build_smartbet_meta():
             "warehouse_year_min": wh_summary.get("year_min"),
             "warehouse_year_max": wh_summary.get("year_max"),
         },
-        "markets_ranked":   [{"market": mk, "wfv_auc": auc} for mk, auc in markets_ranked],
+        # Fix 9: adauga test_ece si quality_gate in markets_ranked
+        # Anterior aceste campuri erau None in smartbet_meta_v2 pentru toate pietele
+        "markets_ranked": [
+            {
+                "market":        mk,
+                "wfv_auc":       auc,
+                "test_ece":      markets.get(mk, {}).get("test_ece"),
+                "quality_gate":  markets.get(mk, {}).get("quality_gate"),
+                "label":         markets.get(mk, {}).get("label", mk),
+            }
+            for mk, auc in markets_ranked
+        ],
         "leagues_count":    len(baselines),
         "health":           build_health_check(),
         # Configurație pentru frontend SmartBet Score v2
