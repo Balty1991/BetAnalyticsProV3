@@ -3806,6 +3806,60 @@ def v2_score_adjustment(row, market_key):
             elif h_def >= 1.8 and a_def >= 1.8:
                 delta -= 1.5
 
+    # ── Referee factor ───────────────────────────────────────────────────────
+    # Arbitrul influențează direct numărul de goluri și stilul meciului.
+    # Folosim trendul recent (ultimele ~10 meciuri) ca semnal principal,
+    # media carierei ca fallback. Ignorăm arbitrii cu < 10 meciuri (sample mic).
+    #
+    # Date disponibile (generate de fetch_referee_stats.py):
+    #   ref_avg_goals      — medie goluri per meci (carieră)
+    #   ref_recent_goals   — medie goluri per meci (ultimele ~10)
+    #   ref_avg_yellow     — medie galbene per meci
+    #   ref_recent_yellow  — medie galbene recente
+    #   ref_is_strict      — bool: ≥ 4.5 galbene/meci
+    #   ref_is_high_goals  — bool: ≥ 3.0 goluri/meci
+    #   ref_matches        — total meciuri arbitrate (filtru sample)
+    ref_matches    = int(row.get("ref_matches") or 0)
+    ref_avg_goals  = float(row.get("ref_avg_goals") or 0.0)
+    ref_recent_gls = float(row.get("ref_recent_goals") or ref_avg_goals)
+    ref_is_strict  = bool(row.get("ref_is_strict"))
+    ref_is_hi_gls  = bool(row.get("ref_is_high_goals"))
+
+    if ref_matches >= 10:
+        # Folosim trendul recent ca semnal principal; media carierei dacă lipsește
+        ref_eff = ref_recent_gls if ref_recent_gls > 0 else ref_avg_goals
+
+        if market_key in {"over25", "btts"}:
+            if ref_is_hi_gls or ref_eff >= 3.0:
+                delta += 1.5    # arbitru favorizează jocuri deschise
+            elif ref_eff >= 2.7:
+                delta += 0.8
+            elif ref_is_strict or ref_eff <= 2.1:
+                delta -= 1.5    # arbitru strict → mai puține goluri/situații
+            elif ref_eff <= 2.4:
+                delta -= 0.7
+
+        elif market_key == "over15":
+            if ref_is_hi_gls or ref_eff >= 2.8:
+                delta += 0.8
+            elif ref_is_strict or ref_eff <= 2.0:
+                delta -= 0.8
+
+        elif market_key == "under35":
+            if ref_is_strict or ref_eff <= 2.2:
+                delta += 1.5    # arbitru strict → probabilitate under mai mare
+            elif ref_eff <= 2.5:
+                delta += 0.7
+            elif ref_is_hi_gls or ref_eff >= 3.2:
+                delta -= 1.5
+            elif ref_eff >= 2.9:
+                delta -= 0.7
+
+        elif market_key in {"homeWin", "awayWin"}:
+            # Arbitrii stricți cresc variabilitatea → ușoară penalizare 1X2
+            if ref_is_strict:
+                delta -= 0.5
+
     return round(delta, 2)
 
 
