@@ -767,3 +767,454 @@
   color: var(--apex-violet);
   background: rgba(139,92,246,.06);
 }
+
+/* ================================================================
+   VEYRA APEX Neural Engine — Lux mobile refresh v2
+   Theme aligned with Meciuri + source-flow panel
+   ================================================================ */
+:root {
+  --apex-bg: #030914;
+  --apex-bg2: #071120;
+  --apex-panel: rgba(8, 18, 34, 0.96);
+  --apex-card: rgba(10, 21, 40, 0.96);
+  --apex-brd: rgba(52, 220, 210, 0.18);
+  --apex-brd2: rgba(96, 124, 170, 0.28);
+  --apex-txt: #f4f8ff;
+  --apex-muted: #8ea1c3;
+  --apex-dim: #7082a5;
+  --apex-fire: #ff9a3d;
+  --apex-amber: #f6c15f;
+  --apex-violet: #a56cff;
+  --apex-cyan: #41efe4;
+  --apex-green: #45f0c9;
+  --apex-red: #ff5a70;
+  --apex-pink: #e17cff;
+  --apex-gold: #ffd978;
+  --apex-r-card: 18px;
+  --apex-r-btn: 16px;
+  --apex-r-chip: 999px;
+}
+
+#tab-smartbet {
+  background:
+    radial-gradient(circle at top left, rgba(48, 219, 201, 0.10), transparent 28%),
+    radial-gradient(circle at top right, rgba(255, 170, 70, 0.08), transparent 24%),
+    linear-gradient(180deg, #030a14 0%, #050d1a 55%, #030812 100%) !important;
+}
+
+.apex-subnav {
+  gap: 10px;
+  padding: 16px 14px 10px;
+  border-bottom: 0;
+}
+.apex-subnav-tab {
+  padding: 10px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(106, 135, 184, 0.20);
+  background: linear-gradient(180deg, rgba(12, 22, 40, 0.96), rgba(8, 16, 31, 0.98));
+  color: #d6e4ff;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(22,40,74,0.15);
+  top: 0;
+}
+.apex-subnav-tab.active {
+  color: var(--apex-cyan);
+  border-color: rgba(62, 236, 221, 0.50);
+  background: linear-gradient(180deg, rgba(16, 34, 56, 0.98), rgba(10, 21, 39, 0.98));
+  box-shadow: 0 0 0 1px rgba(62,236,221,0.12), 0 0 20px rgba(45, 239, 223, 0.10), inset 0 0 22px rgba(45, 239, 223, 0.05);
+}
+.apex-subnav-badge {
+  background: rgba(255, 180, 90, 0.14);
+  color: var(--apex-gold);
+  border: 1px solid rgba(255, 190, 90, 0.25);
+}
+
+.apex-hero-shell { padding: 0 16px 14px; }
+.apex-hero-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 106px;
+  gap: 14px;
+  padding: 18px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(55, 227, 219, 0.20);
+  background:
+    radial-gradient(circle at 82% 28%, rgba(62, 236, 221, 0.10), transparent 30%),
+    radial-gradient(circle at 14% 0%, rgba(255, 177, 64, 0.07), transparent 24%),
+    linear-gradient(180deg, rgba(10, 20, 38, 0.96), rgba(7, 14, 29, 0.98));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.03),
+    0 0 0 1px rgba(23,47,78,0.20),
+    0 14px 34px rgba(0,0,0,0.24);
+}
+.apex-engine-header { padding: 0; }
+.apex-engine-title-row { margin-bottom: 0; }
+.apex-engine-name {
+  font-size: 19px;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  background: linear-gradient(135deg, #ffac51 0%, #ffd97a 50%, #fff0b4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.apex-engine-subtitle {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #aab9d5;
+  letter-spacing: .03em;
+}
+.apex-hero-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.apex-vbadge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  border-color: rgba(255, 172, 81, 0.32);
+  background: rgba(255, 172, 81, 0.10);
+  color: #ffbe66;
+}
+.apex-updated {
+  font-size: 10px;
+  color: #91a5c8;
+}
+.apex-model-strip-hero {
+  padding: 14px 0 0;
+  gap: 8px;
+}
+.apex-model-chip {
+  padding: 7px 12px;
+  border-radius: 14px;
+  border-color: rgba(95, 122, 167, 0.20);
+  background: rgba(255,255,255,0.02);
+  color: #90a4c7;
+  font-size: 10px;
+}
+.apex-model-chip.active { color: var(--apex-txt); }
+.apex-model-chip.active.cyan { border-color: rgba(65,239,228,0.34); background: rgba(65,239,228,0.08); color: var(--apex-cyan); }
+.apex-model-chip.active.violet { border-color: rgba(165,108,255,0.34); background: rgba(165,108,255,0.10); color: #ceafff; }
+.apex-model-chip.active.green { border-color: rgba(69,240,201,0.32); background: rgba(69,240,201,0.08); color: var(--apex-green); }
+.apex-model-chip.active.amber { border-color: rgba(246,193,95,0.32); background: rgba(246,193,95,0.08); color: var(--apex-amber); }
+.apex-model-chip.active.gold { border-color: rgba(255,217,120,0.30); background: rgba(255,217,120,0.09); color: var(--apex-gold); }
+.apex-chip-dot { box-shadow: 0 0 10px currentColor; }
+
+.apex-hero-side { display: flex; align-items: center; justify-content: center; }
+.apex-hero-ring {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background:
+    radial-gradient(circle at center, rgba(10, 24, 44, 0.98) 46%, rgba(6, 14, 28, 0.98) 100%);
+  border: 2px solid rgba(65, 239, 228, 0.42);
+  box-shadow: 0 0 0 8px rgba(65,239,228,0.06), inset 0 0 22px rgba(65,239,228,0.08), 0 0 30px rgba(65,239,228,0.10);
+  position: relative;
+}
+.apex-hero-ring::before,
+.apex-hero-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px solid rgba(65,239,228,0.10);
+}
+.apex-hero-ring::after { inset: -14px; border-color: rgba(255, 173, 72, 0.06); }
+.apex-hero-score {
+  font-family: var(--apex-display);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--apex-green);
+  letter-spacing: -0.05em;
+  text-shadow: 0 0 18px rgba(69,240,201,0.18);
+}
+.apex-hero-score-lbl {
+  font-family: var(--apex-mono);
+  font-size: 10px;
+  color: #c5d3ed;
+  margin-top: 3px;
+}
+
+.apex-kpi-strip {
+  gap: 10px;
+  padding: 0 16px 14px;
+}
+.apex-kpi-card {
+  min-height: 132px;
+  padding: 15px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(54, 224, 215, 0.16);
+  background: linear-gradient(180deg, rgba(10, 20, 38, 0.98), rgba(8, 17, 33, 0.98));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.apex-kpi-card::before {
+  height: 1px;
+  opacity: 0.95;
+}
+.apex-kpi-lbl { font-size: 9px; color: #8fa3c5; }
+.apex-kpi-val {
+  font-size: 27px;
+  margin-top: 2px;
+}
+.apex-kpi-sub {
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #9ab0cf;
+}
+.apex-kpi-card.fire .apex-kpi-val { color: #ff9f48; }
+.apex-kpi-card.violet .apex-kpi-val { color: #b27bff; }
+.apex-kpi-card.cyan .apex-kpi-val { color: var(--apex-cyan); }
+.apex-kpi-card.green .apex-kpi-val { color: var(--apex-green); }
+
+.apex-source-flow {
+  margin: 0 16px 16px;
+  padding: 14px 14px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 167, 66, 0.18);
+  background:
+    linear-gradient(180deg, rgba(12, 23, 41, 0.98), rgba(8, 17, 33, 0.98));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+.apex-source-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.apex-source-title {
+  font-family: var(--apex-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .10em;
+  color: #8bf6ea;
+}
+.apex-source-sub {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #99b0d0;
+}
+.apex-source-badge {
+  min-width: 44px;
+  height: 28px;
+  border-radius: 999px;
+  padding: 0 10px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--apex-mono);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(65,239,228,0.22);
+  background: rgba(65,239,228,0.08);
+  color: var(--apex-green);
+}
+.apex-source-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.apex-source-card {
+  min-height: 90px;
+  padding: 10px 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(87, 112, 154, 0.18);
+  background: linear-gradient(180deg, rgba(9, 18, 35, 0.98), rgba(7, 14, 28, 0.98));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+.apex-source-card.active { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.015); }
+.apex-source-card.cyan.active { border-color: rgba(65,239,228,0.28); }
+.apex-source-card.violet.active { border-color: rgba(165,108,255,0.30); }
+.apex-source-card.green.active { border-color: rgba(69,240,201,0.28); }
+.apex-source-card.amber.active { border-color: rgba(246,193,95,0.28); }
+.apex-source-card.gold.active { border-color: rgba(255,217,120,0.28); }
+.apex-source-icon {
+  font-size: 16px;
+  line-height: 1;
+  color: #e6efff;
+}
+.apex-source-card.cyan .apex-source-icon, .apex-source-card.cyan .apex-source-val { color: var(--apex-cyan); }
+.apex-source-card.violet .apex-source-icon, .apex-source-card.violet .apex-source-val { color: #c69cff; }
+.apex-source-card.green .apex-source-icon, .apex-source-card.green .apex-source-val { color: var(--apex-green); }
+.apex-source-card.amber .apex-source-icon, .apex-source-card.amber .apex-source-val { color: #f5c66a; }
+.apex-source-card.gold .apex-source-icon, .apex-source-card.gold .apex-source-val { color: #ffd978; }
+.apex-source-name {
+  font-size: 10px;
+  line-height: 1.25;
+  color: #dce7fb;
+}
+.apex-source-val {
+  font-family: var(--apex-display);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.apex-tier-section { padding: 0 16px 10px; }
+.apex-tier-header {
+  padding: 11px 14px;
+  border-radius: 16px 16px 0 0;
+  margin-bottom: 0;
+}
+.apex-tier-header.elite {
+  background: linear-gradient(90deg, rgba(255,154,61,0.16), rgba(255,217,120,0.09));
+  border-color: rgba(255, 170, 73, 0.22);
+}
+.apex-tier-header.validated {
+  background: linear-gradient(90deg, rgba(45,239,223,0.12), rgba(69,240,201,0.05));
+  border-color: rgba(45,239,223,0.18);
+}
+.apex-tier-header.watchlist {
+  background: linear-gradient(90deg, rgba(165,108,255,0.12), rgba(225,124,255,0.05));
+  border-color: rgba(165,108,255,0.18);
+}
+.apex-tier-label { font-size: 13px; }
+.apex-tier-label.elite { color: #ffb35a; }
+.apex-tier-label.validated { color: var(--apex-green); }
+.apex-tier-label.watchlist { color: #ca9aff; }
+
+.apex-picks-body { padding: 8px 0 0; }
+.apex-pick-card {
+  margin: 0 0 10px;
+  padding: 15px 14px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(60, 96, 146, 0.22);
+  background: linear-gradient(180deg, rgba(10, 20, 39, 0.98), rgba(8, 16, 31, 0.98));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.018);
+}
+.apex-pick-card.tier-elite { border-color: rgba(255, 167, 66, 0.28); }
+.apex-pick-card.tier-validated { border-color: rgba(65,239,228,0.22); }
+.apex-pick-card.tier-watchlist { border-color: rgba(165,108,255,0.22); }
+.apex-pick-card::before { width: 4px; }
+.apex-pick-match {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.25;
+}
+.apex-pick-league { font-size: 11px; line-height: 1.4; }
+.apex-score-circle {
+  width: 66px;
+  height: 66px;
+  box-shadow: inset 0 0 18px rgba(255,255,255,0.02);
+}
+.apex-score-num { font-size: 22px; }
+.apex-score-lbl { font-size: 8px; }
+.apex-pick-chips { gap: 6px; margin-bottom: 9px; }
+.apex-chip {
+  padding: 5px 9px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.apex-chip.market  { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.07); color: #eff5ff; }
+.apex-chip.edge    { background: rgba(255,154,61,.12); border-color: rgba(255,154,61,.22); color: #ffb45e; }
+.apex-chip.prob    { background: rgba(65,239,228,.08); border-color: rgba(65,239,228,.18); color: var(--apex-cyan); }
+.apex-chip.kelly   { background: rgba(246,193,95,.08); border-color: rgba(246,193,95,.18); color: #ffd27f; }
+.apex-chip.pattern { background: rgba(69,240,201,.08); border-color: rgba(69,240,201,.16); color: var(--apex-green); }
+.apex-chip.memory  { background: rgba(165,108,255,.11); border-color: rgba(165,108,255,.20); color: #cda3ff; }
+.apex-chip.ml2     { background: rgba(255,217,120,.10); border-color: rgba(255,217,120,.20); color: var(--apex-gold); }
+.apex-conf-bar-track { height: 4px; border-radius: 999px; }
+.apex-conf-pct { font-size: 11px; }
+.apex-signals-row { margin-top: 8px; }
+.apex-signal { border-radius: 999px; padding: 4px 8px; }
+
+.apex-ticket-section { padding: 0 16px 18px; }
+.apex-ticket-header {
+  font-size: 15px;
+  color: #f1f6ff;
+}
+.apex-ticket-btns { gap: 10px; }
+.apex-ticket-btn {
+  padding: 11px 8px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(10, 20, 39, 0.98), rgba(7, 15, 29, 0.98));
+  border-color: rgba(96, 124, 170, 0.22);
+  color: #d7e3f8;
+}
+.apex-ticket-btn:hover,
+.apex-ticket-btn.active {
+  border-color: rgba(65,239,228,0.34);
+  color: var(--apex-cyan);
+  background: rgba(65,239,228,0.06);
+}
+#apex-ticket-output {
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(10, 20, 39, 0.98), rgba(7, 15, 29, 0.98));
+  border: 1px solid rgba(56, 95, 148, 0.20);
+}
+.apex-ticket-pick {
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+  border-color: rgba(255,255,255,.05);
+}
+.apex-total-odds { color: #ffb255; }
+
+.apex-section-pad { padding: 14px 16px 8px; }
+.apex-section-title {
+  font-size: 16px;
+  color: #f1f6ff;
+}
+.apex-info-box,
+.apex-learning-card,
+.apex-impact-cell {
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(10, 20, 39, 0.98), rgba(7, 15, 29, 0.98));
+  border-color: rgba(54, 224, 215, 0.14);
+}
+.apex-info-box-title { color: var(--apex-cyan); }
+.apex-info-box-body,
+.apex-lc-sub,
+.apex-lc-role,
+.apex-impact-cell { color: #97abc9; }
+.apex-lc-title { color: #f1f6ff; }
+.apex-lc-val { font-size: 23px; }
+.apex-impact-grid { gap: 8px; }
+.apex-impact-cell {
+  font-size: 10px;
+  font-weight: 700;
+}
+.apex-quick-btn {
+  border-radius: 14px;
+  border-color: rgba(96, 124, 170, 0.22);
+  background: rgba(255,255,255,0.03);
+  color: #d8e4f8;
+}
+.apex-quick-btn:hover {
+  border-color: rgba(65,239,228,0.30);
+  color: var(--apex-cyan);
+  background: rgba(65,239,228,0.05);
+}
+.apex-divider {
+  background: linear-gradient(90deg, transparent, rgba(65,239,228,0.12), transparent);
+  margin: 6px 0 14px;
+}
+
+@media (max-width: 390px) {
+  .apex-hero-card {
+    grid-template-columns: minmax(0, 1fr) 90px;
+    gap: 10px;
+    padding: 16px 14px;
+  }
+  .apex-hero-ring { width: 82px; height: 82px; }
+  .apex-hero-score { font-size: 28px; }
+  .apex-kpi-card { min-height: 124px; }
+  .apex-source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
