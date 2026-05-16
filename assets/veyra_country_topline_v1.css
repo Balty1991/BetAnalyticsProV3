@@ -77,17 +77,27 @@
 
 #tab-meciuri .m17-logo,
 .m17-logo {
-  width: 52px !important;
-  height: 52px !important;
-  flex: 0 0 52px !important;
-  min-width: 52px !important;
+  width: 54px !important;
+  height: 54px !important;
+  flex: 0 0 54px !important;
+  min-width: 54px !important;
   border-radius: 14px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
 }
 
 #tab-meciuri .m17-logo img,
 .m17-logo img {
-  max-width: 46px !important;
-  max-height: 46px !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  padding: 4px !important;
+  box-sizing: border-box !important;
+  transform: scale(1.16) !important;
+  transform-origin: center center !important;
 }
 
 #tab-meciuri .m17-team-name,
@@ -159,16 +169,21 @@
 
   #tab-meciuri .m17-logo,
   .m17-logo {
-    width: 48px !important;
-    height: 48px !important;
-    flex-basis: 48px !important;
-    min-width: 48px !important;
+    width: 50px !important;
+    height: 50px !important;
+    flex-basis: 50px !important;
+    min-width: 50px !important;
   }
 
   #tab-meciuri .m17-logo img,
   .m17-logo img {
-    max-width: 42px !important;
-    max-height: 42px !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    padding: 4px !important;
+    box-sizing: border-box !important;
+    transform: scale(1.14) !important;
   }
 
   #tab-meciuri .m17-team-name,
