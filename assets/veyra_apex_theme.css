@@ -1686,3 +1686,184 @@
 }
 .apex-subnav-icon { font-size: 14px; }
 .apex-subnav-badge { font-size: 10px; }
+
+/* ================================================================
+   VEYRA APEX Neural Engine — compact pass v5
+   Goal: match the approved compact reference more closely
+   ================================================================ */
+
+.apex-hero-shell {
+  padding: 0 14px 10px;
+}
+.apex-hero-card {
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 10px 12px;
+  padding: 14px 14px 12px;
+  border-radius: 24px;
+}
+.apex-engine-name {
+  max-width: 100%;
+  font-size: clamp(18px, 5.6vw, 22px);
+  line-height: .96;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+.apex-engine-subtitle {
+  margin-top: 8px;
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.34;
+  letter-spacing: .01em;
+}
+.apex-hero-meta {
+  margin-top: 11px;
+  gap: 10px;
+}
+.apex-vbadge {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 11px;
+}
+.apex-updated {
+  font-size: 11px;
+}
+.apex-hero-side {
+  min-height: 102px;
+}
+.apex-hero-hud::before {
+  width: 136px;
+  height: 136px;
+  right: -8px;
+  top: -2px;
+  opacity: .9;
+}
+.apex-hero-hud::after {
+  width: 118px;
+  height: 118px;
+  right: 0;
+  top: 8px;
+}
+.apex-hero-ring {
+  width: 92px;
+  height: 92px;
+}
+.apex-hero-ring::before { inset: -7px; }
+.apex-hero-ring::after { inset: -14px; }
+.apex-hero-score {
+  font-size: 32px;
+  line-height: .9;
+}
+.apex-hero-score-lbl {
+  margin-top: 2px;
+  font-size: 9px;
+}
+.apex-model-strip-hero {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 2px;
+}
+.apex-model-strip-hero .apex-model-chip {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 8px;
+  border-radius: 13px;
+  font-size: 10px;
+  line-height: 1.12;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apex-model-strip-hero .apex-chip-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+}
+
+.apex-kpi-strip {
+  gap: 10px;
+  padding: 0 14px;
+}
+.apex-kpi-card {
+  min-height: 118px;
+  padding: 12px 14px;
+  border-radius: 22px;
+}
+.apex-kpi-head {
+  margin-bottom: 6px;
+}
+.apex-kpi-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+}
+.apex-kpi-lbl {
+  font-size: 9px;
+  line-height: 1.15;
+}
+.apex-kpi-val {
+  font-size: clamp(22px, 7.2vw, 30px);
+  line-height: .9;
+}
+.apex-kpi-sub {
+  max-width: 100%;
+  margin-top: 6px;
+  font-size: 10px;
+  line-height: 1.28;
+}
+
+@media (max-width: 430px) {
+  .apex-hero-card {
+    grid-template-columns: minmax(0, 1fr) 102px;
+    gap: 10px;
+    padding: 13px 12px 11px;
+  }
+  .apex-engine-name {
+    font-size: clamp(17px, 5.2vw, 20px);
+  }
+  .apex-engine-subtitle {
+    font-size: 10px;
+    line-height: 1.32;
+  }
+  .apex-hero-ring {
+    width: 86px;
+    height: 86px;
+  }
+  .apex-hero-score {
+    font-size: 29px;
+  }
+  .apex-hero-hud::before {
+    width: 124px;
+    height: 124px;
+    right: -6px;
+  }
+  .apex-hero-hud::after {
+    width: 108px;
+    height: 108px;
+    right: 0;
+    top: 8px;
+  }
+  .apex-model-strip-hero .apex-model-chip {
+    padding: 7px 6px;
+    font-size: 9px;
+  }
+  .apex-kpi-card {
+    min-height: 110px;
+    padding: 11px 12px;
+  }
+  .apex-kpi-val {
+    font-size: clamp(20px, 6.8vw, 28px);
+  }
+  .apex-kpi-sub {
+    font-size: 9.5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .apex-engine-name {
+    font-size: 16px;
+  }
+  .apex-model-strip-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
