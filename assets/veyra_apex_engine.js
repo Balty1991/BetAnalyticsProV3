@@ -690,10 +690,10 @@
       '</div>' +
 
       '<div class="apex-kpi-strip">' +
-        renderKpiCard('Total Picks', String(kpi.total), result.elite.length + ' elite · ' + result.validated.length + ' validate', 'fire') +
-        renderKpiCard('Scor Mediu', kpi.total ? String(kpi.avgScore) : '—', 'din 100 · toate sursele combinate', 'violet') +
-        renderKpiCard('Edge Mediu', kpi.total ? signed(kpi.avgEdge, 1) + 'pp' : '—', 'avantaj față de cota de piață', 'cyan') +
-        renderKpiCard('Prob Medie', kpi.total ? kpi.avgProb.toFixed(1) + '%' : '—', 'probabilitate ajustată multi-sursă', 'green') +
+        renderKpiCard('Total Picks', String(kpi.total), result.elite.length + ' elite · ' + result.validated.length + ' validate', 'fire', '◉') +
+        renderKpiCard('Scor Mediu', kpi.total ? String(kpi.avgScore) : '—', 'din 100 · toate sursele combinate', 'violet', '↗') +
+        renderKpiCard('Edge Mediu', kpi.total ? signed(kpi.avgEdge, 1) + 'pp' : '—', 'avantaj față de cota de piață', 'cyan', '↗') +
+        renderKpiCard('Prob Medie', kpi.total ? kpi.avgProb.toFixed(1) + '%' : '—', 'probabilitate ajustată multi-sursă', 'green', '◌') +
       '</div>' +
 
       renderSourceFlow(result, { hasV2: hasV2, hasMem: hasMem, hasAudit: hasAudit, hasTraining: hasTraining }) +
@@ -738,9 +738,12 @@
     window.__UNIFIED_POOL_COUNT__ = result.elite.length + result.validated.length;
   }
 
-  function renderKpiCard(lbl, val, sub, colorKey) {
+  function renderKpiCard(lbl, val, sub, colorKey, icon) {
     return '<div class="apex-kpi-card ' + colorKey + '">' +
-      '<div class="apex-kpi-lbl">' + esc(lbl) + '</div>' +
+      '<div class="apex-kpi-head">' +
+        '<div class="apex-kpi-lbl">' + esc(lbl) + '</div>' +
+        '<div class="apex-kpi-icon">' + esc(icon || '') + '</div>' +
+      '</div>' +
       '<div class="apex-kpi-val">' + esc(val) + '</div>' +
       '<div class="apex-kpi-sub">' + esc(sub) + '</div>' +
     '</div>';
@@ -769,11 +772,11 @@
     }, 12));
 
     var sources = [
-      { label: 'CatBoost v2',   value: catBoost, active: modelState.hasV2,   color: 'cyan',   icon: '◈' },
-      { label: 'AI Memory',     value: memory,   active: modelState.hasMem,  color: 'violet', icon: '◎' },
-      { label: 'Kelly Filter',  value: kelly,    active: true,               color: 'green',  icon: '◍' },
-      { label: 'H2H Engine',    value: h2h,      active: true,               color: 'amber',  icon: '◌' },
-      { label: 'Market Scanner',value: market,   active: true,               color: 'gold',   icon: '◉' }
+      { label: 'CatBoost v2',   value: catBoost, active: modelState.hasV2,   color: 'cyan',   icon: '⟡' },
+      { label: 'AI Memory',     value: memory,   active: modelState.hasMem,  color: 'violet', icon: '◉' },
+      { label: 'Kelly Filter',  value: kelly,    active: true,               color: 'green',  icon: '✺' },
+      { label: 'H2H Engine',    value: h2h,      active: true,               color: 'amber',  icon: '◍' },
+      { label: 'Market Scanner',value: market,   active: true,               color: 'gold',   icon: '✹' }
     ];
 
     var activeCount = sources.filter(function (s) { return !!s.active; }).length;
@@ -781,10 +784,10 @@
     return '<div class="apex-source-flow">' +
       '<div class="apex-source-head">' +
         '<div>' +
-          '<div class="apex-source-title">SURSE ACTIVE</div>' +
-          '<div class="apex-source-sub">Cum se generează pronosticurile</div>' +
+          '<div class="apex-source-title">CUM S-AU GENERAT PRONOSTICURILE</div>' +
+          '<div class="apex-source-sub">Sursele active care construiesc scorul APEX</div>' +
         '</div>' +
-        '<div class="apex-source-badge">' + activeCount + '/5</div>' +
+        '<div class="apex-source-badge">● ' + activeCount + '/5</div>' +
       '</div>' +
       '<div class="apex-source-grid">' +
         sources.map(function (src) {
@@ -795,6 +798,7 @@
           '</div>';
         }).join('') +
       '</div>' +
+      '<div class="apex-source-foot">Contribuția fiecărei surse la scorul APEX</div>' +
     '</div>';
   }
 

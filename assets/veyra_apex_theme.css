@@ -1218,3 +1218,305 @@
   .apex-kpi-card { min-height: 124px; }
   .apex-source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ================================================================
+   VEYRA APEX Neural Engine — fidelity pass v3
+   Closer to approved mockup image
+   ================================================================ */
+
+.apex-subnav {
+  gap: 8px;
+  padding: 14px 14px 10px;
+}
+.apex-subnav-tab {
+  padding: 10px 12px;
+  font-size: 11px;
+  gap: 7px;
+  min-width: max-content;
+}
+.apex-subnav-badge {
+  min-width: 22px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.apex-hero-card {
+  grid-template-columns: minmax(0, 1fr) 118px;
+  gap: 16px;
+  border-radius: 24px;
+  border: 1px solid rgba(55, 227, 219, 0.22);
+  background:
+    radial-gradient(circle at 78% 26%, rgba(42, 217, 233, 0.08), transparent 28%),
+    radial-gradient(circle at 18% 0%, rgba(255, 182, 73, 0.05), transparent 24%),
+    linear-gradient(180deg, rgba(6, 15, 30, 0.98), rgba(4, 11, 23, 0.99));
+}
+.apex-engine-name {
+  font-family: var(--apex-font);
+  font-size: clamp(22px, 7.4vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+  color: #f8fbff;
+  background: none;
+  -webkit-text-fill-color: initial;
+}
+.apex-engine-subtitle {
+  max-width: 92%;
+  font-size: 11px;
+  line-height: 1.58;
+  letter-spacing: .01em;
+  color: #b7c4da;
+}
+.apex-hero-meta { margin-top: 14px; }
+.apex-vbadge {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.apex-model-strip-hero {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 14px 0 0;
+  overflow: visible;
+}
+.apex-model-strip-hero .apex-model-chip {
+  min-width: 0;
+  justify-content: flex-start;
+  padding: 8px 11px;
+  font-size: 10px;
+  letter-spacing: .01em;
+}
+.apex-hero-side { align-items: center; }
+.apex-hero-ring {
+  width: 106px;
+  height: 106px;
+  box-shadow:
+    0 0 0 1px rgba(32, 86, 146, 0.25),
+    0 0 0 10px rgba(37, 219, 234, 0.04),
+    inset 0 0 28px rgba(37, 219, 234, 0.08),
+    0 0 34px rgba(37, 219, 234, 0.10);
+}
+.apex-hero-ring::before {
+  inset: -12px;
+  border: 1px solid rgba(37, 219, 234, 0.14);
+  background:
+    radial-gradient(circle at center, transparent 66%, rgba(37, 219, 234, 0.10) 67%, transparent 69%);
+}
+.apex-hero-ring::after {
+  inset: -18px;
+  border: 1px dashed rgba(37, 219, 234, 0.14);
+}
+.apex-hero-score {
+  font-size: 34px;
+  color: #4df0c9;
+}
+.apex-hero-score-lbl {
+  font-size: 10px;
+  letter-spacing: .06em;
+}
+
+.apex-kpi-strip {
+  gap: 12px;
+}
+.apex-kpi-card {
+  min-height: 140px;
+  padding: 15px 16px;
+}
+.apex-kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.apex-kpi-icon {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 20px;
+  border: 1px solid rgba(93, 121, 168, 0.28);
+  background: radial-gradient(circle at center, rgba(13, 29, 54, 0.96), rgba(8, 18, 34, 0.98));
+  color: var(--kpi-color, var(--apex-cyan));
+  box-shadow: inset 0 0 14px rgba(255,255,255,0.02);
+}
+.apex-kpi-lbl {
+  margin-bottom: 0;
+  font-size: 10px;
+}
+.apex-kpi-val {
+  font-size: clamp(24px, 9vw, 34px);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  word-break: break-word;
+}
+.apex-kpi-sub {
+  max-width: 90%;
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.36;
+}
+
+.apex-source-flow {
+  margin: 0 16px 16px;
+  padding: 14px 14px 10px;
+  border-radius: 22px;
+  border: 1px solid rgba(42, 227, 219, 0.22);
+}
+.apex-source-head {
+  margin-bottom: 12px;
+}
+.apex-source-title {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #4cf0d6;
+}
+.apex-source-sub {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #9ab0cf;
+}
+.apex-source-badge {
+  min-width: 58px;
+  height: 30px;
+  font-size: 11px;
+  gap: 5px;
+}
+.apex-source-grid {
+  gap: 10px;
+}
+.apex-source-card {
+  min-height: 102px;
+  padding: 10px 8px 12px;
+  border-radius: 18px;
+}
+.apex-source-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+.apex-source-name {
+  font-size: 10px;
+  line-height: 1.25;
+}
+.apex-source-val {
+  font-size: 19px;
+}
+.apex-source-foot {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #99b0d0;
+}
+
+.apex-tier-header {
+  border-radius: 18px 18px 0 0;
+}
+.apex-tier-label {
+  font-size: 14px;
+}
+.apex-tier-toggle {
+  font-size: 11px;
+  color: #edf5ff;
+  background: rgba(10, 17, 32, 0.98);
+  border: 1px solid rgba(95, 122, 167, 0.18);
+  border-radius: 999px;
+  padding: 10px 14px;
+}
+.apex-tier-count {
+  font-size: 11px;
+  min-width: 26px;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.apex-pick-card {
+  padding: 14px 14px 12px;
+  border-radius: 22px;
+}
+.apex-pick-top {
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.apex-pick-match {
+  font-size: 16px;
+  line-height: 1.18;
+  max-width: 98%;
+}
+.apex-pick-league {
+  margin-top: 6px;
+  font-size: 11px;
+}
+.apex-score-circle {
+  width: 74px;
+  height: 74px;
+  border-width: 3px;
+}
+.apex-score-num { font-size: 24px; }
+.apex-score-circle.elite { box-shadow: 0 0 16px rgba(255,154,61,.08), inset 0 0 16px rgba(255,154,61,.03); }
+.apex-chip { font-size: 10px; }
+.apex-conf-bar-track { height: 5px; }
+.apex-conf-bar-fill.elite,
+.apex-conf-bar-fill.validated,
+.apex-conf-bar-fill.watchlist {
+  background: linear-gradient(90deg, #ff8c33, #ffbd61);
+}
+.apex-conf-pct.elite,
+.apex-conf-pct.validated,
+.apex-conf-pct.watchlist {
+  color: #ffb45e;
+}
+
+@media (max-width: 430px) {
+  .apex-hero-card {
+    grid-template-columns: minmax(0, 1fr) 104px;
+    gap: 12px;
+    padding: 16px 14px;
+  }
+  .apex-model-strip-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .apex-kpi-card {
+    min-height: 132px;
+  }
+  .apex-kpi-val {
+    font-size: clamp(22px, 8.6vw, 30px);
+  }
+  .apex-source-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .apex-source-card {
+    min-height: 96px;
+    padding: 9px 6px 10px;
+  }
+  .apex-source-icon { font-size: 18px; }
+  .apex-source-name { font-size: 9px; }
+  .apex-source-val { font-size: 17px; }
+}
+
+@media (max-width: 380px) {
+  .apex-subnav-tab {
+    padding: 9px 11px;
+    font-size: 10px;
+  }
+  .apex-hero-card {
+    grid-template-columns: 1fr;
+  }
+  .apex-hero-side {
+    justify-content: flex-start;
+    padding-top: 2px;
+  }
+  .apex-hero-ring {
+    width: 92px;
+    height: 92px;
+  }
+  .apex-source-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
