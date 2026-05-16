@@ -1554,7 +1554,7 @@ function getBetVerdict(match, bet) {
 
   // v7: Praguri ridicate pentru PARIAZA. Cerință minimă: prob ≥83, edge ≥7, value ≥0.02
   // Hard-stop: probabilitate mică, EV negativ, cotă invalidă sau contradicție reală.
-  var minProbHard = mkey === 'under35' ? 72 : (mkey === 'over15' ? 74 : 62);
+  var minProbHard = mkey === 'under35' ? 75 : (mkey === 'over15' ? 74 : 62);
   if (adjProb < minProbHard) return avoid('Probabilitate prea mică (' + adjProb.toFixed(1) + '%)', 0);
   if (value <= 0) return avoid('EV/value negativ', 0);
   if (odds && (odds < 1.10 || odds > 3.20)) return avoid('Cotă în afara profilului', 0);
@@ -2670,7 +2670,7 @@ function heuristicRecommendForRaw(raw, marketKey){
   if(marketKey === 'over15') return safePct(raw.prob_over_15) >= 76 && xgTotal >= 2.10 && (!ls || ls.total >= 2);
   if(marketKey === 'over25') return safePct(raw.prob_over_25) >= 60 && xgTotal >= 2.60 && (!ls || ls.total >= 3);
   if(marketKey === 'under25') return (100 - safePct(raw.prob_over_25)) >= 56 && xgTotal <= 2.55 && (!ls || ls.total <= 2);
-  if(marketKey === 'under35') return (100 - safePct(raw.prob_over_35)) >= 68 && xgTotal <= 3.05 && (!ls || ls.total <= 3);
+  if(marketKey === 'under35') return (100 - safePct(raw.prob_over_35)) >= 73 && xgTotal <= 3.05 && (!ls || ls.total <= 3);
   if(marketKey === 'btts') return safePct(raw.prob_btts_yes) >= 58 && xgHome >= 0.90 && xgAway >= 0.90 && (!ls || ls.btts);
   if(marketKey === 'homeWin') return raw.predicted_result === 'H' && raw.favorite === 'H' && (xgHome - xgAway) >= 0.30 && probDraw < 27;
   if(marketKey === 'draw') return probDraw >= 28 && gap <= 0.25 && (!ls || ls.home === ls.away);
@@ -2746,7 +2746,7 @@ function getTrainingBaselineRateForType(baseline, type){
 function getTrainingMarketGate(type){
   if(type === 'over15') return { minRate:74, minProb:74, maxBoost:10 };
   if(type === 'over25') return { minRate:50, minProb:60, maxBoost:10 };
-  if(type === 'under35') return { minRate:71, minProb:68, maxBoost:9 };
+  if(type === 'under35') return { minRate:73, minProb:73, maxBoost:9 };
   if(type === 'btts') return { minRate:53, minProb:60, maxBoost:9 };
   return { minRate:0, minProb:0, maxBoost:0 };
 }
@@ -5506,7 +5506,7 @@ function buildMatchReasons(m){
   if(m.xgTotal >= 2.6) reasons.push('xG total ' + m.xgTotal.toFixed(2));
   if(m.probOver25 >= 60) reasons.push('O2.5 ' + m.probOver25.toFixed(1) + '%');
   if(m.probUnder25 >= 56) reasons.push('U2.5 ' + m.probUnder25.toFixed(1) + '%');
-  if(m.probUnder35 >= 68) reasons.push('U3.5 ' + m.probUnder35.toFixed(1) + '%');
+  if(m.probUnder35 >= 73) reasons.push('U3.5 ' + m.probUnder35.toFixed(1) + '%');
   if(m.probBtts >= 58) reasons.push('BTTS ' + m.probBtts.toFixed(1) + '%');
   if(m.probBttsNo >= 58) reasons.push('NG ' + m.probBttsNo.toFixed(1) + '%');
   if(m.favoriteRecommend && m.favoriteProp) reasons.push('favorit ML ' + m.favoriteProp.toFixed(1) + '%');
@@ -6377,7 +6377,7 @@ function renderML35(){
   var list = ALL_MATCHES.filter(function(m){
     var matchTime = new Date(m.date).getTime();
     var now = new Date().getTime();
-    return (m.mlFlags.u35 || (m.probUnder35 && m.probUnder35 >= 68)) && matchTime > (now - 900000);
+    return (m.mlFlags.u35 || (m.probUnder35 && m.probUnder35 >= 73)) && matchTime > (now - 900000);
   });
   list.sort(function(a,b){
     if(sortMode === 'date') return new Date(a.date) - new Date(b.date);
@@ -7666,7 +7666,7 @@ function marketFitAnalysis(m, type){
   }
 
   if(type === 'under35'){
-    if(m.probUnder35 >= 68){ score += 13; reasons.push('Under 3.5 solid'); }
+    if(m.probUnder35 >= 73){ score += 13; reasons.push('Under 3.5 solid'); }
     if(xgTotal <= 3.05){ score += 10; reasons.push('xG total controlat'); }
     if(ls && ls.total <= 3){ score += 12; reasons.push('scor probabil ≤ 3 goluri'); }
     if(ls && ls.total > 3){ score -= 16; }
@@ -8181,7 +8181,7 @@ function isHeuristicAiPass(c, type){
   if(type === 'draw') return !!(c.probDraw >= 28 && c.bestBet.adjProb >= 66);
   if(type === 'awayWin') return !!(c.favorite === 'A' && c.predictedResult === 'A' && c.bestBet.adjProb >= 72);
   if(type === 'under25') return !!(c.probUnder25 >= 56 && c.bestBet.adjProb >= 70);
-  if(type === 'under35') return !!(c.probUnder35 >= 68 && c.bestBet.adjProb >= 74);
+  if(type === 'under35') return !!(c.probUnder35 >= 73 && c.bestBet.adjProb >= 76);
   return false;
 }
 
@@ -8241,7 +8241,7 @@ function customCandidateFilter(c){
     }
 
     if(t === 'under35'){
-      if(c.probUnder35 < 68) return false;
+      if(c.probUnder35 < 73) return false;
       if(Number(c.xgTotal || 0) > 3.10) return false;
       if(ls && ls.total > 3) return false;
     }
@@ -8866,7 +8866,7 @@ function generateProfitFocusTicket(){
     }
 
     if(t === 'under35'){
-      return c.probUnder35 >= 68 && xgTotal <= 3.05;
+      return c.probUnder35 >= 73 && xgTotal <= 3.05;
     }
 
     if(t === 'homeWin'){
@@ -9139,7 +9139,7 @@ function buildProfitFocusTicketPreview(){
     if(t === 'over25') return c.probOver25 >= 60 && xgTotal >= 2.60;
     if(t === 'btts') return c.probBtts >= 62 && xgHome >= 1.00 && xgAway >= 1.00 && c.bestBet.adjProb >= 62;
     if(t === 'under25') return c.probUnder25 >= 56 && xgTotal <= 2.55;
-    if(t === 'under35') return c.probUnder35 >= 68 && xgTotal <= 3.05;
+    if(t === 'under35') return c.probUnder35 >= 73 && xgTotal <= 3.05;
     if(t === 'homeWin') return c.predictedResult === 'H' && c.favorite === 'H' && (xgHome - xgAway) >= 0.30 && c.probDraw < 27;
     if(t === 'draw') return c.probDraw >= 28 && Math.abs(xgHome - xgAway) <= 0.35 && Math.abs(c.probHome - c.probAway) <= 10;
     if(t === 'awayWin') return c.predictedResult === 'A' && c.favorite === 'A' && (xgAway - xgHome) >= 0.30 && c.probDraw < 27;
