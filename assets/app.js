@@ -7208,8 +7208,7 @@ function renderMatches(){
         // Procesam Markdown minimal: **bold** → <strong>, newline → <br>
         var aiText = htmlEsc(m.aiPreview)
           .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-          .replace(/
-/g, '<br>');
+          .replace(/\n/g, '<br>');
         aiPreviewBlock = '<div class="ai-preview-block">'+
           '<div class="ai-preview-label">🤖 AI Preview BSD</div>'+
           '<div class="ai-preview-text">'+aiText+'</div>'+
