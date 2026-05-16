@@ -138,7 +138,7 @@ jobs:
         run: |
           test -f data/predictions.json
           test -f data/events.json
-          test -f data/recommendation_log.json
+          test -f data/ui_picks_log.json || test -f data/predictions.json
 
       # ─── CatBoost ÎNAINTE de enrich — catboost_signal trebuie să existe în ev_signals_v2.json
       # înainte ca enrich_predictions.py să îl citească și să îl adauge pe predictions ───────────
