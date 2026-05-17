@@ -31,9 +31,7 @@ LOOKAHEAD_DAYS = 30
 BACKTEST_LOOKBACK_DAYS = 21
 HISTORY_LOOKBACK_DAYS = 60
 HISTORY_MAX_ROWS = 2500
-UI_PICKS_LOG_MAX_ROWS = 50000
-UI_PICKS_ALLOWED_MARKETS = {"over15", "over25", "under35"}
-UI_PICKS_RESET_AT = datetime(2026, 5, 17, 4, 45, tzinfo=timezone.utc)
+RECOMMENDATION_LOG_MAX_ROWS = 5000
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
@@ -1070,26 +1068,10 @@ def dedupe_and_filter_predictions(predictions, now_utc=None, max_age_hours=MAX_P
     }
 
 
-
-def ui_pick_log_id(event_id, market_key=None):
-    """Cheie stabilă pentru istoricul UI: același meci poate avea mai multe piețe eligibile."""
-    if event_id in (None, ""):
-        return ""
-    market = str(market_key or "").strip()
-    return f"{event_id}::{market}" if market else str(event_id)
-
 def build_signal_audit(predictions, recommendation_log=None):
     rows = []
     now_utc = datetime.now(timezone.utc)
-    log_index = {}
-    for _r in (recommendation_log or []):
-        if not (_r or {}).get("event_id"):
-            continue
-        _mk = (_r or {}).get("market_key") or (_r or {}).get("market")
-        _log_key = (_r or {}).get("log_id") or ui_pick_log_id((_r or {}).get("event_id"), _mk)
-        log_index[str(_log_key)] = _r or {}
-        # fallback pentru log-urile vechi, care erau indexate doar pe event_id
-        log_index.setdefault(str((_r or {}).get("event_id")), _r or {})
+    log_index = {str((r or {}).get("event_id") or ""): (r or {}) for r in (recommendation_log or []) if (r or {}).get("event_id")}
     for row in predictions or []:
         event = row.get("event") or {}
         if event.get("status") != "notstarted":
@@ -1126,7 +1108,7 @@ def build_signal_audit(predictions, recommendation_log=None):
             reason_tags.append(f"Scor {row.get('most_likely_score')}")
         if pick.get("odds_upgraded") and pick.get("best_odds_bookmaker"):
             reason_tags.append(f"Best@{pick['best_odds_bookmaker']}")
-        log_row = log_index.get(ui_pick_log_id(pick.get("event_id"), pick.get("market_key"))) or log_index.get(str(pick.get("event_id"))) or {}
+        log_row = log_index.get(str(pick.get("event_id"))) or {}
         previous_odds = log_row.get("odds") if log_row.get("odds") is not None else pick.get("odds")
         opening_odds = log_row.get("opening_odds") if log_row.get("opening_odds") is not None else previous_odds
         current_odds = pick.get("odds")
@@ -2412,15 +2394,8 @@ def build_ui_live_candidate(row, market_key):
     value = calc_value(prob, odds)
     if value <= 0:
         return None
-    # Ridicat de la 1.65 → 2.00 pentru a permite BTTS si Over25 sa concureze
-    if odds > 2.00:
+    if odds > 1.65:
         return None
-    # Under35 edge floor: zona 8-11pp are ROI negativ pe date reale.
-    # Profitabil doar edge >= 11pp. Sub acest prag pick-ul e eliminat.
-    if market_key == "under35":
-        _mp_u35 = market_prob_from_row_event(row, event, market_key)
-        if _mp_u35 is not None and (prob - _mp_u35) < 11.0:
-            return None
 
     adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     market_prob = market_prob_from_row_event(row, event, market_key)
@@ -2508,7 +2483,7 @@ def build_ui_live_candidate(row, market_key):
 def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event_ids=None):
     rows = []
     drifting_event_ids = drifting_event_ids or set()
-    tracked_market_keys = ["over15", "over25", "under35"]
+    tracked_market_keys = ["over15", "over25", "under35", "btts"]
 
     for row in predictions or []:
         event = row.get("event") or {}
@@ -2532,86 +2507,80 @@ def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event
             ),
             reverse=True,
         )
+        pick = candidates[0]
+        event_id = pick.get("event_id")
+        if not event_id:
+            continue
 
-        # Salvăm separat fiecare piață eligibilă afișabilă în Meciuri.
-        # Înainte se salva doar event_id, deci BTTS/Over/Under se suprascriau între ele.
-        for rank_idx, pick in enumerate(candidates, start=1):
-            event_id = pick.get("event_id")
-            if not event_id:
-                continue
-            market_key = pick.get("market_key")
-            log_key = ui_pick_log_id(event_id, market_key)
+        # ─── Excludem pick-urile DRIFTING (piața s-a mișcat >5.3% contra) ────
+        if str(event_id) in drifting_event_ids:
+            continue
 
-            # ─── Excludem pick-urile DRIFTING ────────────────────────────────
-            # Compatibil cu log-urile vechi: poate exista event_id simplu sau event_id::market_key.
-            if str(event_id) in drifting_event_ids or str(log_key) in drifting_event_ids:
-                continue
+        # ── Calculeaza toate categoriile Meciuri la care apartine acest meci ──
+        _pick_verdict  = pick.get("verdict") or ""
+        _pick_value    = float(pick.get("value") or 0)
+        _pick_edge     = float(pick.get("edge_pct") or 0)
+        _pick_risk     = pick.get("risk_tier") or ""
+        _all_mkt_keys  = {c.get("market_key") for c in candidates if c.get("market_key")}
+        _eligible_cats = ["all"]
+        if _pick_verdict == "safe" or _pick_risk == "Safe":
+            _eligible_cats.append("safe")
+        if _pick_value >= 0.08 and _pick_edge >= 3 or _pick_risk == "Value":
+            _eligible_cats.append("value")
+        if "over15"  in _all_mkt_keys: _eligible_cats.append("o15")
+        if "over25"  in _all_mkt_keys: _eligible_cats.append("o25")
+        if "btts"    in _all_mkt_keys: _eligible_cats.append("btts")
+        if "under35" in _all_mkt_keys: _eligible_cats.append("u35")
 
-            _pick_verdict = pick.get("verdict") or ""
-            _pick_value = float(pick.get("value") or 0)
-            _pick_edge = float(pick.get("edge_pct") or 0)
-            _pick_risk = pick.get("risk_tier") or ""
-            _eligible_cats = ["all"]
-            if _pick_verdict == "safe" or _pick_risk == "Safe":
-                _eligible_cats.append("safe")
-            if (_pick_value >= 0.08 and _pick_edge >= 3) or _pick_risk == "Value":
-                _eligible_cats.append("value")
-            if market_key == "over15": _eligible_cats.append("o15")
-            if market_key == "over25": _eligible_cats.append("o25")
-            if market_key == "btts": _eligible_cats.append("btts")
-            if market_key == "under35": _eligible_cats.append("u35")
+        rows.append({
+            "log_id": str(event_id),
+            "logged_at": logged_at_iso,
+            "prediction_created_at": pick.get("created_at"),
+            "event_id": event_id,
+            "prediction_id": pick.get("prediction_id"),
+            "home": event.get("home_team"),
+            "away": event.get("away_team"),
+            "home_api_id": pick.get("home_api_id") or (event.get("home_team_obj") or {}).get("api_id"),
+            "away_api_id": pick.get("away_api_id") or (event.get("away_team_obj") or {}).get("api_id"),
+            "league_api_id": pick.get("league_api_id") or (event.get("league") or {}).get("api_id"),
+            "league": pick.get("league"),
+            "event_date": pick.get("date"),
+            "market": pick.get("market"),
+            "market_key": pick.get("market_key"),
+            "odds": pick.get("odds"),
+            "model_prob": pick.get("model_prob"),
+            "api_prob": pick.get("api_prob"),
+            "poisson_prob": pick.get("poisson_prob"),
+            "poisson_delta": pick.get("poisson_delta"),
+            "poisson_alert": pick.get("poisson_alert"),
+            "adjusted_prob": pick.get("adjusted_prob"),
+            "market_prob": pick.get("market_prob"),
+            "edge_pct": pick.get("edge_pct"),
+            "confidence": pick.get("confidence"),
+            "value": pick.get("value"),
+            "score": pick.get("ticket_score"),
+            "source_api": pick.get("source_api"),
+            "source_heuristic": pick.get("source_heuristic"),
+            "model_version": row.get("model_version"),
+            "most_likely_score": pick.get("most_likely_score"),
+            "league_tier": pick.get("league_tier"),
+            "verdict": _pick_verdict,
+            "risk_tier": _pick_risk,
+            "eligible_categories": _eligible_cats,
+            "opening_odds": pick.get("odds"),
+            "previous_odds": pick.get("odds"),
+            "line_movement_pct": 0.0,
+            "from_open_pct": 0.0,
+            "status": "pending",
+            "won": None,
+            "home_score": None,
+            "away_score": None,
+            "settled_at": None,
+        })
 
-            rows.append({
-                "log_id": log_key,
-                "ui_mirror_key": log_key,
-                "candidate_rank": rank_idx,
-                "is_primary_pick": rank_idx == 1,
-                "logged_at": logged_at_iso,
-                "prediction_created_at": pick.get("created_at"),
-                "event_id": event_id,
-                "prediction_id": pick.get("prediction_id"),
-                "home": event.get("home_team"),
-                "away": event.get("away_team"),
-                "home_api_id": pick.get("home_api_id") or (event.get("home_team_obj") or {}).get("api_id"),
-                "away_api_id": pick.get("away_api_id") or (event.get("away_team_obj") or {}).get("api_id"),
-                "league_api_id": pick.get("league_api_id") or (event.get("league") or {}).get("api_id"),
-                "league": pick.get("league"),
-                "event_date": pick.get("date"),
-                "market": pick.get("market"),
-                "market_key": market_key,
-                "odds": pick.get("odds"),
-                "model_prob": pick.get("model_prob"),
-                "api_prob": pick.get("api_prob"),
-                "poisson_prob": pick.get("poisson_prob"),
-                "poisson_delta": pick.get("poisson_delta"),
-                "poisson_alert": pick.get("poisson_alert"),
-                "adjusted_prob": pick.get("adjusted_prob"),
-                "market_prob": pick.get("market_prob"),
-                "edge_pct": pick.get("edge_pct"),
-                "confidence": pick.get("confidence"),
-                "value": pick.get("value"),
-                "score": pick.get("ticket_score"),
-                "source_api": pick.get("source_api"),
-                "source_heuristic": pick.get("source_heuristic"),
-                "model_version": row.get("model_version"),
-                "most_likely_score": pick.get("most_likely_score"),
-                "league_tier": pick.get("league_tier"),
-                "verdict": _pick_verdict,
-                "risk_tier": _pick_risk,
-                "eligible_categories": _eligible_cats,
-                "opening_odds": pick.get("odds"),
-                "previous_odds": pick.get("odds"),
-                "line_movement_pct": 0.0,
-                "from_open_pct": 0.0,
-                "status": "pending",
-                "won": None,
-                "home_score": None,
-                "away_score": None,
-                "settled_at": None,
-            })
-
-    rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0, x.get("candidate_rank") or 99))
+    rows.sort(key=lambda x: (x.get("event_date") or "", x.get("event_id") or 0))
     return rows
+
 
 def build_finished_event_index(predictions):
     out = {}
@@ -2629,64 +2598,33 @@ def build_finished_event_index(predictions):
 
 
 
-def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at_iso):
+def update_recommendation_log(existing_rows, current_rows, finished_events, settled_at_iso):
     existing_rows = existing_rows or []
-    by_log_id = {}
-
-    def _norm_market_key(value):
-        raw = str(value or "").strip().lower()
-        label_map = {
-            "over 1.5g": "over15", "over 1.5": "over15", "o1.5g": "over15", "o1.5": "over15",
-            "over 2.5g": "over25", "over 2.5": "over25", "o2.5g": "over25", "o2.5": "over25",
-            "under 3.5g": "under35", "under 3.5": "under35", "u3.5g": "under35", "u3.5": "under35",
-        }
-        return label_map.get(raw, raw)
-
-    def _row_is_after_reset(row):
-        dt = parse_dt(row.get("first_logged_at") or row.get("logged_at") or row.get("settled_at") or row.get("prediction_created_at"))
-        if not dt:
-            return False
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt >= UI_PICKS_RESET_AT
+    by_event_id = {}
 
     for row in existing_rows:
         event_id = row.get("event_id")
         if not event_id:
             continue
-        market_key = _norm_market_key(row.get("market_key") or row.get("market"))
-        if market_key not in UI_PICKS_ALLOWED_MARKETS:
-            continue
-        # Reset curat: ignoră cele 5-6 validate vechi și orice rând logat înainte de reset.
-        # Rândurile pending curente se reconstruiesc imediat din current_rows la aceeași rulare.
-        if not _row_is_after_reset(row):
-            continue
-        row["market_key"] = market_key
-        key = str(row.get("log_id") or ui_pick_log_id(event_id, market_key))
-        row["log_id"] = key
-        row["ui_mirror_key"] = row.get("ui_mirror_key") or key
-        by_log_id[key] = row
+        row["log_id"] = str(event_id)
+        by_event_id[str(event_id)] = row
 
     for row in current_rows or []:
         event_id = row.get("event_id")
         if not event_id:
             continue
-        market_key = _norm_market_key(row.get("market_key") or row.get("market"))
-        if market_key not in UI_PICKS_ALLOWED_MARKETS:
-            continue
-        row["market_key"] = market_key
-        key = str(row.get("log_id") or ui_pick_log_id(event_id, market_key))
+        key = str(event_id)
         row["log_id"] = key
-        row["ui_mirror_key"] = row.get("ui_mirror_key") or key
-        existing = by_log_id.get(key)
+        existing = by_event_id.get(key)
 
         if not existing:
             row["line_move_signal"] = "NEW"
-            by_log_id[key] = row
+            by_event_id[key] = row
             continue
 
         # Ținem snapshotul final pentru meciurile deja închise,
-        # dar pentru cele încă pending resincronizăm aceeași piață.
+        # dar pentru cele încă pending resincronizăm piața curentă
+        # ca numerele din Istoric 21 zile să bată cu tab-ul Meciuri.
         if existing.get("status") in {"win", "lose"}:
             continue
 
@@ -2707,14 +2645,13 @@ def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at
         except Exception:
             row["line_movement_pct"] = 0.0
             row["from_open_pct"] = 0.0
-
         # ─── Line Move Signal ─────────────────────────────────────────────────
         # Bazat pe CLV Buckets: drift > 5.3% = CLV ≤-5% = ROI -12.29% → DRIFTING
         fop = row.get("from_open_pct") or 0.0
         if fop > LINE_MOVE_DRIFT_REJECT:
-            row["line_move_signal"] = "DRIFTING"
+            row["line_move_signal"] = "DRIFTING"   # piața s-a mișcat contra → excludem
         elif fop < LINE_MOVE_CONFIRM_MIN:
-            row["line_move_signal"] = "CONFIRMED"
+            row["line_move_signal"] = "CONFIRMED"  # piața confirmă direcția → prioritizăm
         else:
             row["line_move_signal"] = "NEUTRAL"
         row["status"] = existing.get("status") or row.get("status")
@@ -2722,9 +2659,9 @@ def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at
         row["home_score"] = existing.get("home_score")
         row["away_score"] = existing.get("away_score")
         row["settled_at"] = existing.get("settled_at")
-        by_log_id[key] = row
+        by_event_id[key] = row
 
-    for row in by_log_id.values():
+    for row in by_event_id.values():
         if row.get("status") in {"win", "lose"}:
             continue
         event = finished_events.get(row.get("event_id"))
@@ -2739,9 +2676,10 @@ def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at
         row["away_score"] = event.get("away_score")
         row["settled_at"] = settled_at_iso
 
-    out = list(by_log_id.values())
-    out.sort(key=lambda x: (x.get("logged_at") or x.get("prediction_created_at") or "", x.get("event_id") or 0, x.get("market_key") or ""), reverse=True)
-    return out[:UI_PICKS_LOG_MAX_ROWS]
+    out = list(by_event_id.values())
+    out.sort(key=lambda x: (x.get("logged_at") or x.get("prediction_created_at") or "", x.get("event_id") or 0), reverse=True)
+    return out[:RECOMMENDATION_LOG_MAX_ROWS]
+
 
 
 
@@ -3598,12 +3536,12 @@ def main():
         history_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past_history}&date_to={today}")
         history_predictions, _history_prep = dedupe_and_filter_predictions(history_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
     history_rows = build_history_rows(history_predictions)
-    recommendation_log = load_existing_json("ui_picks_log.json", [])
+    recommendation_log = load_existing_json("recommendation_log.json", [])
     signal_audit = build_signal_audit(predictions, recommendation_log=recommendation_log)
     # ─── Line Move Filter: colectăm event-urile DRIFTING din log-ul anterior ──
     # Picks unde piața s-a mișcat >5.3% contra noastră (CLV ≤-5% → ROI -12.29%)
     drifting_event_ids = {
-        str(r.get("log_id") or ui_pick_log_id(r.get("event_id"), r.get("market_key")))
+        str(r.get("event_id"))
         for r in recommendation_log
         if r.get("line_move_signal") == "DRIFTING" and r.get("status") == "pending"
     }
@@ -3611,7 +3549,7 @@ def main():
         print(f"[LineMove] {len(drifting_event_ids)} pick-uri DRIFTING excluse (drift >{LINE_MOVE_DRIFT_REJECT}%)")
     current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat(), drifting_event_ids=drifting_event_ids)
     finished_events = build_finished_event_index(history_predictions)
-    recommendation_log = update_ui_picks_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
+    recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
     ai_memory = build_ai_memory(current_recommendations, recommendation_log, history_rows, started_at)
     data_health = build_data_health(predictions, upcoming_prep)
     header_sync = build_header_sync_metrics(predictions)
@@ -3641,7 +3579,7 @@ def main():
     save_json(backtest, "backtest.json")
     save_json(history_rows, "history_engine.json")
     save_json(signal_audit, "signal_audit.json")
-    save_json(recommendation_log, "ui_picks_log.json")
+    save_json(recommendation_log, "recommendation_log.json")
     save_json(ai_memory, "ai_memory.json")
 
     meta = {
