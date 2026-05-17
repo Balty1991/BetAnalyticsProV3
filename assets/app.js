@@ -1419,18 +1419,22 @@ function getMarketThresholds() {
 
 var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 3.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
+  // Safety floor: dynamic_thresholds poate coborî prea mult pragul când un bucket are ROI marginal.
+  // Under 3.5 a inundat lista la min_edge=5%, deși bucketul 15%+ este mult mai sănătos.
+  var HARD_EDGE_FLOORS = { under35: 15.0, over15: 10.0, over25: 5.0, btts: 5.0 };
+  var hardFloor = HARD_EDGE_FLOORS[marketKey] != null ? HARD_EDGE_FLOORS[marketKey] : 0;
   var t = getMarketThresholds()[marketKey];
+  var edge = EDGE_FALLBACK[marketKey] != null ? EDGE_FALLBACK[marketKey] : 3.0;
   if (t && !t.disabled && typeof t.min_edge === 'number'){
     // Bootstrap activ: bucketul profitabil are date insuficiente (n < bootstrap_target_n).
-    // Folosim bootstrap_min_edge (prag mai permisiv) ca să acumulăm istoric.
-    // Când n atinge target → build_model_benchmarks.py setează bootstrap_min_edge=null
-    // și revenim automat la min_edge data-driven.
+    // Folosim bootstrap_min_edge doar dacă nu coboară sub safety floor.
     if(typeof t.bootstrap_min_edge === 'number' && t.bootstrap_min_edge > 0){
-      return t.bootstrap_min_edge;
+      edge = t.bootstrap_min_edge;
+    } else {
+      edge = t.min_edge;
     }
-    return t.min_edge;
   }
-  return EDGE_FALLBACK[marketKey] != null ? EDGE_FALLBACK[marketKey] : 3.0;
+  return Math.max(hardFloor, Number(edge || 0));
 }
 function isMarketDisabled(marketKey) {
   var t = getMarketThresholds()[marketKey];
@@ -7786,7 +7790,28 @@ function buildMarketCandidate(m, type){
     if(Number(b.adjProb || 0) < 52 || Number(m.probOver25 || 0) < 50 || Number(m.xgTotal || 0) < 1.80 || Number(b.odds || 0) < 1.15 || _edgeFailO25 || Number(b.value || 0) < 0.01) return null;
   }
   if(isMarketDisabled('under35')) return null;
-  if(type === 'under35' && edgePct < getMarketMinEdge('under35')) return null;
+  if(type === 'under35'){
+    var _u35EdgeMin = Math.max(getMarketMinEdge('under35'), 15.0);
+    var _u35AdjProb = Number(b.adjProb || 0);
+    var _u35ApiProb = Number(m.probUnder35 || 0);
+    var _u35XgTotal = Number(m.xgTotal || 0);
+    var _u35Odds = Number(b.odds || 0);
+    var _u35Value = Number(b.value || 0);
+    var _u35Likely = (typeof parseLikelyScore === 'function') ? parseLikelyScore(m.mostLikelyScore) : null;
+    var _u35LikelyOk = !_u35Likely || Number(_u35Likely.total || 0) <= 3;
+    // Anti-flood U3.5: înainte era filtrat aproape doar pe edge, ceea ce producea prea multe selecții U3.5.
+    if(
+      edgePct < _u35EdgeMin ||
+      _u35AdjProb < 80 ||
+      _u35ApiProb < 78 ||
+      _u35XgTotal <= 0 ||
+      _u35XgTotal > 2.85 ||
+      _u35Odds < 1.18 ||
+      _u35Odds > 1.65 ||
+      _u35Value < 0.02 ||
+      !_u35LikelyOk
+    ) return null;
+  }
   if(type === 'btts' && (Number(b.adjProb || 0) < 62 || Number(m.probBtts || 0) < 62 || Number(m.xgHome || 0) < 1.00 || Number(m.xgAway || 0) < 1.00 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 1.00 || edgePct < 3 || Number(b.value || 0) < 0.03)) return null;
   // DC 1X / X2 — safe bet, prob >=75%, value >=0.02, odds >=1.15 (sub 1.15 devine irelevant)
   if(type === 'dc1x' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
