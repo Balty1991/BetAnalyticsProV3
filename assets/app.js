@@ -742,6 +742,67 @@ function renderModernDashboard(){
   var todayLiveCount = eligibleLocal.filter(function(m){ return isSameLocalDay(m.event_date || m.eventDate); }).length || analyzedCount;
   var helloText = todayLiveCount + ' meciuri disponibile azi';
 
+  function buildVisibleBacktestPanel(){
+    var bt = BACKTEST_SUMMARY || {};
+    var overallBt = bt.overall || {};
+    var engineBets = Number(bt.engine_bets != null ? bt.engine_bets : (overallBt.bets || 0));
+    var engineWins = Number(bt.engine_wins != null ? bt.engine_wins : (overallBt.wins || 0));
+    var engineLosses = Number((bt.engine_losses != null ? bt.engine_losses : (overallBt.losses != null ? overallBt.losses : Math.max(0, engineBets - engineWins))) || 0);
+    var engineProfit = Number(bt.engine_profit != null ? bt.engine_profit : (overallBt.profit || 0));
+    var engineRoi = Number(bt.engine_roi != null ? bt.engine_roi : (overallBt.roi || 0));
+    var engineWinrate = Number(bt.engine_winrate != null ? bt.engine_winrate : (overallBt.winrate || 0));
+    var avgOdds = Number(bt.engine_avg_odds != null ? bt.engine_avg_odds : (overallBt.avg_odds || 0));
+    var avgEdge = Number(bt.engine_avg_edge != null ? bt.engine_avg_edge : (overallBt.avg_edge || 0));
+    var lookback = Number(bt.lookback_days || 21);
+    var source = String(bt.source || '').trim();
+    var scope = String(bt.scope || bt.note || '').trim();
+    var sampleLabel = engineBets >= 120 ? 'solid' : engineBets >= 60 ? 'mediu' : engineBets > 0 ? 'mic' : 'în așteptare';
+    var updatedTxt = bt.updated_at ? fmtDateTime(bt.updated_at) : '—';
+    function pctColor(v){ return Number(v || 0) >= 0 ? 'var(--grn)' : 'var(--red)'; }
+    function card(label, value, detail, color){
+      return '<div class="visible-bt-card">'+
+        '<div class="visible-bt-k">'+esc(label)+'</div>'+
+        '<div class="visible-bt-v" style="color:'+color+'">'+esc(value)+'</div>'+
+        '<div class="visible-bt-d">'+esc(detail || '')+'</div>'+
+      '</div>';
+    }
+    var marketRows = Array.isArray(bt.by_market) ? bt.by_market.slice() : [];
+    marketRows.sort(function(a,b){
+      var ab = Number(a.bets || 0), bb = Number(b.bets || 0);
+      if(bb !== ab) return bb - ab;
+      return Number(b.roi || 0) - Number(a.roi || 0);
+    });
+    var marketHtml = marketRows.length ? (
+      '<div class="visible-bt-table-wrap"><table class="visible-bt-table">'+
+        '<thead><tr><th>Piață</th><th>Pariuri</th><th>W%</th><th>ROI</th></tr></thead>'+
+        '<tbody>'+ marketRows.slice(0,5).map(function(r){
+          var roi = Number(r.roi || r.roi_pct || 0);
+          var wr = Number(r.winrate || 0);
+          return '<tr>'+
+            '<td>'+esc(r.label || r.key || '—')+'</td>'+
+            '<td>'+Number(r.bets || 0)+'</td>'+
+            '<td>'+((r.bets || 0) ? wr.toFixed(1)+'%' : '—')+'</td>'+
+            '<td style="color:'+pctColor(roi)+'">'+((r.bets || 0) ? (roi>=0?'+':'')+roi.toFixed(1)+'%' : '—')+'</td>'+
+          '</tr>';
+        }).join('') + '</tbody></table></div>'
+    ) : '<div class="visible-bt-empty">Se va completa automat după ce predicțiile afișate în Meciuri se finalizează. Momentan backtestul vizibil este resetat curat.</div>';
+    var included = Array.isArray(bt.markets_included) && bt.markets_included.length ? bt.markets_included.join(', ') : 'doar piețele afișate';
+    return '<div class="dashboard-v16-section visible-bt-panel">'+
+      '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">🧪 BACKTEST MECIURI VIZIBILE</div><div class="dashboard-v16-section-sub">Calculează doar predicțiile filtrate și afișate în Meciuri, nu tot ce produce motorul în fundal.</div></div><div class="dashboard-v16-swipe-note">'+lookback+' zile</div></div>'+
+      '<div class="visible-bt-source"><span>Sursă: '+esc(source || 'meciuri_visible')+'</span><span>Update: '+esc(updatedTxt)+'</span></div>'+
+      '<div class="visible-bt-grid">'+
+        card('Sample', engineBets ? (engineBets + ' închise') : '0 închise', engineWins + 'W / ' + engineLosses + 'L • ' + sampleLabel, 'var(--acc)')+
+        card('ROI', engineBets ? signed(engineRoi, '%') : '—', 'profit ' + signed(engineProfit, 'u') + ' • 1u/pick', engineBets ? pctColor(engineRoi) : 'var(--txt)')+
+        card('Win rate', engineBets ? engineWinrate.toFixed(1)+'%' : '—', engineWins + '/' + engineBets + ' câștigate', 'var(--grn)')+
+        card('Medii', engineBets ? ('@' + avgOdds.toFixed(2)) : '—', 'edge mediu ' + (engineBets ? signed(avgEdge, 'pp') : '—'), 'var(--yel)')+
+      '</div>'+
+      marketHtml+
+      '<div class="visible-bt-note">'+esc(scope || 'Intră doar pick-urile logate ca vizibile în Meciuri.')+' • Piețe: '+esc(included)+'</div>'+
+    '</div>';
+  }
+
+  var visibleBacktestHtml = buildVisibleBacktestPanel();
+
   target.innerHTML = '<div class="dashboard-v16-shell">'+
     '</div>'+
 
@@ -765,6 +826,8 @@ function renderModernDashboard(){
       (catTableHtml ? catTableHtml : '')+
       (yesterdayHtml ? yesterdayHtml : '')+
     '</div>'+
+
+    visibleBacktestHtml+
 
     '<div class="dashboard-v16-reco">'+
       '<div class="dashboard-v16-section-head"><div><div class="dashboard-v16-section-title">🎯 RECOMANDĂRI PENTRU TINE</div><div class="dashboard-v16-section-sub">Motorul caută piața cu semnal istoric mai bun și o compară cu meciurile disponibile acum.</div></div></div>'+
