@@ -5069,6 +5069,14 @@ function applyLazyDataset(key, data){
     RECOMMENDATION_LOG = normalizeResultList(data);
     writeDatasetCache('recommendationLog', RECOMMENDATION_LOG);
     try { autoSyncTrackingStatuses(); } catch(e){}
+    // Re-rendereaza Performanta daca tab-ul e deja deschis
+    try {
+      if(document.getElementById('perf-verdict-content') &&
+         document.getElementById('tab-performanta') &&
+         document.getElementById('tab-performanta').style.display !== 'none'){
+        renderPerformantaVerdict();
+      }
+    } catch(e){}
     return;
   }
   if(key === 'historyEngine'){
