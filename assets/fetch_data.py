@@ -32,6 +32,8 @@ BACKTEST_LOOKBACK_DAYS = 21
 HISTORY_LOOKBACK_DAYS = 60
 HISTORY_MAX_ROWS = 2500
 UI_PICKS_LOG_MAX_ROWS = 50000
+UI_PICKS_ALLOWED_MARKETS = {"over15", "over25", "under35"}
+UI_PICKS_RESET_AT = datetime(2026, 5, 17, 4, 45, tzinfo=timezone.utc)
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
@@ -2506,7 +2508,7 @@ def build_ui_live_candidate(row, market_key):
 def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event_ids=None):
     rows = []
     drifting_event_ids = drifting_event_ids or set()
-    tracked_market_keys = ["over15", "over25", "under35", "btts"]
+    tracked_market_keys = ["over15", "over25", "under35"]
 
     for row in predictions or []:
         event = row.get("event") or {}
@@ -2631,11 +2633,35 @@ def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at
     existing_rows = existing_rows or []
     by_log_id = {}
 
+    def _norm_market_key(value):
+        raw = str(value or "").strip().lower()
+        label_map = {
+            "over 1.5g": "over15", "over 1.5": "over15", "o1.5g": "over15", "o1.5": "over15",
+            "over 2.5g": "over25", "over 2.5": "over25", "o2.5g": "over25", "o2.5": "over25",
+            "under 3.5g": "under35", "under 3.5": "under35", "u3.5g": "under35", "u3.5": "under35",
+        }
+        return label_map.get(raw, raw)
+
+    def _row_is_after_reset(row):
+        dt = parse_dt(row.get("first_logged_at") or row.get("logged_at") or row.get("settled_at") or row.get("prediction_created_at"))
+        if not dt:
+            return False
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt >= UI_PICKS_RESET_AT
+
     for row in existing_rows:
         event_id = row.get("event_id")
         if not event_id:
             continue
-        market_key = row.get("market_key") or row.get("market")
+        market_key = _norm_market_key(row.get("market_key") or row.get("market"))
+        if market_key not in UI_PICKS_ALLOWED_MARKETS:
+            continue
+        # Reset curat: ignoră cele 5-6 validate vechi și orice rând logat înainte de reset.
+        # Rândurile pending curente se reconstruiesc imediat din current_rows la aceeași rulare.
+        if not _row_is_after_reset(row):
+            continue
+        row["market_key"] = market_key
         key = str(row.get("log_id") or ui_pick_log_id(event_id, market_key))
         row["log_id"] = key
         row["ui_mirror_key"] = row.get("ui_mirror_key") or key
@@ -2645,7 +2671,10 @@ def update_ui_picks_log(existing_rows, current_rows, finished_events, settled_at
         event_id = row.get("event_id")
         if not event_id:
             continue
-        market_key = row.get("market_key") or row.get("market")
+        market_key = _norm_market_key(row.get("market_key") or row.get("market"))
+        if market_key not in UI_PICKS_ALLOWED_MARKETS:
+            continue
+        row["market_key"] = market_key
         key = str(row.get("log_id") or ui_pick_log_id(event_id, market_key))
         row["log_id"] = key
         row["ui_mirror_key"] = row.get("ui_mirror_key") or key
