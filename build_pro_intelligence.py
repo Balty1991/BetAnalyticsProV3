@@ -171,7 +171,7 @@ def settled_stats(rows: Iterable[Dict[str, Any]], field: str) -> List[Dict[str, 
 
 
 def build() -> Dict[str, Any]:
-    log_rows = load_json(DATA_DIR / "ui_picks_log.json", [])
+    log_rows = load_json(DATA_DIR / "recommendation_log.json", [])
     if not isinstance(log_rows, list):
         log_rows = []
     backtest = load_json(DATA_DIR / "backtest.json", {})

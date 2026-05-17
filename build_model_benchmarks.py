@@ -552,11 +552,11 @@ def rank_models(by_market: Dict[str, Dict[str, Dict]]) -> List[Dict]:
     return ranking
 
 
-# ─── REAL BACKTEST din ui_picks_log.json ────────────────────────────────
+# ─── REAL BACKTEST din recommendation_log.json ────────────────────────────────
 
 def real_backtest_from_log(log_path: Path) -> Dict:
     """
-    Backtest real folosind cotele și rezultatele din ui_picks_log.json.
+    Backtest real folosind cotele și rezultatele din recommendation_log.json.
     Nu folosește proxy odds — folosește câmpul `odds` direct din API.
 
     Returnează structura:
@@ -908,8 +908,8 @@ def main() -> None:
 
     # 10. Structurare output
     # 10b. Real backtest din log cu cote reale
-    print("  Calculez real backtest din ui_picks_log.json...")
-    real_bt = real_backtest_from_log(DATA_DIR / "ui_picks_log.json")
+    print("  Calculez real backtest din recommendation_log.json...")
+    real_bt = real_backtest_from_log(DATA_DIR / "recommendation_log.json")
     dynamic_thresholds = compute_dynamic_thresholds(real_bt) if real_bt.get("n_total", 0) > 50 else {}
     print(f"  Praguri dinamice calculate: {json.dumps(dynamic_thresholds, indent=None)}")
     if real_bt.get("n_total", 0):

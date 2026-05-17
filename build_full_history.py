@@ -308,7 +308,7 @@ def main():
     started_at = datetime.now(timezone.utc)
     today = started_at.strftime("%Y-%m-%d")
 
-    recommendation_log = load_existing_json("ui_picks_log.json", [])
+    recommendation_log = load_existing_json("recommendation_log.json", [])
     recommendation_journal = load_existing_json("recommendation_journal.json", [])
     settled_at_iso = datetime.now(timezone.utc).isoformat()
 

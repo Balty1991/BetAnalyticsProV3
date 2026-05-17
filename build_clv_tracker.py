@@ -3,7 +3,7 @@
 build_clv_tracker.py — BetAnalytics Pro V3 | Closing Line Value Engine
 =======================================================================
 Calculează CLV (Closing Line Value) pentru toate pick-urile settle-ate
-din ui_picks_log.json.
+din recommendation_log.json.
 
 CLV = cât de mult ai bătut (sau pierdut față de) linia de închidere a pieței.
 - CLV > 0  → ai obținut cote mai bune decât closing line → semnal de value real
@@ -429,9 +429,9 @@ def _std(values: List[float]) -> float:
 def main() -> None:
     print("=== Build CLV Tracker ===")
 
-    log_path = DATA_DIR / "ui_picks_log.json"
+    log_path = DATA_DIR / "recommendation_log.json"
     if not log_path.exists():
-        print(f"[CLV] ui_picks_log.json lipsă: {log_path}")
+        print(f"[CLV] recommendation_log.json lipsă: {log_path}")
         return
 
     raw     = load_json(log_path, [])
