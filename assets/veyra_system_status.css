@@ -1,33 +1,37 @@
-/* VEYRA — System status + Dashboard visible rescue */
+/* VEYRA — Dashboard gol + Meciuri count + header cleanup */
 :root{
   --vsys-cyan:#2be5c5;
   --vsys-cyan-2:#22d3ee;
 }
 
-/* Scoate informația despre cote din header */
+/* Scoate complet informația despre cote din header */
 #hq-odds{display:none!important}
 .veyra-sync-row{gap:7px!important}
 .veyra-sync-row span{white-space:nowrap}
 
-/* IMPORTANT: nu mai ascundem Dashboard-ul. Clasa veche rămâne tolerată, dar vizibilă. */
-#tab-dashboard.veyra-dashboard-blank,
-#tab-dashboard,
-#tab-dashboard.active{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
+/* Dashboard gol: nu mai afișăm Status Sistem sau panouri injectate */
+#tab-dashboard.veyra-dashboard-blank{
+  min-height:calc(100vh - 170px)!important;
 }
-#tab-dashboard.veyra-dashboard-blank #dashboard-modern-shell,
-#dashboard-modern-shell{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
+#tab-dashboard.veyra-dashboard-blank #dashboard-modern-shell{
   min-height:0!important;
+  margin:0!important;
+  padding:0!important;
 }
-#tab-dashboard.veyra-dashboard-blank #dashboard-modern-shell > *{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
+#tab-dashboard.veyra-dashboard-blank #dashboard-modern-shell > *,
+#tab-dashboard.veyra-dashboard-blank #dashboard-system-status,
+#tab-dashboard.veyra-dashboard-blank .dashboard-v16-shell,
+#tab-dashboard.veyra-dashboard-blank .dashboard-v16-section,
+#tab-dashboard.veyra-dashboard-blank .dashboard-v16-performance,
+#tab-dashboard.veyra-dashboard-blank .dashboard-v16-reco,
+#tab-dashboard.veyra-dashboard-blank #dashboard-stats,
+#tab-dashboard.veyra-dashboard-blank #health-panel,
+#tab-dashboard.veyra-dashboard-blank #dashboard-visual-panel,
+#tab-dashboard.veyra-dashboard-blank #market-performance-panel,
+#tab-dashboard.veyra-dashboard-blank #dashboard-help-panel,
+#tab-dashboard.veyra-dashboard-blank #dashboard-monitor-grid,
+#tab-dashboard.veyra-dashboard-blank #pro-intelligence-shell{
+  display:none!important;
 }
 
 /* Badge-ul de număr din pagina Meciuri rămâne vizibil */
