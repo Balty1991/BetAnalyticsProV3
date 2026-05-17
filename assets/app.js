@@ -1748,173 +1748,164 @@ function getVerdictBlock(match, bet) {
 function renderPerformantaVerdict() {
   var el = document.getElementById('perf-verdict-content');
   if (!el) return;
-
   try {
     var log = RECOMMENDATION_LOG || [];
-    var settled = log.filter(function(r) {
-      return r.status === 'win' || r.status === 'lose';
-    });
-    var pending = log.filter(function(r) { return r.status === 'pending'; });
+    var settled = log.filter(function(r){ return r.status==='win'||r.status==='lose'; });
+    var pending = log.filter(function(r){ return r.status==='pending'; });
+    var mktLabels = {under35:'Under 3.5G',over15:'Over 1.5G',over25:'Over 2.5G',btts:'BTTS',homeWin:'1 (Acasă)',awayWin:'2 (Deplasare)',draw:'X (Egal)'};
 
-    // ── Avertisment sample mic ──────────────────────────────────────
-    var sampleWarnHtml = '';
-    if (settled.length < 50) {
-      sampleWarnHtml = '<div style="padding:12px 14px;border-radius:12px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);margin-bottom:16px">' +
-        '<div style="font-size:12px;font-weight:800;color:#f59e0b;margin-bottom:4px">⚠️ Sample insuficient statistic</div>' +
-        '<div style="font-size:11px;color:var(--muted)">Doar ' + settled.length + ' picks finalizate. Concluziile devin relevante după minim 100 picks. Datele curente sunt orientative.</div>' +
-      '</div>';
+    // ── Avertisment sample mic ─────────────────────────────────────
+    var sampleWarn = settled.length < 50 ?
+      '<div style="padding:12px 14px;border-radius:12px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);margin-bottom:14px">'+
+        '<div style="font-size:12px;font-weight:800;color:#f59e0b;margin-bottom:3px">⚠️ Sample insuficient statistic</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+settled.length+' picks finalizate. Concluziile devin relevante după minim 100 picks.</div>'+
+      '</div>' : '';
+
+    // ── Global settled ─────────────────────────────────────────────
+    var globalHtml = '';
+    if (settled.length > 0) {
+      var wins=0, profit=0, odds_sum=0, edge_sum=0;
+      settled.forEach(function(r){
+        var won=r.won||r.status==='win'; var o=parseFloat(r.odds||0);
+        if(won) wins++; profit+=won?(o-1):-1; odds_sum+=o; edge_sum+=parseFloat(r.edge_pct||0);
+      });
+      var roi=profit/settled.length*100, wr=wins/settled.length*100;
+      var rc=roi>=5?'#22c55e':roi>=0?'#f59e0b':'#ef4444';
+      globalHtml =
+        '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:12px">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">📊 Global finalizate</div>'+
+          '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'+
+            _perfMetric('Total',settled.length,'')+
+            _perfMetric('ROI',(roi>=0?'+':'')+roi.toFixed(1)+'%','',rc)+
+            _perfMetric('Winrate',wr.toFixed(1)+'%','',wr>=68?'#22c55e':wr>=58?'#f59e0b':'#ef4444')+
+            _perfMetric('Profit',(profit>=0?'+':'')+profit.toFixed(2)+'u','',profit>=0?'#22c55e':'#ef4444')+
+            _perfMetric('Cotă avg',(odds_sum/settled.length).toFixed(2),'')+
+            _perfMetric('Edge avg','+'+(edge_sum/settled.length).toFixed(1)+'pp','')+
+          '</div>'+
+        '</div>';
     }
 
-    if (settled.length === 0) {
-      el.innerHTML = sampleWarnHtml +
-        '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">' +
-        'Niciun pick finalizat încă.<br><small>Istoricul se construiește pe măsură ce meciurile se termină.</small></div>';
-      return;
+    // ── Finalizate per tip pronostic ───────────────────────────────
+    var byMktHtml = '';
+    if (settled.length > 0) {
+      var byMkt = {};
+      settled.forEach(function(r){
+        var mk=r.market_key||'?';
+        if(!byMkt[mk]) byMkt[mk]={n:0,wins:0,profit:0};
+        var won=r.won||r.status==='win'; var o=parseFloat(r.odds||0);
+        byMkt[mk].n++; if(won) byMkt[mk].wins++; byMkt[mk].profit+=won?(o-1):-1;
+      });
+      var mktRows = Object.keys(byMkt).sort(function(a,b){return byMkt[b].n-byMkt[a].n;}).map(function(mk){
+        var s=byMkt[mk]; var r2=s.profit/s.n*100; var w2=s.wins/s.n*100;
+        var rc2=r2>=5?'#22c55e':r2>=0?'#f59e0b':'#ef4444';
+        var icon=r2>=5?'✅':r2>=0?'⚠️':'❌';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
+          '<div><div style="font-size:13px;font-weight:700;color:var(--txt)">'+(mktLabels[mk]||mk)+'</div>'+
+          '<div style="font-size:10px;color:var(--muted)">'+s.n+' par. · '+w2.toFixed(0)+'% WR</div></div>'+
+          '<div style="display:flex;align-items:center;gap:10px">'+
+            '<span style="font-size:11px">'+icon+'</span>'+
+            '<span style="font-size:14px;font-weight:900;color:'+rc2+'">'+(r2>=0?'+':'')+r2.toFixed(1)+'%</span>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+      byMktHtml =
+        '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:12px">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">🎯 Finalizate per tip pronostic</div>'+
+          mktRows+
+        '</div>';
     }
 
-    // ── Calcule globale ─────────────────────────────────────────────
-    var wins = settled.filter(function(r) { return r.won || r.status === 'win'; }).length;
-    var profit = settled.reduce(function(acc, r) {
-      var won = r.won || r.status === 'win';
-      var o = parseFloat(r.odds || 0);
-      return acc + (won ? (o - 1) : -1);
-    }, 0);
-    var roi = settled.length > 0 ? (profit / settled.length * 100) : 0;
-    var wr  = settled.length > 0 ? (wins / settled.length * 100) : 0;
-    var avgOdds = settled.reduce(function(a, r) { return a + parseFloat(r.odds || 0); }, 0) / settled.length;
-    var avgEdge = settled.reduce(function(a, r) { return a + parseFloat(r.edge_pct || 0); }, 0) / settled.length;
+    // ── Edge buckets ───────────────────────────────────────────────
+    var edgeHtml = '';
+    if (settled.length > 0) {
+      var eBks=[{l:'0–8pp',fn:function(e){return e<8;}},{l:'8–11pp',fn:function(e){return e>=8&&e<11;}},{l:'11–15pp',fn:function(e){return e>=11&&e<15;}},{l:'15pp+',fn:function(e){return e>=15;}}];
+      var eRows = eBks.map(function(bk){
+        var rows=settled.filter(function(r){return bk.fn(parseFloat(r.edge_pct||0));});
+        if(!rows.length) return '';
+        var w2=rows.filter(function(r){return r.won||r.status==='win';}).length;
+        var p2=rows.reduce(function(a,r){var won=r.won||r.status==='win';var o=parseFloat(r.odds||0);return a+(won?(o-1):-1);},0);
+        var r2=p2/rows.length*100; var rc2=r2>=5?'#22c55e':r2>=0?'#f59e0b':'#ef4444';
+        var verdict=r2>=5?'✅ Profitabil':r2>=0?'⚠️ Marginal':'❌ Pierdere';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
+          '<div><div style="font-size:13px;font-weight:700;color:var(--txt)">Edge '+bk.l+'</div>'+
+          '<div style="font-size:10px;color:'+rc2+'">'+verdict+' · '+rows.length+' par.</div></div>'+
+          '<div style="display:flex;align-items:center;gap:10px">'+
+            '<span style="font-size:14px;font-weight:900;color:'+rc2+'">'+(r2>=0?'+':'')+r2.toFixed(1)+'%</span>'+
+            '<span style="font-size:11px;color:var(--muted)">'+(w2/rows.length*100).toFixed(0)+'% WR</span>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+      edgeHtml =
+        '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:12px">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">📈 ROI per edge bucket</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Zona profitabilă = unde vrei să fii.</div>'+
+          eRows+
+        '</div>';
+    }
 
-    var roiColor = roi >= 5 ? '#22c55e' : roi >= 0 ? '#f59e0b' : '#ef4444';
-    var roiSign  = roi >= 0 ? '+' : '';
-    var profSign = profit >= 0 ? '+' : '';
+    // ── Ultimele finalizate ────────────────────────────────────────
+    var recentHtml = '';
+    if (settled.length > 0) {
+      var recent = settled.slice().sort(function(a,b){
+        return (b.settled_at||b.event_date||'')>(a.settled_at||a.event_date||'')?1:-1;
+      }).slice(0,20);
+      var rRows = recent.map(function(r){
+        var won=r.won||r.status==='win'; var o=parseFloat(r.odds||0);
+        var pnl=won?(o-1):-1; var col=won?'#22c55e':'#ef4444';
+        var mk=mktLabels[r.market_key||r.market]||r.market_key||'?';
+        var dt=(r.event_date||r.settled_at||'').substring(0,10);
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
+          '<div style="flex:1;min-width:0">'+
+            '<div style="font-size:12px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(won?'✅':'❌')+' '+(r.home||'?')+' vs '+(r.away||'?')+'</div>'+
+            '<div style="font-size:10px;color:var(--muted)">'+mk+' @'+o.toFixed(2)+' · '+dt+'</div>'+
+          '</div>'+
+          '<div style="font-size:13px;font-weight:900;color:'+col+';margin-left:10px;flex-shrink:0">'+(pnl>=0?'+':'')+pnl.toFixed(2)+'u</div>'+
+        '</div>';
+      }).join('');
+      recentHtml =
+        '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:12px">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">🕐 Ultimele '+recent.length+' picks finalizate</div>'+
+          rRows+
+        '</div>';
+    } else {
+      recentHtml = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Niciun pick finalizat încă.<br><small>Istoricul se construiește pe măsură ce meciurile se termină.</small></div>';
+    }
 
-    var overallHtml =
-      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">Global — picks reale UI</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">' +
-          _perfMetric('Total', settled.length, '') +
-          _perfMetric('ROI', roiSign + roi.toFixed(1) + '%', '', roiColor) +
-          _perfMetric('Winrate', wr.toFixed(1) + '%', '', wr >= 68 ? '#22c55e' : wr >= 60 ? '#f59e0b' : '#ef4444') +
-          _perfMetric('Profit', profSign + profit.toFixed(2) + 'u', '', profit >= 0 ? '#22c55e' : '#ef4444') +
-          _perfMetric('Cotă medie', avgOdds.toFixed(3), '') +
-          _perfMetric('Edge mediu', '+' + avgEdge.toFixed(1) + 'pp', '') +
-        '</div>' +
-        '<div style="font-size:10px;color:var(--muted)">' + pending.length + ' picks în așteptare • ' + settled.length + ' finalizate</div>' +
-      '</div>';
+    // ── Pending per tip pronostic ──────────────────────────────────
+    var pendingHtml = '';
+    if (pending.length > 0) {
+      var byMktP = {};
+      pending.forEach(function(r){
+        var mk=r.market_key||'?';
+        if(!byMktP[mk]) byMktP[mk]=[];
+        byMktP[mk].push(r);
+      });
+      var pRows = Object.keys(byMktP).sort(function(a,b){return byMktP[b].length-byMktP[a].length;}).map(function(mk){
+        var items=byMktP[mk];
+        var avgOdds=items.reduce(function(a,r){return a+parseFloat(r.odds||0);},0)/items.length;
+        var avgEdge=items.reduce(function(a,r){return a+parseFloat(r.edge_pct||0);},0)/items.length;
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
+          '<div>'+
+            '<div style="font-size:13px;font-weight:700;color:var(--txt)">'+(mktLabels[mk]||mk)+'</div>'+
+            '<div style="font-size:10px;color:var(--muted)">cotă avg '+avgOdds.toFixed(2)+' · edge avg +'+(avgEdge.toFixed(1))+'pp</div>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            '<span style="font-size:13px;font-weight:900;color:var(--txt)">'+items.length+'</span>'+
+            '<span style="font-size:10px;color:var(--muted)">picks</span>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+      pendingHtml =
+        '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(99,102,241,.20);margin-bottom:12px">'+
+          '<div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">⏳ Pending per tip pronostic ('+pending.length+' total)</div>'+
+          pRows+
+        '</div>';
+    }
 
-    // ── Per piata ───────────────────────────────────────────────────
-    var byMkt = {};
-    settled.forEach(function(r) {
-      var mk = r.market_key || r.market || '?';
-      if (!byMkt[mk]) byMkt[mk] = { n:0, wins:0, profit:0, odds_sum:0 };
-      var won = r.won || r.status === 'win';
-      var o = parseFloat(r.odds || 0);
-      byMkt[mk].n++;
-      if (won) byMkt[mk].wins++;
-      byMkt[mk].profit += won ? (o - 1) : -1;
-      byMkt[mk].odds_sum += o;
-    });
-
-    var mktLabels = { under35:'Under 3.5G', over15:'Over 1.5G', over25:'Over 2.5G', btts:'BTTS', homeWin:'1 (Acasă)', awayWin:'2 (Deplasare)', draw:'X (Egal)' };
-    var mktRows = Object.keys(byMkt).sort(function(a,b){ return byMkt[b].n - byMkt[a].n; }).map(function(mk) {
-      var s = byMkt[mk];
-      var r = s.profit / s.n * 100;
-      var w = s.wins / s.n * 100;
-      var rc = r >= 5 ? '#22c55e' : r >= 0 ? '#f59e0b' : '#ef4444';
-      var rs = r >= 0 ? '+' : '';
-      var label = mktLabels[mk] || mk;
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
-        '<div>' +
-          '<div style="font-size:13px;font-weight:700;color:var(--txt)">' + label + '</div>' +
-          '<div style="font-size:10px;color:var(--muted)">' + s.n + ' picks • avg odds ' + (s.odds_sum/s.n).toFixed(2) + '</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:12px;align-items:center">' +
-          '<span style="font-size:11px;color:var(--muted)">' + w.toFixed(0) + '% WR</span>' +
-          '<span style="font-size:14px;font-weight:900;color:' + rc + '">' + rs + r.toFixed(1) + '%</span>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    var mktHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per piață</div>' +
-      mktRows +
-    '</div>';
-
-    // ── Per edge bucket ─────────────────────────────────────────────
-    var edgeBuckets = [
-      { label:'0–8pp',  fn: function(e){ return e < 8; } },
-      { label:'8–11pp', fn: function(e){ return e >= 8 && e < 11; } },
-      { label:'11–15pp',fn: function(e){ return e >= 11 && e < 15; } },
-      { label:'15pp+',  fn: function(e){ return e >= 15; } },
-    ];
-    var edgeRows = edgeBuckets.map(function(bk) {
-      var rows = settled.filter(function(r) { return bk.fn(parseFloat(r.edge_pct || 0)); });
-      if (!rows.length) return '';
-      var w2 = rows.filter(function(r) { return r.won || r.status === 'win'; }).length;
-      var p2 = rows.reduce(function(a,r) { var won = r.won||r.status==='win'; var o=parseFloat(r.odds||0); return a+(won?(o-1):-1); }, 0);
-      var r2 = p2 / rows.length * 100;
-      var rc2 = r2 >= 5 ? '#22c55e' : r2 >= 0 ? '#f59e0b' : '#ef4444';
-      var verdict = r2 >= 5 ? '✅ Profitabil' : r2 >= 0 ? '⚠️ Marginal' : '❌ Pierdere';
-      var vc = r2 >= 5 ? '#22c55e' : r2 >= 0 ? '#f59e0b' : '#ef4444';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
-        '<div>' +
-          '<div style="font-size:13px;font-weight:700;color:var(--txt)">Edge ' + bk.label + '</div>' +
-          '<div style="font-size:10px;color:' + vc + '">' + verdict + '</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:12px;align-items:center">' +
-          '<span style="font-size:11px;color:var(--muted)">' + rows.length + ' par.</span>' +
-          '<span style="font-size:14px;font-weight:900;color:' + rc2 + '">' + (r2>=0?'+':'') + r2.toFixed(1) + '%</span>' +
-          '<span style="font-size:11px;color:var(--muted)">' + (w2/rows.length*100).toFixed(0) + '% WR</span>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    var edgeHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per edge bucket</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Zona profitabilă = unde vrei să fii.</div>' +
-      edgeRows +
-    '</div>';
-
-    // ── Ultimele 20 picks finalizate ────────────────────────────────
-    var recent = settled.slice().sort(function(a,b) {
-      return (b.settled_at || b.event_date || '') > (a.settled_at || a.event_date || '') ? 1 : -1;
-    }).slice(0, 20);
-
-    var recentRows = recent.map(function(r) {
-      var won = r.won || r.status === 'win';
-      var o = parseFloat(r.odds || 0);
-      var pnl = won ? (o - 1) : -1;
-      var color = won ? '#22c55e' : '#ef4444';
-      var icon  = won ? '✅' : '❌';
-      var mLabel = mktLabels[r.market_key || r.market] || r.market_key || '?';
-      var dateStr = (r.event_date || r.settled_at || '').substring(0, 10);
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="font-size:12px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-            icon + ' ' + (r.home||'?') + ' vs ' + (r.away||'?') +
-          '</div>' +
-          '<div style="font-size:10px;color:var(--muted)">' + mLabel + ' @' + o.toFixed(2) + ' · ' + dateStr + '</div>' +
-        '</div>' +
-        '<div style="font-size:13px;font-weight:900;color:' + color + ';margin-left:10px;flex-shrink:0">' +
-          (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + 'u' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    var recentHtml = recent.length ? (
-      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Ultimele 20 picks finalizate</div>' +
-        recentRows +
-      '</div>'
-    ) : '';
-
-    var updAt = log.length ? 'Date din ui_picks_log — picks reale UI' : '—';
-    var metaHtml = '<div style="font-size:10px;color:var(--muted);margin-bottom:14px">' + updAt + '</div>';
-
-    el.innerHTML = sampleWarnHtml + metaHtml + overallHtml + mktHtml + edgeHtml + recentHtml;
+    el.innerHTML = sampleWarn + globalHtml + byMktHtml + edgeHtml + recentHtml + pendingHtml;
 
   } catch(e) {
-    el.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:12px">Eroare: ' + e.message + '</div>';
+    el.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:12px">Eroare: '+e.message+'</div>';
     console.error('renderPerformantaVerdict:', e);
   }
 }
