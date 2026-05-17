@@ -782,6 +782,23 @@ def compute_dynamic_thresholds(real_bt: Dict) -> Dict:
             thresholds["over15"]["basis"]       = "capped_at_10pct"
             thresholds["over15"]["cap_warning"] = True
 
+    # Safety floors: nu lăsăm pragurile dinamice să coboare sub zona care a fost stabilă.
+    # Fix critic pentru Under 3.5: bucketul 5-10% are ROI marginal și a produs flood de selecții.
+    MARKET_EDGE_FLOORS = {
+        "under35": 15.0,
+        "over15": 10.0,
+        "over25": 5.0,
+        "btts": 5.0,
+    }
+    for _mkt, _floor in MARKET_EDGE_FLOORS.items():
+        if _mkt in thresholds and not thresholds[_mkt].get("disabled"):
+            if float(thresholds[_mkt].get("min_edge") or 0) < _floor:
+                thresholds[_mkt]["min_edge"] = _floor
+                thresholds[_mkt]["safety_floor"] = True
+                thresholds[_mkt]["safety_floor_reason"] = f"min_edge forced to {_floor}% to avoid market flood / weak edge bucket"
+                if thresholds[_mkt].get("bootstrap_min_edge") is not None and float(thresholds[_mkt].get("bootstrap_min_edge") or 0) < _floor:
+                    thresholds[_mkt]["bootstrap_min_edge"] = None
+
     # Detecteaza modificari fata de pragurile anterioare
     changes: List[Dict] = []
     for mkt, t in thresholds.items():
