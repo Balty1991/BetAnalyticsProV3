@@ -33,6 +33,8 @@ var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
 var MATCHES_PAGE_SIZE = 9999;      // afișează toate cardurile filtrate; evită diferența între count și lista vizibilă
 var MATCHES_RENDERED_COUNT = 0;    // câte carduri sunt acum în DOM
 var MATCHES_FILTERED_CACHE = [];   // lista filtrată curentă (pentru load more)
+var MECIURI_VISIBLE_SNAPSHOT = { rows: [], html: '', count: 0, meta: {}, updatedAt: null }; // oglinda exactă pentru Istoric Performanță
+var MECIURI_MIRROR_REFRESHING = false; // guard anti-recursie când Istoricul cere cache-ul din Meciuri
 var MATCHES_SCROLL_OBSERVER = null; // IntersectionObserver sentinel
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
 var TICKET_JOURNAL = JSON.parse(localStorage.getItem('bet_ticket_journal') || '[]');
@@ -863,6 +865,338 @@ function htmlEsc(v){
     .replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
 }
+
+function veyraFilterMetaLabel(meta){
+  meta = meta || {};
+  var parts = [];
+  var filterNames = {
+    all:'Toate', bet_ok:'OK', motor_validated:'Motor', safe:'Safe', moderate:'Balanced', value:'Value',
+    o15:'Over 1.5G', o25:'Over 2.5G', u35:'Under 3.5G', btts:'BTTS', dc:'Șansă dublă',
+    dashboard_ml_sync:'ML sync', dashboard_with_odds:'Cu cote'
+  };
+  parts.push(filterNames[meta.currentFilter || CURRENT_FILTER] || (meta.currentFilter || CURRENT_FILTER || 'Toate'));
+  if(meta.marketF) parts.push('piață ' + meta.marketF);
+  if(meta.verdictF && meta.verdictF !== 'all') parts.push('verdict ' + meta.verdictF);
+  if(meta.dateF && meta.dateF !== 'all') parts.push(meta.dateF === 'today' ? 'azi' : ('+' + meta.dateF + ' zile'));
+  if(meta.kickoffF && meta.kickoffF !== 'all') parts.push('start < ' + meta.kickoffF + 'h');
+  if(meta.tierF && meta.tierF !== 'all') parts.push('tier ' + meta.tierF);
+  if(meta.minProb) parts.push('prob ≥ ' + meta.minProb + '%');
+  if(meta.minEdge) parts.push('edge ≥ ' + meta.minEdge + 'pp');
+  return parts.filter(Boolean).join(' • ');
+}
+
+function veyraSanitizeMeciuriMirrorHtml(html){
+  var out = String(html || '');
+  if(!out) return '';
+  // Elimină sentinel-ul de scroll și face cardurile read-only în Istoric.
+  out = out.replace(/<div class="matches-load-sentinel"[\s\S]*?<\/div>/g, '');
+  out = out.replace(/\bid="([^"]+)"/g, function(_, id){
+    id = String(id || '').replace(/^hist-/, '');
+    return 'id="hist-' + id.replace(/"/g, '') + '"';
+  });
+  out = out.replace(/\bfor="([^"]+)"/g, function(_, id){
+    id = String(id || '').replace(/^hist-/, '');
+    return 'for="hist-' + id.replace(/"/g, '') + '"';
+  });
+  out = out.replace(/\sonclick="[^"]*"/g, '');
+  out = out.replace(/\sonchange="[^"]*"/g, '');
+  return out;
+}
+
+function veyraCaptureMeciuriVisible(container, rows, meta){
+  try{
+    rows = Array.isArray(rows) ? rows.slice() : [];
+    var rawHtml = container ? String(container.innerHTML || '') : '';
+    var realCount = container ? container.querySelectorAll('.match-card').length : rows.length;
+    if(rows.length === 0) realCount = 0;
+    var snapshot = {
+      rows: rows,
+      html: veyraSanitizeMeciuriMirrorHtml(rawHtml),
+      count: realCount || rows.length,
+      meta: Object.assign({ currentFilter: CURRENT_FILTER, cardMode: MATCH_CARD_MODE }, meta || {}),
+      updatedAt: new Date().toISOString()
+    };
+    MECIURI_VISIBLE_SNAPSHOT = snapshot;
+    window.__VEYRA_LAST_FILTERED_MATCHES = rows.slice();
+    window.__VEYRA_MECIURI_VISIBLE_MIRROR = snapshot;
+    window.__VEYRA_MECIURI_DISPLAYED_COUNT = snapshot.count;
+  }catch(e){
+    console.warn('[VEYRA] Nu pot captura oglinda Meciuri pentru Istoric:', e);
+  }
+}
+
+function veyraEnsureMeciuriVisibleSnapshot(){
+  var snap = window.__VEYRA_MECIURI_VISIBLE_MIRROR || MECIURI_VISIBLE_SNAPSHOT;
+  if(snap && (snap.html || (snap.rows && snap.rows.length))) return snap;
+  if(MECIURI_MIRROR_REFRESHING) return snap || { rows: [], html: '', count: 0, meta: {}, updatedAt: null };
+  if(typeof renderMatches === 'function' && $('matches-container')){
+    try{
+      MECIURI_MIRROR_REFRESHING = true;
+      renderMatches();
+    }catch(e){
+      console.warn('[VEYRA] Nu pot reface oglinda Meciuri pentru Istoric:', e);
+    }finally{
+      MECIURI_MIRROR_REFRESHING = false;
+    }
+  }
+  return window.__VEYRA_MECIURI_VISIBLE_MIRROR || MECIURI_VISIBLE_SNAPSHOT || { rows: [], html: '', count: 0, meta: {}, updatedAt: null };
+}
+
+function veyraMarketKeyToLabel(marketKey){
+  if(marketKey === 'over15') return 'Over 1.5G';
+  if(marketKey === 'over25') return 'Over 2.5G';
+  if(marketKey === 'under35') return 'Under 3.5G';
+  if(marketKey === 'btts') return 'BTTS';
+  return marketKey || 'Pronostic';
+}
+
+function veyraPerfFirstNum(){
+  for(var i=0;i<arguments.length;i++){
+    var n = Number(arguments[i]);
+    if(isFinite(n) && n !== 0) return n;
+  }
+  return 0;
+}
+
+function veyraPerfAuditRowMatchesMarket(row, marketKey){
+  if(!row || !marketKey) return false;
+  var mk = String(row.market_key || row.marketKey || '').toLowerCase();
+  var ml = String(row.market || row.label || '').toLowerCase();
+  if(marketKey === 'over15') return mk === 'over15' || ml === 'over 1.5g' || ml === 'over 1.5' || ml === 'o1.5g' || ml === 'o1.5';
+  if(marketKey === 'over25') return mk === 'over25' || ml === 'over 2.5g' || ml === 'over 2.5' || ml === 'o2.5g' || ml === 'o2.5';
+  if(marketKey === 'under35') return mk === 'under35' || ml === 'under 3.5g' || ml === 'under 3.5' || ml === 'u3.5g' || ml === 'u3.5';
+  return mk === marketKey || ml === marketKey;
+}
+
+function veyraPerfAuditRowForMarket(match, marketKey){
+  var eid = String(match && (match.eventId != null ? match.eventId : (match.event_id != null ? match.event_id : '')) || '');
+  if(!eid) return null;
+  var rows = (SIGNAL_AUDIT && SIGNAL_AUDIT.rows) || [];
+  for(var i=0;i<rows.length;i++){
+    var r = rows[i] || {};
+    var rid = String(r.event_id != null ? r.event_id : (r.eventId != null ? r.eventId : ''));
+    if(rid === eid && veyraPerfAuditRowMatchesMarket(r, marketKey)) return r;
+  }
+  return null;
+}
+
+function veyraPerfAuditRowToBestBet(row, marketKey, fallbackBet){
+  var label = veyraMarketKeyToLabel(marketKey);
+  var prob = veyraPerfFirstNum(row.adjusted_prob, row.adjProb, row.model_prob, row.prob, row.api_prob, row.confidence);
+  var odds = veyraPerfFirstNum(row.book_odds, row.odds, row.best_odds, row.base_odds, row.market_odds, row.fair_odds);
+  var edge = veyraPerfFirstNum(row.edge_pct, row.edgePct, row.edge_pp);
+  var value = veyraPerfFirstNum(row.value, row.value_pct);
+  if(value > 1) value = value / 100;
+  return Object.assign({}, fallbackBet || {}, {
+    type: marketKey,
+    marketKey: marketKey,
+    label: row.market || row.label || label,
+    odds: odds || Number((fallbackBet || {}).odds || 0),
+    baseOdds: odds || Number((fallbackBet || {}).baseOdds || 0),
+    adjProb: prob || Number((fallbackBet || {}).adjProb || 0),
+    prob: prob || Number((fallbackBet || {}).prob || 0),
+    edgePct: edge,
+    value: value,
+    score: veyraPerfFirstNum(row.score, row.smartScore, row.ticket_score, (fallbackBet || {}).score),
+    verdict: row.verdict || (fallbackBet || {}).verdict || 'moderate',
+    sourceApi: row.source_api !== false,
+    sourceHeuristic: !!row.source_heuristic,
+    fairOdds: row.fair_odds || ((prob > 0) ? (100 / prob) : (fallbackBet || {}).fairOdds)
+  });
+}
+
+function veyraPerfCloneWithMarket(match, marketKey){
+  if(!match) return null;
+  var b = match.bestBet || null;
+  if(b && b.type === marketKey){
+    return Object.assign({}, match, { bestBet:Object.assign({}, b), _perfMarketKey:marketKey });
+  }
+  var matching = Array.isArray(match.eligibleCandidates)
+    ? match.eligibleCandidates.find(function(c){ return c && c.bestBet && c.bestBet.type === marketKey; })
+    : null;
+  if(matching && matching.bestBet){
+    return Object.assign({}, match, {
+      bestBet: Object.assign({}, matching.bestBet),
+      smartScore: matching.ticketScore || matching.bestBet.score || match.smartScore,
+      why: matching.why || match.why,
+      verdict: matching.bestBet.verdict || match.verdict,
+      analysisState: match.analysisState === 'ELIGIBLE' ? match.analysisState : 'ELIGIBLE',
+      _perfMarketKey: marketKey
+    });
+  }
+  var auditRow = veyraPerfAuditRowForMarket(match, marketKey);
+  if(auditRow){
+    var auditBet = veyraPerfAuditRowToBestBet(auditRow, marketKey, b);
+    return Object.assign({}, match, {
+      bestBet: auditBet,
+      smartScore: auditBet.score || match.smartScore,
+      why: auditRow.reason || auditRow.why || ('Semnal ' + (auditBet.label || 'piață') + ' validat de motor'),
+      verdict: auditBet.verdict || match.verdict || 'moderate',
+      analysisState: 'ELIGIBLE',
+      _perfMarketKey: marketKey
+    });
+  }
+  return null;
+}
+
+function veyraPerfControls(){
+  return {
+    sort: $('sort-select') ? $('sort-select').value : 'date',
+    leagueF: $('league-filter') ? $('league-filter').value : '',
+    dateF: $('match-date-filter') ? $('match-date-filter').value : 'all',
+    marketF: $('match-market-filter') ? $('match-market-filter').value : '',
+    verdictF: $('match-verdict-filter') ? $('match-verdict-filter').value : 'all',
+    proMode: $('match-pro-mode') ? $('match-pro-mode').value : 'all',
+    minProb: $('match-min-prob') ? Number($('match-min-prob').value || 0) : 0,
+    minEdge: $('match-min-edge') ? Number($('match-min-edge').value || 0) : 0,
+    kickoffF: $('match-kickoff-filter') ? $('match-kickoff-filter').value : 'all',
+    tierF: $('match-tier-filter') ? $('match-tier-filter').value : 'all',
+    minScore: $('match-min-score') ? Number($('match-min-score').value || 0) : 0
+  };
+}
+
+function veyraPerfRowsForMarket(marketKey){
+  var c = veyraPerfControls();
+  var now = Date.now();
+  var smartBetLookup = (typeof getSmartBetAnalysisLookup === 'function') ? getSmartBetAnalysisLookup() : null;
+  var marketLabel = veyraMarketKeyToLabel(marketKey);
+
+  var rows = (ALL_MATCHES || []).map(function(m){ return veyraPerfCloneWithMarket(m, marketKey); }).filter(function(m){
+    if(!m || !m.bestBet) return false;
+    var b = m.bestBet || {};
+    if(MATCH_FOCUS_KEY && getMatchCardKey(m) !== MATCH_FOCUS_KEY) return false;
+    if(c.leagueF && m.league !== c.leagueF) return false;
+    if(typeof isMatchStillDisplayable === 'function' && !isMatchStillDisplayable(m)) return false;
+    if(m.analysisState !== 'ELIGIBLE') return false;
+
+    if(c.dateF === 'today'){
+      if(fmtDateKey(m.date) !== fmtDateKey(new Date().toISOString())) return false;
+    } else if(c.dateF !== 'all'){
+      var days = (new Date(m.date).getTime() - now) / 86400000;
+      if(days < 0 || days > Number(c.dateF)) return false;
+    }
+
+    if(c.marketF && c.marketF !== marketLabel) return false;
+
+    if(c.verdictF && c.verdictF !== 'all'){
+      var verdictMeta = (typeof getBetVerdict === 'function') ? getBetVerdict(m, b) : null;
+      if(!verdictMeta || verdictMeta.state !== c.verdictF) return false;
+    }
+
+    if(c.proMode === 'pro' && !(m.leagueTier !== 'avoid' && Number(b.adjProb || 0) >= 72 && Number(b.edgePct != null ? b.edgePct : -999) >= 1.5 && Number(b.value || 0) >= 0.01)) return false;
+    if(Number(b.adjProb || 0) < c.minProb) return false;
+    if(Number(b.edgePct != null ? b.edgePct : -999) < c.minEdge) return false;
+    if(Number(m.smartScore || 0) < c.minScore) return false;
+    if(c.tierF !== 'all' && String(m.leagueTier || 'neutral') !== c.tierF) return false;
+    if(c.kickoffF !== 'all'){
+      var hrsToKick = getHoursToKickoff(m);
+      if(hrsToKick == null || hrsToKick < 0 || hrsToKick > Number(c.kickoffF)) return false;
+    }
+
+    if(typeof getSmartBetStatusForMatch === 'function'){
+      var motorMeta = getSmartBetStatusForMatch(m, b, smartBetLookup);
+      if(motorMeta && motorMeta.state === 'blocked') return false;
+      m._motorMeta = motorMeta;
+    }
+    return true;
+  });
+
+  rows.sort(function(a,b){
+    var aBet = a.bestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
+    var bBet = b.bestBet || {value:-999,adjProb:0,odds:0,edgePct:-999};
+    if(c.sort === 'score'){
+      var aV = (typeof getBetVerdict === 'function') ? getBetVerdict(a, aBet) : null;
+      var bV = (typeof getBetVerdict === 'function') ? getBetVerdict(b, bBet) : null;
+      var aVS = aV ? aV.score : -1;
+      var bVS = bV ? bV.score : -1;
+      var aGrp = aVS >= 4 ? 2 : aVS >= 2 ? 1 : 0;
+      var bGrp = bVS >= 4 ? 2 : bVS >= 2 ? 1 : 0;
+      if(bGrp !== aGrp) return bGrp - aGrp;
+      return (b.smartScore || b.rawSmartScore || 0) - (a.smartScore || a.rawSmartScore || 0);
+    }
+    if(c.sort === 'value') return Number(bBet.value || 0) - Number(aBet.value || 0);
+    if(c.sort === 'prob') return Number(bBet.adjProb || 0) - Number(aBet.adjProb || 0);
+    if(c.sort === 'edge') return Number(bBet.edgePct || 0) - Number(aBet.edgePct || 0);
+    if(c.sort === 'conf') return Number(b.confidence || 0) - Number(a.confidence || 0);
+    return new Date(a.date) - new Date(b.date);
+  });
+
+  return rows;
+}
+
+function veyraPerfTimeText(dateValue){
+  var d = new Date(dateValue || '');
+  if(!isFinite(d.getTime())) return {date:'—', time:'—'};
+  var dd = String(d.getDate()).padStart(2,'0');
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  var hh = String(d.getHours()).padStart(2,'0');
+  var mi = String(d.getMinutes()).padStart(2,'0');
+  return {date:dd+'.'+mm, time:hh+':'+mi};
+}
+
+function veyraPerfPendingCard(m, idx){
+  var b = m.bestBet || {};
+  var t = veyraPerfTimeText(m.date);
+  var prob = Number(b.adjProb || b.prob || 0);
+  var edge = Number(b.edgePct || 0);
+  var odds = Number(b.odds || 0);
+  var score = Number(m.smartScore || b.score || 0);
+  var scoreTxt = score ? Math.round(score) : '—';
+  var edgeTxt = (edge >= 0 ? '+' : '') + edge.toFixed(1) + 'pp';
+  var probTxt = prob ? prob.toFixed(1) + '%' : '—';
+  var oddsTxt = odds ? odds.toFixed(2) : '—';
+  var state = (typeof getBetVerdict === 'function' && b) ? getBetVerdict(m, b) : null;
+  var verdict = state && state.label ? state.label : (m.verdict || 'OK');
+  return '<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">'+
+      '<div style="min-width:0;flex:1">'+
+        '<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">'+
+          '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;border-radius:999px;background:rgba(45,212,191,.10);border:1px solid rgba(45,212,191,.30);color:#8bffea;font-size:11px;font-weight:900">#'+idx+'</span>'+
+          '<span style="font-size:12px;font-weight:900;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htmlEsc(m.home || '?')+' vs '+htmlEsc(m.away || '?')+'</span>'+
+        '</div>'+
+        '<div style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htmlEsc(m.league || '—')+' · '+htmlEsc(m.country || '—')+' · '+htmlEsc(t.date)+' '+htmlEsc(t.time)+'</div>'+
+        '<div style="font-size:10px;color:#8bffea;margin-top:4px;font-family:var(--mono)">'+htmlEsc(b.label || veyraMarketKeyToLabel(m._perfMarketKey))+' @'+oddsTxt+' · Prob '+probTxt+' · Edge '+edgeTxt+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex:0 0 auto">'+
+        '<div style="font-size:13px;font-weight:900;color:#22c55e">'+scoreTxt+'</div>'+
+        '<div style="font-size:9px;color:var(--muted);max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htmlEsc(verdict)+'</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function veyraBuildPerformantaMeciuriMirrorHtml(){
+  var markets = [
+    { key:'over15', label:'Over 1.5G', icon:'🔥' },
+    { key:'over25', label:'Over 2.5G', icon:'📈' },
+    { key:'under35', label:'Under 3.5G', icon:'🧊' }
+  ];
+  var total = 0;
+  var sections = markets.map(function(def){
+    var rows = veyraPerfRowsForMarket(def.key);
+    total += rows.length;
+    var body = rows.length ? rows.map(function(m, i){ return veyraPerfPendingCard(m, i+1); }).join('') :
+      '<div style="padding:12px 0;color:var(--muted);font-size:12px">Nu există meciuri în așteptare pentru '+htmlEsc(def.label)+' cu filtrele curente.</div>';
+    return '<div style="padding:13px 14px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(99,102,241,.20);margin-bottom:12px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
+        '<div style="font-size:12px;font-weight:900;color:#a5b4fc;text-transform:uppercase;letter-spacing:.06em">'+def.icon+' '+htmlEsc(def.label)+'</div>'+
+        '<div style="padding:6px 9px;border-radius:999px;background:rgba(45,212,191,.10);border:1px solid rgba(45,212,191,.28);color:#8bffea;font-size:11px;font-weight:900;font-family:var(--mono)">'+rows.length+' pending</div>'+
+      '</div>'+ body +
+    '</div>';
+  }).join('');
+
+  var metaLabel = veyraFilterMetaLabel(veyraPerfControls());
+  return '<div style="padding:14px;border-radius:18px;background:rgba(255,255,255,.025);border:1px solid rgba(45,212,191,.18);margin-bottom:12px">'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">'+
+      '<div style="min-width:0">'+
+        '<div style="font-size:12px;font-weight:950;color:#8bffea;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">⏳ Meciuri în așteptare — sincron cu Meciuri</div>'+
+        '<div style="font-size:10px;color:var(--muted);line-height:1.35">Doar Over 1.5G, Over 2.5G și Under 3.5G. Se folosesc aceleași filtre active: '+htmlEsc(metaLabel || 'Toate')+'</div>'+
+      '</div>'+
+      '<div style="flex:0 0 auto;padding:7px 10px;border-radius:999px;background:rgba(45,212,191,.10);border:1px solid rgba(45,212,191,.30);color:#8bffea;font-size:12px;font-weight:900;font-family:var(--mono)">'+total+' total</div>'+
+    '</div>'+sections+
+  '</div>';
+}
+
 function pickDefined(){
   for(var i = 0; i < arguments.length; i++){
     var value = arguments[i];
@@ -1748,173 +2082,53 @@ function getVerdictBlock(match, bet) {
 function renderPerformantaVerdict() {
   var el = document.getElementById('perf-verdict-content');
   if (!el) return;
-
   try {
-    var log = RECOMMENDATION_LOG || [];
-    var settled = log.filter(function(r) {
-      return r.status === 'win' || r.status === 'lose';
-    });
-    var pending = log.filter(function(r) { return r.status === 'pending'; });
+    var allowed = { over15:true, over25:true, under35:true };
+    var log = (RECOMMENDATION_LOG || []).filter(function(r){ return allowed[String(r.market_key || r.marketKey || '').toLowerCase()]; });
 
-    // ── Avertisment sample mic ──────────────────────────────────────
-    var sampleWarnHtml = '';
-    if (settled.length < 50) {
-      sampleWarnHtml = '<div style="padding:12px 14px;border-radius:12px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);margin-bottom:16px">' +
-        '<div style="font-size:12px;font-weight:800;color:#f59e0b;margin-bottom:4px">⚠️ Sample insuficient statistic</div>' +
-        '<div style="font-size:11px;color:var(--muted)">Doar ' + settled.length + ' picks finalizate. Concluziile devin relevante după minim 100 picks. Datele curente sunt orientative.</div>' +
-      '</div>';
-    }
+    // Reset cerut: nu mai afișăm cele 5-6 picks finalizate vechi. Istoricul pornește curat
+    // și va valida doar ce apare de acum înainte în O1.5 / O2.5 / U3.5.
+    var settled = log.filter(function(r){ return r.status==='win'||r.status==='lose'; });
+    var mktLabels = {under35:'Under 3.5G',over15:'Over 1.5G',over25:'Over 2.5G'};
 
-    if (settled.length === 0) {
-      el.innerHTML = sampleWarnHtml +
-        '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">' +
-        'Niciun pick finalizat încă.<br><small>Istoricul se construiește pe măsură ce meciurile se termină.</small></div>';
-      return;
-    }
+    var pendingHtml = veyraBuildPerformantaMeciuriMirrorHtml();
 
-    // ── Calcule globale ─────────────────────────────────────────────
-    var wins = settled.filter(function(r) { return r.won || r.status === 'win'; }).length;
-    var profit = settled.reduce(function(acc, r) {
-      var won = r.won || r.status === 'win';
-      var o = parseFloat(r.odds || 0);
-      return acc + (won ? (o - 1) : -1);
-    }, 0);
-    var roi = settled.length > 0 ? (profit / settled.length * 100) : 0;
-    var wr  = settled.length > 0 ? (wins / settled.length * 100) : 0;
-    var avgOdds = settled.reduce(function(a, r) { return a + parseFloat(r.odds || 0); }, 0) / settled.length;
-    var avgEdge = settled.reduce(function(a, r) { return a + parseFloat(r.edge_pct || 0); }, 0) / settled.length;
-
-    var roiColor = roi >= 5 ? '#22c55e' : roi >= 0 ? '#f59e0b' : '#ef4444';
-    var roiSign  = roi >= 0 ? '+' : '';
-    var profSign = profit >= 0 ? '+' : '';
-
-    var overallHtml =
-      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">Global — picks reale UI</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">' +
-          _perfMetric('Total', settled.length, '') +
-          _perfMetric('ROI', roiSign + roi.toFixed(1) + '%', '', roiColor) +
-          _perfMetric('Winrate', wr.toFixed(1) + '%', '', wr >= 68 ? '#22c55e' : wr >= 60 ? '#f59e0b' : '#ef4444') +
-          _perfMetric('Profit', profSign + profit.toFixed(2) + 'u', '', profit >= 0 ? '#22c55e' : '#ef4444') +
-          _perfMetric('Cotă medie', avgOdds.toFixed(3), '') +
-          _perfMetric('Edge mediu', '+' + avgEdge.toFixed(1) + 'pp', '') +
-        '</div>' +
-        '<div style="font-size:10px;color:var(--muted)">' + pending.length + ' picks în așteptare • ' + settled.length + ' finalizate</div>' +
-      '</div>';
-
-    // ── Per piata ───────────────────────────────────────────────────
-    var byMkt = {};
-    settled.forEach(function(r) {
-      var mk = r.market_key || r.market || '?';
-      if (!byMkt[mk]) byMkt[mk] = { n:0, wins:0, profit:0, odds_sum:0 };
-      var won = r.won || r.status === 'win';
-      var o = parseFloat(r.odds || 0);
-      byMkt[mk].n++;
-      if (won) byMkt[mk].wins++;
-      byMkt[mk].profit += won ? (o - 1) : -1;
-      byMkt[mk].odds_sum += o;
-    });
-
-    var mktLabels = { under35:'Under 3.5G', over15:'Over 1.5G', over25:'Over 2.5G', btts:'BTTS', homeWin:'1 (Acasă)', awayWin:'2 (Deplasare)', draw:'X (Egal)' };
-    var mktRows = Object.keys(byMkt).sort(function(a,b){ return byMkt[b].n - byMkt[a].n; }).map(function(mk) {
-      var s = byMkt[mk];
-      var r = s.profit / s.n * 100;
-      var w = s.wins / s.n * 100;
-      var rc = r >= 5 ? '#22c55e' : r >= 0 ? '#f59e0b' : '#ef4444';
-      var rs = r >= 0 ? '+' : '';
-      var label = mktLabels[mk] || mk;
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
-        '<div>' +
-          '<div style="font-size:13px;font-weight:700;color:var(--txt)">' + label + '</div>' +
-          '<div style="font-size:10px;color:var(--muted)">' + s.n + ' picks • avg odds ' + (s.odds_sum/s.n).toFixed(2) + '</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:12px;align-items:center">' +
-          '<span style="font-size:11px;color:var(--muted)">' + w.toFixed(0) + '% WR</span>' +
-          '<span style="font-size:14px;font-weight:900;color:' + rc + '">' + rs + r.toFixed(1) + '%</span>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    var mktHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per piață</div>' +
-      mktRows +
+    var resetInfo = '<div style="padding:12px 14px;border-radius:14px;background:rgba(45,212,191,.075);border:1px solid rgba(45,212,191,.24);margin-bottom:12px">'+
+      '<div style="font-size:12px;font-weight:900;color:#8bffea;margin-bottom:4px">✅ Istoric resetat pe O1.5 / O2.5 / U3.5</div>'+
+      '<div style="font-size:11px;color:var(--muted);line-height:1.45">Picks-urile finalizate vechi nu se mai folosesc în această secțiune. De acum se urmăresc doar meciurile în așteptare care corespund cu tabul Meciuri pentru Over 1.5G, Over 2.5G și Under 3.5G.</div>'+
     '</div>';
 
-    // ── Per edge bucket ─────────────────────────────────────────────
-    var edgeBuckets = [
-      { label:'0–8pp',  fn: function(e){ return e < 8; } },
-      { label:'8–11pp', fn: function(e){ return e >= 8 && e < 11; } },
-      { label:'11–15pp',fn: function(e){ return e >= 11 && e < 15; } },
-      { label:'15pp+',  fn: function(e){ return e >= 15; } },
-    ];
-    var edgeRows = edgeBuckets.map(function(bk) {
-      var rows = settled.filter(function(r) { return bk.fn(parseFloat(r.edge_pct || 0)); });
-      if (!rows.length) return '';
-      var w2 = rows.filter(function(r) { return r.won || r.status === 'win'; }).length;
-      var p2 = rows.reduce(function(a,r) { var won = r.won||r.status==='win'; var o=parseFloat(r.odds||0); return a+(won?(o-1):-1); }, 0);
-      var r2 = p2 / rows.length * 100;
-      var rc2 = r2 >= 5 ? '#22c55e' : r2 >= 0 ? '#f59e0b' : '#ef4444';
-      var verdict = r2 >= 5 ? '✅ Profitabil' : r2 >= 0 ? '⚠️ Marginal' : '❌ Pierdere';
-      var vc = r2 >= 5 ? '#22c55e' : r2 >= 0 ? '#f59e0b' : '#ef4444';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
-        '<div>' +
-          '<div style="font-size:13px;font-weight:700;color:var(--txt)">Edge ' + bk.label + '</div>' +
-          '<div style="font-size:10px;color:' + vc + '">' + verdict + '</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:12px;align-items:center">' +
-          '<span style="font-size:11px;color:var(--muted)">' + rows.length + ' par.</span>' +
-          '<span style="font-size:14px;font-weight:900;color:' + rc2 + '">' + (r2>=0?'+':'') + r2.toFixed(1) + '%</span>' +
-          '<span style="font-size:11px;color:var(--muted)">' + (w2/rows.length*100).toFixed(0) + '% WR</span>' +
-        '</div>' +
-      '</div>';
-    }).join('');
+    var settledHtml = '';
+    if (settled.length > 0) {
+      var byMkt = {};
+      settled.forEach(function(r){
+        var mk = String(r.market_key || r.marketKey || '').toLowerCase();
+        if(!allowed[mk]) return;
+        if(!byMkt[mk]) byMkt[mk]={n:0,wins:0,profit:0};
+        var won = r.won || r.status === 'win';
+        var o = parseFloat(r.odds || 0);
+        byMkt[mk].n++;
+        if(won) byMkt[mk].wins++;
+        byMkt[mk].profit += won ? (o - 1) : -1;
+      });
+      var rows = Object.keys(byMkt).map(function(mk){
+        var s = byMkt[mk];
+        var roi = s.n ? (s.profit / s.n * 100) : 0;
+        var wr = s.n ? (s.wins / s.n * 100) : 0;
+        var col = roi >= 5 ? '#22c55e' : roi >= 0 ? '#f59e0b' : '#ef4444';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
+          '<div><div style="font-size:13px;font-weight:800;color:var(--txt)">'+htmlEsc(mktLabels[mk] || mk)+'</div><div style="font-size:10px;color:var(--muted)">'+s.n+' finalizate · '+wr.toFixed(0)+'% WR</div></div>'+ 
+          '<div style="font-size:14px;font-weight:950;color:'+col+'">'+(roi>=0?'+':'')+roi.toFixed(1)+'%</div>'+ 
+        '</div>';
+      }).join('');
+      settledHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:12px">'+
+        '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">📊 Finalizate după reset</div>'+rows+'</div>';
+    }
 
-    var edgeHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-      '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">ROI per edge bucket</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Zona profitabilă = unde vrei să fii.</div>' +
-      edgeRows +
-    '</div>';
-
-    // ── Ultimele 20 picks finalizate ────────────────────────────────
-    var recent = settled.slice().sort(function(a,b) {
-      return (b.settled_at || b.event_date || '') > (a.settled_at || a.event_date || '') ? 1 : -1;
-    }).slice(0, 20);
-
-    var recentRows = recent.map(function(r) {
-      var won = r.won || r.status === 'win';
-      var o = parseFloat(r.odds || 0);
-      var pnl = won ? (o - 1) : -1;
-      var color = won ? '#22c55e' : '#ef4444';
-      var icon  = won ? '✅' : '❌';
-      var mLabel = mktLabels[r.market_key || r.market] || r.market_key || '?';
-      var dateStr = (r.event_date || r.settled_at || '').substring(0, 10);
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">' +
-        '<div style="flex:1;min-width:0">' +
-          '<div style="font-size:12px;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-            icon + ' ' + (r.home||'?') + ' vs ' + (r.away||'?') +
-          '</div>' +
-          '<div style="font-size:10px;color:var(--muted)">' + mLabel + ' @' + o.toFixed(2) + ' · ' + dateStr + '</div>' +
-        '</div>' +
-        '<div style="font-size:13px;font-weight:900;color:' + color + ';margin-left:10px;flex-shrink:0">' +
-          (pnl >= 0 ? '+' : '') + pnl.toFixed(2) + 'u' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    var recentHtml = recent.length ? (
-      '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Ultimele 20 picks finalizate</div>' +
-        recentRows +
-      '</div>'
-    ) : '';
-
-    var updAt = log.length ? 'Date din ui_picks_log — picks reale UI' : '—';
-    var metaHtml = '<div style="font-size:10px;color:var(--muted);margin-bottom:14px">' + updAt + '</div>';
-
-    el.innerHTML = sampleWarnHtml + metaHtml + overallHtml + mktHtml + edgeHtml + recentHtml;
+    el.innerHTML = resetInfo + pendingHtml + settledHtml;
 
   } catch(e) {
-    el.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:12px">Eroare: ' + e.message + '</div>';
+    el.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:12px">Eroare: '+e.message+'</div>';
     console.error('renderPerformantaVerdict:', e);
   }
 }
@@ -4813,7 +5027,7 @@ var LAZY_DATA_READY = {
   fullHistoryAssets:false
 };
 var FULL_HISTORY_ASSETS_PROMISE = null;
-var DATASET_CACHE_VERSION = '20260425archivefix1';
+var DATASET_CACHE_VERSION = '20260517pendingOnlyO15O25U35v2';
 
 function getDatasetCacheKey(key){
   return 'bet_dataset_cache_' + DATASET_CACHE_VERSION + '_' + key;
@@ -5069,6 +5283,14 @@ function applyLazyDataset(key, data){
     RECOMMENDATION_LOG = normalizeResultList(data);
     writeDatasetCache('recommendationLog', RECOMMENDATION_LOG);
     try { autoSyncTrackingStatuses(); } catch(e){}
+    // Re-rendereaza Performanta daca tab-ul e deja deschis
+    try {
+      if(document.getElementById('perf-verdict-content') &&
+         document.getElementById('tab-performanta') &&
+         document.getElementById('tab-performanta').style.display !== 'none'){
+        renderPerformantaVerdict();
+      }
+    } catch(e){}
     return;
   }
   if(key === 'historyEngine'){
@@ -6929,6 +7151,7 @@ function renderMatches(){
   window.__VEYRA_MECIURI_DISPLAYED_COUNT = filtered.length;
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
+    veyraCaptureMeciuriVisible(container, filtered, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
     return;
   }
 
@@ -7502,6 +7725,7 @@ function renderMatches(){
     minProb, minEdge, kickoffF || '', tierF || '', minScore, MATCHES_FILTERED_CACHE.length, firstVisibleSig
   ].join('::');
   if(container.getAttribute('data-ba-render-sig') === renderSig && container.querySelector('.match-card')){
+    veyraCaptureMeciuriVisible(container, filtered, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
     renderTicketQuickPeek();
     if(typeof renderDashboardMonitor === 'function') renderDashboardMonitor();
     return;
@@ -7529,6 +7753,7 @@ function renderMatches(){
     // Sursa canonică pentru Dashboard Status — mereu reflectă ce vede userul în Meciuri
     if(_realCount > 0) window.__VEYRA_MECIURI_DISPLAYED_COUNT = _realCount;
   } catch(_e){}
+  veyraCaptureMeciuriVisible(container, filtered, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
 
   // Funcție pentru a adăuga batch-ul următor
   function appendNextBatch(){
@@ -7543,6 +7768,7 @@ function renderMatches(){
       var grid = container.querySelector('#matches-grid-inner');
       if(grid){ grid.innerHTML += nextBatch.map(function(m){ return renderCard(m, m && m._renderNumber); }).join(''); }
     }
+    veyraCaptureMeciuriVisible(container, MATCHES_FILTERED_CACHE, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
 
     // Actualizează sau elimină sentinela
     var oldSentinel = container.querySelector('.matches-load-sentinel');
