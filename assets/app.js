@@ -33,6 +33,8 @@ var MATCH_CARD_MODE = localStorage.getItem('bet_match_card_mode') || 'simple';
 var MATCHES_PAGE_SIZE = 9999;      // afișează toate cardurile filtrate; evită diferența între count și lista vizibilă
 var MATCHES_RENDERED_COUNT = 0;    // câte carduri sunt acum în DOM
 var MATCHES_FILTERED_CACHE = [];   // lista filtrată curentă (pentru load more)
+var MECIURI_VISIBLE_SNAPSHOT = { rows: [], html: '', count: 0, meta: {}, updatedAt: null }; // oglinda exactă pentru Istoric Performanță
+var MECIURI_MIRROR_REFRESHING = false; // guard anti-recursie când Istoricul cere cache-ul din Meciuri
 var MATCHES_SCROLL_OBSERVER = null; // IntersectionObserver sentinel
 var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
 var TICKET_JOURNAL = JSON.parse(localStorage.getItem('bet_ticket_journal') || '[]');
@@ -862,6 +864,108 @@ function htmlEsc(v){
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
+}
+
+function veyraFilterMetaLabel(meta){
+  meta = meta || {};
+  var parts = [];
+  var filterNames = {
+    all:'Toate', bet_ok:'OK', motor_validated:'Motor', safe:'Safe', moderate:'Balanced', value:'Value',
+    o15:'Over 1.5G', o25:'Over 2.5G', u35:'Under 3.5G', btts:'BTTS', dc:'Șansă dublă',
+    dashboard_ml_sync:'ML sync', dashboard_with_odds:'Cu cote'
+  };
+  parts.push(filterNames[meta.currentFilter || CURRENT_FILTER] || (meta.currentFilter || CURRENT_FILTER || 'Toate'));
+  if(meta.marketF) parts.push('piață ' + meta.marketF);
+  if(meta.verdictF && meta.verdictF !== 'all') parts.push('verdict ' + meta.verdictF);
+  if(meta.dateF && meta.dateF !== 'all') parts.push(meta.dateF === 'today' ? 'azi' : ('+' + meta.dateF + ' zile'));
+  if(meta.kickoffF && meta.kickoffF !== 'all') parts.push('start < ' + meta.kickoffF + 'h');
+  if(meta.tierF && meta.tierF !== 'all') parts.push('tier ' + meta.tierF);
+  if(meta.minProb) parts.push('prob ≥ ' + meta.minProb + '%');
+  if(meta.minEdge) parts.push('edge ≥ ' + meta.minEdge + 'pp');
+  return parts.filter(Boolean).join(' • ');
+}
+
+function veyraSanitizeMeciuriMirrorHtml(html){
+  var out = String(html || '');
+  if(!out) return '';
+  // Elimină sentinel-ul de scroll și face cardurile read-only în Istoric.
+  out = out.replace(/<div class="matches-load-sentinel"[\s\S]*?<\/div>/g, '');
+  out = out.replace(/\bid="([^"]+)"/g, function(_, id){
+    id = String(id || '').replace(/^hist-/, '');
+    return 'id="hist-' + id.replace(/"/g, '') + '"';
+  });
+  out = out.replace(/\bfor="([^"]+)"/g, function(_, id){
+    id = String(id || '').replace(/^hist-/, '');
+    return 'for="hist-' + id.replace(/"/g, '') + '"';
+  });
+  out = out.replace(/\sonclick="[^"]*"/g, '');
+  out = out.replace(/\sonchange="[^"]*"/g, '');
+  return out;
+}
+
+function veyraCaptureMeciuriVisible(container, rows, meta){
+  try{
+    rows = Array.isArray(rows) ? rows.slice() : [];
+    var rawHtml = container ? String(container.innerHTML || '') : '';
+    var realCount = container ? container.querySelectorAll('.match-card').length : rows.length;
+    if(rows.length === 0) realCount = 0;
+    var snapshot = {
+      rows: rows,
+      html: veyraSanitizeMeciuriMirrorHtml(rawHtml),
+      count: realCount || rows.length,
+      meta: Object.assign({ currentFilter: CURRENT_FILTER, cardMode: MATCH_CARD_MODE }, meta || {}),
+      updatedAt: new Date().toISOString()
+    };
+    MECIURI_VISIBLE_SNAPSHOT = snapshot;
+    window.__VEYRA_LAST_FILTERED_MATCHES = rows.slice();
+    window.__VEYRA_MECIURI_VISIBLE_MIRROR = snapshot;
+    window.__VEYRA_MECIURI_DISPLAYED_COUNT = snapshot.count;
+  }catch(e){
+    console.warn('[VEYRA] Nu pot captura oglinda Meciuri pentru Istoric:', e);
+  }
+}
+
+function veyraEnsureMeciuriVisibleSnapshot(){
+  var snap = window.__VEYRA_MECIURI_VISIBLE_MIRROR || MECIURI_VISIBLE_SNAPSHOT;
+  if(snap && (snap.html || (snap.rows && snap.rows.length))) return snap;
+  if(MECIURI_MIRROR_REFRESHING) return snap || { rows: [], html: '', count: 0, meta: {}, updatedAt: null };
+  if(typeof renderMatches === 'function' && $('matches-container')){
+    try{
+      MECIURI_MIRROR_REFRESHING = true;
+      renderMatches();
+    }catch(e){
+      console.warn('[VEYRA] Nu pot reface oglinda Meciuri pentru Istoric:', e);
+    }finally{
+      MECIURI_MIRROR_REFRESHING = false;
+    }
+  }
+  return window.__VEYRA_MECIURI_VISIBLE_MIRROR || MECIURI_VISIBLE_SNAPSHOT || { rows: [], html: '', count: 0, meta: {}, updatedAt: null };
+}
+
+function veyraBuildPerformantaMeciuriMirrorHtml(){
+  var snap = veyraEnsureMeciuriVisibleSnapshot();
+  var rows = (snap && Array.isArray(snap.rows)) ? snap.rows : [];
+  var count = Number((snap && snap.count) || rows.length || 0);
+  var metaLabel = veyraFilterMetaLabel((snap && snap.meta) || {});
+  var html = snap && snap.html ? snap.html : '';
+
+  if(!count || !html){
+    return '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(99,102,241,.20);margin-bottom:12px">'+
+      '<div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">⏳ Lista curentă din Meciuri</div>'+
+      '<div style="font-size:12px;color:var(--muted);line-height:1.45">Nu există meciuri pentru filtrul curent. Istoricul folosește aceeași listă filtrată ca tabul Meciuri.</div>'+
+    '</div>';
+  }
+
+  return '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(99,102,241,.20);margin-bottom:12px">'+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">'+
+      '<div style="min-width:0">'+
+        '<div style="font-size:11px;font-weight:800;color:#8bffea;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">⏳ Lista curentă din Meciuri — oglindă 1:1</div>'+
+        '<div style="font-size:10px;color:var(--muted);line-height:1.35">Aceleași carduri, aceeași ordine și aceleași filtre: '+htmlEsc(metaLabel || 'Toate')+'</div>'+
+      '</div>'+
+      '<div style="flex:0 0 auto;padding:7px 10px;border-radius:999px;background:rgba(45,212,191,.10);border:1px solid rgba(45,212,191,.30);color:#8bffea;font-size:12px;font-weight:900;font-family:var(--mono)">'+count+' meciuri</div>'+
+    '</div>'+
+    '<div class="perf-meciuri-mirror" style="display:block">'+html+'</div>'+
+  '</div>';
 }
 function pickDefined(){
   for(var i = 0; i < arguments.length; i++){
@@ -1871,61 +1975,8 @@ function renderPerformantaVerdict() {
       recentHtml = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Niciun pick finalizat încă.<br><small>Istoricul se construiește pe măsură ce meciurile se termină.</small></div>';
     }
 
-    // ── Meciuri active acum ── foloseste mlFlags (exact ca filtrele din tab Meciuri) ──
-    var pendingHtml = '';
-    try {
-      var srcMatches = (typeof ALL_MATCHES !== 'undefined' ? ALL_MATCHES : []) || [];
-      // Filtrare identica cu Meciuri tab: doar notstarted
-      var upcomingM = srcMatches.filter(function(m){
-        if(!m) return false;
-        var ev = m.event || {};
-        return !ev.status || ev.status === 'notstarted';
-      });
-      // Numara per tip folosind mlFlags — exact aceeasi logica ca chip-urile din Meciuri
-      var flagMap = [
-        {flag:'u35',  mk:'under35', label:'Under 3.5G', oddsField:'probUnder35'},
-        {flag:'o15',  mk:'over15',  label:'Over 1.5G',  oddsField:'probOver15'},
-        {flag:'btts', mk:'btts',    label:'BTTS',        oddsField:'probBtts'},
-        {flag:'o25',  mk:'over25',  label:'Over 2.5G',  oddsField:'probOver25'},
-      ];
-      var totalActive = upcomingM.length;
-      var pRows = '';
-      var hasAny = false;
-      flagMap.forEach(function(fm){
-        var items = upcomingM.filter(function(m){ return m.mlFlags && m.mlFlags[fm.flag]; });
-        if(!items.length) return;
-        hasAny = true;
-        // Odds si edge din allBets pentru tipul respectiv
-        var oddsSum=0, edgeSum=0, oddsN=0, edgeN=0;
-        items.forEach(function(m){
-          var bets = m.allBets || [];
-          var bet = bets.filter(function(b){ return b && b.type===fm.mk; })[0];
-          if(bet){
-            if(bet.odds>1){ oddsSum+=parseFloat(bet.odds); oddsN++; }
-            if(bet.edgePct){ edgeSum+=parseFloat(bet.edgePct); edgeN++; }
-          }
-        });
-        var avgOdds = oddsN ? (oddsSum/oddsN).toFixed(2) : '—';
-        var avgEdge = edgeN ? '+'+(edgeSum/edgeN).toFixed(1)+'pp' : '—';
-        pRows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
-          '<div>'+
-            '<div style="font-size:13px;font-weight:700;color:var(--txt)">'+fm.label+'</div>'+
-            '<div style="font-size:10px;color:var(--muted)">cotă avg '+avgOdds+' · edge avg '+avgEdge+'</div>'+
-          '</div>'+
-          '<div style="display:flex;align-items:center;gap:8px">'+
-            '<span style="font-size:13px;font-weight:900;color:var(--txt)">'+items.length+'</span>'+
-            '<span style="font-size:10px;color:var(--muted)">meciuri</span>'+
-          '</div>'+
-        '</div>';
-      });
-      if(hasAny){
-        pendingHtml =
-          '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(99,102,241,.20);margin-bottom:12px">'+
-            '<div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">⏳ Meciuri active — identic cu filtrele din tab Meciuri</div>'+
-            pRows+
-          '</div>';
-      }
-    } catch(eP){ console.warn('active picks mlFlags error', eP); }
+    // ── Lista activă din Meciuri: aceeași sursă, aceleași filtre, același HTML randat ──
+    var pendingHtml = veyraBuildPerformantaMeciuriMirrorHtml();
 
     el.innerHTML = sampleWarn + globalHtml + byMktHtml + edgeHtml + recentHtml + pendingHtml;
 
@@ -6953,6 +7004,7 @@ function renderMatches(){
   window.__VEYRA_MECIURI_DISPLAYED_COUNT = filtered.length;
   if(filtered.length === 0){
     container.innerHTML = '<div class="empty-state">Niciun meci găsit pentru filtrele selectate.<br/><button class="btn btn-primary" style="margin-top:10px" onclick="resetMatchFilters()">Resetează filtrele</button></div>';
+    veyraCaptureMeciuriVisible(container, filtered, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
     return;
   }
 
@@ -7526,6 +7578,7 @@ function renderMatches(){
     minProb, minEdge, kickoffF || '', tierF || '', minScore, MATCHES_FILTERED_CACHE.length, firstVisibleSig
   ].join('::');
   if(container.getAttribute('data-ba-render-sig') === renderSig && container.querySelector('.match-card')){
+    veyraCaptureMeciuriVisible(container, filtered, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
     renderTicketQuickPeek();
     if(typeof renderDashboardMonitor === 'function') renderDashboardMonitor();
     return;
@@ -7553,6 +7606,7 @@ function renderMatches(){
     // Sursa canonică pentru Dashboard Status — mereu reflectă ce vede userul în Meciuri
     if(_realCount > 0) window.__VEYRA_MECIURI_DISPLAYED_COUNT = _realCount;
   } catch(_e){}
+  veyraCaptureMeciuriVisible(container, filtered, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
 
   // Funcție pentru a adăuga batch-ul următor
   function appendNextBatch(){
@@ -7567,6 +7621,7 @@ function renderMatches(){
       var grid = container.querySelector('#matches-grid-inner');
       if(grid){ grid.innerHTML += nextBatch.map(function(m){ return renderCard(m, m && m._renderNumber); }).join(''); }
     }
+    veyraCaptureMeciuriVisible(container, MATCHES_FILTERED_CACHE, { sort:sort, leagueF:leagueF, dateF:dateF, marketF:marketF, verdictF:verdictF, proMode:proMode, minProb:minProb, minEdge:minEdge, kickoffF:kickoffF, tierF:tierF, minScore:minScore, currentFilter:CURRENT_FILTER });
 
     // Actualizează sau elimină sentinela
     var oldSentinel = container.querySelector('.matches-load-sentinel');
