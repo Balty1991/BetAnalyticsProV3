@@ -34,6 +34,7 @@ BACKTEST_LOOKBACK_DAYS = 21
 HISTORY_LOOKBACK_DAYS = 90
 HISTORY_MAX_ROWS = 2500
 RECOMMENDATION_LOG_MAX_ROWS = 5000
+VISIBLE_BACKTEST_SOURCE = "meciuri_visible_default_v2"
 MAX_PREDICTION_AGE_HOURS = 21 * 24
 SIGNAL_AUDIT_MAX_ROWS = 24
 EVENT_ODDS_COMPARE_CACHE: Dict[int, Dict[str, Any]] = {}
@@ -1346,6 +1347,105 @@ def build_signal_audit(predictions, recommendation_log=None):
     }
 
 
+def _visible_log_time(row):
+    dt = parse_dt(row.get("first_logged_at") or row.get("logged_at") or row.get("event_date"))
+    if dt and dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _market_label_from_key(market_key):
+    m = MARKET_MAP.get(str(market_key or ""))
+    return (m or {}).get("label") or str(market_key or "unknown")
+
+
+def build_visible_backtest_from_log(recommendation_log, lookback_days):
+    """
+    Backtest canonic pentru UI: folosește DOAR pick-urile care au fost logate ca
+    selecții afișate în Meciuri (`source_scope = VISIBLE_BACKTEST_SOURCE`).
+
+    Nu mai reconstruiește pariuri din toate predicțiile istorice, pentru că acelea
+    includ selecții care nu au fost văzute/pariate în tabul Meciuri.
+    """
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=lookback_days)
+    rows = []
+
+    for row in recommendation_log or []:
+        if not isinstance(row, dict):
+            continue
+        if row.get("source_scope") != VISIBLE_BACKTEST_SOURCE:
+            continue
+        status = str(row.get("status") or "").lower()
+        if status not in {"win", "lose", "loss", "lost"}:
+            continue
+        odds = _safe_float(row.get("odds"), 0.0)
+        if odds <= 1.01:
+            continue
+        dt = _visible_log_time(row)
+        if dt and dt < cutoff:
+            continue
+        won = bool(row.get("won")) if row.get("won") is not None else status == "win"
+        market_key = str(row.get("market_key") or "unknown")
+        rows.append({
+            "market": row.get("market") or _market_label_from_key(market_key),
+            "market_key": market_key,
+            "league": row.get("league") or "Unknown",
+            "odds": odds,
+            "won": won,
+            "edge_pct": _safe_float(row.get("edge_pct"), 0.0),
+            "confidence": _safe_float(row.get("confidence"), 0.0),
+            "date": row.get("event_date") or row.get("logged_at") or row.get("first_logged_at"),
+            "event_id": row.get("event_id"),
+            "prediction_id": row.get("prediction_id"),
+        })
+
+    by_market = {}
+    by_league = {}
+    by_odds = {}
+    by_conf = {}
+    by_edge = {}
+
+    for pick in rows:
+        accumulate_pick(by_market, pick["market"], pick)
+        accumulate_pick(by_league, pick["league"], pick)
+        accumulate_pick(by_odds, bucket_label_odds(pick["odds"]), pick)
+        accumulate_pick(by_conf, bucket_label_conf(pick["confidence"]), pick)
+        accumulate_pick(by_edge, bucket_label_edge(max(0.0, pick.get("edge_pct") or 0.0)), pick)
+
+    overall_stats = finalize_pick_stats(rows, "Meciuri afișate")
+    strategy_stats = dict(overall_stats)
+    strategy_stats["key"] = "meciuri_visible"
+
+    return {
+        "updated_at": now.isoformat(),
+        "lookback_days": lookback_days,
+        "source": VISIBLE_BACKTEST_SOURCE,
+        "scope": "doar predicțiile filtrate/logate ca afișate în Meciuri",
+        "finished_predictions": len(rows),
+        "engine_bets": overall_stats["bets"],
+        "engine_wins": overall_stats["wins"],
+        "engine_profit": overall_stats["profit"],
+        "engine_roi": overall_stats["roi"],
+        "engine_winrate": overall_stats["winrate"],
+        "engine_avg_odds": overall_stats["avg_odds"],
+        "engine_avg_edge": overall_stats["avg_edge"],
+        "engine_best_run": overall_stats["best_run"],
+        "engine_worst_run": overall_stats["worst_run"],
+        "overall": overall_stats,
+        "by_market": rows_from_bucket_map(by_market),
+        "by_league": rows_from_bucket_map(by_league),
+        "by_strategy": [strategy_stats] if overall_stats["bets"] else [],
+        "by_odds_bucket": rows_from_bucket_map(by_odds),
+        "by_conf_bucket": rows_from_bucket_map(by_conf),
+        "by_edge_bucket": rows_from_bucket_map(by_edge),
+        "markets_included": sorted({p["market"] for p in rows}),
+        "excluded_markets": [],
+        "note": "Backtest resetat pe sursa vizibilă: intră doar pick-urile logate ca afișate în Meciuri, nu toate predicțiile brute.",
+    }
+
+
+
 def build_data_health(predictions, prep_stats=None):
     now = datetime.now(timezone.utc)
     ages = []
@@ -2554,16 +2654,65 @@ def build_ui_live_candidate(row, market_key):
     # sa concureze cu Under35 — BTTS ROI +12%, Over25 ROI +13% erau sistematic eliminate
     if odds > 2.00:
         return None
-    # Anti-flood Under35: impune min_edge 6pp inline inainte de calcule costisitoare
-    # Zona edge 5-7pp are ROI +3.6% (OK), sub 6pp nu justifica pick-ul
-    if market_key == "under35":
-        _mp_u35 = market_prob_from_row_event(row, event, market_key)
-        if _mp_u35 is not None and (prob - _mp_u35) < 6.0:
-            return None
-
-    adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
     market_prob = market_prob_from_row_event(row, event, market_key)
     edge_pct = round(prob - market_prob, 2) if market_prob is not None else None
+
+    # Disciplină UI: logăm pentru backtest numai ce poate apărea în Meciuri.
+    # Pragurile sunt aliniate cu buildMarketCandidate() din assets/app.js.
+    xg_home = _safe_float(row.get("expected_home_goals")) or 0.0
+    xg_away = _safe_float(row.get("expected_away_goals")) or 0.0
+    xg_total = _safe_float(row.get("xg_total") or row.get("expected_goals_total")) or 0.0
+    if xg_total <= 0.0:
+        xg_total = xg_home + xg_away
+    scoreline = parse_scoreline(row.get("most_likely_score"))
+    adj = adjusted_prob(prob, confidence, league_name=league_name, market_key=market_key, odds=odds)
+
+    if market_key == "over15":
+        if (
+            edge_pct is None or edge_pct < 10.0 or
+            adj < 72.0 or
+            pct(row.get("prob_over_15")) < 74.0 or
+            xg_total < 2.00 or
+            odds < 1.20 or
+            value < 0.02
+        ):
+            return None
+
+    if market_key == "over25":
+        if (
+            edge_pct is not None and edge_pct < 5.0 or
+            adj < 52.0 or
+            pct(row.get("prob_over_25")) < 50.0 or
+            xg_total < 1.80 or
+            odds < 1.15 or
+            value < 0.01
+        ):
+            return None
+
+    if market_key == "under35":
+        if (
+            edge_pct is None or edge_pct < 15.0 or
+            adj < 80.0 or
+            prob < 78.0 or
+            xg_total <= 0.0 or xg_total > 2.85 or
+            odds < 1.18 or odds > 1.65 or
+            value < 0.02 or
+            (scoreline is not None and scoreline.get("total", 0) > 3)
+        ):
+            return None
+
+    if market_key == "btts":
+        if (
+            edge_pct is None or edge_pct < 3.0 or
+            adj < 62.0 or
+            pct(row.get("prob_btts_yes")) < 62.0 or
+            xg_home < 1.00 or
+            xg_away < 1.00 or
+            abs(xg_home - xg_away) > 1.00 or
+            value < 0.03
+        ):
+            return None
+
     fit = ui_like_market_fit_score(row, market_key)
     source_api = api_recommend(row, market_key)
     source_heuristic = ui_like_heuristic_recommend(row, market_key)
@@ -2732,6 +2881,8 @@ def build_current_recommendation_rows(predictions, logged_at_iso, drifting_event
             "verdict": _pick_verdict,
             "risk_tier": _pick_risk,
             "eligible_categories": _eligible_cats,
+            "source_scope": VISIBLE_BACKTEST_SOURCE,
+            "backtest_scope": "meciuri_visible",
             "opening_odds": pick.get("odds"),
             "previous_odds": pick.get("odds"),
             "line_movement_pct": 0.0,
@@ -4027,8 +4178,6 @@ def main():
     print(f"\n[4/6] Building historical audit (last {BACKTEST_LOOKBACK_DAYS} days)...")
     historical_predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={past}&date_to={today}")
     historical_predictions, historical_prep = dedupe_and_filter_predictions(historical_predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
-    backtest = build_backtest_summary(historical_predictions, BACKTEST_LOOKBACK_DAYS)
-    print(f"Finished preds: {backtest['finished_predictions']} | Engine bets: {backtest['engine_bets']} | ROI: {backtest['engine_roi']}%")
 
     history_predictions = historical_predictions
     if HISTORY_LOOKBACK_DAYS != BACKTEST_LOOKBACK_DAYS:
@@ -4049,6 +4198,8 @@ def main():
     current_recommendations = build_current_recommendation_rows(predictions, started_at.isoformat(), drifting_event_ids=drifting_event_ids)
     finished_events = build_finished_event_index(history_predictions)
     recommendation_log = update_recommendation_log(recommendation_log, current_recommendations, finished_events, datetime.now(timezone.utc).isoformat())
+    backtest = build_visible_backtest_from_log(recommendation_log, BACKTEST_LOOKBACK_DAYS)
+    print(f"Visible Meciuri backtest: {backtest['engine_bets']} pariuri | ROI: {backtest['engine_roi']}% | WR: {backtest['engine_winrate']}%")
     ai_memory = build_ai_memory(current_recommendations, recommendation_log, history_rows, started_at)
     data_health = build_data_health(predictions, upcoming_prep)
     header_sync = build_header_sync_metrics(predictions)

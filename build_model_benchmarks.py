@@ -571,15 +571,22 @@ def real_backtest_from_log(log_path: Path) -> Dict:
     """
     raw = load_json(log_path, [])
     entries = raw if isinstance(raw, list) else raw.get("log", [])
-    settled = [
+    scoped_entries = [
         e for e in entries
-        if isinstance(e, dict)
-        and e.get("won") is not None
+        if isinstance(e, dict) and e.get("source_scope") == VISIBLE_BACKTEST_SOURCE
+    ]
+    settled = [
+        e for e in scoped_entries
+        if e.get("won") is not None
         and safe_float(e.get("odds"), 0.0) > 1.01
     ]
 
     if not settled:
-        return {"n_total": 0, "warnings": ["Niciun pariu finalizat cu cote reale în log."]}
+        return {
+            "n_total": 0,
+            "source": VISIBLE_BACKTEST_SOURCE,
+            "warnings": ["Niciun pariu finalizat din selecțiile afișate în Meciuri. Backtestul vechi brut nu mai este folosit."],
+        }
 
     def _stats(bets: List[Dict]) -> Dict:
         if not bets:
@@ -666,6 +673,8 @@ def real_backtest_from_log(log_path: Path) -> Dict:
 
     return {
         "n_total":          len(settled),
+        "source":           VISIBLE_BACKTEST_SOURCE,
+        "source_rows":      len(scoped_entries),
         "overall":          _stats(settled),
         "by_market":        {k: _stats(v) for k, v in sorted(by_market.items())},
         "by_league":        {k: _stats(v) for k, v in sorted(by_league.items(), key=lambda x: -len(x[1]))},
