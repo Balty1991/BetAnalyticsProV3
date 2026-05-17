@@ -1871,57 +1871,61 @@ function renderPerformantaVerdict() {
       recentHtml = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Niciun pick finalizat încă.<br><small>Istoricul se construiește pe măsură ce meciurile se termină.</small></div>';
     }
 
-    // ── Meciuri active acum ── citeste din ALL_MATCHES (identic cu tab Meciuri) ──
+    // ── Meciuri active acum ── foloseste mlFlags (exact ca filtrele din tab Meciuri) ──
     var pendingHtml = '';
-    var activePicks = [];
     try {
       var srcMatches = (typeof ALL_MATCHES !== 'undefined' ? ALL_MATCHES : []) || [];
-      srcMatches.forEach(function(m){
-        if(!m) return;
+      // Filtrare identica cu Meciuri tab: doar notstarted
+      var upcomingM = srcMatches.filter(function(m){
+        if(!m) return false;
         var ev = m.event || {};
-        if(ev.status && ev.status !== 'notstarted') return;
-        var bb = m.bestBet;
-        if(!bb) return;
-        var mk = bb.type || bb.market_key || bb.marketKey || '';
-        if(!mk) return;
-        activePicks.push({
-          market_key: mk,
-          odds: parseFloat(bb.odds || 0),
-          edge_pct: parseFloat(bb.edgePct || bb.edge_pp || m.edgePct || 0),
-          home: m.home || m.homeTeam || '',
-          away: m.away || m.awayTeam || ''
+        return !ev.status || ev.status === 'notstarted';
+      });
+      // Numara per tip folosind mlFlags — exact aceeasi logica ca chip-urile din Meciuri
+      var flagMap = [
+        {flag:'u35',  mk:'under35', label:'Under 3.5G', oddsField:'probUnder35'},
+        {flag:'o15',  mk:'over15',  label:'Over 1.5G',  oddsField:'probOver15'},
+        {flag:'btts', mk:'btts',    label:'BTTS',        oddsField:'probBtts'},
+        {flag:'o25',  mk:'over25',  label:'Over 2.5G',  oddsField:'probOver25'},
+      ];
+      var totalActive = upcomingM.length;
+      var pRows = '';
+      var hasAny = false;
+      flagMap.forEach(function(fm){
+        var items = upcomingM.filter(function(m){ return m.mlFlags && m.mlFlags[fm.flag]; });
+        if(!items.length) return;
+        hasAny = true;
+        // Odds si edge din allBets pentru tipul respectiv
+        var oddsSum=0, edgeSum=0, oddsN=0, edgeN=0;
+        items.forEach(function(m){
+          var bets = m.allBets || [];
+          var bet = bets.filter(function(b){ return b && b.type===fm.mk; })[0];
+          if(bet){
+            if(bet.odds>1){ oddsSum+=parseFloat(bet.odds); oddsN++; }
+            if(bet.edgePct){ edgeSum+=parseFloat(bet.edgePct); edgeN++; }
+          }
         });
-      });
-    } catch(eP){ console.warn('active picks error', eP); }
-
-    if (activePicks.length > 0) {
-      var byMktP = {};
-      activePicks.forEach(function(r){
-        var mk=r.market_key||'?';
-        if(!byMktP[mk]) byMktP[mk]=[];
-        byMktP[mk].push(r);
-      });
-      var pRows = Object.keys(byMktP).sort(function(a,b){return byMktP[b].length-byMktP[a].length;}).map(function(mk){
-        var items=byMktP[mk];
-        var avgOdds=items.reduce(function(a,r){return a+parseFloat(r.odds||0);},0)/items.length;
-        var avgEdge=items.reduce(function(a,r){return a+parseFloat(r.edge_pct||0);},0)/items.length;
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
+        var avgOdds = oddsN ? (oddsSum/oddsN).toFixed(2) : '—';
+        var avgEdge = edgeN ? '+'+(edgeSum/edgeN).toFixed(1)+'pp' : '—';
+        pRows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">'+
           '<div>'+
-            '<div style="font-size:13px;font-weight:700;color:var(--txt)">'+(mktLabels[mk]||mk)+'</div>'+
-            '<div style="font-size:10px;color:var(--muted)">cotă avg '+(avgOdds>0?avgOdds.toFixed(2):'—')+' · edge avg +'+(avgEdge>0?avgEdge.toFixed(1):'—')+'pp</div>'+
+            '<div style="font-size:13px;font-weight:700;color:var(--txt)">'+fm.label+'</div>'+
+            '<div style="font-size:10px;color:var(--muted)">cotă avg '+avgOdds+' · edge avg '+avgEdge+'</div>'+
           '</div>'+
           '<div style="display:flex;align-items:center;gap:8px">'+
             '<span style="font-size:13px;font-weight:900;color:var(--txt)">'+items.length+'</span>'+
             '<span style="font-size:10px;color:var(--muted)">meciuri</span>'+
           '</div>'+
         '</div>';
-      }).join('');
-      pendingHtml =
-        '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(99,102,241,.20);margin-bottom:12px">'+
-          '<div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">⏳ Meciuri active acum ('+activePicks.length+' — identic cu tab Meciuri)</div>'+
-          pRows+
-        '</div>';
-    }
+      });
+      if(hasAny){
+        pendingHtml =
+          '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(99,102,241,.20);margin-bottom:12px">'+
+            '<div style="font-size:11px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">⏳ Meciuri active — identic cu filtrele din tab Meciuri</div>'+
+            pRows+
+          '</div>';
+      }
+    } catch(eP){ console.warn('active picks mlFlags error', eP); }
 
     el.innerHTML = sampleWarn + globalHtml + byMktHtml + edgeHtml + recentHtml + pendingHtml;
 
