@@ -1130,6 +1130,7 @@ function renderMatchesTab(){
 function renderActiveTab(name, opts){
   opts = opts || {};
   if(name === 'dashboard'){
+    try { renderModernDashboard(); } catch(e){ console.error('[Dashboard] renderModernDashboard failed', e); }
     markTabRendered('dashboard');
     return;
   }
@@ -13873,17 +13874,23 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(function(){ clearInterval(checkInterval); }, 8000);
 });
 
-// Dashboard renderers dezactivate — conținut va fi construit manual ulterior.
+// Dashboard renderers active — removed stale disable block.
+
+
+
+/* ===== Dashboard visible backtest restore guard ===== */
 (function(){
   'use strict';
-  window.__BA_DASHBOARD_REMOVED = true;
-  var names = [
-    'renderModernDashboard','renderDashboardTab','renderDashboard','renderDashboardStats',
-    'renderDashboardVisuals','renderDashboardMonitor','renderTodayBest','renderTopPicks',
-    'renderTopSafe','renderFocusPanel','renderMarketPerformance','renderBacktestSummary'
-  ];
-  names.forEach(function(name){
-    try { window[name] = function(){ return null; }; } catch(e) {}
-  });
+  function bootDashboardGuard(){
+    try{
+      var dash = document.getElementById('tab-dashboard');
+      var root = document.getElementById('dashboard-modern-shell');
+      if(dash && root && dash.classList.contains('active') && !root.children.length && typeof renderModernDashboard === 'function'){
+        renderModernDashboard();
+      }
+    }catch(e){ console.error('[DashboardGuard] failed', e); }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(bootDashboardGuard, 200); });
+  else setTimeout(bootDashboardGuard, 200);
+  window.addEventListener('load', function(){ setTimeout(bootDashboardGuard, 450); });
 })();
-
