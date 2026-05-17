@@ -1,19 +1,34 @@
-/* VEYRA — Dashboard gol + Meciuri count + header cleanup */
+/* VEYRA — System status + Dashboard visible rescue */
 :root{
   --vsys-cyan:#2be5c5;
   --vsys-cyan-2:#22d3ee;
 }
 
-/* Scoate complet informația despre cote din header */
+/* Scoate informația despre cote din header */
 #hq-odds{display:none!important}
 .veyra-sync-row{gap:7px!important}
 .veyra-sync-row span{white-space:nowrap}
 
-/* Dashboard activ: panoul de backtest vizibil poate fi afișat.
-   Nu mai ascundem conținutul din #dashboard-modern-shell. */
-#tab-dashboard{min-height:auto!important}
-#dashboard-modern-shell{display:block!important;min-height:0!important}
-#dashboard-modern-shell > *{display:block!important}
+/* IMPORTANT: nu mai ascundem Dashboard-ul. Clasa veche rămâne tolerată, dar vizibilă. */
+#tab-dashboard.veyra-dashboard-blank,
+#tab-dashboard,
+#tab-dashboard.active{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+#tab-dashboard.veyra-dashboard-blank #dashboard-modern-shell,
+#dashboard-modern-shell{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  min-height:0!important;
+}
+#tab-dashboard.veyra-dashboard-blank #dashboard-modern-shell > *{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
 
 /* Badge-ul de număr din pagina Meciuri rămâne vizibil */
 .mx21-head #filter-count,
