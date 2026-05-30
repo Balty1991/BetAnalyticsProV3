@@ -98,6 +98,9 @@
     var host = $('dashboard-modern-shell');
     if(!dash) return;
 
+    // Skip blanking when the new dashboard is rendered
+    if(host && host.dataset.veyraNew) return;
+
     dash.classList.add('veyra-dashboard-blank');
 
     // Elimină complet panoul Status Sistem și orice card injectat în Dashboard.
