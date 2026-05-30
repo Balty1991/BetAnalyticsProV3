@@ -48,16 +48,18 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260427procc3"/>
 <link rel="stylesheet" href="./assets/veyra_apex_theme.css?v=20260516apex2"/>
 <link rel="stylesheet" href="./assets/nav_visibility_fix.css?v=20260515navfix2"/>
-<link rel="stylesheet" href="./assets/veyra_system_status.css?v=20260515dashblank1"/>
+<link rel="stylesheet" href="./assets/veyra_system_status.css?v=20260530dash1"/>
 <link rel="stylesheet" href="./assets/veyra_compact_v42.css?v=20260515compact2"/>
 <link rel="stylesheet" href="./assets/veyra_date_separator_final.css?v=20260515dayfull1"/>
 <link rel="stylesheet" href="./assets/veyra_reco_grouped.css?v=20260515reco2"/>
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
+<link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260530dash1"/>
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
 <script defer src="./assets/app.js?v=20260515reco2"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
+<script defer src="./assets/veyra_dashboard.js?v=20260530dash1"></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Sari la conținutul principal</a>
@@ -547,13 +549,13 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
         var sb = document.getElementById('sb-text');
         if(sb){ var m = (sb.textContent||sb.innerText||'').match(/ora\s+(\d{2}:\d{2})/); if(m) t = m[1]; }
       }
-      el.textContent = t ? '\u23F1 '+t : '';
+      el.textContent = t ? '⏱ '+t : '';
     }
     [1000,2000,4000,8000].forEach(function(d){ setTimeout(updateSyncTime,d); });
     setInterval(updateSyncTime, 15000);
   })();
   </script>
   <script defer src="./assets/nav_visibility_fix.js?v=20260515navfix3"></script>
-  <script defer src="./assets/veyra_system_status.js?v=20260515dashblank1"></script>
+  <script defer src="./assets/veyra_system_status.js?v=20260530dash1"></script>
 </body>
 </html>

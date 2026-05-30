@@ -53,18 +53,12 @@
   }
 
   function displayedMeciuriCount(){
-    // Sursa principală: valoarea setată de renderMatches() după randarea reală.
     var fromGlobal = safeNum(W.__VEYRA_MECIURI_DISPLAYED_COUNT, 0);
     if(fromGlobal > 0) return fromGlobal;
-
-    // Fallback: pastila existentă din DOM.
     var fromPill = countFromFilterPill();
     if(fromPill > 0) return fromPill;
-
-    // Fallback: cache-ul filtrat, dacă există.
     var cache = W.MATCHES_FILTERED_CACHE;
     if(Array.isArray(cache) && cache.length) return cache.length;
-
     return defaultMeciuriCount();
   }
 
@@ -98,9 +92,11 @@
     var host = $('dashboard-modern-shell');
     if(!dash) return;
 
+    // Skip blanking when the new dashboard is rendered
+    if(host && host.dataset.veyraNew) return;
+
     dash.classList.add('veyra-dashboard-blank');
 
-    // Elimină complet panoul Status Sistem și orice card injectat în Dashboard.
     var status = $('dashboard-system-status');
     if(status) status.remove();
 
@@ -112,7 +108,6 @@
       host.dataset.veyraBlank = '1';
     }
 
-    // Curățare defensivă pentru panouri vechi mutate direct în tab-dashboard.
     var selectors = [
       '#dashboard-system-status',
       '.dashboard-v16-shell',
