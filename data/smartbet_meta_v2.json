@@ -1,14 +1,14 @@
 {
   "version": "smartbet-fusion-v2",
-  "updated_at": "2026-05-11T14:53:06.501203+00:00",
+  "updated_at": "2026-06-01T09:25:33.662948+00:00",
   "system": {
-    "avg_wfv_auc": 0.5999,
-    "avg_test_ece": 0.0141,
+    "avg_wfv_auc": 0.5978,
+    "avg_test_ece": 0.015,
     "models_trained": 7,
     "feature_count": 253,
-    "training_rows": 55749,
-    "eligible_rows_min5": 50274,
-    "warehouse_events": 55749,
+    "training_rows": 56846,
+    "eligible_rows_min5": 51293,
+    "warehouse_events": 56846,
     "warehouse_leagues": 35,
     "warehouse_year_min": 2003,
     "warehouse_year_max": 2079
@@ -16,31 +16,52 @@
   "markets_ranked": [
     {
       "market": "away_win",
-      "wfv_auc": 0.6833
+      "wfv_auc": 0.6804,
+      "test_ece": 0.0214,
+      "quality_gate": "A",
+      "label": "away_win"
     },
     {
       "market": "home_win",
-      "wfv_auc": 0.6726
+      "wfv_auc": 0.6702,
+      "test_ece": 0.019,
+      "quality_gate": "A",
+      "label": "home_win"
     },
     {
       "market": "under35",
-      "wfv_auc": 0.5934
-    },
-    {
-      "market": "over25",
-      "wfv_auc": 0.5789
+      "wfv_auc": 0.5885,
+      "test_ece": 0.0143,
+      "quality_gate": "B",
+      "label": "under35"
     },
     {
       "market": "over15",
-      "wfv_auc": 0.5767
+      "wfv_auc": 0.579,
+      "test_ece": 0.0078,
+      "quality_gate": "B",
+      "label": "over15"
+    },
+    {
+      "market": "over25",
+      "wfv_auc": 0.5771,
+      "test_ece": 0.0111,
+      "quality_gate": "B",
+      "label": "over25"
     },
     {
       "market": "btts",
-      "wfv_auc": 0.5517
+      "wfv_auc": 0.5524,
+      "test_ece": 0.022,
+      "quality_gate": "B",
+      "label": "btts"
     },
     {
       "market": "draw",
-      "wfv_auc": 0.5429
+      "wfv_auc": 0.537,
+      "test_ece": 0.0097,
+      "quality_gate": "C",
+      "label": "draw"
     }
   ],
   "leagues_count": 31,
@@ -61,13 +82,13 @@
       },
       "models_count": 7,
       "models": [
-        "catboost_btts.cbm",
-        "catboost_draw.cbm",
-        "catboost_under35.cbm",
         "catboost_over25.cbm",
-        "catboost_home_win.cbm",
         "catboost_over15.cbm",
-        "catboost_away_win.cbm"
+        "catboost_btts.cbm",
+        "catboost_away_win.cbm",
+        "catboost_under35.cbm",
+        "catboost_draw.cbm",
+        "catboost_home_win.cbm"
       ]
     }
   },
