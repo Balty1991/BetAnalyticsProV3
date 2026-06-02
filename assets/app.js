@@ -10460,7 +10460,10 @@ function renderML5Analysis(){
   });
 
   // Summary header
-  var avgScore = Math.round(sorted.reduce(function(s,m){ return s+(m.smartScore||0); },0)/sorted.length);
+  var scoredMatches = sorted.filter(function(m){ return (m.smartScore||0) > 0; });
+  var avgScore = scoredMatches.length > 0
+    ? Math.round(scoredMatches.reduce(function(s,m){ return s+(m.smartScore||0); },0)/scoredMatches.length)
+    : 0;
   var topPicks = sorted.filter(function(m){ return (m.smartScore||0) >= 80; }).length;
   var highConf = sorted.filter(function(m){
     return m.bestBet && m.bestBet.ml5Factors && Number(m.bestBet.ml5Factors.combined||1) >= 1.05;
