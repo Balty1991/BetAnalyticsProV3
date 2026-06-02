@@ -5443,7 +5443,7 @@ function renderTodayBest(){
       '<div class="tp-league">'+m.league+' • '+m.timeLabel+'</div>'+
       '<div class="tp-metrics">'+
         '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--grn)">'+valStr+'</div><div class="tp-metric-lbl">Value</div></div>'+
-        '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--acc)">'+m.confidence.toFixed(0)+'%</div><div class="tp-metric-lbl">AI Conf.</div></div>'+
+        '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--acc)">'+Number(m.confidence||0).toFixed(0)+'%</div><div class="tp-metric-lbl">AI Conf.</div></div>'+
         '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--yel)">'+b.odds.toFixed(2)+'</div><div class="tp-metric-lbl">Odds</div></div>'+
       '</div>'+
       '<div class="tp-rec">🎯 '+b.label+' @ '+b.odds.toFixed(2)+' | Șansă: '+fmtPct(b.adjProb)+'</div>'+
@@ -5490,7 +5490,7 @@ function renderTopPicks(){
       '<div class="tp-league">'+m.league+' • '+m.dateLabel+' '+m.timeLabel+'</div>'+
       '<div class="tp-metrics">'+
         '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--grn)">'+valStr+'</div><div class="tp-metric-lbl">Value</div></div>'+
-        '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--acc)">'+m.confidence.toFixed(0)+'%</div><div class="tp-metric-lbl">AI Conf.</div></div>'+
+        '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--acc)">'+Number(m.confidence||0).toFixed(0)+'%</div><div class="tp-metric-lbl">AI Conf.</div></div>'+
         '<div class="tp-metric"><div class="tp-metric-val" style="color:var(--pur)">'+hScore+'</div><div class="tp-metric-lbl">H-Score</div></div>'+
       '</div>'+
       '<div class="tp-rec" style="background:linear-gradient(90deg,rgba(59,130,246,0.1),rgba(168,85,247,0.1));border:1px solid rgba(168,85,247,0.2)">🎯 '+b.label+' @ '+b.odds.toFixed(2)+' | Șansă: '+fmtPct(b.adjProb)+'</div>'+
@@ -5506,7 +5506,7 @@ function buildMatchReasons(m){
   if(m.bestBet && m.bestBet.value >= 0.03) reasons.push('EV+ ' + fmtPct(m.bestBet.value * 100));
   if(m.bestBet) reasons.push('sursă ' + sourceLabelFromBet(m.bestBet));
 
-  if(m.confidence >= 60) reasons.push('AI confidence ' + m.confidence.toFixed(0) + '%');
+  if(m.confidence >= 60) reasons.push('AI confidence ' + Number(m.confidence||0).toFixed(0) + '%');
   if(m.xgTotal >= 2.6) reasons.push('xG total ' + m.xgTotal.toFixed(2));
   if(m.probOver25 >= 60) reasons.push('O2.5 ' + m.probOver25.toFixed(1) + '%');
   if(m.probUnder25 >= 56) reasons.push('U2.5 ' + m.probUnder25.toFixed(1) + '%');
@@ -6259,7 +6259,7 @@ function renderML(){
         '<span class="ml-pick" style="background:rgba(59,130,246,0.15);color:var(--acc);font-size:11px;padding:4px 10px">🎯 '+topPick.label+'</span>'+
       '</div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05)">'+
-        '<div style="font-size:9px;color:var(--muted)">AI: <b>'+m.confidence.toFixed(0)+'%</b></div>'+
+        '<div style="font-size:9px;color:var(--muted)">AI: <b>'+Number(m.confidence||0).toFixed(0)+'%</b></div>'+
         '<div style="font-size:9px;color:var(--acc);font-weight:700">Prob: '+topPick.prob.toFixed(1)+'%</div>'+
       '</div>'+
     '</div>';
@@ -6335,7 +6335,7 @@ function renderML15(){
       '<div class="ml-picks"><span class="ml-pick" style="background:rgba(34,197,94,0.15);color:var(--grn);font-size:11px;padding:4px 10px">🔥 Over 1.5G</span></div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05)">'+
         '<div style="font-size:9px;color:var(--muted)">Data: <b>'+m.timeLabel+'</b></div>'+
-        '<div style="font-size:9px;color:var(--grn);font-weight:700">AI: '+m.confidence.toFixed(0)+'%</div>'+
+        '<div style="font-size:9px;color:var(--grn);font-weight:700">AI: '+Number(m.confidence||0).toFixed(0)+'%</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -6357,7 +6357,7 @@ function renderML25(){
     return '<div class="ml-card" style="background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.2)">'+
       '<div class="ml-hdr">'+
         '<div class="ml-teams">'+m.home+' vs '+m.away+'</div>'+
-        '<div class="ml-conf" style="color:var(--val)">'+m.confidence.toFixed(0)+'%</div>'+
+        '<div class="ml-conf" style="color:var(--val)">'+Number(m.confidence||0).toFixed(0)+'%</div>'+
       '</div>'+
       '<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+
         '<span>'+m.league+' • '+m.dateLabel+' • '+(m.modelVersion||'CatBoost')+'</span>' +
@@ -6430,7 +6430,7 @@ function renderTopSafe(){
     return '<div class="ml-card" style="background:rgba(34,197,94,0.08);border:2px solid rgba(34,197,94,0.3)">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
         '<span style="font-size:12px;font-weight:900;color:rgba(34,197,94,0.75)">#'+(i+1)+'</span>'+
-        '<span style="color:'+confColor+';font-size:13px;font-weight:800">'+m.confidence.toFixed(0)+'%</span>'+
+        '<span style="color:'+confColor+';font-size:13px;font-weight:800">'+Number(m.confidence||0).toFixed(0)+'%</span>'+
       '</div>'+
       '<div class="ml-teams" style="font-weight:700;color:var(--txt);margin-bottom:8px">'+m.home+' vs '+m.away+'</div>'+
       '<div style="font-size:9px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'+
@@ -6951,7 +6951,7 @@ function renderMatches(){
     var probBadge = b ? ('<span class="card-reco-badge">Șansă '+fmtPct(b.adjProb || 0)+'</span>') : '';
     var valueBadge = b && b.value != null ? ('<span class="card-reco-badge">Value '+((b.value>=0?'+':'') + fmtPct((b.value||0)*100))+'</span>') : '';
     var edgeBadge = b && b.edgePct != null ? ('<span class="card-reco-badge">Edge '+(b.edgePct >= 0 ? '+' : '')+fmtPct(b.edgePct)+'</span>') : '';
-    var confBadge = b ? ('<span class="card-reco-badge">Confidence '+m.confidence.toFixed(0)+'%</span>') : '';
+    var confBadge = b ? ('<span class="card-reco-badge">Confidence '+Number(m.confidence||0).toFixed(0)+'%</span>') : '';
     var tierBadge = b && m.leagueTierLabel ? ('<span class="card-reco-badge">'+m.leagueTierLabel+'</span>') : '';
     var poissonBadge = b ? poissonBadgeHtmlForBet(b) : '';
     var scoreBadge = m.mostLikelyScore ? ('<span class="mc-score-pill">scor probabil '+m.mostLikelyScore+'</span>') : '';
@@ -7501,6 +7501,13 @@ function renderMatches(){
     minProb, minEdge, kickoffF || '', tierF || '', minScore, MATCHES_FILTERED_CACHE.length, firstVisibleSig
   ].join('::');
   if(container.getAttribute('data-ba-render-sig') === renderSig && container.querySelector('.match-card')){
+    try{
+      var _ec=container.querySelectorAll('.match-card').length;
+      if(_ec>0 && _ec!==filtered.length){
+        var _ecf=$('filter-count');
+        if(_ecf){ var _ecl=CURRENT_FILTER==='motor_validated'?' validate':CURRENT_FILTER==='bet_ok'?' OK':' meciuri'; _ecf.textContent=_ec+_ecl; }
+      }
+    }catch(_){}
     renderTicketQuickPeek();
     if(typeof renderDashboardMonitor === 'function') renderDashboardMonitor();
     return;
