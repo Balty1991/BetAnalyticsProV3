@@ -73,6 +73,8 @@
   flex-direction: column;
   gap: 3px;
   transition: border-color .2s;
+  overflow: hidden;
+  min-width: 0;
 }
 .vd-stat-card:hover {
   border-color: rgba(43,229,197,.35);
@@ -91,11 +93,15 @@
   text-transform: uppercase;
   letter-spacing: .07em;
   margin-top: 4px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .vd-stat-sub {
   font-size: 10px;
   color: rgba(240,244,251,.28);
   margin-top: 1px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Section */
@@ -147,6 +153,8 @@
   cursor: pointer;
   transition: all .18s;
   text-align: left;
+  overflow: hidden;
+  min-width: 0;
 }
 .vd-nav-btn:hover, .vd-nav-btn:active {
   border-color: rgba(43,229,197,.35);
@@ -163,11 +171,17 @@
   font-weight: 700;
   color: var(--txt, #F0F4FB);
   line-height: 1.2;
+  display: block;
+  width: 100%;
 }
 .vd-nav-btn-sub {
   font-size: 10px;
   color: var(--muted, #6B7B97);
   line-height: 1.35;
+  display: block;
+  width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Pick cards */
