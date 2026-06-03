@@ -54,6 +54,31 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/veyra_reco_grouped.css?v=20260515reco2"/>
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
 <link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260603dash3"/>
+<link rel="stylesheet" href="./assets/light_theme.css?v=20260603lgt1"/>
+<script>
+/* Early theme init — prevents flash of dark theme when light is saved */
+(function(){
+  if(localStorage.getItem('veyra-theme')==='light'){
+    document.documentElement.style.background='#F0F4FB';
+    document.addEventListener('DOMContentLoaded',function(){
+      document.body.classList.add('theme-light');
+      var sd=document.getElementById('theme-svg-dark');
+      var sl=document.getElementById('theme-svg-light');
+      if(sd)sd.style.display='none';
+      if(sl)sl.style.display='';
+    });
+  }
+})();
+function toggleTheme(){
+  var isLight=document.body.classList.toggle('theme-light');
+  localStorage.setItem('veyra-theme',isLight?'light':'dark');
+  var sd=document.getElementById('theme-svg-dark');
+  var sl=document.getElementById('theme-svg-light');
+  if(sd)sd.style.display=isLight?'none':'';
+  if(sl)sl.style.display=isLight?'':'none';
+  document.documentElement.style.background=isLight?'#F0F4FB':'';
+}
+</script>
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
@@ -99,6 +124,12 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
     <div class="header-tools">
       <button class="btn btn-refresh-ico" id="btn-refresh" onclick="doRefresh(true)" aria-label="Reimprospateaza date" title="Reimprospateaza">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button class="btn btn-refresh-ico" id="btn-theme" onclick="toggleTheme()" aria-label="Schimba tema" title="Temă luminoasă / întunecată">
+        <!-- Moon — shown in dark mode -->
+        <svg id="theme-svg-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <!-- Sun — shown in light mode -->
+        <svg id="theme-svg-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
     </div>
   </div>

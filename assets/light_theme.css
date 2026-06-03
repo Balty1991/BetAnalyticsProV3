@@ -1,0 +1,507 @@
+/* =================================================================
+   VEYRA — Light Theme
+   Activated via: body.theme-light
+   ================================================================= */
+
+/* ── 1. CSS VARIABLE OVERRIDES ──────────────────────────────────── */
+body.theme-light {
+  /* Core surfaces */
+  --c-bg:        #F0F4FB;
+  --c-bg2:       #FFFFFF;
+  --c-surface:   #FFFFFF;
+  --c-surface2:  #F5F8FF;
+  --c-surface3:  #EBF0FA;
+  --c-border:    #D0D9EE;
+  --c-border2:   #B8C5DB;
+  --c-hairline:  rgba(0,0,0,.07);
+  --c-hairline2: rgba(0,0,0,.12);
+
+  /* Text */
+  --c-text:   #0C1220;
+  --c-text2:  #2A3650;
+  --c-muted:  #546376;
+  --c-dim:    #8899B2;
+
+  /* Accent — darker mint for white-bg contrast */
+  --c-acc:      #0CA88E;
+  --c-acc-hi:   #14C4A8;
+  --c-acc-lo:   rgba(12,168,142,.12);
+  --c-acc-mid:  rgba(12,168,142,.28);
+  --c-acc-glow: rgba(12,168,142,.25);
+
+  /* Secondary */
+  --c-blue:      #2E7BD4;
+  --c-blue-glow: rgba(46,123,212,.25);
+
+  /* Gold */
+  --c-gold:      #B38900;
+  --c-gold-glow: rgba(179,137,0,.25);
+
+  /* Semantic — darkened for light-bg readability */
+  --c-ok:        #148A5C;
+  --c-ok-glow:   rgba(20,138,92,.20);
+  --c-warn:      #C97A00;
+  --c-warn-glow: rgba(201,122,0,.20);
+  --c-bad:       #C42040;
+  --c-bad-glow:  rgba(196,32,64,.20);
+  --c-violet:    #6B42C6;
+  --c-violet-glow: rgba(107,66,198,.20);
+
+  /* Elevation */
+  --shadow-1: 0 1px 0 rgba(255,255,255,.9) inset, 0 2px 6px rgba(0,0,0,.06);
+  --shadow-2: 0 1px 0 rgba(255,255,255,.9) inset, 0 8px 22px rgba(0,0,0,.09);
+  --shadow-3: 0 1px 0 rgba(255,255,255,.9) inset, 0 18px 44px rgba(0,0,0,.12);
+
+  /* Backward-compat aliases */
+  --bg:    #F0F4FB;
+  --bg2:   #FFFFFF;
+  --panel: #FFFFFF;
+  --brd:   #D0D9EE;
+  --brd2:  #B8C5DB;
+  --txt:   #0C1220;
+  --muted: #546376;
+  --acc:   #0CA88E;
+  --grn:   #148A5C;
+  --yel:   #C97A00;
+  --org:   #B86000;
+  --red:   #C42040;
+  --pur:   #6B42C6;
+  --cyan:  #0CA88E;
+  --val:   #148A5C;
+}
+
+/* ── 2. BASE ─────────────────────────────────────────────────────── */
+body.theme-light {
+  background: #F0F4FB !important;
+  color: #0C1220 !important;
+}
+
+/* Atmospheric aurora — light version */
+body.theme-light::before {
+  background:
+    radial-gradient(ellipse 90% 55% at 0%   0%,   rgba(12,168,142,.06)  0%, transparent 55%),
+    radial-gradient(ellipse 70% 60% at 100% 100%, rgba(46,123,212,.04)  0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 50%  90%,  rgba(107,66,198,.03)  0%, transparent 50%) !important;
+}
+
+/* Grain — barely visible on light */
+body.theme-light::after { opacity: .18 !important; }
+
+/* ── 3. SCROLLBAR ────────────────────────────────────────────────── */
+body.theme-light ::-webkit-scrollbar-thumb { background: rgba(12,168,142,.25) !important; }
+body.theme-light ::-webkit-scrollbar-thumb:hover { background: rgba(12,168,142,.45) !important; }
+
+/* ── 4. HEADER ───────────────────────────────────────────────────── */
+body.theme-light .header {
+  background: rgba(240,244,251,.92) !important;
+  backdrop-filter: saturate(160%) blur(22px) !important;
+  -webkit-backdrop-filter: saturate(160%) blur(22px) !important;
+  border-bottom: 1px solid #D0D9EE !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.8), 0 2px 8px rgba(0,0,0,.06) !important;
+}
+body.theme-light .header::after {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(12,168,142,.3) 30%,
+    rgba(46,123,212,.25) 70%,
+    transparent 100%) !important;
+}
+
+/* Logo title on light bg */
+body.theme-light .logo-title {
+  background: linear-gradient(105deg, #0C1220 0%, #0CA88E 55%, #2E7BD4 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+body.theme-light .logo-sub { color: #546376 !important; }
+body.theme-light .logo-sync-row { color: #546376 !important; }
+body.theme-light .logo-sync-row b { color: #0CA88E !important; }
+
+/* Refresh + theme buttons */
+body.theme-light .btn-refresh-ico {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  color: #0CA88E !important;
+}
+
+/* ── 5. TABS NAV ─────────────────────────────────────────────────── */
+body.theme-light nav.tabs,
+body.theme-light .tabs {
+  background: linear-gradient(180deg, rgba(240,244,251,.98), rgba(235,240,250,.96)) !important;
+  backdrop-filter: saturate(160%) blur(22px) !important;
+  -webkit-backdrop-filter: saturate(160%) blur(22px) !important;
+  border-top: 1px solid rgba(12,168,142,.14) !important;
+  border-bottom: 1px solid #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.7) !important;
+}
+body.theme-light .tabs::before {
+  background: linear-gradient(90deg, transparent, rgba(12,168,142,.45), rgba(46,123,212,.28), transparent) !important;
+}
+body.theme-light .tab { color: #546376 !important; }
+body.theme-light .tab.active {
+  color: #0CA88E !important;
+  border-bottom-color: #0CA88E !important;
+  background: rgba(12,168,142,.08) !important;
+}
+body.theme-light .tab:hover:not(.active) {
+  color: #0C1220 !important;
+  background: rgba(0,0,0,.04) !important;
+}
+
+/* ── 6. MAIN PANELS ──────────────────────────────────────────────── */
+body.theme-light .section,
+body.theme-light .panel,
+body.theme-light .card,
+body.theme-light .tab-content {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
+
+/* ── 7. LOADER ───────────────────────────────────────────────────── */
+body.theme-light .loader {
+  background: rgba(240,244,251,.97) !important;
+  backdrop-filter: blur(8px) !important;
+}
+body.theme-light .loader-title { color: #0C1220 !important; }
+
+/* ── 8. DESKTOP MORE PANEL ───────────────────────────────────────── */
+body.theme-light .desktop-more-panel.show {
+  background: rgba(240,244,251,.98) !important;
+  border-top: 1px solid #D0D9EE !important;
+}
+body.theme-light .desktop-more-title { color: #0C1220 !important; }
+body.theme-light .desktop-more-sub { color: #546376 !important; }
+body.theme-light .more-card-btn {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  color: #0C1220 !important;
+}
+body.theme-light .more-card-btn:hover {
+  border-color: rgba(12,168,142,.35) !important;
+  background: rgba(12,168,142,.05) !important;
+}
+body.theme-light .more-card-title { color: #0C1220 !important; }
+body.theme-light .more-card-sub { color: #546376 !important; }
+
+/* ── 9. STAT CARDS ───────────────────────────────────────────────── */
+body.theme-light .stat-card,
+body.theme-light .track-stat {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
+
+/* ── 10. MATCH CARDS ─────────────────────────────────────────────── */
+body.theme-light .match-card {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .match-card:hover {
+  border-color: #B8C5DB !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08) !important;
+}
+body.theme-light .mc-team-logo {
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .mc-stat { background: rgba(0,0,0,.04) !important; }
+body.theme-light .mc-rec {
+  background: rgba(12,168,142,.07) !important;
+  border-color: rgba(12,168,142,.22) !important;
+}
+
+/* ── 11. TOP PICK CARDS ──────────────────────────────────────────── */
+body.theme-light .top-pick-card {
+  background: #FFFFFF !important;
+  border-color: rgba(12,168,142,.28) !important;
+}
+body.theme-light .tp-rank { color: rgba(0,0,0,.06) !important; }
+body.theme-light .tp-metric { background: rgba(0,0,0,.04) !important; }
+body.theme-light .tp-rec {
+  background: rgba(12,168,142,.07) !important;
+  color: #0CA88E !important;
+}
+
+/* ── 12. FILTER BAR ──────────────────────────────────────────────── */
+body.theme-light .filter-btn {
+  border-color: #D0D9EE !important;
+  color: #546376 !important;
+}
+body.theme-light .filter-btn.active {
+  background: rgba(12,168,142,.1) !important;
+  border-color: #0CA88E !important;
+  color: #0CA88E !important;
+}
+body.theme-light .sort-select,
+body.theme-light .league-filter-select {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  color: #0C1220 !important;
+}
+
+/* ── 13. MATCHES SECTION CARD ────────────────────────────────────── */
+body.theme-light .matches-section-card {
+  background: linear-gradient(180deg, #FFFFFF, #F8FAFF) !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06) !important;
+}
+body.theme-light .matches-filter-toolbar {
+  background: rgba(0,0,0,.02) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light .matches-filter-advanced {
+  background: rgba(0,0,0,.015) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light .matches-chip-meta .filter-count {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #546376 !important;
+}
+body.theme-light .date-label {
+  background: rgba(0,0,0,.04) !important;
+  color: #546376 !important;
+}
+
+/* ── 14. HELP PANELS ─────────────────────────────────────────────── */
+body.theme-light .help-chip {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.10) !important;
+  color: #0C1220 !important;
+}
+body.theme-light .help-chip:hover {
+  border-color: rgba(12,168,142,.38) !important;
+  background: rgba(12,168,142,.08) !important;
+}
+body.theme-light .help-output {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+}
+
+/* ── 15. VISUAL INSIGHT CARDS ────────────────────────────────────── */
+body.theme-light .visual-card {
+  background: linear-gradient(180deg, #FFFFFF, #F8FAFF) !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .visual-row {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+body.theme-light .visual-bar { background: rgba(0,0,0,.08) !important; }
+body.theme-light .visual-dist-stack {
+  background: rgba(0,0,0,.07) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light .visual-dist-pill {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #546376 !important;
+}
+
+/* ── 16. TREND ───────────────────────────────────────────────────── */
+body.theme-light .trend-shell {
+  background: linear-gradient(180deg, #FFFFFF, #F8FAFF) !important;
+  border-color: rgba(12,168,142,.2) !important;
+}
+body.theme-light .trend-meta-card {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light .trend-pill {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #546376 !important;
+}
+
+/* ── 17. BANKROLL / FORM INPUTS ──────────────────────────────────── */
+body.theme-light .bk-item {
+  background: rgba(0,0,0,.03) !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .bk-input,
+body.theme-light .form-input {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  color: #0C1220 !important;
+}
+body.theme-light .bk-input::placeholder,
+body.theme-light .form-input::placeholder { color: #8899B2 !important; }
+
+/* ── 18. BILET CARD ──────────────────────────────────────────────── */
+body.theme-light .bilet-card { background: #FFFFFF !important; border-color: #D0D9EE !important; }
+
+/* ── 19. COLLAPSIBLE ─────────────────────────────────────────────── */
+body.theme-light .collapse-count {
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D0D9EE !important;
+  color: #546376 !important;
+}
+body.theme-light .collapse-toggle {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.25) !important;
+  color: #0CA88E !important;
+}
+body.theme-light .collapse-toggle.open {
+  background: rgba(12,168,142,.2) !important;
+}
+
+/* ── 20. HISTORY TABLE ───────────────────────────────────────────── */
+body.theme-light .history-table td { border-bottom-color: rgba(208,217,238,.7) !important; }
+body.theme-light .history-table tr:hover td { background: rgba(0,0,0,.02) !important; }
+body.theme-light .history-table-wrapper::-webkit-scrollbar-thumb { background: #D0D9EE !important; }
+
+/* ── 21. MOBILE SHEET ────────────────────────────────────────────── */
+body.theme-light .mobile-sheet {
+  background: rgba(240,244,251,.98) !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 18px 38px rgba(0,0,0,.12) !important;
+}
+body.theme-light .mobile-sheet-btn {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #0C1220 !important;
+}
+body.theme-light .sheet-btn-title { color: #0C1220 !important; }
+body.theme-light .sheet-btn-sub { color: #546376 !important; }
+
+/* ── 22. DASHBOARD INSIGHTS ──────────────────────────────────────── */
+body.theme-light .dashboard-insights-toggle {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+body.theme-light .dashboard-insights-title { color: #0C1220 !important; }
+body.theme-light .dashboard-insights-sub { color: #546376 !important; }
+
+/* ── 23. VEYRA DASHBOARD COMPONENT (veyra_dashboard.css) ─────────── */
+body.theme-light #veyra-dash { background: transparent !important; }
+body.theme-light .vd-greeting { color: #0C1220 !important; }
+body.theme-light .vd-date { color: #546376 !important; }
+
+body.theme-light .vd-pill {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.1) !important;
+  color: #546376 !important;
+}
+body.theme-light .vd-pill.live {
+  background: rgba(20,138,92,.1) !important;
+  border-color: rgba(20,138,92,.32) !important;
+  color: #148A5C !important;
+}
+
+body.theme-light .vd-stat-card {
+  background: #FFFFFF !important;
+  border-color: rgba(12,168,142,.18) !important;
+}
+body.theme-light .vd-stat-card:hover { border-color: rgba(12,168,142,.38) !important; }
+body.theme-light .vd-stat-val { color: #0CA88E !important; }
+body.theme-light .vd-stat-lbl { color: #546376 !important; }
+body.theme-light .vd-stat-sub { color: rgba(12,18,32,.42) !important; }
+
+body.theme-light .vd-section-title { color: #0C1220 !important; }
+body.theme-light .vd-section-link { color: #0CA88E !important; }
+
+body.theme-light .vd-nav-btn {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .vd-nav-btn:hover,
+body.theme-light .vd-nav-btn:active {
+  border-color: rgba(12,168,142,.35) !important;
+  background: rgba(12,168,142,.05) !important;
+}
+body.theme-light .vd-nav-btn-label { color: #0C1220 !important; }
+body.theme-light .vd-nav-btn-sub { color: #546376 !important; }
+
+body.theme-light .vd-pick-card {
+  background: #F8FAFF !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .vd-pick-card:hover,
+body.theme-light .vd-pick-card:active {
+  border-color: rgba(12,168,142,.28) !important;
+  background: rgba(12,168,142,.04) !important;
+}
+body.theme-light .vd-pick-conf {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.25) !important;
+  color: #0CA88E !important;
+}
+body.theme-light .vd-pick-conf.high {
+  background: rgba(20,138,92,.1) !important;
+  border-color: rgba(20,138,92,.3) !important;
+  color: #148A5C !important;
+}
+body.theme-light .vd-pick-teams { color: #0C1220 !important; }
+body.theme-light .vd-pick-meta { color: #546376 !important; }
+body.theme-light .vd-pick-badge {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  color: #0CA88E !important;
+}
+body.theme-light .vd-pick-badge.safe {
+  background: rgba(20,138,92,.1) !important;
+  border-color: rgba(20,138,92,.3) !important;
+  color: #148A5C !important;
+}
+body.theme-light .vd-pick-badge.mod {
+  background: rgba(201,122,0,.1) !important;
+  border-color: rgba(201,122,0,.28) !important;
+  color: #C97A00 !important;
+}
+body.theme-light .vd-empty {
+  background: rgba(0,0,0,.02) !important;
+  border-color: #D0D9EE !important;
+  color: #546376 !important;
+}
+body.theme-light .vd-divider {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,.1), transparent) !important;
+}
+
+/* ── 24. BTN GHOST ───────────────────────────────────────────────── */
+body.theme-light .btn-ghost {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.1) !important;
+  color: #0C1220 !important;
+}
+body.theme-light .btn-ghost:hover {
+  background: rgba(0,0,0,.07) !important;
+}
+
+/* ── 25. NAV BADGE ───────────────────────────────────────────────── */
+body.theme-light .nav-ticket-badge { color: #148A5C !important; }
+
+/* ── 26. WELCOME BOX ─────────────────────────────────────────────── */
+body.theme-light .welcome-box {
+  background: linear-gradient(135deg, rgba(12,168,142,.07), rgba(46,123,212,.06)) !important;
+  border-color: rgba(12,168,142,.22) !important;
+}
+
+/* ── 27. SEC BADGE ───────────────────────────────────────────────── */
+body.theme-light .sec-badge {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  color: #0CA88E !important;
+}
+
+/* ── 28. SCORE BADGE ─────────────────────────────────────────────── */
+body.theme-light .score-badge {
+  background: rgba(107,66,198,.1) !important;
+  border-color: rgba(107,66,198,.28) !important;
+}
+
+/* ── 29. GENERATOR TILES ─────────────────────────────────────────── */
+body.theme-light .generator-tile {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .generator-tile .badge {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+
+/* ── 30. THEME TOGGLE BUTTON ─────────────────────────────────────── */
+body.theme-light #btn-theme {
+  background: rgba(201,122,0,.1) !important;
+  border-color: rgba(201,122,0,.28) !important;
+  color: #C97A00 !important;
+}
