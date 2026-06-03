@@ -117,6 +117,55 @@
     try { TRACKING.unshift = patchedUnshift; } catch(e) {}
   }
 
+  /* ─── scanare retroactivă pariuri existente ─── */
+  function scanExistingTracking() {
+    var TRACKING = Array.isArray(window.TRACKING) ? window.TRACKING : [];
+    if (!TRACKING.length) return;
+    var log = loadLog();
+    var changed = false;
+
+    TRACKING.forEach(function (ticket) {
+      if (!ticket || !Array.isArray(ticket.picks)) return;
+      ticket.picks.forEach(function (pick) {
+        if (!pick || !pick.home || !pick.away) return;
+        // verificăm să nu dublăm
+        var exists = log.some(function (e) {
+          return e.ticketId === ticket.id && e.home === pick.home && e.away === pick.away;
+        });
+        if (exists) return;
+
+        var ml5 = findML5ForPick(pick.home, pick.away);
+        if (!ml5 || ml5.ml5Score <= 0) return;
+
+        // determinăm rezultatul pe baza statusului biletului
+        var result = 'pending';
+        if (ticket.status === 'won') result = 'won';
+        else if (ticket.status === 'lost' || ticket.status === 'lose') result = 'lost';
+
+        log.unshift({
+          ticketId: ticket.id,
+          savedAt: ticket.placedAt || ticket.createdAt || new Date().toISOString(),
+          home: pick.home,
+          away: pick.away,
+          league: ml5.ml5League || pick.league || '',
+          eventDate: ml5.ml5EventDate || pick.eventDate || '',
+          betLabel: pick.bet || ml5.ml5Market || '',
+          market: pick.marketType || '',
+          trackOdds: safeN(pick.odds),
+          trackProb: safeN(pick.prob),
+          ml5Score: ml5.ml5Score,
+          ml5Prob: ml5.ml5Prob,
+          ml5Odds: ml5.ml5Odds,
+          factors: ml5.factors,
+          result: result
+        });
+        changed = true;
+      });
+    });
+
+    if (changed) saveLog(log);
+  }
+
   /* ─── sincronizare rezultate din TRACKING ─── */
   function syncResults() {
     var log = loadLog();
@@ -333,17 +382,21 @@
     interceptTracking();
     hookRender();
     syncResults();
+    // Scanăm retroactiv tracking-ul existent după ce ALL_MATCHES e populat
+    [800, 2000, 4000].forEach(function (d) {
+      setTimeout(function () {
+        scanExistingTracking();
+        syncResults();
+        interceptTracking();
+        hookRender();
+        // Reîmprospătăm UI-ul dacă tab-ul ML5 e vizibil
+        var tab = document.getElementById('tab-ml5');
+        if (tab && tab.classList.contains('active')) injectMonitor();
+      }, d);
+    });
     // Dacă tab-ul ML5 e activ deja, injectăm imediat
     var tab = document.getElementById('tab-ml5');
     if (tab && tab.classList.contains('active')) setTimeout(injectMonitor, 200);
-    // Re-hook după ce app.js inițializează funcțiile
-    [500, 1200, 2500, 5000].forEach(function (d) {
-      setTimeout(function () {
-        interceptTracking();
-        hookRender();
-        syncResults();
-      }, d);
-    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
