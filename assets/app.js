@@ -10431,7 +10431,7 @@ function renderML5Analysis(){
 
   // If no token - prompt
   var token = API_TOKEN || localStorage.getItem('bsd_token') || '';
-  var tokenWarning = !token ?
+  var tokenWarning = (!token && enriched.length === 0) ?
     '<div style="padding:14px 16px;border-radius:14px;background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.25);color:#fca5a5;font-size:12px;margin-bottom:16px">' +
       '⚠️ <strong>Token BSD lipsă.</strong> Introdu tokenul în Setări pentru a activa enrichment-ul live.' +
     '</div>' : '';
