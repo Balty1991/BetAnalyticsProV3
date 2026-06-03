@@ -54,11 +54,24 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/veyra_reco_grouped.css?v=20260515reco2"/>
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
 <link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260603dash3"/>
-<link rel="stylesheet" href="./assets/light_theme.css?v=20260603lgt14"/>
+<link rel="stylesheet" href="./assets/light_theme.css?v=20260603lgt15"/>
 <!-- APEX light-mode nuclear override — appears LAST in cascade, beats all @import chains -->
 <style id="apex-light-override">
 /* html background — beats apex_lux_exact.css html{background:#02050a!important} via :has() specificity */
 html:has(body.theme-light) { background: #F0F4FB !important; }
+
+/* Override apex CSS variables at body level — fixes ALL elements using var(--apex-card) etc. */
+body.theme-light {
+  --apex-bg:    #F0F4FB !important;
+  --apex-bg2:   #E8EDF6 !important;
+  --apex-panel: #F4F7FD !important;
+  --apex-card:  #FFFFFF !important;
+  --apex-brd:   #D0D9EE !important;
+  --apex-brd2:  #C0CDE0 !important;
+  --apex-txt:   #0C1220 !important;
+  --apex-muted: #6B7890 !important;
+  --apex-dim:   #8494B0 !important;
+}
 
 /* Mobile bottom nav — solid light glass */
 body.theme-light .mobile-nav { background: rgba(240,244,251,.97) !important; backdrop-filter: saturate(160%) blur(28px) !important; -webkit-backdrop-filter: saturate(160%) blur(28px) !important; border: 1px solid rgba(12,168,142,.18) !important; box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 -4px 20px rgba(0,0,0,.08) !important; }
