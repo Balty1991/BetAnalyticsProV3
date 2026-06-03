@@ -68,6 +68,35 @@ body.theme-light {
   --pur:   #6B42C6;
   --cyan:  #0CA88E;
   --val:   #148A5C;
+
+  /* ── platform_theme_unifier.css variables ───────────────────────── */
+  --ba-ui-bg:       #F0F4FB;
+  --ba-ui-panel:    #FFFFFF;
+  --ba-ui-panel-2:  #F5F8FF;
+  --ba-ui-text:     #0C1220;
+  --ba-ui-muted:    #546376;
+  --ba-ui-soft:     #2A3650;
+  --ba-ui-cyan:     #0CA88E;
+  --ba-ui-blue:     #2E7BD4;
+  --ba-ui-gold:     #B38900;
+  --ba-ui-green:    #148A5C;
+  --ba-ui-red:      #C42040;
+  --ba-ui-line:     linear-gradient(90deg,transparent,rgba(12,168,142,.3),rgba(46,123,212,.2),transparent);
+
+  /* ── apex_lux_pixel_meciuri.css variables ───────────────────────── */
+  --apx-bg:         #F0F4FB;
+  --apx-bg2:        #FFFFFF;
+  --apx-panel:      #FFFFFF;
+  --apx-panel2:     #F5F8FF;
+  --apx-card:       #FFFFFF;
+  --apx-line:       rgba(0,0,0,.10);
+  --apx-line-soft:  rgba(0,0,0,.06);
+  --apx-cyan:       #0CA88E;
+  --apx-gold:       #B38900;
+  --apx-blue:       #2E7BD4;
+  --apx-text:       #0C1220;
+  --apx-muted:      #546376;
+  --apx-shadow:     0 4px 16px rgba(0,0,0,.08);
 }
 
 /* ── 2. BASE ─────────────────────────────────────────────────────── */
@@ -592,12 +621,43 @@ body.theme-light .main #tab-smartbet [class*="card"],
 body.theme-light .main #tab-ml5 [class*="card"],
 body.theme-light .main #tab-clv [class*="card"],
 body.theme-light .main #tab-performanta [class*="card"],
+body.theme-light .main #tab-more [class*="card"],
+body.theme-light .main #tab-cota2 [class*="card"],
 body.theme-light .main #tab-dashboard [class*="panel"],
 body.theme-light .main #tab-smartbet [class*="panel"],
 body.theme-light .main #tab-ml5 [class*="panel"],
 body.theme-light .main #tab-clv [class*="panel"],
+body.theme-light .main #tab-more [class*="panel"],
 body.theme-light .main #tab-dashboard [class*="tile"],
+body.theme-light .main #tab-smartbet [class*="tile"],
+body.theme-light .main #tab-ml5 [class*="tile"],
 body.theme-light .main #tab-dashboard [class*="metric"],
+body.theme-light .main #tab-smartbet [class*="metric"],
+body.theme-light .main #tab-ml5 [class*="metric"],
+body.theme-light .main #tab-clv [class*="metric"],
+body.theme-light .main #tab-dashboard [class*="tracker"],
+body.theme-light .main #tab-clv [class*="tracker"],
+body.theme-light .main #tab-performanta [class*="tracker"],
+body.theme-light .main #tab-dashboard [class*="training"],
+body.theme-light .main #tab-smartbet [class*="training"],
+body.theme-light .main #tab-ml5 [class*="training"],
+body.theme-light .main #tab-dashboard [class*="quality"],
+body.theme-light .main #tab-smartbet [class*="quality"],
+body.theme-light .main #tab-dashboard [class*="summary"],
+body.theme-light .main #tab-smartbet [class*="summary"],
+body.theme-light .main #tab-ml5 [class*="summary"],
+body.theme-light .main #tab-clv [class*="summary"],
+body.theme-light .main #tab-dashboard .corr-box,
+body.theme-light .main #tab-smartbet .corr-box,
+body.theme-light .main #tab-ml5 .corr-box,
+body.theme-light .main #tab-clv .corr-box,
+body.theme-light .main #tab-dashboard .rbox,
+body.theme-light .main #tab-smartbet .rbox,
+body.theme-light .main #tab-ml5 .rbox,
+body.theme-light .main #tab-clv .rbox,
+body.theme-light .main #tab-dashboard .picks-wrap,
+body.theme-light .main #tab-smartbet .picks-wrap,
+body.theme-light .main #tab-ml5 .picks-wrap,
 body.theme-light .main #tab-dashboard .section,
 body.theme-light .main #tab-dashboard .panel,
 body.theme-light .main #tab-dashboard .card,
@@ -734,6 +794,29 @@ body.theme-light .main #tab-ml5 div[style*="background"] {
   background: #FFFFFF !important;
   border-color: #D0D9EE !important;
   box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+
+/* ── I. Counter platform_theme_unifier div:has() dark backgrounds ── */
+/* Heading containers forced dark */
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> h1),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> h2:first-child),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> h3:first-child) {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+/* Button/link container rows forced dark (filter bars, tab rows) */
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)) {
+  background: rgba(0,0,0,.025) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)) > button,
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)) > a {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  color: #2A3650 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -877,3 +960,219 @@ body.theme-light .match-card-v16 .m16-score   { color: #0CA88E !important; }
   }
   body.theme-light .mobile-nav-btn.active small { color: #0CA88E !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   37. #TAB-MECIURI MX21 — filter section card (apex_lux_pixel_meciuri)
+   ═══════════════════════════════════════════════════════════════════ */
+body.theme-light #tab-meciuri .mx21-card {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.07) !important;
+}
+body.theme-light #tab-meciuri .mx21-head {
+  border-bottom-color: #D0D9EE !important;
+}
+body.theme-light #tab-meciuri .mx21-title  { color: #0C1220 !important; }
+body.theme-light #tab-meciuri .mx21-ball   {
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light #tab-meciuri .mx21-count {
+  color: #0CA88E !important;
+  background: rgba(12,168,142,.08) !important;
+  border-color: rgba(12,168,142,.35) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .mx21-filter-btn {
+  color: #2A3650 !important;
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D0D9EE !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .mx21-mode {
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light #tab-meciuri .mx21-mode-btn { color: #546376 !important; }
+body.theme-light #tab-meciuri .mx21-mode-btn.active {
+  color: #0CA88E !important;
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.4) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .mx21-select {
+  color: #0C1220 !important;
+  background-color: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .mx21-chip {
+  color: #2A3650 !important;
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D0D9EE !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .mx21-chip.active {
+  color: #0CA88E !important;
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.4) !important;
+  box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   38. MATCH CARD M17 — full light pass (apex_lux_pixel_meciuri.css)
+   ═══════════════════════════════════════════════════════════════════ */
+body.theme-light .match-card-m17 {
+  background: #FFFFFF !important;
+  border-color: rgba(12,168,142,.3) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.07) !important;
+}
+body.theme-light .match-card-m17::before {
+  background: linear-gradient(90deg, rgba(12,168,142,.5), rgba(12,168,142,.9), rgba(12,168,142,.5)) !important;
+  box-shadow: none !important;
+}
+/* Topline (league + time) */
+body.theme-light .m17-topline {
+  background: rgba(0,0,0,.025) !important;
+  border-color: rgba(0,0,0,.07) !important;
+  box-shadow: none !important;
+}
+body.theme-light .m17-league   { color: #2A3650 !important; }
+body.theme-light .m17-country  { color: #546376 !important; }
+body.theme-light .m17-time .m17-date { color: #546376 !important; }
+body.theme-light .m17-time .m17-hour { color: #0C1220 !important; }
+body.theme-light .m17-time .m17-countdown {
+  color: #B38900 !important;
+  background: rgba(179,137,0,.1) !important;
+}
+body.theme-light .m17-meta-row .m17-pill.m17-state {
+  color: #B38900 !important;
+  background: rgba(179,137,0,.1) !important;
+  border-color: rgba(179,137,0,.3) !important;
+}
+/* Teams */
+body.theme-light .m17-logo {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  box-shadow: none !important;
+}
+body.theme-light .m17-team-name { color: #0C1220 !important; }
+body.theme-light .m17-team-prob { color: #546376 !important; }
+body.theme-light .m17-vs {
+  color: #546376 !important;
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.1) !important;
+  box-shadow: none !important;
+}
+body.theme-light .m17-ml-bar {
+  background: rgba(0,0,0,.08) !important;
+}
+body.theme-light .m17-ml-note { color: #546376 !important; }
+body.theme-light .m17-ml-note span:nth-child(1) { color: #0CA88E !important; }
+body.theme-light .m17-ml-note span:nth-child(2) { color: #C97A00 !important; }
+body.theme-light .m17-ml-note span:nth-child(3) { color: #2E7BD4 !important; }
+/* Recommendation */
+body.theme-light .m17-reco {
+  background: rgba(12,168,142,.05) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  box-shadow: none !important;
+}
+body.theme-light .m17-reco-kicker { color: #0CA88E !important; }
+body.theme-light .m17-pick        { color: #0C1220 !important; }
+body.theme-light .m17-odd {
+  color: #B38900 !important;
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(179,137,0,.28) !important;
+  box-shadow: none !important;
+}
+/* Metrics strip */
+body.theme-light .m17-metric {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+body.theme-light .m17-metric span   { color: #546376 !important; }
+body.theme-light .m17-metric strong { color: #0CA88E !important; }
+/* Pill row */
+body.theme-light .m17-kelly,
+body.theme-light .m17-consensus.ok {
+  color: #0CA88E !important;
+  background: rgba(12,168,142,.09) !important;
+  border-color: rgba(12,168,142,.3) !important;
+}
+body.theme-light .m17-pill.m17-risk {
+  color: #B38900 !important;
+  background: rgba(179,137,0,.09) !important;
+  border-color: rgba(179,137,0,.3) !important;
+}
+/* Why section */
+body.theme-light .m17-why {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+body.theme-light .m17-why span   { color: #2E7BD4 !important; }
+body.theme-light .m17-why strong { color: #2A3650 !important; }
+/* Action button */
+body.theme-light .m17-btn {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #2A3650 !important;
+  box-shadow: none !important;
+}
+body.theme-light .m17-extra { border-color: rgba(0,0,0,.07) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   39. ANALYSIS DETAIL SHELL — match detail sections (app.css)
+   ═══════════════════════════════════════════════════════════════════ */
+body.theme-light .analysis-detail-hero,
+body.theme-light .analysis-detail-section {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+body.theme-light .analysis-detail-hero {
+  border-color: rgba(12,168,142,.22) !important;
+}
+body.theme-light .analysis-detail-kicker,
+body.theme-light .analysis-detail-title  { color: #546376 !important; }
+body.theme-light .analysis-detail-pick   { color: #0C1220 !important; }
+body.theme-light .analysis-detail-odd {
+  background: rgba(46,123,212,.1) !important;
+  border-color: rgba(46,123,212,.22) !important;
+  color: #2E7BD4 !important;
+}
+body.theme-light .analysis-detail-shell .match-inline-summary {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+  color: #0C1220 !important;
+}
+body.theme-light .analysis-detail-shell .match-inline-chip {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+/* Overview / support frames */
+body.theme-light .analysis-detail-expert-overview-frame,
+body.theme-light .analysis-detail-expert-support-frame,
+body.theme-light .analysis-detail-overview-frame,
+body.theme-light .analysis-detail-lower-frame {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   40. MECIURI — reinforced date-label & text colours
+   ═══════════════════════════════════════════════════════════════════ */
+/* Date group */
+body.theme-light #tab-meciuri .date-group {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .date-label {
+  background: transparent !important;
+  color: #2A3650 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+/* Generic text inside Meciuri that uses --apx-text / --apx-muted */
+body.theme-light #tab-meciuri { color: #0C1220 !important; }
