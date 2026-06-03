@@ -97,6 +97,17 @@ body.theme-light {
   --apx-text:       #0C1220;
   --apx-muted:      #546376;
   --apx-shadow:     0 4px 16px rgba(0,0,0,.08);
+
+  /* ── veyra_apex_theme.css variables (SmartBet engine) ──────────── */
+  --apex-bg:     #F0F4FB;
+  --apex-bg2:    #F5F8FF;
+  --apex-panel:  #FFFFFF;
+  --apex-card:   #FFFFFF;
+  --apex-brd:    #D0D9EE;
+  --apex-brd2:   #B8C5DB;
+  --apex-txt:    #0C1220;
+  --apex-muted:  #546376;
+  --apex-dim:    #8899B2;
 }
 
 /* ── 2. BASE ─────────────────────────────────────────────────────── */
@@ -1176,3 +1187,139 @@ body.theme-light #tab-meciuri .date-label {
 }
 /* Generic text inside Meciuri that uses --apx-text / --apx-muted */
 body.theme-light #tab-meciuri { color: #0C1220 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   41. NUCLEAR — v5-* hardcoded dark elements + apex remaining gaps
+   supreme_engine_v5.css uses hardcoded rgba dark backgrounds/colors
+   that variable overrides alone can't fix; explicit overrides needed.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* v5 supreme card wrapper */
+body.theme-light .v5-supreme-card {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.07) !important;
+}
+/* v5 title & meta text (hardcoded color:#fff) */
+body.theme-light .v5-title,
+body.theme-light .v5-match,
+body.theme-light .v5-section-title,
+body.theme-light .v5-vip-title { color: #0C1220 !important; }
+body.theme-light .v5-sub,
+body.theme-light .v5-meta,
+body.theme-light .v5-kpi-label,
+body.theme-light .v5-kpi-note,
+body.theme-light .v5-vip-line  { color: #546376 !important; }
+body.theme-light .v5-kpi-value { color: #0C1220 !important; }
+
+/* v5 KPI tiles — hardcoded rgba(8,18,34,.72) */
+body.theme-light .v5-kpi {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: none !important;
+}
+/* v5 signal rows — hardcoded dark gradient */
+body.theme-light .v5-signal {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: none !important;
+}
+/* v5 source matrix cells */
+body.theme-light .v5-source {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light .v5-source span:first-child { color: #2A3650 !important; }
+/* v5 chips */
+body.theme-light .v5-chip {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.10) !important;
+  color: #2A3650 !important;
+}
+body.theme-light .v5-chip.good   { color: #148A5C !important; border-color: rgba(20,138,92,.25) !important; background: rgba(20,138,92,.06) !important; }
+body.theme-light .v5-chip.gold   { color: #B38900 !important; border-color: rgba(179,137,0,.25) !important; background: rgba(179,137,0,.06) !important; }
+body.theme-light .v5-chip.violet { color: #6B42C6 !important; border-color: rgba(107,66,198,.22) !important; background: rgba(107,66,198,.06) !important; }
+body.theme-light .v5-chip.blue   { color: #2E7BD4 !important; border-color: rgba(46,123,212,.22) !important; background: rgba(46,123,212,.06) !important; }
+/* v5 badge */
+body.theme-light .v5-badge {
+  background: rgba(12,168,142,.08) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  color: #0CA88E !important;
+  box-shadow: none !important;
+}
+/* v5 score box */
+body.theme-light .v5-score {
+  background: rgba(12,168,142,.08) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  color: #0CA88E !important;
+}
+body.theme-light .v5-score small { color: #546376 !important; }
+/* v5 vip box */
+body.theme-light .v5-vip-box {
+  background: rgba(12,168,142,.05) !important;
+  border-color: rgba(12,168,142,.22) !important;
+}
+/* v5 empty state */
+body.theme-light .v5-empty {
+  background: rgba(0,0,0,.02) !important;
+  border-color: rgba(0,0,0,.12) !important;
+  color: #546376 !important;
+}
+
+/* apex tier toggle button */
+body.theme-light .apex-tier-toggle {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.09) !important;
+  color: #2A3650 !important;
+}
+/* apex ticket output panel */
+body.theme-light #apex-ticket-output {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  color: #0C1220 !important;
+}
+/* apex ticket buttons */
+body.theme-light .apex-ticket-btn {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.10) !important;
+  color: #2A3650 !important;
+}
+/* apex info box */
+body.theme-light .apex-info-box {
+  background: rgba(107,66,198,.05) !important;
+  border-color: rgba(107,66,198,.16) !important;
+}
+body.theme-light .apex-info-box-body { color: #546376 !important; }
+/* apex impact cells (hardcoded rgba dark) */
+body.theme-light .apex-impact-cell {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #2A3650 !important;
+}
+/* apex kpi text (falls back on hardcoded if variable not resolved) */
+body.theme-light .apex-kpi-lbl { color: #546376 !important; }
+body.theme-light .apex-kpi-val { color: #0C1220 !important; }
+body.theme-light .apex-kpi-sub { color: #546376 !important; }
+/* apex section title */
+body.theme-light .apex-section-title { color: #0C1220 !important; }
+/* apex learning card role border */
+body.theme-light .apex-lc-role { border-color: rgba(0,0,0,.08) !important; }
+/* apex tier header */
+body.theme-light .apex-tier-header {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+/* apex pick card text */
+body.theme-light .apex-pick-teams { color: #0C1220 !important; }
+body.theme-light .apex-pick-pick  { color: #0C1220 !important; }
+/* apex subnav tab text */
+body.theme-light .apex-subnav-tab { color: #546376 !important; }
+body.theme-light .apex-subnav-tab.active { color: #C47A2A !important; background: rgba(196,122,42,.06) !important; }
+
+/* Wildcard sweep — any remaining [class*="apex"] or [class*="v5"] element
+   that inherits a dark hardcoded background not caught above */
+body.theme-light .main [class*="apex-"][style*="background"],
+body.theme-light .main [class*="v5-"][style*="background"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
