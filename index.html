@@ -55,6 +55,84 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
 <link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260603dash3"/>
 <link rel="stylesheet" href="./assets/light_theme.css?v=20260603lgt11"/>
+<!-- APEX light-mode nuclear override — appears LAST in cascade, beats all @import chains -->
+<style id="apex-light-override">
+body.theme-light #tab-smartbet { background: #F0F4FB !important; }
+body.theme-light #apex-predictii-section,
+body.theme-light #apex-invatare-section,
+body.theme-light #apex-arhiva-section { background: #F0F4FB !important; }
+body.theme-light .apex-hero-card { background: #FFFFFF !important; border-color: #D0D9EE !important; box-shadow: 0 4px 20px rgba(0,0,0,.08) !important; }
+body.theme-light .apex-engine-name { color: #0C1220 !important; background: none !important; -webkit-text-fill-color: #0C1220 !important; }
+body.theme-light .apex-engine-subtitle { color: #6B7890 !important; }
+body.theme-light .apex-subnav { background: #F0F4FB !important; border-bottom-color: #D0D9EE !important; }
+body.theme-light .apex-subnav-tab { background: #FFFFFF !important; border-color: #D0D9EE !important; color: #2A3650 !important; }
+body.theme-light .apex-subnav-tab.active { background: rgba(12,168,142,.10) !important; border-color: rgba(12,168,142,.38) !important; color: #0CA88E !important; }
+body.theme-light .apex-vbadge { background: rgba(12,168,142,.10) !important; border-color: rgba(12,168,142,.28) !important; color: #0CA88E !important; }
+body.theme-light .apex-hero-ring { background: radial-gradient(circle at center,#FFFFFF 0%,#F4F7FD 100%) !important; border-color: rgba(12,168,142,.35) !important; box-shadow: 0 0 0 8px rgba(12,168,142,.04) !important; }
+body.theme-light .apex-hero-score { color: #0CA88E !important; text-shadow: none !important; }
+body.theme-light .apex-hero-score-lbl { color: #8494B0 !important; }
+body.theme-light .apex-model-chip { background: rgba(0,0,0,.04) !important; border-color: #D0D9EE !important; color: #6B7890 !important; }
+body.theme-light .apex-model-chip.active.cyan { border-color: rgba(12,168,142,.28) !important; background: rgba(12,168,142,.07) !important; color: #0CA88E !important; }
+body.theme-light .apex-model-chip.active.violet { border-color: rgba(109,40,217,.22) !important; background: rgba(109,40,217,.06) !important; color: #6D28D9 !important; }
+body.theme-light .apex-model-chip.active.green { border-color: rgba(5,150,105,.22) !important; background: rgba(5,150,105,.06) !important; color: #059669 !important; }
+body.theme-light .apex-model-chip.active.amber { border-color: rgba(180,83,9,.22) !important; background: rgba(180,83,9,.06) !important; color: #B45309 !important; }
+body.theme-light .apex-kpi-card { background: #FFFFFF !important; border-color: #D0D9EE !important; box-shadow: 0 4px 12px rgba(0,0,0,.06) !important; }
+body.theme-light .apex-kpi-lbl, body.theme-light .apex-kpi-sub { color: #6B7890 !important; }
+body.theme-light .apex-kpi-card.fire .apex-kpi-val { color: #C84A00 !important; }
+body.theme-light .apex-kpi-card.violet .apex-kpi-val { color: #6D28D9 !important; }
+body.theme-light .apex-kpi-card.cyan .apex-kpi-val { color: #0CA88E !important; }
+body.theme-light .apex-kpi-card.green .apex-kpi-val { color: #059669 !important; }
+body.theme-light .apex-source-flow { background: #FFFFFF !important; border-color: #D0D9EE !important; box-shadow: 0 4px 12px rgba(0,0,0,.06) !important; }
+body.theme-light .apex-source-card { background: #F4F7FD !important; border-color: #D0D9EE !important; }
+body.theme-light .apex-source-title { color: #0CA88E !important; }
+body.theme-light .apex-source-sub, body.theme-light .apex-source-foot { color: #6B7890 !important; }
+body.theme-light .apex-source-name { color: #2A3650 !important; }
+body.theme-light .apex-source-badge { background: rgba(12,168,142,.10) !important; border-color: rgba(12,168,142,.22) !important; color: #0CA88E !important; }
+body.theme-light .apex-tier-header.elite { background: linear-gradient(90deg,rgba(200,74,0,.08),rgba(180,100,0,.04)) !important; border-color: rgba(200,74,0,.18) !important; }
+body.theme-light .apex-tier-header.validated { background: linear-gradient(90deg,rgba(5,150,105,.07),rgba(8,120,110,.04)) !important; border-color: rgba(5,150,105,.16) !important; }
+body.theme-light .apex-tier-header.watchlist { background: linear-gradient(90deg,rgba(109,40,217,.07),rgba(150,70,200,.04)) !important; border-color: rgba(109,40,217,.14) !important; }
+body.theme-light .apex-tier-label.elite { color: #C84A00 !important; }
+body.theme-light .apex-tier-label.validated { color: #059669 !important; }
+body.theme-light .apex-tier-label.watchlist { color: #6D28D9 !important; }
+body.theme-light .apex-tier-toggle { background: #F4F7FD !important; border-color: #D0D9EE !important; color: #2A3650 !important; }
+body.theme-light .apex-pick-card { background: #FFFFFF !important; border-color: #D0D9EE !important; box-shadow: 0 2px 8px rgba(0,0,0,.05) !important; }
+body.theme-light .apex-pick-card.tier-elite { background: linear-gradient(135deg,rgba(200,74,0,.03),#FFFFFF) !important; border-color: rgba(200,74,0,.22) !important; }
+body.theme-light .apex-pick-card.tier-validated { border-color: rgba(5,150,105,.18) !important; }
+body.theme-light .apex-pick-card.tier-watchlist { border-color: rgba(109,40,217,.16) !important; }
+body.theme-light .apex-pick-match { color: #0C1220 !important; }
+body.theme-light .apex-pick-rank { color: #8494B0 !important; }
+body.theme-light .apex-pick-league { color: #6B7890 !important; }
+body.theme-light .apex-score-circle.elite { background: rgba(200,74,0,.07) !important; border-color: #C84A00 !important; }
+body.theme-light .apex-score-circle.validated { background: rgba(5,150,105,.07) !important; border-color: #059669 !important; }
+body.theme-light .apex-score-circle.watchlist { background: rgba(109,40,217,.07) !important; border-color: #6D28D9 !important; }
+body.theme-light .apex-score-circle.elite .apex-score-num { color: #C84A00 !important; }
+body.theme-light .apex-score-circle.validated .apex-score-num { color: #059669 !important; }
+body.theme-light .apex-score-circle.watchlist .apex-score-num { color: #6D28D9 !important; }
+body.theme-light .apex-score-lbl { color: #8494B0 !important; }
+body.theme-light .apex-chip.market { background: rgba(0,0,0,.04) !important; border-color: rgba(0,0,0,.10) !important; color: #2A3650 !important; }
+body.theme-light .apex-chip.edge { background: rgba(200,74,0,.06) !important; border-color: rgba(200,74,0,.16) !important; color: #C84A00 !important; }
+body.theme-light .apex-chip.prob { background: rgba(12,168,142,.06) !important; border-color: rgba(12,168,142,.18) !important; color: #0CA88E !important; }
+body.theme-light .apex-chip.kelly { background: rgba(180,83,9,.06) !important; border-color: rgba(180,83,9,.18) !important; color: #B45309 !important; }
+body.theme-light .apex-chip.pattern { background: rgba(5,150,105,.06) !important; border-color: rgba(5,150,105,.18) !important; color: #059669 !important; }
+body.theme-light .apex-chip.memory { background: rgba(109,40,217,.06) !important; border-color: rgba(109,40,217,.16) !important; color: #6D28D9 !important; }
+body.theme-light .apex-chip.edge.negative { background: rgba(180,20,40,.06) !important; border-color: rgba(180,20,40,.16) !important; color: #B81428 !important; }
+body.theme-light .apex-conf-bar-track { background: rgba(0,0,0,.08) !important; }
+body.theme-light .apex-signal { background: rgba(0,0,0,.04) !important; border-color: rgba(0,0,0,.08) !important; color: #6B7890 !important; }
+body.theme-light .apex-signal.pos { background: rgba(5,150,105,.06) !important; border-color: rgba(5,150,105,.16) !important; color: #059669 !important; }
+body.theme-light .apex-signal.neg { background: rgba(180,20,40,.06) !important; border-color: rgba(180,20,40,.16) !important; color: #B81428 !important; }
+body.theme-light .apex-ticket-btn { background: #FFFFFF !important; border-color: #D0D9EE !important; color: #2A3650 !important; }
+body.theme-light #apex-ticket-output { background: #F4F7FD !important; border-color: #D0D9EE !important; }
+body.theme-light .apex-ticket-pick { background: #FFFFFF !important; border-color: #D0D9EE !important; }
+body.theme-light .apex-ticket-match { color: #0C1220 !important; }
+body.theme-light .apex-ticket-header, body.theme-light .apex-section-title { color: #0C1220 !important; }
+body.theme-light .apex-learning-card, body.theme-light .apex-info-box, body.theme-light .apex-impact-cell { background: #FFFFFF !important; border-color: #D0D9EE !important; }
+body.theme-light .apex-lc-title { color: #0C1220 !important; }
+body.theme-light .apex-lc-sub, body.theme-light .apex-lc-role { color: #6B7890 !important; }
+body.theme-light .apex-quick-btn { background: #FFFFFF !important; border-color: #D0D9EE !important; color: #2A3650 !important; }
+body.theme-light .apex-divider { background: linear-gradient(90deg,transparent,#D0D9EE,transparent) !important; }
+body.theme-light .apex-empty { color: #6B7890 !important; }
+body.theme-light .apex-empty-title { color: #0C1220 !important; }
+</style>
 <script>
 /* Early theme init — prevents flash of dark theme when light is saved */
 (function(){
