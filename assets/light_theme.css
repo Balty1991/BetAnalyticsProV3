@@ -735,3 +735,145 @@ body.theme-light .main #tab-ml5 div[style*="background"] {
   border-color: #D0D9EE !important;
   box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   34. VD-NAV-BTN — platform_theme_unifier matches <button> elements
+   inside tab-content with specificity (1,3,1). Need same or higher.
+   ═══════════════════════════════════════════════════════════════════ */
+body.theme-light .main #tab-dashboard .vd-nav-btn {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+  color: #0C1220 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+body.theme-light .main #tab-dashboard .vd-nav-btn:hover,
+body.theme-light .main #tab-dashboard .vd-nav-btn:active {
+  border-color: rgba(12,168,142,.35) !important;
+  background: rgba(12,168,142,.06) !important;
+}
+body.theme-light .main #tab-dashboard .vd-nav-btn-label {
+  color: #0C1220 !important;
+}
+body.theme-light .main #tab-dashboard .vd-nav-btn-sub {
+  color: #546376 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   35. #TAB-MECIURI — light backgrounds for all match components
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Tab surface */
+body.theme-light #tab-meciuri,
+body.theme-light .main #tab-meciuri {
+  background: #F0F4FB !important;
+  color: #0C1220 !important;
+  border-color: #D0D9EE !important;
+  box-shadow: none !important;
+}
+
+/* Matches section card (filter toolbar) */
+body.theme-light #tab-meciuri .matches-section-card {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.07) !important;
+}
+body.theme-light #tab-meciuri .matches-card-title { color: #0C1220 !important; }
+body.theme-light #tab-meciuri .matches-card-sub   { color: #546376 !important; }
+
+/* Filter toolbar inside Meciuri */
+body.theme-light #tab-meciuri .matches-filter-toolbar {
+  background: rgba(0,0,0,.02) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light #tab-meciuri .filter-btn {
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D0D9EE !important;
+  color: #546376 !important;
+}
+body.theme-light #tab-meciuri .filter-btn.active {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.35) !important;
+  color: #0CA88E !important;
+}
+body.theme-light #tab-meciuri .sort-select,
+body.theme-light #tab-meciuri .league-filter-select {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  color: #0C1220 !important;
+}
+
+/* match-card-v16 — main match card (has hardcoded dark gradient) */
+body.theme-light #tab-meciuri .match-card-v16,
+body.theme-light .match-card-v16 {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.07) !important;
+}
+body.theme-light .match-card-v16 .m16-top,
+body.theme-light .match-card-v16 .m16-reco,
+body.theme-light .match-card-v16 .m16-signals,
+body.theme-light .match-card-v16 .m16-actions,
+body.theme-light .match-card-v16 .m16-extra {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+body.theme-light .match-card-v16 .m16-team-logo {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light .match-card-v16 .m16-ml-bar {
+  background: rgba(0,0,0,.08) !important;
+  border-color: rgba(0,0,0,.08) !important;
+}
+body.theme-light .match-card-v16 .m16-signal-pill {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #2A3650 !important;
+}
+body.theme-light .match-card-v16 .m16-btn {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #2A3650 !important;
+}
+body.theme-light .match-card-v16 .m16-btn:hover {
+  background: rgba(0,0,0,.07) !important;
+  border-color: rgba(12,168,142,.25) !important;
+}
+body.theme-light .match-card-v16 .m16-kickoff-pill {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.25) !important;
+  color: #0CA88E !important;
+}
+
+/* Date separator in Meciuri */
+body.theme-light #tab-meciuri .date-label {
+  background: transparent !important;
+  color: #546376 !important;
+}
+
+/* Collapsible sections in Meciuri */
+body.theme-light #tab-meciuri .collapsible-body { color: #0C1220 !important; }
+
+/* Text colors inside match cards */
+body.theme-light .match-card-v16 .m16-league  { color: #546376 !important; }
+body.theme-light .match-card-v16 .m16-time    { color: #546376 !important; }
+body.theme-light .match-card-v16 .m16-team    { color: #0C1220 !important; }
+body.theme-light .match-card-v16 .m16-vs      { color: #546376 !important; }
+body.theme-light .match-card-v16 .m16-score   { color: #0CA88E !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   36. MOBILE NAV — reinforce (some browsers need higher specificity)
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  body.theme-light .mobile-nav {
+    background: rgba(240,244,251,.96) !important;
+    border-color: rgba(12,168,142,.18) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 -4px 20px rgba(0,0,0,.08) !important;
+  }
+  body.theme-light .mobile-nav-btn { color: #546376 !important; }
+  body.theme-light .mobile-nav-btn.active {
+    background: rgba(12,168,142,.1) !important;
+    color: #0CA88E !important;
+  }
+  body.theme-light .mobile-nav-btn.active small { color: #0CA88E !important; }
+}
