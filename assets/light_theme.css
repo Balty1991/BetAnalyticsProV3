@@ -1543,3 +1543,213 @@ body.theme-light .main #tab-smartbet div[style*="rgba(255,255,255,.07)"],
 body.theme-light .main #tab-more div[style*="rgba(255,255,255,.07)"] {
   border-color: rgba(0,0,0,.09) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   43. ML5 + SMARTBET NUCLEAR OVERRIDE
+   ml5_contrast_patch.css uses (2,1,1) selectors. We use (2,2,2).
+   SmartBet .section / inline rgba tiles addressed with ID selectors.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── ML5 TAB: override ml5_contrast_patch.css dark gradients ────────
+   All selectors below are body.theme-light + ml5_contrast_patch.css
+   selector = one extra class → wins the !important specificity war.   */
+
+/* Tab surface */
+body.theme-light #tab-ml5 {
+  background: #F0F4FB !important;
+  color: #0C1220 !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06) !important;
+}
+body.theme-light #tab-ml5::before { display: none !important; }
+
+/* ml5-root and its direct child wrapper */
+body.theme-light #tab-ml5 #ml5-root {
+  background: transparent !important;
+  color: #0C1220 !important;
+}
+body.theme-light #tab-ml5 #ml5-root > div {
+  background: transparent !important;
+  color: #0C1220 !important;
+}
+
+/* Stat pills — background:rgba(255,255,255,.04) → white cards
+   Dark rule: #tab-ml5 #ml5-root div[style*="background:rgba(255,255,255,.04)"] = (2,1,1)
+   Our rule adds body.theme-light → (2,2,2) wins.                      */
+body.theme-light #tab-ml5 #ml5-root div[style*="background:rgba(255,255,255,.04)"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+/* Match cards — background:#161d2e → white */
+body.theme-light #tab-ml5 #ml5-root div[style*="background:#161d2e"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+/* Pronostic sub-card — background:rgba(59,130,246,.08) → light blue */
+body.theme-light #tab-ml5 #ml5-root div[style*="background:rgba(59,130,246,.08)"] {
+  background: rgba(46,123,212,.06) !important;
+  border-color: rgba(46,123,212,.22) !important;
+}
+/* Distribution card — padding:12px 14px */
+body.theme-light #tab-ml5 #ml5-root div[style*="padding:12px 14px"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
+/* Factor pills — padding:2px 7px → transparent on light */
+body.theme-light #tab-ml5 #ml5-root div[style*="padding:2px 7px"] {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.10) !important;
+}
+/* Metric mini boxes — min-width:60px */
+body.theme-light #tab-ml5 #ml5-root div[style*="min-width:60px"] {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+}
+
+/* Override ml5_contrast_patch text color forcing (#f8fbff, #93a4bf etc.)
+   These use (2,2,1) — our (2,2,2) wins.                                */
+body.theme-light #tab-ml5 #ml5-root div[style*="color:var(--txt)"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:var(--txt)"] {
+  color: #0C1220 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:var(--muted)"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:var(--muted)"] {
+  color: #546376 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:var(--acc)"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:var(--acc)"] {
+  color: #0CA88E !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:var(--grn)"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:var(--grn)"] {
+  color: #148A5C !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:#22c55e"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:#22c55e"] {
+  color: #148A5C !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:var(--yel)"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:var(--yel)"] {
+  color: #B38900 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:var(--red)"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:var(--red)"] {
+  color: #C42040 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:#a78bfa"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:#a78bfa"] {
+  color: #6B42C6 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:#3b82f6"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:#3b82f6"] {
+  color: #2E7BD4 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:#f59e0b"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:#f59e0b"] {
+  color: #B38900 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="color:#ef4444"],
+body.theme-light #tab-ml5 #ml5-root span[style*="color:#ef4444"] {
+  color: #C42040 !important;
+}
+/* Enlarged title text patch */
+body.theme-light #tab-ml5 #ml5-root div[style*="font-size:13px"][style*="font-weight:800"] {
+  color: #0C1220 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="font-size:13px"][style*="font-weight:800"][style*="color:var(--txt)"] {
+  color: #0C1220 !important;
+}
+body.theme-light #tab-ml5 #ml5-root div[style*="font-size:18px"][style*="font-weight:900"] {
+  color: #0CA88E !important;
+}
+/* White-on-dark gradient progress bars → keep them colored */
+body.theme-light #tab-ml5 #ml5-root div[style*="background:linear-gradient(90deg,#7c3aed"] {
+  background: linear-gradient(90deg, #6B42C6, #8B5CF6) !important;
+  box-shadow: none !important;
+}
+/* background:rgba(255,255,255,.08) → light gray */
+body.theme-light #tab-ml5 #ml5-root div[style*="background:rgba(255,255,255,.08)"] {
+  background: rgba(0,0,0,.08) !important;
+}
+/* text shadow removal already there, ensure all text is visible */
+body.theme-light #tab-ml5 #ml5-root * { text-shadow: none !important; }
+
+/* ── SMARTBET: inline rgba tiles and .section wrapper ───────────────
+   The .section inside #smartlearn-section-predictii uses class+
+   unified_engine_frame.css dark override. Belt-and-suspenders here.   */
+
+/* .section and .card in the predictii/invatare sections */
+body.theme-light #smartlearn-section-predictii .section,
+body.theme-light #smartlearn-section-predictii .card {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+/* The summary grid inline tiles use rgba(255,255,255,.03) or rgba(255,255,255,.025) */
+body.theme-light #unified-summary-grid div[style*="rgba(255,255,255,.03)"],
+body.theme-light #unified-summary-grid div[style*="rgba(255,255,255,.025)"],
+body.theme-light #unified-summary-grid div[style*="rgba(255,255,255,.04)"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,.05) !important;
+}
+/* Picks list inline tiles */
+body.theme-light #unified-picks-list div[style*="rgba(255,255,255,.025)"],
+body.theme-light #unified-picks-list div[style*="rgba(255,255,255,.03)"],
+body.theme-light #unified-picks-list div[style*="rgba(255,255,255,.07)"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,.05) !important;
+}
+/* v2 badge inline tile */
+body.theme-light #unified-v2-badge div[style*="rgba(99,102,241"],
+body.theme-light #unified-v2-badge div[style*="rgba(16,185,129"] {
+  background: rgba(12,168,142,.06) !important;
+  border-color: rgba(12,168,142,.22) !important;
+}
+/* smartlearn nav buttons */
+body.theme-light #smartlearn-nav button,
+body.theme-light #smartlearn-nav .smartlearn-tab {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+  color: #2A3650 !important;
+  box-shadow: none !important;
+}
+body.theme-light #smartlearn-nav button.active,
+body.theme-light #smartlearn-nav .smartlearn-tab.active {
+  background: rgba(12,168,142,.10) !important;
+  border-color: rgba(12,168,142,.40) !important;
+  color: #0CA88E !important;
+}
+/* Learning engine root */
+body.theme-light #learning-engine-root {
+  background: transparent !important;
+  color: #0C1220 !important;
+}
+body.theme-light #learning-engine-root div[style*="rgba(255,255,255"],
+body.theme-light #learning-engine-root div[style*="rgba(99,102,241"],
+body.theme-light #learning-engine-root div[style*="rgba(16,185,129"],
+body.theme-light #learning-engine-root div[style*="rgba(245,158,11"],
+body.theme-light #learning-engine-root div[style*="background:linear-gradient"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+/* Archive summary cards */
+body.theme-light #archive-summary-cards div[style*="rgba"],
+body.theme-light #archive-summary-cards div[style*="background"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light #archive-learning-impact div[style*="rgba(255,255,255"] {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.09) !important;
+}
+/* Smartbet SmartBetFusion v2 badge */
+body.theme-light #smartlearn-section-predictii div[style*="rgba(99,102,241"],
+body.theme-light #smartlearn-section-predictii div[style*="rgba(16,185,129"] {
+  background: rgba(12,168,142,.05) !important;
+  border-color: rgba(12,168,142,.20) !important;
+}
