@@ -544,11 +544,194 @@ body.theme-light .mobile-nav-btn.active::after {
 }
 
 /* ── 32. TOP TABS (on desktop / force-top-menu mode) ─────────────── */
-/* The final override rule in app.css (line ~7864) also uses !important */
-/* body.theme-light has higher specificity so these win */
 body.theme-light .tabs,
 body.theme-light nav.tabs {
   background: linear-gradient(180deg, rgba(240,244,251,.98), rgba(235,240,250,.96)) !important;
   border-color: #D0D9EE !important;
   box-shadow: 0 4px 14px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.8) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   33. PLATFORM THEME UNIFIER OVERRIDES
+   platform_theme_unifier.css (via @import in pro_command_center.css)
+   uses ID selectors (#tab-dashboard etc.) with !important — specificity
+   (1,0,0). We must use body.theme-light .main #tab-XXX to reach (1,2,1)
+   and beat it. For child rules that use :not(#id) = (1,3,0) we use
+   body.theme-light .main #tab-XXX [attr] = (1,3,1).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── A. Main tab surfaces ─────────────────────────────────────────── */
+body.theme-light .main #tab-dashboard,
+body.theme-light .main #tab-smartbet,
+body.theme-light .main #tab-ml5,
+body.theme-light .main #tab-clv,
+body.theme-light .main #tab-performanta,
+body.theme-light .main #tab-more,
+body.theme-light .main #tab-cota2,
+body.theme-light .main .tab-content {
+  color: #0C1220 !important;
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.06) !important;
+}
+
+/* Remove the cyan glow line at the top of each tab panel */
+body.theme-light .main #tab-dashboard::before,
+body.theme-light .main #tab-smartbet::before,
+body.theme-light .main #tab-ml5::before,
+body.theme-light .main #tab-clv::before,
+body.theme-light .main #tab-performanta::before,
+body.theme-light .main .tab-content::before {
+  background: linear-gradient(90deg, transparent, rgba(12,168,142,.35), rgba(46,123,212,.2), transparent) !important;
+  box-shadow: none !important;
+}
+
+/* ── B. Cards, panels, tiles inside tabs ─────────────────────────── */
+body.theme-light .main #tab-dashboard [class*="card"],
+body.theme-light .main #tab-smartbet [class*="card"],
+body.theme-light .main #tab-ml5 [class*="card"],
+body.theme-light .main #tab-clv [class*="card"],
+body.theme-light .main #tab-performanta [class*="card"],
+body.theme-light .main #tab-dashboard [class*="panel"],
+body.theme-light .main #tab-smartbet [class*="panel"],
+body.theme-light .main #tab-ml5 [class*="panel"],
+body.theme-light .main #tab-clv [class*="panel"],
+body.theme-light .main #tab-dashboard [class*="tile"],
+body.theme-light .main #tab-dashboard [class*="metric"],
+body.theme-light .main #tab-dashboard .section,
+body.theme-light .main #tab-dashboard .panel,
+body.theme-light .main #tab-dashboard .card,
+body.theme-light .main #tab-smartbet .section,
+body.theme-light .main #tab-smartbet .panel,
+body.theme-light .main #tab-smartbet .card,
+body.theme-light .main #tab-ml5 .section,
+body.theme-light .main #tab-ml5 .panel,
+body.theme-light .main #tab-ml5 .card,
+body.theme-light .main #tab-clv .section,
+body.theme-light .main #tab-clv .panel,
+body.theme-light .main #tab-clv .card,
+body.theme-light .main #tab-performanta .section,
+body.theme-light .main #tab-performanta .panel,
+body.theme-light .main #tab-performanta .card {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+
+/* ── C. Header/intro blocks inside tabs ──────────────────────────── */
+body.theme-light .main #tab-dashboard .visual-card-head,
+body.theme-light .main #tab-dashboard .section-head,
+body.theme-light .main #tab-smartbet .visual-card-head,
+body.theme-light .main #tab-smartbet .section-head,
+body.theme-light .main #tab-ml5 .visual-card-head,
+body.theme-light .main #tab-ml5 .section-head,
+body.theme-light .main #tab-clv .visual-card-head,
+body.theme-light .main #tab-performanta .visual-card-head {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+
+/* ── D. Text colors inside tabs ──────────────────────────────────── */
+body.theme-light .main #tab-dashboard h1,
+body.theme-light .main #tab-dashboard h2,
+body.theme-light .main #tab-dashboard h3,
+body.theme-light .main #tab-dashboard h4,
+body.theme-light .main #tab-smartbet h1,
+body.theme-light .main #tab-smartbet h2,
+body.theme-light .main #tab-smartbet h3,
+body.theme-light .main #tab-ml5 h1,
+body.theme-light .main #tab-ml5 h2,
+body.theme-light .main #tab-ml5 h3,
+body.theme-light .main #tab-clv h1,
+body.theme-light .main #tab-clv h2,
+body.theme-light .main #tab-performanta h1,
+body.theme-light .main #tab-performanta h2 {
+  color: #0C1220 !important;
+  font-weight: 800 !important;
+}
+
+/* ── E. Buttons and filter bars inside tabs ──────────────────────── */
+body.theme-light .main #tab-dashboard button,
+body.theme-light .main #tab-smartbet button,
+body.theme-light .main #tab-ml5 button,
+body.theme-light .main #tab-clv button,
+body.theme-light .main #tab-performanta button,
+body.theme-light .main #tab-dashboard .filter-btn,
+body.theme-light .main #tab-smartbet .filter-btn,
+body.theme-light .main #tab-ml5 .filter-btn,
+body.theme-light .main #tab-clv .filter-btn,
+body.theme-light .main #tab-performanta .filter-btn {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  color: #2A3650 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+body.theme-light .main #tab-dashboard button.active,
+body.theme-light .main #tab-smartbet button.active,
+body.theme-light .main #tab-ml5 button.active,
+body.theme-light .main #tab-clv button.active,
+body.theme-light .main #tab-performanta button.active,
+body.theme-light .main #tab-dashboard .filter-btn.active,
+body.theme-light .main #tab-smartbet .filter-btn.active,
+body.theme-light .main #tab-ml5 .filter-btn.active,
+body.theme-light .main #tab-clv .filter-btn.active,
+body.theme-light .main #tab-performanta .filter-btn.active {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.4) !important;
+  color: #0CA88E !important;
+  box-shadow: 0 0 12px rgba(12,168,142,.12) !important;
+}
+
+/* But keep the refresh button teal in light mode */
+body.theme-light #btn-refresh {
+  background: rgba(12,168,142,.1) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  color: #0CA88E !important;
+}
+
+/* ── F. Tables inside tabs ───────────────────────────────────────── */
+body.theme-light .main #tab-dashboard tbody tr,
+body.theme-light .main #tab-smartbet tbody tr,
+body.theme-light .main #tab-ml5 tbody tr,
+body.theme-light .main #tab-clv tbody tr,
+body.theme-light .main #tab-performanta tbody tr {
+  background: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04) !important;
+}
+body.theme-light .main #tab-dashboard td,
+body.theme-light .main #tab-smartbet td,
+body.theme-light .main #tab-ml5 td,
+body.theme-light .main #tab-clv td,
+body.theme-light .main #tab-performanta td {
+  border-color: rgba(208,217,238,.7) !important;
+  color: #2A3650 !important;
+}
+body.theme-light .main #tab-dashboard th,
+body.theme-light .main #tab-smartbet th,
+body.theme-light .main #tab-ml5 th,
+body.theme-light .main #tab-clv th,
+body.theme-light .main #tab-performanta th {
+  color: #546376 !important;
+  border-bottom-color: #D0D9EE !important;
+}
+
+/* ── G. Filter bar containers inside tabs ────────────────────────── */
+body.theme-light .main #tab-dashboard .filter-bar,
+body.theme-light .main #tab-smartbet .filter-bar,
+body.theme-light .main #tab-ml5 .filter-bar,
+body.theme-light .main #tab-clv .filter-bar,
+body.theme-light .main #tab-performanta .filter-bar {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.05) !important;
+}
+
+/* ── H. Inline-style divs forced dark by platform_theme_unifier ─── */
+body.theme-light .main #tab-smartbet div[style*="background"],
+body.theme-light .main #tab-clv div[style*="background"],
+body.theme-light .main #tab-ml5 div[style*="background"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
 }
