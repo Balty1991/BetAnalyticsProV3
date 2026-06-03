@@ -1,5 +1,5 @@
 /**
- * VEYRA — ML5 Accuracy Monitor v5
+ * VEYRA — ML5 Accuracy Monitor v6
  * Înregistrează AUTOMAT toate predicțiile ML5 curente ca "în așteptare".
  * Nu necesită adăugare manuală în tracking.
  * Rezultatele se pot sincroniza din TRACKING (dacă userul a plasat și bilete).
@@ -80,15 +80,34 @@
 
   /* ─── auto-înregistrare din ALL_MATCHES ─── */
   function autoRegisterPredictions() {
-    expireOldPredictions();
     var matches = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
     // Același filtru ca renderML5Analysis + renderML5MatchCard: isEnriched + bestBet
     var preds = matches.filter(function (m) {
       return m && m.isEnriched && m.bestBet && m.smartScore > 0;
     });
-    if (!preds.length) return 0;
 
     var log = loadLog();
+
+    // Purge stale autoTracked pending entries not present in current preds.
+    // This handles future-dated stale entries that expireOldPredictions() misses.
+    if (preds.length > 0) {
+      var predEids = {}, predKeys = {};
+      preds.forEach(function (m) {
+        var eid = m.eventId ? String(m.eventId) : '';
+        var ed  = m.event_date || m.eventDate || m.date || '';
+        if (eid) predEids[eid] = true;
+        predKeys[entryKey(m.home, m.away, ed)] = true;
+      });
+      var lenBefore = log.length;
+      log = log.filter(function (e) {
+        if (!e.autoTracked || e.result !== 'pending') return true;
+        return (e.eventId && predEids[e.eventId]) || predKeys[entryKey(e.home, e.away, e.eventDate)];
+      });
+      if (log.length !== lenBefore) saveLog(log);
+    }
+
+    if (!preds.length) return 0;
+
     var existingKeys = {};
     var existingEids = {};
     log.forEach(function (e) {
