@@ -505,3 +505,50 @@ body.theme-light #btn-theme {
   border-color: rgba(201,122,0,.28) !important;
   color: #C97A00 !important;
 }
+
+/* ── 31. MOBILE BOTTOM NAV (.mobile-nav) ─────────────────────────── */
+/* Overrides hardcoded rgba(8,11,22) dark backgrounds in app.css */
+body.theme-light .mobile-nav {
+  background: rgba(240,244,251,.96) !important;
+  backdrop-filter: saturate(160%) blur(28px) !important;
+  -webkit-backdrop-filter: saturate(160%) blur(28px) !important;
+  border: 1px solid rgba(12,168,142,.18) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 14px 40px rgba(0,0,0,.10),
+    0 0 0 1px rgba(12,168,142,.08) !important;
+}
+body.theme-light .mobile-nav::before {
+  background: linear-gradient(90deg, transparent, rgba(12,168,142,.42), rgba(46,123,212,.28), transparent) !important;
+}
+body.theme-light .mobile-nav-btn {
+  color: #546376 !important;
+  background: transparent !important;
+}
+body.theme-light .mobile-nav-btn small {
+  color: #546376 !important;
+}
+body.theme-light .mobile-nav-btn.active {
+  background: linear-gradient(135deg, rgba(12,168,142,.12), rgba(46,123,212,.06)) !important;
+  color: #0CA88E !important;
+}
+body.theme-light .mobile-nav-btn.active span {
+  filter: drop-shadow(0 0 8px rgba(12,168,142,.35)) !important;
+}
+body.theme-light .mobile-nav-btn.active small {
+  color: #0CA88E !important;
+  font-weight: 700 !important;
+}
+body.theme-light .mobile-nav-btn.active::after {
+  background: #0CA88E !important;
+}
+
+/* ── 32. TOP TABS (on desktop / force-top-menu mode) ─────────────── */
+/* The final override rule in app.css (line ~7864) also uses !important */
+/* body.theme-light has higher specificity so these win */
+body.theme-light .tabs,
+body.theme-light nav.tabs {
+  background: linear-gradient(180deg, rgba(240,244,251,.98), rgba(235,240,250,.96)) !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.8) !important;
+}
