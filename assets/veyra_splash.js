@@ -163,12 +163,12 @@
     }
     @keyframes vs-scan{from{top:-130px}to{top:100vh}}
 
-    /* HUD corners */
+    /* HUD corners — clamp keeps them visible on any screen width */
     .vs-hud-corner{position:absolute;width:36px;height:36px;opacity:0}
-    .vs-hud-corner.tl{top:calc(50% - 220px);left:calc(50% - 200px);border-top:2px solid #2BE5C5;border-left:2px solid #2BE5C5;animation:vs-c-tl .45s cubic-bezier(.16,1,.3,1) .18s forwards}
-    .vs-hud-corner.tr{top:calc(50% - 220px);right:calc(50% - 200px);border-top:2px solid #2BE5C5;border-right:2px solid #2BE5C5;animation:vs-c-tr .45s cubic-bezier(.16,1,.3,1) .18s forwards}
-    .vs-hud-corner.bl{bottom:calc(50% - 220px);left:calc(50% - 200px);border-bottom:2px solid #2BE5C5;border-left:2px solid #2BE5C5;animation:vs-c-bl .45s cubic-bezier(.16,1,.3,1) .18s forwards}
-    .vs-hud-corner.br{bottom:calc(50% - 220px);right:calc(50% - 200px);border-bottom:2px solid #2BE5C5;border-right:2px solid #2BE5C5;animation:vs-c-br .45s cubic-bezier(.16,1,.3,1) .18s forwards}
+    .vs-hud-corner.tl{top:clamp(80px,16%,180px);left:clamp(14px,4vw,55px);border-top:2px solid #2BE5C5;border-left:2px solid #2BE5C5;animation:vs-c-tl .45s cubic-bezier(.16,1,.3,1) .18s forwards}
+    .vs-hud-corner.tr{top:clamp(80px,16%,180px);right:clamp(14px,4vw,55px);border-top:2px solid #2BE5C5;border-right:2px solid #2BE5C5;animation:vs-c-tr .45s cubic-bezier(.16,1,.3,1) .18s forwards}
+    .vs-hud-corner.bl{bottom:clamp(80px,16%,180px);left:clamp(14px,4vw,55px);border-bottom:2px solid #2BE5C5;border-left:2px solid #2BE5C5;animation:vs-c-bl .45s cubic-bezier(.16,1,.3,1) .18s forwards}
+    .vs-hud-corner.br{bottom:clamp(80px,16%,180px);right:clamp(14px,4vw,55px);border-bottom:2px solid #2BE5C5;border-right:2px solid #2BE5C5;animation:vs-c-br .45s cubic-bezier(.16,1,.3,1) .18s forwards}
     @keyframes vs-c-tl{from{opacity:0;transform:translate( 20px, 20px)}to{opacity:1;transform:translate(0,0)}}
     @keyframes vs-c-tr{from{opacity:0;transform:translate(-20px, 20px)}to{opacity:1;transform:translate(0,0)}}
     @keyframes vs-c-bl{from{opacity:0;transform:translate( 20px,-20px)}to{opacity:1;transform:translate(0,0)}}
@@ -192,8 +192,8 @@
       line-height:1.7;opacity:0;
       animation:vs-fi .5s ease 1.4s forwards;
     }
-    .vs-hud-data.tl{top:calc(50% - 210px);left:calc(50% - 190px)}
-    .vs-hud-data.br{bottom:calc(50% - 210px);right:calc(50% - 190px);text-align:right}
+    .vs-hud-data.tl{top:clamp(90px,17%,195px);left:clamp(18px,5vw,65px)}
+    .vs-hud-data.br{bottom:clamp(90px,17%,195px);right:clamp(18px,5vw,65px);text-align:right}
 
     /* logo */
     .vs-logo{
@@ -206,12 +206,12 @@
       100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0) brightness(1)}
     }
     .vs-logo img{
-      width:min(295px,71vw);display:block;
+      width:min(340px,88vw);display:block;
       animation:vs-lglow 2.3s ease-in-out 1.3s infinite alternate,vs-glitch 7s linear 2s infinite;
     }
     @keyframes vs-lglow{
-      from{filter:drop-shadow(0 0 18px rgba(43,229,197,.55)) drop-shadow(0 0 50px rgba(43,229,197,.22))}
-      to  {filter:drop-shadow(0 0 40px rgba(43,229,197,.9)) drop-shadow(0 0 95px rgba(43,229,197,.42)) drop-shadow(0 0 160px rgba(43,229,197,.18))}
+      from{filter:drop-shadow(0 0 22px rgba(43,229,197,.7)) drop-shadow(0 0 60px rgba(43,229,197,.3)) brightness(1.05)}
+      to  {filter:drop-shadow(0 0 48px rgba(43,229,197,1)) drop-shadow(0 0 110px rgba(43,229,197,.5)) drop-shadow(0 0 180px rgba(43,229,197,.2)) brightness(1.12)}
     }
     @keyframes vs-glitch{
       0%,89%,100%{clip-path:none;transform:none}
