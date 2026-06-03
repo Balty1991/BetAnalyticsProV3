@@ -2564,8 +2564,8 @@ function computeStakeMultiplier(row){
   if(row.learningToxic === true) sourceMult *= 0.40;
 
   // Line movement guard: daca linia s-a miscat >3% impotriva noastra, reducere
-  if(fromOpenPct < -3) sourceMult *= 0.75;
-  else if(fromOpenPct < -5) sourceMult *= 0.55;
+  if(fromOpenPct < -5) sourceMult *= 0.55;
+  else if(fromOpenPct < -3) sourceMult *= 0.75;
 
   // Edge bucket 15-20% este anomalie (ROI -8% in jurnal) - reducere moderata
   if(edge >= 15 && edge < 20) edgeMult *= 0.75;
