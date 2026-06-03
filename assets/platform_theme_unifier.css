@@ -226,3 +226,119 @@
     padding:14px 12px!important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LIGHT THEME OVERRIDE — specificity (1,4,x) beats dark (1,3,x)
+   These rules appear LAST in this file and win on BOTH axes.
+   ══════════════════════════════════════════════════════════════*/
+
+/* 1. Tab surfaces */
+body.theme-light .main .tab-content:not(#tab-meciuri),
+body.theme-light #tab-dashboard,
+body.theme-light #tab-more,
+body.theme-light #tab-smartbet,
+body.theme-light #tab-ml5,
+body.theme-light #tab-clv,
+body.theme-light #tab-cota2{
+  color:inherit!important;
+  background:#F0F4FB!important;
+  border-color:#D0D9EE!important;
+  box-shadow:none!important;
+}
+body.theme-light .main .tab-content:not(#tab-meciuri)::before{
+  background:none!important;
+  box-shadow:none!important;
+}
+
+/* 2. All cards / panels / tiles / metrics */
+body.theme-light .main .tab-content:not(#tab-meciuri) :is(.card,.panel,.section,.visual-card,.stat-card,.kpi-card,.metric-card,.summary-card,.engine-card,.smartbet-card,.memory-card,.ai-card,.clv-card,.corr-box,.rbox,.picks-wrap,.box),
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="card"],
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="panel"],
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="tile"],
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="metric"],
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="summary"],
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="quality"],
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="tracker"],
+body.theme-light .main .tab-content:not(#tab-meciuri) [class*="training"]{
+  background:#FFFFFF!important;
+  border-color:#D0D9EE!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.06)!important;
+}
+
+/* 3. Inline-style divs */
+body.theme-light #tab-smartbet div[style*="background"],
+body.theme-light #tab-clv div[style*="background"],
+body.theme-light #tab-ml5 div[style*="background"],
+body.theme-light #tab-more div[style*="background"]{
+  border-color:#D0D9EE!important;
+}
+body.theme-light #tab-smartbet div[style*="rgba(255,255,255"],
+body.theme-light #tab-smartbet div[style*="rgba(6,8,15"],
+body.theme-light #tab-smartbet div[style*="rgba(14,20,36"],
+body.theme-light #tab-smartbet div[style*="#0E1424"],
+body.theme-light #tab-smartbet div[style*="#161d2e"]{
+  background:#FFFFFF!important;
+  border-color:#D0D9EE!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.06)!important;
+}
+
+/* 4. Header / intro blocks */
+body.theme-light .main .tab-content:not(#tab-meciuri) :is(.visual-card-head,.section-head,.panel-head,.card-head,.clv-header),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> h1),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> h2:first-child),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> h3:first-child){
+  background:#FFFFFF!important;
+  border-color:#D0D9EE!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.06)!important;
+}
+body.theme-light .main .tab-content:not(#tab-meciuri) :is(h1,h2,h3,h4,.visual-card-title,.sec-title,.panel-title,.card-title,.clv-title){
+  color:#0C1220!important;
+  font-weight:inherit!important;
+  letter-spacing:inherit!important;
+}
+body.theme-light .main .tab-content:not(#tab-meciuri) :is(p,.visual-card-sub,.muted,.sub,.note,.meta,.desc,[class*="sub"],[class*="meta"],[class*="note"]){
+  color:#546376!important;
+}
+
+/* 5. Button/chip groups */
+body.theme-light .main .tab-content:not(#tab-meciuri) :is(.filter-bar,.tab-row,.subtabs,.smartbet-tabs,.sb-tabs,.sbv2-tabs,.engine-tabs,.ai-memory-tabs,.unified-tabs,.p-filters),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)){
+  background:#F0F4FB!important;
+  border-color:#D0D9EE!important;
+  box-shadow:none!important;
+}
+body.theme-light .main .tab-content:not(#tab-meciuri) :is(button,a.btn,.filter-btn,.chip,.pill,.tag,.procc-btn,.clv-sel),
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> button:nth-of-type(2)) > button,
+body.theme-light .main .tab-content:not(#tab-meciuri) div:has(> a:nth-of-type(2)) > a{
+  background:#FFFFFF!important;
+  border-color:#D0D9EE!important;
+  color:#2A3650!important;
+  box-shadow:none!important;
+}
+body.theme-light .main .tab-content:not(#tab-meciuri) :is(button.active,button.on,button[aria-selected="true"],a.active,a.on,a[aria-current="page"],.filter-btn.active,.chip.active,.pill.active){
+  background:rgba(12,168,142,.10)!important;
+  border-color:rgba(12,168,142,.38)!important;
+  color:#0CA88E!important;
+  box-shadow:none!important;
+}
+
+/* 6. SmartBet link/button groups */
+body.theme-light #tab-smartbet div:has(> a):has(> a + a),
+body.theme-light #tab-smartbet div:has(> button):has(> button + button){
+  background:#F0F4FB!important;
+  border-color:#D0D9EE!important;
+  box-shadow:none!important;
+}
+body.theme-light #tab-smartbet div:has(> a):has(> a + a) > a,
+body.theme-light #tab-smartbet div:has(> button):has(> button + button) > button{
+  background:#FFFFFF!important;
+  border-color:#D0D9EE!important;
+  color:#2A3650!important;
+  box-shadow:none!important;
+}
+
+/* 7. Tables */
+body.theme-light .main .tab-content:not(#tab-meciuri) tbody tr{background:#F4F7FD!important;box-shadow:none!important;}
+body.theme-light .main .tab-content:not(#tab-meciuri) td{color:#2A3650!important;}
+body.theme-light .main .tab-content:not(#tab-meciuri) th{color:#546376!important;}
