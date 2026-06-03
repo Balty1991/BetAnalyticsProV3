@@ -10501,7 +10501,7 @@ function renderML5Analysis(){
     '</div>';
 
   // Cards per match
-  var cardsHtml = sorted.map(function(m){ return renderML5MatchCard(m); }).join('');
+  var cardsHtml = sorted.map(function(m, idx){ return renderML5MatchCard(m, idx+1); }).join('');
 
   root.innerHTML =
     '<div style="padding:0 4px">' +
@@ -10532,11 +10532,12 @@ function ml5FactorBar(label, count, total, color){
   '</div>';
 }
 
-function renderML5MatchCard(m){
+function renderML5MatchCard(m, cardIdx){
   var b = m.bestBet;
   if(!b) return '';
   var score = m.smartScore || 0;
   var scoreColor = score>=85?'#22c55e':score>=70?'var(--acc)':score>=55?'var(--yel)':'var(--muted)';
+  var numBadge = cardIdx ? '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:6px;background:rgba(255,255,255,.08);color:var(--muted);font-size:10px;font-weight:800;margin-right:7px;vertical-align:middle;flex-shrink:0">#'+cardIdx+'</span>' : '';
 
   // Form dots
   function fdots(fs){
@@ -10573,7 +10574,7 @@ function renderML5MatchCard(m){
     // Header row: score + teams
     '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">' +
       '<div>' +
-        '<div style="font-size:13px;font-weight:800;color:var(--txt)">'+htmlEsc(m.home||'')+' vs '+htmlEsc(m.away||'')+'</div>' +
+        '<div style="font-size:13px;font-weight:800;color:var(--txt);display:flex;align-items:center;flex-wrap:wrap;gap:2px">'+numBadge+htmlEsc(m.home||'')+' vs '+htmlEsc(m.away||'')+'</div>' +
         '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+htmlEsc(m.league||'')+' · '+htmlEsc(m.dateLabel||'')+' '+htmlEsc(m.timeLabel||'')+'</div>' +
       '</div>' +
       '<div style="text-align:right">' +
