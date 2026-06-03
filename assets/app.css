@@ -68,10 +68,10 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-heig
   .toast{max-width:none;width:100%;font-size:11px;padding:10px 12px}
 }
 @media(max-width:480px){
-  .main{padding-left:6px!important;padding-right:6px!important}
+  .main{padding-left:0!important;padding-right:0!important}
   .header{padding-left:8px;padding-right:8px}
   .tabs{padding-left:6px;padding-right:6px}
-  .tab-content{border-radius:12px!important}
+  .tab-content{border-radius:0!important;border-left:none!important;border-right:none!important}
   .apex-hero-shell,.apex-tier-section,.apex-ticket-section,
   .apex-section-pad,.apex-engine-header,.apex-picks-body{
     padding-left:10px;padding-right:10px
@@ -587,7 +587,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-heig
 @media(max-width:768px){
   .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px 12px;top:84px}
   .tab{font-size:11px;padding:10px 6px;border-radius:12px}
-  .main{padding:14px 6px 28px}
+  .main{padding:14px 0 28px}
   .header{padding:10px 12px}
   .header-inner{align-items:flex-start}
   .header-tools{width:100%;justify-content:flex-start}
@@ -3012,7 +3012,7 @@ button, input, select, textarea { font-family: inherit; }
   .header-quick-stats { display: none !important; }
 
   /* Section spacing */
-  .main { padding: 14px 6px calc(96px + env(safe-area-inset-bottom,0px)) !important; }
+  .main { padding: 14px 0 calc(96px + env(safe-area-inset-bottom,0px)) !important; }
   .section, .match-card, .match-card-v16, .bilet-card, .focus-shell { border-radius: var(--r-md) !important; }
   .focus-shell { padding: 14px !important; }
   .focus-title { font-size: 16px !important; }
@@ -3026,7 +3026,7 @@ button, input, select, textarea { font-family: inherit; }
 @media (max-width: 420px) {
   .mobile-nav-btn small { font-size: 9px !important; }
   .mobile-nav { left: 8px !important; right: 8px !important; bottom: 8px !important; }
-  .main { padding-left: 6px !important; padding-right: 6px !important; }
+  .main { padding-left: 0 !important; padding-right: 0 !important; }
   .modern-title { font-size: 20px !important; }
 }
 
