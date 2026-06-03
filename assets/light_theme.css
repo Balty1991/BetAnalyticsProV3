@@ -1323,3 +1323,223 @@ body.theme-light .main [class*="v5-"][style*="background"] {
   background: #FFFFFF !important;
   border-color: #D0D9EE !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   42. HIGH-SPECIFICITY OVERRIDES — beat (1,1,0) selectors in
+   apex_lux_gold_ribbon.css / apex_lux_photo_exact_cards.css that use
+   #tab-meciuri .m17-XXX, and beat (1,1,0) in unified_engine_frame.css
+   / performance_verdict_clv_frame.css for SmartBet + CLV elements.
+   Strategy: body.theme-light #tab-meciuri .m17-XXX = (1,2,0) > (1,1,0)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── M17 MATCH CARDS (inside #tab-meciuri) ────────────────────────
+   apex_lux_gold_ribbon.css + apex_lux_photo_exact_cards.css both use
+   #tab-meciuri .m17-topline / .m17-reco with (1,1,0) specificity.
+   We use body.theme-light #tab-meciuri .m17-XXX = (1,2,0) to win.    */
+body.theme-light #tab-meciuri .match-card-m17 {
+  background: #FFFFFF !important;
+  border-color: rgba(12,168,142,.3) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.07) !important;
+}
+body.theme-light #tab-meciuri .match-card-m17::before {
+  background: linear-gradient(90deg, rgba(12,168,142,.5), rgba(12,168,142,.9), rgba(12,168,142,.5)) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .m17-topline {
+  background: rgba(0,0,0,.025) !important;
+  border-color: rgba(0,0,0,.07) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .m17-topline::before,
+body.theme-light #tab-meciuri .m17-topline::after { display: none !important; }
+body.theme-light #tab-meciuri .m17-league   { color: #2A3650 !important; }
+body.theme-light #tab-meciuri .m17-country  { color: #546376 !important; }
+body.theme-light #tab-meciuri .m17-time .m17-date { color: #546376 !important; }
+body.theme-light #tab-meciuri .m17-time .m17-hour { color: #0C1220 !important; }
+body.theme-light #tab-meciuri .m17-time .m17-countdown {
+  color: #B38900 !important;
+  background: rgba(179,137,0,.1) !important;
+}
+body.theme-light #tab-meciuri .m17-logo {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .m17-team-name { color: #0C1220 !important; }
+body.theme-light #tab-meciuri .m17-team-prob { color: #546376 !important; }
+body.theme-light #tab-meciuri .m17-vs {
+  color: #546376 !important;
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.1) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .m17-ml-bar  { background: rgba(0,0,0,.08) !important; }
+body.theme-light #tab-meciuri .m17-ml-note { color: #546376 !important; }
+body.theme-light #tab-meciuri .m17-ml-note span:nth-child(1) { color: #0CA88E !important; }
+body.theme-light #tab-meciuri .m17-ml-note span:nth-child(2) { color: #C97A00 !important; }
+body.theme-light #tab-meciuri .m17-ml-note span:nth-child(3) { color: #2E7BD4 !important; }
+body.theme-light #tab-meciuri .m17-reco {
+  background: rgba(12,168,142,.05) !important;
+  border-color: rgba(12,168,142,.28) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .m17-reco-kicker { color: #0CA88E !important; }
+body.theme-light #tab-meciuri .m17-pick        { color: #0C1220 !important; }
+body.theme-light #tab-meciuri .m17-odd {
+  color: #B38900 !important;
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(179,137,0,.28) !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .m17-metric {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+body.theme-light #tab-meciuri .m17-metric span   { color: #546376 !important; }
+body.theme-light #tab-meciuri .m17-metric strong { color: #0CA88E !important; }
+body.theme-light #tab-meciuri .m17-kelly,
+body.theme-light #tab-meciuri .m17-consensus.ok {
+  color: #0CA88E !important;
+  background: rgba(12,168,142,.09) !important;
+  border-color: rgba(12,168,142,.3) !important;
+}
+body.theme-light #tab-meciuri .m17-pill {
+  color: #2A3650 !important;
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.10) !important;
+}
+body.theme-light #tab-meciuri .m17-pill.m17-risk {
+  color: #B38900 !important;
+  background: rgba(179,137,0,.09) !important;
+  border-color: rgba(179,137,0,.3) !important;
+}
+body.theme-light #tab-meciuri .m17-why {
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.07) !important;
+}
+body.theme-light #tab-meciuri .m17-why span   { color: #2E7BD4 !important; }
+body.theme-light #tab-meciuri .m17-why strong { color: #2A3650 !important; }
+body.theme-light #tab-meciuri .m17-btn {
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.08) !important;
+  color: #2A3650 !important;
+  box-shadow: none !important;
+}
+body.theme-light #tab-meciuri .m17-extra { border-color: rgba(0,0,0,.07) !important; }
+
+/* ── CLV TAB — containers not covered by wildcards ─────────────────
+   performance_verdict_clv_frame.css uses #tab-clv .kpi-row (1,1,0).
+   body.theme-light .main #tab-clv .kpi-row = (1,3,1) beats it.       */
+body.theme-light .main #tab-clv .kpi-row {
+  background: rgba(0,0,0,.02) !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.05) !important;
+}
+body.theme-light .main #tab-clv .clv-header {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+body.theme-light .main #tab-clv .clv-root {
+  color: #0C1220 !important;
+  background: transparent !important;
+}
+body.theme-light .main #tab-clv .clv-title  { color: #0C1220 !important; }
+body.theme-light .main #tab-clv .clv-st     { color: #0C1220 !important; }
+body.theme-light .main #tab-clv .clv-updated {
+  background: rgba(12,168,142,.08) !important;
+  border-color: rgba(12,168,142,.25) !important;
+  color: #0CA88E !important;
+}
+body.theme-light .main #tab-clv .kpi-lbl { color: #546376 !important; }
+body.theme-light .main #tab-clv .kpi-val { color: #0C1220 !important; }
+body.theme-light .main #tab-clv .kpi-sub { color: #546376 !important; }
+body.theme-light .main #tab-clv .diag-text,
+body.theme-light .main #tab-clv .diag-action,
+body.theme-light .main #tab-clv .clv-note  { color: #2A3650 !important; }
+body.theme-light .main #tab-clv .diag-meta,
+body.theme-light .main #tab-clv .box-sub,
+body.theme-light .main #tab-clv .rk,
+body.theme-light .main #tab-clv .dt        { color: #546376 !important; }
+body.theme-light .main #tab-clv .mt,
+body.theme-light .main #tab-clv .mk,
+body.theme-light .main #tab-clv .rv        { color: #0C1220 !important; }
+
+/* ── SMARTBET — blocks not caught by [class*="..."] wildcards ───────
+   unified_engine_frame.css uses #tab-smartbet #hybrid-main-copy (2,0,0).
+   body.theme-light .main #tab-smartbet #hybrid-main-copy = (2,2,0).    */
+body.theme-light .main #tab-smartbet #hybrid-main-copy {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+  color: #0C1220 !important;
+}
+body.theme-light .main #tab-smartbet #hybrid-main-copy * { color: inherit !important; }
+body.theme-light .main #tab-smartbet #unified-hybrid-badge,
+body.theme-light .main #tab-smartbet #unified-hybrid-badge > div {
+  background: rgba(0,0,0,.02) !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.05) !important;
+}
+/* KPI summary tiles (ID-based grid children) */
+body.theme-light .main #tab-smartbet #unified-summary-grid > *,
+body.theme-light .main #tab-smartbet #smartbet-summary-grid > *,
+body.theme-light .main #tab-smartbet #unified-engine-summary > * {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+/* Learning and knowledge cards (missed by existing wildcards) */
+body.theme-light .main #tab-smartbet [class*="learning"],
+body.theme-light .main #tab-smartbet [class*="knowledge"],
+body.theme-light .main #tab-more [class*="learning"],
+body.theme-light .main #tab-more [class*="knowledge"] {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06) !important;
+}
+/* Text colors inside SmartBet (hardcoded #f8fbff in unified_engine_frame) */
+body.theme-light .main #tab-smartbet h2,
+body.theme-light .main #tab-smartbet h3,
+body.theme-light .main #tab-smartbet .visual-card-title,
+body.theme-light .main #tab-smartbet .sec-title { color: #0C1220 !important; }
+body.theme-light .main #tab-smartbet p,
+body.theme-light .main #tab-smartbet .visual-card-sub,
+body.theme-light .main #tab-smartbet .muted     { color: #546376 !important; }
+/* SmartBet tab buttons */
+body.theme-light .main #tab-smartbet .smartbet-tabs button,
+body.theme-light .main #tab-smartbet .sb-tabs button,
+body.theme-light .main #tab-smartbet .unified-tabs button,
+body.theme-light .main #tab-smartbet .engine-tabs button,
+body.theme-light .main #tab-smartbet .filter-bar button,
+body.theme-light .main #tab-smartbet .tab-row button {
+  background: #F5F8FF !important;
+  border-color: #D0D9EE !important;
+  color: #2A3650 !important;
+  box-shadow: none !important;
+}
+body.theme-light .main #tab-smartbet .smartbet-tabs button.active,
+body.theme-light .main #tab-smartbet .sb-tabs button.active,
+body.theme-light .main #tab-smartbet .unified-tabs button.active,
+body.theme-light .main #tab-smartbet .engine-tabs button.active,
+body.theme-light .main #tab-smartbet .filter-bar button.active,
+body.theme-light .main #tab-smartbet .tab-row button.active,
+body.theme-light .main #tab-smartbet button.active,
+body.theme-light .main #tab-smartbet button[aria-selected="true"] {
+  background: rgba(12,168,142,.10) !important;
+  border-color: rgba(12,168,142,.40) !important;
+  color: #0CA88E !important;
+  box-shadow: 0 0 14px rgba(12,168,142,.12) !important;
+}
+/* SmartBet ::before decorative lines */
+body.theme-light .main #tab-smartbet .smartbet-tabs::before,
+body.theme-light .main #tab-smartbet .sb-tabs::before,
+body.theme-light .main #tab-smartbet .unified-tabs::before,
+body.theme-light .main #tab-smartbet .tab-row::before {
+  display: none !important;
+}
+/* Inline-style divs in "Baza de Cunoștințe" — border-top separator */
+body.theme-light .main #tab-smartbet div[style*="rgba(255,255,255,.07)"],
+body.theme-light .main #tab-more div[style*="rgba(255,255,255,.07)"] {
+  border-color: rgba(0,0,0,.09) !important;
+}
