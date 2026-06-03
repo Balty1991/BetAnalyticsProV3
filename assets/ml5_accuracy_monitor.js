@@ -49,12 +49,42 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify((log || []).slice(0, MAX_ENTRIES))); } catch(e) {}
   }
 
+  /* ─── expirare predicții vechi (nu mai sunt în ALL_MATCHES + data trecută) ─── */
+  function expireOldPredictions() {
+    var log = loadLog();
+    if (!log.length) return 0;
+    var matches = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
+    var activeEids = {}, activeKeys = {};
+    matches.forEach(function (m) {
+      if (!m) return;
+      if (m.eventId) activeEids[String(m.eventId)] = true;
+      activeKeys[entryKey(m.home, m.away, m.event_date || m.eventDate || m.date || '')] = true;
+    });
+    var now = Date.now();
+    var changed = 0;
+    log.forEach(function (e) {
+      if (!e.autoTracked || e.result !== 'pending') return;
+      var isActive = (e.eventId && activeEids[e.eventId]) || activeKeys[entryKey(e.home, e.away, e.eventDate)];
+      if (isActive) return;
+      // Nu mai e în datele curente — verificăm data evenimentului
+      var evTs = e.eventDate ? new Date(e.eventDate).getTime() : 0;
+      var saveTs = e.savedAt ? new Date(e.savedAt).getTime() : 0;
+      var ref = evTs > 0 ? evTs : saveTs;
+      if (ref > 0 && (now - ref) > 12 * 3600 * 1000) {
+        e.result = 'expired'; changed++;
+      }
+    });
+    if (changed > 0) saveLog(log);
+    return changed;
+  }
+
   /* ─── auto-înregistrare din ALL_MATCHES ─── */
   function autoRegisterPredictions() {
+    expireOldPredictions();
     var matches = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
-    // Include orice meci cu scor ML5 > 0, indiferent daca are odds sau nu
+    // Același filtru ca renderML5Analysis + renderML5MatchCard: isEnriched + bestBet
     var preds = matches.filter(function (m) {
-      return m && m.smartScore > 0;
+      return m && m.isEnriched && m.bestBet && m.smartScore > 0;
     });
     if (!preds.length) return 0;
 
@@ -89,7 +119,8 @@
         trackOdds:   safeN(b.odds),
         trackProb:   safeN(b.adjProb || b.prob),
         ml5Score:    safeN(m.smartScore),
-        ml5Prob:     safeN(b.adjProb || b.prob),
+        ml5Prob:     safeN(b.adjProb || b.prob), // stored as 0–100 (adjProb is %)
+
         ml5Odds:     safeN(b.odds),
         factors: {
           form: safeN(f.formFactor, 1),
@@ -198,9 +229,10 @@
 
   /* ─── calcule statistici ─── */
   function calcStats(entries) {
-    var settled = entries.filter(function (e) { return e.result === 'won' || e.result === 'lost'; });
+    var active  = entries.filter(function (e) { return e.result !== 'expired'; });
+    var settled = active.filter(function (e) { return e.result === 'won' || e.result === 'lost'; });
     var wins    = settled.filter(function (e) { return e.result === 'won'; }).length;
-    var pending = entries.filter(function (e) { return e.result === 'pending'; });
+    var pending = active.filter(function (e) { return e.result === 'pending'; });
 
     var bands = [
       { label: '≥ 85', min: 85, max: 101 },
@@ -224,7 +256,7 @@
     });
 
     return {
-      total:    entries.length,
+      total:    active.length,
       settled:  settled.length,
       wins:     wins,
       pending:  pending.length,
@@ -320,7 +352,7 @@
         '</div>' +
         '<div style="font-size:10px;color:var(--muted);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap">' +
           '<span>' + esc(e.betLabel || '—') + '</span>' +
-          (e.ml5Prob > 0 ? '<span>prob ' + Math.round(e.ml5Prob * 100) + '%</span>' : '') +
+          (e.ml5Prob > 0 ? '<span>prob ' + (e.ml5Prob > 1 ? Math.round(e.ml5Prob) : Math.round(e.ml5Prob * 100)) + '%</span>' : '') +
           (e.trackOdds > 1 ? '<span>@ ' + safeN(e.trackOdds).toFixed(2) + '</span>' : '') +
           dateStr +
           '<span style="color:' + rc + ';font-weight:700">' + (e.result === 'pending' ? 'în așteptare' : e.result) + '</span>' +
