@@ -1141,7 +1141,9 @@ function switchTab(name){
     }
   }
   document.querySelectorAll('.tab-content').forEach(function(el){ el.classList.remove('active'); });
-  $('tab-'+name).classList.add('active');
+  var _tabEl = $('tab-'+name);
+  if(!_tabEl){ console.warn('[switchTab] tab not found:', name); return; }
+  _tabEl.classList.add('active');
   closeDesktopMore(true);
   closeMobileMore();
   setDesktopTabActive(name);
