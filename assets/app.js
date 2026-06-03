@@ -7509,6 +7509,8 @@ function renderMatches(){
         var _ecf=$('filter-count');
         if(_ecf){ var _ecl=CURRENT_FILTER==='motor_validated'?' validate':CURRENT_FILTER==='bet_ok'?' OK':' meciuri'; _ecf.textContent=_ec+_ecl; }
       }
+      // Actualizăm și variabila globală citită de veyra_system_status.js → previne resetul la filtered.length
+      if(_ec>0) window.__VEYRA_MECIURI_DISPLAYED_COUNT = _ec;
     }catch(_){}
     renderTicketQuickPeek();
     if(typeof renderDashboardMonitor === 'function') renderDashboardMonitor();
