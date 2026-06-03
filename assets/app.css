@@ -67,6 +67,15 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-heig
   .toast-wrap{left:12px;right:12px;bottom:calc(88px + env(safe-area-inset-bottom,0px));gap:10px}
   .toast{max-width:none;width:100%;font-size:11px;padding:10px 12px}
 }
+@media(max-width:480px){
+  .main{padding-left:8px;padding-right:8px}
+  .header{padding-left:8px;padding-right:8px}
+  .tabs{padding-left:6px;padding-right:6px}
+  .apex-hero-shell,.apex-tier-section,.apex-ticket-section,
+  .apex-section-pad,.apex-engine-header,.apex-picks-body{
+    padding-left:10px;padding-right:10px
+  }
+}
 @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
 /* STATS GRID */
