@@ -4309,12 +4309,6 @@ def main():
         print(f"[V2] Enrichment v2 eșuat complet (non-fatal, continuăm cu v1): {e}")
         v2_stats = {"error": str(e)}
 
-    print("\n[2.9/6] Generare AI Preview în română (Claude) pentru meciuri fără preview...")
-    try:
-        predictions = enrich_with_claude_previews(predictions, started_at)
-    except Exception as e:
-        print(f"[ClaudePreview] Eroare fatală (non-fatal, continuăm): {e}")
-
     print("\n[3/6] Fetching BSD status metrics...")
     status_metrics = fetch_status_metrics()
     if status_metrics:
