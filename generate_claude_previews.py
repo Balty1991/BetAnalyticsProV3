@@ -2,9 +2,9 @@
 """
 generate_claude_previews.py — Analiză AI structurată (VERDICT/GĂSIT/CONCLUZIE).
 
-Rulează DUPĂ enrich_predictions.py care setează best_market pe fiecare rând.
-Citește predictions.json, generează preview-uri Claude în română cu context Tavily,
-scrie înapoi în predictions.json și actualizează cache-urile.
+Rulează DUPĂ enrich_predictions.py care setează markets_enriched + best_market.
+Trimite Claude TOP 3 pick-uri (nu doar best_market) + context Tavily web,
+astfel încât verdictul să acopere recomandarea reală a aplicației.
 """
 import json
 import os
@@ -84,30 +84,65 @@ def _tavily_search(client, home, away, event_date):
         return ""
 
 
-def _generate_preview(client, home, away, league, prob_home, prob_draw, prob_away,
+def _build_picks_text(markets_enriched, bm):
+    """Construieste lista de pick-uri top 3 non-Avoid pentru prompt."""
+    candidates = []
+    for mk, v in (markets_enriched or {}).items():
+        if not isinstance(v, dict):
+            continue
+        tier = v.get("risk_tier", "Avoid")
+        score = float(v.get("score") or 0)
+        candidates.append((score, mk, v))
+    candidates.sort(reverse=True)
+
+    lines = []
+    for _, mk, v in candidates[:3]:
+        pick_ro = _MARKET_RO.get(mk, mk)
+        odds    = float(v.get("odds") or 0)
+        prob    = float(v.get("prob") or v.get("bsd_prob") or 0)
+        ev      = float(v.get("ev_pct") or 0)
+        edge    = float(v.get("edge_pp") or 0)
+        tier    = v.get("risk_tier", "")
+        tier_tag = f" [{tier}]" if tier and tier != "Avoid" else ""
+        lines.append(
+            f"  • {pick_ro} @ {odds:.2f} | prob {round(prob*100)}%"
+            f" | EV {ev:+.1f}% | edge {edge:+.1f}pp{tier_tag}"
+        )
+
+    if not lines and bm:
+        mk = bm.get("market_key") or bm.get("market") or ""
+        pick_ro = _MARKET_RO.get(mk, mk)
+        lines.append(
+            f"  • {pick_ro} @ {float(bm.get('odds') or 0):.2f}"
+            f" | prob {round(float(bm.get('prob') or 0)*100)}%"
+            f" | EV {float(bm.get('ev_pct') or 0):+.1f}%"
+            f" | edge {float(bm.get('edge_pp') or 0):+.1f}pp"
+        )
+    return "\n".join(lines)
+
+
+def _generate_preview(client, home, away, league,
                       xg_home, xg_away, home_form, away_form,
                       is_derby, funfacts, web_context,
-                      pick_market, pick_odds, pick_prob, pick_ev, pick_edge):
+                      picks_text):
     derby_line = "\nDERBY LOCAL!" if is_derby else ""
-    facts_line = ("\nStatistici BSD: " + " | ".join(str(f) for f in funfacts[:2])) if funfacts else ""
+    facts_line = ("\nStatistici: " + " | ".join(str(f) for f in funfacts[:2])) if funfacts else ""
 
-    if pick_market:
-        pick_ro = _MARKET_RO.get(pick_market, pick_market)
-        web_section = (f"\nȘTIRI WEB: {web_context.strip()}"
+    if picks_text:
+        web_section = (f"\nȘTIRI WEB:\n{web_context.strip()}"
                        if web_context and len(web_context.strip()) > 20
                        else "\nȘTIRI WEB: nicio știre relevantă găsită.")
         prompt = (
             f"Ești analist sportiv. Răspunde STRICT în formatul de mai jos, în română, fără text extra.\n\n"
-            f"DATE MECI: {home} vs {away} | {league}{derby_line}\n"
-            f"PICK MODEL: {pick_ro} @ {pick_odds:.2f} | prob {round(pick_prob * 100)}% | "
-            f"EV +{pick_ev:.1f}% | edge +{pick_edge:.1f}pp\n"
-            f"STATISTICI: xG {xg_home:.2f}–{xg_away:.2f} | "
+            f"MECI: {home} vs {away} | {league}{derby_line}\n"
+            f"PICK-URI MODEL (evaluează toate):\n{picks_text}\n"
+            f"DATE: xG {xg_home:.2f}–{xg_away:.2f} | "
             f"formă {home}:[{home_form or '?'}] {away}:[{away_form or '?'}]"
             f"{facts_line}{web_section}\n\n"
             f"FORMAT RĂSPUNS (respectă exact, fără alte cuvinte):\n"
             f"VERDICT: [CONFIRMĂ / ATENȚIE / CONTRAZICE]\n"
-            f"GĂSIT: [1 propoziție — ce informații relevante au fost găsite pe web]\n"
-            f"CONCLUZIE: [1 propoziție — recomandarea ta finală despre acest pick]"
+            f"GĂSIT: [1 propoziție — ce informații relevante ai găsit pe web despre acest meci]\n"
+            f"CONCLUZIE: [1 propoziție — care pick e cel mai susținut de date și de ce]"
         )
     else:
         web_section = f"\nWeb: {web_context.strip()}" if web_context and len(web_context.strip()) > 20 else ""
@@ -121,10 +156,10 @@ def _generate_preview(client, home, away, league, prob_home, prob_draw, prob_awa
 
     msg = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=180,
+        max_tokens=220,
         messages=[{"role": "user", "content": prompt}],
     )
-    return msg.content[0].text.strip()[:450]
+    return msg.content[0].text.strip()[:500]
 
 
 def main():
@@ -189,9 +224,16 @@ def main():
         except Exception:
             continue
 
+        # Cache key: event_id + top markets sorted → regenerăm dacă pick-urile se schimbă
         bm = row.get("best_market") or {}
-        market_key  = bm.get("market_key") or bm.get("market") or ""
-        cache_key   = f"{event_id}:{market_key}" if market_key else event_id
+        markets_enriched = row.get("markets_enriched") or {}
+        non_avoid = sorted(
+            [(float(v.get("score") or 0), mk) for mk, v in markets_enriched.items()
+             if isinstance(v, dict) and v.get("risk_tier") != "Avoid"],
+            reverse=True
+        )
+        top_keys = "+".join(mk for _, mk in non_avoid[:3])
+        cache_key = f"{event_id}:{top_keys}" if top_keys else event_id
 
         if cache_key in claude_cache:
             row["ai_preview"] = claude_cache[cache_key]
@@ -204,9 +246,6 @@ def main():
             lg      = ev.get("league") or {}
             league  = lg.get("name") or "Ligă necunoscută"
 
-            prob_home = float(row.get("prob_home_win") or 0.33)
-            prob_draw = float(row.get("prob_draw") or 0.33)
-            prob_away = float(row.get("prob_away_win") or 0.33)
             xg_home   = float(row.get("expected_home_goals") or 1.2)
             xg_away   = float(row.get("expected_away_goals") or 1.0)
             home_form = (row.get("supreme_home_form_string")
@@ -218,10 +257,7 @@ def main():
                              or ev.get("is_local_derby"))
             funfacts  = row.get("funfacts") or []
 
-            pick_odds  = float(bm.get("odds") or 0)
-            pick_prob  = float(bm.get("prob") or bm.get("bsd_prob") or 0)
-            pick_ev    = float(bm.get("ev_pct") or 0)
-            pick_edge  = float(bm.get("edge_pp") or 0)
+            picks_text = _build_picks_text(markets_enriched, bm)
 
             web_context = ""
             if tavily_client:
@@ -234,10 +270,9 @@ def main():
 
             preview = _generate_preview(
                 client, home, away, league,
-                prob_home, prob_draw, prob_away,
                 xg_home, xg_away, home_form, away_form,
                 is_derby, funfacts, web_context,
-                market_key, pick_odds, pick_prob, pick_ev, pick_edge,
+                picks_text,
             )
             row["ai_preview"] = preview
             claude_cache[cache_key] = preview
