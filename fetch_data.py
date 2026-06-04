@@ -3839,41 +3839,35 @@ def _generate_one_claude_preview(client, home: str, away: str, league: str, coun
         web_line = f"\n\nȘTIRI RECENTE (web):\n{web_context.strip()}"
 
     if pick_market:
-        # Mod validare pick — principalul mod de utilizare
         pick_ro = _MARKET_RO.get(pick_market, pick_market)
+        web_section = f"\nȘTIRI WEB: {web_context.strip()}" if web_context and len(web_context.strip()) > 20 else "\nȘTIRI WEB: nicio știre relevantă găsită."
         prompt = (
-            f"Ești un analist sportiv senior. Modelul ML recomandă un pariu pentru meciul de mai jos.\n"
-            f"Sarcina ta: analizează dacă informațiile disponibile (statistici + știri web) "
-            f"CONFIRMĂ sau CONTRAZIC acest pick. Fii concis și direct (max 4 propoziții).\n\n"
-            f"MECI: {home} vs {away} | {league} ({country}){derby_line}\n"
-            f"PICK RECOMANDAT: {pick_ro} @ {pick_odds:.2f} "
-            f"(probabilitate model: {round(pick_prob*100)}%, EV: +{pick_ev:.1f}%, edge: +{pick_edge:.1f}pp)\n"
-            f"MOTIVAȚIE MODEL: {pick_rationale}\n"
-            f"DATE MODEL: {home} câștigă {round(prob_home*100)}% | xG {xg_home:.2f}–{xg_away:.2f} "
-            f"| Formă: {home} [{home_form or 'N/A'}] vs {away} [{away_form or 'N/A'}]"
-            f"{facts_line}{web_line}\n\n"
-            f"Răspunde în română astfel:\n"
-            f"Prima linie: DOAR unul din aceste cuvinte cheie: CONFIRMĂ / ATENȚIE / CONTRAZICE\n"
-            f"Urmează 2-3 propoziții: ce spun știrile despre pick, ce riscuri există, concluzia ta."
+            f"Ești analist sportiv. Răspunde STRICT în formatul de mai jos, în română, fără text extra.\n\n"
+            f"DATE MECI: {home} vs {away} | {league}{derby_line}\n"
+            f"PICK MODEL: {pick_ro} @ {pick_odds:.2f} | prob {round(pick_prob*100)}% | EV +{pick_ev:.1f}% | edge +{pick_edge:.1f}pp\n"
+            f"STATISTICI: xG {xg_home:.2f}–{xg_away:.2f} | formă {home}:[{home_form or '?'}] {away}:[{away_form or '?'}]"
+            f"{facts_line}{web_section}\n\n"
+            f"FORMAT RĂSPUNS (respectă exact, fără alte cuvinte):\n"
+            f"VERDICT: [CONFIRMĂ / ATENȚIE / CONTRAZICE]\n"
+            f"GĂSIT: [1 propoziție — ce informații relevante au fost găsite pe web]\n"
+            f"CONCLUZIE: [1 propoziție — recomandarea ta finală despre acest pick]"
         )
     else:
-        # Mod preview general (fără pick recomandat)
+        web_section = f"\nWeb: {web_context.strip()}" if web_context and len(web_context.strip()) > 20 else ""
         prompt = (
-            f"Ești analist sportiv. Scrie un preview scurt în română (3 propoziții, max 300 caractere), "
-            f"fără titluri, fără markdown.\n\n"
-            f"Meci: {home} vs {away} | {league} ({country}){derby_line}\n"
-            f"Model: {home} {round(prob_home*100)}% | xG {xg_home:.2f}–{xg_away:.2f} "
-            f"| Formă: [{home_form or 'N/A'}] vs [{away_form or 'N/A'}]"
-            f"{facts_line}{web_line}\n\n"
-            f"Răspunde DOAR cu textul preview-ului în română."
+            f"Ești analist sportiv. Scrie 2 propoziții scurte în română despre acest meci.\n\n"
+            f"{home} vs {away} | {league}\n"
+            f"xG {xg_home:.2f}–{xg_away:.2f} | formă [{home_form or '?'}] vs [{away_form or '?'}]"
+            f"{facts_line}{web_section}\n\n"
+            f"Răspunde DOAR cu cele 2 propoziții, fără titluri."
         )
 
     msg = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=280,
+        max_tokens=180,
         messages=[{"role": "user", "content": prompt}],
     )
-    return msg.content[0].text.strip()[:550]
+    return msg.content[0].text.strip()[:450]
 
 
 def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: datetime) -> List[Dict[str, Any]]:
