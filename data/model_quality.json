@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-04T16:11:07.519397+00:00",
+  "updated_at": "2026-06-04T17:42:40.695596+00:00",
   "quality_score": 73.2,
   "quality_grade": "B",
   "overall_brier": 0.2073,
@@ -10,15 +10,15 @@
   "diagnosis": "Calibrare acceptabila — variante mici fata de probabilitatile reale.",
   "coverage": {
     "predictions": 325,
-    "ev_signals": 5,
+    "ev_signals": 4,
     "log_total": 1728,
     "log_closed": 1613,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.69,
+    "age_hours": 0.77,
     "color": "green",
-    "label": "0.7h"
+    "label": "0.8h"
   },
   "markets": [
     {
@@ -83,11 +83,11 @@
     }
   ],
   "backtest": {
-    "roi_pct": -1.9,
-    "winrate": 70.59,
-    "n_bets": 68,
-    "avg_odds": 1.405,
-    "avg_edge": 13.53
+    "roi_pct": -0.92,
+    "winrate": 71.21,
+    "n_bets": 66,
+    "avg_odds": 1.409,
+    "avg_edge": 13.62
   },
   "recommendations": [
     "Calibrare în parametri normali. Continuă colectarea de rezultate."
@@ -177,7 +177,7 @@
             "n": 2456,
             "brier": 0.2056,
             "log_loss": 0.6,
-            "ece": 0.0043,
+            "ece": 0.0044,
             "winrate": 0.2976
           }
         ]
@@ -298,7 +298,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-06-04T16:11:07.395146"
+    "updated_at": "2026-06-04T17:42:40.565635"
   },
   "ui_cards": [
     {
@@ -315,7 +315,7 @@
     },
     {
       "label": "ROI backtest",
-      "value": -1.9,
+      "value": -0.9,
       "suffix": "%",
       "tone": "bad"
     },
