@@ -958,11 +958,51 @@
       else if (activeSection === 'invatare') renderInvatareSection();
       else if (activeSection === 'arhiva') renderArhivaSection();
 
+      /* Apply light-theme overrides via inline style — beats all CSS specificity */
+      if (document.body.classList.contains('theme-light')) apexLightPass();
+
       /* Sync legacy globals */
       window.__UNIFIED_POOL_COUNT__ = total;
     } catch (e) { console.warn('[APEX] Render error:', e); }
 
     STATE.rendering = false;
+  }
+
+  /* ── Light theme post-render pass ────────────────────────────── */
+  function sp(el, prop, val) { el.style.setProperty(prop, val, 'important'); }
+
+  function apexLightPass() {
+    var tab = $('tab-smartbet');
+    if (!tab) return;
+
+    /* Tab + section containers */
+    sp(tab, 'background', '#F0F4FB');
+    ['apex-predictii-section', 'apex-invatare-section', 'apex-arhiva-section'].forEach(function (id) {
+      var s = $(id); if (s) sp(s, 'background', '#F0F4FB');
+    });
+
+    /* Tier sections and picks body */
+    tab.querySelectorAll('.apex-tier-section').forEach(function (el) { sp(el, 'background', '#F0F4FB'); });
+    tab.querySelectorAll('.apex-picks-body').forEach(function (el) { sp(el, 'background', 'transparent'); });
+
+    /* Tier headers — white */
+    tab.querySelectorAll('.apex-tier-header').forEach(function (el) {
+      sp(el, 'background', '#FFFFFF');
+      sp(el, 'box-shadow', '0 2px 8px rgba(0,0,0,.06)');
+    });
+
+    /* Pick cards — white */
+    tab.querySelectorAll('.apex-pick-card').forEach(function (el) {
+      sp(el, 'background', '#FFFFFF');
+      sp(el, 'box-shadow', '0 2px 8px rgba(0,0,0,.06)');
+    });
+
+    /* Mobile nav */
+    var nav = document.querySelector('.mobile-nav');
+    if (nav) {
+      sp(nav, 'background', 'rgba(240,244,251,.97)');
+      sp(nav, 'border-color', 'rgba(12,168,142,.18)');
+    }
   }
 
   /* ── Schedule render ─────────────────────────────────────────── */
