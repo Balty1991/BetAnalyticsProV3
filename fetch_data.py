@@ -3787,43 +3787,93 @@ def _save_claude_preview_cache(cache: Dict[str, str]) -> None:
         print(f"[ClaudePreview] Nu s-a putut salva cache-ul: {e}")
 
 
+_MARKET_RO = {
+    "homeWin":  "Victorie gazdă",
+    "awayWin":  "Victorie oaspete",
+    "draw":     "Egal",
+    "over15":   "Peste 1.5 goluri",
+    "over25":   "Peste 2.5 goluri",
+    "over35":   "Peste 3.5 goluri",
+    "under15":  "Sub 1.5 goluri",
+    "under25":  "Sub 2.5 goluri",
+    "under35":  "Sub 3.5 goluri",
+    "btts":     "Ambele marchează",
+    "dc1x":     "Șansă dublă 1X",
+    "dcx2":     "Șansă dublă X2",
+    "dc12":     "Șansă dublă 12",
+    "home_win": "Victorie gazdă",
+    "away_win": "Victorie oaspete",
+    "over_15":  "Peste 1.5 goluri",
+    "over_25":  "Peste 2.5 goluri",
+    "over_35":  "Peste 3.5 goluri",
+    "under_15": "Sub 1.5 goluri",
+    "under_25": "Sub 2.5 goluri",
+    "under_35": "Sub 3.5 goluri",
+    "btts_yes": "Ambele marchează",
+    "dc_1x":    "Șansă dublă 1X",
+    "dc_x2":    "Șansă dublă X2",
+    "dc_12":    "Șansă dublă 12",
+}
+
+
 def _generate_one_claude_preview(client, home: str, away: str, league: str, country: str,
                                   prob_home: float, prob_draw: float, prob_away: float,
                                   xg_home: float, xg_away: float,
                                   home_form: str, away_form: str,
                                   is_derby: bool, funfacts: list,
-                                  web_context: str = "") -> str:
+                                  web_context: str = "",
+                                  pick_market: str = "",
+                                  pick_odds: float = 0.0,
+                                  pick_prob: float = 0.0,
+                                  pick_ev: float = 0.0,
+                                  pick_edge: float = 0.0,
+                                  pick_rationale: str = "") -> str:
+
+    derby_line = "\nDERBY LOCAL!" if is_derby else ""
     facts_line = ""
     if funfacts:
-        facts_line = "\nFapte statistice: " + " | ".join(str(f) for f in funfacts[:2])
-
-    derby_line = "\nEste un derby local!" if is_derby else ""
+        facts_line = "\nStatistici BSD: " + " | ".join(str(f) for f in funfacts[:2])
 
     web_line = ""
     if web_context and len(web_context.strip()) > 20:
-        web_line = f"\n\nȘtiri recente (surse externe):\n{web_context.strip()}"
+        web_line = f"\n\nȘTIRI RECENTE (web):\n{web_context.strip()}"
 
-    prompt = (
-        f"Ești un analist sportiv. Scrie un preview de meci în limba română, "
-        f"4-5 propoziții (max 450 caractere), fără titluri, fără liste, fără markdown. "
-        f"Dacă există știri recente despre accidentați sau lotul echipei, menționează-le explicit. "
-        f"Tonul să fie analitic și direct.\n\n"
-        f"Meci: {home} vs {away}\n"
-        f"Competiție: {league} ({country})\n"
-        f"Probabilități model: {home} câștigă {round(prob_home*100)}%, egal {round(prob_draw*100)}%, "
-        f"{away} câștigă {round(prob_away*100)}%\n"
-        f"xG estimat: {home} {xg_home:.2f} — {away} {xg_away:.2f}\n"
-        f"Formă recentă: {home} [{home_form or 'N/A'}] vs {away} [{away_form or 'N/A'}]"
-        f"{derby_line}{facts_line}{web_line}\n\n"
-        f"Răspunde DOAR cu textul preview-ului în română, fără alte explicații."
-    )
+    if pick_market:
+        # Mod validare pick — principalul mod de utilizare
+        pick_ro = _MARKET_RO.get(pick_market, pick_market)
+        prompt = (
+            f"Ești un analist sportiv senior. Modelul ML recomandă un pariu pentru meciul de mai jos.\n"
+            f"Sarcina ta: analizează dacă informațiile disponibile (statistici + știri web) "
+            f"CONFIRMĂ sau CONTRAZIC acest pick. Fii concis și direct (max 4 propoziții).\n\n"
+            f"MECI: {home} vs {away} | {league} ({country}){derby_line}\n"
+            f"PICK RECOMANDAT: {pick_ro} @ {pick_odds:.2f} "
+            f"(probabilitate model: {round(pick_prob*100)}%, EV: +{pick_ev:.1f}%, edge: +{pick_edge:.1f}pp)\n"
+            f"MOTIVAȚIE MODEL: {pick_rationale}\n"
+            f"DATE MODEL: {home} câștigă {round(prob_home*100)}% | xG {xg_home:.2f}–{xg_away:.2f} "
+            f"| Formă: {home} [{home_form or 'N/A'}] vs {away} [{away_form or 'N/A'}]"
+            f"{facts_line}{web_line}\n\n"
+            f"Răspunde în română astfel:\n"
+            f"Prima linie: DOAR unul din aceste cuvinte cheie: CONFIRMĂ / ATENȚIE / CONTRAZICE\n"
+            f"Urmează 2-3 propoziții: ce spun știrile despre pick, ce riscuri există, concluzia ta."
+        )
+    else:
+        # Mod preview general (fără pick recomandat)
+        prompt = (
+            f"Ești analist sportiv. Scrie un preview scurt în română (3 propoziții, max 300 caractere), "
+            f"fără titluri, fără markdown.\n\n"
+            f"Meci: {home} vs {away} | {league} ({country}){derby_line}\n"
+            f"Model: {home} {round(prob_home*100)}% | xG {xg_home:.2f}–{xg_away:.2f} "
+            f"| Formă: [{home_form or 'N/A'}] vs [{away_form or 'N/A'}]"
+            f"{facts_line}{web_line}\n\n"
+            f"Răspunde DOAR cu textul preview-ului în română."
+        )
 
     msg = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=250,
+        max_tokens=280,
         messages=[{"role": "user", "content": prompt}],
     )
-    return msg.content[0].text.strip()[:500]
+    return msg.content[0].text.strip()[:550]
 
 
 def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: datetime) -> List[Dict[str, Any]]:
@@ -3840,14 +3890,14 @@ def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: date
     client = _anthropic_mod.Anthropic(api_key=api_key)
     cutoff = now_utc + timedelta(days=_CLAUDE_PREVIEW_MAX_DAYS)
 
-    # Tavily — opțional, pentru context web independent
+    # Tavily — opțional
     tavily_client = None
     tavily_cache = _load_tavily_search_cache()
     tavily_key = os.environ.get("TAVILY_API_KEY", "").strip()
     if _TAVILY_AVAILABLE and tavily_key:
         try:
             tavily_client = _TavilyClient(api_key=tavily_key)
-            print("[ClaudePreview] Tavily disponibil — preview-urile vor include știri web recente.")
+            print("[ClaudePreview] Tavily activ — preview-urile includ știri web recente.")
         except Exception as e:
             print(f"[Tavily] Init eșuat (non-fatal): {e}")
     else:
@@ -3871,7 +3921,7 @@ def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: date
         if row.get("ai_preview"):
             continue
 
-        # verificăm că meciul e în fereastra de 7 zile
+        # fereastra de 7 zile
         ev_date_str = ev.get("event_date") or ""
         try:
             ev_dt = datetime.fromisoformat(ev_date_str.replace("Z", "+00:00"))
@@ -3880,30 +3930,41 @@ def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: date
         except Exception:
             continue
 
-        # cache hit
-        if event_id in cache:
-            row["ai_preview"] = cache[event_id]
+        # cache key include pick-ul — dacă pick-ul se schimbă, regenerăm
+        bm = row.get("best_market") or {}
+        market_key = bm.get("market_key") or bm.get("market") or ""
+        cache_key = f"{event_id}:{market_key}" if market_key else event_id
+
+        if cache_key in cache:
+            row["ai_preview"] = cache[cache_key]
             cached_hits += 1
             continue
 
-        # generăm cu Claude
         try:
             home = ev.get("home_team") or "Gazdă"
             away = ev.get("away_team") or "Oaspete"
             lg = ev.get("league") or {}
-            league = lg.get("name") or "Ligă necunoscută"
+            league  = lg.get("name") or "Ligă necunoscută"
             country = lg.get("country") or ""
             prob_home = float(row.get("prob_home_win") or 0.33)
             prob_draw = float(row.get("prob_draw") or 0.33)
             prob_away = float(row.get("prob_away_win") or 0.33)
-            xg_home = float(row.get("expected_home_goals") or 1.2)
-            xg_away = float(row.get("expected_away_goals") or 1.0)
+            xg_home   = float(row.get("expected_home_goals") or 1.2)
+            xg_away   = float(row.get("expected_away_goals") or 1.0)
             home_form = row.get("home_form_string") or ""
             away_form = row.get("away_form_string") or ""
-            is_derby = bool(row.get("is_local_derby") or ev.get("is_local_derby"))
-            funfacts = row.get("funfacts") or []
+            is_derby  = bool(row.get("is_local_derby") or ev.get("is_local_derby"))
+            funfacts  = row.get("funfacts") or []
 
-            # Căutare web Tavily pentru context independent (știri recente, accidentați)
+            # Date pick recomandat
+            pick_market   = market_key
+            pick_odds     = float(bm.get("odds") or 0)
+            pick_prob     = float(bm.get("prob") or bm.get("bsd_prob") or 0)
+            pick_ev       = float(bm.get("ev_pct") or 0)
+            pick_edge     = float(bm.get("edge_pp") or 0)
+            pick_rationale = str(bm.get("rationale") or "")[:200]
+
+            # Căutare Tavily (cache per event_id — același indiferent de pick)
             web_context = ""
             if tavily_client:
                 if event_id in tavily_cache:
@@ -3917,22 +3978,23 @@ def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: date
                 client, home, away, league, country,
                 prob_home, prob_draw, prob_away,
                 xg_home, xg_away, home_form, away_form,
-                is_derby, funfacts, web_context
+                is_derby, funfacts, web_context,
+                pick_market, pick_odds, pick_prob, pick_ev, pick_edge, pick_rationale
             )
             row["ai_preview"] = preview
-            cache[event_id] = preview
+            cache[cache_key] = preview
             generated += 1
 
         except Exception as e:
             errors += 1
             if errors <= 3:
-                print(f"[ClaudePreview] Eroare pentru event {event_id}: {e}")
+                print(f"[ClaudePreview] Eroare event {event_id}: {e}")
             row["ai_preview"] = None
 
     _save_claude_preview_cache(cache)
     if tavily_client:
         _save_tavily_search_cache(tavily_cache)
-    print(f"[ClaudePreview] Generate: {generated} | Din cache: {cached_hits} | Tavily searches: {tavily_searches} | Erori: {errors}")
+    print(f"[ClaudePreview] Generate: {generated} | Cache: {cached_hits} | Tavily: {tavily_searches} | Erori: {errors}")
     return predictions
 
 

@@ -7211,12 +7211,32 @@ function renderMatches(){
     var aiPreviewBlock = '';
     try {
       if(m.aiPreview && typeof m.aiPreview === 'string' && m.aiPreview.length > 20){
-        // Procesam Markdown minimal: **bold** → <strong>, newline → <br>
-        var aiText = htmlEsc(m.aiPreview)
+        var rawPreview = m.aiPreview;
+        var verdictBadge = '';
+        var verdictColor = '';
+        var bodyText = rawPreview;
+        // detectăm verdict pe prima linie
+        var firstNL = rawPreview.indexOf('\n');
+        var firstLine = (firstNL > -1 ? rawPreview.substring(0, firstNL) : rawPreview).trim().toUpperCase();
+        if(firstLine === 'CONFIRMĂ' || firstLine === 'CONFIRMA'){
+          verdictBadge = '✅ CONFIRMĂ'; verdictColor = '#148A5C';
+          bodyText = firstNL > -1 ? rawPreview.substring(firstNL+1).trim() : '';
+        } else if(firstLine === 'ATENȚIE' || firstLine === 'ATENTIE' || firstLine === '⚠️ ATENȚIE'){
+          verdictBadge = '⚠️ ATENȚIE'; verdictColor = '#D97706';
+          bodyText = firstNL > -1 ? rawPreview.substring(firstNL+1).trim() : '';
+        } else if(firstLine === 'CONTRAZICE'){
+          verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040';
+          bodyText = firstNL > -1 ? rawPreview.substring(firstNL+1).trim() : '';
+        }
+        var aiText = htmlEsc(bodyText || rawPreview)
           .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
           .replace(/\n/g, '<br>');
+        var verdictHtml = verdictBadge
+          ? '<div style="font-size:12px;font-weight:800;color:'+verdictColor+';margin-bottom:6px;letter-spacing:.5px">'+htmlEsc(verdictBadge)+'</div>'
+          : '';
         aiPreviewBlock = '<div class="ai-preview-block">'+
-          '<div class="ai-preview-label">🤖 AI Preview BSD</div>'+
+          '<div class="ai-preview-label">🤖 Analiză AI</div>'+
+          verdictHtml+
           '<div class="ai-preview-text">'+aiText+'</div>'+
         '</div>';
       }
