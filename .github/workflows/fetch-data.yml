@@ -34,7 +34,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests anthropic
 
       - name: Fetch referee stats (weekly cache + trend repair)
         env:
@@ -84,6 +84,7 @@ jobs:
       - name: Fetch predictions and events
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python fetch_data.py
 
       - name: VEYRA Supreme v5 — API v2 enrichment cache
