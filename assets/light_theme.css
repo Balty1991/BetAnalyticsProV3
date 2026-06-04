@@ -155,7 +155,7 @@ body.theme-light .veyra-emblem-frame {
 }
 /* Swap SVG cu versiunea light (fără rect negru) */
 body.theme-light .veyra-emblem-img {
-  content: url('./veyra-icon-light.svg?v=20260604icon1') !important;
+  content: url('./veyra-icon-light.svg?v=20260604icon2') !important;
   filter: none !important;
 }
 
@@ -165,15 +165,17 @@ body.theme-light .header {
 }
 
 /* Butoane header — fără glow/umbră */
-body.theme-light .btn-refresh-ico,
 body.theme-light #btn-theme {
   background: rgba(0,0,0,.04) !important;
   border-color: #D8E4F0 !important;
-  color: #2A3650 !important;
+  color: #B45309 !important;
   box-shadow: none !important;
 }
-body.theme-light #btn-theme {
-  color: #B45309 !important;
+body.theme-light .btn-refresh-ico {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #0CA88E !important;
+  box-shadow: none !important;
 }
 
 /* Logo title on light bg */
@@ -186,13 +188,6 @@ body.theme-light .logo-title {
 body.theme-light .logo-sub { color: #546376 !important; }
 body.theme-light .logo-sync-row { color: #546376 !important; }
 body.theme-light .logo-sync-row b { color: #0CA88E !important; }
-
-/* Refresh + theme buttons */
-body.theme-light .btn-refresh-ico {
-  background: rgba(12,168,142,.1) !important;
-  border-color: rgba(12,168,142,.28) !important;
-  color: #0CA88E !important;
-}
 
 /* ── 5. TABS NAV ─────────────────────────────────────────────────── */
 body.theme-light nav.tabs,
