@@ -147,10 +147,10 @@ body.theme-light .header::after {
     transparent 100%) !important;
 }
 
-/* Logo emblem frame — fundal transparent, fără glow/umbră */
+/* Logo emblem frame — complet transparent în light mode */
 body.theme-light .veyra-emblem-frame {
-  background: rgba(12,168,142,.08) !important;
-  border-color: rgba(12,168,142,.20) !important;
+  background: transparent !important;
+  border: none !important;
   box-shadow: none !important;
 }
 /* Swap SVG cu versiunea light (fără rect negru) */
@@ -578,7 +578,7 @@ body.theme-light .mobile-nav {
   border: none !important;
   border-top: 1px solid #E4ECF7 !important;
   border-radius: 0px !important;
-  box-shadow: 0 -1px 8px rgba(0,0,0,.05) !important;
+  box-shadow: none !important;
 }
 body.theme-light .mobile-nav::before {
   display: none !important;
@@ -994,13 +994,14 @@ body.theme-light .match-card-v16 .m16-score   { color: #0CA88E !important; }
    ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   body.theme-light .mobile-nav {
-    background: rgba(240,244,251,.96) !important;
-    border-color: rgba(12,168,142,.18) !important;
-    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 -4px 20px rgba(0,0,0,.08) !important;
+    background: #FFFFFF !important;
+    border-top: 1px solid #E4ECF7 !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
   body.theme-light .mobile-nav-btn { color: #546376 !important; }
   body.theme-light .mobile-nav-btn.active {
-    background: rgba(12,168,142,.1) !important;
+    background: transparent !important;
     color: #0CA88E !important;
   }
   body.theme-light .mobile-nav-btn.active small { color: #0CA88E !important; }

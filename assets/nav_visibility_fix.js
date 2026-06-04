@@ -68,7 +68,7 @@
         setI(mnav, 'background',     '#FFFFFF');
         setI(mnav, 'border',         'none');
         setI(mnav, 'border-top',     '1px solid #E4ECF7');
-        setI(mnav, 'box-shadow',     '0 -1px 8px rgba(0,0,0,.05)');
+        setI(mnav, 'box-shadow',     'none');
         setI(mnav, 'border-radius',  '0px');
         setI(mnav, 'padding',        '4px 8px');
       } else {
