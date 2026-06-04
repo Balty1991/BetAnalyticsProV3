@@ -19,6 +19,12 @@ import requests
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 
+try:
+    import anthropic as _anthropic_mod
+    _ANTHROPIC_AVAILABLE = True
+except ImportError:
+    _ANTHROPIC_AVAILABLE = False
+
 TOKEN = os.environ.get("BSD_TOKEN", "").strip()
 API_BASE = "https://sports.bzzoiro.com"
 V2_BASE = "https://sports.bzzoiro.com/api/v2"  # BSD API v2 — endpoints noi (managers, standings xGd, predictions filter)
@@ -3704,6 +3710,148 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
     return predictions
 
 
+# ─── Claude AI Preview (Romanian) ──────────────────────────────────────────────
+
+CLAUDE_PREVIEW_CACHE_FILE = os.path.join("data", "claude_preview_cache.json")
+_CLAUDE_PREVIEW_MAX_DAYS = 7  # generăm preview doar pentru meciurile din next 7 zile
+
+
+def _load_claude_preview_cache() -> Dict[str, str]:
+    if not os.path.exists(CLAUDE_PREVIEW_CACHE_FILE):
+        return {}
+    try:
+        with open(CLAUDE_PREVIEW_CACHE_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_claude_preview_cache(cache: Dict[str, str]) -> None:
+    try:
+        with open(CLAUDE_PREVIEW_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[ClaudePreview] Nu s-a putut salva cache-ul: {e}")
+
+
+def _generate_one_claude_preview(client, home: str, away: str, league: str, country: str,
+                                  prob_home: float, prob_draw: float, prob_away: float,
+                                  xg_home: float, xg_away: float,
+                                  home_form: str, away_form: str,
+                                  is_derby: bool, funfacts: list) -> str:
+    facts_line = ""
+    if funfacts:
+        facts_line = "\nFapte statistice: " + " | ".join(str(f) for f in funfacts[:2])
+
+    derby_line = "\nEste un derby local!" if is_derby else ""
+
+    prompt = (
+        f"Scrie un preview de meci în limba română, concis (3-4 propoziții, max 350 caractere), "
+        f"fără titluri, fără liste, fără markdown. Tonul să fie analitic și direct.\n\n"
+        f"Meci: {home} vs {away}\n"
+        f"Competiție: {league} ({country})\n"
+        f"Probabilități model: {home} câștigă {round(prob_home*100)}%, egal {round(prob_draw*100)}%, "
+        f"{away} câștigă {round(prob_away*100)}%\n"
+        f"xG estimat: {home} {xg_home:.2f} — {away} {xg_away:.2f}\n"
+        f"Formă recentă: {home} [{home_form or 'N/A'}] vs {away} [{away_form or 'N/A'}]"
+        f"{derby_line}{facts_line}\n\n"
+        f"Răspunde DOAR cu textul preview-ului în română, fără alte explicații."
+    )
+
+    msg = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=200,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return msg.content[0].text.strip()[:400]
+
+
+def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: datetime) -> List[Dict[str, Any]]:
+    if not _ANTHROPIC_AVAILABLE:
+        print("[ClaudePreview] Librăria 'anthropic' nu e instalată — skip.")
+        return predictions
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if not api_key:
+        print("[ClaudePreview] ANTHROPIC_API_KEY lipsă — skip generare preview.")
+        return predictions
+
+    cache = _load_claude_preview_cache()
+    client = _anthropic_mod.Anthropic(api_key=api_key)
+    cutoff = now_utc + timedelta(days=_CLAUDE_PREVIEW_MAX_DAYS)
+
+    generated = 0
+    cached_hits = 0
+    errors = 0
+
+    for row in predictions:
+        ev = row.get("event") or {}
+        if ev.get("status") != "notstarted":
+            continue
+
+        event_id = str(ev.get("id") or "")
+        if not event_id:
+            continue
+
+        # dacă BSD API a dat deja un preview, îl păstrăm
+        if row.get("ai_preview"):
+            continue
+
+        # verificăm că meciul e în fereastra de 7 zile
+        ev_date_str = ev.get("event_date") or ""
+        try:
+            ev_dt = datetime.fromisoformat(ev_date_str.replace("Z", "+00:00"))
+            if ev_dt > cutoff:
+                continue
+        except Exception:
+            continue
+
+        # cache hit
+        if event_id in cache:
+            row["ai_preview"] = cache[event_id]
+            cached_hits += 1
+            continue
+
+        # generăm cu Claude
+        try:
+            home = ev.get("home_team") or "Gazdă"
+            away = ev.get("away_team") or "Oaspete"
+            lg = ev.get("league") or {}
+            league = lg.get("name") or "Ligă necunoscută"
+            country = lg.get("country") or ""
+            prob_home = float(row.get("prob_home_win") or 0.33)
+            prob_draw = float(row.get("prob_draw") or 0.33)
+            prob_away = float(row.get("prob_away_win") or 0.33)
+            xg_home = float(row.get("expected_home_goals") or 1.2)
+            xg_away = float(row.get("expected_away_goals") or 1.0)
+            home_form = row.get("home_form_string") or ""
+            away_form = row.get("away_form_string") or ""
+            is_derby = bool(row.get("is_local_derby") or ev.get("is_local_derby"))
+            funfacts = row.get("funfacts") or []
+
+            preview = _generate_one_claude_preview(
+                client, home, away, league, country,
+                prob_home, prob_draw, prob_away,
+                xg_home, xg_away, home_form, away_form,
+                is_derby, funfacts
+            )
+            row["ai_preview"] = preview
+            cache[event_id] = preview
+            generated += 1
+
+        except Exception as e:
+            errors += 1
+            if errors <= 3:
+                print(f"[ClaudePreview] Eroare pentru event {event_id}: {e}")
+            row["ai_preview"] = None
+
+    _save_claude_preview_cache(cache)
+    print(f"[ClaudePreview] Generate: {generated} | Din cache: {cached_hits} | Erori: {errors}")
+    return predictions
+
+
+# ───────────────────────────────────────────────────────────────────────────────
+
 def v2_score_adjustment(row, market_key):
     """
     Delta scor bazat pe semnale v2 API.
@@ -4018,6 +4166,12 @@ def main():
     except Exception as e:
         print(f"[V2] Enrichment v2 eșuat complet (non-fatal, continuăm cu v1): {e}")
         v2_stats = {"error": str(e)}
+
+    print("\n[2.9/6] Generare AI Preview în română (Claude) pentru meciuri fără preview...")
+    try:
+        predictions = enrich_with_claude_previews(predictions, started_at)
+    except Exception as e:
+        print(f"[ClaudePreview] Eroare fatală (non-fatal, continuăm): {e}")
 
     print("\n[3/6] Fetching BSD status metrics...")
     status_metrics = fetch_status_metrics()
