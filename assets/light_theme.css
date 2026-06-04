@@ -147,6 +147,21 @@ body.theme-light .header::after {
     transparent 100%) !important;
 }
 
+/* Logo emblem frame — light bg, fără umbră neagră */
+body.theme-light .veyra-emblem-frame {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(12,168,142,.14), transparent 55%),
+    linear-gradient(145deg, rgba(240,244,251,.98), rgba(224,234,248,.95)) !important;
+  border-color: rgba(12,168,142,.26) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.9) inset,
+    0 0 12px rgba(12,168,142,.10),
+    0 4px 14px rgba(0,0,0,.07) !important;
+}
+body.theme-light .veyra-emblem-img {
+  filter: drop-shadow(0 0 6px rgba(12,168,142,.20)) !important;
+}
+
 /* Logo title on light bg */
 body.theme-light .logo-title {
   background: linear-gradient(105deg, #0C1220 0%, #0CA88E 55%, #2E7BD4 100%) !important;
