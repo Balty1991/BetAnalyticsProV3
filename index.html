@@ -54,7 +54,7 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/veyra_reco_grouped.css?v=20260515reco2"/>
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
 <link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260603dash3"/>
-<link rel="stylesheet" href="./assets/light_theme.css?v=20260604lgt21"/>
+<link rel="stylesheet" href="./assets/light_theme.css?v=20260604lgt22"/>
 <!-- APEX light-mode nuclear override — appears LAST in cascade, beats all @import chains -->
 <style id="apex-light-override">
 body.theme-light #tab-smartbet { background: #F0F4FB !important; }
@@ -132,6 +132,10 @@ body.theme-light .main #tab-smartbet .apex-quick-btn { background: #FFFFFF !impo
 body.theme-light .main #tab-smartbet .apex-divider { background: linear-gradient(90deg,transparent,#D0D9EE,transparent) !important; }
 body.theme-light .main #tab-smartbet .apex-empty { color: #6B7890 !important; }
 body.theme-light .main #tab-smartbet .apex-empty-title { color: #0C1220 !important; }
+/* ── Buton refresh: complet transparent în light mode ── */
+body.theme-light #btn-refresh { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+/* ── Logo frame: fără fundal/border/shadow în light mode ── */
+body.theme-light .veyra-emblem-frame { background: transparent !important; border: none !important; box-shadow: none !important; }
 </style>
 <script>
 /* Early theme init — prevents flash of dark theme when light is saved */
@@ -164,7 +168,7 @@ function toggleTheme(){
       mnav.style.setProperty('background',   '#FFFFFF',          'important');
       mnav.style.setProperty('border',       'none',             'important');
       mnav.style.setProperty('border-top',   '1px solid #E4ECF7','important');
-      mnav.style.setProperty('box-shadow',   '0 -1px 8px rgba(0,0,0,.05)','important');
+      mnav.style.setProperty('box-shadow',   'none',             'important');
       mnav.style.setProperty('border-radius','0px',              'important');
       mnav.style.setProperty('padding',      '4px 8px',          'important');
     } else {
@@ -661,7 +665,7 @@ function toggleTheme(){
             mnav.style.setProperty('background',   '#FFFFFF',        'important');
             mnav.style.setProperty('border',       'none',           'important');
             mnav.style.setProperty('border-top',   '1px solid #E4ECF7','important');
-            mnav.style.setProperty('box-shadow',   '0 -1px 8px rgba(0,0,0,.05)','important');
+            mnav.style.setProperty('box-shadow',   'none',           'important');
             mnav.style.setProperty('border-radius','0px',            'important');
             mnav.style.setProperty('padding',      '4px 8px',        'important');
           } else {
