@@ -22,7 +22,7 @@
     try {
       var s = document.createElement('script');
       s.defer = true;
-      s.src = './assets/veyra_apex_engine.js?v=20260604lgt1';
+      s.src = './assets/veyra_apex_engine.js?v=20260604lgt2';
       s.onload = function(){ window.__VEYRA_APEX_LOADING__ = false; };
       s.onerror = function(){ window.__VEYRA_APEX_LOADING__ = false; };
       document.head.appendChild(s);

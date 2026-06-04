@@ -969,35 +969,66 @@
   }
 
   /* ── Light theme post-render pass ────────────────────────────── */
-  function sp(el, prop, val) { el.style.setProperty(prop, val, 'important'); }
+
+  /* Inject a <style> element last in <head> so it wins every cascade battle */
+  function ensureApexLightStyle() {
+    var id = 'apex-light-runtime-css';
+    if (document.getElementById(id)) return;
+    var s = document.createElement('style');
+    s.id = id;
+    s.textContent = [
+      'body.theme-light #tab-smartbet{background:#F0F4FB!important}',
+      'body.theme-light #tab-smartbet .apex-tier-section{background:#F0F4FB!important}',
+      'body.theme-light #tab-smartbet .apex-picks-body{background:transparent!important}',
+      'body.theme-light #tab-smartbet .apex-tier-header,',
+      'body.theme-light #tab-smartbet .apex-tier-header.elite,',
+      'body.theme-light #tab-smartbet .apex-tier-header.validated,',
+      'body.theme-light #tab-smartbet .apex-tier-header.watchlist{',
+      '  background:#FFFFFF!important;',
+      '  box-shadow:0 2px 8px rgba(0,0,0,.06)!important',
+      '}',
+      'body.theme-light #tab-smartbet .apex-pick-card,',
+      'body.theme-light #tab-smartbet .apex-pick-card.tier-elite,',
+      'body.theme-light #tab-smartbet .apex-pick-card.tier-validated,',
+      'body.theme-light #tab-smartbet .apex-pick-card.tier-watchlist{',
+      '  background:#FFFFFF!important;',
+      '  box-shadow:0 2px 8px rgba(0,0,0,.06)!important',
+      '}',
+      'body.theme-light #apex-predictii-section,',
+      'body.theme-light #apex-invatare-section,',
+      'body.theme-light #apex-arhiva-section{background:#F0F4FB!important}',
+      'body.theme-light .mobile-nav{background:rgba(240,244,251,.97)!important;border-color:rgba(12,168,142,.18)!important}'
+    ].join('\n');
+    document.head.appendChild(s);
+  }
 
   function apexLightPass() {
+    /* Inject the runtime stylesheet (wins because it's last in cascade) */
+    ensureApexLightStyle();
+
+    /* Also set inline styles as a belt-and-suspenders fallback */
     var tab = $('tab-smartbet');
     if (!tab) return;
+    var sp = function(el, p, v) { el.style.setProperty(p, v, 'important'); };
 
-    /* Tab + section containers */
     sp(tab, 'background', '#F0F4FB');
     ['apex-predictii-section', 'apex-invatare-section', 'apex-arhiva-section'].forEach(function (id) {
       var s = $(id); if (s) sp(s, 'background', '#F0F4FB');
     });
 
-    /* Tier sections and picks body */
     tab.querySelectorAll('.apex-tier-section').forEach(function (el) { sp(el, 'background', '#F0F4FB'); });
     tab.querySelectorAll('.apex-picks-body').forEach(function (el) { sp(el, 'background', 'transparent'); });
 
-    /* Tier headers — white */
     tab.querySelectorAll('.apex-tier-header').forEach(function (el) {
       sp(el, 'background', '#FFFFFF');
       sp(el, 'box-shadow', '0 2px 8px rgba(0,0,0,.06)');
     });
 
-    /* Pick cards — white */
     tab.querySelectorAll('.apex-pick-card').forEach(function (el) {
       sp(el, 'background', '#FFFFFF');
       sp(el, 'box-shadow', '0 2px 8px rgba(0,0,0,.06)');
     });
 
-    /* Mobile nav */
     var nav = document.querySelector('.mobile-nav');
     if (nav) {
       sp(nav, 'background', 'rgba(240,244,251,.97)');
@@ -1093,6 +1124,7 @@
 
   /* ── Boot sequence ───────────────────────────────────────────── */
   function boot() {
+    ensureApexLightStyle();
     injectHTML();
     scheduleRender();
 
