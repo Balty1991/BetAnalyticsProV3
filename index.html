@@ -46,7 +46,7 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/app.css?v=20260603pad4"/>
 <link rel="stylesheet" href="./assets/supreme_engine_v5.css?v=20260511v5"/>
 <link rel="stylesheet" href="./assets/pro_command_center.css?v=20260603lgt14"/>
-<link rel="stylesheet" href="./assets/veyra_apex_theme.css?v=20260516apex2"/>
+<link rel="stylesheet" href="./assets/veyra_apex_theme.css?v=20260516apex3"/>
 <link rel="stylesheet" href="./assets/nav_visibility_fix.css?v=20260515navfix2"/>
 <link rel="stylesheet" href="./assets/veyra_system_status.css?v=20260530dash1"/>
 <link rel="stylesheet" href="./assets/veyra_compact_v42.css?v=20260515compact2"/>
@@ -54,7 +54,7 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/veyra_reco_grouped.css?v=20260515reco2"/>
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
 <link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260603dash3"/>
-<link rel="stylesheet" href="./assets/light_theme.css?v=20260603lgt15"/>
+<link rel="stylesheet" href="./assets/light_theme.css?v=20260604lgt1"/>
 <!-- APEX light-mode nuclear override — appears LAST in cascade, beats all @import chains -->
 <style id="apex-light-override">
 /* html background — beats apex_lux_exact.css html{background:#02050a!important} via :has() specificity */
@@ -122,10 +122,10 @@ body.theme-light .main #tab-smartbet .apex-source-sub, body.theme-light .main #t
 body.theme-light .main #tab-smartbet .apex-source-name { color: #2A3650 !important; }
 body.theme-light .main #tab-smartbet .apex-source-badge { background: rgba(12,168,142,.10) !important; border-color: rgba(12,168,142,.22) !important; color: #0CA88E !important; }
 
-/* Tier headers — solid light colors, not near-transparent (prevents dark bleed-through) */
-body.theme-light .main #tab-smartbet .apex-tier-header.elite { background: linear-gradient(90deg,#FFF4EC,#FFF8F4) !important; border-color: rgba(200,74,0,.24) !important; }
-body.theme-light .main #tab-smartbet .apex-tier-header.validated { background: linear-gradient(90deg,#EEF9F5,#F3FBF8) !important; border-color: rgba(5,150,105,.22) !important; }
-body.theme-light .main #tab-smartbet .apex-tier-header.watchlist { background: linear-gradient(90deg,#F3F0FE,#F7F5FF) !important; border-color: rgba(109,40,217,.20) !important; }
+/* Tier headers — pure white background, colored border only */
+body.theme-light .main #tab-smartbet .apex-tier-header.elite { background: #FFFFFF !important; border-color: rgba(200,74,0,.30) !important; }
+body.theme-light .main #tab-smartbet .apex-tier-header.validated { background: #FFFFFF !important; border-color: rgba(5,150,105,.28) !important; }
+body.theme-light .main #tab-smartbet .apex-tier-header.watchlist { background: #FFFFFF !important; border-color: rgba(109,40,217,.26) !important; }
 body.theme-light .main #tab-smartbet .apex-tier-label.elite { color: #C84A00 !important; }
 body.theme-light .main #tab-smartbet .apex-tier-label.validated { color: #059669 !important; }
 body.theme-light .main #tab-smartbet .apex-tier-label.watchlist { color: #6D28D9 !important; }
@@ -134,9 +134,9 @@ body.theme-light .main #tab-smartbet .validated .apex-tier-count { background: r
 body.theme-light .main #tab-smartbet .watchlist .apex-tier-count { background: rgba(109,40,217,.12) !important; color: #6D28D9 !important; }
 body.theme-light .main #tab-smartbet .apex-tier-toggle { background: #F4F7FD !important; border-color: #D0D9EE !important; color: #2A3650 !important; }
 
-/* Pick cards — solid white background */
-body.theme-light .main #tab-smartbet .apex-pick-card { background: #FFFFFF !important; border-color: #D0D9EE !important; box-shadow: 0 2px 8px rgba(0,0,0,.05) !important; }
-body.theme-light .main #tab-smartbet .apex-pick-card.tier-elite { background: linear-gradient(135deg,#FFF4EC,#FFFFFF) !important; border-color: rgba(200,74,0,.22) !important; }
+/* Pick cards — pure white */
+body.theme-light .main #tab-smartbet .apex-pick-card { background: #FFFFFF !important; border-color: #D0D9EE !important; box-shadow: 0 2px 8px rgba(0,0,0,.06) !important; }
+body.theme-light .main #tab-smartbet .apex-pick-card.tier-elite { background: #FFFFFF !important; border-color: rgba(200,74,0,.28) !important; }
 body.theme-light .main #tab-smartbet .apex-pick-card.tier-validated { background: #FFFFFF !important; border-color: rgba(5,150,105,.18) !important; }
 body.theme-light .main #tab-smartbet .apex-pick-card.tier-watchlist { background: #FFFFFF !important; border-color: rgba(109,40,217,.16) !important; }
 body.theme-light .main #tab-smartbet .apex-pick-match { color: #0C1220 !important; }
@@ -207,7 +207,7 @@ function toggleTheme(){
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
 <script defer src="./assets/app.js?v=20260603fix5"></script>
-<script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
+<script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex3"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260602dash2"></script>
 </head>
 <body>

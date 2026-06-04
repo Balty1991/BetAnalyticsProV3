@@ -1867,3 +1867,97 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   LIGHT THEME — body.theme-light overrides
+   Specificity (1,3,1) beats all dark rules in this file (max 0,2,0).
+   Loaded inside veyra_apex_theme.css so it travels with the same
+   versioned URL and is always consistent with the dark styles above.
+   ════════════════════════════════════════════════════════════════════ */
+body.theme-light #tab-smartbet {
+  background: #F0F4FB !important;
+}
+body.theme-light #apex-predictii-section,
+body.theme-light #apex-invatare-section,
+body.theme-light #apex-arhiva-section {
+  background: #F0F4FB !important;
+}
+
+/* Tier section containers */
+body.theme-light .main #tab-smartbet .apex-tier-section {
+  background: #F0F4FB !important;
+}
+body.theme-light .main #tab-smartbet .apex-picks-body {
+  background: transparent !important;
+}
+
+/* Tier headers — pure white, colored border only */
+body.theme-light .main #tab-smartbet .apex-tier-header {
+  background: #FFFFFF !important;
+}
+body.theme-light .main #tab-smartbet .apex-tier-header.elite {
+  background: #FFFFFF !important;
+  border-color: rgba(200,74,0,.30) !important;
+}
+body.theme-light .main #tab-smartbet .apex-tier-header.validated {
+  background: #FFFFFF !important;
+  border-color: rgba(5,150,105,.28) !important;
+}
+body.theme-light .main #tab-smartbet .apex-tier-header.watchlist {
+  background: #FFFFFF !important;
+  border-color: rgba(109,40,217,.26) !important;
+}
+body.theme-light .main #tab-smartbet .apex-tier-label.elite   { color: #C84A00 !important; }
+body.theme-light .main #tab-smartbet .apex-tier-label.validated { color: #059669 !important; }
+body.theme-light .main #tab-smartbet .apex-tier-label.watchlist { color: #6D28D9 !important; }
+body.theme-light .main #tab-smartbet .elite   .apex-tier-count { background: rgba(200,74,0,.10) !important; color: #C84A00 !important; }
+body.theme-light .main #tab-smartbet .validated .apex-tier-count { background: rgba(5,150,105,.10) !important; color: #059669 !important; }
+body.theme-light .main #tab-smartbet .watchlist .apex-tier-count { background: rgba(109,40,217,.10) !important; color: #6D28D9 !important; }
+body.theme-light .main #tab-smartbet .apex-tier-toggle {
+  background: #F4F7FD !important;
+  border-color: #D0D9EE !important;
+  color: #2A3650 !important;
+}
+
+/* Pick cards — pure white */
+body.theme-light .main #tab-smartbet .apex-pick-card {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06) !important;
+}
+body.theme-light .main #tab-smartbet .apex-pick-card.tier-elite {
+  background: #FFFFFF !important;
+  border-color: rgba(200,74,0,.28) !important;
+}
+body.theme-light .main #tab-smartbet .apex-pick-card.tier-validated {
+  background: #FFFFFF !important;
+  border-color: rgba(5,150,105,.24) !important;
+}
+body.theme-light .main #tab-smartbet .apex-pick-card.tier-watchlist {
+  background: #FFFFFF !important;
+  border-color: rgba(109,40,217,.22) !important;
+}
+body.theme-light .main #tab-smartbet .apex-pick-match  { color: #0C1220 !important; }
+body.theme-light .main #tab-smartbet .apex-pick-rank   { color: #8494B0 !important; }
+body.theme-light .main #tab-smartbet .apex-pick-league { color: #6B7890 !important; }
+
+/* Score circles */
+body.theme-light .main #tab-smartbet .apex-score-circle.elite   { background: rgba(200,74,0,.06) !important; border-color: #C84A00 !important; }
+body.theme-light .main #tab-smartbet .apex-score-circle.validated { background: rgba(5,150,105,.06) !important; border-color: #059669 !important; }
+body.theme-light .main #tab-smartbet .apex-score-circle.watchlist { background: rgba(109,40,217,.06) !important; border-color: #6D28D9 !important; }
+body.theme-light .main #tab-smartbet .apex-score-circle.elite    .apex-score-num { color: #C84A00 !important; }
+body.theme-light .main #tab-smartbet .apex-score-circle.validated .apex-score-num { color: #059669 !important; }
+body.theme-light .main #tab-smartbet .apex-score-circle.watchlist .apex-score-num { color: #6D28D9 !important; }
+body.theme-light .main #tab-smartbet .apex-score-lbl { color: #8494B0 !important; }
+
+/* Chips */
+body.theme-light .main #tab-smartbet .apex-chip.market  { background: rgba(0,0,0,.04) !important; border-color: rgba(0,0,0,.12) !important; color: #2A3650 !important; }
+body.theme-light .main #tab-smartbet .apex-chip.edge    { background: rgba(200,74,0,.06) !important; border-color: rgba(200,74,0,.20) !important; color: #C84A00 !important; }
+body.theme-light .main #tab-smartbet .apex-chip.prob    { background: rgba(12,168,142,.06) !important; border-color: rgba(12,168,142,.22) !important; color: #0CA88E !important; }
+body.theme-light .main #tab-smartbet .apex-chip.kelly   { background: rgba(180,83,9,.06) !important; border-color: rgba(180,83,9,.22) !important; color: #B45309 !important; }
+body.theme-light .main #tab-smartbet .apex-chip.pattern { background: rgba(5,150,105,.06) !important; border-color: rgba(5,150,105,.22) !important; color: #059669 !important; }
+body.theme-light .main #tab-smartbet .apex-chip.memory  { background: rgba(109,40,217,.06) !important; border-color: rgba(109,40,217,.20) !important; color: #6D28D9 !important; }
+body.theme-light .main #tab-smartbet .apex-signal       { background: rgba(0,0,0,.04) !important; border-color: rgba(0,0,0,.10) !important; color: #6B7890 !important; }
+body.theme-light .main #tab-smartbet .apex-signal.pos   { background: rgba(5,150,105,.06) !important; border-color: rgba(5,150,105,.18) !important; color: #059669 !important; }
+body.theme-light .main #tab-smartbet .apex-signal.neg   { background: rgba(180,20,40,.06) !important; border-color: rgba(180,20,40,.18) !important; color: #B81428 !important; }
+body.theme-light .main #tab-smartbet .apex-conf-bar-track { background: rgba(0,0,0,.08) !important; }

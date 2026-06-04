@@ -22,14 +22,14 @@
     try {
       var s = document.createElement('script');
       s.defer = true;
-      s.src = './assets/veyra_apex_engine.js?v=20260516apex2';
+      s.src = './assets/veyra_apex_engine.js?v=20260516apex3';
       s.onload = function(){ window.__VEYRA_APEX_LOADING__ = false; };
       s.onerror = function(){ window.__VEYRA_APEX_LOADING__ = false; };
       document.head.appendChild(s);
       if (!document.querySelector('link[href*="veyra_apex_theme"]')) {
         var l = document.createElement('link');
         l.rel = 'stylesheet';
-        l.href = './assets/veyra_apex_theme.css?v=20260516apex2';
+        l.href = './assets/veyra_apex_theme.css?v=20260516apex3';
         document.head.appendChild(l);
       }
     } catch(e) { window.__VEYRA_APEX_LOADING__ = false; }
