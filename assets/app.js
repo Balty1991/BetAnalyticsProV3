@@ -7220,8 +7220,8 @@ function renderMatches(){
         var structured = false;
         var parsedLines = {};
         lines.forEach(function(l){
-          var m2 = l.match(/^(VERDICT|G[AÃ]SIT|CONCLUZIE)\s*:\s*(.*)/i);
-          if(m2) { parsedLines[m2[1].toUpperCase().replace('ÃSIT','ASIT').replace('GĂSIT','GASIT')] = m2[2].trim(); structured = true; }
+          var m2 = l.match(/^(VERDICT|G[AĂÃ]SIT|GASIT|CONCLUZIE)\s*:\s*(.*)/i);
+          if(m2) { parsedLines[m2[1].toUpperCase().replace(/[ĂÃ]SIT/,'ASIT').replace('GĂSIT','GASIT').replace('GĂSIT','GASIT')] = m2[2].trim(); structured = true; }
         });
         if(structured){
           var v = (parsedLines['VERDICT'] || '').toUpperCase();

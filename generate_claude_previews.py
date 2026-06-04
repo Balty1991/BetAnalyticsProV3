@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-generate_claude_previews.py — Analiză AI structurată (VERDICT/GĂSIT/CONCLUZIE).
+generate_claude_previews.py — Analiză AI structurată (VERDICT/GASIT/CONCLUZIE).
 
-Rulează DUPĂ enrich_predictions.py care setează markets_enriched + best_market.
-Trimite Claude TOP 3 pick-uri (nu doar best_market) + context Tavily web,
-astfel încât verdictul să acopere recomandarea reală a aplicației.
+Rulează DUPĂ enrich_predictions.py. Sortează pick-urile după EV% (nu score) pentru
+a alinia PICK PRINCIPAL cu recomandarea reală a aplicației. Include H2H + formă.
 """
 import json
 import os
@@ -84,99 +83,94 @@ def _tavily_search(client, home, away, event_date):
         return ""
 
 
-def _build_picks_text(markets_enriched, bm):
-    """Construieste lista de pick-uri top 3 non-Avoid pentru prompt."""
+def _get_sorted_picks(markets_enriched):
+    """Sortează pick-urile non-Avoid după EV% descrescător.
+    EV mai mare → aliniat cu recomandarea aplicației (care prioritizează valoare).
+    """
     candidates = []
     for mk, v in (markets_enriched or {}).items():
         if not isinstance(v, dict):
             continue
-        tier = v.get("risk_tier", "Avoid")
-        score = float(v.get("score") or 0)
-        candidates.append((score, mk, v))
-    candidates.sort(reverse=True)
-
-    lines = []
-    for _, mk, v in candidates[:3]:
-        pick_ro = _MARKET_RO.get(mk, mk)
-        odds    = float(v.get("odds") or 0)
-        prob    = float(v.get("prob") or v.get("bsd_prob") or 0)
-        ev      = float(v.get("ev_pct") or 0)
-        edge    = float(v.get("edge_pp") or 0)
-        tier    = v.get("risk_tier", "")
-        tier_tag = f" [{tier}]" if tier and tier != "Avoid" else ""
-        lines.append(
-            f"  • {pick_ro} @ {odds:.2f} | prob {round(prob*100)}%"
-            f" | EV {ev:+.1f}% | edge {edge:+.1f}pp{tier_tag}"
-        )
-
-    if not lines and bm:
-        mk = bm.get("market_key") or bm.get("market") or ""
-        pick_ro = _MARKET_RO.get(mk, mk)
-        lines.append(
-            f"  • {pick_ro} @ {float(bm.get('odds') or 0):.2f}"
-            f" | prob {round(float(bm.get('prob') or 0)*100)}%"
-            f" | EV {float(bm.get('ev_pct') or 0):+.1f}%"
-            f" | edge {float(bm.get('edge_pp') or 0):+.1f}pp"
-        )
-    return "\n".join(lines)
+        if v.get("risk_tier") == "Avoid":
+            continue
+        ev    = float(v.get("ev_pct") or 0)
+        odds  = float(v.get("odds") or 0)
+        prob  = float(v.get("prob") or v.get("bsd_prob") or 0)
+        edge  = float(v.get("edge_pp") or 0)
+        tier  = v.get("risk_tier", "")
+        if odds < 1.01 or prob < 0.01:
+            continue
+        candidates.append({
+            "mk": mk, "ev": ev, "odds": odds,
+            "prob": prob, "edge": edge, "tier": tier,
+        })
+    candidates.sort(key=lambda x: x["ev"], reverse=True)
+    return candidates
 
 
-def _generate_preview(client, home, away, league,
-                      xg_home, xg_away, home_form, away_form,
-                      is_derby, funfacts, web_context,
-                      picks_text):
+def _build_prompt(home, away, league, xg_home, xg_away,
+                  home_form, away_form, is_derby, funfacts,
+                  h2h_line, web_context, sorted_picks):
     derby_line = "\nDERBY LOCAL!" if is_derby else ""
     facts_line = ("\nStatistici: " + " | ".join(str(f) for f in funfacts[:2])) if funfacts else ""
 
-    if picks_text:
-        web_section = (f"\nȘTIRI WEB:\n{web_context.strip()}"
+    if sorted_picks:
+        lines = []
+        for i, p in enumerate(sorted_picks[:3]):
+            pick_ro = _MARKET_RO.get(p["mk"], p["mk"])
+            tag = " [★ PICK PRINCIPAL]" if i == 0 else ""
+            tier_tag = f" [{p['tier']}]" if p["tier"] else ""
+            lines.append(
+                f"  {'→' if i == 0 else '·'} {pick_ro} @ {p['odds']:.2f}"
+                f" | prob {round(p['prob']*100)}%"
+                f" | EV {p['ev']:+.1f}% | edge {p['edge']:+.1f}pp"
+                f"{tier_tag}{tag}"
+            )
+        picks_block = "\n".join(lines)
+
+        web_section = (f"\nSTIRI WEB:\n{web_context.strip()}"
                        if web_context and len(web_context.strip()) > 20
-                       else "\nȘTIRI WEB: nicio știre relevantă găsită.")
-        prompt = (
-            f"Ești analist sportiv. Răspunde STRICT în formatul de mai jos, în română, fără text extra.\n\n"
+                       else "\nSTIRI WEB: nicio stire recenta gasita.")
+
+        return (
+            f"Esti analist sportiv. Raspunde STRICT in formatul de mai jos, in romana, fara text extra.\n\n"
             f"MECI: {home} vs {away} | {league}{derby_line}\n"
-            f"PICK-URI MODEL (evaluează toate):\n{picks_text}\n"
-            f"DATE: xG {xg_home:.2f}–{xg_away:.2f} | "
-            f"formă {home}:[{home_form or '?'}] {away}:[{away_form or '?'}]"
-            f"{facts_line}{web_section}\n\n"
-            f"FORMAT RĂSPUNS (respectă exact, fără alte cuvinte):\n"
-            f"VERDICT: [CONFIRMĂ / ATENȚIE / CONTRAZICE]\n"
-            f"GĂSIT: [1 propoziție — ce informații relevante ai găsit pe web despre acest meci]\n"
-            f"CONCLUZIE: [1 propoziție — care pick e cel mai susținut de date și de ce]"
+            f"PICK-URI MODEL:\n{picks_block}\n"
+            f"DATE STATISTICE: xG {xg_home:.2f}-{xg_away:.2f}"
+            f" | forma {home}:[{home_form or '?'}] {away}:[{away_form or '?'}]"
+            f"{h2h_line}{facts_line}{web_section}\n\n"
+            f"Concentreaza-te pe PICK PRINCIPAL (marcat cu ★).\n"
+            f"FORMAT RASPUNS (respecta exact, fara alte cuvinte):\n"
+            f"VERDICT: [CONFIRMA / ATENTIE / CONTRAZICE]\n"
+            f"GASIT: [1 propozitie — ce spun stirile/H2H/forma despre PICK PRINCIPAL]\n"
+            f"CONCLUZIE: [1 propozitie — de ce PICK PRINCIPAL merita sau nu jucat]"
         )
     else:
         web_section = f"\nWeb: {web_context.strip()}" if web_context and len(web_context.strip()) > 20 else ""
-        prompt = (
-            f"Ești analist sportiv. Scrie 2 propoziții scurte în română despre acest meci.\n\n"
+        return (
+            f"Esti analist sportiv. Scrie 2 propozitii scurte in romana despre acest meci.\n\n"
             f"{home} vs {away} | {league}\n"
-            f"xG {xg_home:.2f}–{xg_away:.2f} | formă [{home_form or '?'}] vs [{away_form or '?'}]"
+            f"xG {xg_home:.2f}-{xg_away:.2f} | forma [{home_form or '?'}] vs [{away_form or '?'}]"
             f"{facts_line}{web_section}\n\n"
-            f"Răspunde DOAR cu cele 2 propoziții, fără titluri."
+            f"Raspunde DOAR cu cele 2 propozitii, fara titluri."
         )
-
-    msg = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=220,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return msg.content[0].text.strip()[:500]
 
 
 def main():
     print("=== GENERATE CLAUDE PREVIEWS ===")
 
     if not _ANTHROPIC_AVAILABLE:
-        print("[ClaudePreview] Librăria 'anthropic' nu e instalată — skip.")
+        print("[ClaudePreview] Libraria 'anthropic' nu e instalata — skip.")
         return
 
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
-        print("[ClaudePreview] ANTHROPIC_API_KEY lipsă — skip.")
+        print("[ClaudePreview] ANTHROPIC_API_KEY lipsa — skip.")
         return
 
     pred_path = DATA_DIR / "predictions.json"
     if not pred_path.exists():
-        print("[ClaudePreview] predictions.json lipsă — skip.")
+        print("[ClaudePreview] predictions.json lipsa — skip.")
         return
 
     raw = _load_json(pred_path, [])
@@ -199,11 +193,11 @@ def main():
     if _TAVILY_AVAILABLE and tavily_key:
         try:
             tavily_client = _TavilyClient(api_key=tavily_key)
-            print("[ClaudePreview] Tavily activ — context web inclus în preview-uri.")
+            print("[ClaudePreview] Tavily activ — context web inclus in preview-uri.")
         except Exception as e:
-            print(f"[Tavily] Init eșuat (non-fatal): {e}")
+            print(f"[Tavily] Init esuat (non-fatal): {e}")
     else:
-        print("[ClaudePreview] Tavily indisponibil — preview fără context web.")
+        print("[ClaudePreview] Tavily indisponibil — preview fara context web.")
 
     generated = cached_hits = tavily_searches = errors = 0
 
@@ -224,16 +218,17 @@ def main():
         except Exception:
             continue
 
-        # Cache key: event_id + top markets sorted → regenerăm dacă pick-urile se schimbă
-        bm = row.get("best_market") or {}
         markets_enriched = row.get("markets_enriched") or {}
-        non_avoid = sorted(
-            [(float(v.get("score") or 0), mk) for mk, v in markets_enriched.items()
-             if isinstance(v, dict) and v.get("risk_tier") != "Avoid"],
-            reverse=True
-        )
-        top_keys = "+".join(mk for _, mk in non_avoid[:3])
-        cache_key = f"{event_id}:{top_keys}" if top_keys else event_id
+        sorted_picks = _get_sorted_picks(markets_enriched)
+
+        # Cache key: event_id + pick principal (EV-based) + odds → invalideaza daca pick-ul sau cotele se schimba
+        if sorted_picks:
+            p0 = sorted_picks[0]
+            cache_key = f"{event_id}:{p0['mk']}@{p0['odds']:.2f}"
+        else:
+            bm = row.get("best_market") or {}
+            mk = bm.get("market_key") or bm.get("market") or ""
+            cache_key = f"{event_id}:{mk}" if mk else event_id
 
         if cache_key in claude_cache:
             row["ai_preview"] = claude_cache[cache_key]
@@ -241,10 +236,10 @@ def main():
             continue
 
         try:
-            home    = ev.get("home_team") or "Gazdă"
+            home    = ev.get("home_team") or "Gazda"
             away    = ev.get("away_team") or "Oaspete"
             lg      = ev.get("league") or {}
-            league  = lg.get("name") or "Ligă necunoscută"
+            league  = lg.get("name") or "Liga necunoscuta"
 
             xg_home   = float(row.get("expected_home_goals") or 1.2)
             xg_away   = float(row.get("expected_away_goals") or 1.0)
@@ -257,7 +252,17 @@ def main():
                              or ev.get("is_local_derby"))
             funfacts  = row.get("funfacts") or []
 
-            picks_text = _build_picks_text(markets_enriched, bm)
+            # H2H context
+            h2h_n     = int(float(row.get("supreme_h2h_matches") or 0))
+            h2h_btts  = float(row.get("supreme_h2h_btts_rate") or 0)
+            h2h_goals = float(row.get("supreme_h2h_avg_goals") or 0)
+            h2h_draw  = float(row.get("supreme_h2h_draw_rate") or 0)
+            h2h_parts = []
+            if h2h_n > 0:
+                if h2h_btts > 0:  h2h_parts.append(f"BTTS {round(h2h_btts*100)}%")
+                if h2h_goals > 0: h2h_parts.append(f"media {h2h_goals:.1f}g/meci")
+                if h2h_draw > 0:  h2h_parts.append(f"egal {round(h2h_draw*100)}%")
+            h2h_line = (f"\nH2H ({h2h_n} meciuri): " + " | ".join(h2h_parts)) if h2h_parts else ""
 
             web_context = ""
             if tavily_client:
@@ -268,12 +273,18 @@ def main():
                     tavily_cache[event_id] = web_context
                     tavily_searches += 1
 
-            preview = _generate_preview(
-                client, home, away, league,
-                xg_home, xg_away, home_form, away_form,
-                is_derby, funfacts, web_context,
-                picks_text,
+            prompt = _build_prompt(
+                home, away, league, xg_home, xg_away,
+                home_form, away_form, is_derby, funfacts,
+                h2h_line, web_context, sorted_picks,
             )
+
+            msg = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=240,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            preview = msg.content[0].text.strip()[:500]
             row["ai_preview"] = preview
             claude_cache[cache_key] = preview
             generated += 1
