@@ -34,7 +34,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests anthropic
+        run: pip install requests anthropic tavily-python
 
       - name: Fetch referee stats (weekly cache + trend repair)
         env:
@@ -85,6 +85,7 @@ jobs:
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: python fetch_data.py
 
       - name: VEYRA Supreme v5 — API v2 enrichment cache

@@ -25,6 +25,12 @@ try:
 except ImportError:
     _ANTHROPIC_AVAILABLE = False
 
+try:
+    from tavily import TavilyClient as _TavilyClient
+    _TAVILY_AVAILABLE = True
+except ImportError:
+    _TAVILY_AVAILABLE = False
+
 TOKEN = os.environ.get("BSD_TOKEN", "").strip()
 API_BASE = "https://sports.bzzoiro.com"
 V2_BASE = "https://sports.bzzoiro.com/api/v2"  # BSD API v2 — endpoints noi (managers, standings xGd, predictions filter)
@@ -3710,10 +3716,57 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
     return predictions
 
 
-# ─── Claude AI Preview (Romanian) ──────────────────────────────────────────────
+# ─── Claude AI Preview (Romanian) + Tavily web search ──────────────────────────
 
 CLAUDE_PREVIEW_CACHE_FILE = os.path.join("data", "claude_preview_cache.json")
-_CLAUDE_PREVIEW_MAX_DAYS = 7  # generăm preview doar pentru meciurile din next 7 zile
+TAVILY_SEARCH_CACHE_FILE  = os.path.join("data", "tavily_search_cache.json")
+_CLAUDE_PREVIEW_MAX_DAYS  = 7  # generăm preview doar pentru meciurile din next 7 zile
+
+
+def _load_tavily_search_cache() -> Dict[str, str]:
+    if not os.path.exists(TAVILY_SEARCH_CACHE_FILE):
+        return {}
+    try:
+        with open(TAVILY_SEARCH_CACHE_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_tavily_search_cache(cache: Dict[str, str]) -> None:
+    try:
+        with open(TAVILY_SEARCH_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[Tavily] Nu s-a putut salva cache-ul: {e}")
+
+
+def _tavily_search_match(client, home: str, away: str, event_date: str) -> str:
+    """Caută știri recente despre meci — accidentați, lotul, context. Max 3 rezultate."""
+    try:
+        month_year = ""
+        try:
+            dt = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+            month_year = dt.strftime("%B %Y")
+        except Exception:
+            pass
+
+        query = f"{home} vs {away} preview team news injury lineup {month_year}".strip()
+        result = client.search(
+            query=query,
+            search_depth="basic",
+            max_results=3,
+            include_answer=False,
+        )
+        snippets = []
+        for r in (result.get("results") or [])[:3]:
+            title   = (r.get("title") or "").strip()
+            content = (r.get("content") or "").strip()[:200]
+            if content:
+                snippets.append(f"• {title}: {content}")
+        return "\n".join(snippets)
+    except Exception as e:
+        return ""
 
 
 def _load_claude_preview_cache() -> Dict[str, str]:
@@ -3738,32 +3791,39 @@ def _generate_one_claude_preview(client, home: str, away: str, league: str, coun
                                   prob_home: float, prob_draw: float, prob_away: float,
                                   xg_home: float, xg_away: float,
                                   home_form: str, away_form: str,
-                                  is_derby: bool, funfacts: list) -> str:
+                                  is_derby: bool, funfacts: list,
+                                  web_context: str = "") -> str:
     facts_line = ""
     if funfacts:
         facts_line = "\nFapte statistice: " + " | ".join(str(f) for f in funfacts[:2])
 
     derby_line = "\nEste un derby local!" if is_derby else ""
 
+    web_line = ""
+    if web_context and len(web_context.strip()) > 20:
+        web_line = f"\n\nȘtiri recente (surse externe):\n{web_context.strip()}"
+
     prompt = (
-        f"Scrie un preview de meci în limba română, concis (3-4 propoziții, max 350 caractere), "
-        f"fără titluri, fără liste, fără markdown. Tonul să fie analitic și direct.\n\n"
+        f"Ești un analist sportiv. Scrie un preview de meci în limba română, "
+        f"4-5 propoziții (max 450 caractere), fără titluri, fără liste, fără markdown. "
+        f"Dacă există știri recente despre accidentați sau lotul echipei, menționează-le explicit. "
+        f"Tonul să fie analitic și direct.\n\n"
         f"Meci: {home} vs {away}\n"
         f"Competiție: {league} ({country})\n"
         f"Probabilități model: {home} câștigă {round(prob_home*100)}%, egal {round(prob_draw*100)}%, "
         f"{away} câștigă {round(prob_away*100)}%\n"
         f"xG estimat: {home} {xg_home:.2f} — {away} {xg_away:.2f}\n"
         f"Formă recentă: {home} [{home_form or 'N/A'}] vs {away} [{away_form or 'N/A'}]"
-        f"{derby_line}{facts_line}\n\n"
+        f"{derby_line}{facts_line}{web_line}\n\n"
         f"Răspunde DOAR cu textul preview-ului în română, fără alte explicații."
     )
 
     msg = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=200,
+        max_tokens=250,
         messages=[{"role": "user", "content": prompt}],
     )
-    return msg.content[0].text.strip()[:400]
+    return msg.content[0].text.strip()[:500]
 
 
 def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: datetime) -> List[Dict[str, Any]]:
@@ -3780,8 +3840,22 @@ def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: date
     client = _anthropic_mod.Anthropic(api_key=api_key)
     cutoff = now_utc + timedelta(days=_CLAUDE_PREVIEW_MAX_DAYS)
 
+    # Tavily — opțional, pentru context web independent
+    tavily_client = None
+    tavily_cache = _load_tavily_search_cache()
+    tavily_key = os.environ.get("TAVILY_API_KEY", "").strip()
+    if _TAVILY_AVAILABLE and tavily_key:
+        try:
+            tavily_client = _TavilyClient(api_key=tavily_key)
+            print("[ClaudePreview] Tavily disponibil — preview-urile vor include știri web recente.")
+        except Exception as e:
+            print(f"[Tavily] Init eșuat (non-fatal): {e}")
+    else:
+        print("[ClaudePreview] Tavily indisponibil — preview fără context web.")
+
     generated = 0
     cached_hits = 0
+    tavily_searches = 0
     errors = 0
 
     for row in predictions:
@@ -3829,11 +3903,21 @@ def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: date
             is_derby = bool(row.get("is_local_derby") or ev.get("is_local_derby"))
             funfacts = row.get("funfacts") or []
 
+            # Căutare web Tavily pentru context independent (știri recente, accidentați)
+            web_context = ""
+            if tavily_client:
+                if event_id in tavily_cache:
+                    web_context = tavily_cache[event_id]
+                else:
+                    web_context = _tavily_search_match(tavily_client, home, away, ev_date_str)
+                    tavily_cache[event_id] = web_context
+                    tavily_searches += 1
+
             preview = _generate_one_claude_preview(
                 client, home, away, league, country,
                 prob_home, prob_draw, prob_away,
                 xg_home, xg_away, home_form, away_form,
-                is_derby, funfacts
+                is_derby, funfacts, web_context
             )
             row["ai_preview"] = preview
             cache[event_id] = preview
@@ -3846,7 +3930,9 @@ def enrich_with_claude_previews(predictions: List[Dict[str, Any]], now_utc: date
             row["ai_preview"] = None
 
     _save_claude_preview_cache(cache)
-    print(f"[ClaudePreview] Generate: {generated} | Din cache: {cached_hits} | Erori: {errors}")
+    if tavily_client:
+        _save_tavily_search_cache(tavily_cache)
+    print(f"[ClaudePreview] Generate: {generated} | Din cache: {cached_hits} | Tavily searches: {tavily_searches} | Erori: {errors}")
     return predictions
 
 
