@@ -561,34 +561,38 @@ body.theme-light #btn-theme {
   color: #C97A00 !important;
 }
 
-/* ── 31. MOBILE BOTTOM NAV (.mobile-nav) ─────────────────────────── */
-/* Overrides hardcoded rgba(8,11,22) dark backgrounds in app.css */
+/* ── 31. MOBILE BOTTOM NAV — bară plată albă (stil BetPredict) ───── */
 body.theme-light .mobile-nav {
-  background: rgba(240,244,251,.96) !important;
-  backdrop-filter: saturate(160%) blur(28px) !important;
-  -webkit-backdrop-filter: saturate(160%) blur(28px) !important;
-  border: 1px solid rgba(12,168,142,.18) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.9) inset,
-    0 14px 40px rgba(0,0,0,.10),
-    0 0 0 1px rgba(12,168,142,.08) !important;
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  border-top: 1px solid #E4ECF7 !important;
+  border-radius: 0px !important;
+  box-shadow: 0 -1px 8px rgba(0,0,0,.05) !important;
 }
 body.theme-light .mobile-nav::before {
-  background: linear-gradient(90deg, transparent, rgba(12,168,142,.42), rgba(46,123,212,.28), transparent) !important;
+  display: none !important;
+}
+/* Padding pentru safe-area (iPhone home indicator) */
+body.theme-light .mobile-nav {
+  padding-bottom: env(safe-area-inset-bottom, 4px) !important;
 }
 body.theme-light .mobile-nav-btn {
-  color: #546376 !important;
+  color: #8494B0 !important;
   background: transparent !important;
 }
 body.theme-light .mobile-nav-btn small {
-  color: #546376 !important;
+  color: #8494B0 !important;
 }
 body.theme-light .mobile-nav-btn.active {
-  background: linear-gradient(135deg, rgba(12,168,142,.12), rgba(46,123,212,.06)) !important;
+  background: transparent !important;
   color: #0CA88E !important;
 }
-body.theme-light .mobile-nav-btn.active span {
-  filter: drop-shadow(0 0 8px rgba(12,168,142,.35)) !important;
+body.theme-light .mobile-nav-btn.active span,
+body.theme-light .mobile-nav-btn.active svg {
+  filter: none !important;
+  color: #0CA88E !important;
 }
 body.theme-light .mobile-nav-btn.active small {
   color: #0CA88E !important;
@@ -596,6 +600,12 @@ body.theme-light .mobile-nav-btn.active small {
 }
 body.theme-light .mobile-nav-btn.active::after {
   background: #0CA88E !important;
+}
+/* .main padding-bottom redus — bara plată nu are marjă flotantă */
+@media (max-width: 768px) {
+  body.theme-light .main {
+    padding-bottom: 76px !important;
+  }
 }
 
 /* ── 32. TOP TABS (on desktop / force-top-menu mode) ─────────────── */

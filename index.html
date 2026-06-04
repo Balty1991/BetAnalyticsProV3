@@ -54,7 +54,7 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/veyra_reco_grouped.css?v=20260515reco2"/>
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
 <link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260603dash3"/>
-<link rel="stylesheet" href="./assets/light_theme.css?v=20260604lgt16"/>
+<link rel="stylesheet" href="./assets/light_theme.css?v=20260604lgt17"/>
 <!-- APEX light-mode nuclear override — appears LAST in cascade, beats all @import chains -->
 <style id="apex-light-override">
 body.theme-light #tab-smartbet { background: #F0F4FB !important; }
@@ -157,9 +157,26 @@ function toggleTheme(){
   document.documentElement.style.background=isLight?'#F0F4FB':'';
   var mnav=document.getElementById('mobile-nav');
   if(mnav&&window.innerWidth<=768){
-    mnav.style.setProperty('background',isLight?'rgba(240,244,251,.97)':'rgba(8,11,22,.92)','important');
-    mnav.style.setProperty('border',isLight?'1px solid rgba(12,168,142,.20)':'1px solid rgba(43,229,197,.15)','important');
-    mnav.style.setProperty('box-shadow',isLight?'0 6px 22px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.9) inset':'0 14px 40px rgba(0,0,0,.55)','important');
+    if(isLight){
+      mnav.style.setProperty('bottom',       '0px',              'important');
+      mnav.style.setProperty('left',         '0px',              'important');
+      mnav.style.setProperty('right',        '0px',              'important');
+      mnav.style.setProperty('background',   '#FFFFFF',          'important');
+      mnav.style.setProperty('border',       'none',             'important');
+      mnav.style.setProperty('border-top',   '1px solid #E4ECF7','important');
+      mnav.style.setProperty('box-shadow',   '0 -1px 8px rgba(0,0,0,.05)','important');
+      mnav.style.setProperty('border-radius','0px',              'important');
+      mnav.style.setProperty('padding',      '4px 8px',          'important');
+    } else {
+      mnav.style.setProperty('bottom',       '12px',             'important');
+      mnav.style.setProperty('left',         '12px',             'important');
+      mnav.style.setProperty('right',        '12px',             'important');
+      mnav.style.setProperty('background',   'rgba(8,11,22,.92)','important');
+      mnav.style.setProperty('border',       '1px solid rgba(43,229,197,.15)','important');
+      mnav.style.setProperty('box-shadow',   '0 14px 40px rgba(0,0,0,.55)','important');
+      mnav.style.setProperty('border-radius','22px',             'important');
+      mnav.style.setProperty('padding',      '6px',              'important');
+    }
   }
 }
 </script>
@@ -631,19 +648,33 @@ function toggleTheme(){
       if(mnav){
         if(isMobile){
           var lt = document.body.classList.contains('theme-light');
-          mnav.style.setProperty('display',        'flex',    'important');
-          mnav.style.setProperty('position',       'fixed',   'important');
-          mnav.style.setProperty('bottom',         '12px',    'important');
-          mnav.style.setProperty('left',           '12px',    'important');
-          mnav.style.setProperty('right',          '12px',    'important');
-          mnav.style.setProperty('z-index',        '9999',    'important');
-          mnav.style.setProperty('background',     lt?'rgba(240,244,251,.97)':'rgba(8,11,22,.92)', 'important');
-          mnav.style.setProperty('border',         lt?'1px solid rgba(12,168,142,.20)':'1px solid rgba(43,229,197,.15)', 'important');
-          mnav.style.setProperty('box-shadow',     lt?'0 6px 22px rgba(0,0,0,.08),0 1px 0 rgba(255,255,255,.9) inset':'0 14px 40px rgba(0,0,0,.55)', 'important');
-          mnav.style.setProperty('border-radius',  '22px',    'important');
-          mnav.style.setProperty('padding',        '6px',     'important');
-          mnav.style.setProperty('justify-content','space-around','important');
-          mnav.style.setProperty('align-items',    'stretch', 'important');
+          mnav.style.setProperty('display',        'flex',           'important');
+          mnav.style.setProperty('position',       'fixed',          'important');
+          mnav.style.setProperty('z-index',        '9999',           'important');
+          mnav.style.setProperty('justify-content','space-around',   'important');
+          mnav.style.setProperty('align-items',    'stretch',        'important');
+          if(lt){
+            /* Light mode: bară plată albă (ca BetPredict) */
+            mnav.style.setProperty('bottom',       '0px',            'important');
+            mnav.style.setProperty('left',         '0px',            'important');
+            mnav.style.setProperty('right',        '0px',            'important');
+            mnav.style.setProperty('background',   '#FFFFFF',        'important');
+            mnav.style.setProperty('border',       'none',           'important');
+            mnav.style.setProperty('border-top',   '1px solid #E4ECF7','important');
+            mnav.style.setProperty('box-shadow',   '0 -1px 8px rgba(0,0,0,.05)','important');
+            mnav.style.setProperty('border-radius','0px',            'important');
+            mnav.style.setProperty('padding',      '4px 8px',        'important');
+          } else {
+            /* Dark mode: pilulflotant original */
+            mnav.style.setProperty('bottom',       '12px',           'important');
+            mnav.style.setProperty('left',         '12px',           'important');
+            mnav.style.setProperty('right',        '12px',           'important');
+            mnav.style.setProperty('background',   'rgba(8,11,22,.92)','important');
+            mnav.style.setProperty('border',       '1px solid rgba(43,229,197,.15)','important');
+            mnav.style.setProperty('box-shadow',   '0 14px 40px rgba(0,0,0,.55)','important');
+            mnav.style.setProperty('border-radius','22px',           'important');
+            mnav.style.setProperty('padding',      '6px',            'important');
+          }
         } else {
           mnav.style.setProperty('display', 'none', 'important');
         }
