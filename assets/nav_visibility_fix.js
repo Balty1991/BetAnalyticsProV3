@@ -51,20 +51,37 @@
 
     // ── Mobile nav: mereu jos, mereu vizibil ─────────────
     if(mnav && !desktop){
+      var lt = body.classList.contains('theme-light');
       setI(mnav, 'display',          'flex');
       setI(mnav, 'position',         'fixed');
-      setI(mnav, 'bottom',           '12px');
-      setI(mnav, 'left',             '12px');
-      setI(mnav, 'right',            '12px');
       setI(mnav, 'z-index',          '9999');
-      setI(mnav, 'background',       'rgba(8,11,22,.92)');
-      setI(mnav, 'border-radius',    '22px');
-      setI(mnav, 'padding',          '6px');
       setI(mnav, 'justify-content',  'space-around');
       setI(mnav, 'align-items',      'stretch');
       setI(mnav, 'visibility',       'visible');
       setI(mnav, 'opacity',          '1');
       setI(mnav, 'pointer-events',   'auto');
+      if(lt){
+        /* Light mode: bară plată albă */
+        setI(mnav, 'bottom',         '0px');
+        setI(mnav, 'left',           '0px');
+        setI(mnav, 'right',          '0px');
+        setI(mnav, 'background',     '#FFFFFF');
+        setI(mnav, 'border',         'none');
+        setI(mnav, 'border-top',     '1px solid #E4ECF7');
+        setI(mnav, 'box-shadow',     '0 -1px 8px rgba(0,0,0,.05)');
+        setI(mnav, 'border-radius',  '0px');
+        setI(mnav, 'padding',        '4px 8px');
+      } else {
+        /* Dark mode: pilă flotantă originală */
+        setI(mnav, 'bottom',         '12px');
+        setI(mnav, 'left',           '12px');
+        setI(mnav, 'right',          '12px');
+        setI(mnav, 'background',     'rgba(8,11,22,.92)');
+        setI(mnav, 'border',         '1px solid rgba(43,229,197,.15)');
+        setI(mnav, 'box-shadow',     '0 14px 40px rgba(0,0,0,.55)');
+        setI(mnav, 'border-radius',  '22px');
+        setI(mnav, 'padding',        '6px');
+      }
     } else if(mnav && desktop){
       setI(mnav, 'display', 'none');
     }
