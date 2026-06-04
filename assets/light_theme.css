@@ -2600,3 +2600,63 @@ body.theme-light #main-content #tab-smartbet .sec-title { color: #0C1220 !import
 body.theme-light #main-content #tab-smartbet p,
 body.theme-light #main-content #tab-smartbet .visual-card-sub,
 body.theme-light #main-content #tab-smartbet .muted      { color: #6B7890 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   47. VERDICT PANEL (WATCH/BET/AVOID box în detalii meci)
+   .verdict-label are color: rgba(255,255,255,.78) hardcodat — invizibil pe alb
+   ═══════════════════════════════════════════════════════════════════ */
+body.theme-light .verdict-panel {
+  background: #FFFFFF !important;
+  border-color: #D0D9EE !important;
+}
+body.theme-light .verdict-panel.bet   { border-color: rgba(20,138,92,.35) !important; }
+body.theme-light .verdict-panel.risk  { border-color: rgba(245,158,11,.35) !important; }
+body.theme-light .verdict-panel.avoid { border-color: rgba(196,32,64,.30) !important; }
+body.theme-light .verdict-panel-head  { background: rgba(0,0,0,.025) !important; }
+body.theme-light .verdict-panel.bet .verdict-panel-head   { background: rgba(20,138,92,.07) !important; }
+body.theme-light .verdict-panel.risk .verdict-panel-head  { background: rgba(245,158,11,.07) !important; }
+body.theme-light .verdict-panel.avoid .verdict-panel-head { background: rgba(196,32,64,.06) !important; }
+body.theme-light .verdict-panel-sub { color: #546376 !important; }
+body.theme-light .verdict-row { border-bottom-color: rgba(0,0,0,.06) !important; }
+/* CHEIA: verdict-label era alb hardcodat — acum dark */
+body.theme-light .verdict-label { color: #2A3650 !important; }
+body.theme-light .verdict-value { color: #0C1220 !important; }
+body.theme-light .verdict-note  { color: #546376 !important; }
+body.theme-light .verdict-row.ok .verdict-note  { color: #148A5C !important; }
+body.theme-light .verdict-row.bad .verdict-note { color: #C42040 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   48. BA-CLV-GUIDANCE (carduri "Ghid miză" injectate din JS)
+   clv_card_guidance_runtime.js injectează background:rgba(12,18,31,.66)
+   fără !important — override-ul nostru cu !important câștigă
+   ═══════════════════════════════════════════════════════════════════ */
+body.theme-light .ba-clv-guidance {
+  background: rgba(12,168,142,.04) !important;
+  border-color: rgba(12,168,142,.22) !important;
+  color: #0C1220 !important;
+}
+body.theme-light .ba-clv-guidance * { color: inherit !important; }
+body.theme-light .ba-clv-details .ba-clv-top { color: #0C1220 !important; }
+body.theme-light .ba-clv-guidance .ba-clv-label { color: #546376 !important; }
+body.theme-light .ba-clv-guidance .ba-clv-val   { color: #0C1220 !important; }
+body.theme-light .ba-clv-guidance .ba-clv-note  { color: #546376 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   49. MATCH CARD — league/country text (match_card_league_country_visibility.css)
+   Regulile folosesc #tab-meciuri .match-card-m17 .cls = (1,2,0) cu !important
+   → noi folosim body.theme-light #tab-meciuri .match-card-m17 = (1,3,1) ca să câștigăm
+   ═══════════════════════════════════════════════════════════════════ */
+/* Liga: "International Friendly Games" era rgba(248,251,255,.95) = aproape alb */
+body.theme-light #tab-meciuri .match-card-m17 .m17-league {
+  color: #0C1220 !important;
+  text-shadow: none !important;
+}
+/* Țara/country: [class*="country"] era #dce8fb = albastru deschis invizibil */
+body.theme-light #tab-meciuri .match-card-m17 [class*="country"] {
+  color: #546376 !important;
+  text-shadow: none !important;
+}
+body.theme-light #tab-meciuri .match-card-m17 .m17-league span,
+body.theme-light #tab-meciuri .match-card-m17 .m17-league-logo + span {
+  color: #0C1220 !important;
+}
