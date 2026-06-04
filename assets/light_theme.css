@@ -147,11 +147,11 @@ body.theme-light .header::after {
     transparent 100%) !important;
 }
 
-/* Logo emblem frame — complet transparent în light mode */
+/* Logo emblem frame — chenar teal vizibil pe fundal luminos */
 body.theme-light .veyra-emblem-frame {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: rgba(12,168,142,.06) !important;
+  border: 1.5px solid rgba(12,168,142,.55) !important;
+  box-shadow: 0 0 0 3px rgba(12,168,142,.10), 0 0 20px rgba(12,168,142,.22) !important;
 }
 /* Swap SVG cu versiunea light (fără rect negru) */
 body.theme-light .veyra-emblem-img {
@@ -590,6 +590,8 @@ body.theme-light .mobile-nav {
 body.theme-light .mobile-nav-btn {
   color: #8494B0 !important;
   background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 body.theme-light .mobile-nav-btn small {
   color: #8494B0 !important;
@@ -597,6 +599,7 @@ body.theme-light .mobile-nav-btn small {
 body.theme-light .mobile-nav-btn.active {
   background: transparent !important;
   color: #0CA88E !important;
+  box-shadow: none !important;
 }
 body.theme-light .mobile-nav-btn.active span,
 body.theme-light .mobile-nav-btn.active svg {
