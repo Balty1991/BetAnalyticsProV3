@@ -22,7 +22,7 @@ from typing import Dict, Any, List, Optional
 TOKEN = os.environ.get("BSD_TOKEN", "").strip()
 API_BASE = "https://sports.bzzoiro.com"
 V2_BASE = "https://sports.bzzoiro.com/api/v2"  # BSD API v2 — endpoints noi (managers, standings xGd, predictions filter)
-HEADERS = {"Authorization": f"Token {TOKEN}"}
+HEADERS = {"Authorization": f"Token {TOKEN}", "Accept-Language": "ro-RO,ro;q=0.9"}
 TZ = "Europe/Bucharest"
 DATA_DIR = "data"
 
@@ -3675,7 +3675,7 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
         if event_id:
             row["funfacts"] = []
             try:
-                meta_url = f"{V2_BASE}/events/{int(event_id)}/metadata/"
+                meta_url = f"{V2_BASE}/events/{int(event_id)}/metadata/?language=ro"
                 meta_data = fetch_url(meta_url)
                 if meta_data and isinstance(meta_data, dict):
                     facts = meta_data.get("funfacts") or []
