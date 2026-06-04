@@ -137,7 +137,7 @@ body.theme-light .header {
   backdrop-filter: saturate(160%) blur(22px) !important;
   -webkit-backdrop-filter: saturate(160%) blur(22px) !important;
   border-bottom: 1px solid #D0D9EE !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,.8), 0 2px 8px rgba(0,0,0,.06) !important;
+  box-shadow: 0 1px 0 #E4ECF7 !important;
 }
 body.theme-light .header::after {
   background: linear-gradient(90deg,
@@ -147,19 +147,33 @@ body.theme-light .header::after {
     transparent 100%) !important;
 }
 
-/* Logo emblem frame — light bg, fără umbră neagră */
+/* Logo emblem frame — fundal transparent, fără glow/umbră */
 body.theme-light .veyra-emblem-frame {
-  background:
-    radial-gradient(circle at 50% 18%, rgba(12,168,142,.14), transparent 55%),
-    linear-gradient(145deg, rgba(240,244,251,.98), rgba(224,234,248,.95)) !important;
-  border-color: rgba(12,168,142,.26) !important;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.9) inset,
-    0 0 12px rgba(12,168,142,.10),
-    0 4px 14px rgba(0,0,0,.07) !important;
+  background: rgba(12,168,142,.08) !important;
+  border-color: rgba(12,168,142,.20) !important;
+  box-shadow: none !important;
 }
+/* Swap SVG cu versiunea light (fără rect negru) */
 body.theme-light .veyra-emblem-img {
-  filter: drop-shadow(0 0 6px rgba(12,168,142,.20)) !important;
+  content: url('./veyra-icon-light.svg?v=20260604icon1') !important;
+  filter: none !important;
+}
+
+/* Header — elimină umbra de sub header */
+body.theme-light .header {
+  box-shadow: 0 1px 0 #E4ECF7 !important;
+}
+
+/* Butoane header — fără glow/umbră */
+body.theme-light .btn-refresh-ico,
+body.theme-light #btn-theme {
+  background: rgba(0,0,0,.04) !important;
+  border-color: #D8E4F0 !important;
+  color: #2A3650 !important;
+  box-shadow: none !important;
+}
+body.theme-light #btn-theme {
+  color: #B45309 !important;
 }
 
 /* Logo title on light bg */
