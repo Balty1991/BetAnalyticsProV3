@@ -30,7 +30,7 @@ def _load_referee_stats() -> dict:
         return {"by_id": {}, "by_name": {}}
 
 
-def _load_team_form() -> Dict_:
+def _load_team_form() -> dict:
     """Încarcă team_form_cache.json — form_score, avg_goals_scored/conceded per echipă."""
     try:
         raw = json.load(open(DATA_DIR / "team_form_cache.json", encoding="utf-8"))
@@ -110,9 +110,6 @@ def _h2h_features(home: str, away: str, current_date, h2h_index: dict, n: int = 
         "h2h_btts_rate":     round(btts / n2, 3),
     }
 
-
-# Type alias pentru type hints simple
-Dict_ = dict
 
 
 def to_float(value, default=0.0):
