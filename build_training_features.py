@@ -13,7 +13,7 @@ FULL_HISTORY_FOR_MODEL = 5
 DATA_DIR = Path("data")
 
 
-def _load_referee_stats() -> Dict_:
+def _load_referee_stats() -> dict:
     """Încarcă referee_stats.json — avg_goals, avg_yellow, is_strict per referee."""
     try:
         raw = json.load(open(DATA_DIR / "referee_stats.json", encoding="utf-8"))
