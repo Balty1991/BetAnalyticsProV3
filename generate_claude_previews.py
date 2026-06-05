@@ -14,7 +14,7 @@ DATA_DIR = Path("data")
 CLAUDE_PREVIEW_CACHE_FILE = DATA_DIR / "claude_preview_cache.json"
 TAVILY_SEARCH_CACHE_FILE  = DATA_DIR / "tavily_search_cache.json"
 PREVIEW_MAX_DAYS = 7
-TAVILY_MAX_PER_RUN = int(os.environ.get("TAVILY_MAX_PER_RUN", "15"))
+TAVILY_MAX_PER_RUN = int(os.environ.get("TAVILY_MAX_PER_RUN", "25"))
 
 try:
     import anthropic as _anthropic_mod
