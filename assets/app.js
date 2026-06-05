@@ -1549,7 +1549,7 @@ function getBetVerdict(match, bet) {
     return { state:state, label:label, sub:sub, bg:bg, border:border, color:color, score:score || 0 };
   }
   function avoid(sub, score){
-    return verdict('avoid', '❌ EVITA', sub || 'Risc peste prag', '#ef4444', 'rgba(239,68,68,.10)', 'rgba(239,68,68,.30)', score || 0);
+    return verdict('avoid', '⚠️ Prezintă risc', sub || 'Risc peste prag', '#f97316', 'rgba(249,115,22,.10)', 'rgba(249,115,22,.30)', score || 0);
   }
   function watch(sub, score){
     return verdict('watch', '👀 WATCH', sub || 'Semnal bun, dar cu avertisment', '#f59e0b', 'rgba(245,158,11,.10)', 'rgba(245,158,11,.32)', score || 2);
@@ -7221,7 +7221,32 @@ function renderMatches(){
       }
     } catch(e) { funfactsBlock = ''; polyBlock = ''; }
 
-    var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    // Analiză internă (fără API) — din date enrichment existente
+    var internalAnalysisBlock = '';
+    if(b) {
+      var _iv = getBetVerdict(m, b);
+      if(_iv) {
+        var _iState = _iv.state;
+        var _iLabel = _iState === 'bet' ? '✅ Jucabil' : (_iState === 'watch' ? '⚠️ Cu atenție' : '⚠️ Prezintă risc');
+        var _iColor = _iState === 'bet' ? '#22c55e' : (_iState === 'watch' ? '#f59e0b' : '#f97316');
+        var _iReason = _iv.sub || '';
+        var _iEdge = b.edgePct != null ? ((Number(b.edgePct) >= 0 ? '+' : '') + Number(b.edgePct).toFixed(1) + 'pp edge') : '';
+        var _iProb = b.adjProb != null ? (Number(b.adjProb).toFixed(0) + '% prob') : '';
+        var _iVal = b.value != null && Number(b.value) !== 0 ? ((Number(b.value) >= 0 ? '+' : '') + (Number(b.value) * 100).toFixed(1) + '% value') : '';
+        var _iStats = [_iEdge, _iProb, _iVal].filter(Boolean).join(' • ');
+        internalAnalysisBlock = '<div class="ai-preview-block">'
+          + '<div class="ai-preview-label">🤖 Analiză internă</div>'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+          + '<span style="font-size:13px;font-weight:900;color:' + _iColor + '">' + _iLabel + '</span>'
+          + (_iReason ? '<span style="font-size:11px;font-weight:600;color:' + _iColor + ';background:' + _iColor + '1A;padding:2px 8px;border-radius:20px">' + htmlEsc(_iReason) + '</span>' : '')
+          + '</div>'
+          + (_iStats ? '<div style="font-size:12px;color:var(--c-text-muted)">' + _iStats + '</div>' : '')
+          + '</div>';
+      }
+    }
+
+    var detailLowerFrame = (internalAnalysisBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+      (internalAnalysisBlock ? buildAnalysisSection('Analiză internă', internalAnalysisBlock, 'analysis-detail-preview-section') : '')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
@@ -7250,7 +7275,8 @@ function renderMatches(){
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
     '</div>';
-    var simpleLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    var simpleLowerFrame = (internalAnalysisBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+      (internalAnalysisBlock ? buildAnalysisSection('Analiză internă', internalAnalysisBlock, 'analysis-detail-preview-section') : '')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
