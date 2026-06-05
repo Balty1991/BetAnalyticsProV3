@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-06-05T13:26:51.188791+00:00",
+  "updated_at": "2026-06-05T17:59:16.975166+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 67.4,
+  "overall_score": 65.8,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 1731,
-    "pending_rows": 112,
-    "candidates_with_odds_and_probability": 95,
+    "pending_rows": 111,
+    "candidates_with_odds_and_probability": 94,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -20,17 +20,17 @@
     "value": 6,
     "speculative": 59,
     "balanced": 23,
-    "safe": 7
+    "safe": 6
   },
   "market_distribution_top150": {
     "BTTS": 11,
     "Under 3.5G": 47,
-    "Over 2.5G": 4,
+    "Over 2.5G": 3,
     "Over 1.5G": 33
   },
   "league_distribution_top150": {
     "World Cup 2026": 43,
-    "International Friendly Games": 24,
+    "International Friendly Games": 23,
     "J1 League": 9,
     "Chinese Super League": 6,
     "USL Championship": 4,
@@ -312,34 +312,6 @@
       "rationale": [
         "Probabilitate model 69.9% vs. probabilitate implicată 55.2%.",
         "EV estimat 26.5% și edge 14.6 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 209438,
-      "prediction_id": 4647,
-      "home": "Singapore",
-      "away": "China",
-      "league": "International Friendly Games",
-      "event_date": "2026-06-05T14:30:00+03:00",
-      "market": "Over 2.5G",
-      "odds": 1.57,
-      "model_probability": 0.7666,
-      "model_probability_pct": 76.66,
-      "implied_probability_pct": 63.69,
-      "fair_odds": 1.304,
-      "edge_pp": 12.97,
-      "ev_pct": 20.36,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 61.25,
-      "score": 109.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.7% vs. probabilitate implicată 63.7%.",
-        "EV estimat 20.4% și edge 13.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -901,6 +873,34 @@
         "Probabilitate model 81.6% vs. probabilitate implicată 71.9%.",
         "EV estimat 13.4% și edge 9.7 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 8358,
+      "prediction_id": 4902,
+      "home": "Jordan",
+      "away": "Argentina",
+      "league": "World Cup 2026",
+      "event_date": "2026-06-28T05:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.56,
+      "model_probability": 0.7134,
+      "model_probability_pct": 71.34,
+      "implied_probability_pct": 64.1,
+      "fair_odds": 1.402,
+      "edge_pp": 7.24,
+      "ev_pct": 11.29,
+      "kelly_fraction": 0.0504,
+      "kelly_units_100": 5.04,
+      "confidence": 47.66,
+      "score": 97.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 71.3% vs. probabilitate implicată 64.1%.",
+        "EV estimat 11.3% și edge 7.2 puncte procentuale.",
+        "Miză Kelly fracțională 5.04% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1524,34 +1524,6 @@
       ]
     },
     {
-      "event_id": 209438,
-      "prediction_id": 4647,
-      "home": "Singapore",
-      "away": "China",
-      "league": "International Friendly Games",
-      "event_date": "2026-06-05T14:30:00+03:00",
-      "market": "Over 2.5G",
-      "odds": 1.57,
-      "model_probability": 0.7666,
-      "model_probability_pct": 76.66,
-      "implied_probability_pct": 63.69,
-      "fair_odds": 1.304,
-      "edge_pp": 12.97,
-      "ev_pct": 20.36,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 61.25,
-      "score": 109.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.7% vs. probabilitate implicată 63.7%.",
-        "EV estimat 20.4% și edge 13.0 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 10281,
       "prediction_id": 4701,
       "home": "Portugal",
@@ -2026,17 +1998,45 @@
         "EV estimat 1.8% și edge 1.3 puncte procentuale.",
         "Miză Kelly fracțională 1.04% din bancă, plafonată prudent."
       ]
+    },
+    {
+      "event_id": 8323,
+      "prediction_id": 4839,
+      "home": "Spain",
+      "away": "Saudi Arabia",
+      "league": "World Cup 2026",
+      "event_date": "2026-06-21T19:00:00+03:00",
+      "market": "Over 2.5G",
+      "odds": 1.48,
+      "model_probability": 0.7022,
+      "model_probability_pct": 70.22,
+      "implied_probability_pct": 67.57,
+      "fair_odds": 1.424,
+      "edge_pp": 2.65,
+      "ev_pct": 3.93,
+      "kelly_fraction": 0.0204,
+      "kelly_units_100": 2.04,
+      "confidence": 56.26,
+      "score": 87.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 70.2% vs. probabilitate implicată 67.6%.",
+        "EV estimat 3.9% și edge 2.7 puncte procentuale.",
+        "Miză Kelly fracțională 2.04% din bancă, plafonată prudent."
+      ]
     }
   ],
   "settled_market_performance": [
     {
       "key": "Over 2.5G",
-      "bets": 37,
-      "wins": 28,
-      "winrate": 75.68,
-      "profit_units": 6.58,
-      "roi_pct": 17.78,
-      "avg_odds": 1.565
+      "bets": 38,
+      "wins": 29,
+      "winrate": 76.32,
+      "profit_units": 7.15,
+      "roi_pct": 18.81,
+      "avg_odds": 1.566
     },
     {
       "key": "BTTS",
