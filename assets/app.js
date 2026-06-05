@@ -7212,51 +7212,85 @@ function renderMatches(){
     try {
       if(m.aiPreview && typeof m.aiPreview === 'string' && m.aiPreview.length > 20){
         var rawPreview = m.aiPreview;
-        var verdictBadge = ''; var verdictColor = '';
-        var gasitText = ''; var concluzie = ''; var bodyText = rawPreview;
+        var esc = function(t){ return htmlEsc(String(t||'')); };
 
-        // parsăm formatul structurat: VERDICT: / GĂSIT: / CONCLUZIE:
+        // parsăm toate câmpurile posibile (v4: PICK/VERDICT/MOTIV/RISC; v3: VERDICT/GASIT/CONCLUZIE)
         var lines = rawPreview.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
-        var structured = false;
         var parsedLines = {};
         lines.forEach(function(l){
-          var m2 = l.match(/^(VERDICT|G[AĂÃ]SIT|GASIT|CONCLUZIE)\s*:\s*(.*)/i);
-          if(m2) { parsedLines[m2[1].toUpperCase().replace(/[ĂÃ]SIT/,'ASIT').replace('GĂSIT','GASIT').replace('GĂSIT','GASIT')] = m2[2].trim(); structured = true; }
+          var m2 = l.match(/^(PICK|VERDICT|MOTIV|RISC|G[AĂÃ]SIT|GASIT|CONCLUZIE|ALTERNATIVA)\s*:\s*(.*)/i);
+          if(m2){
+            var k = m2[1].toUpperCase()
+              .replace(/[ĂÃ]SIT/,'ASIT').replace('GĂSIT','GASIT');
+            parsedLines[k] = m2[2].trim();
+          }
         });
-        if(structured){
-          var v = (parsedLines['VERDICT'] || '').toUpperCase();
-          if(v.indexOf('CONFIRM') > -1){ verdictBadge = '✅ CONFIRMĂ'; verdictColor = '#148A5C'; }
-          else if(v.indexOf('ATEN') > -1){ verdictBadge = '⚠️ ATENȚIE'; verdictColor = '#D97706'; }
-          else if(v.indexOf('CONTRAZICE') > -1){ verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040'; }
-          gasitText  = parsedLines['GASIT'] || parsedLines['GĂSIT'] || '';
-          concluzie  = parsedLines['CONCLUZIE'] || '';
-          bodyText   = '';
+
+        var isV4 = !!parsedLines['PICK'];  // noul format v4
+
+        if(isV4){
+          // ─── FORMAT v4: PICK / VERDICT / MOTIV / RISC ───────────────────
+          var pickText = parsedLines['PICK'] || '';
+          var v4       = (parsedLines['VERDICT'] || '').toUpperCase();
+          var motivTxt = parsedLines['MOTIV'] || '';
+          var riscTxt  = parsedLines['RISC'] || '';
+
+          var vBadge = ''; var vColor = '#2BE5C5';
+          if(v4.indexOf('JUCABIL') > -1)          { vBadge = '✅ JUCABIL';    vColor = '#148A5C'; }
+          else if(v4.indexOf('GRIJ') > -1)         { vBadge = '⚠️ CU GRIJĂ'; vColor = '#D97706'; }
+          else if(v4.indexOf('EVIT') > -1)         { vBadge = '❌ EVITĂ';     vColor = '#C42040'; }
+
+          var pickHtml = pickText
+            ? '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">'
+              + '<span style="font-size:13px;font-weight:900;color:#2BE5C5">🏆 '+esc(pickText)+'</span>'
+              + (vBadge ? '<span style="font-size:11px;font-weight:800;color:'+vColor+';background:'+vColor+'1A;padding:2px 8px;border-radius:20px">'+esc(vBadge)+'</span>' : '')
+              + '</div>'
+            : '';
+          var motivHtml = motivTxt
+            ? '<div style="font-size:12px;color:var(--c-text-muted);margin-bottom:4px"><span style="font-weight:700;color:var(--c-text)">💬 Motiv:</span> '+esc(motivTxt)+'</div>'
+            : '';
+          var riscHtml = (riscTxt && !/risc scazut/i.test(riscTxt))
+            ? '<div style="font-size:12px;color:#F59E0B;font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">⚠️ <span style="color:#F59E0B">Risc:</span> '+esc(riscTxt)+'</div>'
+            : (riscTxt ? '<div style="font-size:12px;color:#148A5C;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">✅ '+esc(riscTxt)+'</div>' : '');
+
+          aiPreviewBlock = '<div class="ai-preview-block">'
+            + '<div class="ai-preview-label">🤖 Analiză AI</div>'
+            + pickHtml + motivHtml + riscHtml
+            + '</div>';
+
         } else {
-          // fallback: detectăm verdict pe prima linie simpla
-          var fl = lines[0] ? lines[0].toUpperCase() : '';
-          if(fl.indexOf('CONFIRM') > -1){ verdictBadge = '✅ CONFIRMĂ'; verdictColor = '#148A5C'; bodyText = lines.slice(1).join(' '); }
-          else if(fl.indexOf('ATEN') > -1){ verdictBadge = '⚠️ ATENȚIE'; verdictColor = '#D97706'; bodyText = lines.slice(1).join(' '); }
-          else if(fl.indexOf('CONTRAZICE') > -1){ verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040'; bodyText = lines.slice(1).join(' '); }
+          // ─── FORMAT v3 (backward compat): VERDICT / GASIT / CONCLUZIE ───
+          var structured = Object.keys(parsedLines).length > 0;
+          var verdictBadge = ''; var verdictColor = '';
+          var gasitText = ''; var concluzie = ''; var alternativa = ''; var bodyText = structured ? '' : rawPreview;
+
+          if(structured){
+            var v3 = (parsedLines['VERDICT'] || '').toUpperCase();
+            if(v3.indexOf('CONFIRM') > -1)     { verdictBadge = '✅ CONFIRMĂ';   verdictColor = '#148A5C'; }
+            else if(v3.indexOf('ATEN') > -1)   { verdictBadge = '⚠️ ATENȚIE';  verdictColor = '#D97706'; }
+            else if(v3.indexOf('CONTRAZICE')>-1){ verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040'; }
+            gasitText   = parsedLines['GASIT'] || '';
+            concluzie   = parsedLines['CONCLUZIE'] || '';
+            alternativa = parsedLines['ALTERNATIVA'] || '';
+            if(/^NICIUNA$/i.test(alternativa.trim())) alternativa = '';
+          } else {
+            var fl = lines[0] ? lines[0].toUpperCase() : '';
+            if(fl.indexOf('CONFIRM') > -1)    { verdictBadge = '✅ CONFIRMĂ';   verdictColor = '#148A5C'; bodyText = lines.slice(1).join(' '); }
+            else if(fl.indexOf('ATEN') > -1)  { verdictBadge = '⚠️ ATENȚIE';  verdictColor = '#D97706'; bodyText = lines.slice(1).join(' '); }
+            else if(fl.indexOf('CONTRAZICE')>-1){verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040'; bodyText = lines.slice(1).join(' '); }
+          }
+
+          var verdictHtml    = verdictBadge ? '<div style="font-size:13px;font-weight:800;color:'+verdictColor+';margin-bottom:8px;letter-spacing:.4px">'+esc(verdictBadge)+'</div>' : '';
+          var gasitHtml      = gasitText    ? '<div style="font-size:12px;color:var(--c-text-muted);margin-bottom:4px"><span style="font-weight:700;color:var(--c-text)">🔍 Găsit:</span> '+esc(gasitText)+'</div>' : '';
+          var concluzieHtml  = concluzie    ? '<div style="font-size:12px;color:var(--c-text);font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px"><span style="color:'+verdictColor+'">💡 Concluzie:</span> '+esc(concluzie)+'</div>' : '';
+          var alternativaHtml= alternativa  ? '<div style="font-size:12px;color:#0EA5E9;font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">🔄 <span style="color:#0EA5E9">Alternativă:</span> '+esc(alternativa)+'</div>' : '';
+          var bodyHtml       = bodyText     ? '<div class="ai-preview-text">'+esc(bodyText).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')+'</div>' : '';
+
+          aiPreviewBlock = '<div class="ai-preview-block">'
+            + '<div class="ai-preview-label">🤖 Analiză AI</div>'
+            + verdictHtml + gasitHtml + concluzieHtml + alternativaHtml + bodyHtml
+            + '</div>';
         }
-
-        var esc = function(t){ return htmlEsc(String(t||'')); };
-        var verdictHtml = verdictBadge
-          ? '<div style="font-size:13px;font-weight:800;color:'+verdictColor+';margin-bottom:8px;letter-spacing:.4px">'+esc(verdictBadge)+'</div>'
-          : '';
-        var gasitHtml = gasitText
-          ? '<div style="font-size:12px;color:var(--c-text-muted);margin-bottom:4px"><span style="font-weight:700;color:var(--c-text)">🔍 Găsit:</span> '+esc(gasitText)+'</div>'
-          : '';
-        var concluzieHtml = concluzie
-          ? '<div style="font-size:12px;color:var(--c-text);font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px"><span style="color:'+verdictColor+'">💡 Concluzie:</span> '+esc(concluzie)+'</div>'
-          : '';
-        var bodyHtml = bodyText
-          ? '<div class="ai-preview-text">'+esc(bodyText).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')+'</div>'
-          : '';
-
-        aiPreviewBlock = '<div class="ai-preview-block">'+
-          '<div class="ai-preview-label">🤖 Analiză AI</div>'+
-          verdictHtml + gasitHtml + concluzieHtml + bodyHtml +
-        '</div>';
       }
       if(m.funfacts && Array.isArray(m.funfacts) && m.funfacts.length > 0){
         var ffItems = m.funfacts.map(function(f){ return '<div class="funfact-item">💡 '+htmlEsc(String(f||''))+'</div>'; }).join('');
