@@ -195,7 +195,7 @@ def main():
         print(f"[ClaudeDaily] Raspuns: {len(raw_text)} chars")
 
         out = _parse_response(raw_text)
-        out["generated_at"]     = now_utc.isoformat()
+        out["generated_at"]     = datetime.now(timezone.utc).isoformat()
         out["matches_analyzed"] = n
         out["raw_response"]     = raw_text
 
