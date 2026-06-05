@@ -119,23 +119,68 @@ def _build_local_context(event_id, social_cache, profiles_cache):
     return "\n".join(parts)
 
 
-def _get_sorted_picks(markets_enriched):
-    """Sorteaza pick-urile non-Avoid dupa EV% descrescator."""
-    candidates = []
+def _build_picks_list(best_market, markets_enriched):
+    """
+    Construieste lista de pick-uri pentru prompt.
+    PICK PRINCIPAL = best_market (setat de enrich_predictions.py, aliniat cu RECOMANDARE din app).
+    Alternative = restul pick-urilor non-Avoid sortate dupa edge_pp descrescator.
+    """
+    bm_key = ""
+    picks = []
+
+    if best_market and isinstance(best_market, dict):
+        bm_key = str(best_market.get("market_key") or best_market.get("market") or "")
+        ev   = float(best_market.get("ev_pct") or 0)
+        odds = float(best_market.get("odds") or 0)
+        prob = float(best_market.get("prob") or best_market.get("bsd_prob") or 0)
+        edge = float(best_market.get("edge_pp") or 0)
+        tier = str(best_market.get("risk_tier") or "")
+        if bm_key and odds >= 1.01 and prob >= 0.01:
+            picks.append({"mk": bm_key, "ev": ev, "odds": odds,
+                          "prob": prob, "edge": edge, "tier": tier})
+
+    # Adauga alternative din markets_enriched sortate dupa edge_pp
+    alts = []
     for mk, v in (markets_enriched or {}).items():
         if not isinstance(v, dict) or v.get("risk_tier") == "Avoid":
             continue
-        ev   = float(v.get("ev_pct") or 0)
+        if mk == bm_key:
+            continue
         odds = float(v.get("odds") or 0)
         prob = float(v.get("prob") or v.get("bsd_prob") or 0)
-        edge = float(v.get("edge_pp") or 0)
-        tier = v.get("risk_tier", "")
         if odds < 1.01 or prob < 0.01:
             continue
-        candidates.append({"mk": mk, "ev": ev, "odds": odds,
-                            "prob": prob, "edge": edge, "tier": tier})
-    candidates.sort(key=lambda x: x["ev"], reverse=True)
-    return candidates
+        alts.append({
+            "mk":   mk,
+            "ev":   float(v.get("ev_pct") or 0),
+            "odds": odds,
+            "prob": prob,
+            "edge": float(v.get("edge_pp") or 0),
+            "tier": str(v.get("risk_tier") or ""),
+        })
+    alts.sort(key=lambda x: x["edge"], reverse=True)
+    picks.extend(alts[:2])
+
+    # Fallback: daca best_market lipsea, sorteaza tot dupa edge_pp
+    if not picks:
+        for mk, v in (markets_enriched or {}).items():
+            if not isinstance(v, dict) or v.get("risk_tier") == "Avoid":
+                continue
+            odds = float(v.get("odds") or 0)
+            prob = float(v.get("prob") or v.get("bsd_prob") or 0)
+            if odds < 1.01 or prob < 0.01:
+                continue
+            picks.append({
+                "mk":   mk,
+                "ev":   float(v.get("ev_pct") or 0),
+                "odds": odds,
+                "prob": prob,
+                "edge": float(v.get("edge_pp") or 0),
+                "tier": str(v.get("risk_tier") or ""),
+            })
+        picks.sort(key=lambda x: x["edge"], reverse=True)
+
+    return picks
 
 
 def _build_prompt(home, away, league, xg_home, xg_away,
@@ -259,17 +304,20 @@ def main():
         except Exception:
             continue
 
+        best_market      = row.get("best_market") or {}
         markets_enriched = row.get("markets_enriched") or {}
-        sorted_picks = _get_sorted_picks(markets_enriched)
+        sorted_picks     = _build_picks_list(best_market, markets_enriched)
 
-        # Cache key: pick principal (EV) + cota — invalideaza la schimbari
-        if sorted_picks:
+        # Cache key: best_market (RECOMANDARE din app) + cota — invalideaza la schimbari
+        bm_key  = str(best_market.get("market_key") or best_market.get("market") or "")
+        bm_odds = float(best_market.get("odds") or 0)
+        if bm_key and bm_odds >= 1.01:
+            cache_key = f"{event_id}:{bm_key}@{bm_odds:.2f}"
+        elif sorted_picks:
             p0 = sorted_picks[0]
             cache_key = f"{event_id}:{p0['mk']}@{p0['odds']:.2f}"
         else:
-            bm = row.get("best_market") or {}
-            mk = bm.get("market_key") or bm.get("market") or ""
-            cache_key = f"{event_id}:{mk}" if mk else event_id
+            cache_key = event_id
 
         if cache_key in claude_cache:
             row["ai_preview"] = claude_cache[cache_key]
