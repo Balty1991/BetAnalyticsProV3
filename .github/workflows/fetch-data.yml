@@ -185,6 +185,15 @@ jobs:
         run: python generate_claude_previews.py
         continue-on-error: true
 
+      - name: Build Claude daily analysis (top picks + acumulator)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -f build_claude_daily.py ]; then
+            timeout 120s python -u build_claude_daily.py || echo "Claude daily analysis skipped; non-fatal."
+          fi
+        continue-on-error: true
+
       - name: Build API history catalog
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
@@ -277,6 +286,7 @@ jobs:
           # Astfel workflow-ul nu mai pică dacă un asset auxiliar este șters intenționat.
           git add -A data/ index.html assets/ \
             generate_claude_previews.py \
+            build_claude_daily.py \
             build_adaptive_predictions.py \
             build_prediction_type_history.py \
             build_training_features.py \

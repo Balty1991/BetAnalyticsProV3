@@ -1064,6 +1064,116 @@ function renderMatchesTab(){
   renderMatches();
   markTabRendered('meciuri');
 }
+// ============================================================
+// CLAUDE AI DAILY ANALYSIS TAB
+// ============================================================
+function renderClaudeAITab(){
+  var root = document.getElementById('claudeai-root');
+  if(!root) return;
+  var d = window.CLAUDE_DAILY || {};
+  var topPicks = d.top_picks || [];
+  var acumulator = d.acumulator || [];
+  var tipare = d.tipare || [];
+  var deEvitat = d.de_evitat || [];
+  var generatedAt = d.generated_at || '';
+  var matchesAnalyzed = d.matches_analyzed || 0;
+  var cotaTotala = d.cota_totala || null;
+  var sansaPct = d.sansa_pct || null;
+
+  if(!generatedAt && !topPicks.length && !acumulator.length){
+    root.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted,#64748b)">'
+      + '<div style="font-size:32px;margin-bottom:12px">🤖</div>'
+      + '<div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--txt)">Analiza nu este disponibilă</div>'
+      + '<div style="font-size:13px">Analiza zilnică Claude se generează automat la fiecare rulare a workflow-ului.<br>Încearcă din nou mai târziu.</div>'
+      + '</div>';
+    return;
+  }
+
+  var genStr = '';
+  if(generatedAt){
+    try{
+      var gd = new Date(generatedAt);
+      genStr = gd.toLocaleString('ro-RO', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    }catch(e){ genStr = generatedAt.slice(0,16).replace('T',' '); }
+  }
+
+  var html = '<div style="padding:0 4px">';
+
+  // Header
+  html += '<div style="background:linear-gradient(135deg,rgba(43,229,197,.1),rgba(99,102,241,.08));border:1px solid rgba(43,229,197,.25);border-radius:16px;padding:16px 18px;margin-bottom:14px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+    + '<div><div style="font-size:17px;font-weight:900;color:var(--txt)">🤖 Predicții AI Claude</div>'
+    + (genStr ? '<div style="font-size:11px;color:var(--muted)">Generat ' + genStr + (matchesAnalyzed ? ' · ' + matchesAnalyzed + ' meciuri analizate' : '') + '</div>' : '')
+    + '</div>'
+    + '</div></div>';
+
+  // Top Picks
+  if(topPicks.length){
+    html += '<div style="background:#0E1424;border:1px solid rgba(43,229,197,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+      + '<div style="font-size:14px;font-weight:800;color:#2BE5C5;margin-bottom:10px">🏆 Top 5 Pariuri ale Zilei</div>';
+    topPicks.forEach(function(p, i){
+      html += '<div style="background:rgba(43,229,197,.05);border:1px solid rgba(43,229,197,.12);border-radius:10px;padding:10px 12px;margin-bottom:8px">'
+        + '<div style="display:flex;align-items:flex-start;gap:10px">'
+        + '<div style="min-width:22px;height:22px;border-radius:50%;background:#2BE5C5;color:#0E1424;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center">' + (i+1) + '</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:3px">' + (p.meci || '') + '</div>'
+        + (p.pick ? '<div style="font-size:12px;color:#2BE5C5;margin-bottom:2px">' + p.pick + '</div>' : '')
+        + (p.motiv ? '<div style="font-size:11px;color:var(--muted)">' + p.motiv + '</div>' : '')
+        + '</div></div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Acumulator
+  if(acumulator.length){
+    html += '<div style="background:#0E1424;border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
+      + '<div style="font-size:14px;font-weight:800;color:#818cf8">🎰 Acumulator Recomandat</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+      + (cotaTotala ? '<span style="font-size:12px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:3px 10px;color:#818cf8">Cotă: ' + cotaTotala.toFixed(2) + '</span>' : '')
+      + (sansaPct ? '<span style="font-size:12px;font-weight:700;background:rgba(20,138,92,.12);border:1px solid rgba(20,138,92,.3);border-radius:20px;padding:3px 10px;color:#10b981">Șansă: ' + sansaPct + '%</span>' : '')
+      + '</div></div>';
+    acumulator.forEach(function(a){
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        + '<div style="font-size:18px">⚽</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--txt)">' + (a.meci || '') + '</div>'
+        + '<div style="font-size:11px;color:#818cf8">' + (a.pick || '') + '</div>'
+        + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Tipare
+  if(tipare.length){
+    html += '<div style="background:#0E1424;border:1px solid rgba(251,191,36,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+      + '<div style="font-size:14px;font-weight:800;color:#fbbf24;margin-bottom:10px">📊 Tipare Identificate</div>';
+    tipare.forEach(function(t){
+      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        + '<div style="color:#fbbf24;font-size:14px;flex-shrink:0">•</div>'
+        + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + t + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // De evitat
+  if(deEvitat.length){
+    html += '<div style="background:#0E1424;border:1px solid rgba(196,32,64,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+      + '<div style="font-size:14px;font-weight:800;color:#f87171;margin-bottom:10px">⚠️ Meciuri / Piețe de Evitat</div>';
+    deEvitat.forEach(function(e){
+      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        + '<div style="color:#f87171;font-size:14px;flex-shrink:0">✗</div>'
+        + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + e + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  root.innerHTML = html;
+}
+
 function renderActiveTab(name, opts){
   opts = opts || {};
   if(name === 'dashboard'){
@@ -1108,6 +1218,11 @@ function renderActiveTab(name, opts){
   if(name === 'ml5'){
     renderML5Analysis();
     markTabRendered('ml5');
+    return;
+  }
+  if(name === 'claudeai'){
+    renderClaudeAITab();
+    markTabRendered('claudeai');
     return;
   }
 }
@@ -5202,7 +5317,8 @@ function doRefresh(isManual){
     fetch9('/data/training_scoring_summary.json', {}),
     fetch9('/data/enriched.json', {}),  // ML5 pre-baked enrichment
     fetch9('/data/build_status.json', {}),
-    fetch9('/data/model_benchmarks.json', {})
+    fetch9('/data/model_benchmarks.json', {}),
+    fetch9('/data/claude_daily_analysis.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -5215,6 +5331,7 @@ function doRefresh(isManual){
     var enrichedFile = results[8] || {};
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
+    window.CLAUDE_DAILY = results[11] || {};
     _MARKET_THRESHOLDS_CACHE = null;
     if(document.getElementById('perf-verdict-content')) try{ renderPerformantaVerdict(); }catch(e){}
 

@@ -277,6 +277,10 @@ function toggleTheme(){
       <span class="more-card-title">📈 CLV Tracker</span>
       <span class="more-card-sub">Closing Line Value — verifică dacă modelul bate piața real.</span>
     </button>
+    <button class="more-card-btn" onclick="switchTab('claudeai');closeDesktopMore()">
+      <span class="more-card-title">🤖 Predicții AI Claude</span>
+      <span class="more-card-sub">Analiză holistică zilnică: top picks, acumulator, tipare și meciuri de evitat.</span>
+    </button>
   </div>
 </div>
 
@@ -590,6 +594,11 @@ function toggleTheme(){
 
   <!-- end tab-charts -->
 
+  <!-- ===== PREDICȚII AI CLAUDE ===== -->
+  <div class="tab-content" id="tab-claudeai">
+    <div id="claudeai-root" style="padding:16px 0 80px"></div>
+  </div>
+
   <!-- ===== CLV TRACKER ===== -->
   <div class="tab-content" id="tab-clv">
     <div class="clv-loading-init" style="text-align:center;padding:48px;color:var(--muted,#64748b)">
@@ -625,6 +634,7 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 ⚡ APEX Neural Engine</span><small class="sheet-btn-sub">CatBoost v2 · AI Memory · Kelly · H2H · 3 niveluri de predicție</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('claudeai');closeMobileMore()"><span class="sheet-btn-title">🤖 Predicții AI Claude</span><small class="sheet-btn-sub">Top picks zilnice, acumulator și tipare identificate de Claude AI</small></button>
 </div>
 
 
