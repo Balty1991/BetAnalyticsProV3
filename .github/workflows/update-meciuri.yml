@@ -120,13 +120,12 @@ jobs:
             timeout 420s python -u enrich_predictions.py || echo "Optional enrich skipped or timed out; non-fatal."
           fi
 
-      - name: Generate Claude AI previews (VERDICT/GĂSIT/CONCLUZIE în română)
+      - name: Generate Claude AI previews (VERDICT/GASIT/CONCLUZIE in romana)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: |
           if [ -f generate_claude_previews.py ]; then
-            pip install anthropic tavily-python 2>/dev/null | tail -1
+            pip install anthropic 2>/dev/null | tail -1
             timeout 300s python -u generate_claude_previews.py || echo "Claude previews skipped/timed out; non-fatal."
           fi
         continue-on-error: true
