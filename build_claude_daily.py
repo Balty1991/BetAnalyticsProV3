@@ -119,7 +119,7 @@ def _call_gemini(prompt, api_key):
         from google import genai
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
         )
         text = response.text.strip()
@@ -209,7 +209,7 @@ def main():
     if gemini_key:
         raw_text = _call_gemini(prompt, gemini_key)
         if raw_text:
-            provider = "gemini-2.0-flash"
+            provider = "gemini-1.5-flash"
 
     if not raw_text:
         claude_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
