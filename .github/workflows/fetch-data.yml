@@ -178,11 +178,13 @@ jobs:
       - name: Enrich predictions with EV/Kelly/fair_odds/risk_tier
         run: python enrich_predictions.py
 
-      - name: Generate Claude AI previews (VERDICT/GĂSIT/CONCLUZIE în română)
+      - name: Build Claude daily analysis (top picks + acumulator)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-        run: python generate_claude_previews.py
+        run: |
+          if [ -f build_claude_daily.py ]; then
+            timeout 120s python -u build_claude_daily.py || echo "Claude daily analysis skipped; non-fatal."
+          fi
         continue-on-error: true
 
       - name: Build API history catalog
@@ -276,7 +278,11 @@ jobs:
           # Safe add: folosim folderele, nu listă rigidă de fișiere JS/CSS.
           # Astfel workflow-ul nu mai pică dacă un asset auxiliar este șters intenționat.
           git add -A data/ index.html assets/ \
+<<<<<<< Updated upstream
             generate_claude_previews.py \
+=======
+            build_claude_daily.py \
+>>>>>>> Stashed changes
             build_adaptive_predictions.py \
             build_prediction_type_history.py \
             build_training_features.py \
