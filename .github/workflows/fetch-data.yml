@@ -195,6 +195,16 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Motor AI — analiză per meci cu Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -f build_ai_match_engine.py ]; then
+            timeout 180s python -u build_ai_match_engine.py || echo "Motor AI skipped; non-fatal."
+          fi
+        continue-on-error: true
+
       - name: Build API history catalog
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
@@ -288,6 +298,7 @@ jobs:
           git add -A data/ index.html assets/ \
             build_claude_daily.py \
             build_ai_predictions_tracking.py \
+            build_ai_match_engine.py \
             build_adaptive_predictions.py \
             build_prediction_type_history.py \
             build_training_features.py \

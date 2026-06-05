@@ -281,6 +281,10 @@ function toggleTheme(){
       <span class="more-card-title">📈 CLV Tracker</span>
       <span class="more-card-sub">Closing Line Value — verifică dacă modelul bate piața real.</span>
     </button>
+    <button class="more-card-btn" onclick="switchTab('motorai');closeDesktopMore()">
+      <span class="more-card-title">⚡ Motor AI</span>
+      <span class="more-card-sub">Gemini 1.5 Flash analizează per meci — cele mai sigure predicții cu scor de încredere.</span>
+    </button>
   </div>
 </div>
 
@@ -599,6 +603,11 @@ function toggleTheme(){
     <div id="claudeai-root" style="padding:16px 0 80px"></div>
   </div>
 
+  <!-- ===== MOTOR AI — PER-MATCH GEMINI ANALYSIS ===== -->
+  <div class="tab-content" id="tab-motorai">
+    <div id="motorai-root" style="padding:16px 0 80px"></div>
+  </div>
+
   <!-- ===== CLV TRACKER ===== -->
   <div class="tab-content" id="tab-clv">
     <div class="clv-loading-init" style="text-align:center;padding:48px;color:var(--muted,#64748b)">
@@ -640,6 +649,7 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 ⚡ APEX Neural Engine</span><small class="sheet-btn-sub">CatBoost v2 · AI Memory · Kelly · H2H · 3 niveluri de predicție</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">⚡ Motor AI</span><small class="sheet-btn-sub">Gemini 1.5 Flash — predicții per meci cu scor de încredere</small></button>
 
 </div>
 
