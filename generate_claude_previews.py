@@ -211,15 +211,14 @@ def main():
         print("[ClaudePreview] ANTHROPIC_API_KEY lipsa — skip.")
         return
 
-    # Verifica daca mai generam preview-uri noi sau doar aplicam cache-ul existent
+    # Sari daca cache-ul v4 e proaspat (evita apeluri redundante in update-meciuri)
     claude_cache = _load_json(CLAUDE_PREVIEW_CACHE_FILE, {})
-    skip_new_generation = False
     if CLAUDE_PREVIEW_CACHE_FILE.exists() and claude_cache:
         age_hours = (datetime.now(timezone.utc).timestamp()
                      - CLAUDE_PREVIEW_CACHE_FILE.stat().st_mtime) / 3600
         if age_hours < CACHE_FRESH_HOURS:
-            skip_new_generation = True
-            print(f"[ClaudePreview] Cache v4 proaspat ({age_hours:.1f}h) — aplicam cache, fara generare noua.")
+            print(f"[ClaudePreview] Cache v4 proaspat ({age_hours:.1f}h < {CACHE_FRESH_HOURS}h) — skip.")
+            return
 
     pred_path = DATA_DIR / "predictions.json"
     if not pred_path.exists():
@@ -238,12 +237,16 @@ def main():
           f"{len(social_cache.get('events') or {})} social + "
           f"{len(profiles_cache.get('events') or {})} profile events")
 
-    now_utc  = datetime.now(timezone.utc)
-    cutoff   = now_utc + timedelta(days=PREVIEW_MAX_DAYS)
-    client   = None if skip_new_generation else _anthropic_mod.Anthropic(api_key=api_key)
+    now_utc = datetime.now(timezone.utc)
+    cutoff  = now_utc + timedelta(days=PREVIEW_MAX_DAYS)
+    client  = _anthropic_mod.Anthropic(api_key=api_key)
     generated = cached_hits = errors = 0
 
     for row in predictions:
+        if generated >= MAX_NEW_PER_RUN:
+            print(f"[ClaudePreview] Limita {MAX_NEW_PER_RUN} apeluri/rulare atinsa — stop.")
+            break
+
         ev = row.get("event") or {}
         if ev.get("status") != "notstarted":
             continue
@@ -263,20 +266,16 @@ def main():
         markets_enriched = row.get("markets_enriched") or {}
         top_picks = _get_top_picks(markets_enriched)
 
+        # Cache key v4: basat pe top pick (edge×prob), nu best_market
         if top_picks:
             p0 = top_picks[0]
             cache_key = f"{event_id}:v4:{p0['mk']}@{p0['odds']:.2f}"
         else:
             cache_key = f"{event_id}:v4"
 
-        # Aplica intotdeauna cache-ul existent
         if cache_key in claude_cache:
             row["ai_preview"] = claude_cache[cache_key]
             cached_hits += 1
-            continue
-
-        # Generare noua — doar daca nu suntem in modul skip si nu am depasit limita
-        if skip_new_generation or generated >= MAX_NEW_PER_RUN:
             continue
 
         try:

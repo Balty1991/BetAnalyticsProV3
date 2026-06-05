@@ -159,6 +159,62 @@
     return added;
   }
 
+  /* ─── evaluare piată pe baza scorului final ─── */
+  function evalOutcome(market, h, a) {
+    if (h == null || a == null) return null;
+    h = Number(h); a = Number(a);
+    if (!isFinite(h) || !isFinite(a)) return null;
+    var t = h + a;
+    var mk = String(market || '').toLowerCase().replace(/[_\s]/g, '');
+    if (mk === 'over15'  || mk === 'over1.5') return t >= 2 ? 'won' : 'lost';
+    if (mk === 'over25'  || mk === 'over2.5') return t >= 3 ? 'won' : 'lost';
+    if (mk === 'over35'  || mk === 'over3.5') return t >= 4 ? 'won' : 'lost';
+    if (mk === 'under15' || mk === 'under1.5') return t <= 1 ? 'won' : 'lost';
+    if (mk === 'under25' || mk === 'under2.5') return t <= 2 ? 'won' : 'lost';
+    if (mk === 'under35' || mk === 'under3.5') return t <= 3 ? 'won' : 'lost';
+    if (mk === 'btts' || mk === 'bttsyes') return (h > 0 && a > 0) ? 'won' : 'lost';
+    if (mk === 'homewin' || mk === '1') return h > a ? 'won' : 'lost';
+    if (mk === 'awaywin' || mk === '2') return a > h ? 'won' : 'lost';
+    if (mk === 'draw'    || mk === 'x')  return h === a ? 'won' : 'lost';
+    if (mk === 'doublechange1x' || mk === '1x') return h >= a ? 'won' : 'lost';
+    if (mk === 'doublechangex2' || mk === 'x2') return a >= h ? 'won' : 'lost';
+    if (mk === 'doublechange12' || mk === '12') return h !== a ? 'won' : 'lost';
+    return null;
+  }
+
+  /* ─── auto-decontare din scoruri ALL_MATCHES ─── */
+  function autoSettleFromScores() {
+    var matches = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
+    if (!matches.length) return 0;
+
+    // Index meciuri terminate dupa eventId si dupa key home|away
+    var byEid = {}, byKey = {};
+    matches.forEach(function (m) {
+      if (!m) return;
+      var hs = m.homeScore != null ? m.homeScore : (m.home_score != null ? m.home_score : null);
+      var as = m.awayScore != null ? m.awayScore : (m.away_score != null ? m.away_score : null);
+      if (hs == null || as == null) return; // scor nedisponibil — meci neterminat
+      var entry = { homeScore: hs, awayScore: as };
+      if (m.eventId) byEid[String(m.eventId)] = entry;
+      byKey[entryKey(m.home || '', m.away || '', m.event_date || m.eventDate || m.date || '')] = entry;
+    });
+
+    if (!Object.keys(byEid).length && !Object.keys(byKey).length) return 0;
+
+    var log = loadLog();
+    var changed = 0;
+    log.forEach(function (e) {
+      if (e.result !== 'pending') return;
+      var score = (e.eventId && byEid[e.eventId]) || byKey[entryKey(e.home, e.away, e.eventDate)];
+      if (!score) return;
+      var outcome = evalOutcome(e.market, score.homeScore, score.awayScore);
+      if (outcome) { e.result = outcome; changed++; }
+    });
+
+    if (changed > 0) saveLog(log);
+    return changed;
+  }
+
   /* ─── sincronizare rezultate din TRACKING (bilete manuale) ─── */
   function syncFromTracking() {
     var TRACKING = Array.isArray(window.TRACKING) ? window.TRACKING : [];
@@ -202,6 +258,7 @@
       var r = orig.apply(this, arguments);
       setTimeout(function () {
         autoRegisterPredictions();
+        autoSettleFromScores();
         syncFromTracking();
         var tab = document.getElementById('tab-ml5');
         if (tab && tab.classList.contains('active')) injectMonitor();
@@ -220,6 +277,7 @@
       var r = orig.apply(this, arguments);
       setTimeout(function () {
         autoRegisterPredictions();
+        autoSettleFromScores();
         syncFromTracking();
         injectMonitor();
       }, 100);
@@ -431,9 +489,10 @@
   };
   window.__ml5AccRescan = function () {
     var a = autoRegisterPredictions();
+    var sc = autoSettleFromScores();
     var s = syncFromTracking();
     injectMonitor();
-    return 'Adăugate: ' + a + ', Sincronizate: ' + s;
+    return 'Adăugate: ' + a + ', Decontate din scoruri: ' + sc + ', Sincronizate tracking: ' + s;
   };
 
   /* ─── boot ─── */
@@ -445,6 +504,7 @@
     [600, 1500, 3000, 6000, 12000].forEach(function (d) {
       setTimeout(function () {
         autoRegisterPredictions();
+        autoSettleFromScores();
         syncFromTracking();
         hookSyncRec();
         hookRender();
@@ -458,6 +518,7 @@
     if (tab && tab.classList.contains('active')) {
       setTimeout(function () {
         autoRegisterPredictions();
+        autoSettleFromScores();
         syncFromTracking();
         injectMonitor();
       }, 400);

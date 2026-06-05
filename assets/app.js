@@ -1664,7 +1664,7 @@ function getBetVerdict(match, bet) {
     return { state:state, label:label, sub:sub, bg:bg, border:border, color:color, score:score || 0 };
   }
   function avoid(sub, score){
-    return verdict('avoid', '❌ EVITA', sub || 'Risc peste prag', '#ef4444', 'rgba(239,68,68,.10)', 'rgba(239,68,68,.30)', score || 0);
+    return verdict('avoid', '⚠️ Prezintă risc', sub || 'Risc peste prag', '#f97316', 'rgba(249,115,22,.10)', 'rgba(249,115,22,.30)', score || 0);
   }
   function watch(sub, score){
     return verdict('watch', '👀 WATCH', sub || 'Semnal bun, dar cu avertisment', '#f59e0b', 'rgba(245,158,11,.10)', 'rgba(245,158,11,.32)', score || 2);
@@ -4737,7 +4737,6 @@ function analyzeMatch(raw){
     polymarketDivergence: raw.polymarket_divergence != null ? Number(raw.polymarket_divergence) : null,
     polymarketMarket   : raw.polymarket_market     || null,
     funfacts           : Array.isArray(raw.funfacts) ? raw.funfacts : [],
-    aiPreview          : raw.ai_preview ? String(raw.ai_preview) : null,
     catboostMarket : raw.catboost_market || null,
     catboostScore  : raw.catboost_score != null ? Number(raw.catboost_score) : null,
     catboostEvPct  : raw.catboost_ev_pct != null ? Number(raw.catboost_ev_pct) : null,
@@ -7325,90 +7324,7 @@ function renderMatches(){
         // ─── Funfacts + Polymarket block (defensive) ────────────────────────────
     var funfactsBlock = '';
     var polyBlock = '';
-    var aiPreviewBlock = '';
     try {
-      if(m.aiPreview && typeof m.aiPreview === 'string' && m.aiPreview.length > 20){
-        var rawPreview = m.aiPreview;
-        var esc = function(t){ return htmlEsc(String(t||'')); };
-
-        // parsăm toate câmpurile posibile (v4: PICK/VERDICT/MOTIV/RISC; v3: VERDICT/GASIT/CONCLUZIE)
-        var lines = rawPreview.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
-        var parsedLines = {};
-        lines.forEach(function(l){
-          var m2 = l.match(/^(PICK|VERDICT|MOTIV|RISC|G[AĂÃ]SIT|GASIT|CONCLUZIE|ALTERNATIVA)\s*:\s*(.*)/i);
-          if(m2){
-            var k = m2[1].toUpperCase()
-              .replace(/[ĂÃ]SIT/,'ASIT').replace('GĂSIT','GASIT');
-            parsedLines[k] = m2[2].trim();
-          }
-        });
-
-        var isV4 = !!parsedLines['PICK'];  // noul format v4
-
-        if(isV4){
-          // ─── FORMAT v4: PICK / VERDICT / MOTIV / RISC ───────────────────
-          var pickText = parsedLines['PICK'] || '';
-          var v4       = (parsedLines['VERDICT'] || '').toUpperCase();
-          var motivTxt = parsedLines['MOTIV'] || '';
-          var riscTxt  = parsedLines['RISC'] || '';
-
-          var vBadge = ''; var vColor = '#2BE5C5';
-          if(v4.indexOf('JUCABIL') > -1)          { vBadge = '✅ JUCABIL';    vColor = '#148A5C'; }
-          else if(v4.indexOf('GRIJ') > -1)         { vBadge = '⚠️ CU GRIJĂ'; vColor = '#D97706'; }
-          else if(v4.indexOf('EVIT') > -1)         { vBadge = '❌ EVITĂ';     vColor = '#C42040'; }
-
-          var pickHtml = pickText
-            ? '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">'
-              + '<span style="font-size:13px;font-weight:900;color:#2BE5C5">🏆 '+esc(pickText)+'</span>'
-              + (vBadge ? '<span style="font-size:11px;font-weight:800;color:'+vColor+';background:'+vColor+'1A;padding:2px 8px;border-radius:20px">'+esc(vBadge)+'</span>' : '')
-              + '</div>'
-            : '';
-          var motivHtml = motivTxt
-            ? '<div style="font-size:12px;color:var(--c-text-muted);margin-bottom:4px"><span style="font-weight:700;color:var(--c-text)">💬 Motiv:</span> '+esc(motivTxt)+'</div>'
-            : '';
-          var riscHtml = (riscTxt && !/risc scazut/i.test(riscTxt))
-            ? '<div style="font-size:12px;color:#F59E0B;font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">⚠️ <span style="color:#F59E0B">Risc:</span> '+esc(riscTxt)+'</div>'
-            : (riscTxt ? '<div style="font-size:12px;color:#148A5C;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">✅ '+esc(riscTxt)+'</div>' : '');
-
-          aiPreviewBlock = '<div class="ai-preview-block">'
-            + '<div class="ai-preview-label">🤖 Analiză AI</div>'
-            + pickHtml + motivHtml + riscHtml
-            + '</div>';
-
-        } else {
-          // ─── FORMAT v3 (backward compat): VERDICT / GASIT / CONCLUZIE ───
-          var structured = Object.keys(parsedLines).length > 0;
-          var verdictBadge = ''; var verdictColor = '';
-          var gasitText = ''; var concluzie = ''; var alternativa = ''; var bodyText = structured ? '' : rawPreview;
-
-          if(structured){
-            var v3 = (parsedLines['VERDICT'] || '').toUpperCase();
-            if(v3.indexOf('CONFIRM') > -1)     { verdictBadge = '✅ CONFIRMĂ';   verdictColor = '#148A5C'; }
-            else if(v3.indexOf('ATEN') > -1)   { verdictBadge = '⚠️ ATENȚIE';  verdictColor = '#D97706'; }
-            else if(v3.indexOf('CONTRAZICE')>-1){ verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040'; }
-            gasitText   = parsedLines['GASIT'] || '';
-            concluzie   = parsedLines['CONCLUZIE'] || '';
-            alternativa = parsedLines['ALTERNATIVA'] || '';
-            if(/^NICIUNA$/i.test(alternativa.trim())) alternativa = '';
-          } else {
-            var fl = lines[0] ? lines[0].toUpperCase() : '';
-            if(fl.indexOf('CONFIRM') > -1)    { verdictBadge = '✅ CONFIRMĂ';   verdictColor = '#148A5C'; bodyText = lines.slice(1).join(' '); }
-            else if(fl.indexOf('ATEN') > -1)  { verdictBadge = '⚠️ ATENȚIE';  verdictColor = '#D97706'; bodyText = lines.slice(1).join(' '); }
-            else if(fl.indexOf('CONTRAZICE')>-1){verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040'; bodyText = lines.slice(1).join(' '); }
-          }
-
-          var verdictHtml    = verdictBadge ? '<div style="font-size:13px;font-weight:800;color:'+verdictColor+';margin-bottom:8px;letter-spacing:.4px">'+esc(verdictBadge)+'</div>' : '';
-          var gasitHtml      = gasitText    ? '<div style="font-size:12px;color:var(--c-text-muted);margin-bottom:4px"><span style="font-weight:700;color:var(--c-text)">🔍 Găsit:</span> '+esc(gasitText)+'</div>' : '';
-          var concluzieHtml  = concluzie    ? '<div style="font-size:12px;color:var(--c-text);font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px"><span style="color:'+verdictColor+'">💡 Concluzie:</span> '+esc(concluzie)+'</div>' : '';
-          var alternativaHtml= alternativa  ? '<div style="font-size:12px;color:#0EA5E9;font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">🔄 <span style="color:#0EA5E9">Alternativă:</span> '+esc(alternativa)+'</div>' : '';
-          var bodyHtml       = bodyText     ? '<div class="ai-preview-text">'+esc(bodyText).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')+'</div>' : '';
-
-          aiPreviewBlock = '<div class="ai-preview-block">'
-            + '<div class="ai-preview-label">🤖 Analiză AI</div>'
-            + verdictHtml + gasitHtml + concluzieHtml + alternativaHtml + bodyHtml
-            + '</div>';
-        }
-      }
       if(m.funfacts && Array.isArray(m.funfacts) && m.funfacts.length > 0){
         var ffItems = m.funfacts.map(function(f){ return '<div class="funfact-item">💡 '+htmlEsc(String(f||''))+'</div>'; }).join('');
         if(ffItems) funfactsBlock = '<div class="funfacts-block">'+ffItems+'</div>';
@@ -7422,11 +7338,35 @@ function renderMatches(){
       }
     } catch(e) { funfactsBlock = ''; polyBlock = ''; }
 
-    var detailLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    // Analiză internă (fără API) — din date enrichment existente
+    var internalAnalysisBlock = '';
+    if(b) {
+      var _iv = getBetVerdict(m, b);
+      if(_iv) {
+        var _iState = _iv.state;
+        var _iLabel = _iState === 'bet' ? '✅ Jucabil' : (_iState === 'watch' ? '⚠️ Cu atenție' : '⚠️ Prezintă risc');
+        var _iColor = _iState === 'bet' ? '#22c55e' : (_iState === 'watch' ? '#f59e0b' : '#f97316');
+        var _iReason = _iv.sub || '';
+        var _iEdge = b.edgePct != null ? ((Number(b.edgePct) >= 0 ? '+' : '') + Number(b.edgePct).toFixed(1) + 'pp edge') : '';
+        var _iProb = b.adjProb != null ? (Number(b.adjProb).toFixed(0) + '% prob') : '';
+        var _iVal = b.value != null && Number(b.value) !== 0 ? ((Number(b.value) >= 0 ? '+' : '') + (Number(b.value) * 100).toFixed(1) + '% value') : '';
+        var _iStats = [_iEdge, _iProb, _iVal].filter(Boolean).join(' • ');
+        internalAnalysisBlock = '<div class="ai-preview-block">'
+          + '<div class="ai-preview-label">🤖 Analiză internă</div>'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+          + '<span style="font-size:13px;font-weight:900;color:' + _iColor + '">' + _iLabel + '</span>'
+          + (_iReason ? '<span style="font-size:11px;font-weight:600;color:' + _iColor + ';background:' + _iColor + '1A;padding:2px 8px;border-radius:20px">' + htmlEsc(_iReason) + '</span>' : '')
+          + '</div>'
+          + (_iStats ? '<div style="font-size:12px;color:var(--c-text-muted)">' + _iStats + '</div>' : '')
+          + '</div>';
+      }
+    }
+
+    var detailLowerFrame = (internalAnalysisBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+      (internalAnalysisBlock ? buildAnalysisSection('Analiză internă', internalAnalysisBlock, 'analysis-detail-preview-section') : '')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
-      (aiPreviewBlock ? buildAnalysisSection('Preview meci', aiPreviewBlock, 'analysis-detail-preview-section') : '')+
       (funfactsBlock ? buildAnalysisSection('Context pre-meci', funfactsBlock + polyBlock, 'analysis-detail-funfacts-section') : (polyBlock ? buildAnalysisSection('', polyBlock, 'analysis-detail-poly-section') : ''))+
       (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';
@@ -7452,11 +7392,11 @@ function renderMatches(){
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
     '</div>';
-    var simpleLowerFrame = (altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    var simpleLowerFrame = (internalAnalysisBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+      (internalAnalysisBlock ? buildAnalysisSection('Analiză internă', internalAnalysisBlock, 'analysis-detail-preview-section') : '')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
-      (aiPreviewBlock ? buildAnalysisSection('Preview meci', aiPreviewBlock, 'analysis-detail-preview-section') : '')+
       (funfactsBlock ? buildAnalysisSection('Context pre-meci', funfactsBlock + polyBlock, 'analysis-detail-funfacts-section') : (polyBlock ? buildAnalysisSection('', polyBlock, 'analysis-detail-poly-section') : ''))+
       (lineupBlock ? buildAnalysisSection('', lineupBlock, 'analysis-detail-lineup-section') : '')+
     '</div>' : '';
