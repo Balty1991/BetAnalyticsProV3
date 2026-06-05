@@ -278,11 +278,7 @@ jobs:
           # Safe add: folosim folderele, nu listă rigidă de fișiere JS/CSS.
           # Astfel workflow-ul nu mai pică dacă un asset auxiliar este șters intenționat.
           git add -A data/ index.html assets/ \
-<<<<<<< Updated upstream
-            generate_claude_previews.py \
-=======
             build_claude_daily.py \
->>>>>>> Stashed changes
             build_adaptive_predictions.py \
             build_prediction_type_history.py \
             build_training_features.py \
