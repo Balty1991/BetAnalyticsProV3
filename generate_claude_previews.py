@@ -14,7 +14,9 @@ DATA_DIR = Path("data")
 CLAUDE_PREVIEW_CACHE_FILE = DATA_DIR / "claude_preview_cache.json"
 TAVILY_SEARCH_CACHE_FILE  = DATA_DIR / "tavily_search_cache.json"
 PREVIEW_MAX_DAYS = 7
-TAVILY_MAX_PER_RUN = int(os.environ.get("TAVILY_MAX_PER_RUN", "25"))
+# Tavily cauta stirile doar pentru meciurile din urmatoarele 48h
+# (stiri relevante doar aproape de meci; cele mai departe nu au informatii utile inca)
+TAVILY_SEARCH_HOURS = int(os.environ.get("TAVILY_SEARCH_HOURS", "48"))
 
 try:
     import anthropic as _anthropic_mod
@@ -269,10 +271,12 @@ def main():
             if tavily_client:
                 if event_id in tavily_cache:
                     web_context = tavily_cache[event_id]
-                elif tavily_searches < TAVILY_MAX_PER_RUN:
-                    web_context = _tavily_search(tavily_client, home, away, ev_date_str)
-                    tavily_cache[event_id] = web_context
-                    tavily_searches += 1
+                else:
+                    hours_until_match = (ev_dt - now_utc).total_seconds() / 3600
+                    if hours_until_match <= TAVILY_SEARCH_HOURS:
+                        web_context = _tavily_search(tavily_client, home, away, ev_date_str)
+                        tavily_cache[event_id] = web_context
+                        tavily_searches += 1
 
             prompt = _build_prompt(
                 home, away, league, xg_home, xg_away,
