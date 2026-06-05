@@ -1132,7 +1132,7 @@ function renderClaudeAITab(){
 
   // Top Picks
   if(topPicks.length){
-    html += '<div style="background:#0E1424;border:1px solid rgba(43,229,197,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(43,229,197,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="font-size:14px;font-weight:800;color:#2BE5C5;margin-bottom:10px">🏆 Top 5 Pariuri ale Zilei</div>';
     topPicks.forEach(function(p, i){
       html += '<div style="background:rgba(43,229,197,.05);border:1px solid rgba(43,229,197,.12);border-radius:10px;padding:10px 12px;margin-bottom:8px">'
@@ -1150,7 +1150,7 @@ function renderClaudeAITab(){
 
   // Acumulator
   if(acumulator.length){
-    html += '<div style="background:#0E1424;border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
       + '<div style="font-size:14px;font-weight:800;color:#818cf8">🎰 Acumulator Recomandat</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
@@ -1159,7 +1159,7 @@ function renderClaudeAITab(){
       + '</div></div>';
     acumulator.forEach(function(a){
       var _at = _getKickoff(a.meci || '');
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--brd)">'
         + '<div style="font-size:18px">⚽</div>'
         + '<div style="flex:1;min-width:0">'
         + '<div style="font-size:12px;font-weight:600;color:var(--txt)">' + (a.meci || '') + '</div>'
@@ -1174,10 +1174,10 @@ function renderClaudeAITab(){
 
   // Tipare
   if(tipare.length){
-    html += '<div style="background:#0E1424;border:1px solid rgba(251,191,36,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(251,191,36,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="font-size:14px;font-weight:800;color:#fbbf24;margin-bottom:10px">📊 Tipare Identificate</div>';
     tipare.forEach(function(t){
-      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--brd)">'
         + '<div style="color:#fbbf24;font-size:14px;flex-shrink:0">•</div>'
         + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + t + '</div>'
         + '</div>';
@@ -1187,10 +1187,10 @@ function renderClaudeAITab(){
 
   // De evitat
   if(deEvitat.length){
-    html += '<div style="background:#0E1424;border:1px solid rgba(196,32,64,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(196,32,64,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="font-size:14px;font-weight:800;color:#f87171;margin-bottom:10px">⚠️ Meciuri / Piețe de Evitat</div>';
     deEvitat.forEach(function(e){
-      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--brd)">'
         + '<div style="color:#f87171;font-size:14px;flex-shrink:0">✗</div>'
         + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + e + '</div>'
         + '</div>';
@@ -1206,7 +1206,7 @@ function renderClaudeAITab(){
   var acStats    = trkStats.acumulators || {};
   var streak     = trkStats.streak      || {};
 
-  html += '<div style="background:#0E1424;border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+  html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
     + '<div style="font-size:14px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Monitorizare & Statistici</div>';
 
   if(!trkHistory.length){
@@ -1296,7 +1296,7 @@ function renderClaudeAITab(){
                  : ar === 'loss' ? '<span style="color:#ef4444;font-weight:700">❌ LOSS</span>'
                  : '<span style="color:#64748b">⏳ Pending</span>';
       var cotaStr = rec.cota_totala ? ' · @'+Number(rec.cota_totala).toFixed(2) : '';
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap">'
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);flex-wrap:wrap">'
         + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
         + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
         + '<span style="font-size:11px;color:var(--muted)">'+pickStr+'</span>'

@@ -2660,3 +2660,23 @@ body.theme-light #tab-meciuri .match-card-m17 .m17-league span,
 body.theme-light #tab-meciuri .match-card-m17 .m17-league-logo + span {
   color: #0C1220 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   50. AI CLAUDE TAB — light theme fixes
+   ═══════════════════════════════════════════════════════════════════ */
+body.theme-light #tab-claudeai {
+  background: #F0F4FB !important;
+}
+/* Tab content area background */
+body.theme-light #claudeai-root > div {
+  background: transparent !important;
+}
+/* Inner pick cards that use rgba teal overlay — keep tint visible on white */
+body.theme-light #tab-claudeai [style*="rgba(43,229,197,.05)"] {
+  background: rgba(12,168,142,.06) !important;
+  border-color: rgba(12,168,142,.18) !important;
+}
+/* SVG text in chart needs dark color on light bg */
+body.theme-light #tab-claudeai svg text {
+  fill: #546376 !important;
+}
