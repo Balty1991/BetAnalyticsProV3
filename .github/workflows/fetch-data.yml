@@ -178,10 +178,9 @@ jobs:
       - name: Enrich predictions with EV/Kelly/fair_odds/risk_tier
         run: python enrich_predictions.py
 
-      - name: Generate Claude AI previews (VERDICT/GĂSIT/CONCLUZIE în română)
+      - name: Generate Claude AI previews (VERDICT/GASIT/CONCLUZIE in romana)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
         run: python generate_claude_previews.py
         continue-on-error: true
 
