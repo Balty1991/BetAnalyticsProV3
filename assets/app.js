@@ -1198,6 +1198,116 @@ function renderClaudeAITab(){
     html += '</div>';
   }
 
+  // ── Monitorizare & Statistici ──────────────────────────────────────────────
+  var trk = window.AI_PRED_TRACKING || {};
+  var trkHistory = trk.history || [];
+  var trkStats   = trk.stats   || {};
+  var tpStats    = trkStats.top_picks   || {};
+  var acStats    = trkStats.acumulators || {};
+  var streak     = trkStats.streak      || {};
+
+  html += '<div style="background:#0E1424;border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+    + '<div style="font-size:14px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Monitorizare & Statistici</div>';
+
+  if(!trkHistory.length){
+    html += '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">Statisticile se acumulează zilnic. Revin mâine cu primul raport.</div>';
+  } else {
+    // ── 3 stat cards ──────────────────────────────────────────────────────────
+    var tpW = tpStats.wins || 0, tpL = tpStats.losses || 0, tpP = tpStats.pending || 0;
+    var tpWR = (tpStats.winrate != null) ? tpStats.winrate : 0;
+    var tpColor = tpWR >= 60 ? '#22c55e' : (tpWR >= 50 ? '#f59e0b' : '#ef4444');
+
+    var acW = acStats.wins || 0, acL = acStats.losses || 0;
+    var acWR = (acStats.winrate != null) ? acStats.winrate : 0;
+    var acColor = acWR >= 50 ? '#22c55e' : '#ef4444';
+
+    var strN = streak.current || 0, strT = streak.type || '';
+    var strColor = strT === 'win' ? '#22c55e' : (strT === 'loss' ? '#ef4444' : '#64748b');
+    var strLabel = strN ? (strN + ' ' + strT.toUpperCase()) : '—';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
+      // Card picks
+      + '<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 8px;text-align:center">'
+      + '<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Picks</div>'
+      + '<div style="font-size:18px;font-weight:900;color:'+tpColor+'">'+tpWR.toFixed(0)+'%</div>'
+      + '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+tpW+'W '+tpL+'L'+(tpP?' '+tpP+'P':'')+'</div>'
+      + '</div>'
+      // Card acumulatoare
+      + '<div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:10px 8px;text-align:center">'
+      + '<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Acum</div>'
+      + '<div style="font-size:18px;font-weight:900;color:'+acColor+'">'+acWR.toFixed(0)+'%</div>'
+      + '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+acW+'W '+acL+'L</div>'
+      + '</div>'
+      // Card streak
+      + '<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 8px;text-align:center">'
+      + '<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Streak</div>'
+      + '<div style="font-size:15px;font-weight:900;color:'+strColor+'">'+strLabel+'</div>'
+      + '<div style="font-size:10px;color:var(--muted);margin-top:3px">consecutiv</div>'
+      + '</div>'
+      + '</div>';
+
+    // ── SVG Bar chart — ultimele 14 zile ──────────────────────────────────────
+    var chartData = trkHistory.slice(0, 14).reverse();
+    if(chartData.length){
+      var cW = 300, cH = 70, barW = Math.floor((cW - 8) / chartData.length) - 2, maxH = 50;
+      var svgBars = '';
+      chartData.forEach(function(rec, i){
+        var s = rec.top_picks_summary || {};
+        var w = s.wins || 0, l = s.losses || 0, p = s.pending || 0;
+        var tot = w + l + p || 1;
+        var x = 4 + i * (barW + 2);
+        var wH = Math.round(w / tot * maxH), lH = Math.round(l / tot * maxH), pH = Math.round(p / tot * maxH);
+        var y = cH - 16;
+        // stacked: wins bottom, losses middle, pending top
+        if(pH) svgBars += '<rect x="'+x+'" y="'+(y-wH-lH-pH)+'" width="'+barW+'" height="'+pH+'" fill="#94a3b8" rx="2"/>';
+        if(lH) svgBars += '<rect x="'+x+'" y="'+(y-wH-lH)+'" width="'+barW+'" height="'+lH+'" fill="#ef4444" rx="2"/>';
+        if(wH) svgBars += '<rect x="'+x+'" y="'+(y-wH)+'" width="'+barW+'" height="'+wH+'" fill="#22c55e" rx="2"/>';
+        // date label
+        var dd = rec.date ? rec.date.slice(8,10)+'.'+rec.date.slice(5,7) : '';
+        svgBars += '<text x="'+(x+barW/2)+'" y="'+(cH-2)+'" text-anchor="middle" font-size="8" fill="#64748b">'+dd+'</text>';
+      });
+      html += '<div style="margin-bottom:12px">'
+        + '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Picks / zi — ultimele '+chartData.length+' zile</div>'
+        + '<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">'
+        + '<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:#22c55e;border-radius:2px;display:inline-block"></span>Win</span>'
+        + '<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:#ef4444;border-radius:2px;display:inline-block"></span>Loss</span>'
+        + '<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:#94a3b8;border-radius:2px;display:inline-block"></span>Pending</span>'
+        + '</div>'
+        + '<svg width="100%" viewBox="0 0 '+cW+' '+cH+'" style="overflow:visible">'+svgBars+'</svg>'
+        + '</div>';
+    }
+
+    // ── History list ──────────────────────────────────────────────────────────
+    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">Istoric — ultimele '+ Math.min(trkHistory.length,7) + ' zile</div>';
+    trkHistory.slice(0,7).forEach(function(rec){
+      var dateStr = '';
+      if(rec.date){
+        var months = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
+        var dp = rec.date.split('-');
+        dateStr = parseInt(dp[2],10)+' '+months[parseInt(dp[1],10)-1];
+      }
+      var prov = rec.provider || '';
+      var provLabel = prov.indexOf('gemini') !== -1 ? 'Gemini' : (prov.indexOf('claude') !== -1 ? 'Claude' : prov || '?');
+      var provColor = prov.indexOf('gemini') !== -1 ? '#2BE5C5' : '#818cf8';
+      var s = rec.top_picks_summary || {};
+      var pickStr = (s.wins||0)+'W '+(s.losses||0)+'L'+(s.pending?' '+(s.pending)+'P':'');
+      var ar = rec.acumulator_result || 'pending';
+      var arHtml = ar === 'win' ? '<span style="color:#22c55e;font-weight:700">✅ WIN</span>'
+                 : ar === 'loss' ? '<span style="color:#ef4444;font-weight:700">❌ LOSS</span>'
+                 : '<span style="color:#64748b">⏳ Pending</span>';
+      var cotaStr = rec.cota_totala ? ' · @'+Number(rec.cota_totala).toFixed(2) : '';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);flex-wrap:wrap">'
+        + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
+        + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
+        + '<span style="font-size:11px;color:var(--muted)">'+pickStr+'</span>'
+        + '<span style="font-size:11px;margin-left:auto">'+arHtml+cotaStr+'</span>'
+        + '</div>';
+    });
+  }
+
+  html += '</div>';
+  // ── End monitorizare ────────────────────────────────────────────────────────
+
   html += '</div>';
   root.innerHTML = html;
 }
@@ -5345,7 +5455,8 @@ function doRefresh(isManual){
     fetch9('/data/enriched.json', {}),  // ML5 pre-baked enrichment
     fetch9('/data/build_status.json', {}),
     fetch9('/data/model_benchmarks.json', {}),
-    fetch9('/data/claude_daily_analysis.json', {})
+    fetch9('/data/claude_daily_analysis.json', {}),
+    fetch9('/data/ai_predictions_tracking.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -5359,6 +5470,7 @@ function doRefresh(isManual){
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
     window.CLAUDE_DAILY = results[11] || {};
+    window.AI_PRED_TRACKING = results[12] || {};
     _MARKET_THRESHOLDS_CACHE = null;
     if(document.getElementById('perf-verdict-content')) try{ renderPerformantaVerdict(); }catch(e){}
 

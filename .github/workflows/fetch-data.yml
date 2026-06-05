@@ -188,6 +188,13 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Build AI predictions tracking
+        run: |
+          if [ -f build_ai_predictions_tracking.py ]; then
+            timeout 120s python -u build_ai_predictions_tracking.py || echo "AI tracking skipped; non-fatal."
+          fi
+        continue-on-error: true
+
       - name: Build API history catalog
         env:
           BSD_TOKEN: ${{ secrets.BSD_TOKEN }}
@@ -280,6 +287,7 @@ jobs:
           # Astfel workflow-ul nu mai pică dacă un asset auxiliar este șters intenționat.
           git add -A data/ index.html assets/ \
             build_claude_daily.py \
+            build_ai_predictions_tracking.py \
             build_adaptive_predictions.py \
             build_prediction_type_history.py \
             build_training_features.py \
