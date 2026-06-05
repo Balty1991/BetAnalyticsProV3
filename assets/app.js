@@ -7213,15 +7213,15 @@ function renderMatches(){
       if(m.aiPreview && typeof m.aiPreview === 'string' && m.aiPreview.length > 20){
         var rawPreview = m.aiPreview;
         var verdictBadge = ''; var verdictColor = '';
-        var gasitText = ''; var concluzie = ''; var bodyText = rawPreview;
+        var gasitText = ''; var concluzie = ''; var alternativa = ''; var bodyText = rawPreview;
 
         // parsăm formatul structurat: VERDICT: / GĂSIT: / CONCLUZIE:
         var lines = rawPreview.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
         var structured = false;
         var parsedLines = {};
         lines.forEach(function(l){
-          var m2 = l.match(/^(VERDICT|G[AÃ]SIT|CONCLUZIE)\s*:\s*(.*)/i);
-          if(m2) { parsedLines[m2[1].toUpperCase().replace('ÃSIT','ASIT').replace('GĂSIT','GASIT')] = m2[2].trim(); structured = true; }
+          var m2 = l.match(/^(VERDICT|G[AĂÃ]SIT|GASIT|CONCLUZIE|ALTERNATIVA)\s*:\s*(.*)/i);
+          if(m2) { parsedLines[m2[1].toUpperCase().replace(/[ĂÃ]SIT/,'ASIT').replace('GĂSIT','GASIT').replace('GĂSIT','GASIT')] = m2[2].trim(); structured = true; }
         });
         if(structured){
           var v = (parsedLines['VERDICT'] || '').toUpperCase();
@@ -7230,6 +7230,8 @@ function renderMatches(){
           else if(v.indexOf('CONTRAZICE') > -1){ verdictBadge = '❌ CONTRAZICE'; verdictColor = '#C42040'; }
           gasitText  = parsedLines['GASIT'] || parsedLines['GĂSIT'] || '';
           concluzie  = parsedLines['CONCLUZIE'] || '';
+          alternativa = parsedLines['ALTERNATIVA'] || '';
+          if(/^NICIUNA$/i.test(alternativa.trim())) alternativa = '';
           bodyText   = '';
         } else {
           // fallback: detectăm verdict pe prima linie simpla
@@ -7249,13 +7251,16 @@ function renderMatches(){
         var concluzieHtml = concluzie
           ? '<div style="font-size:12px;color:var(--c-text);font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px"><span style="color:'+verdictColor+'">💡 Concluzie:</span> '+esc(concluzie)+'</div>'
           : '';
+        var alternativaHtml = alternativa
+          ? '<div style="font-size:12px;color:#0EA5E9;font-weight:600;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">🔄 <span style="color:#0EA5E9">Alternativă:</span> '+esc(alternativa)+'</div>'
+          : '';
         var bodyHtml = bodyText
           ? '<div class="ai-preview-text">'+esc(bodyText).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')+'</div>'
           : '';
 
         aiPreviewBlock = '<div class="ai-preview-block">'+
           '<div class="ai-preview-label">🤖 Analiză AI</div>'+
-          verdictHtml + gasitHtml + concluzieHtml + bodyHtml +
+          verdictHtml + gasitHtml + concluzieHtml + alternativaHtml + bodyHtml +
         '</div>';
       }
       if(m.funfacts && Array.isArray(m.funfacts) && m.funfacts.length > 0){
