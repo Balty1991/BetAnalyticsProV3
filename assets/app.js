@@ -1081,22 +1081,20 @@ function renderClaudeAITab(){
   // Build kickoff lookup: normalized "home vs away" → time string
   var _kickoffMap = {};
   (window.ALL_MATCHES || []).forEach(function(m){
-    var raw = m.event_date || m.eventDate || m.date || m.starts_at || m.kickoff || m.start_time || '';
-    if(!raw) return;
-    var d2 = new Date(raw);
-    var timeStr = isFinite(d2.getTime()) ? d2.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'}) : '';
-    if(!timeStr) return;
-    var key = ((m.home||'')+'vs'+(m.away||'')).toLowerCase().replace(/\s+/g,'');
-    _kickoffMap[key] = timeStr;
+    var timeStr = m.timeLabel || (m.date ? fmtTime(m.date) : '');
+    if(!timeStr || timeStr === '00:00') return;
+    var key = ((m.home||'')+(m.away||'')).toLowerCase().replace(/\s+/g,'');
+    if(key) _kickoffMap[key] = timeStr;
   });
   function _getKickoff(meciStr){
     var parts = meciStr.split(/\s+vs\s+/i);
     if(parts.length < 2) return '';
-    var key = (parts[0]+' vs '+parts[1]).toLowerCase().replace(/\s+/g,'').replace('vs','vs');
+    var h = parts[0].trim().toLowerCase().replace(/\s+/g,'');
+    var a = parts[1].trim().toLowerCase().replace(/\s+/g,'');
+    // exact key match
+    var key = h + a;
     if(_kickoffMap[key]) return _kickoffMap[key];
-    // fuzzy: check if any key contains both team fragments
-    var h = parts[0].toLowerCase().replace(/\s+/g,'');
-    var a = parts[1].toLowerCase().replace(/\s+/g,'');
+    // fuzzy: find any key that starts with home fragment and ends with away fragment
     for(var k in _kickoffMap){
       if(k.indexOf(h) !== -1 && k.indexOf(a) !== -1) return _kickoffMap[k];
     }
