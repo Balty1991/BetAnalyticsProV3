@@ -65,9 +65,15 @@
     log.forEach(function (e) {
       if (!e.autoTracked || e.result !== 'pending') return;
       var isActive = (e.eventId && activeEids[e.eventId]) || activeKeys[entryKey(e.home, e.away, e.eventDate)];
+      // If event date + 3h is in the past, expire regardless of whether match is still in ALL_MATCHES
+      // (BSD API can keep status "notstarted" for already-finished matches)
+      var evTs2 = e.eventDate ? new Date(e.eventDate).getTime() : 0;
+      if (evTs2 > 0 && (now - evTs2) > 3 * 3600 * 1000) {
+        e.result = 'expired'; changed++; return;
+      }
       if (isActive) return;
-      // Nu mai e în datele curente — verificăm data evenimentului
-      var evTs = e.eventDate ? new Date(e.eventDate).getTime() : 0;
+      // No longer in current data — check event date
+      var evTs = evTs2;
       var saveTs = e.savedAt ? new Date(e.savedAt).getTime() : 0;
       var ref = evTs > 0 ? evTs : saveTs;
       if (ref > 0 && (now - ref) > 12 * 3600 * 1000) {

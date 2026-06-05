@@ -10790,7 +10790,13 @@ function renderML5Analysis(){
   var root = $('ml5-root');
   if(!root) return;
 
-  var enriched = (window.ALL_MATCHES||[]).filter(function(m){ return m.isEnriched; });
+  var _now = Date.now();
+  var enriched = (window.ALL_MATCHES||[]).filter(function(m){
+    if(!m.isEnriched) return false;
+    // Hide matches that started more than 2h ago (finished / in-play but API still "notstarted")
+    if(m.date){ var _d=new Date(m.date); if(isFinite(_d.getTime()) && _d.getTime() < _now - 2*3600*1000) return false; }
+    return true;
+  });
   var total    = (window.ALL_MATCHES||[]).length;
   var coverage = total > 0 ? Math.round(enriched.length * 100 / total) : 0;
   var cacheCount = Object.keys(ENRICHED_EVENT_CACHE).length;
