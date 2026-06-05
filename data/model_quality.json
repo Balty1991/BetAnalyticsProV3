@@ -1,22 +1,22 @@
 {
-  "updated_at": "2026-06-05T17:58:51.717244+00:00",
-  "quality_score": 72.9,
+  "updated_at": "2026-06-05T23:12:15.718727+00:00",
+  "quality_score": 73.0,
   "quality_grade": "B",
-  "overall_brier": 0.2067,
-  "overall_log_loss": 0.6048,
-  "overall_ece": 0.0417,
+  "overall_brier": 0.2065,
+  "overall_log_loss": 0.6042,
+  "overall_ece": 0.0412,
   "overall_calibration_grade": "B",
-  "n_settled": 1620,
+  "n_settled": 1623,
   "diagnosis": "Calibrare acceptabila — variante mici fata de probabilitatile reale.",
   "coverage": {
-    "predictions": 338,
+    "predictions": 341,
     "ev_signals": 5,
     "log_total": 1731,
-    "log_closed": 1620,
+    "log_closed": 1623,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.67,
+    "age_hours": 0.65,
     "color": "green",
     "label": "0.7h"
   },
@@ -39,16 +39,16 @@
     {
       "market": "over15",
       "label": "Peste 1.5G",
-      "n": 377,
+      "n": 379,
       "credible": true,
-      "brier": 0.2128,
-      "log_loss": 0.6217,
-      "ece": 0.0764,
+      "brier": 0.2119,
+      "log_loss": 0.6198,
+      "ece": 0.0747,
       "calib_label": "bun",
-      "winrate": 70.29,
-      "roi_pct": -6.99,
-      "n_wins": 265,
-      "score": 65.1,
+      "winrate": 70.45,
+      "roi_pct": -6.76,
+      "n_wins": 267,
+      "score": 65.5,
       "grade": "C"
     },
     {
@@ -69,31 +69,31 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 944,
+      "n": 945,
       "credible": true,
-      "brier": 0.1998,
-      "log_loss": 0.5884,
-      "ece": 0.0292,
+      "brier": 0.1997,
+      "log_loss": 0.5881,
+      "ece": 0.0289,
       "calib_label": "excelent",
-      "winrate": 71.61,
-      "roi_pct": -1.0,
-      "n_wins": 676,
+      "winrate": 71.64,
+      "roi_pct": -0.97,
+      "n_wins": 677,
       "score": 76.1,
       "grade": "B"
     }
   ],
   "backtest": {
-    "roi_pct": -0.35,
-    "winrate": 71.21,
-    "n_bets": 66,
-    "avg_odds": 1.408,
-    "avg_edge": 13.79
+    "roi_pct": -0.87,
+    "winrate": 71.01,
+    "n_bets": 69,
+    "avg_odds": 1.407,
+    "avg_edge": 13.76
   },
   "recommendations": [
     "Calibrare în parametri normali. Continuă colectarea de rezultate."
   ],
   "wfv": {
-    "global_score": 74.6,
+    "global_score": 74.5,
     "global_grade": "B",
     "n_folds": 2,
     "source": "baseline_league_rates",
@@ -188,9 +188,9 @@
         "folds": 2,
         "avg_brier": 0.2425,
         "avg_log_loss": 0.678,
-        "avg_ece": 0.0099,
+        "avg_ece": 0.0104,
         "avg_winrate": 0.5134,
-        "score": 76.3,
+        "score": 76.2,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
@@ -205,7 +205,7 @@
             "n": 2460,
             "brier": 0.2437,
             "log_loss": 0.6803,
-            "ece": 0.0042,
+            "ece": 0.0051,
             "winrate": 0.5077
           }
         ]
@@ -261,7 +261,7 @@
             "n": 2460,
             "brier": 0.2435,
             "log_loss": 0.6799,
-            "ece": 0.0049,
+            "ece": 0.005,
             "winrate": 0.515
           }
         ]
@@ -298,24 +298,24 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.303 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-06-05T17:58:51.573834"
+    "updated_at": "2026-06-05T23:12:15.567727"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 72.9,
+      "value": 73.0,
       "suffix": "/100",
       "tone": "good"
     },
     {
       "label": "Meciuri analizate",
-      "value": 1620,
+      "value": 1623,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": -0.3,
+      "value": -0.9,
       "suffix": "%",
       "tone": "bad"
     },

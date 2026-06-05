@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-06-05T17:58:51.573834",
+  "updated_at": "2026-06-05T23:12:15.567727",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 9992,
+  "n_rows": 10001,
   "n_folds": 2,
-  "global_score": 74.6,
+  "global_score": 74.5,
   "global_grade": "B",
   "markets": [
     {
@@ -97,9 +97,9 @@
       "folds": 2,
       "avg_brier": 0.2425,
       "avg_log_loss": 0.678,
-      "avg_ece": 0.0099,
+      "avg_ece": 0.0104,
       "avg_winrate": 0.5134,
-      "score": 76.3,
+      "score": 76.2,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
@@ -114,7 +114,7 @@
           "n": 2460,
           "brier": 0.2437,
           "log_loss": 0.6803,
-          "ece": 0.0042,
+          "ece": 0.0051,
           "winrate": 0.5077
         }
       ]
@@ -170,7 +170,7 @@
           "n": 2460,
           "brier": 0.2435,
           "log_loss": 0.6799,
-          "ece": 0.0049,
+          "ece": 0.005,
           "winrate": 0.515
         }
       ]
