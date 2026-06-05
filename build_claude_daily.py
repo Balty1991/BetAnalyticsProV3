@@ -74,7 +74,9 @@ def _parse_response(text):
         line = raw.strip()
         if not line:
             continue
-        upper = line.upper()
+        # strip Markdown headers/bullets so "## TOP_PICKS:" matches too
+        clean = line.lstrip("#*- \t").strip()
+        upper = clean.upper()
         if upper.startswith("TOP_PICKS") or upper.startswith("TOP PICKS"):
             section = "top"; continue
         if upper.startswith("ACUMULATOR"):
@@ -94,11 +96,11 @@ def _parse_response(text):
                     "motiv": parts[2] if len(parts) > 2 else "",
                 })
         elif section == "acum":
-            if line.upper().startswith("COTA_TOTALA") or line.upper().startswith("COTA TOTALA"):
-                try: result["cota_totala"] = float(line.split(":")[-1].strip().replace(",", "."))
+            if clean.upper().startswith("COTA_TOTALA") or clean.upper().startswith("COTA TOTALA"):
+                try: result["cota_totala"] = float(line.split(":")[-1].strip().replace(",", ".").rstrip("*_ "))
                 except: pass
-            elif line.upper().startswith("SANSA"):
-                try: result["sansa_pct"] = int(line.split(":")[-1].strip().rstrip("%"))
+            elif clean.upper().startswith("SANSA"):
+                try: result["sansa_pct"] = int(line.split(":")[-1].strip().rstrip("% *_"))
                 except: pass
             elif "→" in line or "->" in line:
                 parts = line.replace("->", "→").split("→", 1)
@@ -183,7 +185,7 @@ def main():
         f"Format date per meci: EchipaG vs EchipaO|Liga|xG g-o|Forma G:[XXXXX] O:[XXXXX]|"
         f"Piata@cota(prob%/+edgepp)\n\n"
         f"DATE MECIURI:\n{block}\n\n"
-        f"Genereaza analiza EXACT in formatul urmator (in romana, fara text suplimentar):\n\n"
+        f"Genereaza analiza EXACT in formatul urmator (in romana, fara text suplimentar, fara Markdown, fara ## sau **):\n\n"
         f"TOP_PICKS:\n"
         f"1. [Echipa1 vs Echipa2] | [Piata @ cota] | [motiv 6-8 cuvinte]\n"
         f"2. [similar]\n3. [similar]\n4. [similar]\n5. [similar]\n\n"
