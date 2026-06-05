@@ -250,6 +250,10 @@ function toggleTheme(){
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3l3 4-3 4-3-4 3-4z"/><path d="M3 12l4 3-2 5"/><path d="M21 12l-4 3 2 5"/></svg>
     Meciuri
   </button>
+  <button class="tab" data-tab="claudeai" onclick="switchTab('claudeai')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
+    AI Claude
+  </button>
   <button class="tab" data-tab="more" onclick="toggleDesktopMore()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
     Mai mult
@@ -276,10 +280,6 @@ function toggleTheme(){
     <button class="more-card-btn" onclick="switchTab('clv');closeDesktopMore()">
       <span class="more-card-title">📈 CLV Tracker</span>
       <span class="more-card-sub">Closing Line Value — verifică dacă modelul bate piața real.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('claudeai');closeDesktopMore()">
-      <span class="more-card-title">🤖 Predicții AI Claude</span>
-      <span class="more-card-sub">Analiză holistică zilnică: top picks, acumulator, tipare și meciuri de evitat.</span>
     </button>
   </div>
 </div>
@@ -622,6 +622,12 @@ function toggleTheme(){
     </span>
     <small>Meciuri</small>
   </button>
+  <button class="mobile-nav-btn" data-tab="claudeai" onclick="switchTab('claudeai')" aria-label="AI Claude">
+    <span aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
+    </span>
+    <small>AI Claude</small>
+  </button>
   <button class="mobile-nav-btn" data-tab="more" onclick="toggleMobileMore()" aria-label="Mai mult">
     <span aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
@@ -634,7 +640,7 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 ⚡ APEX Neural Engine</span><small class="sheet-btn-sub">CatBoost v2 · AI Memory · Kelly · H2H · 3 niveluri de predicție</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('claudeai');closeMobileMore()"><span class="sheet-btn-title">🤖 Predicții AI Claude</span><small class="sheet-btn-sub">Top picks zilnice, acumulator și tipare identificate de Claude AI</small></button>
+
 </div>
 
 

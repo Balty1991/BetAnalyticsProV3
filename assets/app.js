@@ -949,14 +949,14 @@ function renderLeagueBadge(row, size){
 // TAB SWITCHING
 // ============================================================
 function setMobileNavActive(name){
-  var primary = ['dashboard','meciuri','bilete'];
+  var primary = ['dashboard','meciuri','claudeai','bilete'];
   document.querySelectorAll('.mobile-nav-btn').forEach(function(btn){ btn.classList.remove('active'); });
   var activeKey = primary.indexOf(name) >= 0 ? name : 'more';
   var target = document.querySelector('.mobile-nav-btn[data-tab="'+activeKey+'"]');
   if(target) target.classList.add('active');
 }
 function setDesktopTabActive(name){
-  var primary = ['dashboard','meciuri','bilete'];
+  var primary = ['dashboard','meciuri','claudeai','bilete'];
   document.querySelectorAll('.tab').forEach(function(btn){ btn.classList.remove('active'); });
   var activeKey = primary.indexOf(name) >= 0 ? name : 'more';
   var target = document.querySelector('.tab[data-tab="'+activeKey+'"]');

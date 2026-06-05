@@ -12,7 +12,7 @@ Output: data/claude_daily_analysis.json
 """
 import json
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_DIR       = Path("data")
@@ -145,17 +145,10 @@ def main():
     preds = raw if isinstance(raw, list) else (
         raw.get("predictions") or raw.get("results") or raw.get("events") or [])
 
-    now_utc = datetime.now(timezone.utc)
-    cutoff  = now_utc + timedelta(days=2)
     matches = []
     for row in preds:
         ev = row.get("event") or {}
         if ev.get("status") != "notstarted": continue
-        try:
-            if datetime.fromisoformat((ev.get("event_date") or "").replace("Z", "+00:00")) > cutoff:
-                continue
-        except Exception:
-            continue
         me = row.get("markets_enriched") or {}
         if any(isinstance(v, dict) and float(v.get("edge_pp") or 0) > 0 for v in me.values()):
             matches.append(_format_match(row))
@@ -166,10 +159,10 @@ def main():
     n = len(matches)
     print(f"[ClaudeDaily] Analizeaza {n} meciuri...")
 
-    block = "\n".join(f"{i+1}. {m}" for i, m in enumerate(matches[:45]))
+    block = "\n".join(f"{i+1}. {m}" for i, m in enumerate(matches[:80]))
 
     prompt = (
-        f"Esti analist sportiv expert. Analizeaza {n} meciuri cu date statistice reale.\n"
+        f"Esti analist sportiv expert. Analizeaza intreaga oferta disponibila: {n} meciuri cu date statistice reale.\n"
         f"Format date per meci: EchipaG vs EchipaO|Liga|xG g-o|Forma G:[XXXXX] O:[XXXXX]|"
         f"Piata@cota(prob%/+edgepp)\n\n"
         f"DATE MECIURI:\n{block}\n\n"
@@ -195,7 +188,7 @@ def main():
         client  = _anthropic_mod.Anthropic(api_key=api_key)
         msg     = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=900,
+            max_tokens=1200,
             messages=[{"role": "user", "content": prompt}],
         )
         raw_text = msg.content[0].text.strip()
