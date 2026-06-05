@@ -16,6 +16,8 @@ from pathlib import Path
 DATA_DIR = Path("data")
 CLAUDE_PREVIEW_CACHE_FILE = DATA_DIR / "claude_preview_cache.json"
 PREVIEW_MAX_DAYS = 7
+CACHE_FRESH_HOURS = 8   # skip generation if cache younger than this
+MAX_NEW_PER_RUN   = 30  # cap API calls per single run
 
 try:
     import anthropic as _anthropic_mod
@@ -202,6 +204,14 @@ def main():
         print("[ClaudePreview] ANTHROPIC_API_KEY lipsa — skip.")
         return
 
+    # Sari daca cache-ul e proaspat — evita cheltuieli in update-meciuri (la 30 min)
+    if CLAUDE_PREVIEW_CACHE_FILE.exists():
+        age_hours = (datetime.now(timezone.utc).timestamp()
+                     - CLAUDE_PREVIEW_CACHE_FILE.stat().st_mtime) / 3600
+        if age_hours < CACHE_FRESH_HOURS:
+            print(f"[ClaudePreview] Cache proaspat ({age_hours:.1f}h < {CACHE_FRESH_HOURS}h) — skip generare.")
+            return
+
     pred_path = DATA_DIR / "predictions.json"
     if not pred_path.exists():
         print("[ClaudePreview] predictions.json lipsa — skip.")
@@ -230,6 +240,9 @@ def main():
     generated = cached_hits = errors = 0
 
     for row in predictions:
+        if generated >= MAX_NEW_PER_RUN:
+            print(f"[ClaudePreview] Limita {MAX_NEW_PER_RUN} apeluri/rulare atinsa — stop.")
+            break
         ev = row.get("event") or {}
         if ev.get("status") != "notstarted":
             continue
