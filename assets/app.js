@@ -1083,8 +1083,15 @@ function renderClaudeAITab(){
   (window.ALL_MATCHES || []).forEach(function(m){
     var timeStr = m.timeLabel || (m.date ? fmtTime(m.date) : '');
     if(!timeStr || timeStr === '00:00') return;
+    var dateStr = '';
+    if(m.date){
+      var _d = new Date(m.date);
+      if(isFinite(_d.getTime()))
+        dateStr = _d.getDate().toString().padStart(2,'0') + '.' + (_d.getMonth()+1).toString().padStart(2,'0');
+    }
+    var label = dateStr ? (dateStr + ' · ' + timeStr) : timeStr;
     var key = ((m.home||'')+(m.away||'')).toLowerCase().replace(/\s+/g,'');
-    if(key) _kickoffMap[key] = timeStr;
+    if(key) _kickoffMap[key] = label;
   });
   function _getKickoff(meciStr){
     var parts = meciStr.split(/\s+vs\s+/i);
