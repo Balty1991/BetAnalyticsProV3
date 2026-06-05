@@ -34,7 +34,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests anthropic tavily-python
+        run: pip install requests anthropic tavily-python google-genai
 
       - name: Fetch referee stats (weekly cache + trend repair)
         env:
@@ -180,6 +180,7 @@ jobs:
 
       - name: Build Claude daily analysis (top picks + acumulator)
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           if [ -f build_claude_daily.py ]; then

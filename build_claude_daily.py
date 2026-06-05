@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-build_claude_daily.py — Analiză zilnică Claude AI: toate meciurile → top picks + acumulator.
+build_claude_daily.py — Analiză zilnică AI: toate meciurile → top picks + acumulator.
 
-Genereaza o data la CACHE_FRESH_HOURS ore:
-- Top 5 pariuri ale zilei (cu motive)
-- Acumulator recomandat 7-10 selectii
-- Tipare identificate cross-meci
-- Meciuri/piete de evitat
+Provider-uri (în ordine, primul disponibil câștigă):
+  1. Google Gemini 2.0 Flash  — gratuit, principal
+  2. Anthropic Claude Haiku   — paid, fallback
 
 Output: data/claude_daily_analysis.json
 """
@@ -15,15 +13,9 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-DATA_DIR       = Path("data")
-OUTPUT_FILE    = DATA_DIR / "claude_daily_analysis.json"
+DATA_DIR          = Path("data")
+OUTPUT_FILE       = DATA_DIR / "claude_daily_analysis.json"
 CACHE_FRESH_HOURS = 10
-
-try:
-    import anthropic as _anthropic_mod
-    _AVAILABLE = True
-except ImportError:
-    _AVAILABLE = False
 
 _MK_RO = {
     "home_win": "Victorie gazda", "away_win": "Victorie oaspete", "draw": "Egal",
@@ -122,15 +114,41 @@ def _parse_response(text):
     return result
 
 
+def _call_gemini(prompt, api_key):
+    try:
+        from google import genai
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+        )
+        text = response.text.strip()
+        print(f"[ClaudeDaily] Gemini raspuns: {len(text)} chars")
+        return text
+    except Exception as e:
+        print(f"[ClaudeDaily] Gemini eroare: {e}")
+        return None
+
+
+def _call_claude(prompt, api_key):
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=api_key)
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1200,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = msg.content[0].text.strip()
+        print(f"[ClaudeDaily] Claude raspuns: {len(text)} chars")
+        return text
+    except Exception as e:
+        print(f"[ClaudeDaily] Claude eroare: {e}")
+        return None
+
+
 def main():
-    print("=== BUILD CLAUDE DAILY ANALYSIS ===")
-
-    if not _AVAILABLE:
-        print("[ClaudeDaily] anthropic lipsa — skip."); return
-
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if not api_key:
-        print("[ClaudeDaily] ANTHROPIC_API_KEY lipsa — skip."); return
+    print("=== BUILD DAILY AI ANALYSIS ===")
 
     if OUTPUT_FILE.exists():
         age_h = (datetime.now(timezone.utc).timestamp() - OUTPUT_FILE.stat().st_mtime) / 3600
@@ -141,7 +159,7 @@ def main():
     if not pred_path.exists():
         print("[ClaudeDaily] predictions.json lipsa — skip."); return
 
-    raw  = _load_json(pred_path, [])
+    raw   = _load_json(pred_path, [])
     preds = raw if isinstance(raw, list) else (
         raw.get("predictions") or raw.get("results") or raw.get("events") or [])
 
@@ -156,10 +174,9 @@ def main():
     if not matches:
         print("[ClaudeDaily] Niciun meci cu edge pozitiv."); return
 
-    n = len(matches)
-    print(f"[ClaudeDaily] Analizeaza {n} meciuri...")
-
+    n     = len(matches)
     block = "\n".join(f"{i+1}. {m}" for i, m in enumerate(matches[:80]))
+    print(f"[ClaudeDaily] Analizeaza {n} meciuri...")
 
     prompt = (
         f"Esti analist sportiv expert. Analizeaza intreaga oferta disponibila: {n} meciuri cu date statistice reale.\n"
@@ -184,30 +201,38 @@ def main():
         f"• [similar]\n"
     )
 
-    try:
-        client  = _anthropic_mod.Anthropic(api_key=api_key)
-        msg     = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1200,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw_text = msg.content[0].text.strip()
-        print(f"[ClaudeDaily] Raspuns: {len(raw_text)} chars")
+    # Provider chain: Gemini (gratuit) → Claude (paid fallback)
+    raw_text = None
+    provider = None
 
-        out = _parse_response(raw_text)
-        out["generated_at"]     = datetime.now(timezone.utc).isoformat()
-        out["matches_analyzed"] = n
-        out["raw_response"]     = raw_text
+    gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if gemini_key:
+        raw_text = _call_gemini(prompt, gemini_key)
+        if raw_text:
+            provider = "gemini-2.0-flash"
 
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-            json.dump(out, f, ensure_ascii=False, indent=2)
+    if not raw_text:
+        claude_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+        if claude_key:
+            raw_text = _call_claude(prompt, claude_key)
+            if raw_text:
+                provider = "claude-haiku"
 
-        print(f"[ClaudeDaily] OK — top:{len(out['top_picks'])} acum:{len(out['acumulator'])} "
-              f"tipare:{len(out['tipare'])} evitat:{len(out['de_evitat'])}")
+    if not raw_text:
+        print("[ClaudeDaily] Niciun provider disponibil — skip."); return
 
-    except Exception as e:
-        print(f"[ClaudeDaily] Eroare: {e}")
+    out = _parse_response(raw_text)
+    out["generated_at"]     = datetime.now(timezone.utc).isoformat()
+    out["matches_analyzed"] = n
+    out["provider"]         = provider
+    out["raw_response"]     = raw_text
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+
+    print(f"[ClaudeDaily] OK [{provider}] — top:{len(out['top_picks'])} "
+          f"acum:{len(out['acumulator'])} tipare:{len(out['tipare'])} evitat:{len(out['de_evitat'])}")
 
 
 if __name__ == "__main__":
