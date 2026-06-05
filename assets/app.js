@@ -1077,6 +1077,31 @@ function renderClaudeAITab(){
   var deEvitat = d.de_evitat || [];
   var generatedAt = d.generated_at || '';
   var matchesAnalyzed = d.matches_analyzed || 0;
+
+  // Build kickoff lookup: normalized "home vs away" → time string
+  var _kickoffMap = {};
+  (window.ALL_MATCHES || []).forEach(function(m){
+    var raw = m.event_date || m.eventDate || m.date || m.starts_at || m.kickoff || m.start_time || '';
+    if(!raw) return;
+    var d2 = new Date(raw);
+    var timeStr = isFinite(d2.getTime()) ? d2.toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'}) : '';
+    if(!timeStr) return;
+    var key = ((m.home||'')+'vs'+(m.away||'')).toLowerCase().replace(/\s+/g,'');
+    _kickoffMap[key] = timeStr;
+  });
+  function _getKickoff(meciStr){
+    var parts = meciStr.split(/\s+vs\s+/i);
+    if(parts.length < 2) return '';
+    var key = (parts[0]+' vs '+parts[1]).toLowerCase().replace(/\s+/g,'').replace('vs','vs');
+    if(_kickoffMap[key]) return _kickoffMap[key];
+    // fuzzy: check if any key contains both team fragments
+    var h = parts[0].toLowerCase().replace(/\s+/g,'');
+    var a = parts[1].toLowerCase().replace(/\s+/g,'');
+    for(var k in _kickoffMap){
+      if(k.indexOf(h) !== -1 && k.indexOf(a) !== -1) return _kickoffMap[k];
+    }
+    return '';
+  }
   var cotaTotala = d.cota_totala || null;
   var sansaPct = d.sansa_pct || null;
 
@@ -1116,7 +1141,8 @@ function renderClaudeAITab(){
         + '<div style="display:flex;align-items:flex-start;gap:10px">'
         + '<div style="min-width:22px;height:22px;border-radius:50%;background:#2BE5C5;color:#0E1424;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center">' + (i+1) + '</div>'
         + '<div style="flex:1;min-width:0">'
-        + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:3px">' + (p.meci || '') + '</div>'
+        + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">' + (p.meci || '') + '</div>'
+        + (function(){ var t=_getKickoff(p.meci||''); return t?'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">🕐 '+t+'</div>':''; })()
         + (p.pick ? '<div style="font-size:12px;color:#2BE5C5;margin-bottom:2px">' + p.pick + '</div>' : '')
         + (p.motiv ? '<div style="font-size:11px;color:var(--muted)">' + p.motiv + '</div>' : '')
         + '</div></div></div>';
@@ -1134,11 +1160,15 @@ function renderClaudeAITab(){
       + (sansaPct ? '<span style="font-size:12px;font-weight:700;background:rgba(20,138,92,.12);border:1px solid rgba(20,138,92,.3);border-radius:20px;padding:3px 10px;color:#10b981">Șansă: ' + sansaPct + '%</span>' : '')
       + '</div></div>';
     acumulator.forEach(function(a){
+      var _at = _getKickoff(a.meci || '');
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
         + '<div style="font-size:18px">⚽</div>'
         + '<div style="flex:1;min-width:0">'
         + '<div style="font-size:12px;font-weight:600;color:var(--txt)">' + (a.meci || '') + '</div>'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         + '<div style="font-size:11px;color:#818cf8">' + (a.pick || '') + '</div>'
+        + (_at ? '<div style="font-size:10px;color:var(--muted)">🕐 ' + _at + '</div>' : '')
+        + '</div>'
         + '</div></div>';
     });
     html += '</div>';
