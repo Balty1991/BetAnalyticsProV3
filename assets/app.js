@@ -1325,8 +1325,19 @@ function renderClaudeAITab(){
       // Accumulator card
       + '<div style="background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:12px 10px">'
       + '<div style="font-size:10px;font-weight:800;color:#818cf8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎰 Acumulatoare</div>'
-      + '<div style="font-size:22px;font-weight:900;color:'+acColor+';line-height:1">'+_ac_wr_pct.toFixed(0)+'%</div>'
-      + '<div style="font-size:9px;color:var(--muted);margin-top:2px;margin-bottom:8px">Win Rate</div>'
+      + (function(){
+          var pickSettled = _ac_pick_wins + _ac_pick_losses;
+          var pickWR = pickSettled ? Math.round(_ac_pick_wins / pickSettled * 100) : 0;
+          var pickWRColor = pickWR >= 70 ? '#22c55e' : (pickWR >= 55 ? '#f59e0b' : '#ef4444');
+          return '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:2px">'
+            + '<div><div style="font-size:22px;font-weight:900;color:'+acColor+';line-height:1">'+_ac_wr_pct.toFixed(0)+'%</div>'
+            + '<div style="font-size:8px;color:var(--muted);margin-top:1px">bilete</div></div>'
+            + '<div style="width:1px;height:24px;background:rgba(99,102,241,.25);margin-bottom:4px"></div>'
+            + '<div><div style="font-size:22px;font-weight:900;color:'+pickWRColor+';line-height:1">'+pickWR+'%</div>'
+            + '<div style="font-size:8px;color:var(--muted);margin-top:1px">events</div></div>'
+            + '</div>'
+            + '<div style="font-size:9px;color:var(--muted);margin-bottom:8px">Win Rate</div>';
+        })()
       + '<div style="display:flex;flex-direction:column;gap:3px">'
       + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">Bilete jucate</span><span style="font-size:10px;font-weight:700;color:var(--txt)">'+(_ac_won+_ac_lost+_ac_pend_cnt)+'</span></div>'
       + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Bilete câșt.</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+_ac_won+'</span></div>'
