@@ -1137,16 +1137,50 @@ function renderClaudeAITab(){
     + '</div>'
     + '</div></div>';
 
+  // Build result lookup from today's tracking entry
+  var _todayStr = new Date().toISOString().slice(0,10);
+  var _todayRec = null;
+  for(var _ti=0; _ti < trkHistory.length; _ti++){
+    if(trkHistory[_ti].date === _todayStr){ _todayRec = trkHistory[_ti]; break; }
+  }
+  var _topResMap = {};
+  if(_todayRec && Array.isArray(_todayRec.top_picks_results)){
+    _todayRec.top_picks_results.forEach(function(r){
+      var k = (r.meci||'').toLowerCase().replace(/\s+/g,'');
+      if(k) _topResMap[k] = r;
+    });
+  }
+  var _acumResMap = {};
+  if(_todayRec && Array.isArray(_todayRec.acumulator_picks)){
+    _todayRec.acumulator_picks.forEach(function(r){
+      var k = (r.meci||'').toLowerCase().replace(/\s+/g,'');
+      if(k) _acumResMap[k] = r;
+    });
+  }
+  function _resultBadge(res, compact){
+    if(!res || !res.result || res.result === 'pending') return '';
+    var scoreStr = res.score ? ' <span style="font-size:10px;color:var(--muted);font-weight:400">'+res.score+'</span>' : '';
+    if(res.result === 'win')  return '<span style="color:#22c55e;font-size:'+(compact?'11':'12')+'px;font-weight:800">✅ WIN</span>'+scoreStr;
+    if(res.result === 'loss') return '<span style="color:#ef4444;font-size:'+(compact?'11':'12')+'px;font-weight:800">❌ LOSS</span>'+scoreStr;
+    return '';
+  }
+
   // Top Picks
   if(topPicks.length){
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(43,229,197,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="font-size:14px;font-weight:800;color:#2BE5C5;margin-bottom:10px">🏆 Top 5 Pariuri ale Zilei</div>';
     topPicks.forEach(function(p, i){
-      html += '<div style="background:rgba(43,229,197,.05);border:1px solid rgba(43,229,197,.12);border-radius:10px;padding:10px 12px;margin-bottom:8px">'
+      var _res = _topResMap[(p.meci||'').toLowerCase().replace(/\s+/g,'')];
+      var _badge = _resultBadge(_res, false);
+      var _borderCol = _res && _res.result === 'win' ? 'rgba(34,197,94,.25)' : _res && _res.result === 'loss' ? 'rgba(239,68,68,.2)' : 'rgba(43,229,197,.12)';
+      html += '<div style="background:rgba(43,229,197,.05);border:1px solid '+_borderCol+';border-radius:10px;padding:10px 12px;margin-bottom:8px">'
         + '<div style="display:flex;align-items:flex-start;gap:10px">'
         + '<div style="min-width:22px;height:22px;border-radius:50%;background:#2BE5C5;color:#0E1424;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center">' + (i+1) + '</div>'
         + '<div style="flex:1;min-width:0">'
-        + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">' + (p.meci || '') + '</div>'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--txt)">' + (p.meci || '') + '</div>'
+        + (_badge ? '<div>'+_badge+'</div>' : '')
+        + '</div>'
         + (function(){ var t=_getKickoff(p.meci||''); return t?'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">🕐 '+t+'</div>':''; })()
         + (p.pick ? '<div style="font-size:12px;color:#2BE5C5;margin-bottom:2px">' + p.pick + '</div>' : '')
         + (p.motiv ? '<div style="font-size:11px;color:var(--muted)">' + p.motiv + '</div>' : '')
@@ -1157,22 +1191,32 @@ function renderClaudeAITab(){
 
   // Acumulator
   if(acumulator.length){
+    var _acumTodayResult = _todayRec ? (_todayRec.acumulator_result || 'pending') : 'pending';
+    var _acumBadge = _acumTodayResult === 'win'
+      ? '<span style="color:#22c55e;font-size:13px;font-weight:900">✅ WIN</span>'
+      : _acumTodayResult === 'loss'
+      ? '<span style="color:#ef4444;font-size:13px;font-weight:900">❌ LOSS</span>'
+      : '';
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
       + '<div style="font-size:14px;font-weight:800;color:#818cf8">🎰 Acumulator Recomandat</div>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+      + (_acumBadge ? _acumBadge : '')
       + (cotaTotala ? '<span style="font-size:12px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:3px 10px;color:#818cf8">Cotă: ' + cotaTotala.toFixed(2) + '</span>' : '')
       + (sansaPct ? '<span style="font-size:12px;font-weight:700;background:rgba(20,138,92,.12);border:1px solid rgba(20,138,92,.3);border-radius:20px;padding:3px 10px;color:#10b981">Șansă: ' + sansaPct + '%</span>' : '')
       + '</div></div>';
     acumulator.forEach(function(a){
       var _at = _getKickoff(a.meci || '');
+      var _ar = _acumResMap[(a.meci||'').toLowerCase().replace(/\s+/g,'')];
+      var _ab = _resultBadge(_ar, true);
       html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--brd)">'
-        + '<div style="font-size:18px">⚽</div>'
+        + '<div style="font-size:16px">' + (_ar && _ar.result === 'win' ? '✅' : _ar && _ar.result === 'loss' ? '❌' : '⚽') + '</div>'
         + '<div style="flex:1;min-width:0">'
         + '<div style="font-size:12px;font-weight:600;color:var(--txt)">' + (a.meci || '') + '</div>'
         + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         + '<div style="font-size:11px;color:#818cf8">' + (a.pick || '') + '</div>'
         + (_at ? '<div style="font-size:10px;color:var(--muted)">🕐 ' + _at + '</div>' : '')
+        + (_ab ? '<div>'+_ab+'</div>' : '')
         + '</div>'
         + '</div></div>';
     });
@@ -1282,6 +1326,29 @@ function renderClaudeAITab(){
         + '</div>'
         + '<svg width="100%" viewBox="0 0 '+cW+' '+cH+'" style="overflow:visible">'+svgBars+'</svg>'
         + '</div>';
+    }
+
+    // ── Top 5 azi — rezultate per pick ────────────────────────────────────────
+    if(_todayRec && Array.isArray(_todayRec.top_picks_results) && _todayRec.top_picks_results.length){
+      html += '<div style="margin-bottom:12px">'
+        + '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Top 5 azi — rezultate per pick</div>';
+      _todayRec.top_picks_results.forEach(function(r){
+        var res = r.result || 'pending';
+        var icon = res === 'win' ? '✅' : res === 'loss' ? '❌' : '⏳';
+        var col  = res === 'win' ? '#22c55e' : res === 'loss' ? '#ef4444' : '#f59e0b';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+          + '<span style="font-size:14px">'+icon+'</span>'
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.meci||'')+'</div>'
+          + '<div style="font-size:10px;color:#2BE5C5">'+(r.pick||'')+'</div>'
+          + '</div>'
+          + '<div style="text-align:right;white-space:nowrap">'
+          + (r.score ? '<div style="font-size:11px;font-weight:700;color:'+col+'">'+r.score+'</div>' : '')
+          + '<div style="font-size:10px;color:'+col+';font-weight:700">'+res.toUpperCase()+'</div>'
+          + '</div>'
+          + '</div>';
+      });
+      html += '</div>';
     }
 
     // ── History list ──────────────────────────────────────────────────────────
