@@ -425,9 +425,17 @@
 
     if (preds.length) {
       var liveStatuses = ['inprogress', 'live', 'in_progress', '1h', '2h', 'ht', 'et', 'break'];
-      var pendingStatuses = ['notstarted', 'not_started', 'scheduled', 'tbd', 'prematch', ''];
       var liveCount = preds.filter(function (m) { return liveStatuses.indexOf(String(m.status || '').toLowerCase()) >= 0; }).length;
-      var pendingCount = preds.filter(function (m) { return pendingStatuses.indexOf(String(m.status || '').toLowerCase()) >= 0; }).length;
+
+      // Meciuri eligibile = trec de passesSelectionFilter (acelaşi filtru ca tab-ul Meciuri)
+      var eligibleMatches = preds.filter(function (m) {
+        if (typeof passesSelectionFilter === 'function') return passesSelectionFilter(m);
+        return m.analysisState === 'ELIGIBLE' && m.bestBet;
+      });
+      var pendingCount = eligibleMatches.filter(function (m) {
+        return liveStatuses.indexOf(String(m.status || '').toLowerCase()) < 0;
+      }).length;
+
       var leagueMap = {};
       preds.forEach(function (m) {
         var l = m.league || m.competition || 'Altele';
@@ -441,11 +449,11 @@
         + '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(43,229,197,.07);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#2BE5C5">' + preds.length + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Total</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Total API</div>'
         + '</div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#fbbf24">' + pendingCount + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">În așteptare</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Predicții eligibile</div>'
         + '</div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#22c55e">' + liveCount + '</div>'

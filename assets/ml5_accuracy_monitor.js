@@ -87,9 +87,13 @@
   /* ─── auto-înregistrare din ALL_MATCHES ─── */
   function autoRegisterPredictions() {
     var matches = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
-    // Același filtru ca renderML5Analysis + renderML5MatchCard: isEnriched + bestBet
+    // Folosim EXACT acelaşi filtru ca tab-ul Meciuri (passesSelectionFilter):
+    // requires analysisState === 'ELIGIBLE' + bestBet + isMatchStillDisplayable
     var preds = matches.filter(function (m) {
-      return m && m.isEnriched && m.bestBet && m.smartScore > 0;
+      if (!m) return false;
+      if (typeof passesSelectionFilter === 'function') return passesSelectionFilter(m);
+      // fallback dacă app.js nu e încărcat încă
+      return m.isEnriched && m.bestBet && m.analysisState === 'ELIGIBLE' && m.smartScore > 0;
     });
 
     var log = loadLog();
@@ -517,6 +521,24 @@
     if (child) root.appendChild(child);
   }
 
+  /* ─── curăță intrările non-eligibile salvate anterior ─── */
+  function purgeNonEligible() {
+    if (typeof passesSelectionFilter !== 'function') return 0;
+    var log = loadLog();
+    var before = log.length;
+    // Păstrăm: decontate (won/lost/expired) + cele eligibile + cele din ultimele 3h (settlement window)
+    var nowTs = Date.now();
+    log = log.filter(function (e) {
+      if (e.result !== 'pending') return true; // decontate/expirate → păstrează
+      // Verifică dacă intrarea e în settlement window (max 3h după eveniment)
+      var evTs = e.eventDate ? new Date(e.eventDate).getTime() : 0;
+      if (evTs > 0 && (nowTs - evTs) > 3 * 3600 * 1000) return false; // prea vechi
+      return true; // altfel păstrează (se va purja prin purge normal)
+    });
+    if (log.length !== before) saveLog(log);
+    return before - log.length;
+  }
+
   /* ─── comenzi publice ─── */
   window.__ml5AccClear = function () {
     if (!confirm('Resetezi tot istoricul de predicții ML5?')) return;
@@ -542,6 +564,7 @@
     [600, 1500, 3000, 6000, 12000].forEach(function (d) {
       setTimeout(function () {
         autoSettleFromScores();   // settle first
+        purgeNonEligible();       // remove non-eligible pending entries
         autoRegisterPredictions();
         expireOldPredictions();
         syncFromTracking();
