@@ -1265,38 +1265,77 @@ function renderClaudeAITab(){
   if(!trkHistory.length){
     html += '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">Statisticile se acumulează zilnic. Revin mâine cu primul raport.</div>';
   } else {
-    // ── 3 stat cards ──────────────────────────────────────────────────────────
+    // ── ROI computations ──────────────────────────────────────────────────────
+    var _tp_roi_sum = 0, _tp_roi_cnt = 0;
+    trkHistory.forEach(function(rec){
+      (rec.top_picks_results || []).forEach(function(p){
+        if(p.result === 'win'){ _tp_roi_sum += (p.odds || 2) - 1; _tp_roi_cnt++; }
+        else if(p.result === 'loss'){ _tp_roi_sum -= 1; _tp_roi_cnt++; }
+      });
+    });
+    var _tp_roi_pct = _tp_roi_cnt ? Math.round(_tp_roi_sum / _tp_roi_cnt * 100) : 0;
+
+    var _ac_roi_sum = 0, _ac_settled = 0, _ac_won = 0, _ac_lost = 0, _ac_pend_cnt = 0;
+    trkHistory.forEach(function(rec){
+      var ar = rec.acumulator_result || 'pending';
+      if(ar === 'win'){ _ac_roi_sum += (rec.cota_totala || 1) - 1; _ac_settled++; _ac_won++; }
+      else if(ar === 'loss'){ _ac_roi_sum -= 1; _ac_settled++; _ac_lost++; }
+      else { _ac_pend_cnt++; }
+    });
+    var _ac_roi_pct = _ac_settled ? Math.round(_ac_roi_sum / _ac_settled * 100) : 0;
+    var _ac_wr_pct  = _ac_settled ? parseFloat((_ac_won / _ac_settled * 100).toFixed(1)) : 0;
+
+    // ── Existing top-picks aggregate ──────────────────────────────────────────
     var tpW = tpStats.wins || 0, tpL = tpStats.losses || 0, tpP = tpStats.pending || 0;
     var tpWR = (tpStats.winrate != null) ? tpStats.winrate : 0;
-    var tpColor = tpWR >= 60 ? '#22c55e' : (tpWR >= 50 ? '#f59e0b' : '#ef4444');
-
-    var acW = acStats.wins || 0, acL = acStats.losses || 0;
-    var acWR = (acStats.winrate != null) ? acStats.winrate : 0;
-    var acColor = acWR >= 50 ? '#22c55e' : '#ef4444';
+    var tpTotal = tpW + tpL + tpP;
+    var tpColor    = tpWR >= 60 ? '#22c55e' : (tpWR >= 50 ? '#f59e0b' : '#ef4444');
+    var tpRoiColor = _tp_roi_pct > 0 ? '#22c55e' : (_tp_roi_pct === 0 ? '#f59e0b' : '#ef4444');
+    var acColor    = _ac_wr_pct >= 50 ? '#22c55e' : '#ef4444';
+    var acRoiColor = _ac_roi_pct > 0 ? '#22c55e' : (_ac_roi_pct === 0 ? '#f59e0b' : '#ef4444');
 
     var strN = streak.current || 0, strT = streak.type || '';
     var strColor = strT === 'win' ? '#22c55e' : (strT === 'loss' ? '#ef4444' : '#64748b');
     var strLabel = strN ? (strN + ' ' + strT.toUpperCase()) : '—';
 
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
-      // Card picks
-      + '<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-      + '<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Picks</div>'
-      + '<div style="font-size:18px;font-weight:900;color:'+tpColor+'">'+tpWR.toFixed(0)+'%</div>'
-      + '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+tpW+'W '+tpL+'L'+(tpP?' '+tpP+'P':'')+'</div>'
+    // ── Two dedicated monitoring cards ────────────────────────────────────────
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+      // Top 5 card
+      + '<div style="background:rgba(43,229,197,.05);border:1px solid rgba(43,229,197,.25);border-radius:12px;padding:12px 10px">'
+      + '<div style="font-size:10px;font-weight:800;color:#2BE5C5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🏆 Top 5 Picks</div>'
+      + '<div style="font-size:22px;font-weight:900;color:'+tpColor+';line-height:1">'+tpWR.toFixed(0)+'%</div>'
+      + '<div style="font-size:9px;color:var(--muted);margin-top:2px;margin-bottom:8px">Win Rate</div>'
+      + '<div style="display:flex;flex-direction:column;gap:3px">'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">Jucate</span><span style="font-size:10px;font-weight:700;color:var(--txt)">'+tpTotal+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Win</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+tpW+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#ef4444">Loss</span><span style="font-size:10px;font-weight:700;color:#ef4444">'+tpL+'</span></div>'
+      + (tpP ? '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#f59e0b">Pending</span><span style="font-size:10px;font-weight:700;color:#f59e0b">'+tpP+'</span></div>' : '')
+      + '<div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid rgba(43,229,197,.15)">'
+      + '<span style="font-size:10px;color:var(--muted)">ROI</span>'
+      + '<span style="font-size:12px;font-weight:900;color:'+tpRoiColor+'">'+(_tp_roi_pct > 0 ? '+' : '')+_tp_roi_pct+'%</span>'
       + '</div>'
-      // Card acumulatoare
-      + '<div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-      + '<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Acum</div>'
-      + '<div style="font-size:18px;font-weight:900;color:'+acColor+'">'+acWR.toFixed(0)+'%</div>'
-      + '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+acW+'W '+acL+'L</div>'
+      + '</div></div>'
+      // Accumulator card
+      + '<div style="background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:12px 10px">'
+      + '<div style="font-size:10px;font-weight:800;color:#818cf8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎰 Acumulatoare</div>'
+      + '<div style="font-size:22px;font-weight:900;color:'+acColor+';line-height:1">'+_ac_wr_pct.toFixed(0)+'%</div>'
+      + '<div style="font-size:9px;color:var(--muted);margin-top:2px;margin-bottom:8px">Win Rate</div>'
+      + '<div style="display:flex;flex-direction:column;gap:3px">'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">Jucate</span><span style="font-size:10px;font-weight:700;color:var(--txt)">'+(_ac_won+_ac_lost+_ac_pend_cnt)+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Câștigate</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+_ac_won+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#ef4444">Pierdute</span><span style="font-size:10px;font-weight:700;color:#ef4444">'+_ac_lost+'</span></div>'
+      + (_ac_pend_cnt ? '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#f59e0b">Pending</span><span style="font-size:10px;font-weight:700;color:#f59e0b">'+_ac_pend_cnt+'</span></div>' : '')
+      + '<div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid rgba(99,102,241,.15)">'
+      + '<span style="font-size:10px;color:var(--muted)">ROI</span>'
+      + '<span style="font-size:12px;font-weight:900;color:'+acRoiColor+'">'+(_ac_roi_pct > 0 ? '+' : '')+_ac_roi_pct+'%</span>'
       + '</div>'
-      // Card streak
-      + '<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-      + '<div style="font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Streak</div>'
-      + '<div style="font-size:15px;font-weight:900;color:'+strColor+'">'+strLabel+'</div>'
-      + '<div style="font-size:10px;color:var(--muted);margin-top:3px">consecutiv</div>'
-      + '</div>'
+      + '</div></div>'
+      + '</div>';
+
+    // Streak row
+    html += '<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'
+      + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Streak Acumulator</div>'
+      + '<div style="font-size:15px;font-weight:900;color:'+strColor+'">'+strLabel+' <span style="font-size:10px;font-weight:400;color:var(--muted)">consecutiv</span></div>'
       + '</div>';
 
     // ── SVG Bar chart — ultimele 14 zile ──────────────────────────────────────
