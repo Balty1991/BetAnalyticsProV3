@@ -412,11 +412,15 @@
     if (preds.length) {
       var liveStatuses = ['inprogress', 'live', 'in_progress', '1h', '2h', 'ht', 'et', 'break'];
       var liveCount = preds.filter(function (m) { return liveStatuses.indexOf(String(m.status || '').toLowerCase()) >= 0; }).length;
-      var displayedCount = (typeof window.__VEYRA_MECIURI_DISPLAYED_COUNT === 'number' && window.__VEYRA_MECIURI_DISPLAYED_COUNT >= 0)
-        ? window.__VEYRA_MECIURI_DISPLAYED_COUNT
-        : preds.filter(function (m) {
-            return typeof passesSelectionFilter === 'function' ? passesSelectionFilter(m) : (m.analysisState === 'ELIGIBLE' && m.bestBet);
-          }).length;
+      // Prioritate: variabila globală setată de renderMatches → elementul DOM → '—'
+      var displayedCount;
+      if (typeof window.__VEYRA_MECIURI_DISPLAYED_COUNT === 'number' && window.__VEYRA_MECIURI_DISPLAYED_COUNT >= 0) {
+        displayedCount = window.__VEYRA_MECIURI_DISPLAYED_COUNT;
+      } else {
+        var fcEl = document.getElementById('filter-count');
+        var fcMatch = fcEl ? String(fcEl.textContent || '').match(/(\d+)/) : null;
+        displayedCount = fcMatch ? parseInt(fcMatch[1], 10) : '—';
+      }
 
       var leagueMap = {};
       preds.forEach(function (m) {
@@ -514,8 +518,16 @@
     if (!root) return;
 
     var activeTab = window._statsTab || 'claude';
+
+    // Auto-inițializare: dacă nu e dată de start setată, setăm azi automat
     var startDate = getStartDate();
-    var sinceLabel = startDate ? 'din ' + startDate.slice(0, 10) : 'tot istoricul';
+    if (!startDate) {
+      var today = new Date().toISOString().slice(0, 10);
+      try { localStorage.setItem(RESET_KEY, today); } catch(e) {}
+      startDate = today;
+    }
+
+    var sinceLabel = 'din ' + startDate.slice(0, 10);
 
     var html = '<div style="padding:0 4px 24px">';
 
