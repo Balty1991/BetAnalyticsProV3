@@ -427,14 +427,15 @@
       var liveStatuses = ['inprogress', 'live', 'in_progress', '1h', '2h', 'ht', 'et', 'break'];
       var liveCount = preds.filter(function (m) { return liveStatuses.indexOf(String(m.status || '').toLowerCase()) >= 0; }).length;
 
-      // Meciuri eligibile = trec de passesSelectionFilter (acelaşi filtru ca tab-ul Meciuri)
-      var eligibleMatches = preds.filter(function (m) {
-        if (typeof passesSelectionFilter === 'function') return passesSelectionFilter(m);
-        return m.analysisState === 'ELIGIBLE' && m.bestBet;
-      });
-      var pendingCount = eligibleMatches.filter(function (m) {
-        return liveStatuses.indexOf(String(m.status || '').toLowerCase()) < 0;
-      }).length;
+      // Folosim exact acelaşi contor ca badge-ul din tab-ul Meciuri (renderMatches setează asta)
+      var pendingCount = (typeof window.__VEYRA_MECIURI_DISPLAYED_COUNT === 'number' && window.__VEYRA_MECIURI_DISPLAYED_COUNT > 0)
+        ? window.__VEYRA_MECIURI_DISPLAYED_COUNT
+        : preds.filter(function (m) {
+            if (typeof passesSelectionFilter === 'function') return passesSelectionFilter(m);
+            return m.analysisState === 'ELIGIBLE' && m.bestBet;
+          }).filter(function (m) {
+            return liveStatuses.indexOf(String(m.status || '').toLowerCase()) < 0;
+          }).length;
 
       var leagueMap = {};
       preds.forEach(function (m) {
@@ -453,7 +454,7 @@
         + '</div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#fbbf24">' + pendingCount + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Predicții eligibile</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Afișate în Meciuri</div>'
         + '</div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#22c55e">' + liveCount + '</div>'
