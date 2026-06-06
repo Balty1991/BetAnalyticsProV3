@@ -1398,8 +1398,34 @@ function renderClaudeAITab(){
       html += '</div>';
     }
 
-    // ── History list ──────────────────────────────────────────────────────────
-    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">Istoric Acumulator — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
+    // ── Istoric Top 5 ─────────────────────────────────────────────────────────
+    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">Istoric Top 5 — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
+    trkHistory.slice(0,7).forEach(function(rec){
+      var dateStr = '';
+      if(rec.date){
+        var months = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
+        var dp = rec.date.split('-');
+        dateStr = parseInt(dp[2],10)+' '+months[parseInt(dp[1],10)-1];
+      }
+      var prov = rec.provider || '';
+      var provLabel = prov.indexOf('gemini') !== -1 ? 'Gemini' : (prov.indexOf('claude') !== -1 ? 'Claude' : prov || '?');
+      var provColor = prov.indexOf('gemini') !== -1 ? '#2BE5C5' : '#818cf8';
+      var s = rec.top_picks_summary || {};
+      var tpW5 = s.wins || 0, tpL5 = s.losses || 0, tpP5 = s.pending || 0;
+      var tp5Html = '<span style="color:#22c55e">'+tpW5+'W</span> <span style="color:#ef4444">'+tpL5+'L</span>'+(tpP5 ? ' <span style="color:#f59e0b">'+tpP5+'P</span>' : '');
+      var settled5 = tpW5 + tpL5;
+      var wr5 = settled5 ? Math.round(tpW5 / settled5 * 100) : 0;
+      var wr5Color = wr5 >= 60 ? '#22c55e' : (wr5 >= 50 ? '#f59e0b' : '#ef4444');
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);flex-wrap:wrap">'
+        + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
+        + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
+        + '<span style="font-size:11px">'+tp5Html+'</span>'
+        + '<span style="font-size:11px;font-weight:700;color:'+wr5Color+';margin-left:auto">'+wr5+'%</span>'
+        + '</div>';
+    });
+
+    // ── Istoric Acumulator ────────────────────────────────────────────────────
+    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;margin-top:14px">Istoric Acumulator — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
     trkHistory.slice(0,7).forEach(function(rec){
       var dateStr = '';
       if(rec.date){
@@ -1422,7 +1448,7 @@ function renderClaudeAITab(){
       html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);flex-wrap:wrap">'
         + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
         + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
-        + '<span style="font-size:11px;color:var(--muted)">'+pickStr+'</span>'
+        + '<span style="font-size:11px">'+pickStr+'</span>'
         + '<span style="font-size:11px;margin-left:auto">'+arHtml+cotaStr+'</span>'
         + '</div>';
     });
