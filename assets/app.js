@@ -1326,11 +1326,11 @@ function renderClaudeAITab(){
       + '<div style="font-size:22px;font-weight:900;color:'+acColor+';line-height:1">'+_ac_wr_pct.toFixed(0)+'%</div>'
       + '<div style="font-size:9px;color:var(--muted);margin-top:2px;margin-bottom:8px">Win Rate</div>'
       + '<div style="display:flex;flex-direction:column;gap:3px">'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">Jucate</span><span style="font-size:10px;font-weight:700;color:var(--txt)">'+(_ac_won+_ac_lost+_ac_pend_cnt)+'</span></div>'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Câștigate</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+_ac_won+'</span></div>'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#ef4444">Pierdute</span><span style="font-size:10px;font-weight:700;color:#ef4444">'+_ac_lost+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">Bilete jucate</span><span style="font-size:10px;font-weight:700;color:var(--txt)">'+(_ac_won+_ac_lost+_ac_pend_cnt)+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Bilete câșt.</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+_ac_won+'</span></div>'
+      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#ef4444">Bilete piers.</span><span style="font-size:10px;font-weight:700;color:#ef4444">'+_ac_lost+'</span></div>'
       + (_ac_pend_cnt ? '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#f59e0b">Pending</span><span style="font-size:10px;font-weight:700;color:#f59e0b">'+_ac_pend_cnt+'</span></div>' : '')
-      + ((_ac_pick_wins + _ac_pick_losses) > 0 ? '<div style="display:flex;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:1px solid rgba(99,102,241,.12)"><span style="font-size:10px;color:var(--muted)">Picks</span><span style="font-size:10px;font-weight:700;color:var(--txt)"><span style="color:#22c55e">'+_ac_pick_wins+'W</span> <span style="color:#ef4444">'+_ac_pick_losses+'L</span></span></div>' : '')
+      + ((_ac_pick_wins + _ac_pick_losses) > 0 ? '<div style="display:flex;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:1px solid rgba(99,102,241,.12)"><span style="font-size:10px;color:var(--muted)">Picks câșt./piers.</span><span style="font-size:10px;font-weight:700;color:var(--txt)"><span style="color:#22c55e">'+_ac_pick_wins+'W</span> <span style="color:#ef4444">'+_ac_pick_losses+'L</span></span></div>' : '')
       + '<div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid rgba(99,102,241,.15)">'
       + '<span style="font-size:10px;color:var(--muted)">ROI</span>'
       + '<span style="font-size:12px;font-weight:900;color:'+acRoiColor+'">'+(_ac_roi_pct > 0 ? '+' : '')+_ac_roi_pct+'%</span>'
@@ -1373,29 +1373,6 @@ function renderClaudeAITab(){
         + '</div>'
         + '<svg width="100%" viewBox="0 0 '+cW+' '+cH+'" style="overflow:visible">'+svgBars+'</svg>'
         + '</div>';
-    }
-
-    // ── Top 5 azi — rezultate per pick ────────────────────────────────────────
-    if(_todayRec && Array.isArray(_todayRec.top_picks_results) && _todayRec.top_picks_results.length){
-      html += '<div style="margin-bottom:12px">'
-        + '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Top 5 azi — rezultate per pick</div>';
-      _todayRec.top_picks_results.forEach(function(r){
-        var res = r.result || 'pending';
-        var icon = res === 'win' ? '✅' : res === 'loss' ? '❌' : '⏳';
-        var col  = res === 'win' ? '#22c55e' : res === 'loss' ? '#ef4444' : '#f59e0b';
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
-          + '<span style="font-size:14px">'+icon+'</span>'
-          + '<div style="flex:1;min-width:0">'
-          + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.meci||'')+'</div>'
-          + '<div style="font-size:10px;color:#2BE5C5">'+(r.pick||'')+'</div>'
-          + '</div>'
-          + '<div style="text-align:right;white-space:nowrap">'
-          + (r.score ? '<div style="font-size:11px;font-weight:700;color:'+col+'">'+r.score+'</div>' : '')
-          + '<div style="font-size:10px;color:'+col+';font-weight:700">'+res.toUpperCase()+'</div>'
-          + '</div>'
-          + '</div>';
-      });
-      html += '</div>';
     }
 
     // ── Istoric Top 5 ─────────────────────────────────────────────────────────
