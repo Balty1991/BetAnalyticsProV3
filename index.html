@@ -187,7 +187,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260606fix10"></script>
+<script defer src="./assets/app.js?v=20260606fix11"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260602dash2"></script>
 </head>
@@ -284,6 +284,10 @@ function toggleTheme(){
     <button class="more-card-btn" onclick="switchTab('motorai');closeDesktopMore()">
       <span class="more-card-title">⚡ Motor AI</span>
       <span class="more-card-sub">Gemini 1.5 Flash analizează per meci — cele mai sigure predicții cu scor de încredere.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('statistici');closeDesktopMore()">
+      <span class="more-card-title">📊 Statistici</span>
+      <span class="more-card-sub">Win rate · ROI · Trend · Per piață — toate secțiunile: AI Claude, ML5, APEX, Meciuri.</span>
     </button>
   </div>
 </div>
@@ -616,6 +620,11 @@ function toggleTheme(){
     </div>
   </div>
 
+  <!-- ===== STATISTICI ===== -->
+  <div class="tab-content" id="tab-statistici">
+    <div id="statistici-root" style="padding:16px 0 80px"></div>
+  </div>
+
 </div><!-- /main -->
 
 <nav class="mobile-nav" id="mobile-nav" aria-label="Navigare mobilă">
@@ -650,6 +659,7 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">⚡ Motor AI</span><small class="sheet-btn-sub">Gemini 1.5 Flash — predicții per meci cu scor de încredere</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('statistici');closeMobileMore()"><span class="sheet-btn-title">📊 Statistici</span><small class="sheet-btn-sub">Win rate · ROI · Trend · Per piață — AI Claude, ML5, APEX, Meciuri</small></button>
 
 </div>
 
@@ -745,5 +755,6 @@ function toggleTheme(){
   <script defer src="./assets/hybrid_adaptive_runtime.js?v=20260603patch1"></script>
   <script defer src="./assets/ml5_backend_status_fix.js?v=20260603patch1"></script>
   <script defer src="./assets/ml5_accuracy_monitor.js?v=20260603acc6"></script>
+  <script defer src="./assets/statistici.js?v=20260606v1"></script>
 </body>
 </html>

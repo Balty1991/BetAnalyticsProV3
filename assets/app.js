@@ -1658,6 +1658,11 @@ function renderActiveTab(name, opts){
     markTabRendered('motorai');
     return;
   }
+  if(name === 'statistici'){
+    if(typeof renderStatisticiTab === 'function') renderStatisticiTab();
+    markTabRendered('statistici');
+    return;
+  }
 }
 function prefetchNonCriticalTabData(){
   if(NONCRITICAL_PREFETCH_STARTED) return;
