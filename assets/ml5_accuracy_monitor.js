@@ -9,7 +9,7 @@
   if (window.__veyraML5AccMonV1) return;
   window.__veyraML5AccMonV1 = true;
 
-  var STORAGE_KEY = 'veyra_ml5_accuracy_log';
+  var STORAGE_KEY = 'veyra_ml5_accuracy_log_v2'; // v2: fix purge logic
   var MAX_ENTRIES = 1000;
 
   /* ─── helpers ─── */
@@ -94,10 +94,14 @@
 
     var log = loadLog();
 
-    // Purge stale autoTracked pending entries not present in current preds.
-    // This handles future-dated stale entries that expireOldPredictions() misses.
-    if (preds.length > 0) {
+    // Purge stale autoTracked pending entries.
+    // Always runs (even when preds is empty) so old entries don't accumulate.
+    // Keep entries that: (a) are settled/expired, (b) still in current preds,
+    // or (c) just finished within the last 2h (settlement window).
+    {
       var predEids = {}, predKeys = {};
+      var nowTs = Date.now();
+      var SETTLE_WINDOW_MS = 2 * 3600 * 1000; // 2h — aligns with ML5 tab visibility cutoff
       preds.forEach(function (m) {
         var eid = m.eventId ? String(m.eventId) : '';
         var ed  = m.event_date || m.eventDate || m.date || '';
@@ -107,7 +111,15 @@
       var lenBefore = log.length;
       log = log.filter(function (e) {
         if (!e.autoTracked || e.result !== 'pending') return true;
-        return (e.eventId && predEids[e.eventId]) || predKeys[entryKey(e.home, e.away, e.eventDate)];
+        // Still in current predictions → keep
+        if ((e.eventId && predEids[e.eventId]) || predKeys[entryKey(e.home, e.away, e.eventDate)]) return true;
+        // Within settlement window after event start → keep for score lookup
+        var evTs = e.eventDate ? new Date(e.eventDate).getTime() : 0;
+        if (evTs > 0 && (nowTs - evTs) < SETTLE_WINDOW_MS) return true;
+        // Future events with unknown date → keep if data not loaded yet
+        if (evTs === 0 && preds.length === 0) return true;
+        // Past settlement window and still unsettled → purge
+        return false;
       });
       if (log.length !== lenBefore) saveLog(log);
     }
@@ -188,21 +200,37 @@
     return null;
   }
 
-  /* ─── auto-decontare din scoruri ALL_MATCHES ─── */
+  /* ─── auto-decontare din scoruri ALL_MATCHES + RECOMMENDATION_LOG ─── */
   function autoSettleFromScores() {
-    var matches = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
-    if (!matches.length) return 0;
-
     // Index meciuri terminate dupa eventId si dupa key home|away
+    // Sursa 1: ALL_MATCHES (meciuri live/recente cu scoruri)
     var byEid = {}, byKey = {};
+    var matches = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
     matches.forEach(function (m) {
       if (!m) return;
       var hs = m.homeScore != null ? m.homeScore : (m.home_score != null ? m.home_score : null);
       var as = m.awayScore != null ? m.awayScore : (m.away_score != null ? m.away_score : null);
-      if (hs == null || as == null) return; // scor nedisponibil — meci neterminat
+      if (hs == null || as == null) return;
       var entry = { homeScore: hs, awayScore: as };
       if (m.eventId) byEid[String(m.eventId)] = entry;
       byKey[entryKey(m.home || '', m.away || '', m.event_date || m.eventDate || m.date || '')] = entry;
+    });
+
+    // Sursa 2: RECOMMENDATION_LOG — conține home_score/away_score pentru meciuri terminate
+    // Meciurile terminate dispar din ALL_MATCHES (filtrate de isMatchStillDisplayable),
+    // dar rămân în RECOMMENDATION_LOG cu scorurile finale.
+    var recLog = Array.isArray(window.RECOMMENDATION_LOG) ? window.RECOMMENDATION_LOG : [];
+    recLog.forEach(function (r) {
+      if (!r) return;
+      var hs = r.home_score != null ? r.home_score : null;
+      var as = r.away_score != null ? r.away_score : null;
+      if (hs == null || as == null) return;
+      var entry = { homeScore: Number(hs), awayScore: Number(as) };
+      var eid = r.event_id ? String(r.event_id) : '';
+      if (eid && !byEid[eid]) byEid[eid] = entry;
+      var ed = r.event_date || r.date || '';
+      var key = entryKey(r.home || '', r.away || '', ed);
+      if (key && !byKey[key]) byKey[key] = entry;
     });
 
     if (!Object.keys(byEid).length && !Object.keys(byKey).length) return 0;
@@ -263,8 +291,9 @@
     window.syncRecommendationEngine = function () {
       var r = orig.apply(this, arguments);
       setTimeout(function () {
+        autoSettleFromScores();   // settle first
         autoRegisterPredictions();
-        autoSettleFromScores();
+        expireOldPredictions();
         syncFromTracking();
         var tab = document.getElementById('tab-ml5');
         if (tab && tab.classList.contains('active')) injectMonitor();
@@ -282,8 +311,9 @@
     window.renderML5Analysis = function () {
       var r = orig.apply(this, arguments);
       setTimeout(function () {
+        autoSettleFromScores();   // settle first so purge doesn't remove settleable entries
         autoRegisterPredictions();
-        autoSettleFromScores();
+        expireOldPredictions();   // mark 3h+ unsettled entries as expired
         syncFromTracking();
         injectMonitor();
       }, 100);
@@ -301,7 +331,9 @@
       var r = orig.apply(this, arguments);
       if (String(name) === 'ml5') {
         setTimeout(function () {
+          autoSettleFromScores();   // settle first so purge doesn't remove settleable entries
           autoRegisterPredictions();
+          expireOldPredictions();   // mark 3h+ unsettled entries as expired
           syncFromTracking();
           injectMonitor();
         }, 300);
@@ -422,7 +454,7 @@
         mktRows + '</div>' : '';
 
     /* recent */
-    var recentRows = log.slice(0, 15).map(function (e) {
+    var recentRows = log.filter(function(e){ return e.result !== 'expired'; }).slice(0, 15).map(function (e) {
       var icon = e.result === 'won' ? '✅' : e.result === 'lost' ? '❌' : '⏳';
       var rc   = e.result === 'won' ? '#22c55e' : e.result === 'lost' ? '#ef4444' : '#f59e0b';
       var sc   = e.ml5Score >= 80 ? '#22c55e' : e.ml5Score >= 65 ? '#2BE5C5' : '#f59e0b';
@@ -509,8 +541,9 @@
 
     [600, 1500, 3000, 6000, 12000].forEach(function (d) {
       setTimeout(function () {
+        autoSettleFromScores();   // settle first
         autoRegisterPredictions();
-        autoSettleFromScores();
+        expireOldPredictions();
         syncFromTracking();
         hookSyncRec();
         hookRender();
@@ -523,8 +556,9 @@
     var tab = document.getElementById('tab-ml5');
     if (tab && tab.classList.contains('active')) {
       setTimeout(function () {
+        autoSettleFromScores();   // settle first
         autoRegisterPredictions();
-        autoSettleFromScores();
+        expireOldPredictions();
         syncFromTracking();
         injectMonitor();
       }, 400);
