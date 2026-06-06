@@ -1400,7 +1400,7 @@ function renderClaudeAITab(){
 
     // ── Istoric Top 5 ─────────────────────────────────────────────────────────
     html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">Istoric Top 5 — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
-    trkHistory.slice(0,7).forEach(function(rec){
+    trkHistory.slice(0,7).forEach(function(rec, idx){
       var dateStr = '';
       if(rec.date){
         var months = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
@@ -1416,17 +1416,38 @@ function renderClaudeAITab(){
       var settled5 = tpW5 + tpL5;
       var wr5 = settled5 ? Math.round(tpW5 / settled5 * 100) : 0;
       var wr5Color = wr5 >= 60 ? '#22c55e' : (wr5 >= 50 ? '#f59e0b' : '#ef4444');
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);flex-wrap:wrap">'
+      var tp5picks = rec.top_picks_results || [];
+      var detId5 = 'tp5d-'+idx, arrId5 = 'tp5a-'+idx;
+      var toggleFn5 = "var d=document.getElementById('"+detId5+"');var a=document.getElementById('"+arrId5+"');if(d.style.display==='none'){d.style.display='block';a.textContent='▴';}else{d.style.display='none';a.textContent='▾';}";
+      html += '<div onclick="'+toggleFn5+'" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);cursor:pointer;user-select:none">'
         + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
         + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
         + '<span style="font-size:11px">'+tp5Html+'</span>'
         + '<span style="font-size:11px;font-weight:700;color:'+wr5Color+';margin-left:auto">'+wr5+'%</span>'
+        + (tp5picks.length ? '<span id="'+arrId5+'" style="font-size:10px;color:var(--muted);margin-left:4px">&#9662;</span>' : '')
         + '</div>';
+      if(tp5picks.length){
+        html += '<div id="'+detId5+'" style="display:none;padding:4px 0 6px 6px;border-bottom:1px solid var(--brd)">';
+        tp5picks.forEach(function(p){
+          var res = p.result || 'pending';
+          var icon = res === 'win' ? '✅' : res === 'loss' ? '❌' : '⏳';
+          var col  = res === 'win' ? '#22c55e' : res === 'loss' ? '#ef4444' : '#f59e0b';
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
+            + '<span style="font-size:13px">'+icon+'</span>'
+            + '<div style="flex:1;min-width:0;overflow:hidden">'
+            + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.meci||'')+'</div>'
+            + '<div style="font-size:10px;color:#2BE5C5">'+(p.pick||'')+'</div>'
+            + '</div>'
+            + (p.score ? '<div style="font-size:11px;font-weight:700;color:'+col+';white-space:nowrap">'+p.score+'</div>' : '')
+            + '</div>';
+        });
+        html += '</div>';
+      }
     });
 
     // ── Istoric Acumulator ────────────────────────────────────────────────────
     html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;margin-top:14px">Istoric Acumulator — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
-    trkHistory.slice(0,7).forEach(function(rec){
+    trkHistory.slice(0,7).forEach(function(rec, idx){
       var dateStr = '';
       if(rec.date){
         var months = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
@@ -1445,12 +1466,32 @@ function renderClaudeAITab(){
                  : ar === 'loss' ? '<span style="color:#ef4444;font-weight:700">❌ LOSS</span>'
                  : '<span style="color:#64748b">⏳ Pending</span>';
       var cotaStr = rec.cota_totala ? ' · @'+Number(rec.cota_totala).toFixed(2) : '';
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);flex-wrap:wrap">'
+      var detIdA = 'acd-'+idx, arrIdA = 'aca-'+idx;
+      var toggleFnA = "var d=document.getElementById('"+detIdA+"');var a=document.getElementById('"+arrIdA+"');if(d.style.display==='none'){d.style.display='block';a.textContent='▴';}else{d.style.display='none';a.textContent='▾';}";
+      html += '<div onclick="'+toggleFnA+'" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);cursor:pointer;user-select:none">'
         + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
         + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
         + '<span style="font-size:11px">'+pickStr+'</span>'
         + '<span style="font-size:11px;margin-left:auto">'+arHtml+cotaStr+'</span>'
+        + (acPs.length ? '<span id="'+arrIdA+'" style="font-size:10px;color:var(--muted);margin-left:4px">&#9662;</span>' : '')
         + '</div>';
+      if(acPs.length){
+        html += '<div id="'+detIdA+'" style="display:none;padding:4px 0 6px 6px;border-bottom:1px solid var(--brd)">';
+        acPs.forEach(function(p){
+          var res = p.result || 'pending';
+          var icon = res === 'win' ? '✅' : res === 'loss' ? '❌' : '⏳';
+          var col  = res === 'win' ? '#22c55e' : res === 'loss' ? '#ef4444' : '#f59e0b';
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
+            + '<span style="font-size:13px">'+icon+'</span>'
+            + '<div style="flex:1;min-width:0;overflow:hidden">'
+            + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.meci||'')+'</div>'
+            + '<div style="font-size:10px;color:#818cf8">'+(p.pick||'')+'</div>'
+            + '</div>'
+            + (p.score ? '<div style="font-size:11px;font-weight:700;color:'+col+';white-space:nowrap">'+p.score+'</div>' : '')
+            + '</div>';
+        });
+        html += '</div>';
+      }
     });
   }
 
