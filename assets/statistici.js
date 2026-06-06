@@ -424,23 +424,34 @@
     var html = '';
 
     if (preds.length) {
-      var liveCount = preds.filter(function (m) { return m.status === 'inprogress' || m.status === 'live'; }).length;
+      var liveStatuses = ['inprogress', 'live', 'in_progress', '1h', '2h', 'ht', 'et', 'break'];
+      var pendingStatuses = ['notstarted', 'not_started', 'scheduled', 'tbd', 'prematch', ''];
+      var liveCount = preds.filter(function (m) { return liveStatuses.indexOf(String(m.status || '').toLowerCase()) >= 0; }).length;
+      var pendingCount = preds.filter(function (m) { return pendingStatuses.indexOf(String(m.status || '').toLowerCase()) >= 0; }).length;
       var leagueMap = {};
-      preds.forEach(function (m) { var l = m.league || m.competition || 'Altele'; leagueMap[l] = (leagueMap[l] || 0) + 1; });
-      var topLeagues = Object.keys(leagueMap).sort(function (a, b) { return leagueMap[b] - leagueMap[a]; }).slice(0, 5);
+      preds.forEach(function (m) {
+        var l = m.league || m.competition || 'Altele';
+        if (typeof l === 'object' && l !== null) l = l.name || 'Altele';
+        leagueMap[l] = (leagueMap[l] || 0) + 1;
+      });
+      var topLeagues = Object.keys(leagueMap).sort(function (a, b) { return leagueMap[b] - leagueMap[a]; }).slice(0, 8);
 
       html += card(
         secHead('⚽ Meciuri Afișate Azi', '#2BE5C5')
-        + '<div style="display:flex;gap:8px;margin-bottom:12px">'
-        + '<div style="flex:1;text-align:center;background:rgba(43,229,197,.07);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 6px">'
+        + '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">'
+        + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(43,229,197,.07);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#2BE5C5">' + preds.length + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Total meciuri</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Total</div>'
         + '</div>'
-        + '<div style="flex:1;text-align:center;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 6px">'
+        + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px 6px">'
+        + '<div style="font-size:22px;font-weight:900;color:#fbbf24">' + pendingCount + '</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">În așteptare</div>'
+        + '</div>'
+        + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#22c55e">' + liveCount + '</div>'
         + '<div style="font-size:9px;color:#64748b;margin-top:2px">Live acum</div>'
         + '</div>'
-        + '<div style="flex:1;text-align:center;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:10px 6px">'
+        + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#818cf8">' + Object.keys(leagueMap).length + '</div>'
         + '<div style="font-size:9px;color:#64748b;margin-top:2px">Ligi</div>'
         + '</div>'
@@ -451,11 +462,11 @@
           var bW = Math.round(cnt / preds.length * 180);
           return '<div style="margin-bottom:6px">'
             + '<div style="display:flex;justify-content:space-between;margin-bottom:2px">'
-            + '<span style="font-size:11px;color:var(--txt)">' + l.slice(0, 26) + '</span>'
-            + '<span style="font-size:10px;color:#2BE5C5;font-weight:700">' + cnt + ' meciuri</span>'
+            + '<span style="font-size:11px;color:var(--txt)">' + String(l).slice(0, 28) + '</span>'
+            + '<span style="font-size:10px;color:#2BE5C5;font-weight:700">' + cnt + '</span>'
             + '</div>'
-            + '<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)">'
-            + '<div style="height:6px;width:' + bW + 'px;max-width:100%;border-radius:3px;background:rgba(43,229,197,.5)"></div>'
+            + '<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.06)">'
+            + '<div style="height:5px;width:' + bW + 'px;max-width:100%;border-radius:3px;background:rgba(43,229,197,.5)"></div>'
             + '</div>'
             + '</div>';
         }).join(''),
