@@ -1231,30 +1231,38 @@ function renderClaudeAITab(){
     html += '</div>';
   }
 
-  // Tipare
+  // Tipare — collapsible
   if(tipare.length){
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(251,191,36,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + '<div style="font-size:14px;font-weight:800;color:#fbbf24;margin-bottom:10px">📊 Tipare Identificate</div>';
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(251,191,36,.2);border-radius:14px;margin-bottom:12px;overflow:hidden">'
+      + '<div onclick="var b=document.getElementById(\'tip-body\');var a=document.getElementById(\'tip-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none">'
+      + '<div style="font-size:14px;font-weight:800;color:#fbbf24">📊 Tipare Identificate <span style="font-size:11px;font-weight:400;color:var(--muted)">('+tipare.length+')</span></div>'
+      + '<span id="tip-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
+      + '</div>'
+      + '<div id="tip-body" style="display:none;padding:0 16px 14px 16px">';
     tipare.forEach(function(t){
       html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--brd)">'
         + '<div style="color:#fbbf24;font-size:14px;flex-shrink:0">•</div>'
         + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + t + '</div>'
         + '</div>';
     });
-    html += '</div>';
+    html += '</div></div>';
   }
 
-  // De evitat
+  // De evitat — collapsible
   if(deEvitat.length){
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(196,32,64,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + '<div style="font-size:14px;font-weight:800;color:#f87171;margin-bottom:10px">⚠️ Meciuri / Piețe de Evitat</div>';
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(196,32,64,.2);border-radius:14px;margin-bottom:12px;overflow:hidden">'
+      + '<div onclick="var b=document.getElementById(\'dev-body\');var a=document.getElementById(\'dev-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none">'
+      + '<div style="font-size:14px;font-weight:800;color:#f87171">⚠️ Meciuri / Piețe de Evitat <span style="font-size:11px;font-weight:400;color:var(--muted)">('+deEvitat.length+')</span></div>'
+      + '<span id="dev-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
+      + '</div>'
+      + '<div id="dev-body" style="display:none;padding:0 16px 14px 16px">';
     deEvitat.forEach(function(e){
       html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--brd)">'
         + '<div style="color:#f87171;font-size:14px;flex-shrink:0">✗</div>'
         + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + e + '</div>'
         + '</div>';
     });
-    html += '</div>';
+    html += '</div></div>';
   }
 
   // ── Monitorizare & Statistici ──────────────────────────────────────────────
