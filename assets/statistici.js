@@ -1,15 +1,30 @@
 /* VEYRA — Statistici Predicții
    Covers: AI Claude · ML5 · APEX · Meciuri
-   All computation is client-side from existing data — zero extra API calls.
+   All computation is client-side — zero extra API calls.
+   Supports reset: sets veyra_stats_start_date in localStorage.
 */
 (function () {
   'use strict';
+
+  var RESET_KEY = 'veyra_stats_start_date';
+  var ML5_KEY   = 'veyra_ml5_accuracy_log_v2';
 
   var MKT = {
     btts:'BTTS', over15:'Peste 1.5G', over25:'Peste 2.5G', over35:'Peste 3.5G',
     under25:'Sub 2.5G', under35:'Sub 3.5G', home_win:'Gazdă câștigă',
     away_win:'Oaspete câștigă', draw:'Egal', unknown:'Altele'
   };
+
+  function getStartDate() {
+    try { return localStorage.getItem(RESET_KEY) || null; } catch(e) { return null; }
+  }
+
+  function afterStart(dateStr) {
+    var start = getStartDate();
+    if (!start) return true;
+    var d = (dateStr || '').slice(0, 10);
+    return d >= start.slice(0, 10);
+  }
 
   // ─── SVG helpers ─────────────────────────────────────────────────────────────
 
@@ -38,19 +53,11 @@
     var yMax = Math.max.apply(null, ys);
     var yMin = Math.max(0, Math.min.apply(null, ys) - 10);
     var range = yMax - yMin || 1;
-
     var coords = pts.map(function (p, i) {
-      return {
-        cx: pL + (i / (pts.length - 1)) * cW,
-        cy: pT + (1 - (p.y - yMin) / range) * cH,
-        label: p.x,
-        val: p.y
-      };
+      return { cx: pL + (i / (pts.length - 1)) * cW, cy: pT + (1 - (p.y - yMin) / range) * cH, label: p.x };
     });
-
     var pathD = coords.map(function (c, i) { return (i ? 'L' : 'M') + c.cx.toFixed(1) + ',' + c.cy.toFixed(1); }).join(' ');
     var areaD = pathD + ' L' + coords[coords.length - 1].cx.toFixed(1) + ',' + (pT + cH) + ' L' + pL + ',' + (pT + cH) + ' Z';
-
     var svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="overflow:visible">';
     [0, 25, 50, 75, 100].forEach(function (v) {
       if (v < yMin - 5 || v > yMax + 5) return;
@@ -81,8 +88,7 @@
       var roi = r.roi != null ? r.roi : 0;
       var roiStr = (roi >= 0 ? '+' : '') + roi + '%';
       var roiCol = roi >= 0 ? '#22c55e' : '#ef4444';
-      var lbl = String(r.label || '').slice(0, 20);
-      svg += '<text x="0" y="' + (y + 11) + '" font-size="10" fill="var(--txt,#e2e8f0)" font-weight="600">' + lbl + '</text>';
+      svg += '<text x="0" y="' + (y + 11) + '" font-size="10" fill="var(--txt,#e2e8f0)" font-weight="600">' + String(r.label || '').slice(0, 20) + '</text>';
       svg += '<rect x="0" y="' + (y + 15) + '" width="160" height="10" rx="5" fill="rgba(255,255,255,.05)"/>';
       if (bW > 0) svg += '<rect x="0" y="' + (y + 15) + '" width="' + bW + '" height="10" rx="5" fill="' + wrCol + '" fill-opacity="0.75"/>';
       svg += '<text x="' + (bW + 4) + '" y="' + (y + 24) + '" font-size="9" fill="' + wrCol + '" font-weight="700">' + (r.wr || 0) + '%</text>';
@@ -98,20 +104,20 @@
   function card(inner, border) {
     return '<div style="background:var(--bg2,#0E1424);border:1px solid ' + (border || 'rgba(255,255,255,.1)') + ';border-radius:14px;padding:14px 16px;margin-bottom:12px">' + inner + '</div>';
   }
-
   function secHead(txt, col) {
     return '<div style="font-size:10px;font-weight:800;color:' + (col || '#64748b') + ';text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">' + txt + '</div>';
   }
-
   function statRow(label, value, valCol) {
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0">'
       + '<span style="font-size:11px;color:#64748b">' + label + '</span>'
       + '<span style="font-size:12px;font-weight:700;color:' + (valCol || 'var(--txt,#e2e8f0)') + '">' + value + '</span>'
       + '</div>';
   }
-
   function roiStr(v) { return (v >= 0 ? '+' : '') + v + '%'; }
   function roiCol(v) { return v > 0 ? '#22c55e' : v === 0 ? '#f59e0b' : '#ef4444'; }
+  function overviewBlock(donutSvg, rows) {
+    return '<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">' + donutSvg + '<div style="flex:1">' + rows + '</div></div>';
+  }
 
   // ─── Compute helpers ──────────────────────────────────────────────────────────
 
@@ -143,13 +149,6 @@
     }).sort(function (a, b) { return b.total - a.total; }).slice(0, 6);
   }
 
-  function trendFromHistory(hist, dateFn, wrFn) {
-    return hist.slice(0, 14).reverse().map(function (r) {
-      var dt = dateFn(r);
-      return { x: dt ? dt.slice(8, 10) + '.' + dt.slice(5, 7) : '', y: wrFn(r) };
-    }).filter(function (p) { return p.x; });
-  }
-
   function trendFromLog(settled, dateFn, wonFn) {
     var byDate = {};
     settled.forEach(function (r) {
@@ -165,10 +164,14 @@
     });
   }
 
-  function overviewBlock(donutSvg, rows) {
-    return '<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">'
-      + donutSvg
-      + '<div style="flex:1">' + rows + '</div>'
+  // ─── Mesaj "fără date" după reset ────────────────────────────────────────────
+
+  function noDataMsg(color) {
+    var start = getStartDate();
+    var since = start ? ' (din ' + start.slice(0, 10) + ')' : '';
+    return '<div style="text-align:center;padding:40px 20px;color:#64748b;font-size:13px">'
+      + 'Nu există date' + since + '.<br>'
+      + '<span style="font-size:11px">Predicțiile se acumulează automat pe măsură ce apar în tab-ul Meciuri.</span>'
       + '</div>';
   }
 
@@ -176,21 +179,20 @@
 
   function claudeStats() {
     var trk = window.AI_PRED_TRACKING || {};
-    var hist = trk.history || [];
+    var hist = (trk.history || []).filter(function (r) { return afterStart(r.date); });
     var st = trk.stats || {};
-    var tp = st.top_picks || {};
-    var ac = st.acumulators || {};
     var streak = st.streak || {};
 
-    if (!hist.length) return '<div style="text-align:center;padding:48px 20px;color:#64748b;font-size:13px">Nu există date. Rulează workflow-ul <b style="color:var(--txt)">Fetch VEYRA Data</b> o dată.</div>';
+    if (!hist.length) return noDataMsg('#2BE5C5');
 
-    var tpRoiSum = 0, tpRoiCnt = 0;
+    var tpW = 0, tpL = 0, tpPend = 0, tpRoiSum = 0, tpRoiCnt = 0;
     var acRoiSum = 0, acSettled = 0, acWon = 0;
     var acPW = 0, acPL = 0, acPRoiSum = 0;
     hist.forEach(function (r) {
       (r.top_picks_results || []).forEach(function (p) {
-        if (p.result === 'win') { tpRoiSum += (p.odds || 2) - 1; tpRoiCnt++; }
-        else if (p.result === 'loss') { tpRoiSum -= 1; tpRoiCnt++; }
+        if (p.result === 'win') { tpW++; tpRoiSum += (p.odds || 2) - 1; tpRoiCnt++; }
+        else if (p.result === 'loss') { tpL++; tpRoiSum -= 1; tpRoiCnt++; }
+        else { tpPend++; }
       });
       var ar = r.acumulator_result || 'pending';
       if (ar === 'win') { acRoiSum += (r.cota_totala || 1) - 1; acSettled++; acWon++; }
@@ -201,7 +203,8 @@
       });
     });
 
-    var tpWR = Math.round(tp.winrate || 0);
+    var tpTotal = tpW + tpL;
+    var tpWR = tpTotal ? Math.round(tpW / tpTotal * 100) : 0;
     var tpROI = tpRoiCnt ? Math.round(tpRoiSum / tpRoiCnt * 100) : 0;
     var acPCnt = acPW + acPL;
     var acPWR = acPCnt ? Math.round(acPW / acPCnt * 100) : 0;
@@ -211,27 +214,16 @@
     var strCol = strT === 'win' ? '#22c55e' : strT === 'loss' ? '#ef4444' : '#64748b';
 
     var html = '';
-
     html += card(
       secHead('🏆 Top 5 Picks', '#2BE5C5')
       + overviewBlock(donut(tpWR, '#2BE5C5', 84),
-        statRow('Total picks', tp.total || 0)
-        + statRow('Win', tp.wins || 0, '#22c55e')
-        + statRow('Loss', tp.losses || 0, '#ef4444')
-        + (tp.pending ? statRow('Pending', tp.pending, '#f59e0b') : '')
+        statRow('Win', tpW, '#22c55e')
+        + statRow('Loss', tpL, '#ef4444')
+        + (tpPend ? statRow('Pending', tpPend, '#f59e0b') : '')
         + '<div style="border-top:1px solid rgba(43,229,197,.15);margin-top:5px;padding-top:5px">'
         + statRow('ROI per pick', roiStr(tpROI), roiCol(tpROI))
         + '</div>'
-      )
-      + secHead('Trend Win Rate — ultimele ' + Math.min(hist.length, 14) + ' zile', '#64748b')
-      + lineChart(
-          trendFromHistory(hist, function (r) { return r.date; }, function (r) {
-            var s = r.top_picks_summary || {};
-            var t = (s.wins || 0) + (s.losses || 0);
-            return t ? Math.round((s.wins || 0) / t * 100) : 0;
-          }),
-          280, 80, '#2BE5C5'),
-      'rgba(43,229,197,.2)'
+      ), 'rgba(43,229,197,.2)'
     );
 
     var allPicks = [];
@@ -254,15 +246,13 @@
         + statRow('ROI picks', roiStr(acPROI), roiCol(acPROI))
         + statRow('ROI bilet', roiStr(acBROI), roiCol(acBROI))
         + '</div>'
-      ),
-      'rgba(99,102,241,.2)'
+      ), 'rgba(99,102,241,.2)'
     );
 
     html += '<div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
       + '<div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Streak Acumulator</div>'
       + '<div style="font-size:17px;font-weight:900;color:' + strCol + '">' + (strN ? strN + ' ' + (strT === 'win' ? 'WIN' : 'LOSS') : '—') + '</div>'
       + '</div>';
-
     return html;
   }
 
@@ -270,25 +260,31 @@
 
   function ml5Stats() {
     var raw = [];
-    try { raw = JSON.parse(localStorage.getItem('veyra_ml5_accuracy_log_v2') || '[]'); } catch (e) {}
+    try { raw = JSON.parse(localStorage.getItem(ML5_KEY) || '[]'); } catch (e) {}
     if (!Array.isArray(raw)) raw = [];
+
+    // Filtrăm după data de reset
+    raw = raw.filter(function (e) {
+      var d = (e.eventDate || e.savedAt || '').slice(0, 10);
+      return afterStart(d);
+    });
+
     var settled = raw.filter(function (e) { return e.result === 'won' || e.result === 'lost'; });
     var pending = raw.filter(function (e) { return e.result === 'pending'; });
 
-    if (!settled.length) return '<div style="text-align:center;padding:48px 20px;color:#64748b;font-size:13px">Fără predicții ML5 înregistrate.<br>Navighează pe tab-ul <b style="color:var(--txt)">Meciuri</b> — tracking-ul pornește automat.</div>';
+    if (!raw.length) return noDataMsg('#22c55e');
 
     var wins = settled.filter(function (e) { return e.result === 'won'; });
-    var wr = Math.round(wins.length / settled.length * 100);
+    var wr = settled.length ? Math.round(wins.length / settled.length * 100) : 0;
     var roiSum = 0;
     settled.forEach(function (e) { roiSum += e.result === 'won' ? ((e.odds || 2) - 1) : -1; });
-    var roi = Math.round(roiSum / settled.length * 100);
+    var roi = settled.length ? Math.round(roiSum / settled.length * 100) : 0;
 
     var html = '';
-
     html += card(
       secHead('🧠 ML5 — Rezumat', '#22c55e')
       + overviewBlock(donut(wr, '#22c55e', 84),
-        statRow('Total înregistrate', raw.length)
+        statRow('Total', raw.length)
         + statRow('Decontate', settled.length)
         + statRow('Win', wins.length, '#22c55e')
         + statRow('Loss', settled.length - wins.length, '#ef4444')
@@ -298,12 +294,9 @@
         + '</div>'
       )
       + secHead('Trend Win Rate', '#64748b')
-      + lineChart(
-          trendFromLog(settled,
-            function (e) { return (e.eventDate || e.savedAt || '').slice(0, 10); },
-            function (e) { return e.result === 'won'; }
-          ),
-          280, 80, '#22c55e'),
+      + lineChart(trendFromLog(settled,
+          function (e) { return (e.eventDate || e.savedAt || '').slice(0, 10); },
+          function (e) { return e.result === 'won'; }), 280, 80, '#22c55e'),
       'rgba(34,197,94,.2)'
     );
 
@@ -324,20 +317,14 @@
           var dt = (e.eventDate || e.savedAt || '').slice(5, 10).replace('-', '.');
           return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
             + '<span>' + icon + '</span>'
-            + '<div style="flex:1;min-width:0">'
-            + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (e.home || '') + (e.away ? ' — ' + e.away : '') + '</div>'
-            + '<div style="font-size:10px;color:#22c55e">' + (MKT[e.market] || e.market || '') + (e.odds ? ' @' + e.odds : '') + '</div>'
-            + '</div>'
-            + '<div style="text-align:right">'
-            + '<div style="font-size:10px;color:#64748b">' + dt + '</div>'
-            + '<div style="font-size:10px;font-weight:700;color:' + col + '">' + e.result.toUpperCase() + '</div>'
-            + '</div>'
+            + '<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (e.home || '') + (e.away ? ' — ' + e.away : '') + '</div>'
+            + '<div style="font-size:10px;color:#22c55e">' + (MKT[e.market] || e.market || '') + (e.odds ? ' @' + e.odds : '') + '</div></div>'
+            + '<div style="text-align:right"><div style="font-size:10px;color:#64748b">' + dt + '</div>'
+            + '<div style="font-size:10px;font-weight:700;color:' + col + '">' + e.result.toUpperCase() + '</div></div>'
             + '</div>';
-        }).join(''),
-        'rgba(34,197,94,.12)'
+        }).join(''), 'rgba(34,197,94,.12)'
       );
     }
-
     return html;
   }
 
@@ -345,9 +332,11 @@
 
   function apexStats() {
     var log = Array.isArray(window.RECOMMENDATION_LOG) ? window.RECOMMENDATION_LOG : [];
-    var settled = log.filter(function (r) { return r.won === true || r.won === false; });
+    var settled = log.filter(function (r) {
+      return (r.won === true || r.won === false) && afterStart(r.date || r.event_date);
+    });
 
-    if (!settled.length) return '<div style="text-align:center;padding:48px 20px;color:#64748b;font-size:13px">Fără predicții APEX decontate în log.</div>';
+    if (!settled.length) return noDataMsg('#818cf8');
 
     var wins = settled.filter(function (r) { return r.won === true; });
     var wr = Math.round(wins.length / settled.length * 100);
@@ -359,9 +348,8 @@
     var avgEdge = settled.length ? parseFloat((edgeSum / settled.length).toFixed(1)) : 0;
 
     var html = '';
-
     html += card(
-      secHead('⚡ APEX Neural Engine — Rezumat', '#818cf8')
+      secHead('⚡ APEX Neural Engine', '#818cf8')
       + overviewBlock(donut(wr, '#818cf8', 84),
         statRow('Decontate', settled.length)
         + statRow('Win', wins.length, '#22c55e')
@@ -372,12 +360,9 @@
         + '</div>'
       )
       + secHead('Trend Win Rate', '#64748b')
-      + lineChart(
-          trendFromLog(settled,
-            function (r) { return (r.date || '').slice(0, 10); },
-            function (r) { return r.won === true; }
-          ),
-          280, 80, '#818cf8'),
+      + lineChart(trendFromLog(settled,
+          function (r) { return (r.date || '').slice(0, 10); },
+          function (r) { return r.won === true; }), 280, 80, '#818cf8'),
       'rgba(99,102,241,.2)'
     );
 
@@ -418,23 +403,19 @@
   function meciuriStats() {
     var preds = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
     var log = Array.isArray(window.RECOMMENDATION_LOG) ? window.RECOMMENDATION_LOG : [];
-    var settled = log.filter(function (r) { return r.won === true || r.won === false; });
+    var settled = log.filter(function (r) {
+      return (r.won === true || r.won === false) && afterStart(r.date || r.event_date);
+    });
     var wins = settled.filter(function (r) { return r.won === true; });
-
     var html = '';
 
     if (preds.length) {
       var liveStatuses = ['inprogress', 'live', 'in_progress', '1h', '2h', 'ht', 'et', 'break'];
       var liveCount = preds.filter(function (m) { return liveStatuses.indexOf(String(m.status || '').toLowerCase()) >= 0; }).length;
-
-      // Folosim exact acelaşi contor ca badge-ul din tab-ul Meciuri (renderMatches setează asta)
-      var pendingCount = (typeof window.__VEYRA_MECIURI_DISPLAYED_COUNT === 'number' && window.__VEYRA_MECIURI_DISPLAYED_COUNT > 0)
+      var displayedCount = (typeof window.__VEYRA_MECIURI_DISPLAYED_COUNT === 'number' && window.__VEYRA_MECIURI_DISPLAYED_COUNT >= 0)
         ? window.__VEYRA_MECIURI_DISPLAYED_COUNT
         : preds.filter(function (m) {
-            if (typeof passesSelectionFilter === 'function') return passesSelectionFilter(m);
-            return m.analysisState === 'ELIGIBLE' && m.bestBet;
-          }).filter(function (m) {
-            return liveStatuses.indexOf(String(m.status || '').toLowerCase()) < 0;
+            return typeof passesSelectionFilter === 'function' ? passesSelectionFilter(m) : (m.analysisState === 'ELIGIBLE' && m.bestBet);
           }).length;
 
       var leagueMap = {};
@@ -450,34 +431,26 @@
         + '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(43,229,197,.07);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#2BE5C5">' + preds.length + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Total API</div>'
-        + '</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Total API</div></div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px 6px">'
-        + '<div style="font-size:22px;font-weight:900;color:#fbbf24">' + pendingCount + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Afișate în Meciuri</div>'
-        + '</div>'
+        + '<div style="font-size:22px;font-weight:900;color:#fbbf24">' + displayedCount + '</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Afișate în Meciuri</div></div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#22c55e">' + liveCount + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Live acum</div>'
-        + '</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Live acum</div></div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#818cf8">' + Object.keys(leagueMap).length + '</div>'
-        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Ligi</div>'
-        + '</div>'
+        + '<div style="font-size:9px;color:#64748b;margin-top:2px">Ligi</div></div>'
         + '</div>'
         + secHead('Top Ligi Azi', '#64748b')
         + topLeagues.map(function (l) {
           var cnt = leagueMap[l];
           var bW = Math.round(cnt / preds.length * 180);
-          return '<div style="margin-bottom:6px">'
-            + '<div style="display:flex;justify-content:space-between;margin-bottom:2px">'
+          return '<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;margin-bottom:2px">'
             + '<span style="font-size:11px;color:var(--txt)">' + String(l).slice(0, 28) + '</span>'
-            + '<span style="font-size:10px;color:#2BE5C5;font-weight:700">' + cnt + '</span>'
-            + '</div>'
+            + '<span style="font-size:10px;color:#2BE5C5;font-weight:700">' + cnt + '</span></div>'
             + '<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.06)">'
-            + '<div style="height:5px;width:' + bW + 'px;max-width:100%;border-radius:3px;background:rgba(43,229,197,.5)"></div>'
-            + '</div>'
-            + '</div>';
+            + '<div style="height:5px;width:' + bW + 'px;max-width:100%;border-radius:3px;background:rgba(43,229,197,.5)"></div></div></div>';
         }).join(''),
         'rgba(43,229,197,.2)'
       );
@@ -488,7 +461,6 @@
       var roiSum = 0;
       settled.forEach(function (r) { roiSum += r.won ? ((r.odds || 1.5) - 1) : -1; });
       var roi = Math.round(roiSum / settled.length * 100);
-
       html += card(
         secHead('📈 Performanță Predicții Istorice', '#f59e0b')
         + overviewBlock(donut(wr, '#f59e0b', 84),
@@ -500,35 +472,41 @@
           + '</div>'
         )
         + secHead('Trend Win Rate', '#64748b')
-        + lineChart(
-            trendFromLog(settled,
-              function (r) { return (r.date || '').slice(0, 10); },
-              function (r) { return r.won === true; }
-            ),
-            280, 80, '#f59e0b'),
+        + lineChart(trendFromLog(settled,
+            function (r) { return (r.date || '').slice(0, 10); },
+            function (r) { return r.won === true; }), 280, 80, '#f59e0b'),
         'rgba(245,158,11,.2)'
       );
-
       var mktRows = computeMarkets(settled,
         function (r) { return r.market_key || r.market || 'unknown'; },
         function (r) { return r.won === true; },
         function (r) { return r.odds || 1.5; }
       );
       if (mktRows.length) html += card(secHead('📊 Per Piață', '#64748b') + hBars(mktRows), 'rgba(245,158,11,.12)');
-    } else if (!preds.length) {
-      html += '<div style="text-align:center;padding:40px 20px;color:#64748b;font-size:13px">Date indisponibile.</div>';
+    } else {
+      html += noDataMsg('#f59e0b');
     }
-
     return html;
   }
+
+  // ─── Reset ───────────────────────────────────────────────────────────────────
+
+  window.__statsReset = function () {
+    if (!confirm('Resetezi toate statisticile?\nDatelor vechi vor fi ignorate și monitorizarea începe de azi.')) return;
+    var today = new Date().toISOString().slice(0, 10);
+    try { localStorage.setItem(RESET_KEY, today); } catch(e) {}
+    // Șterge și logul ML5 vechi
+    try { localStorage.removeItem(ML5_KEY); } catch(e) {}
+    window.renderStatisticiTab();
+  };
 
   // ─── Main render ─────────────────────────────────────────────────────────────
 
   var TABS = [
-    { id: 'claude',   label: '🤖 AI Claude', col: '#2BE5C5' },
-    { id: 'ml5',      label: '🧠 ML5',       col: '#22c55e' },
-    { id: 'apex',     label: '⚡ APEX',      col: '#818cf8' },
-    { id: 'meciuri',  label: '⚽ Meciuri',   col: '#f59e0b' }
+    { id: 'claude',  label: '🤖 AI Claude', col: '#2BE5C5' },
+    { id: 'ml5',     label: '🧠 ML5',       col: '#22c55e' },
+    { id: 'apex',    label: '⚡ APEX',      col: '#818cf8' },
+    { id: 'meciuri', label: '⚽ Meciuri',   col: '#f59e0b' }
   ];
 
   window.renderStatisticiTab = function () {
@@ -536,14 +514,23 @@
     if (!root) return;
 
     var activeTab = window._statsTab || 'claude';
+    var startDate = getStartDate();
+    var sinceLabel = startDate ? 'din ' + startDate.slice(0, 10) : 'tot istoricul';
 
     var html = '<div style="padding:0 4px 24px">';
 
-    html += '<div style="background:linear-gradient(135deg,rgba(43,229,197,.1),rgba(99,102,241,.08));border:1px solid rgba(43,229,197,.2);border-radius:16px;padding:16px 18px;margin-bottom:14px">'
+    // Header + reset button
+    html += '<div style="background:linear-gradient(135deg,rgba(43,229,197,.1),rgba(99,102,241,.08));border:1px solid rgba(43,229,197,.2);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      + '<div>'
       + '<div style="font-size:17px;font-weight:900;color:var(--txt,#e2e8f0)">📊 Statistici Predicții</div>'
-      + '<div style="font-size:11px;color:#64748b;margin-top:3px">Win rate · ROI · Trend · Per piață · Per ligă</div>'
+      + '<div style="font-size:11px;color:#64748b;margin-top:3px">Monitorizare ' + sinceLabel + '</div>'
+      + '</div>'
+      + '<button onclick="window.__statsReset()" style="flex-shrink:0;padding:7px 12px;border-radius:10px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#ef4444;font-size:11px;font-weight:700;cursor:pointer">🔄 Resetează</button>'
+      + '</div>'
       + '</div>';
 
+    // Sub-tabs
     html += '<div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch">';
     TABS.forEach(function (t) {
       var active = activeTab === t.id;
@@ -557,6 +544,7 @@
     });
     html += '</div>';
 
+    // Content
     if (activeTab === 'claude') html += claudeStats();
     else if (activeTab === 'ml5') html += ml5Stats();
     else if (activeTab === 'apex') html += apexStats();
