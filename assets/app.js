@@ -1078,6 +1078,14 @@ function renderClaudeAITab(){
   var generatedAt = d.generated_at || '';
   var matchesAnalyzed = d.matches_analyzed || 0;
 
+  // Tracking data — needed early for result lookups in Top5 & Acumulator
+  var trk = window.AI_PRED_TRACKING || {};
+  var trkHistory = trk.history || [];
+  var trkStats   = trk.stats   || {};
+  var tpStats    = trkStats.top_picks   || {};
+  var acStats    = trkStats.acumulators || {};
+  var streak     = trkStats.streak      || {};
+
   // Build kickoff lookup: normalized "home vs away" → time string
   var _kickoffMap = {};
   (window.ALL_MATCHES || []).forEach(function(m){
@@ -1250,12 +1258,6 @@ function renderClaudeAITab(){
   }
 
   // ── Monitorizare & Statistici ──────────────────────────────────────────────
-  var trk = window.AI_PRED_TRACKING || {};
-  var trkHistory = trk.history || [];
-  var trkStats   = trk.stats   || {};
-  var tpStats    = trkStats.top_picks   || {};
-  var acStats    = trkStats.acumulators || {};
-  var streak     = trkStats.streak      || {};
 
   html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
     + '<div style="font-size:14px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Monitorizare & Statistici</div>';
