@@ -1364,8 +1364,8 @@ function renderMotorAITab(){
   }
 
   // Filter controls (confidence threshold)
-  html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
-    + '<span style="font-size:12px;color:var(--muted);align-self:center">Filtrează:</span>'
+  html += '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:nowrap;align-items:center;overflow-x:auto">'
+    + '<span style="font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0">Filtrează:</span>'
     + '<button onclick="window._motorAIFilter=0;renderMotorAITab()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid var(--brd);background:var(--bg2,#0E1424);color:var(--txt);cursor:pointer">Toate ('+picks.length+')</button>'
     + '<button onclick="window._motorAIFilter=70;renderMotorAITab()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid rgba(43,229,197,.4);background:rgba(43,229,197,.08);color:#2BE5C5;cursor:pointer">≥70% ('+picks.filter(function(p){return(p.incredere||0)>=70;}).length+')</button>'
     + '<button onclick="window._motorAIFilter=80;renderMotorAITab()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.08);color:#22c55e;cursor:pointer">≥80% ('+picks.filter(function(p){return(p.incredere||0)>=80;}).length+')</button>'
@@ -1381,6 +1381,14 @@ function renderMotorAITab(){
     var confColor = conf >= 80 ? '#22c55e' : (conf >= 65 ? '#2BE5C5' : (conf >= 50 ? '#f59e0b' : '#ef4444'));
     var xgStr = (p.xg_home || p.xg_away) ? ('xG '+Number(p.xg_home||0).toFixed(1)+'-'+Number(p.xg_away||0).toFixed(1)) : '';
     var edgeStr = p.edge_pp ? ('+'+Number(p.edge_pp).toFixed(1)+'pp') : '';
+    var kickoffStr = '';
+    if(p.event_date){
+      var _kd = new Date(p.event_date);
+      if(isFinite(_kd.getTime())){
+        kickoffStr = String(_kd.getDate()).padStart(2,'0')+'.'+String(_kd.getMonth()+1).padStart(2,'0')
+          +' · '+String(_kd.getHours()).padStart(2,'0')+':'+String(_kd.getMinutes()).padStart(2,'0');
+      }
+    }
 
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid var(--brd);border-radius:12px;padding:12px 14px;margin-bottom:8px">'
       // Top row: confidence + teams
@@ -1390,7 +1398,7 @@ function renderMotorAITab(){
       + '</div>'
       + '<div style="flex:1;min-width:0">'
       + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">'+htmlEsc(p.home||'')+' vs '+htmlEsc(p.away||'')+'</div>'
-      + '<div style="font-size:11px;color:var(--muted)">'+htmlEsc(p.league||'')+(xgStr?' · '+xgStr:'')+'</div>'
+      + '<div style="font-size:11px;color:var(--muted)">'+htmlEsc(p.league||'')+(xgStr?' · '+xgStr:'')+(kickoffStr?' · 🕐 '+kickoffStr:'')+'</div>'
       + '</div>'
       + '</div>'
       // Pick row

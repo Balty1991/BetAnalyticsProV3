@@ -29,6 +29,15 @@ MARKET_LABELS = {
     'dc_x2': 'Șansă X2',
 }
 
+# BSD API uses underscored keys (over_25, btts_yes) — normalize to canonical form
+MARKET_NORMALIZE = {
+    'over_15': 'over15', 'over_25': 'over25', 'over_35': 'over35',
+    'under_15': 'under15', 'under_25': 'under25', 'under_35': 'under35',
+    'btts_yes': 'btts', 'btts_no': 'btts',
+    'double_chance_1x': 'dc_1x', 'double_chance_x2': 'dc_x2', 'double_chance_12': 'dc_1x',
+    '1x': 'dc_1x', 'x2': 'dc_x2',
+}
+
 OUTPUT_PATH = Path('data/ai_match_engine.json')
 PREDICTIONS_PATH = Path('data/predictions.json')
 CACHE_MAX_AGE_HOURS = 4
@@ -87,7 +96,7 @@ def _format_batch(matches):
         "ID|PIATA|COTA|INCREDERE|MOTIV\n\n"
         "Unde:\n"
         "- ID = numărul meciului (1, 2, 3...)\n"
-        "- PIATA = exact una din: home_win, away_win, draw, over15, over25, over35, btts, dc_1x, dc_x2\n"
+        "- PIATA = exact una din: home_win, away_win, draw, over_15, over_25, over_35, under_25, btts_yes, dc_1x, dc_x2\n"
         "- COTA = odds numeric (ex: 1.85)\n"
         "- INCREDERE = procent 0-100 (ex: 78)\n"
         "- MOTIV = maxim 8 cuvinte în română\n\n"
@@ -119,13 +128,10 @@ def _parse_response(text, batch):
             continue
 
         piata = parts[1].strip().lower().replace(' ', '_')
+        piata = MARKET_NORMALIZE.get(piata, piata)  # normalize BSD underscore variants
         valid_markets = set(MARKET_LABELS.keys())
         if piata not in valid_markets:
-            # Try fuzzy: strip common prefixes
-            piata_raw = parts[1].strip()
-            # Accept anyway if it's close
-            if piata_raw not in valid_markets:
-                continue
+            continue
 
         try:
             cota = float(parts[2].strip())
@@ -150,6 +156,7 @@ def _parse_response(text, batch):
             'home': m.get('home', ''),
             'away': m.get('away', ''),
             'league': m.get('league', ''),
+            'event_date': m.get('event_date', ''),
             'piata': piata,
             'piata_label': MARKET_LABELS.get(piata, piata),
             'cota': round(cota, 2),
@@ -167,18 +174,13 @@ def _parse_response(text, batch):
 
 
 def _call_gemini(prompt, api_key):
-    """Call Gemini 1.5 Flash via google-genai SDK."""
+    """Call Gemini 1.5 Flash via google-genai SDK (free tier compatible)."""
     try:
         from google import genai
-        from google.genai import types as genai_types
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model='gemini-1.5-flash',
             contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                max_output_tokens=800,
-                temperature=0.3,
-            )
         )
         return response.text
     except Exception as e:
@@ -226,6 +228,8 @@ def _prepare_matches(raw_predictions):
         if not home or not away:
             continue
 
+        event_date = event.get('event_date', '') or event.get('scheduled', '') or event.get('start_timestamp', '') or ''
+
         league_info = event.get('league', {}) or {}
         league = league_info.get('name', '') if isinstance(league_info, dict) else str(league_info)
 
@@ -268,6 +272,7 @@ def _prepare_matches(raw_predictions):
             'home': home,
             'away': away,
             'league': league,
+            'event_date': event_date,
             'xg_home': float(xg_home),
             'xg_away': float(xg_away),
             'home_form': home_form,
