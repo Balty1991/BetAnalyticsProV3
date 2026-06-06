@@ -1276,11 +1276,16 @@ function renderClaudeAITab(){
     var _tp_roi_pct = _tp_roi_cnt ? Math.round(_tp_roi_sum / _tp_roi_cnt * 100) : 0;
 
     var _ac_roi_sum = 0, _ac_settled = 0, _ac_won = 0, _ac_lost = 0, _ac_pend_cnt = 0;
+    var _ac_pick_wins = 0, _ac_pick_losses = 0;
     trkHistory.forEach(function(rec){
       var ar = rec.acumulator_result || 'pending';
       if(ar === 'win'){ _ac_roi_sum += (rec.cota_totala || 1) - 1; _ac_settled++; _ac_won++; }
       else if(ar === 'loss'){ _ac_roi_sum -= 1; _ac_settled++; _ac_lost++; }
       else { _ac_pend_cnt++; }
+      (rec.acumulator_picks || []).forEach(function(p){
+        if(p.result === 'win') _ac_pick_wins++;
+        else if(p.result === 'loss') _ac_pick_losses++;
+      });
     });
     var _ac_roi_pct = _ac_settled ? Math.round(_ac_roi_sum / _ac_settled * 100) : 0;
     var _ac_wr_pct  = _ac_settled ? parseFloat((_ac_won / _ac_settled * 100).toFixed(1)) : 0;
@@ -1325,6 +1330,7 @@ function renderClaudeAITab(){
       + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Câștigate</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+_ac_won+'</span></div>'
       + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#ef4444">Pierdute</span><span style="font-size:10px;font-weight:700;color:#ef4444">'+_ac_lost+'</span></div>'
       + (_ac_pend_cnt ? '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#f59e0b">Pending</span><span style="font-size:10px;font-weight:700;color:#f59e0b">'+_ac_pend_cnt+'</span></div>' : '')
+      + ((_ac_pick_wins + _ac_pick_losses) > 0 ? '<div style="display:flex;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:1px solid rgba(99,102,241,.12)"><span style="font-size:10px;color:var(--muted)">Picks</span><span style="font-size:10px;font-weight:700;color:var(--txt)"><span style="color:#22c55e">'+_ac_pick_wins+'W</span> <span style="color:#ef4444">'+_ac_pick_losses+'L</span></span></div>' : '')
       + '<div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid rgba(99,102,241,.15)">'
       + '<span style="font-size:10px;color:var(--muted)">ROI</span>'
       + '<span style="font-size:12px;font-weight:900;color:'+acRoiColor+'">'+(_ac_roi_pct > 0 ? '+' : '')+_ac_roi_pct+'%</span>'
@@ -1393,7 +1399,7 @@ function renderClaudeAITab(){
     }
 
     // ── History list ──────────────────────────────────────────────────────────
-    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">Istoric — ultimele '+ Math.min(trkHistory.length,7) + ' zile</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">Istoric Acumulator — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
     trkHistory.slice(0,7).forEach(function(rec){
       var dateStr = '';
       if(rec.date){
@@ -1404,8 +1410,10 @@ function renderClaudeAITab(){
       var prov = rec.provider || '';
       var provLabel = prov.indexOf('gemini') !== -1 ? 'Gemini' : (prov.indexOf('claude') !== -1 ? 'Claude' : prov || '?');
       var provColor = prov.indexOf('gemini') !== -1 ? '#2BE5C5' : '#818cf8';
-      var s = rec.top_picks_summary || {};
-      var pickStr = (s.wins||0)+'W '+(s.losses||0)+'L'+(s.pending?' '+(s.pending)+'P':'');
+      var acPs = rec.acumulator_picks || [];
+      var acPW = acPs.filter(function(p){ return p.result === 'win'; }).length;
+      var acPL = acPs.filter(function(p){ return p.result === 'loss'; }).length;
+      var pickStr = acPs.length ? ('<span style="color:#22c55e">'+acPW+'W</span> <span style="color:#ef4444">'+acPL+'L</span>') : '—';
       var ar = rec.acumulator_result || 'pending';
       var arHtml = ar === 'win' ? '<span style="color:#22c55e;font-weight:700">✅ WIN</span>'
                  : ar === 'loss' ? '<span style="color:#ef4444;font-weight:700">❌ LOSS</span>'
