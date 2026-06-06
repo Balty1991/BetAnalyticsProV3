@@ -1277,17 +1277,19 @@ function renderClaudeAITab(){
 
     var _ac_roi_sum = 0, _ac_settled = 0, _ac_won = 0, _ac_lost = 0, _ac_pend_cnt = 0;
     var _ac_pick_wins = 0, _ac_pick_losses = 0;
+    var _ac_pick_roi_sum = 0, _ac_pick_roi_cnt = 0;
     trkHistory.forEach(function(rec){
       var ar = rec.acumulator_result || 'pending';
       if(ar === 'win'){ _ac_roi_sum += (rec.cota_totala || 1) - 1; _ac_settled++; _ac_won++; }
       else if(ar === 'loss'){ _ac_roi_sum -= 1; _ac_settled++; _ac_lost++; }
       else { _ac_pend_cnt++; }
       (rec.acumulator_picks || []).forEach(function(p){
-        if(p.result === 'win') _ac_pick_wins++;
-        else if(p.result === 'loss') _ac_pick_losses++;
+        if(p.result === 'win'){ _ac_pick_wins++; _ac_pick_roi_sum += (p.odds || 1.3) - 1; _ac_pick_roi_cnt++; }
+        else if(p.result === 'loss'){ _ac_pick_losses++; _ac_pick_roi_sum -= 1; _ac_pick_roi_cnt++; }
       });
     });
     var _ac_roi_pct = _ac_settled ? Math.round(_ac_roi_sum / _ac_settled * 100) : 0;
+    var _ac_pick_roi_pct = _ac_pick_roi_cnt ? Math.round(_ac_pick_roi_sum / _ac_pick_roi_cnt * 100) : 0;
     var _ac_wr_pct  = _ac_settled ? parseFloat((_ac_won / _ac_settled * 100).toFixed(1)) : 0;
 
     // ── Existing top-picks aggregate ──────────────────────────────────────────
@@ -1332,9 +1334,10 @@ function renderClaudeAITab(){
       + (_ac_pend_cnt ? '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#f59e0b">Pending</span><span style="font-size:10px;font-weight:700;color:#f59e0b">'+_ac_pend_cnt+'</span></div>' : '')
       + ((_ac_pick_wins + _ac_pick_losses) > 0 ? '<div style="display:flex;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:1px solid rgba(99,102,241,.12)"><span style="font-size:10px;color:var(--muted)">Picks câșt./piers.</span><span style="font-size:10px;font-weight:700;color:var(--txt)"><span style="color:#22c55e">'+_ac_pick_wins+'W</span> <span style="color:#ef4444">'+_ac_pick_losses+'L</span></span></div>' : '')
       + '<div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid rgba(99,102,241,.15)">'
-      + '<span style="font-size:10px;color:var(--muted)">ROI</span>'
+      + '<span style="font-size:10px;color:var(--muted)">ROI bilet</span>'
       + '<span style="font-size:12px;font-weight:900;color:'+acRoiColor+'">'+(_ac_roi_pct > 0 ? '+' : '')+_ac_roi_pct+'%</span>'
       + '</div>'
+      + (function(){ var c=_ac_pick_roi_pct>0?'#22c55e':(_ac_pick_roi_pct===0?'#f59e0b':'#ef4444'); return '<div style="display:flex;justify-content:space-between;margin-top:2px"><span style="font-size:10px;color:var(--muted)">ROI picks</span><span style="font-size:11px;font-weight:700;color:'+c+'">'+(_ac_pick_roi_pct>0?'+':'')+_ac_pick_roi_pct+'%</span></div>'; })()
       + '</div></div>'
       + '</div>';
 
