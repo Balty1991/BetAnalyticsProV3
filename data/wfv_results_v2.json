@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-06-07T07:38:20.673103",
+  "updated_at": "2026-06-07T16:54:16.972370",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 10029,
+  "n_rows": 10033,
   "n_folds": 2,
   "global_score": 74.5,
   "global_grade": "B",
@@ -11,7 +11,7 @@
       "market": "home_win",
       "label": "Victorie gazdă",
       "folds": 2,
-      "avg_brier": 0.2449,
+      "avg_brier": 0.245,
       "avg_log_loss": 0.6829,
       "avg_ece": 0.0089,
       "avg_winrate": 0.451,
@@ -28,7 +28,7 @@
         },
         {
           "n": 2459,
-          "brier": 0.2461,
+          "brier": 0.2462,
           "log_loss": 0.6854,
           "ece": 0.0122,
           "winrate": 0.453
@@ -124,10 +124,10 @@
       "label": "Sub 3.5G",
       "folds": 2,
       "avg_brier": 0.1995,
-      "avg_log_loss": 0.5857,
-      "avg_ece": 0.0118,
+      "avg_log_loss": 0.5856,
+      "avg_ece": 0.0117,
       "avg_winrate": 0.7105,
-      "score": 79.7,
+      "score": 79.8,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
@@ -141,8 +141,8 @@
         {
           "n": 2459,
           "brier": 0.1961,
-          "log_loss": 0.5785,
-          "ece": 0.0098,
+          "log_loss": 0.5784,
+          "ece": 0.0096,
           "winrate": 0.7214
         }
       ]
@@ -169,7 +169,7 @@
         {
           "n": 2459,
           "brier": 0.2434,
-          "log_loss": 0.6799,
+          "log_loss": 0.6798,
           "ece": 0.0048,
           "winrate": 0.5153
         }
