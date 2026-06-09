@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-06-08T08:04:24.843458+00:00",
+  "updated_at": "2026-06-09T07:33:08.070084+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 68.8,
+  "overall_score": 68.4,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 1732,
-    "pending_rows": 87,
-    "candidates_with_odds_and_probability": 82,
+    "pending_rows": 84,
+    "candidates_with_odds_and_probability": 79,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,19 +18,19 @@
   },
   "risk_distribution": {
     "value": 2,
-    "balanced": 22,
+    "balanced": 21,
     "safe": 9,
-    "speculative": 49
+    "speculative": 47
   },
   "market_distribution_top150": {
-    "BTTS": 6,
+    "BTTS": 7,
     "Over 2.5G": 2,
-    "Under 3.5G": 48,
-    "Over 1.5G": 26
+    "Under 3.5G": 46,
+    "Over 1.5G": 24
   },
   "league_distribution_top150": {
     "World Cup 2026": 49,
-    "International Friendly Games": 8,
+    "International Friendly Games": 6,
     "Chinese Super League": 6,
     "USL Championship": 8,
     "FA Cup": 1,
@@ -38,7 +38,7 @@
     "Super League": 1,
     "Ligue 1": 1,
     "Championship": 1,
-    "Brasileirão Serie B": 3
+    "Brasileirão Serie B": 2
   },
   "bankroll": {
     "default_bankroll_units": 100,
@@ -99,22 +99,22 @@
       "event_date": "2026-06-23T23:00:00+03:00",
       "market": "Over 2.5G",
       "odds": 1.68,
-      "model_probability": 0.7277,
-      "model_probability_pct": 72.77,
+      "model_probability": 0.7134,
+      "model_probability_pct": 71.34,
       "implied_probability_pct": 59.52,
-      "fair_odds": 1.374,
-      "edge_pp": 13.25,
-      "ev_pct": 22.25,
+      "fair_odds": 1.402,
+      "edge_pp": 11.82,
+      "ev_pct": 19.85,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 58.92,
-      "score": 115.0,
+      "score": 114.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 72.8% vs. probabilitate implicată 59.5%.",
-        "EV estimat 22.3% și edge 13.2 puncte procentuale.",
+        "Probabilitate model 71.3% vs. probabilitate implicată 59.5%.",
+        "EV estimat 19.9% și edge 11.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -451,34 +451,6 @@
       "rationale": [
         "Probabilitate model 80.1% vs. probabilitate implicată 73.0%.",
         "EV estimat 9.7% și edge 7.1 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 206695,
-      "prediction_id": 4654,
-      "home": "France",
-      "away": "Northern Ireland",
-      "league": "International Friendly Games",
-      "event_date": "2026-06-08T22:10:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.72,
-      "model_probability": 0.7032,
-      "model_probability_pct": 70.32,
-      "implied_probability_pct": 58.14,
-      "fair_odds": 1.422,
-      "edge_pp": 12.18,
-      "ev_pct": 20.95,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 51.19,
-      "score": 100.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 70.3% vs. probabilitate implicată 58.1%.",
-        "EV estimat 21.0% și edge 12.2 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -900,6 +872,34 @@
         "Probabilitate model 76.1% vs. probabilitate implicată 73.0%.",
         "EV estimat 4.3% și edge 3.1 puncte procentuale.",
         "Miză Kelly fracțională 2.89% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 8334,
+      "prediction_id": 4859,
+      "home": "Colombia",
+      "away": "DR Congo",
+      "league": "World Cup 2026",
+      "event_date": "2026-06-24T05:00:00+03:00",
+      "market": "Over 1.5G",
+      "odds": 1.37,
+      "model_probability": 0.7997,
+      "model_probability_pct": 79.97,
+      "implied_probability_pct": 72.99,
+      "fair_odds": 1.25,
+      "edge_pp": 6.98,
+      "ev_pct": 9.56,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 56.26,
+      "score": 94.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.0% vs. probabilitate implicată 73.0%.",
+        "EV estimat 9.6% și edge 7.0 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1475,22 +1475,22 @@
       "event_date": "2026-06-23T23:00:00+03:00",
       "market": "Over 2.5G",
       "odds": 1.68,
-      "model_probability": 0.7277,
-      "model_probability_pct": 72.77,
+      "model_probability": 0.7134,
+      "model_probability_pct": 71.34,
       "implied_probability_pct": 59.52,
-      "fair_odds": 1.374,
-      "edge_pp": 13.25,
-      "ev_pct": 22.25,
+      "fair_odds": 1.402,
+      "edge_pp": 11.82,
+      "ev_pct": 19.85,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 58.92,
-      "score": 115.0,
+      "score": 114.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 72.8% vs. probabilitate implicată 59.5%.",
-        "EV estimat 22.3% și edge 13.2 puncte procentuale.",
+        "Probabilitate model 71.3% vs. probabilitate implicată 59.5%.",
+        "EV estimat 19.9% și edge 11.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -2048,20 +2048,20 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 956,
-      "wins": 685,
-      "winrate": 71.65,
-      "profit_units": -8.19,
-      "roi_pct": -0.86,
-      "avg_odds": 1.399
+      "bets": 958,
+      "wins": 686,
+      "winrate": 71.61,
+      "profit_units": -8.76,
+      "roi_pct": -0.91,
+      "avg_odds": 1.4
     },
     {
       "key": "Over 1.5G",
-      "bets": 384,
-      "wins": 271,
-      "winrate": 70.57,
-      "profit_units": -25.14,
-      "roi_pct": -6.55,
+      "bets": 385,
+      "wins": 272,
+      "winrate": 70.65,
+      "profit_units": -24.67,
+      "roi_pct": -6.41,
       "avg_odds": 1.331
     }
   ],
