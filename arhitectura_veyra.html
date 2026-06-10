@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VEYRA — Arhitectură & Legendă</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06080F;color:#E2E8F0;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;line-height:1.5;padding:20px}
+h1{font-size:26px;font-weight:900;color:#2BE5C5;margin-bottom:4px;letter-spacing:-.03em}
+h2{font-size:15px;font-weight:800;color:#2BE5C5;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+h3{font-size:12px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.sub{font-size:11px;color:#64748B;margin-bottom:20px}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+/* Cards */
+.card{background:#0E1424;border:1px solid #1E2942;border-radius:16px;padding:14px 16px}
+.card.accent-green{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.04)}
+.card.accent-cyan{border-color:rgba(43,229,197,.3);background:rgba(43,229,197,.04)}
+.card.accent-purple{border-color:rgba(129,140,248,.3);background:rgba(129,140,248,.04)}
+.card.accent-yellow{border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.04)}
+.card.accent-red{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.04)}
+.card.accent-blue{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.04)}
+.card.accent-orange{border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.04)}
+
+/* Flow */
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:8px 0}
+.step{background:#141B2E;border:1px solid #2D3A54;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:#CBD5E1;white-space:nowrap}
+.step.green{border-color:rgba(34,197,94,.4);color:#4ADE80;background:rgba(34,197,94,.08)}
+.step.cyan{border-color:rgba(43,229,197,.4);color:#2BE5C5;background:rgba(43,229,197,.08)}
+.step.purple{border-color:rgba(129,140,248,.4);color:#A78BFA;background:rgba(129,140,248,.08)}
+.step.yellow{border-color:rgba(251,191,36,.4);color:#FCD34D;background:rgba(251,191,36,.08)}
+.step.red{border-color:rgba(239,68,68,.4);color:#F87171;background:rgba(239,68,68,.08)}
+.step.blue{border-color:rgba(59,130,246,.4);color:#93C5FD;background:rgba(59,130,246,.08)}
+.arrow{color:#475569;font-size:16px;font-weight:900}
+
+/* Tags */
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;margin:2px 2px 2px 0}
+.tag-green{background:rgba(34,197,94,.12);color:#4ADE80;border:1px solid rgba(34,197,94,.2)}
+.tag-cyan{background:rgba(43,229,197,.12);color:#2BE5C5;border:1px solid rgba(43,229,197,.2)}
+.tag-purple{background:rgba(129,140,248,.12);color:#A78BFA;border:1px solid rgba(129,140,248,.2)}
+.tag-yellow{background:rgba(251,191,36,.12);color:#FCD34D;border:1px solid rgba(251,191,36,.2)}
+.tag-red{background:rgba(239,68,68,.12);color:#F87171;border:1px solid rgba(239,68,68,.2)}
+.tag-blue{background:rgba(59,130,246,.12);color:#93C5FD;border:1px solid rgba(59,130,246,.2)}
+.tag-gray{background:rgba(148,163,184,.1);color:#94A3B8;border:1px solid rgba(148,163,184,.2)}
+.tag-orange{background:rgba(249,115,22,.12);color:#FB923C;border:1px solid rgba(249,115,22,.2)}
+
+/* Items */
+.item{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:flex-start;gap:8px}
+.item:last-child{border-bottom:none;padding-bottom:0}
+.item-icon{font-size:14px;flex-shrink:0;width:20px;text-align:center;margin-top:1px}
+.item-text{}
+.item-title{font-weight:700;color:#CBD5E1;font-size:12px}
+.item-sub{color:#64748B;font-size:11px}
+
+/* Section sep */
+.sep{height:1px;background:linear-gradient(90deg,transparent,#1E2942 30%,#1E2942 70%,transparent);margin:20px 0}
+.section-label{font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;padding-left:4px;border-left:3px solid #2BE5C5;padding-left:8px}
+
+/* Schema obiect */
+.schema{background:#0A0F1E;border-radius:10px;padding:12px;font-family:'Consolas',monospace;font-size:10px;color:#94A3B8;line-height:1.8;border:1px solid #1A2136;overflow-x:auto}
+.schema .key{color:#93C5FD}
+.schema .type{color:#4ADE80}
+.schema .comment{color:#475569}
+.schema .val{color:#FCD34D}
+
+/* State badge */
+.state{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;margin:2px}
+.state-ok{background:rgba(34,197,94,.12);color:#4ADE80;border:1px solid rgba(34,197,94,.25)}
+.state-warn{background:rgba(251,191,36,.12);color:#FCD34D;border:1px solid rgba(251,191,36,.25)}
+.state-no{background:rgba(239,68,68,.12);color:#F87171;border:1px solid rgba(239,68,68,.25)}
+.state-filter{background:rgba(43,229,197,.12);color:#2BE5C5;border:1px solid rgba(43,229,197,.25)}
+.state-edge{background:rgba(148,163,184,.1);color:#94A3B8;border:1px solid rgba(148,163,184,.2)}
+
+/* Market chips */
+.mkt{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;margin:2px;border:1px solid rgba(43,229,197,.3);color:#2BE5C5;background:rgba(43,229,197,.06)}
+</style>
+</head>
+<body>
+
+<h1>⚡ VEYRA — Arhitectură Completă</h1>
+<p class="sub">Sports Analytics AI · v16.2 · Legendă funcțională și tehnică</p>
+
+<!-- ═══ 1. FLUXUL PRINCIPAL ═══ -->
+<div class="sep"></div>
+<div class="section-label">1 · Fluxul datelor — de la API la ecran</div>
+
+<div class="card accent-cyan" style="margin-bottom:12px">
+  <h2>🔄 Pipeline complet (se execută la fiecare 30 minute via GitHub Actions)</h2>
+  <div class="flow">
+    <div class="step green">🌐 BSD API<br><span style="font-weight:400;font-size:9px">sports.bzzoiro.com</span></div>
+    <div class="arrow">→</div>
+    <div class="step">🐍 fetch_data.py<br><span style="font-weight:400;font-size:9px">~1780 meciuri viitoare</span></div>
+    <div class="arrow">→</div>
+    <div class="step purple">🧠 predict_current.py<br><span style="font-weight:400;font-size:9px">CatBoost ML model</span></div>
+    <div class="arrow">→</div>
+    <div class="step">🔧 feature_engineering.py<br><span style="font-weight:400;font-size:9px">xG, formă, H2H</span></div>
+    <div class="arrow">→</div>
+    <div class="step cyan">📄 data/predictions.json<br><span style="font-weight:400;font-size:9px">244 predicții</span></div>
+    <div class="arrow">→</div>
+    <div class="step green">🚀 GitHub Pages<br><span style="font-weight:400;font-size:9px">balty1991.github.io/VEYRA</span></div>
+  </div>
+</div>
+
+<div class="grid grid-3" style="margin-bottom:12px">
+  <div class="card accent-green">
+    <h3>🐍 Scripturi Python (server)</h3>
+    <div class="item"><div class="item-icon">📥</div><div class="item-text"><div class="item-title">fetch_data.py</div><div class="item-sub">Preia meciuri + cote de la BSD API. Filtrează: viitoare, cu cote, 30 zile lookahead</div></div></div>
+    <div class="item"><div class="item-icon">🤖</div><div class="item-text"><div class="item-title">predict_current.py</div><div class="item-sub">Rulează modelul CatBoost v2 (antrenat pe istoricul de 90 zile). Calculează prob. Over/Under/BTTS</div></div></div>
+    <div class="item"><div class="item-icon">⚙️</div><div class="item-text"><div class="item-title">feature_engineering.py</div><div class="item-sub">Calculează features: xG, formă echipă, H2H, tier ligă, edge față de piață</div></div></div>
+    <div class="item"><div class="item-icon">📊</div><div class="item-text"><div class="item-title">fetch_stats_incidents_cache.py</div><div class="item-sub">Cache statistici detaliate, formații, incidente (ultimele 6 meciuri per echipă)</div></div></div>
+    <div class="item"><div class="item-icon">👤</div><div class="item-text"><div class="item-title">fetch_player_profiles_cache.py</div><div class="item-sub">Profile jucători, absențe, formă individuală</div></div></div>
+  </div>
+
+  <div class="card accent-purple">
+    <h3>⏱️ GitHub Actions Workflows</h3>
+    <div class="item"><div class="item-icon">🔁</div><div class="item-text"><div class="item-title">update-meciuri.yml</div><div class="item-sub"><strong style="color:#FCD34D">La fiecare 30 min</strong> — fetch + predict + enrichment + commit automat la /data/</div></div></div>
+    <div class="item"><div class="item-icon">📅</div><div class="item-text"><div class="item-title">fetch-data.yml</div><div class="item-sub">De 2×/zi (02:20 și 14:20 UTC) — fetch complet cu arbitraj, arbori sezon</div></div></div>
+    <div class="item"><div class="item-icon">🧠</div><div class="item-text"><div class="item-title">ml_pipeline_full.yml</div><div class="item-sub">Antrenare completă model ML — CatBoost pe 90 zile istorice</div></div></div>
+    <div class="item"><div class="item-icon">🔍</div><div class="item-text"><div class="item-title">pro-intelligence.yml</div><div class="item-sub">AI Claude Sonnet — analiza aprofundată per meci (Tavily search)</div></div></div>
+    <div class="item"><div class="item-icon">🔄</div><div class="item-text"><div class="item-title">incremental.yml</div><div class="item-sub">Update incremental rapid — numai cotele se schimbă</div></div></div>
+  </div>
+
+  <div class="card accent-yellow">
+    <h3>📂 Fișiere /data/ cheie</h3>
+    <div class="item"><div class="item-icon">🏆</div><div class="item-text"><div class="item-title">predictions.json</div><div class="item-sub">244 predicții curente. <strong style="color:#FCD34D">Sursa principală</strong> pentru ALL_MATCHES</div></div></div>
+    <div class="item"><div class="item-icon">📈</div><div class="item-text"><div class="item-title">ev_signals_v2.json</div><div class="item-sub">Semnale Expected Value per meci — signal_audit de validare motor</div></div></div>
+    <div class="item"><div class="item-icon">🧪</div><div class="item-text"><div class="item-title">model_pack_v2.json</div><div class="item-sub">Parametrii modelului ML antrenat (coeficienți, praguri, calibrare)</div></div></div>
+    <div class="item"><div class="item-icon">📊</div><div class="item-text"><div class="item-title">backtest.json</div><div class="item-sub">Rezultate backtesting 21 zile — ROI 2.03%, acuratețe per piață</div></div></div>
+    <div class="item"><div class="item-icon">🏟️</div><div class="item-text"><div class="item-title">enriched.json</div><div class="item-sub">Date îmbogățite: statistici echipă, xG, formații, incidente per meci</div></div></div>
+    <div class="item"><div class="item-icon">🤖</div><div class="item-text"><div class="item-title">pro_intelligence.json</div><div class="item-sub">Analizele AI Claude (Sonnet) — verdict per meci bazat pe știri + context</div></div></div>
+    <div class="item"><div class="item-icon">💾</div><div class="item-text"><div class="item-title">ai_memory.json</div><div class="item-sub">1688 pariuri decontate — baza de învățare adaptivă a modelului</div></div></div>
+    <div class="item"><div class="item-icon">🔍</div><div class="item-text"><div class="item-title">signal_audit.json</div><div class="item-sub">24 semnale validate de Motor Unificat — câmpuri: event_id, market_key, edge_pct</div></div></div>
+  </div>
+</div>
+
+<!-- ═══ 2. PROCESARE ÎN BROWSER ═══ -->
+<div class="sep"></div>
+<div class="section-label">2 · Procesare în browser (JavaScript — app.js)</div>
+
+<div class="card accent-cyan" style="margin-bottom:12px">
+  <h2>🔄 Pipeline JavaScript — de la JSON la card afisat</h2>
+  <div class="flow">
+    <div class="step green">📄 /data/predictions.json<br><span style="font-size:9px">fetch la load pagină</span></div>
+    <div class="arrow">→</div>
+    <div class="step">analyzeMatch(raw)<br><span style="font-size:9px">pentru fiecare predicție</span></div>
+    <div class="arrow">→</div>
+    <div class="step purple">applyEnrichmentToMatch()<br><span style="font-size:9px">+ date îmbogățite</span></div>
+    <div class="arrow">→</div>
+    <div class="step cyan">ALL_MATCHES[]<br><span style="font-size:9px">244 obiecte procesate</span></div>
+    <div class="arrow">→</div>
+    <div class="step yellow">syncRecommendationEngine()<br><span style="font-size:9px">calculează bestBet</span></div>
+    <div class="arrow">→</div>
+    <div class="step">renderMatches()<br><span style="font-size:9px">filtrare + afișare</span></div>
+    <div class="arrow">→</div>
+    <div class="step green">MATCHES_FILTERED_CACHE[]<br><span style="font-size:9px">ce vede userul</span></div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:12px">
+  <div class="card">
+    <h3>🏗️ syncRecommendationEngine() — motorul central</h3>
+    <p style="color:#64748B;font-size:11px;margin-bottom:10px">Rulează pe fiecare meci din ALL_MATCHES și decide cel mai bun pariu</p>
+    <div class="flow" style="flex-direction:column;align-items:flex-start;gap:4px">
+      <div class="flow"><div class="step">1. getSupportedMarketTypes()</div><span style="color:#64748B;font-size:11px">→ [over15, over25, under35, btts, dc1x, dcx2, dc12]</span></div>
+      <div class="flow"><div class="step">2. buildMarketCandidate(m, type)</div><span style="color:#64748B;font-size:11px">→ calculează edge, adjProb, value</span></div>
+      <div class="flow"><div class="step">3. Sort candidați</div><span style="color:#64748B;font-size:11px">→ după ticketScore, value, adjProb</span></div>
+      <div class="flow"><div class="step cyan">4. m.bestBet = eligibleCandidates[0]</div><span style="color:#2BE5C5;font-size:11px">→ câștigătorul</span></div>
+    </div>
+    <div style="margin-top:10px">
+      <div><strong>analysisState rezultat:</strong></div>
+      <div style="margin-top:4px">
+        <span class="state state-ok">✅ ELIGIBLE</span>
+        <span class="state state-warn">⚠️ CONTRADICTED</span>
+        <span class="state state-filter">🧠 FILTERED_OUT</span>
+        <span class="state state-edge">⛔ NO_EDGE</span>
+        <span class="state state-no">🛰️ NO_ODDS</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🎯 passesSelectionFilter(m) — filtru de bază</h3>
+    <p style="color:#64748B;font-size:11px;margin-bottom:10px">Condiția minimă ca un meci să fie afișat în Meciuri (filtrul "Toate")</p>
+    <div class="schema">
+      <span class="comment">// 3 condiții obligatorii:</span><br>
+      m.bestBet !== null          <span class="comment">// are un pariu valid</span><br>
+      m.analysisState === <span class="val">'ELIGIBLE'</span> <span class="comment">// a trecut filtrul motor</span><br>
+      isMatchStillDisplayable(m)  <span class="comment">// meciul nu a început de >90min</span>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:#64748B">
+      <strong style="color:#CBD5E1">isMatchStillDisplayable:</strong> data meciului + 90 min &gt; acum<br>
+      <strong style="color:#CBD5E1">Piețe acceptate:</strong>
+      <span class="mkt">Over 1.5G</span><span class="mkt">Over 2.5G</span><span class="mkt">Under 3.5G</span><span class="mkt">BTTS</span><span class="mkt">DC 1X</span><span class="mkt">DC X2</span><span class="mkt">DC 12</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3. SCHEMA OBIECT MECI ═══ -->
+<div class="sep"></div>
+<div class="section-label">3 · Schema unui obiect meci — ALL_MATCHES[i]</div>
+
+<div class="grid grid-2" style="margin-bottom:12px">
+  <div class="card accent-blue">
+    <h3>📋 Câmpuri de bază</h3>
+    <div class="schema">
+      <span class="comment">// Identitate</span><br>
+      <span class="key">eventId</span>: <span class="type">number</span>        <span class="comment">// ID unic BSD API</span><br>
+      <span class="key">home</span>: <span class="type">string</span>           <span class="comment">// "Spain"</span><br>
+      <span class="key">away</span>: <span class="type">string</span>           <span class="comment">// "Cabo Verde"</span><br>
+      <span class="key">league</span>: <span class="type">string</span>         <span class="comment">// "World Cup 2026"</span><br>
+      <span class="key">leagueTier</span>: <span class="type">string</span>     <span class="comment">// "top"|"standard"|"avoid"|"neutral"</span><br>
+      <span class="key">date</span>: <span class="type">ISO string</span>      <span class="comment">// "2026-06-15T17:00:00Z"</span><br>
+      <span class="key">status</span>: <span class="type">string</span>         <span class="comment">// "notstarted"|"live"|"finished"</span><br>
+      <br>
+      <span class="comment">// Probabilități (0-100%)</span><br>
+      <span class="key">prob_over_15</span>: <span class="type">number</span>   <span class="comment">// ex: 87.3</span><br>
+      <span class="key">prob_over_25</span>: <span class="type">number</span>   <span class="comment">// ex: 58.1</span><br>
+      <span class="key">prob_under_35</span>: <span class="type">number</span>  <span class="comment">// ex: 79.2</span><br>
+      <span class="key">prob_btts_yes</span>: <span class="type">number</span>  <span class="comment">// ex: 45.6</span><br>
+      <span class="key">prob_home_win</span>: <span class="type">number</span>  <span class="comment">// ex: 43.0</span><br>
+      <span class="key">prob_draw</span>: <span class="type">number</span>       <span class="comment">// ex: 29.0</span><br>
+      <span class="key">prob_away_win</span>: <span class="type">number</span>  <span class="comment">// ex: 28.0</span><br>
+      <br>
+      <span class="comment">// Cote piață</span><br>
+      <span class="key">odds_over_15</span>: <span class="type">number</span>   <span class="comment">// ex: 1.38</span><br>
+      <span class="key">odds_over_25</span>: <span class="type">number</span>   <span class="comment">// ex: 1.92</span><br>
+      <span class="key">odds_btts_yes</span>: <span class="type">number</span>  <span class="comment">// ex: 2.88</span><br>
+    </div>
+  </div>
+
+  <div class="card accent-purple">
+    <h3>📋 Câmpuri calculate de JS (după syncRecommendationEngine)</h3>
+    <div class="schema">
+      <span class="comment">// Stare analiză</span><br>
+      <span class="key">analysisState</span>: <span class="type">string</span>  <span class="comment">// ELIGIBLE|NO_EDGE|NO_ODDS|...</span><br>
+      <span class="key">smartScore</span>: <span class="type">number</span>     <span class="comment">// scor compozit 0-100</span><br>
+      <span class="key">verdict</span>: <span class="type">string</span>        <span class="comment">// "safe"|"moderate"|"risky"</span><br>
+      <span class="key">riskTier</span>: <span class="type">string</span>       <span class="comment">// "Safe"|"Balanced"|"Value"</span><br>
+      <span class="key">why</span>: <span class="type">string</span>           <span class="comment">// explicația predicției</span><br>
+      <br>
+      <span class="comment">// Cel mai bun pariu selectat</span><br>
+      <span class="key">bestBet</span>: {<br>
+        &nbsp;&nbsp;<span class="key">type</span>: <span class="val">"over25"</span>     <span class="comment">// market key</span><br>
+        &nbsp;&nbsp;<span class="key">label</span>: <span class="val">"Over 2.5G"</span> <span class="comment">// text afisat</span><br>
+        &nbsp;&nbsp;<span class="key">adjProb</span>: <span class="type">58.1</span>    <span class="comment">// probabilitate ajustată %</span><br>
+        &nbsp;&nbsp;<span class="key">odds</span>: <span class="type">1.92</span>        <span class="comment">// cota curentă</span><br>
+        &nbsp;&nbsp;<span class="key">edgePct</span>: <span class="type">7.4</span>     <span class="comment">// avantaj față de piață %</span><br>
+        &nbsp;&nbsp;<span class="key">value</span>: <span class="type">0.12</span>       <span class="comment">// EV (Expected Value)</span><br>
+        &nbsp;&nbsp;<span class="key">verdict</span>: <span class="val">"bet"</span>   <span class="comment">// "bet"|"risk"|"avoid"</span><br>
+        &nbsp;&nbsp;<span class="key">smartScore</span>: <span class="type">74</span>  <span class="comment">// scor decizie</span><br>
+      }<br>
+      <br>
+      <span class="comment">// Toți candidații eligibili</span><br>
+      <span class="key">eligibleCandidates</span>: <span class="type">Array</span> <span class="comment">// ordonați după score</span><br>
+      <span class="key">isEnriched</span>: <span class="type">boolean</span>    <span class="comment">// a primit date îmbogățite</span><br>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 4. MOTOARE DE ANALIZĂ ═══ -->
+<div class="sep"></div>
+<div class="section-label">4 · Motoarele de Analiză</div>
+
+<div class="grid grid-2" style="margin-bottom:12px">
+
+  <div class="card accent-green">
+    <h2>🧠 ML5 — Motor Multi-Factor</h2>
+    <p style="color:#64748B;font-size:11px;margin-bottom:10px">CatBoost v2 antrenat pe date reale. Calculul cel mai ponderat.</p>
+    <div class="item"><div class="item-icon">📄</div><div class="item-text"><div class="item-title">Fișiere</div><div class="item-sub">predict_current.py · model_pack_v2.json · features_v2.json · assets/veyra_apex_engine.js · assets/ml5_accuracy_monitor.js</div></div></div>
+    <div class="item"><div class="item-icon">⚙️</div><div class="item-text"><div class="item-title">Ce analizează</div><div class="item-sub">xG (expected goals) · formă echipă (ultimele 6 meciuri) · H2H (confruntări directe) · absențe jucători cheie · tactici (back 4/5) · tier ligă · calibrare bayesiană</div></div></div>
+    <div class="item"><div class="item-icon">📊</div><div class="item-text"><div class="item-title">Factori în bestBet.ml5Factors</div><div class="item-sub">formFactor · h2hFactor · absenceFactor · tactFactor</div></div></div>
+    <div class="item"><div class="item-icon">📈</div><div class="item-text"><div class="item-title">Output</div><div class="item-sub">adjProb (0–100%) · edgePct · smartScore · riskTier</div></div></div>
+    <div class="item"><div class="item-icon">💾</div><div class="item-text"><div class="item-title">Monitorizare localStorage</div><div class="item-sub"><span class="tag tag-yellow">veyra_ml5_accuracy_log_v2</span> — toate predicțiile auto-înregistrate + rezultate (won/lost/pending)</div></div></div>
+  </div>
+
+  <div class="card accent-purple">
+    <h2>⚡ APEX Neural Engine</h2>
+    <p style="color:#64748B;font-size:11px;margin-bottom:10px">Motor hibrid ML + Heuristic + AI Memory. Generează bilete optimizate.</p>
+    <div class="item"><div class="item-icon">📄</div><div class="item-text"><div class="item-title">Fișiere</div><div class="item-sub">assets/veyra_apex_engine.js · assets/supreme_engine_v5_runtime.js · assets/smartbet_v2_integration.js · data/supreme_engine_v5.json</div></div></div>
+    <div class="item"><div class="item-icon">⚙️</div><div class="item-text"><div class="item-title">3 profiluri de bilet</div><div class="item-sub"><span class="tag tag-green">Premium</span> max 1 meci, prob ≥72%, edge ≥1.5pp · <span class="tag tag-cyan">Double</span> 2 meciuri, scor ≥60 · <span class="tag tag-yellow">Triple</span> 3 meciuri echilibrate · <span class="tag tag-red">Contrarian</span> parieri inverse cu valoare</div></div></div>
+    <div class="item"><div class="item-icon">🎯</div><div class="item-text"><div class="item-title">Strategii</div><div class="item-sub">Kelly Criterion ¼ pentru sizing · EV Dead Zone [1.26-1.45] evitat · League Tiering · Line Movement Tracking</div></div></div>
+    <div class="item"><div class="item-icon">💾</div><div class="item-text"><div class="item-title">localStorage</div><div class="item-sub"><span class="tag tag-purple">veyra_smartbet_history_v2</span> — istoricul biletelor APEX generate</div></div></div>
+  </div>
+
+  <div class="card accent-cyan">
+    <h2>🤖 AI Claude (Sonnet)</h2>
+    <p style="color:#64748B;font-size:11px;margin-bottom:10px">Analiză contextuală prin AI + căutare web Tavily. Verdict narativ per meci.</p>
+    <div class="item"><div class="item-icon">📄</div><div class="item-text"><div class="item-title">Fișiere</div><div class="item-sub">assets/pro_intelligence_runtime.js · data/pro_intelligence.json · data/claude_preview_cache.json · data/claude_daily_analysis.json</div></div></div>
+    <div class="item"><div class="item-icon">⚙️</div><div class="item-text"><div class="item-title">Proces</div><div class="item-sub">1. Caută știri recente (Tavily) despre echipe → 2. Trimite context la Claude API → 3. Primește VERDICT: CONFIRMĂ / ATENȚIE / CU GRIJĂ → 4. Stochează în cache</div></div></div>
+    <div class="item"><div class="item-icon">📊</div><div class="item-text"><div class="item-title">Output</div><div class="item-sub">Verdict text · confirmare/infirmare predicție ML · context accidentări/formă · recomandare finală</div></div></div>
+  </div>
+
+  <div class="card accent-orange">
+    <h2>🛡️ TruthGuard Engine v7</h2>
+    <p style="color:#64748B;font-size:11px;margin-bottom:10px">Validare finală — filtrează predicțiile cu edge real ≥5.5pp.</p>
+    <div class="item"><div class="item-icon">📄</div><div class="item-text"><div class="item-title">Fișiere</div><div class="item-sub">assets/truthguard_v6_runtime_patch.js · data/ev_signals_v2.json · data/signal_audit.json</div></div></div>
+    <div class="item"><div class="item-icon">⚙️</div><div class="item-text"><div class="item-title">Criterii validare</div><div class="item-sub">edge ≥5.5pp · EV pozitiv · nu în Dead Zone de cote · validate de Signal Audit (24 semnale)</div></div></div>
+    <div class="item"><div class="item-icon">🎯</div><div class="item-text"><div class="item-title">Rezultat</div><div class="item-sub">Strict: cumpără · Risk Control: prudent · Afișate în Dashboard ca predicții finale</div></div></div>
+  </div>
+</div>
+
+<!-- ═══ 5. TAB-URI UI ═══ -->
+<div class="sep"></div>
+<div class="section-label">5 · Tab-urile interfeței</div>
+
+<div class="grid grid-4" style="margin-bottom:12px">
+  <div class="card accent-cyan">
+    <h3>🏠 Dashboard</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Rezumat zilnic "Bună dimineața" · Predicțiile TruthGuard validate · Motor status · Statistici live</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-cyan">renderDashboardTab()</span></div>
+    <div style="margin-top:4px"><span class="tag tag-gray">veyra_dashboard.js</span></div>
+  </div>
+
+  <div class="card accent-cyan">
+    <h3>⚽ Meciuri</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Lista filtrată a tuturor predicțiilor. Filtre: Simplu/Expert, Verdict, Piață, Oră, Ligă, Tier</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-cyan">renderMatches()</span></div>
+    <div style="margin-top:4px">
+      <span class="tag tag-green">Toate</span>
+      <span class="tag tag-green">✅ OK</span>
+      <span class="tag tag-yellow">⭐ Top</span>
+      <span class="tag tag-red">🔥 O1.5</span>
+      <span class="tag tag-blue">📈 O2.5</span>
+      <span class="tag tag-purple">BTTS</span>
+      <span class="tag tag-gray">🧊 U3.5</span>
+      <span class="tag tag-orange">💰 Value</span>
+    </div>
+  </div>
+
+  <div class="card accent-green">
+    <h3>🧠 Analiză ML5</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Detalii model ML · scoruri per meci · formă echipă · H2H · factori tactici · acuratețe model</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-green">renderML5Analysis()</span></div>
+    <div style="margin-top:4px"><span class="tag tag-gray">ml5_accuracy_monitor.js</span></div>
+  </div>
+
+  <div class="card accent-purple">
+    <h3>⚡ APEX Neural</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Bilete generate de motor · Premium/Double/Triple/Contrarian · Istoric bilete · Memory learning</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-purple">renderSmartBet()</span></div>
+    <div style="margin-top:4px"><span class="tag tag-gray">veyra_apex_engine.js</span></div>
+  </div>
+
+  <div class="card accent-cyan">
+    <h3>🤖 AI Claude</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Analize narative per meci · Verdictul AI · Preview cu context web · Confirmare/infirmare predicții</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-cyan">tab-claudeai</span></div>
+    <div style="margin-top:4px"><span class="tag tag-gray">pro_intelligence_runtime.js</span></div>
+  </div>
+
+  <div class="card accent-yellow">
+    <h3>📊 Performanță Verdict</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale · Win rate per verdict</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-yellow">tab-performanta</span></div>
+    <div style="margin-top:4px"><span class="tag tag-gray">prediction_history_runtime.js</span></div>
+  </div>
+
+  <div class="card accent-blue">
+    <h3>📈 CLV Tracker</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Closing Line Value — verifică dacă cotele la plasare sunt mai bune decât cotele finale. Indicator de edge real.</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-blue">tab-clv</span></div>
+    <div style="margin-top:4px"><span class="tag tag-gray">clv_tracker_runtime.js</span></div>
+  </div>
+
+  <div class="card accent-orange">
+    <h3>⚡ Motor AI</h3>
+    <div class="item"><div class="item-text"><div class="item-sub">Gemini 1.5 Flash — predicții per meci cu scor de încredere. Motor suplimentar de validare.</div></div></div>
+    <div style="margin-top:6px"><span class="tag tag-orange">renderMotorAITab()</span></div>
+    <div style="margin-top:4px"><span class="tag tag-gray">app.js</span></div>
+  </div>
+</div>
+
+<!-- ═══ 6. FILTRE MECIURI ═══ -->
+<div class="sep"></div>
+<div class="section-label">6 · Sistemul de filtre — renderMatches()</div>
+
+<div class="card" style="margin-bottom:12px">
+  <h2>🔍 Filtre UI și logica lor</h2>
+  <div class="grid grid-3">
+    <div>
+      <h3>Chip-uri de piață (CURRENT_FILTER)</h3>
+      <div class="item"><div class="item-icon">🔵</div><div class="item-text"><div class="item-title">Toate</div><div class="item-sub">analysisState === ELIGIBLE + displayable</div></div></div>
+      <div class="item"><div class="item-icon">✅</div><div class="item-text"><div class="item-title">OK</div><div class="item-sub">isBettingCommonOkMatch() — scor ≥60, edge ≥3%, odds [1.40-2.20]</div></div></div>
+      <div class="item"><div class="item-icon">⭐</div><div class="item-text"><div class="item-title">Top</div><div class="item-sub">verdict === 'safe' sau riskTier === 'Safe'</div></div></div>
+      <div class="item"><div class="item-icon">🔥</div><div class="item-text"><div class="item-title">O1.5</div><div class="item-sub">hasEligibleType(m, 'over15')</div></div></div>
+      <div class="item"><div class="item-icon">📈</div><div class="item-text"><div class="item-title">O2.5</div><div class="item-sub">hasEligibleType(m, 'over25') sau în signal_audit</div></div></div>
+      <div class="item"><div class="item-icon">🤝</div><div class="item-text"><div class="item-title">BTTS</div><div class="item-sub">hasEligibleType(m, 'btts')</div></div></div>
+      <div class="item"><div class="item-icon">🧊</div><div class="item-text"><div class="item-title">U3.5</div><div class="item-sub">hasEligibleType(m, 'under35')</div></div></div>
+      <div class="item"><div class="item-icon">💰</div><div class="item-text"><div class="item-title">Value</div><div class="item-sub">riskTier === 'Value' sau value ≥0.08 + edge ≥3pp</div></div></div>
+    </div>
+    <div>
+      <h3>Dropdown-uri</h3>
+      <div class="item"><div class="item-icon">📋</div><div class="item-text"><div class="item-title">Verdict</div><div class="item-sub">All · ✅ Pariază (bet) · ⚠️ Risc (risk) · ❌ Evită (avoid)</div></div></div>
+      <div class="item"><div class="item-icon">⏰</div><div class="item-text"><div class="item-title">Ora (Sort)</div><div class="item-sub">Data · Edge · Probabilitate · Scor · Value</div></div></div>
+      <div class="item"><div class="item-icon">🏟️</div><div class="item-text"><div class="item-title">Ligă</div><div class="item-sub">Filter după m.league === leagueF</div></div></div>
+      <div class="item"><div class="item-icon">📅</div><div class="item-text"><div class="item-title">Dată</div><div class="item-sub">Azi · 1 zi · 3 zile · 7 zile · Toate</div></div></div>
+      <div class="item"><div class="item-icon">🎯</div><div class="item-text"><div class="item-title">Piață</div><div class="item-sub">Filtru exact după bestBet.label</div></div></div>
+      <div class="item"><div class="item-icon">⚡</div><div class="item-text"><div class="item-title">Kickoff</div><div class="item-sub">În 1h · 3h · 6h · 12h · Oricând</div></div></div>
+      <div class="item"><div class="item-icon">🏆</div><div class="item-text"><div class="item-title">Tier</div><div class="item-sub">top · standard · avoid · neutral</div></div></div>
+    </div>
+    <div>
+      <h3>Rezultat final</h3>
+      <div class="item"><div class="item-icon">💾</div><div class="item-text"><div class="item-title">MATCHES_FILTERED_CACHE</div><div class="item-sub">Array-ul final ce vede utilizatorul. Actualizat după fiecare schimbare de filtru. Folosit de Statistics, ML5 Monitor, Dashboard.</div></div></div>
+      <div class="item"><div class="item-icon">🔢</div><div class="item-text"><div class="item-title">filter-count</div><div class="item-sub">Afișează "10 meciuri" / "5 btts" în header Meciuri</div></div></div>
+      <div class="item"><div class="item-icon">🃏</div><div class="item-text"><div class="item-title">Moduri card</div><div class="item-sub"><span class="tag tag-cyan">Simplu</span> — info de bază · <span class="tag tag-purple">Expert</span> — toți factorii, surse, edge breakdown</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 7. STOCARE LOCALĂ ═══ -->
+<div class="sep"></div>
+<div class="section-label">7 · localStorage — Ce se stochează în browser</div>
+
+<div class="grid grid-2" style="margin-bottom:12px">
+  <div class="card">
+    <h3>🗄️ Chei localStorage</h3>
+    <div class="item"><div class="item-icon">🎯</div><div class="item-text"><div class="item-title"><span class="tag tag-yellow">bet_tracking</span></div><div class="item-sub">Array JSON — biletele manuale plasate de user. Structură: [{id, matches[], stake, status, placedAt}]</div></div></div>
+    <div class="item"><div class="item-icon">📔</div><div class="item-text"><div class="item-title"><span class="tag tag-purple">bet_ticket_journal</span></div><div class="item-sub">Jurnalul complet al biletelor — include rezultate, ROI, note</div></div></div>
+    <div class="item"><div class="item-icon">🧠</div><div class="item-text"><div class="item-title"><span class="tag tag-green">veyra_ml5_accuracy_log_v2</span></div><div class="item-sub">Predicțiile ML5 auto-înregistrate + rezultate won/lost/pending/expired. Max 1000 intrări.</div></div></div>
+    <div class="item"><div class="item-icon">⚡</div><div class="item-text"><div class="item-title"><span class="tag tag-purple">veyra_smartbet_history_v2</span></div><div class="item-sub">Istoricul biletelor APEX generate — pentru pattern recognition</div></div></div>
+    <div class="item"><div class="item-icon">💰</div><div class="item-text"><div class="item-title"><span class="tag tag-cyan">bet_bankroll_settings</span></div><div class="item-sub">{"initial":1000,"single":4%,"double":2.5%,"triple":1.5%,"contrarian":0.8%}</div></div></div>
+    <div class="item"><div class="item-icon">🔔</div><div class="item-text"><div class="item-title"><span class="tag tag-red">bet_match_alerts_v16</span></div><div class="item-sub">Array cu event_id-uri la care s-au setat alerte (notificare la kickoff)</div></div></div>
+    <div class="item"><div class="item-icon">🃏</div><div class="item-text"><div class="item-title"><span class="tag tag-gray">bet_match_card_mode</span></div><div class="item-sub">"simple" | "expert" — modul de afișare al cardurilor</div></div></div>
+    <div class="item"><div class="item-icon">🔑</div><div class="item-text"><div class="item-title"><span class="tag tag-yellow">bsd_token</span></div><div class="item-sub">Token API BSD pentru fetch live direct din browser (opțional)</div></div></div>
+  </div>
+
+  <div class="card">
+    <h3>🗃️ Cache dataset (IndexedDB/localStorage)</h3>
+    <p style="color:#64748B;font-size:11px;margin-bottom:8px">Dataset-urile lazy sunt stocate temporar (TTL: variabil) pentru a evita refetch-ul la fiecare reload</p>
+    <div class="item"><div class="item-icon">📊</div><div class="item-text"><div class="item-title">recommendations</div><div class="item-sub">RECOMMENDATION_LOG — istoricul recomandărilor cu rezultate (utilizat de tab Performanță)</div></div></div>
+    <div class="item"><div class="item-icon">🏟️</div><div class="item-text"><div class="item-title">events · leagues · teams</div><div class="item-sub">Date de referință — echipe, ligi, evenimente complete</div></div></div>
+    <div class="item"><div class="item-icon">📉</div><div class="item-text"><div class="item-title">backtest · historyEngine</div><div class="item-sub">Rezultatele backtesting 21 zile și 90 zile — afișate în tab APEX Statistici</div></div></div>
+    <div class="item"><div class="item-icon">📈</div><div class="item-text"><div class="item-title">fullHistoryAssets</div><div class="item-sub">Istoricul extins (taburi: Istoric Complet, API History, Training Lab)</div></div></div>
+    <div class="item"><div class="item-icon">🎯</div><div class="item-text"><div class="item-title">signalAudit</div><div class="item-sub">SIGNAL_AUDIT — 24 semnale Motor Unificat (event_id, market, edge, cota)</div></div></div>
+    <div class="item"><div class="item-icon">🧠</div><div class="item-text"><div class="item-title">aiMemory</div><div class="item-sub">AI_MEMORY — 1688 pariuri decontate cu ML5 factors. Baza de antrenare adaptivă.</div></div></div>
+  </div>
+</div>
+
+<!-- ═══ 8. FIȘIERE JS ═══ -->
+<div class="sep"></div>
+<div class="section-label">8 · Toate fișierele JavaScript și rolul lor</div>
+
+<div class="grid grid-3" style="margin-bottom:12px">
+  <div class="card accent-cyan">
+    <h3>🏗️ Core</h3>
+    <div class="item"><div class="item-icon">⚡</div><div class="item-text"><div class="item-title">app.js (757KB)</div><div class="item-sub">Fișierul principal. Conține: stare globală, pipeline predicții, toate funcțiile render, filtre, tracking, UI logic.</div></div></div>
+    <div class="item"><div class="item-icon">🎨</div><div class="item-text"><div class="item-title">veyra_dashboard.js</div><div class="item-sub">Randarea dashboard-ului principal: "Bună dimineața", metrici, top picks</div></div></div>
+    <div class="item"><div class="item-icon">💫</div><div class="item-text"><div class="item-title">veyra_splash.js</div><div class="item-sub">Ecranul de loading la pornire</div></div></div>
+    <div class="item"><div class="item-icon">📊</div><div class="item-text"><div class="item-title">veyra_system_status.js</div><div class="item-sub">Status sistem în header: nr. meciuri active, freshness date</div></div></div>
+    <div class="item"><div class="item-icon">⚡</div><div class="item-text"><div class="item-title">veyra_apex_engine.js</div><div class="item-sub">Motor APEX — generare bilete, calcul Kelly, AI Memory, profil risc</div></div></div>
+    <div class="item"><div class="item-icon">🎯</div><div class="item-text"><div class="item-title">pro_command_center.js</div><div class="item-sub">Centru de comandă profesional — unified picks, rapoarte avansate</div></div></div>
+  </div>
+
+  <div class="card accent-green">
+    <h3>🔧 Runtime-uri (patch/runtime)</h3>
+    <div class="item"><div class="item-icon">🤖</div><div class="item-text"><div class="item-title">pro_intelligence_runtime.js</div><div class="item-sub">Randarea analizelor AI Claude per meci + cache preview</div></div></div>
+    <div class="item"><div class="item-icon">🛡️</div><div class="item-text"><div class="item-title">truthguard_v6_runtime_patch.js</div><div class="item-sub">TruthGuard v7 — filtrare predicții cu edge real ≥5.5pp</div></div></div>
+    <div class="item"><div class="item-icon">📈</div><div class="item-text"><div class="item-title">supreme_engine_v5_runtime.js</div><div class="item-sub">Motor Supreme — predicții consolidate + update meniu</div></div></div>
+    <div class="item"><div class="item-icon">🧠</div><div class="item-text"><div class="item-title">ml5_accuracy_monitor.js</div><div class="item-sub">Auto-înregistrare + monitorizare predicții ML5. Decontare automată din scoruri.</div></div></div>
+    <div class="item"><div class="item-icon">📊</div><div class="item-text"><div class="item-title">prediction_history_runtime.js</div><div class="item-sub">Istoricul predicțiilor + calcul acuratețe per tip verdict</div></div></div>
+    <div class="item"><div class="item-icon">📉</div><div class="item-text"><div class="item-title">clv_tracker_runtime.js</div><div class="item-sub">Tracking Closing Line Value — compară cota plasare vs cota finală</div></div></div>
+    <div class="item"><div class="item-icon">🔄</div><div class="item-text"><div class="item-title">hybrid_adaptive_runtime.js</div><div class="item-sub">Ajustare adaptivă probabilități — combină ML + heuristic</div></div></div>
+    <div class="item"><div class="item-icon">🏟️</div><div class="item-text"><div class="item-title">meciuri_filter_scope_runtime.js</div><div class="item-sub">Sincronizare scope filtre — MATCHES_FILTERED_CACHE → alte module</div></div></div>
+  </div>
+
+  <div class="card accent-yellow">
+    <h3>🛠️ Utilitare & Hotfix-uri</h3>
+    <div class="item"><div class="item-icon">📜</div><div class="item-text"><div class="item-title">full-history.js</div><div class="item-sub">Istoricul complet API + decorare meniu cu statistici istorice</div></div></div>
+    <div class="item"><div class="item-icon">🔧</div><div class="item-text"><div class="item-title">dashboard_motor_tracker_sync.js</div><div class="item-sub">Sincronizare Motor Tracker cu dashboard</div></div></div>
+    <div class="item"><div class="item-icon">🎨</div><div class="item-text"><div class="item-title">performance_color_runtime.js</div><div class="item-sub">Culori dinamice pe carduri bazate pe scor/performanță</div></div></div>
+    <div class="item"><div class="item-icon">⚡</div><div class="item-text"><div class="item-title">ba_modern.js</div><div class="item-sub">Banner status freshness date (setat la fiecare 5 min)</div></div></div>
+    <div class="item"><div class="item-icon">🧭</div><div class="item-text"><div class="item-title">nav_visibility_fix.js</div><div class="item-sub">Fix poziționare navigare mobilă</div></div></div>
+    <div class="item"><div class="item-icon">🔍</div><div class="item-text"><div class="item-title">smartbet_v2_integration.js</div><div class="item-sub">Integrare v2 SmartBet — algoritm extins de scoring</div></div></div>
+    <div class="item"><div class="item-icon">🔔</div><div class="item-text"><div class="item-title">clear_cache_button.js</div><div class="item-sub">Buton forțare reload cache + update service worker</div></div></div>
+    <div class="item"><div class="item-icon">🛡️</div><div class="item-text"><div class="item-title">logic_safety_patch.js</div><div class="item-sub">Patch-uri de siguranță pentru edge cases în calcule</div></div></div>
+  </div>
+</div>
+
+<!-- ═══ 9. NUMERE CHEIE ═══ -->
+<div class="sep"></div>
+<div class="section-label">9 · Numere cheie (starea curentă)</div>
+
+<div class="grid grid-4">
+  <div class="card accent-cyan" style="text-align:center">
+    <div style="font-size:36px;font-weight:900;color:#2BE5C5">244</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px">Predicții curente<br><span style="color:#475569">din 1780 meciuri viitoare</span></div>
+  </div>
+  <div class="card accent-green" style="text-align:center">
+    <div style="font-size:36px;font-weight:900;color:#4ADE80">507</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px">ML predictions upcoming<br><span style="color:#475569">conform BSD status</span></div>
+  </div>
+  <div class="card accent-purple" style="text-align:center">
+    <div style="font-size:36px;font-weight:900;color:#A78BFA">1688</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px">Pariuri în AI Memory<br><span style="color:#475569">baza de antrenare adaptivă</span></div>
+  </div>
+  <div class="card accent-yellow" style="text-align:center">
+    <div style="font-size:36px;font-weight:900;color:#FCD34D">2.03%</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px">ROI backtest 21 zile<br><span style="color:#475569">271 pariuri analizate</span></div>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:24px;color:#2D3A54;font-size:10px">
+  VEYRA Architecture Overview · Generat automat din codebase · claude/matches-stats-sync-filter-5y8uy9
+</div>
+
+</body>
+</html>
