@@ -1663,6 +1663,11 @@ function renderActiveTab(name, opts){
     markTabRendered('statistici');
     return;
   }
+  if(name === 'stats-meciuri'){
+    if(typeof window.renderStatsMeciuri === 'function') window.renderStatsMeciuri();
+    markTabRendered('stats-meciuri');
+    return;
+  }
 }
 function prefetchNonCriticalTabData(){
   if(NONCRITICAL_PREFETCH_STARTED) return;

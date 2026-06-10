@@ -285,6 +285,10 @@ function toggleTheme(){
       <span class="more-card-title">⚡ Motor AI</span>
       <span class="more-card-sub">Gemini 1.5 Flash analizează per meci — cele mai sigure predicții cu scor de încredere.</span>
     </button>
+    <button class="more-card-btn" onclick="switchTab('stats-meciuri');window.renderStatsMeciuri&&renderStatsMeciuri();closeDesktopMore()">
+      <span class="more-card-title">📊 Statistică Meciuri</span>
+      <span class="more-card-sub">Distribuție piețe · SmartScore · Top ligi · Lista meciuri afișate în timp real.</span>
+    </button>
   </div>
 </div>
 
@@ -616,6 +620,11 @@ function toggleTheme(){
     </div>
   </div>
 
+  <div class="tab-content" id="tab-stats-meciuri">
+    <div id="stats-meciuri-root" style="padding:16px 12px 80px;text-align:center;color:#334155;font-size:13px;padding-top:48px">
+      Se încarcă statisticile…
+    </div>
+  </div>
 
 </div><!-- /main -->
 
@@ -651,6 +660,7 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">⚡ Motor AI</span><small class="sheet-btn-sub">Gemini 1.5 Flash — predicții per meci cu scor de încredere</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('stats-meciuri');window.renderStatsMeciuri&&renderStatsMeciuri();closeMobileMore()"><span class="sheet-btn-title">📊 Statistică Meciuri</span><small class="sheet-btn-sub">Distribuție piețe · SmartScore · Top ligi · Lista meciuri afișate</small></button>
 
 </div>
 
@@ -747,5 +757,6 @@ function toggleTheme(){
   <script defer src="./assets/ml5_backend_status_fix.js?v=20260603patch1"></script>
   <script defer src="./assets/ml5_accuracy_monitor.js?v=20260606acc7"></script>
   <script defer src="./assets/display_snapshot.js?v=20260610v1"></script>
+  <script defer src="./assets/stats_meciuri.js?v=20260610v1"></script>
 </body>
 </html>
