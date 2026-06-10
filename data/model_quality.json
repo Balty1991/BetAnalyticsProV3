@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-10T07:54:22.573950+00:00",
+  "updated_at": "2026-06-10T18:47:58.602860+00:00",
   "quality_score": 71.7,
   "quality_grade": "C",
   "overall_brier": 0.2069,
@@ -10,13 +10,13 @@
   "diagnosis": "Calibrare acceptabila — variante mici fata de probabilitatile reale.",
   "coverage": {
     "predictions": 244,
-    "ev_signals": 3,
+    "ev_signals": 4,
     "log_total": 1732,
     "log_closed": 1651,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.71,
+    "age_hours": 0.72,
     "color": "green",
     "label": "0.7h"
   },
@@ -83,14 +83,14 @@
     }
   ],
   "backtest": {
-    "roi_pct": 2.03,
-    "winrate": 71.79,
-    "n_bets": 39,
-    "avg_odds": 1.427,
-    "avg_edge": 15.26
+    "roi_pct": -6.45,
+    "winrate": 65.96,
+    "n_bets": 47,
+    "avg_odds": 1.42,
+    "avg_edge": 14.48
   },
   "recommendations": [
-    "Calibrare în parametri normali. Continuă colectarea de rezultate."
+    "Backtest ROI global: -6.5% — revizuiește pragurile."
   ],
   "wfv": {
     "global_score": 74.6,
@@ -347,7 +347,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.306 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-06-10T07:54:22.442715"
+    "updated_at": "2026-06-10T18:47:58.480371"
   },
   "ui_cards": [
     {
@@ -364,9 +364,9 @@
     },
     {
       "label": "ROI backtest",
-      "value": 2.0,
+      "value": -6.5,
       "suffix": "%",
-      "tone": "good"
+      "tone": "bad"
     },
     {
       "label": "Piețe auditate",
