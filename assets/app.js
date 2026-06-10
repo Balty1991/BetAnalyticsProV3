@@ -1664,7 +1664,11 @@ function renderActiveTab(name, opts){
     return;
   }
   if(name === 'stats-meciuri'){
-    if(typeof window.renderStatsMeciuri === 'function') window.renderStatsMeciuri();
+    if(typeof window.renderStatsMeciuri === 'function'){
+      window.renderStatsMeciuri();
+      /* retry once after data settles, in case MATCHES_FILTERED_CACHE wasn't ready */
+      setTimeout(function(){ if(typeof window.renderStatsMeciuri==='function') window.renderStatsMeciuri(); }, 600);
+    }
     markTabRendered('stats-meciuri');
     return;
   }
