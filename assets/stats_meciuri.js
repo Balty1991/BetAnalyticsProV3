@@ -298,7 +298,7 @@
       dayMap[dk].push(e);
     });
     dayOrder.sort();
-    dayOrder.forEach(function (dk, i) { if (dayOpen[dk] === undefined) dayOpen[dk] = (i === 0); });
+    dayOrder.forEach(function (dk) { if (dayOpen[dk] === undefined) dayOpen[dk] = false; });
 
     var h = '';
     dayOrder.forEach(function (dayKey) {
