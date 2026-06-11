@@ -119,7 +119,10 @@
   }
 
   var _dayOpen = {};
+  var _activeMonitorTab = 'meciuri'; /* 'meciuri' | 'apex' */
+
   window._monitorToggleDay = function (dk) { _dayOpen[dk] = !_dayOpen[dk]; window.renderStatsMeciuri(); };
+  window._monitorSwitchTab = function (t)  { _activeMonitorTab = t; window.renderStatsMeciuri(); };
 
   window.renderStatsMeciuri = function () {
     var root = document.getElementById('tab-stats-meciuri');
@@ -133,16 +136,37 @@
 
     var h = '<div style="padding:14px 12px 80px">';
 
-    /* ── MECIURI section ── */
-    h += renderSummaryBlock(meciuriRows, 'window._monitorToggleDay', 'window._monitorClearAll', 'MONITORIZARE MECIURI', '<div style="font-size:32px;margin-bottom:8px">📋</div>Mergi în Meciuri — meciurile afișate apar automat aici.', '#e2e8f0');
-    h += renderDayGroup(meciuriRows, _dayOpen, 'window._monitorToggleDay', 'meciuri');
+    /* ── tab switcher ── */
+    h += '<div style="display:flex;gap:8px;margin-bottom:16px;background:#0a0f1e;border-radius:14px;padding:5px">';
+    [
+      { key: 'meciuri', label: '⚽ Meciuri', count: meciuriRows.length },
+      { key: 'apex',    label: '⚡ APEX',    count: apexRows.length    }
+    ].forEach(function (tab) {
+      var active = _activeMonitorTab === tab.key;
+      h += '<button onclick="window._monitorSwitchTab(\'' + tab.key + '\')" '
+        + 'style="flex:1;padding:9px 8px;border-radius:10px;border:none;cursor:pointer;font-size:12px;font-weight:700;'
+        + 'background:' + (active ? '#1e293b' : 'transparent') + ';'
+        + 'color:' + (active ? '#e2e8f0' : '#475569') + ';transition:all .2s">'
+        + tab.label
+        + (tab.count ? ' <span style="font-size:10px;font-weight:600;color:' + (active ? '#60a5fa' : '#334155') + ';background:' + (active ? '#1e3a5f' : '#1e293b') + ';border-radius:5px;padding:1px 6px;margin-left:4px">' + tab.count + '</span>' : '')
+        + '</button>';
+    });
+    h += '</div>';
 
-    /* ── divider ── */
-    h += '<div style="border-top:1px solid #1e293b;margin:20px 0"></div>';
-
-    /* ── APEX section ── */
-    h += renderSummaryBlock(apexRows, 'window._apexToggleDay', 'window._apexClearAll', '⚡ MONITORIZARE APEX', '<div style="font-size:32px;margin-bottom:8px">⚡</div>Deschide APEX Neural Engine — pick-urile apar automat aici.', '#a78bfa');
-    h += renderDayGroup(apexRows, _apexDayOpen, 'window._apexToggleDay', 'picks');
+    /* ── active section ── */
+    if (_activeMonitorTab === 'meciuri') {
+      h += renderSummaryBlock(meciuriRows, 'window._monitorToggleDay', 'window._monitorClearAll',
+        'MONITORIZARE MECIURI',
+        '<div style="font-size:32px;margin-bottom:8px">📋</div>Mergi în Meciuri — meciurile afișate apar automat aici.',
+        '#e2e8f0');
+      h += renderDayGroup(meciuriRows, _dayOpen, 'window._monitorToggleDay', 'meciuri');
+    } else {
+      h += renderSummaryBlock(apexRows, 'window._apexToggleDay', 'window._apexClearAll',
+        '⚡ MONITORIZARE APEX',
+        '<div style="font-size:32px;margin-bottom:8px">⚡</div>Deschide APEX Neural Engine — pick-urile apar automat aici.',
+        '#a78bfa');
+      h += renderDayGroup(apexRows, _apexDayOpen, 'window._apexToggleDay', 'picks');
+    }
 
     h += '</div>';
     root.innerHTML = h;
