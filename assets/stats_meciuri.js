@@ -20,7 +20,16 @@
   function betType(m)    { var b = m.bestBet; return b && typeof b === 'object' ? (b.type || '') : (b || ''); }
   function betOdds(m)    { var b = m.bestBet; return b && typeof b === 'object' ? (b.bestOdds || b.odds || null) : (m.bestOdds || m.odds || null); }
   function matchDate(m)  { return m.date || m.eventDate || m.event_date || ''; }
-  function entryKey(m)   { var k = String(m.eventId || m.event_id || '') + '|' + betType(m); return (k === '|' || !m.eventId) ? null : k; }
+  function entryKey(m) {
+    var bt  = betType(m);
+    if (!bt) return null;
+    var eid = String(m.eventId != null ? m.eventId : (m.event_id != null ? m.event_id : '')).trim();
+    if (eid && eid !== '0') return eid + '|' + bt;
+    var h = String(m.home || '').toLowerCase().trim();
+    var a = String(m.away || '').toLowerCase().trim();
+    if (h && a) return h + '|' + a + '|' + String(m.date || m.eventDate || m.event_date || '').slice(0, 10) + '|' + bt;
+    return null;
+  }
 
   /* ── get source matches — ONLY what's currently displayed (never ALL_MATCHES) ── */
   function getSourceMatches() {
@@ -193,9 +202,15 @@
   function saveApex(obj) { try { localStorage.setItem(APEX_KEY, JSON.stringify(obj)); } catch (e) {} }
 
   function apexKey(p) {
-    var eid = String(p.event_id || p.eventId || '');
     var mk  = p.marketKey || p.market_key || p.market || '';
-    return (eid && mk) ? eid + '|' + mk : null;
+    if (!mk) return null;
+    var eid = String(p.event_id != null ? p.event_id : (p.eventId != null ? p.eventId : '')).trim();
+    if (eid && eid !== '0') return eid + '|' + mk;
+    /* fallback: use home|away|date|market for picks without event_id */
+    var h = String(p.home || '').toLowerCase().trim();
+    var a = String(p.away || '').toLowerCase().trim();
+    if (h && a) return h + '|' + a + '|' + String(p.event_date || p.eventDate || '').slice(0, 10) + '|' + mk;
+    return null;
   }
 
   function syncApex() {
