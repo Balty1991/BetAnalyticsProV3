@@ -203,7 +203,15 @@
     var pool = analysis && Array.isArray(analysis.pool) ? analysis.pool.filter(Boolean) : [];
     if (!pool.length) return;
     var store   = loadApex();
-    var added   = 0;
+    var changed = false;
+
+    /* remove pending entries no longer in current pool */
+    var curKeys = {};
+    pool.forEach(function(p){ var k = apexKey(p); if (k) curKeys[k] = true; });
+    Object.keys(store).forEach(function(k){
+      if (store[k].status === 'pending' && !curKeys[k]) { delete store[k]; changed = true; }
+    });
+
     pool.forEach(function (p) {
       var k = apexKey(p);
       if (!k) return;
@@ -223,10 +231,10 @@
           awayScore:  null,
           resolvedAt: null
         };
-        added++;
+        changed = true;
       }
     });
-    if (added) saveApex(store);
+    if (changed) saveApex(store);
   }
 
   function autoCheckApex() {
@@ -412,7 +420,15 @@
       return m && m.isEnriched && m.bestBet && m.eventId;
     });
     if (!pool.length) return;
-    var store = loadMl5(), added = 0;
+    var store = loadMl5(), changed = false;
+
+    /* remove pending entries no longer in current pool */
+    var curKeys = {};
+    pool.forEach(function(m){ var k = entryKey(m); if (k) curKeys[k] = true; });
+    Object.keys(store).forEach(function(k){
+      if (store[k].status === 'pending' && !curKeys[k]) { delete store[k]; changed = true; }
+    });
+
     pool.forEach(function (m) {
       var k = entryKey(m);
       if (!k) return;
@@ -432,10 +448,10 @@
           awayScore:  null,
           resolvedAt: null
         };
-        added++;
+        changed = true;
       }
     });
-    if (added) saveMl5(store);
+    if (changed) saveMl5(store);
   }
 
   function autoCheckMl5() {
