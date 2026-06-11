@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-06-11T18:43:59.742959+00:00",
+  "updated_at": "2026-06-11T22:35:54.708152+00:00",
   "quality_score": 71.8,
   "quality_grade": "C",
   "overall_brier": 0.2068,
-  "overall_log_loss": 0.6048,
+  "overall_log_loss": 0.6047,
   "overall_ece": 0.0469,
   "overall_calibration_grade": "B",
-  "n_settled": 1657,
+  "n_settled": 1658,
   "diagnosis": "Calibrare acceptabila — variante mici fata de probabilitatile reale.",
   "coverage": {
     "predictions": 248,
     "ev_signals": 3,
     "log_total": 1732,
-    "log_closed": 1657,
+    "log_closed": 1658,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.59,
+    "age_hours": 0.68,
     "color": "green",
-    "label": "0.6h"
+    "label": "0.7h"
   },
   "markets": [
     {
@@ -69,28 +69,28 @@
     {
       "market": "under35",
       "label": "Sub 3.5G",
-      "n": 964,
+      "n": 965,
       "credible": true,
-      "brier": 0.2004,
-      "log_loss": 0.5899,
-      "ece": 0.0293,
+      "brier": 0.2003,
+      "log_loss": 0.5896,
+      "ece": 0.029,
       "calib_label": "excelent",
-      "winrate": 71.58,
-      "roi_pct": -0.93,
-      "n_wins": 690,
-      "score": 76.0,
+      "winrate": 71.61,
+      "roi_pct": -0.9,
+      "n_wins": 691,
+      "score": 76.1,
       "grade": "B"
     }
   ],
   "backtest": {
-    "roi_pct": 3.97,
-    "winrate": 72.97,
-    "n_bets": 37,
-    "avg_odds": 1.432,
-    "avg_edge": 15.35
+    "roi_pct": -6.27,
+    "winrate": 65.91,
+    "n_bets": 44,
+    "avg_odds": 1.425,
+    "avg_edge": 14.68
   },
   "recommendations": [
-    "Calibrare în parametri normali. Continuă colectarea de rezultate."
+    "Backtest ROI global: -6.3% — revizuiește pragurile."
   ],
   "wfv": {
     "global_score": 74.6,
@@ -347,7 +347,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.306 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-06-11T18:43:59.599718"
+    "updated_at": "2026-06-11T22:35:54.571114"
   },
   "ui_cards": [
     {
@@ -358,15 +358,15 @@
     },
     {
       "label": "Meciuri analizate",
-      "value": 1657,
+      "value": 1658,
       "suffix": " finalizate",
       "tone": "good"
     },
     {
       "label": "ROI backtest",
-      "value": 4.0,
+      "value": -6.3,
       "suffix": "%",
-      "tone": "good"
+      "tone": "bad"
     },
     {
       "label": "Piețe auditate",
