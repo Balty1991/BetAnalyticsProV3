@@ -179,16 +179,17 @@
     h += '</div>';
 
     /* summary row */
-    h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">';
+    h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px">';
     [
       { val: pending, label: 'AȘTEPTARE', color: '#94a3b8' },
       { val: wins,    label: 'WIN',       color: '#22c55e' },
       { val: losses,  label: 'LOSS',      color: '#ef4444' },
-      { val: winRate !== null ? winRate + '%' : '—', label: 'WIN RATE', color: '#60a5fa' }
+      { val: winRate !== null ? winRate + '%' : '—', label: 'WIN RATE', color: '#60a5fa' },
+      { val: roiPct  !== null ? (roiPos ? '+' : '') + roiPct + '%' : '—', label: 'ROI', color: roiPct !== null ? (roiPos ? '#22c55e' : '#ef4444') : '#475569' }
     ].forEach(function (c) {
-      h += '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:10px 4px;text-align:center">';
-      h += '<div style="font-size:22px;font-weight:800;color:' + c.color + ';line-height:1">' + c.val + '</div>';
-      h += '<div style="font-size:9px;color:#475569;margin-top:3px;letter-spacing:.5px">' + c.label + '</div></div>';
+      h += '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:9px 3px;text-align:center">';
+      h += '<div style="font-size:' + (String(c.val).length > 4 ? '14' : '20') + 'px;font-weight:800;color:' + c.color + ';line-height:1">' + c.val + '</div>';
+      h += '<div style="font-size:8px;color:#475569;margin-top:3px;letter-spacing:.4px">' + c.label + '</div></div>';
     });
     h += '</div>';
 

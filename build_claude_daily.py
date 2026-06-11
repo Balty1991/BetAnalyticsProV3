@@ -153,9 +153,20 @@ def main():
     print("=== BUILD DAILY AI ANALYSIS ===")
 
     if OUTPUT_FILE.exists():
-        age_h = (datetime.now(timezone.utc).timestamp() - OUTPUT_FILE.stat().st_mtime) / 3600
-        if age_h < CACHE_FRESH_HOURS:
-            print(f"[ClaudeDaily] Analiza recenta ({age_h:.1f}h < {CACHE_FRESH_HOURS}h) — skip."); return
+        try:
+            existing = json.loads(OUTPUT_FILE.read_text(encoding="utf-8"))
+            gen_at   = existing.get("generated_at", "")
+            if gen_at:
+                from datetime import timezone
+                gen_dt = datetime.fromisoformat(gen_at)
+                if gen_dt.tzinfo is None:
+                    gen_dt = gen_dt.replace(tzinfo=timezone.utc)
+                age_h = (datetime.now(timezone.utc) - gen_dt).total_seconds() / 3600
+                if age_h < CACHE_FRESH_HOURS:
+                    print(f"[ClaudeDaily] Analiza recenta ({age_h:.1f}h < {CACHE_FRESH_HOURS}h) — skip.")
+                    return
+        except Exception as e:
+            print(f"[ClaudeDaily] Nu pot citi generated_at ({e}) — regenerez.")
 
     pred_path = DATA_DIR / "predictions.json"
     if not pred_path.exists():
