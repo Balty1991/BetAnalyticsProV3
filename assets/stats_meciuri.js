@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var STORE_KEY = 'veyra_monitor_v2';
+  var STORE_KEY = 'veyra_monitor_v3';
 
   var MKT_LABEL = {
     over25: 'Over 2.5G', under35: 'Under 3.5G', btts: 'BTTS',
@@ -29,7 +29,7 @@
     if (fc.length) return fc;
     /* 2. last saved snapshot by display_snapshot.js (same filtered list, persisted) */
     try {
-      var snap = JSON.parse(localStorage.getItem('veyra_display_snapshot') || 'null');
+      var snap = JSON.parse(localStorage.getItem('veyra_display_snapshot_v2') || 'null');
       if (snap && Array.isArray(snap.matches) && snap.matches.length) return snap.matches;
     } catch (e) {}
     return [];

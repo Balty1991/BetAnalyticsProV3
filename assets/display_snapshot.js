@@ -7,8 +7,8 @@
 (function () {
   'use strict';
 
-  var SNAPSHOT_KEY = 'veyra_display_snapshot';
-  var HISTORY_KEY  = 'veyra_display_history';
+  var SNAPSHOT_KEY = 'veyra_display_snapshot_v2';
+  var HISTORY_KEY  = 'veyra_display_history_v2';
   var MAX_HISTORY  = 50;
 
   function buildSnapshot() {
