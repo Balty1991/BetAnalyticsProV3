@@ -217,6 +217,10 @@
 
   function syncApex() {
     var analysis = window.SMARTBET_LAST_ANALYSIS;
+    /* compute fresh if not yet available */
+    if (!analysis && typeof window.getSmartBetAnalysis === 'function') {
+      try { analysis = window.getSmartBetAnalysis(); } catch (e) {}
+    }
     var pool = analysis && Array.isArray(analysis.pool) ? analysis.pool.filter(Boolean) : [];
     if (!pool.length) return;
     var store   = loadApex();
