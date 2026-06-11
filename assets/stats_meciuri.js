@@ -432,9 +432,13 @@
   function saveMl5(obj) { try { localStorage.setItem(ML5_KEY, JSON.stringify(obj)); } catch (e) {} }
 
   function syncMl5() {
-    var all = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
+    var _now = Date.now();
+    var all  = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
     var pool = all.filter(function (m) {
-      return m && m.isEnriched && m.bestBet && m.eventId;
+      if (!m || !m.isEnriched || !m.bestBet) return false;
+      /* mirror renderML5Analysis: hide matches started > 2h ago */
+      if (m.date) { var _d = new Date(m.date); if (isFinite(_d.getTime()) && _d.getTime() < _now - 2 * 3600 * 1000) return false; }
+      return true;
     });
     if (!pool.length) return;
     var store = loadMl5(), changed = false;
