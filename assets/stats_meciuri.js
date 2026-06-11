@@ -119,7 +119,7 @@
   }
 
   var _dayOpen = {};
-  var _activeMonitorTab = 'meciuri'; /* 'meciuri' | 'apex' */
+  var _activeMonitorTab = 'meciuri'; /* 'meciuri' | 'apex' | 'ml5' */
 
   window._monitorToggleDay = function (dk) { _dayOpen[dk] = !_dayOpen[dk]; window.renderStatsMeciuri(); };
   window._monitorSwitchTab = function (t)  { _activeMonitorTab = t; window.renderStatsMeciuri(); };
@@ -130,9 +130,11 @@
 
     syncFromSource();  autoCheckResults();
     syncApex();        autoCheckApex();
+    syncMl5();         autoCheckMl5();
 
     var meciuriRows = Object.values(load()).sort(function(a,b){ return new Date(a.eventDate||a.addedAt)-new Date(b.eventDate||b.addedAt); });
     var apexRows    = Object.values(loadApex()).sort(function(a,b){ return new Date(a.eventDate||a.addedAt)-new Date(b.eventDate||b.addedAt); });
+    var ml5Rows     = Object.values(loadMl5()).sort(function(a,b){ return new Date(a.eventDate||a.addedAt)-new Date(b.eventDate||b.addedAt); });
 
     var h = '<div style="padding:14px 12px 80px">';
 
@@ -140,7 +142,8 @@
     h += '<div style="display:flex;gap:8px;margin-bottom:16px;background:#0a0f1e;border-radius:14px;padding:5px">';
     [
       { key: 'meciuri', label: '⚽ Meciuri', count: meciuriRows.length },
-      { key: 'apex',    label: '⚡ APEX',    count: apexRows.length    }
+      { key: 'apex',    label: '⚡ APEX',    count: apexRows.length    },
+      { key: 'ml5',     label: '🔬 ML5',     count: ml5Rows.length     }
     ].forEach(function (tab) {
       var active = _activeMonitorTab === tab.key;
       h += '<button onclick="window._monitorSwitchTab(\'' + tab.key + '\')" '
@@ -160,12 +163,18 @@
         '<div style="font-size:32px;margin-bottom:8px">📋</div>Mergi în Meciuri — meciurile afișate apar automat aici.',
         '#e2e8f0');
       h += renderDayGroup(meciuriRows, _dayOpen, 'window._monitorToggleDay', 'meciuri');
-    } else {
+    } else if (_activeMonitorTab === 'apex') {
       h += renderSummaryBlock(apexRows, 'window._apexToggleDay', 'window._apexClearAll',
         '⚡ MONITORIZARE APEX',
         '<div style="font-size:32px;margin-bottom:8px">⚡</div>Deschide APEX Neural Engine — pick-urile apar automat aici.',
         '#a78bfa');
       h += renderDayGroup(apexRows, _apexDayOpen, 'window._apexToggleDay', 'picks');
+    } else {
+      h += renderSummaryBlock(ml5Rows, 'window._ml5ToggleDay', 'window._ml5ClearAll',
+        '🔬 MONITORIZARE ML5',
+        '<div style="font-size:32px;margin-bottom:8px">🔬</div>Deschide ML5 Analysis — pick-urile apar automat aici.',
+        '#10b981');
+      h += renderDayGroup(ml5Rows, _ml5DayOpen, 'window._ml5ToggleDay', 'picks');
     }
 
     h += '</div>';
@@ -388,10 +397,91 @@
     return h;
   }
 
-  window._apexToggleDay = function (dk) { _apexDayOpen[dk] = !_apexDayOpen[dk]; window.renderStatsMeciuri(); };
-  window._apexClearAll  = function ()   { saveApex({}); window.renderStatsMeciuri(); };
+  /* ═══════════════════════════════════════════════
+     ML5 MONITOR
+  ═══════════════════════════════════════════════ */
+  var ML5_KEY      = 'veyra_ml5_monitor_v1';
+  var _ml5DayOpen  = {};
 
-  /* ── hook renderSmartBet ── */
+  function loadMl5()    { try { return JSON.parse(localStorage.getItem(ML5_KEY) || '{}'); } catch (e) { return {}; } }
+  function saveMl5(obj) { try { localStorage.setItem(ML5_KEY, JSON.stringify(obj)); } catch (e) {} }
+
+  function syncMl5() {
+    var all = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
+    var pool = all.filter(function (m) {
+      return m && m.isEnriched && m.bestBet && m.eventId;
+    });
+    if (!pool.length) return;
+    var store = loadMl5(), added = 0;
+    pool.forEach(function (m) {
+      var k = entryKey(m);
+      if (!k) return;
+      if (!store[k]) {
+        store[k] = {
+          eventId:    String(m.eventId || ''),
+          home:       m.home   || '',
+          away:       m.away   || '',
+          league:     m.league || '',
+          bestBet:    betType(m),
+          odds:       betOdds(m),
+          smartScore: m.smartScore || 0,
+          eventDate:  matchDate(m),
+          addedAt:    new Date().toISOString(),
+          status:     'pending',
+          homeScore:  null,
+          awayScore:  null,
+          resolvedAt: null
+        };
+        added++;
+      }
+    });
+    if (added) saveMl5(store);
+  }
+
+  function autoCheckMl5() {
+    var all = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
+    if (!all.length) return false;
+    var byId = {};
+    all.forEach(function (m) { var eid = String(m.eventId || ''); if (eid) byId[eid] = m; });
+    var store = loadMl5(), changed = false;
+    Object.keys(store).forEach(function (k) {
+      var e = store[k];
+      if (e.status !== 'pending') return;
+      var live = byId[e.eventId];
+      if (!live) return;
+      var hs = live.homeScore != null ? live.homeScore : null;
+      var as = live.awayScore != null ? live.awayScore : null;
+      if (hs === null || as === null) return;
+      var result = typeof window.evaluateMarketOutcome === 'function'
+        ? window.evaluateMarketOutcome(e.bestBet, hs, as) : 'pending';
+      if (result === 'win' || result === 'loss') {
+        e.status = result; e.homeScore = hs; e.awayScore = as; e.resolvedAt = new Date().toISOString();
+        changed = true;
+      }
+    });
+    if (changed) saveMl5(store);
+    return changed;
+  }
+
+  window._ml5ToggleDay = function (dk) { _ml5DayOpen[dk] = !_ml5DayOpen[dk]; window.renderStatsMeciuri(); };
+  window._ml5ClearAll  = function ()   { saveMl5({}); window.renderStatsMeciuri(); };
+
+  /* ── hook renderML5Analysis ── */
+  function hookMl5() {
+    if (window.__ml5MonitorHooked) return;
+    if (typeof window.renderML5Analysis !== 'function') return;
+    window.__ml5MonitorHooked = true;
+    var orig = window.renderML5Analysis;
+    window.renderML5Analysis = function () {
+      var r = orig.apply(this, arguments);
+      setTimeout(function () {
+        syncMl5(); autoCheckMl5();
+        var root = document.getElementById('tab-stats-meciuri');
+        if (root && root.offsetParent !== null) window.renderStatsMeciuri();
+      }, 300);
+      return r;
+    };
+  }
   function hookSmartBet() {
     if (window.__apexMonitorHooked) return;
     if (typeof window.renderSmartBet !== 'function') return;
@@ -428,10 +518,12 @@
   function boot() {
     hookRender();
     hookSmartBet();
+    hookMl5();
     var n = 0, iv = setInterval(function () {
       hookRender();
       hookSmartBet();
-      if ((window.__statsMeciuriHooked && window.__apexMonitorHooked) || ++n > 30) clearInterval(iv);
+      hookMl5();
+      if ((window.__statsMeciuriHooked && window.__apexMonitorHooked && window.__ml5MonitorHooked) || ++n > 30) clearInterval(iv);
     }, 500);
   }
 
