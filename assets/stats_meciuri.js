@@ -118,6 +118,14 @@
     return changed;
   }
 
+  /* ── day expand state (in-memory) ── */
+  var _dayOpen = {};
+
+  window._monitorToggleDay = function (dayKey) {
+    _dayOpen[dayKey] = !_dayOpen[dayKey];
+    window.renderStatsMeciuri();
+  };
+
   /* ── render ── */
   window.renderStatsMeciuri = function () {
     var root = document.getElementById('tab-stats-meciuri');
@@ -128,9 +136,11 @@
 
     var store = load();
     var rows  = Object.values(store).sort(function (a, b) {
-      return new Date(b.addedAt) - new Date(a.addedAt);
+      var da = new Date(a.eventDate || a.addedAt), db = new Date(b.eventDate || b.addedAt);
+      return da - db;
     });
 
+    /* global summary */
     var pending = 0, wins = 0, losses = 0, roiSum = 0;
     rows.forEach(function (e) {
       if      (e.status === 'win')  { wins++;   roiSum += (parseFloat(e.odds) || 1) - 1; }
@@ -142,19 +152,33 @@
     var roiPct  = settled > 0 ? (roiSum / settled * 100).toFixed(1) : null;
     var roiPos  = roiPct !== null && parseFloat(roiPct) >= 0;
 
+    /* group by day */
+    var dayMap = {}, dayOrder = [];
+    rows.forEach(function (e) {
+      var dayKey = (e.eventDate || '').slice(0, 10) || 'necunoscut';
+      if (!dayMap[dayKey]) { dayMap[dayKey] = []; dayOrder.push(dayKey); }
+      dayMap[dayKey].push(e);
+    });
+    dayOrder.sort();
+
+    /* init expand state: first day open by default */
+    dayOrder.forEach(function (k, i) {
+      if (_dayOpen[k] === undefined) _dayOpen[k] = (i === 0);
+    });
+
     var h = '<div style="padding:14px 12px 80px">';
 
     /* header */
     h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">';
     h += '<div><div style="font-size:13px;font-weight:700;color:#e2e8f0;letter-spacing:.4px">MONITORIZARE MECIURI</div>';
-    h += '<div style="font-size:11px;color:#475569;margin-top:2px">' + rows.length + ' meciuri urmărite · actualizare automată</div></div>';
+    h += '<div style="font-size:11px;color:#475569;margin-top:2px">' + rows.length + ' meciuri · ' + dayOrder.length + ' zile · auto-update</div></div>';
     if (rows.length) {
       h += '<button onclick="window._monitorClearAll&&window._monitorClearAll()" '
         + 'style="background:none;border:1px solid #1e293b;color:#475569;border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer">Resetează</button>';
     }
     h += '</div>';
 
-    /* summary */
+    /* summary row */
     h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">';
     [
       { val: pending, label: 'AȘTEPTARE', color: '#94a3b8' },
@@ -178,61 +202,105 @@
         + (roiPos ? '+' : '') + roiPct + '%</span></div>';
     }
 
-    /* list */
+    /* empty state */
     if (!rows.length) {
       h += '<div style="text-align:center;padding:48px 0">';
       h += '<div style="font-size:32px;margin-bottom:12px">📋</div>';
       h += '<div style="font-size:13px;color:#475569">Niciun meci urmărit încă.</div>';
       h += '<div style="font-size:11px;color:#334155;margin-top:6px">Mergi în Meciuri — meciurile afișate<br>apar automat aici.</div>';
       h += '</div>';
-    } else {
-      h += '<div style="display:flex;flex-direction:column;gap:8px">';
-      rows.forEach(function (e) {
-        var color  = MKT_COLOR[e.bestBet] || '#64748b';
-        var label  = MKT_LABEL[e.bestBet] || e.bestBet || '';
-        var odds   = e.odds   ? parseFloat(e.odds).toFixed(2) : '—';
-        var sc     = e.smartScore || 0;
-        var st     = e.status || 'pending';
-
-        var timeStr = '';
-        if (e.eventDate) {
-          var dt = new Date(e.eventDate);
-          if (!isNaN(dt)) timeStr = dt.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })
-            + ' ' + dt.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        var badge, cardBorder;
-        if (st === 'win') {
-          cardBorder = '#166534';
-          badge = '<span style="font-size:12px;font-weight:700;background:#14532d;color:#22c55e;border-radius:8px;padding:4px 12px">✓ WIN'
-            + (e.homeScore != null ? ' · ' + e.homeScore + '-' + e.awayScore : '') + '</span>';
-        } else if (st === 'loss') {
-          cardBorder = '#7f1d1d';
-          badge = '<span style="font-size:12px;font-weight:700;background:#450a0a;color:#ef4444;border-radius:8px;padding:4px 12px">✗ LOSS'
-            + (e.homeScore != null ? ' · ' + e.homeScore + '-' + e.awayScore : '') + '</span>';
-        } else {
-          cardBorder = '#1e293b';
-          badge = '<span style="font-size:11px;color:#64748b;background:#1e293b;border-radius:8px;padding:4px 10px">⏳ Așteptare</span>';
-        }
-
-        h += '<div style="background:#0f172a;border:1px solid ' + cardBorder + ';border-radius:14px;padding:12px">';
-        h += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px">';
-        h += '<span style="font-size:13px;font-weight:700;color:#e2e8f0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
-          + (e.home || '') + ' <span style="color:#475569;font-weight:400">vs</span> ' + (e.away || '') + '</span>';
-        h += '<span style="font-size:10px;color:#475569;white-space:nowrap;margin-left:8px">' + timeStr + '</span>';
-        h += '</div>';
-
-        h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">';
-        if (e.league) h += '<span style="font-size:10px;color:#475569">' + e.league + '</span>';
-        if (label) h += '<span style="font-size:10px;font-weight:700;color:' + color + ';background:#1e293b;border-radius:5px;padding:2px 8px">' + label + '</span>';
-        h += '<span style="font-size:11px;font-weight:700;color:#fbbf24">@ ' + odds + '</span>';
-        h += '<span style="font-size:10px;color:#475569">SS:' + sc + '</span>';
-        h += '</div>';
-        h += badge;
-        h += '</div>';
-      });
-      h += '</div>';
     }
+
+    /* days */
+    dayOrder.forEach(function (dayKey) {
+      var dayRows  = dayMap[dayKey];
+      var isOpen   = !!_dayOpen[dayKey];
+      var dayLabel = '—';
+      if (dayKey !== 'necunoscut') {
+        var dt = new Date(dayKey + 'T12:00:00');
+        if (!isNaN(dt)) {
+          var today    = new Date(); today.setHours(0,0,0,0);
+          var tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+          var dayTs    = dt.getTime();
+          if (dayTs === today.getTime())    dayLabel = 'Azi · ' + dt.toLocaleDateString('ro-RO', {day:'2-digit',month:'short'});
+          else if (dayTs === tomorrow.getTime()) dayLabel = 'Mâine · ' + dt.toLocaleDateString('ro-RO', {day:'2-digit',month:'short'});
+          else dayLabel = dt.toLocaleDateString('ro-RO', {weekday:'short',day:'2-digit',month:'short'});
+        }
+      }
+
+      /* day mini-stats */
+      var dW = 0, dL = 0, dP = 0;
+      dayRows.forEach(function(e){ if(e.status==='win') dW++; else if(e.status==='loss') dL++; else dP++; });
+
+      /* day header */
+      h += '<div style="margin-bottom:8px">';
+      h += '<button onclick="window._monitorToggleDay(\'' + dayKey + '\')" '
+        + 'style="width:100%;background:#0f172a;border:1px solid #1e293b;border-radius:12px;'
+        + 'padding:11px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left">';
+
+      /* left: date + count */
+      h += '<div style="display:flex;align-items:center;gap:10px">';
+      h += '<span style="font-size:12px;font-weight:700;color:#e2e8f0">' + dayLabel + '</span>';
+      h += '<span style="font-size:11px;color:#475569">' + dayRows.length + ' meciuri</span>';
+      h += '</div>';
+
+      /* right: mini badges + arrow */
+      h += '<div style="display:flex;align-items:center;gap:6px">';
+      if (dW) h += '<span style="font-size:10px;font-weight:700;color:#22c55e;background:#14532d;border-radius:5px;padding:2px 7px">' + dW + ' W</span>';
+      if (dL) h += '<span style="font-size:10px;font-weight:700;color:#ef4444;background:#450a0a;border-radius:5px;padding:2px 7px">' + dL + ' L</span>';
+      if (dP) h += '<span style="font-size:10px;color:#64748b;background:#1e293b;border-radius:5px;padding:2px 7px">' + dP + ' ⏳</span>';
+      h += '<span style="font-size:14px;color:#475569;margin-left:4px">' + (isOpen ? '▲' : '▼') + '</span>';
+      h += '</div></button>';
+
+      /* day body */
+      if (isOpen) {
+        h += '<div style="display:flex;flex-direction:column;gap:6px;padding-top:6px">';
+        dayRows.forEach(function (e) {
+          var color  = MKT_COLOR[e.bestBet] || '#64748b';
+          var label  = MKT_LABEL[e.bestBet] || e.bestBet || '';
+          var odds   = e.odds ? parseFloat(e.odds).toFixed(2) : '—';
+          var sc     = e.smartScore || 0;
+          var st     = e.status || 'pending';
+
+          var timeStr = '';
+          if (e.eventDate) {
+            var edt = new Date(e.eventDate);
+            if (!isNaN(edt)) timeStr = edt.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+          }
+
+          var badge, cardBorder;
+          if (st === 'win') {
+            cardBorder = '#166534';
+            badge = '<span style="font-size:11px;font-weight:700;background:#14532d;color:#22c55e;border-radius:7px;padding:3px 10px">✓ WIN'
+              + (e.homeScore != null ? ' · ' + e.homeScore + '-' + e.awayScore : '') + '</span>';
+          } else if (st === 'loss') {
+            cardBorder = '#7f1d1d';
+            badge = '<span style="font-size:11px;font-weight:700;background:#450a0a;color:#ef4444;border-radius:7px;padding:3px 10px">✗ LOSS'
+              + (e.homeScore != null ? ' · ' + e.homeScore + '-' + e.awayScore : '') + '</span>';
+          } else {
+            cardBorder = '#1e293b';
+            badge = '<span style="font-size:11px;color:#64748b;background:#1e293b;border-radius:7px;padding:3px 9px">⏳ Așteptare</span>';
+          }
+
+          h += '<div style="background:#0a0f1e;border:1px solid ' + cardBorder + ';border-radius:12px;padding:11px 12px">';
+          h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
+          h += '<span style="font-size:12px;font-weight:700;color:#e2e8f0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
+            + (e.home || '') + ' <span style="color:#475569;font-weight:400">vs</span> ' + (e.away || '') + '</span>';
+          h += '<span style="font-size:10px;color:#64748b;white-space:nowrap;margin-left:8px">' + timeStr + '</span>';
+          h += '</div>';
+          h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap">';
+          if (e.league) h += '<span style="font-size:10px;color:#475569">' + e.league + '</span>';
+          if (label)    h += '<span style="font-size:10px;font-weight:700;color:' + color + ';background:#1e293b;border-radius:5px;padding:2px 7px">' + label + '</span>';
+          h += '<span style="font-size:11px;font-weight:700;color:#fbbf24">@ ' + odds + '</span>';
+          h += '<span style="font-size:10px;color:#475569">SS:' + sc + '</span>';
+          h += '</div>';
+          h += badge;
+          h += '</div>';
+        });
+        h += '</div>';
+      }
+      h += '</div>';
+    });
 
     h += '</div>';
     root.innerHTML = h;
