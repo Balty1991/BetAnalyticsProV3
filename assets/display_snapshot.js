@@ -20,20 +20,23 @@
       count:    preds.length,
       matches:  preds.map(function (m) {
         if (!m) return null;
+        var _b    = m.bestBet;
+        var _bet  = _b && typeof _b === 'object' ? (_b.type  || '') : (_b || '');
+        var _odds = _b && typeof _b === 'object' ? (_b.bestOdds || _b.odds || null) : null;
         return {
-          eventId:       m.eventId      || m.event_id   || '',
-          home:          m.home         || m.homeTeam    || '',
-          away:          m.away         || m.awayTeam    || '',
-          league:        m.league       || m.leagueName  || '',
-          country:       m.country      || '',
-          eventDate:     m.eventDate    || m.event_date  || m.date || '',
-          bestBet:       m.bestBet      || '',
-          smartScore:    m.smartScore   || 0,
-          odds:          m.bestOdds     || m.odds        || null,
+          eventId:       m.eventId       || m.event_id   || '',
+          home:          m.home          || m.homeTeam   || '',
+          away:          m.away          || m.awayTeam   || '',
+          league:        m.league        || m.leagueName || '',
+          country:       m.country       || '',
+          eventDate:     m.date          || m.eventDate  || m.event_date || '',
+          bestBet:       _bet,
+          smartScore:    m.smartScore    || 0,
+          odds:          _odds,
           analysisState: m.analysisState || '',
-          verdict:       m.verdict      || '',
-          isTop:         !!(m.isTop     || m.top),
-          isBetOk:       !!(m.isBetOk   || m.bet_ok)
+          verdict:       m.verdict       || '',
+          isTop:         !!(m.isTop      || m.top),
+          isBetOk:       !!(m.isBetOk    || m.bet_ok)
         };
       }).filter(Boolean)
     };

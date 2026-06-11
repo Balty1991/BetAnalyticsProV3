@@ -22,19 +22,17 @@
   function matchDate(m)  { return m.date || m.eventDate || m.event_date || ''; }
   function entryKey(m)   { var k = String(m.eventId || m.event_id || '') + '|' + betType(m); return (k === '|' || !m.eventId) ? null : k; }
 
-  /* ── get source matches (filtered cache, or fallback to ALL_MATCHES eligible) ── */
+  /* ── get source matches — ONLY what's currently displayed (never ALL_MATCHES) ── */
   function getSourceMatches() {
+    /* 1. live MATCHES_FILTERED_CACHE — exact filtered display */
     var fc = Array.isArray(window.MATCHES_FILTERED_CACHE) ? window.MATCHES_FILTERED_CACHE.filter(Boolean) : [];
     if (fc.length) return fc;
-    /* fallback: all eligible matches from ALL_MATCHES */
-    var all = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
-    return all.filter(function (m) {
-      if (!m || !m.eventId) return false;
-      var bt = betType(m);
-      if (!bt) return false;
-      if (typeof window.passesSelectionFilter === 'function') return window.passesSelectionFilter(m);
-      return m.analysisState === 'ELIGIBLE';
-    });
+    /* 2. last saved snapshot by display_snapshot.js (same filtered list, persisted) */
+    try {
+      var snap = JSON.parse(localStorage.getItem('veyra_display_snapshot') || 'null');
+      if (snap && Array.isArray(snap.matches) && snap.matches.length) return snap.matches;
+    } catch (e) {}
+    return [];
   }
 
   /* ── sync matches into store ── */
