@@ -132,6 +132,8 @@
 
   window._monitorToggleDay = function (dk) { _dayOpen[dk] = !_dayOpen[dk]; window.renderStatsMeciuri(); };
   window._monitorSwitchTab = function (t)  { _activeMonitorTab = t; window.renderStatsMeciuri(); };
+  window._apexToggleDay    = function (dk) { _apexDayOpen[dk] = !_apexDayOpen[dk]; window.renderStatsMeciuri(); };
+  window._apexClearAll     = function ()   { saveApex({}); window.renderStatsMeciuri(); };
 
   window.renderStatsMeciuri = function () {
     var root = document.getElementById('tab-stats-meciuri');
