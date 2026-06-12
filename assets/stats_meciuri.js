@@ -137,6 +137,7 @@
     var resolved = loadStore(storeKey);
     var rows = [];
     var seen = {};
+    var storeChanged = false;
 
     pool.forEach(function(item) {
       var k = keyFn(item);
@@ -147,16 +148,20 @@
         rows.push(hist);
       } else {
         var base = shapeFn(item);
-        rows.push(Object.assign({}, base, {
+        var entry = Object.assign({}, base, {
           status: 'pending', homeScore: null, awayScore: null, resolvedAt: null
-        }));
+        });
+        /* snapshot pending pick so it survives pipeline updates */
+        if (!hist) { resolved[k] = entry; storeChanged = true; }
+        rows.push(entry);
       }
     });
 
-    /* add historical win/loss not in current pool */
+    if (storeChanged) saveStore(storeKey, resolved);
+
+    /* add ALL historical entries not in current pool (including pending) */
     Object.keys(resolved).forEach(function(k) {
-      var e = resolved[k];
-      if (!seen[k] && e.status !== 'pending') rows.push(e);
+      if (!seen[k]) rows.push(resolved[k]);
     });
 
     return rows;
