@@ -485,6 +485,26 @@
     };
   }
 
+  /* ── periodic re-fetch: every 5 min, refresh predictions and auto-resolve ── */
+  function _periodicFetch() {
+    if (!window.fetch) return;
+    fetch('data/predictions.json?_t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+        var preds = Array.isArray(data) ? data : (data.results || []);
+        if (!preds.length) return;
+        window.__RAW_PREDICTIONS = preds;
+        var before = JSON.stringify([loadStore(STORE_KEY), loadStore(APEX_KEY), loadStore(ML5_KEY)]);
+        _autoCheck(getMeciuriRows(), STORE_KEY, entryKey);
+        _autoCheck(getApexRows(),    APEX_KEY,  apexKey);
+        _autoCheck(getMl5Rows(),     ML5_KEY,   entryKey);
+        var after = JSON.stringify([loadStore(STORE_KEY), loadStore(APEX_KEY), loadStore(ML5_KEY)]);
+        if (before !== after) window.renderStatsMeciuri();
+      })
+      .catch(function() {});
+  }
+
   function boot() {
     hookRender(); hookSmartBet(); hookMl5();
     var n = 0, iv = setInterval(function() {
@@ -492,6 +512,7 @@
       if ((window.__statsMeciuriHooked && window.__apexMonitorHooked && window.__ml5MonitorHooked) || ++n > 30)
         clearInterval(iv);
     }, 500);
+    setInterval(_periodicFetch, 5 * 60 * 1000);
   }
 
   if (document.readyState === 'loading') {
