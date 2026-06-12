@@ -220,6 +220,7 @@
   var _apexDayOpen = {};
   var _ml5DayOpen  = {};
   var _activeMonitorTab = 'meciuri';
+  var _pendingEntries   = [];  /* reset each render; used by manual settle */
 
   window._monitorSwitchTab = function(t)  { _activeMonitorTab = t; window.renderStatsMeciuri(); };
   window._monitorToggleDay = function(dk) { _dayOpen[dk]     = !_dayOpen[dk];     window.renderStatsMeciuri(); };
@@ -229,9 +230,22 @@
   window._apexClearAll     = function()   { saveStore(APEX_KEY,  {}); window.renderStatsMeciuri(); };
   window._ml5ClearAll      = function()   { saveStore(ML5_KEY,   {}); window.renderStatsMeciuri(); };
 
+  window._manualSettle = function(idx, result) {
+    var item = _pendingEntries[idx];
+    if (!item) return;
+    var store = loadStore(item.storeKey);
+    store[item.key] = Object.assign({}, item.entry, {
+      status: result, resolvedAt: new Date().toISOString(), manual: true
+    });
+    saveStore(item.storeKey, store);
+    window.renderStatsMeciuri();
+  };
+
   window.renderStatsMeciuri = function() {
     var root = document.getElementById('tab-stats-meciuri');
     if (!root) return;
+
+    _pendingEntries = [];  /* reset index for manual settle buttons */
 
     /* compute rows live */
     var meciuriRows = getMeciuriRows().sort(function(a,b){ return new Date(a.eventDate)-new Date(b.eventDate); });
@@ -274,17 +288,17 @@
       h += renderSummaryBlock(meciuriRows, 'window._monitorClearAll', 'MONITORIZARE MECIURI',
         '<div style="font-size:32px;margin-bottom:8px">📋</div>Mergi în Meciuri — meciurile afișate apar automat aici.',
         '#e2e8f0');
-      h += renderDayGroup(meciuriRows, _dayOpen,     'window._monitorToggleDay', 'meciuri');
+      h += renderDayGroup(meciuriRows, _dayOpen,     'window._monitorToggleDay', 'meciuri', STORE_KEY, entryKey);
     } else if (_activeMonitorTab === 'apex') {
       h += renderSummaryBlock(apexRows, 'window._apexClearAll', '⚡ MONITORIZARE APEX',
         '<div style="font-size:32px;margin-bottom:8px">⚡</div>Deschide APEX Neural Engine — pick-urile apar automat aici.',
         '#a78bfa');
-      h += renderDayGroup(apexRows, _apexDayOpen, 'window._apexToggleDay',    'picks');
+      h += renderDayGroup(apexRows, _apexDayOpen, 'window._apexToggleDay',    'picks', APEX_KEY, apexKey);
     } else {
       h += renderSummaryBlock(ml5Rows, 'window._ml5ClearAll', '🔬 MONITORIZARE ML5',
         '<div style="font-size:32px;margin-bottom:8px">🔬</div>Deschide ML5 Analysis — pick-urile apar automat aici.',
         '#10b981');
-      h += renderDayGroup(ml5Rows, _ml5DayOpen, 'window._ml5ToggleDay',    'picks');
+      h += renderDayGroup(ml5Rows, _ml5DayOpen, 'window._ml5ToggleDay',    'picks', ML5_KEY, entryKey);
     }
 
     h += '</div>';
@@ -337,7 +351,7 @@
     return h;
   }
 
-  function renderDayGroup(rows, dayOpen, toggleFn, unit) {
+  function renderDayGroup(rows, dayOpen, toggleFn, unit, storeKey, keyFn) {
     var dayMap = {}, dayOrder = [];
     rows.forEach(function(e) {
       var dk = (e.eventDate||'').slice(0,10) || 'necunoscut';
@@ -398,7 +412,14 @@
             badge = '<span style="font-size:11px;font-weight:700;background:#450a0a;color:#ef4444;border-radius:7px;padding:3px 10px">✗ LOSS' + (e.homeScore!=null?' · '+e.homeScore+'-'+e.awayScore:'') + '</span>';
           } else {
             cardBorder = '#1e293b';
-            badge = '<span style="font-size:11px;color:#64748b;background:#1e293b;border-radius:7px;padding:3px 9px">⏳ Așteptare</span>';
+            var idx = _pendingEntries.length;
+            var eKey = keyFn ? (keyFn(e) || (e.home+'|'+e.away+'|'+e.bestBet)) : (e.home+'|'+e.away+'|'+e.bestBet);
+            _pendingEntries.push({ storeKey: storeKey, key: eKey, entry: e });
+            badge = '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+              + '<span style="font-size:11px;color:#64748b;background:#1e293b;border-radius:7px;padding:3px 9px">⏳ Așteptare</span>'
+              + '<button onclick="window._manualSettle(' + idx + ',\'win\')" style="font-size:10px;font-weight:700;color:#22c55e;background:#14532d;border:1px solid #166534;border-radius:6px;padding:2px 9px;cursor:pointer">✓ WIN</button>'
+              + '<button onclick="window._manualSettle(' + idx + ',\'loss\')" style="font-size:10px;font-weight:700;color:#ef4444;background:#450a0a;border:1px solid #7f1d1d;border-radius:6px;padding:2px 9px;cursor:pointer">✗ LOSS</button>'
+              + '</div>';
           }
           h += '<div style="background:#0a0f1e;border:1px solid ' + cardBorder + ';border-radius:12px;padding:11px 12px">';
           h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">';
