@@ -167,20 +167,38 @@
   ══════════════════════════════════════════════════ */
 
   function _autoCheck(rows, storeKey, keyFn) {
-    var all = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
-    if (!all.length) return;
-    var byId = {};
-    all.forEach(function(m) { var eid = String(m.eventId || m.event_id || ''); if (eid) byId[eid] = m; });
+    var rawPreds = Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : [];
+    if (!rawPreds.length) return;
+
+    var byId   = {};
+    var byName = {};
+    rawPreds.forEach(function(raw) {
+      var ev = raw && raw.event ? raw.event : null;
+      if (!ev) return;
+      var hs = (ev.home_score != null && String(ev.home_score) !== 'None') ? Number(ev.home_score) : null;
+      var as = (ev.away_score != null && String(ev.away_score) !== 'None') ? Number(ev.away_score) : null;
+      var sd = { homeScore: hs, awayScore: as, status: ev.status || '' };
+      var eid = String(ev.id != null ? ev.id : '').trim();
+      if (eid) byId[eid] = sd;
+      var h = String(ev.home_team || '').toLowerCase().trim();
+      var a = String(ev.away_team || '').toLowerCase().trim();
+      if (h && a) byName[h + '|' + a] = sd;
+    });
 
     var store   = loadStore(storeKey);
     var changed = false;
     rows.forEach(function(entry) {
       if (entry.status !== 'pending') return;
-      var live = byId[String(entry.eventId || '')];
-      if (!live) return;
-      var hs = live.homeScore != null ? live.homeScore : null;
-      var as = live.awayScore != null ? live.awayScore : null;
-      if (hs === null || as === null) return;
+      var eid = String(entry.eventId || '');
+      var sd  = (eid && eid !== '0') ? byId[eid] : null;
+      if (!sd) {
+        var h = String(entry.home || '').toLowerCase().trim();
+        var a = String(entry.away || '').toLowerCase().trim();
+        if (h && a) sd = byName[h + '|' + a];
+      }
+      if (!sd) return;
+      var hs = sd.homeScore, as = sd.awayScore;
+      if (hs === null || as === null || isNaN(hs) || isNaN(as)) return;
       var result = evalOutcome(entry.bestBet, hs, as);
       if (result === 'win' || result === 'loss') {
         var k = keyFn(entry) || (entry.home + '|' + entry.away + '|' + entry.bestBet);
