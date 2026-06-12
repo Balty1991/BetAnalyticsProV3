@@ -518,6 +518,21 @@
         clearInterval(iv);
     }, 500);
     setInterval(_periodicFetch, 5 * 60 * 1000);
+    _recoverMissingPicks();
+  }
+
+  /* one-time recovery for picks that disappeared before snapshot fix */
+  function _recoverMissingPicks() {
+    var ml5 = loadStore(ML5_KEY);
+    if (!ml5['209500|dc1x']) {
+      ml5['209500|dc1x'] = {
+        eventId: '209500', home: 'Difaâ Hassani El-Jadidi', away: 'Olympique Dcheira',
+        league: 'Botola Pro', bestBet: 'dc1x', odds: 1.29, smartScore: 0,
+        eventDate: '2026-06-12', status: 'win', homeScore: 2, awayScore: 2,
+        resolvedAt: '2026-06-12T21:00:00.000Z', manual: true
+      };
+      saveStore(ML5_KEY, ml5);
+    }
   }
 
   if (document.readyState === 'loading') {
