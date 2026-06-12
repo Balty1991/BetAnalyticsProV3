@@ -9,10 +9,14 @@
    * Astfel contoarele corespund mereu cu ce afișează APEX / ML5 / Meciuri.
    */
 
-  /* ── storage keys (bumped for clean slate) ── */
+  /* ── storage keys ── */
   var STORE_KEY = 'veyra_monitor_v4';
   var APEX_KEY  = 'veyra_apex_monitor_v2';
   var ML5_KEY   = 'veyra_ml5_monitor_v2';
+
+  var _REPO  = 'Balty1991/VEYRA';
+  var _RFILE = 'data/monitor_stats.json';
+  var _syncT = null;
 
   var MKT_LABEL = {
     over25:'Over 2.5G', under35:'Under 3.5G', btts:'BTTS',
@@ -25,9 +29,89 @@
     homewin:'#22c55e', awaywin:'#ef4444', draw:'#94a3b8'
   };
 
-  /* ── generic helpers ── */
-  function loadStore(key)       { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { return {}; } }
-  function saveStore(key, obj)  { try { localStorage.setItem(key, JSON.stringify(obj)); } catch(e) {} }
+  /* ── storage helpers ── */
+  function loadStore(key)           { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { return {}; } }
+  function saveStoreLocal(key, obj) { try { localStorage.setItem(key, JSON.stringify(obj)); } catch(e) {} }
+  function saveStore(key, obj)      { saveStoreLocal(key, obj); _scheduleRepoSave(); }
+
+  /* ── GitHub repo sync ── */
+  function _pat() { return localStorage.getItem('veyra_github_pat') || ''; }
+
+  function _setSyncStatus(msg, color) {
+    var el = document.getElementById('veyra-sync-status');
+    if (el) { el.textContent = msg; el.style.color = color || '#94a3b8'; }
+  }
+
+  function _repoFetch(cb) {
+    fetch('https://api.github.com/repos/' + _REPO + '/contents/' + _RFILE + '?_t=' + Date.now(), {
+      headers: { 'Accept': 'application/vnd.github.v3+json' }
+    })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(meta) {
+      if (!meta || !meta.content) return cb(null, null);
+      try { cb(JSON.parse(atob(meta.content.replace(/\s/g,''))), meta.sha); }
+      catch(e) { cb(null, meta.sha || null); }
+    }).catch(function() { cb(null, null); });
+  }
+
+  function _scheduleRepoSave() {
+    if (!_pat()) return;
+    clearTimeout(_syncT);
+    _syncT = setTimeout(function() {
+      _setSyncStatus('☁ Se salvează…', '#94a3b8');
+      _repoFetch(function(existing, sha) {
+        var payload = {
+          meciuri:  loadStore(STORE_KEY),
+          apex:     loadStore(APEX_KEY),
+          ml5:      loadStore(ML5_KEY),
+          saved_at: new Date().toISOString()
+        };
+        var body = { message: 'VEYRA monitor stats', content: btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2)))) };
+        if (sha) body.sha = sha;
+        fetch('https://api.github.com/repos/' + _REPO + '/contents/' + _RFILE, {
+          method: 'PUT',
+          headers: { 'Authorization': 'token ' + _pat(), 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+          body: JSON.stringify(body)
+        }).then(function(r) {
+          if (r.ok) _setSyncStatus('☁ Salvat ✓', '#22c55e');
+          else _setSyncStatus('☁ Eroare ' + r.status, '#ef4444');
+        }).catch(function() { _setSyncStatus('☁ Offline', '#f59e0b'); });
+      });
+    }, 2000);
+  }
+
+  function _repoLoadAndMerge(done) {
+    _repoFetch(function(data) {
+      if (!data) return done && done();
+      function merge(storeKey, incoming) {
+        if (!incoming || typeof incoming !== 'object') return;
+        var local = loadStore(storeKey), dirty = false;
+        Object.keys(incoming).forEach(function(k) {
+          var ri = incoming[k], li = local[k];
+          if (!li) { local[k] = ri; dirty = true; return; }
+          var rt = ri.resolvedAt || '', lt = li.resolvedAt || '';
+          if (rt && (!lt || rt > lt)) { local[k] = ri; dirty = true; }
+        });
+        if (dirty) saveStoreLocal(storeKey, local);
+      }
+      merge(STORE_KEY, data.meciuri);
+      merge(APEX_KEY,  data.apex);
+      merge(ML5_KEY,   data.ml5);
+      done && done();
+    });
+  }
+
+  window._setMonitorToken = function() {
+    var cur = _pat();
+    var t = prompt(
+      'Token GitHub Personal Access (scope: Contents → Read and write)\n\n' +
+      (cur ? 'Token setat. Lasă gol pentru a dezactiva sincronizarea.' : 'Lipește tokenul tău:')
+    );
+    if (t === null) return;
+    if (t.trim()) { localStorage.setItem('veyra_github_pat', t.trim()); _scheduleRepoSave(); }
+    else           { localStorage.removeItem('veyra_github_pat'); }
+    window.renderStatsMeciuri && window.renderStatsMeciuri();
+  };
 
   function betType(m)   { var b = m.bestBet; return b && typeof b === 'object' ? (b.type || '') : (b || ''); }
   function betOdds(m)   { var b = m.bestBet; return b && typeof b === 'object' ? (b.bestOdds || b.odds || null) : (m.bestOdds || m.odds || null); }
@@ -327,12 +411,21 @@
     var roiPos  = roiPct !== null && parseFloat(roiPct) >= 0;
     var nDays   = Object.keys(rows.reduce(function(m,e){ m[(e.eventDate||'').slice(0,10)||'x']=1; return m; }, {})).length;
 
+    var hasPat    = !!localStorage.getItem('veyra_github_pat');
+    var syncLabel = hasPat ? '☁ Sincronizat' : '☁ Salvare repo';
+    var syncBg    = hasPat ? '#14532d' : '#1e293b';
+    var syncBord  = hasPat ? '#166534' : '#334155';
+    var syncClr   = hasPat ? '#22c55e' : '#94a3b8';
+
     var h = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
     h += '<div>';
     h += '<div style="font-size:13px;font-weight:700;color:' + accentColor + ';letter-spacing:.4px">' + title + '</div>';
     h += '<div style="font-size:11px;color:#475569;margin-top:2px">' + rows.length + ' picks · ' + nDays + ' zile · auto-update</div>';
     h += '</div>';
+    h += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">';
+    h += '<button id="veyra-sync-status" onclick="window._setMonitorToken()" style="font-size:10px;font-weight:600;color:' + syncClr + ';background:' + syncBg + ';border:1px solid ' + syncBord + ';border-radius:7px;padding:4px 10px;cursor:pointer">' + syncLabel + '</button>';
     if (rows.length) h += '<button onclick="' + clearFn + '()" style="background:none;border:1px solid #1e293b;color:#475569;border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer">Resetează</button>';
+    h += '</div>';
     h += '</div>';
 
     h += '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:10px">';
@@ -511,6 +604,10 @@
   }
 
   function boot() {
+    _recoverMissingPicks();
+    _repoLoadAndMerge(function() {
+      window.renderStatsMeciuri && window.renderStatsMeciuri();
+    });
     hookRender(); hookSmartBet(); hookMl5();
     var n = 0, iv = setInterval(function() {
       hookRender(); hookSmartBet(); hookMl5();
@@ -518,7 +615,6 @@
         clearInterval(iv);
     }, 500);
     setInterval(_periodicFetch, 5 * 60 * 1000);
-    _recoverMissingPicks();
   }
 
   /* one-time recovery for picks that disappeared before snapshot fix */
@@ -531,7 +627,7 @@
         eventDate: '2026-06-12', status: 'win', homeScore: 2, awayScore: 2,
         resolvedAt: '2026-06-12T21:00:00.000Z', manual: true
       };
-      saveStore(ML5_KEY, ml5);
+      saveStoreLocal(ML5_KEY, ml5);
     }
   }
 
