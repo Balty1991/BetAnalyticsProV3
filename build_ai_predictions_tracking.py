@@ -255,6 +255,14 @@ def compute_stats(history):
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
+def picks_signature(picks):
+    """Fingerprint a pick list by (meci, pick) pairs — order-independent."""
+    return frozenset(
+        (p.get('meci', '').strip().lower(), p.get('pick', '').strip().lower())
+        for p in picks
+    )
+
+
 def main():
     today = date.today().isoformat()
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -304,6 +312,26 @@ def main():
         else:
             top_picks_raw = daily.get('top_picks', [])
             acumulator_raw = daily.get('acumulator', [])
+
+            # Skip archiving if picks are identical to the most recent history entry
+            sorted_history = sorted(history, key=lambda r: r.get('date', ''), reverse=True)
+            if sorted_history:
+                last = sorted_history[0]
+                last_acum_sig = picks_signature(last.get('acumulator_picks', []))
+                last_top_sig  = picks_signature(last.get('top_picks_results', []))
+                new_acum_sig  = picks_signature(acumulator_raw)
+                new_top_sig   = picks_signature(top_picks_raw)
+                if last_acum_sig == new_acum_sig and last_top_sig == new_top_sig:
+                    print(f"Picks unchanged from {last.get('date')} — no new entry for {entry_date}.")
+                    history = sorted_history  # already re-resolved above
+                    # Fall through to save updated results without new entry
+                    tracking['history'] = history
+                    tracking['stats'] = compute_stats(history)
+                    tracking['updated_at'] = now_iso
+                    os.makedirs('data', exist_ok=True)
+                    tracking_path.write_text(json.dumps(tracking, ensure_ascii=False, indent=2), encoding='utf-8')
+                    print(f"Written data/ai_predictions_tracking.json — {len(history)} days in history (no new entry, picks unchanged)")
+                    return
 
             top_picks_results = [resolve_pick(dict(p), lookup) for p in top_picks_raw]
             acumulator_picks = [resolve_pick({'meci': a.get('meci', ''), 'pick': a.get('pick', '')}, lookup) for a in acumulator_raw]
