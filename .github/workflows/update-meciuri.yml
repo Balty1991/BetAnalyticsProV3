@@ -130,6 +130,24 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Build Claude daily analysis (top picks + acumulator)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -f build_claude_daily.py ]; then
+            pip install google-genai 2>/dev/null | tail -1
+            timeout 120s python -u build_claude_daily.py || echo "Claude daily analysis skipped; non-fatal."
+          fi
+        continue-on-error: true
+
+      - name: Build AI predictions tracking
+        run: |
+          if [ -f build_ai_predictions_tracking.py ]; then
+            timeout 120s python -u build_ai_predictions_tracking.py || echo "AI tracking skipped; non-fatal."
+          fi
+        continue-on-error: true
+
       - name: Update meta marker
         env:
           FETCH_STATUS: ${{ steps.fetch_current.outcome }}
