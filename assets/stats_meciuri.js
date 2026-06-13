@@ -243,16 +243,9 @@
 
     if (storeChanged) saveStore(storeKey, resolved);
 
-    /* historical entries not in current pool:
-       - WIN/LOSS: always show
-       - pending: only show if match date has passed (otherwise recommendation just changed) */
-    var _now2 = Date.now();
+    /* show ALL historical entries not in current pool — WIN/LOSS and all past recommendations */
     Object.keys(resolved).forEach(function(k) {
-      if (seen[k]) return;
-      var e = resolved[k];
-      if (e.status !== 'pending') { rows.push(e); return; }
-      var matchTs = e.eventDate ? new Date(e.eventDate).getTime() : 0;
-      if (matchTs && matchTs < _now2 - 2 * 3600 * 1000) rows.push(e);
+      if (!seen[k]) rows.push(resolved[k]);
     });
 
     return rows;
