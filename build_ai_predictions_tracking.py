@@ -270,23 +270,10 @@ def main():
 
     history = tracking.get('history', [])
 
-    # Remove stale entries where the date doesn't match the generated_at date
-    # (can happen when yesterday's analysis is archived again as today)
-    cleaned = []
-    for rec in history:
-        gen_at_date = (rec.get('generated_at') or '')[:10]
-        rec_date = rec.get('date', '')
-        if gen_at_date and rec_date and gen_at_date != rec_date:
-            print(f"Removing stale entry: date={rec_date} but generated_at={gen_at_date}")
-            continue
-        cleaned.append(rec)
-    history = cleaned
-
-    # Skip if today's entry already exists
-    existing_dates = {r.get('date') for r in history}
-    if today in existing_dates:
-        print(f"Today's entry ({today}) already archived. Re-resolving results only.")
-        # Still update results for pending picks
+    # Load claude_daily_analysis.json to determine the entry date
+    daily_path = Path('data/claude_daily_analysis.json')
+    if not daily_path.exists():
+        print("data/claude_daily_analysis.json not found — updating results only.")
         events = load_events()
         lookup = build_score_lookup(events)
         for rec in history:
@@ -295,30 +282,26 @@ def main():
             rec['top_picks_summary'] = summarise_picks(rec['top_picks_results'])
             rec['acumulator_result'] = acum_result(rec['acumulator_picks'])
     else:
-        # Load today's claude_daily_analysis
-        daily_path = Path('data/claude_daily_analysis.json')
-        if not daily_path.exists():
-            print("data/claude_daily_analysis.json not found — nothing to archive.")
-            return
-
         daily = json.loads(daily_path.read_text(encoding='utf-8'))
-
-        # Don't archive if the analysis was generated on a different day
         gen_at = daily.get('generated_at', '')
-        gen_date = gen_at[:10] if len(gen_at) >= 10 else ''
-        if gen_date and gen_date != today:
-            print(f"claude_daily_analysis.json was generated on {gen_date} (not today {today}). Skipping new entry — updating results only.")
-            events = load_events()
-            lookup = build_score_lookup(events)
-            for rec in history:
-                rec['top_picks_results'] = [resolve_pick(p, lookup) for p in rec.get('top_picks_results', [])]
-                rec['acumulator_picks'] = [resolve_pick(p, lookup) for p in rec.get('acumulator_picks', [])]
-                rec['top_picks_summary'] = summarise_picks(rec['top_picks_results'])
-                rec['acumulator_result'] = acum_result(rec['acumulator_picks'])
-        else:
-            events = load_events()
-            lookup = build_score_lookup(events)
+        # Use the analysis's own generation date as the history entry date
+        entry_date = gen_at[:10] if len(gen_at) >= 10 else today
 
+        existing_dates = {r.get('date') for r in history}
+
+        events = load_events()
+        lookup = build_score_lookup(events)
+
+        # Always re-resolve pending picks in existing history
+        for rec in history:
+            rec['top_picks_results'] = [resolve_pick(p, lookup) for p in rec.get('top_picks_results', [])]
+            rec['acumulator_picks'] = [resolve_pick(p, lookup) for p in rec.get('acumulator_picks', [])]
+            rec['top_picks_summary'] = summarise_picks(rec['top_picks_results'])
+            rec['acumulator_result'] = acum_result(rec['acumulator_picks'])
+
+        if entry_date in existing_dates:
+            print(f"Entry for {entry_date} already archived. Re-resolved results only.")
+        else:
             top_picks_raw = daily.get('top_picks', [])
             acumulator_raw = daily.get('acumulator', [])
 
@@ -326,8 +309,8 @@ def main():
             acumulator_picks = [resolve_pick({'meci': a.get('meci', ''), 'pick': a.get('pick', '')}, lookup) for a in acumulator_raw]
 
             rec = {
-                'date': today,
-                'generated_at': daily.get('generated_at', now_iso),
+                'date': entry_date,
+                'generated_at': gen_at or now_iso,
                 'provider': daily.get('provider', 'unknown'),
                 'matches_analyzed': daily.get('matches_analyzed', 0),
                 'top_picks_results': top_picks_results,
@@ -339,7 +322,7 @@ def main():
             }
 
             history.append(rec)
-            print(f"Archived {today}: {len(top_picks_results)} top picks, {len(acumulator_picks)} acumulator picks")
+            print(f"Archived {entry_date}: {len(top_picks_results)} top picks, {len(acumulator_picks)} acumulator picks")
 
     # Keep last 30 days, sorted by date desc
     history.sort(key=lambda r: r.get('date', ''), reverse=True)
