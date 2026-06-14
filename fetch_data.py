@@ -4371,6 +4371,38 @@ def main():
     save_json(recommendation_log, "recommendation_log.json")
     save_json(ai_memory, "ai_memory.json")
 
+    # Slim recent finished results for browser-side score resolution (last 3 days)
+    recent_cutoff = started_at - timedelta(days=3)
+    recent_results = []
+    for pred in historical_predictions:
+        ev = pred.get('event') or {}
+        if ev.get('status') != 'finished':
+            continue
+        hs = ev.get('home_score')
+        aws = ev.get('away_score')
+        if hs is None or aws is None:
+            continue
+        try:
+            ev_dt_str = ev.get('event_date', '')
+            if ev_dt_str:
+                ev_dt = datetime.fromisoformat(ev_dt_str.replace('Z', '+00:00'))
+                if ev_dt.tzinfo is None:
+                    ev_dt = ev_dt.replace(tzinfo=timezone.utc)
+                if ev_dt < recent_cutoff:
+                    continue
+        except Exception:
+            pass
+        recent_results.append({
+            'id': ev.get('id'),
+            'home_team': ev.get('home_team', ''),
+            'away_team': ev.get('away_team', ''),
+            'home_score': hs,
+            'away_score': aws,
+            'status': 'finished'
+        })
+    save_json(recent_results, 'recent_results.json')
+    print(f"Saved {len(recent_results)} recent finished events to recent_results.json")
+
     meta = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "started_at": started_at.isoformat(),
