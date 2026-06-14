@@ -586,21 +586,31 @@
   /* ── periodic re-fetch: every 5 min, refresh predictions and auto-resolve ── */
   function _periodicFetch() {
     if (!window.fetch) return;
-    fetch('data/predictions.json?_t=' + Date.now(), { cache: 'no-store' })
-      .then(function(r) { return r.ok ? r.json() : null; })
-      .then(function(data) {
-        if (!data) return;
-        var preds = Array.isArray(data) ? data : (data.results || []);
-        if (!preds.length) return;
-        window.__RAW_PREDICTIONS = preds;
-        var before = JSON.stringify([loadStore(STORE_KEY), loadStore(APEX_KEY), loadStore(ML5_KEY)]);
-        _autoCheck(getMeciuriRows(), STORE_KEY, entryKey);
-        _autoCheck(getApexRows(),    APEX_KEY,  apexKey);
-        _autoCheck(getMl5Rows(),     ML5_KEY,   entryKey);
-        var after = JSON.stringify([loadStore(STORE_KEY), loadStore(APEX_KEY), loadStore(ML5_KEY)]);
-        if (before !== after) window.renderStatsMeciuri();
-      })
-      .catch(function() {});
+    var t = Date.now();
+    Promise.all([
+      fetch('data/predictions.json?_t='    + t, { cache: 'no-store' }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+      fetch('data/recent_results.json?_t=' + t, { cache: 'no-store' }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; })
+    ]).then(function(results) {
+      var predData    = results[0];
+      var recentData  = results[1];
+
+      var preds = predData  ? (Array.isArray(predData)  ? predData  : (predData.results  || [])) : [];
+      var recent = recentData ? (Array.isArray(recentData) ? recentData : []) : [];
+
+      /* wrap recent_results entries to match __RAW_PREDICTIONS format */
+      var recentWrapped = recent.map(function(r) { return { event: r }; });
+
+      var merged = preds.concat(recentWrapped);
+      if (!merged.length) return;
+      window.__RAW_PREDICTIONS = merged;
+
+      var before = JSON.stringify([loadStore(STORE_KEY), loadStore(APEX_KEY), loadStore(ML5_KEY)]);
+      _autoCheck(getMeciuriRows(), STORE_KEY, entryKey);
+      _autoCheck(getApexRows(),    APEX_KEY,  apexKey);
+      _autoCheck(getMl5Rows(),     ML5_KEY,   entryKey);
+      var after = JSON.stringify([loadStore(STORE_KEY), loadStore(APEX_KEY), loadStore(ML5_KEY)]);
+      if (before !== after) window.renderStatsMeciuri();
+    });
   }
 
   function boot() {
