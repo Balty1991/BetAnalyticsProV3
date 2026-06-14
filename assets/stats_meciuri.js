@@ -255,7 +255,19 @@
       if (!seen[k]) rows.push(resolved[k]);
     });
 
-    return rows;
+    /* Deduplicate by eventId+bestBet: prefer resolved over pending.
+       This cleans up any duplicate name-based entries created by old auto-check logic. */
+    var byMatch = {};
+    rows.forEach(function(r) {
+      if (!r || !r.eventId || !r.bestBet) return;
+      var mk = r.eventId + '|' + r.bestBet;
+      var cur = byMatch[mk];
+      if (!cur || (cur.status === 'pending' && r.status !== 'pending')) byMatch[mk] = r;
+    });
+    return rows.filter(function(r) {
+      if (!r || !r.eventId || !r.bestBet) return true;
+      return byMatch[r.eventId + '|' + r.bestBet] === r;
+    });
   }
 
   /* ══════════════════════════════════════════════════
@@ -283,8 +295,11 @@
 
     var store   = loadStore(storeKey);
     var changed = false;
-    rows.forEach(function(entry) {
-      if (entry.status !== 'pending') return;
+    /* Iterate store keys directly so we always update the existing key,
+       preventing a new name-based key being created alongside the id-based one. */
+    Object.keys(store).forEach(function(k) {
+      var entry = store[k];
+      if (!entry || entry.status !== 'pending') return;
       var eid = String(entry.eventId || '');
       var sd  = (eid && eid !== '0') ? byId[eid] : null;
       if (!sd) {
@@ -297,7 +312,6 @@
       if (hs === null || as === null || isNaN(hs) || isNaN(as)) return;
       var result = evalOutcome(entry.bestBet, hs, as);
       if (result === 'win' || result === 'loss') {
-        var k = keyFn(entry) || (entry.home + '|' + entry.away + '|' + entry.bestBet);
         store[k] = Object.assign({}, entry, {
           status: result, homeScore: hs, awayScore: as,
           resolvedAt: new Date().toISOString()
