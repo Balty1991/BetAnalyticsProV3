@@ -143,11 +143,19 @@
   function evalOutcome(betKey, hs, as) {
     if (typeof window.evaluateMarketOutcome === 'function')
       return window.evaluateMarketOutcome(betKey, hs, as);
-    var tot = Number(hs) + Number(as);
+    var h = Number(hs), a = Number(as), tot = h + a;
     if (betKey === 'over15')  return tot >= 2 ? 'win' : 'loss';
     if (betKey === 'over25')  return tot >= 3 ? 'win' : 'loss';
+    if (betKey === 'over35')  return tot >= 4 ? 'win' : 'loss';
+    if (betKey === 'under25') return tot <= 2 ? 'win' : 'loss';
     if (betKey === 'under35') return tot <= 3 ? 'win' : 'loss';
-    if (betKey === 'btts')    return (Number(hs)>0 && Number(as)>0) ? 'win' : 'loss';
+    if (betKey === 'btts')    return (h > 0 && a > 0) ? 'win' : 'loss';
+    if (betKey === 'homewin') return h > a ? 'win' : 'loss';
+    if (betKey === 'awaywin') return a > h ? 'win' : 'loss';
+    if (betKey === 'draw')    return h === a ? 'win' : 'loss';
+    if (betKey === 'dc1x')    return h >= a ? 'win' : 'loss';
+    if (betKey === 'dcx2')    return a >= h ? 'win' : 'loss';
+    if (betKey === 'dc12')    return h !== a ? 'win' : 'loss';
     return 'pending';
   }
 
