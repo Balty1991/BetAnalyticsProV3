@@ -139,10 +139,9 @@
     return null;
   }
 
-  /* ── evaluate result (fallback if app function not available) ── */
+  /* ── evaluate result — complete standalone implementation ── */
   function evalOutcome(betKey, hs, as) {
-    if (typeof window.evaluateMarketOutcome === 'function')
-      return window.evaluateMarketOutcome(betKey, hs, as);
+    if (hs == null || as == null) return 'pending';
     var h = Number(hs), a = Number(as), tot = h + a;
     if (betKey === 'over15')  return tot >= 2 ? 'win' : 'loss';
     if (betKey === 'over25')  return tot >= 3 ? 'win' : 'loss';
