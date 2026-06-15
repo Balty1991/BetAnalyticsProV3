@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-06-14T16:53:01.054619+00:00",
+  "updated_at": "2026-06-15T08:25:41.339728+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 62.8,
+  "overall_score": 60.9,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,8 +9,8 @@
   },
   "data_quality": {
     "recommendation_rows": 1732,
-    "pending_rows": 61,
-    "candidates_with_odds_and_probability": 58,
+    "pending_rows": 58,
+    "candidates_with_odds_and_probability": 55,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,18 +18,18 @@
   },
   "risk_distribution": {
     "value": 2,
-    "balanced": 17,
-    "safe": 7,
-    "speculative": 32
+    "balanced": 16,
+    "safe": 6,
+    "speculative": 31
   },
   "market_distribution_top150": {
     "BTTS": 7,
     "Over 2.5G": 2,
-    "Under 3.5G": 31,
-    "Over 1.5G": 18
+    "Under 3.5G": 30,
+    "Over 1.5G": 16
   },
   "league_distribution_top150": {
-    "World Cup 2026": 43,
+    "World Cup 2026": 40,
     "International Friendly Games": 1,
     "Chinese Super League": 6,
     "FA Cup": 1,
@@ -1267,34 +1267,6 @@
       ]
     },
     {
-      "event_id": 8298,
-      "prediction_id": 4786,
-      "home": "Sweden",
-      "away": "Tunisia",
-      "league": "World Cup 2026",
-      "event_date": "2026-06-15T05:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.4,
-      "model_probability": 0.7918,
-      "model_probability_pct": 79.18,
-      "implied_probability_pct": 71.43,
-      "fair_odds": 1.263,
-      "edge_pp": 7.75,
-      "ev_pct": 10.85,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 69.38,
-      "score": 80.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.2% vs. probabilitate implicată 71.4%.",
-        "EV estimat 10.9% și edge 7.8 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 8339,
       "prediction_id": 4868,
       "home": "South Africa",
@@ -1460,6 +1432,34 @@
         "Probabilitate model 77.0% vs. probabilitate implicată 70.9%.",
         "EV estimat 8.6% și edge 6.1 puncte procentuale.",
         "Miză Kelly fracțională 5.25% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 8347,
+      "prediction_id": 4877,
+      "home": "Norway",
+      "away": "France",
+      "league": "World Cup 2026",
+      "event_date": "2026-06-26T22:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.29,
+      "model_probability": 0.7702,
+      "model_probability_pct": 77.02,
+      "implied_probability_pct": 77.52,
+      "fair_odds": 1.298,
+      "edge_pp": -0.5,
+      "ev_pct": -0.64,
+      "kelly_fraction": 0.0,
+      "kelly_units_100": 0.0,
+      "confidence": 41.96,
+      "score": 86.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 77.0% vs. probabilitate implicată 77.5%.",
+        "EV estimat -0.6% și edge -0.5 puncte procentuale.",
+        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -2046,21 +2046,21 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 974,
+      "bets": 975,
       "wins": 699,
-      "winrate": 71.77,
-      "profit_units": -6.65,
-      "roi_pct": -0.68,
-      "avg_odds": 1.4
+      "winrate": 71.69,
+      "profit_units": -7.65,
+      "roi_pct": -0.78,
+      "avg_odds": 1.399
     },
     {
       "key": "Over 1.5G",
-      "bets": 391,
-      "wins": 278,
-      "winrate": 71.1,
-      "profit_units": -22.5,
-      "roi_pct": -5.75,
-      "avg_odds": 1.331
+      "bets": 393,
+      "wins": 279,
+      "winrate": 70.99,
+      "profit_units": -23.1,
+      "roi_pct": -5.88,
+      "avg_odds": 1.332
     }
   ],
   "settled_league_performance": [
@@ -2090,15 +2090,6 @@
       "profit_units": 0.4,
       "roi_pct": 40.0,
       "avg_odds": 1.4
-    },
-    {
-      "key": "World Cup 2026",
-      "bets": 7,
-      "wins": 7,
-      "winrate": 100.0,
-      "profit_units": 2.43,
-      "roi_pct": 34.71,
-      "avg_odds": 1.347
     },
     {
       "key": "Coppa Italia",
@@ -2171,6 +2162,15 @@
       "profit_units": 3.87,
       "roi_pct": 9.93,
       "avg_odds": 1.438
+    },
+    {
+      "key": "Pro League",
+      "bets": 59,
+      "wins": 45,
+      "winrate": 76.27,
+      "profit_units": 5.39,
+      "roi_pct": 9.13,
+      "avg_odds": 1.456
     }
   ],
   "recommendations": [
