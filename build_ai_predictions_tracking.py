@@ -135,6 +135,15 @@ def resolve_pick(pick_dict, lookup):
     out['market'] = market
     if odds is not None:
         out['odds'] = odds
+    # Fallback: if match not found in lookup but pick already has a stored score,
+    # compute result from that score (handles matches that aged out of recent_results.json)
+    if result == 'pending' and pick_dict.get('score'):
+        try:
+            parts = str(pick_dict['score']).split('-')
+            if len(parts) == 2:
+                result = check_market(market, int(parts[0]), int(parts[1]))
+        except (ValueError, TypeError):
+            pass
     out['result'] = result
     if score_str:
         out['score'] = score_str

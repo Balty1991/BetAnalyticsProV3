@@ -1431,11 +1431,18 @@ function renderClaudeAITab(){
           var res = p.result || 'pending';
           var icon = res === 'win' ? '✅' : res === 'loss' ? '❌' : '⏳';
           var col  = res === 'win' ? '#22c55e' : res === 'loss' ? '#ef4444' : '#f59e0b';
+          var dateLabel = '';
+          if(p.eventDate){
+            try{
+              var ed = new Date(p.eventDate);
+              dateLabel = ed.toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+            }catch(e){ dateLabel = String(p.eventDate).slice(0,10); }
+          }
           html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
             + '<span style="font-size:13px">'+icon+'</span>'
             + '<div style="flex:1;min-width:0;overflow:hidden">'
             + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.meci||'')+'</div>'
-            + '<div style="font-size:10px;color:#2BE5C5">'+(p.pick||'')+'</div>'
+            + '<div style="font-size:10px;color:#2BE5C5">'+(p.pick||'')+(dateLabel ? ' · <span style="color:#64748b">'+dateLabel+'</span>' : '')+'</div>'
             + '</div>'
             + (p.score ? '<div style="font-size:11px;font-weight:700;color:'+col+';white-space:nowrap">'+p.score+'</div>' : '')
             + '</div>';
