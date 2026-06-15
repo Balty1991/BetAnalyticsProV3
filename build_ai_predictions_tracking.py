@@ -74,7 +74,7 @@ def norm(name):
 
 
 def build_score_lookup(events):
-    """Build {norm(home)+norm(away): (home_score, away_score, status)} map."""
+    """Build {norm(home)+norm(away): (home_score, away_score, status, event_date)} map."""
     lookup = {}
     for ev in events:
         # Support both raw event and wrapper {"event": {...}}
@@ -84,14 +84,15 @@ def build_score_lookup(events):
         a = e.get('away_team', '') or e.get('away', '')
         hs = e.get('home_score')
         aws = e.get('away_score')
+        event_date = e.get('event_date', '') or e.get('date', '') or ''
         if h and a:
             key = norm(h) + '||' + norm(a)
-            lookup[key] = (hs, aws, status)
+            lookup[key] = (hs, aws, status, event_date)
     return lookup
 
 
 def find_score(meci_str, lookup):
-    """Try to match 'Home vs Away' against the lookup. Returns (hs, as, status) or None."""
+    """Try to match 'Home vs Away' against the lookup. Returns (hs, as, status, event_date) or None."""
     parts = re.split(r'\s+vs\s+', meci_str, flags=re.IGNORECASE)
     if len(parts) < 2:
         return None
@@ -111,7 +112,7 @@ def find_score(meci_str, lookup):
 
 
 def resolve_pick(pick_dict, lookup):
-    """Add result/score fields to a pick dict (mutates in place). Returns updated dict."""
+    """Add result/score/eventDate fields to a pick dict. Returns updated dict."""
     meci = pick_dict.get('meci', '')
     pick_str = pick_dict.get('pick', '')
     market = parse_market(pick_str)
@@ -120,8 +121,9 @@ def resolve_pick(pick_dict, lookup):
 
     result = 'pending'
     score_str = ''
+    event_date = ''
     if score_info:
-        hs, aws, status = score_info
+        hs, aws, status, event_date = score_info
         if status == 'finished' and hs is not None and aws is not None:
             try:
                 result = check_market(market, int(hs), int(aws))
@@ -136,6 +138,8 @@ def resolve_pick(pick_dict, lookup):
     out['result'] = result
     if score_str:
         out['score'] = score_str
+    if event_date and not out.get('eventDate'):
+        out['eventDate'] = event_date
     return out
 
 
