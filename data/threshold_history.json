@@ -1,21 +1,5 @@
 [
   {
-    "market": "over15",
-    "type": "disabled",
-    "prev_edge": 15.0,
-    "new_edge": 999.0,
-    "message": "over15: dezactivat (niciun bucket profitabil)",
-    "timestamp": "2026-05-04T13:42:20.555958+00:00"
-  },
-  {
-    "market": "over15",
-    "type": "threshold_change",
-    "prev_edge": 15.0,
-    "new_edge": 10.0,
-    "message": "over15: prag coborat 15.0% -> 10.0% (ROI +0.4%)",
-    "timestamp": "2026-05-05T06:47:45.184841+00:00"
-  },
-  {
     "market": "under35",
     "type": "threshold_change",
     "prev_edge": 5.0,
@@ -398,5 +382,21 @@
     "new_edge": 999.0,
     "message": "over15: dezactivat (niciun bucket profitabil)",
     "timestamp": "2026-06-16T08:32:42.942599+00:00"
+  },
+  {
+    "market": "over15",
+    "type": "disabled",
+    "prev_edge": 15.0,
+    "new_edge": 999.0,
+    "message": "over15: dezactivat (niciun bucket profitabil)",
+    "timestamp": "2026-06-16T19:32:08.503536+00:00"
+  },
+  {
+    "market": "over15",
+    "type": "recovery_probe",
+    "prev_edge": 15.0,
+    "new_edge": 15.0,
+    "message": "over15: recovery probe activ, prag strict = 15.0%",
+    "timestamp": "2026-06-16T19:32:08.594437+00:00"
   }
 ]
