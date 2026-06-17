@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-06-16T19:32:08.666764+00:00",
+  "updated_at": "2026-06-17T08:15:18.985427+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 56.8,
+  "overall_score": 56.5,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -9,9 +9,9 @@
   },
   "data_quality": {
     "recommendation_rows": 1732,
-    "pending_rows": 57,
-    "candidates_with_odds_and_probability": 46,
-    "top_ev_count": 30,
+    "pending_rows": 55,
+    "candidates_with_odds_and_probability": 44,
+    "top_ev_count": 29,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 32
@@ -20,16 +20,16 @@
     "value": 3,
     "balanced": 14,
     "safe": 4,
-    "speculative": 25
+    "speculative": 23
   },
   "market_distribution_top150": {
     "BTTS": 8,
     "Over 2.5G": 2,
-    "Under 3.5G": 23,
+    "Under 3.5G": 21,
     "Over 1.5G": 13
   },
   "league_distribution_top150": {
-    "World Cup 2026": 33,
+    "World Cup 2026": 31,
     "International Friendly Games": 1,
     "Chinese Super League": 6,
     "FA Cup": 1,
@@ -646,34 +646,6 @@
         "Probabilitate model 75.2% vs. probabilitate implicată 73.0%.",
         "EV estimat 3.0% și edge 2.2 puncte procentuale.",
         "Miză Kelly fracțională 2.05% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 8305,
-      "prediction_id": 4794,
-      "home": "Iraq",
-      "away": "Norway",
-      "league": "World Cup 2026",
-      "event_date": "2026-06-17T01:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.54,
-      "model_probability": 0.6843,
-      "model_probability_pct": 68.43,
-      "implied_probability_pct": 64.94,
-      "fair_odds": 1.461,
-      "edge_pp": 3.49,
-      "ev_pct": 5.38,
-      "kelly_fraction": 0.0249,
-      "kelly_units_100": 2.49,
-      "confidence": 43.82,
-      "score": 91.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 68.4% vs. probabilitate implicată 64.9%.",
-        "EV estimat 5.4% și edge 3.5 puncte procentuale.",
-        "Miză Kelly fracțională 2.49% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1990,12 +1962,12 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 976,
+      "bets": 978,
       "wins": 700,
-      "winrate": 71.72,
-      "profit_units": -7.32,
-      "roi_pct": -0.75,
-      "avg_odds": 1.399
+      "winrate": 71.57,
+      "profit_units": -9.32,
+      "roi_pct": -0.95,
+      "avg_odds": 1.4
     },
     {
       "key": "Over 1.5G",
@@ -2099,15 +2071,6 @@
       "avg_odds": 1.577
     },
     {
-      "key": "World Cup 2026",
-      "bets": 11,
-      "wins": 9,
-      "winrate": 81.82,
-      "profit_units": 1.16,
-      "roi_pct": 10.55,
-      "avg_odds": 1.367
-    },
-    {
       "key": "Trendyol Super Lig",
       "bets": 39,
       "wins": 30,
@@ -2115,6 +2078,15 @@
       "profit_units": 3.87,
       "roi_pct": 9.93,
       "avg_odds": 1.438
+    },
+    {
+      "key": "Pro League",
+      "bets": 59,
+      "wins": 45,
+      "winrate": 76.27,
+      "profit_units": 5.39,
+      "roi_pct": 9.13,
+      "avg_odds": 1.456
     }
   ],
   "recommendations": [
