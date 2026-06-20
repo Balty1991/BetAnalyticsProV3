@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-06-20T07:29:36.768007",
+  "updated_at": "2026-06-20T16:56:49.031153",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 10121,
+  "n_rows": 10122,
   "n_folds": 3,
   "global_score": 74.6,
   "global_grade": "B",
@@ -37,7 +37,7 @@
           "n": 2988,
           "brier": 0.244,
           "log_loss": 0.6811,
-          "ece": 0.0064,
+          "ece": 0.0062,
           "winrate": 0.4525
         }
       ]
@@ -72,7 +72,7 @@
           "n": 2988,
           "brier": 0.1939,
           "log_loss": 0.5759,
-          "ece": 0.0008,
+          "ece": 0.0009,
           "winrate": 0.2651
         }
       ]
@@ -118,9 +118,9 @@
       "folds": 3,
       "avg_brier": 0.2437,
       "avg_log_loss": 0.6805,
-      "avg_ece": 0.0095,
+      "avg_ece": 0.0096,
       "avg_winrate": 0.5131,
-      "score": 76.3,
+      "score": 76.2,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
@@ -142,7 +142,7 @@
           "n": 2988,
           "brier": 0.2459,
           "log_loss": 0.685,
-          "ece": 0.01,
+          "ece": 0.0101,
           "winrate": 0.5131
         }
       ]
@@ -153,7 +153,7 @@
       "folds": 3,
       "avg_brier": 0.1992,
       "avg_log_loss": 0.5856,
-      "avg_ece": 0.0095,
+      "avg_ece": 0.0096,
       "avg_winrate": 0.712,
       "score": 80.2,
       "grade": "B",
@@ -177,7 +177,7 @@
           "n": 2988,
           "brier": 0.1991,
           "log_loss": 0.5862,
-          "ece": 0.0052,
+          "ece": 0.0053,
           "winrate": 0.7142
         }
       ]
@@ -212,7 +212,7 @@
           "n": 2988,
           "brier": 0.2443,
           "log_loss": 0.6817,
-          "ece": 0.0092,
+          "ece": 0.0093,
           "winrate": 0.5281
         }
       ]
@@ -222,8 +222,8 @@
       "label": "Peste 1.5G",
       "folds": 3,
       "avg_brier": 0.2842,
-      "avg_log_loss": 0.7623,
-      "avg_ece": 0.3059,
+      "avg_log_loss": 0.7622,
+      "avg_ece": 0.3058,
       "avg_winrate": 0.7544,
       "score": 50.0,
       "grade": "D",
@@ -245,9 +245,9 @@
         },
         {
           "n": 2988,
-          "brier": 0.2838,
-          "log_loss": 0.7614,
-          "ece": 0.3106,
+          "brier": 0.2837,
+          "log_loss": 0.7612,
+          "ece": 0.3104,
           "winrate": 0.7567
         }
       ]
