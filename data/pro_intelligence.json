@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-06-21T08:09:01.024545+00:00",
+  "updated_at": "2026-06-21T17:04:38.285072+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 50.4,
+  "overall_score": 50.5,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
@@ -10,7 +10,7 @@
   "data_quality": {
     "recommendation_rows": 1732,
     "pending_rows": 44,
-    "candidates_with_odds_and_probability": 31,
+    "candidates_with_odds_and_probability": 32,
     "top_ev_count": 22,
     "has_backtest": true,
     "has_training_summary": true,
@@ -18,19 +18,19 @@
   },
   "risk_distribution": {
     "safe": 1,
-    "balanced": 12,
+    "balanced": 13,
     "speculative": 17,
     "value": 1
   },
   "market_distribution_top150": {
     "Under 3.5G": 18,
-    "Over 2.5G": 1,
+    "Over 2.5G": 2,
     "BTTS": 5,
     "Over 1.5G": 7
   },
   "league_distribution_top150": {
     "International Friendly Games": 1,
-    "World Cup 2026": 16,
+    "World Cup 2026": 17,
     "Chinese Super League": 6,
     "FA Cup": 1,
     "Allsvenskan": 4,
@@ -1602,6 +1602,34 @@
         "Probabilitate model 70.7% vs. probabilitate implicată 69.4%.",
         "EV estimat 1.8% și edge 1.3 puncte procentuale.",
         "Miză Kelly fracțională 1.04% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 8323,
+      "prediction_id": 4839,
+      "home": "Spain",
+      "away": "Saudi Arabia",
+      "league": "World Cup 2026",
+      "event_date": "2026-06-21T19:00:00+03:00",
+      "market": "Over 2.5G",
+      "odds": 1.48,
+      "model_probability": 0.6953,
+      "model_probability_pct": 69.53,
+      "implied_probability_pct": 67.57,
+      "fair_odds": 1.438,
+      "edge_pp": 1.96,
+      "ev_pct": 2.9,
+      "kelly_fraction": 0.0151,
+      "kelly_units_100": 1.51,
+      "confidence": 56.26,
+      "score": 86.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 69.5% vs. probabilitate implicată 67.6%.",
+        "EV estimat 2.9% și edge 2.0 puncte procentuale.",
+        "Miză Kelly fracțională 1.51% din bancă, plafonată prudent."
       ]
     }
   ],
