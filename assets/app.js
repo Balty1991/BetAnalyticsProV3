@@ -5767,7 +5767,7 @@ function doRefresh(isManual){
   var fetch9 = isManual ? getJsonFresh : getJson;
 
   Promise.all([
-    fetch9('/data/predictions.json', []),
+    fetch9('/data/predictions.json', null),
     fetch9('/data/meta.json', {}),
     fetch9('/data/leagues.json', []),
     fetch9('/data/backtest.json', {}),
@@ -5799,8 +5799,15 @@ function doRefresh(isManual){
     _MARKET_THRESHOLDS_CACHE = null;
     if(document.getElementById('perf-verdict-content')) try{ renderPerformantaVerdict(); }catch(e){}
 
-    var preds = predData.results || predData || [];
-    window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
+    // predData === null înseamnă fetch eșuat (rețea/HTTP/parse) — distinct de "server a
+    // răspuns cu listă goală". Nu suprascriem meciurile existente cu o listă vidă falsă
+    // (poate apărea tranzitoriu în timpul redeploy-ului GitHub Pages din workflow-ul auto).
+    if(predData !== null && predData !== undefined){
+      var preds = predData.results || predData || [];
+      window.__RAW_PREDICTIONS = Array.isArray(preds) ? preds : [];
+    } else {
+      console.warn('[VEYRA] predictions.json fetch failed — pastram ' + (window.__RAW_PREDICTIONS||[]).length + ' meciuri anterioare');
+    }
     APP_META = meta || {};
     BACKTEST_SUMMARY = backtestData || {};
     SIGNAL_AUDIT = signalAuditData || {};
