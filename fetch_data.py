@@ -1202,15 +1202,11 @@ def is_prediction_stale(row, now_utc=None, max_age_hours=MAX_PREDICTION_AGE_HOUR
     return age_h > max_age_hours
 
 
-def dedupe_and_filter_predictions(predictions, now_utc=None, max_age_hours=MAX_PREDICTION_AGE_HOURS):
+def dedupe_and_filter_predictions(predictions, now_utc=None, max_age_hours=MAX_PREDICTION_AGE_HOURS, min_keep_ratio=None):
     now_utc = now_utc or datetime.now(timezone.utc)
     kept = {}
-    stale_removed = 0
     duplicate_removed = 0
     for row in predictions or []:
-        if is_prediction_stale(row, now_utc=now_utc, max_age_hours=max_age_hours):
-            stale_removed += 1
-            continue
         event = row.get("event") or {}
         event_id = event.get("id") or row.get("id")
         current = kept.get(event_id)
@@ -1222,7 +1218,22 @@ def dedupe_and_filter_predictions(predictions, now_utc=None, max_age_hours=MAX_P
             kept[event_id] = row
         else:
             duplicate_removed += 1
-    filtered = sorted(kept.values(), key=lambda r: ((r.get("event") or {}).get("event_date") or "", r.get("id") or 0))
+
+    deduped = list(kept.values())
+    fresh = [row for row in deduped if not is_prediction_stale(row, now_utc=now_utc, max_age_hours=max_age_hours)]
+    stale_removed = len(deduped) - len(fresh)
+
+    # Upstream-ul genereaza predictiile in batch-uri rare, nu continuu per meci, asa ca un
+    # batch intreg poate trece simultan peste pragul de stale chiar daca meciurile sunt inca
+    # valide/viitoare. Nu lasam asta sa goleasca aproape complet rezultatul — daca filtrarea
+    # de stale ar elimina prea mult din setul dedupe-uit, renuntam la filtrarea de stale pentru
+    # rularea curenta.
+    if min_keep_ratio is not None and deduped and len(fresh) < len(deduped) * min_keep_ratio:
+        filtered = sorted(deduped, key=lambda r: ((r.get("event") or {}).get("event_date") or "", r.get("id") or 0))
+        stale_removed = 0
+    else:
+        filtered = sorted(fresh, key=lambda r: ((r.get("event") or {}).get("event_date") or "", r.get("id") or 0))
+
     return filtered, {
         "input_count": len(predictions or []),
         "kept_count": len(filtered),
@@ -4239,7 +4250,7 @@ def main():
     print(f"\n[1/5] Fetching predictions (next {LOOKAHEAD_DAYS} days)...")
     predictions = fetch_all_pages(f"/api/predictions/?tz={TZ}&date_from={today}&date_to={future}")
     print(f"Total predictions raw: {len(predictions)}")
-    predictions, upcoming_prep = dedupe_and_filter_predictions(predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS)
+    predictions, upcoming_prep = dedupe_and_filter_predictions(predictions, now_utc=started_at, max_age_hours=MAX_PREDICTION_AGE_HOURS, min_keep_ratio=0.4)
     print(f"Upcoming predictions kept: {len(predictions)} | stale removed: {upcoming_prep['stale_removed']} | duplicates removed: {upcoming_prep['duplicate_removed']}")
     if not predictions:
         raise RuntimeError("Predictions a venit gol dupa filtrarea stale/duplicate. Oprim workflow-ul.")
