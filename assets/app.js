@@ -8391,9 +8391,9 @@ function buildMarketCandidate(m, type){
   var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
   // Over 1.5 — praguri relaxate (xG 2.00, prob 72, value 0.02, edge 2) pentru a include mai multe evenimente
-  if(isMarketDisabled('over15')) return null;
+  if(type === 'over15' && isMarketDisabled('over15')) return null;
   if(type === 'over15' && (Number(b.adjProb || 0) < 72 || Number(m.probOver15 || 0) < 74 || Number(m.xgTotal || 0) < 2.00 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over15') || Number(b.value || 0) < 0.02)) return null;
-  if(isMarketDisabled('over25')) return null;
+  if(type === 'over25' && isMarketDisabled('over25')) return null;
   if(type === 'over25'){
     var _edgeO25 = (b.edgePct != null) ? Number(b.edgePct) : null;
     var _edgeMinO25 = getMarketMinEdge('over25');
@@ -8401,7 +8401,7 @@ function buildMarketCandidate(m, type){
     var _edgeFailO25 = (_edgeO25 !== null) && (_edgeO25 < _edgeMinO25);
     if(Number(b.adjProb || 0) < 52 || Number(m.probOver25 || 0) < 50 || Number(m.xgTotal || 0) < 1.80 || Number(b.odds || 0) < 1.15 || _edgeFailO25 || Number(b.value || 0) < 0.01) return null;
   }
-  if(isMarketDisabled('under35')) return null;
+  if(type === 'under35' && isMarketDisabled('under35')) return null;
   if(type === 'under35'){
     var _u35EdgeMin = Math.max(getMarketMinEdge('under35'), 15.0);
     var _u35AdjProb = Number(b.adjProb || 0);
