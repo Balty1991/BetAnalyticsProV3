@@ -1745,6 +1745,7 @@ var BET_TYPES = [
   {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
   {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35', probGetter:function(raw){ return 100 - safePct(raw.prob_over_35); }},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
+  {key:'homeWin',  label:'1 (Acasă)',    probGetter:function(raw){ return safePct(raw.prob_home_win); }, oddsGetter:function(e){ return Number(e.odds_home || 0); }},
   // Double Chance markets: odds calculated from 1X2 (margin is minimal on DC)
   {key:'dc1x',     label:'Șansă Dublă 1X', probGetter:function(raw){ return safePct(raw.prob_home_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var h=Number(e.odds_home||0), d=Number(e.odds_draw||0); if(h<1.01||d<1.01) return 0; return +(1/(1/h + 1/d)).toFixed(2); }},
   {key:'dcx2',     label:'Șansă Dublă X2', probGetter:function(raw){ return safePct(raw.prob_away_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var d=Number(e.odds_draw||0), a=Number(e.odds_away||0); if(d<1.01||a<1.01) return 0; return +(1/(1/d + 1/a)).toFixed(2); }},
@@ -1752,7 +1753,7 @@ var BET_TYPES = [
 ];
 
 function getSupportedMarketTypes(){
-  return ['over15','over25','under35','btts','dc1x','dcx2','dc12'];
+  return ['over15','over25','under35','btts','homeWin','dc1x','dcx2','dc12'];
 }
 
 function isSaneOddsForType(type, odds){
@@ -1998,8 +1999,7 @@ function getMarketThresholds() {
 var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 3.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
   // Safety floor: dynamic_thresholds poate coborî prea mult pragul când un bucket are ROI marginal.
-  // Under 3.5 a inundat lista la min_edge=5%, deși bucketul 15%+ este mult mai sănătos.
-  var HARD_EDGE_FLOORS = { under35: 15.0, over15: 10.0, over25: 5.0, btts: 5.0 };
+  var HARD_EDGE_FLOORS = { under35: 8.0, over15: 10.0, over25: 5.0, btts: 5.0 };
   var hardFloor = HARD_EDGE_FLOORS[marketKey] != null ? HARD_EDGE_FLOORS[marketKey] : 0;
   var t = getMarketThresholds()[marketKey];
   var edge = EDGE_FALLBACK[marketKey] != null ? EDGE_FALLBACK[marketKey] : 3.0;
@@ -8403,7 +8403,7 @@ function buildMarketCandidate(m, type){
   }
   if(type === 'under35' && isMarketDisabled('under35')) return null;
   if(type === 'under35'){
-    var _u35EdgeMin = Math.max(getMarketMinEdge('under35'), 15.0);
+    var _u35EdgeMin = Math.max(getMarketMinEdge('under35'), 8.0);
     var _u35AdjProb = Number(b.adjProb || 0);
     var _u35ApiProb = Number(m.probUnder35 || 0);
     var _u35XgTotal = Number(m.xgTotal || 0);
@@ -8411,11 +8411,10 @@ function buildMarketCandidate(m, type){
     var _u35Value = Number(b.value || 0);
     var _u35Likely = (typeof parseLikelyScore === 'function') ? parseLikelyScore(m.mostLikelyScore) : null;
     var _u35LikelyOk = !_u35Likely || Number(_u35Likely.total || 0) <= 3;
-    // Anti-flood U3.5: înainte era filtrat aproape doar pe edge, ceea ce producea prea multe selecții U3.5.
     if(
       edgePct < _u35EdgeMin ||
-      _u35AdjProb < 80 ||
-      _u35ApiProb < 78 ||
+      _u35AdjProb < 70 ||
+      _u35ApiProb < 66 ||
       _u35XgTotal <= 0 ||
       _u35XgTotal > 2.85 ||
       _u35Odds < 1.18 ||
@@ -8430,6 +8429,8 @@ function buildMarketCandidate(m, type){
   if(type === 'dcx2' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
   // DC 12 (no draw) — cerem prob >=70, fiind mai riscant statistic
   if(type === 'dc12' && (Number(b.adjProb || 0) < 70 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
+  // Home Win: favorit clar acasă (prob >=62, cota rezonabilă, value pozitiv)
+  if(type === 'homeWin' && (Number(b.adjProb || 0) < 62 || Number(b.odds || 0) < 1.10 || Number(b.odds || 0) > 3.50 || Number(b.value || 0) < 0.01)) return null;
 
   // WEEKDAY: restrictiile hardcodate au fost eliminate (nu trebuie sa excludem un eveniment doar pe baza zilei).
   // Motorul de invatare continuu identifica pattern-uri toxice pe zile DACA apar din jurnal — doar acolo blocam.
