@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-01T08:02:58.426252+00:00",
+  "updated_at": "2026-07-01T17:40:31.007393+00:00",
   "quality_score": 71.8,
   "quality_grade": "C",
   "overall_brier": 0.2061,
@@ -10,15 +10,15 @@
   "diagnosis": "Calibrare acceptabila — variante mici fata de probabilitatile reale.",
   "coverage": {
     "predictions": 348,
-    "ev_signals": 6,
-    "log_total": 1775,
+    "ev_signals": 5,
+    "log_total": 1782,
     "log_closed": 1704,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.69,
+    "age_hours": 0.58,
     "color": "green",
-    "label": "0.7h"
+    "label": "0.6h"
   },
   "markets": [
     {
@@ -278,9 +278,9 @@
         "label": "Ambele marchează",
         "folds": 3,
         "avg_brier": 0.2434,
-        "avg_log_loss": 0.6797,
-        "avg_ece": 0.0071,
-        "avg_winrate": 0.5224,
+        "avg_log_loss": 0.6798,
+        "avg_ece": 0.007,
+        "avg_winrate": 0.5223,
         "score": 76.8,
         "grade": "B",
         "trend": "stabil",
@@ -288,22 +288,22 @@
           {
             "n": 2631,
             "brier": 0.2424,
-            "log_loss": 0.6776,
-            "ece": 0.0061,
-            "winrate": 0.5241
+            "log_loss": 0.6777,
+            "ece": 0.0058,
+            "winrate": 0.5238
           },
           {
             "n": 2456,
             "brier": 0.2435,
             "log_loss": 0.6799,
-            "ece": 0.0051,
+            "ece": 0.005,
             "winrate": 0.5151
           },
           {
             "n": 2989,
             "brier": 0.2443,
             "log_loss": 0.6817,
-            "ece": 0.01,
+            "ece": 0.0101,
             "winrate": 0.5279
           }
         ]
@@ -347,7 +347,7 @@
     "warnings": [
       "Peste 1.5G: ECE mediu 0.305 — calibrare slabă consistent."
     ],
-    "updated_at": "2026-07-01T08:02:58.293609"
+    "updated_at": "2026-07-01T17:40:30.875464"
   },
   "ui_cards": [
     {
