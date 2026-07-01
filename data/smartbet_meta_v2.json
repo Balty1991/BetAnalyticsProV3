@@ -1,14 +1,14 @@
 {
   "version": "smartbet-fusion-v2",
-  "updated_at": "2026-06-01T09:25:33.662948+00:00",
+  "updated_at": "2026-07-01T08:00:36.158527+00:00",
   "system": {
-    "avg_wfv_auc": 0.5978,
-    "avg_test_ece": 0.015,
+    "avg_wfv_auc": 0.5986,
+    "avg_test_ece": 0.0154,
     "models_trained": 7,
     "feature_count": 253,
-    "training_rows": 56846,
-    "eligible_rows_min5": 51293,
-    "warehouse_events": 56846,
+    "training_rows": 56854,
+    "eligible_rows_min5": 51301,
+    "warehouse_events": 56854,
     "warehouse_leagues": 35,
     "warehouse_year_min": 2003,
     "warehouse_year_max": 2079
@@ -16,50 +16,50 @@
   "markets_ranked": [
     {
       "market": "away_win",
-      "wfv_auc": 0.6804,
-      "test_ece": 0.0214,
+      "wfv_auc": 0.6786,
+      "test_ece": 0.0201,
       "quality_gate": "A",
       "label": "away_win"
     },
     {
       "market": "home_win",
-      "wfv_auc": 0.6702,
-      "test_ece": 0.019,
+      "wfv_auc": 0.6697,
+      "test_ece": 0.0225,
       "quality_gate": "A",
       "label": "home_win"
     },
     {
       "market": "under35",
-      "wfv_auc": 0.5885,
-      "test_ece": 0.0143,
+      "wfv_auc": 0.5896,
+      "test_ece": 0.0201,
       "quality_gate": "B",
       "label": "under35"
     },
     {
       "market": "over15",
-      "wfv_auc": 0.579,
-      "test_ece": 0.0078,
+      "wfv_auc": 0.5809,
+      "test_ece": 0.0112,
       "quality_gate": "B",
       "label": "over15"
     },
     {
       "market": "over25",
-      "wfv_auc": 0.5771,
-      "test_ece": 0.0111,
+      "wfv_auc": 0.5796,
+      "test_ece": 0.0102,
       "quality_gate": "B",
       "label": "over25"
     },
     {
       "market": "btts",
-      "wfv_auc": 0.5524,
-      "test_ece": 0.022,
+      "wfv_auc": 0.5562,
+      "test_ece": 0.0204,
       "quality_gate": "B",
       "label": "btts"
     },
     {
       "market": "draw",
-      "wfv_auc": 0.537,
-      "test_ece": 0.0097,
+      "wfv_auc": 0.5358,
+      "test_ece": 0.0031,
       "quality_gate": "C",
       "label": "draw"
     }
@@ -82,11 +82,11 @@
       },
       "models_count": 7,
       "models": [
+        "catboost_under35.cbm",
         "catboost_over25.cbm",
-        "catboost_over15.cbm",
         "catboost_btts.cbm",
         "catboost_away_win.cbm",
-        "catboost_under35.cbm",
+        "catboost_over15.cbm",
         "catboost_draw.cbm",
         "catboost_home_win.cbm"
       ]
