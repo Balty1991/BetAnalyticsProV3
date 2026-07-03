@@ -8431,10 +8431,10 @@ function buildMarketCandidate(m, type){
   if(type === 'over15' && (Number(b.adjProb || 0) < 76 || Number(m.probOver15 || 0) < 76 || Number(m.xgTotal || 0) < 2.20 || Number(b.odds || 0) < 1.20 || edgePct < getMarketMinEdge('over15') || Number(b.value || 0) < 0.03)) return null;
   if(type === 'over25' && isMarketDisabled('over25')) return null;
   if(type === 'over25'){
-    var _edgeO25 = (b.edgePct != null) ? Number(b.edgePct) : null;
+    // Null-edge tratată ca edge=0 — bets fără date de piață sunt slabe sistematic
+    var _edgeO25 = Number(b.edgePct || 0);
     var _edgeMinO25 = getMarketMinEdge('over25');
-    // Dacă nu avem date de piață (edgePct=null), nu blocăm — lăsăm scorul să decidă
-    var _edgeFailO25 = (_edgeO25 !== null) && (_edgeO25 < _edgeMinO25);
+    var _edgeFailO25 = _edgeO25 < _edgeMinO25;
     if(Number(b.adjProb || 0) < 62 || Number(m.probOver25 || 0) < 58 || Number(m.xgTotal || 0) < 2.10 || Number(b.odds || 0) < 1.15 || _edgeFailO25 || Number(b.value || 0) < 0.02) return null;
   }
   if(type === 'under35' && isMarketDisabled('under35')) return null;
@@ -8447,8 +8447,8 @@ function buildMarketCandidate(m, type){
     var _u35Value = Number(b.value || 0);
     var _u35Likely = (typeof parseLikelyScore === 'function') ? parseLikelyScore(m.mostLikelyScore) : null;
     var _u35LikelyOk = !_u35Likely || Number(_u35Likely.total || 0) <= 3;
-    // Dacă nu avem date de piață (edgePct=null/0), nu blocăm pe edge — lăsăm prob și xG să decidă
-    var _u35EdgeOk = (b.edgePct != null && Number(b.edgePct) > 0) ? (Number(b.edgePct) >= _u35EdgeMin) : true;
+    // Null-edge tratată ca 0 — bets fără date de piață sunt slabe sistematic (same policy as over25)
+    var _u35EdgeOk = Number(b.edgePct || 0) >= _u35EdgeMin;
     if(
       !_u35EdgeOk ||
       _u35AdjProb < 74 ||
@@ -8461,12 +8461,13 @@ function buildMarketCandidate(m, type){
       !_u35LikelyOk
     ) return null;
   }
-  if(type === 'btts' && (Number(b.adjProb || 0) < 65 || Number(m.probBtts || 0) < 65 || Number(m.xgHome || 0) < 1.10 || Number(m.xgAway || 0) < 1.10 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 0.80 || edgePct < 5 || Number(b.value || 0) < 0.04)) return null;
-  // DC 1X / X2 — safe bet, prob >=78%, value >=0.03
-  if(type === 'dc1x' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.03)) return null;
-  if(type === 'dcx2' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.03)) return null;
-  // DC 12 (no draw) — cerem prob >=74, mai riscant statistic
-  if(type === 'dc12' && (Number(b.adjProb || 0) < 74 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.03)) return null;
+  // btts: edge ≥15% are -23.9% ROI (n=24) — zona distructivă, blocat
+  if(type === 'btts' && (Number(b.adjProb || 0) < 65 || Number(m.probBtts || 0) < 65 || Number(m.xgHome || 0) < 1.10 || Number(m.xgAway || 0) < 1.10 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 0.80 || edgePct < 5 || edgePct >= 15 || Number(b.value || 0) < 0.04)) return null;
+  // DC 1X / X2 — safe bet, prob >=78%, value >=0.03, max 1.95 (sweet spot)
+  if(type === 'dc1x' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'dcx2' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || Number(b.value || 0) < 0.03)) return null;
+  // DC 12 (no draw) — cerem prob >=74, mai riscant statistic, max 1.85
+  if(type === 'dc12' && (Number(b.adjProb || 0) < 74 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.85 || Number(b.value || 0) < 0.03)) return null;
   // Home Win: favorit clar acasă — prag ridicat (53.8% WR la prag 62, acum 72)
   if(type === 'homeWin' && (Number(b.adjProb || 0) < 72 || Number(b.odds || 0) < 1.20 || Number(b.odds || 0) > 2.80 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
 
@@ -8498,13 +8499,16 @@ function buildMarketCandidate(m, type){
   if(m.leagueTier === 'high') baseScore += 4;
   if(m.leagueTier === 'avoid') baseScore -= 8;
   if(b.odds > 2.20) baseScore -= 8;
-  // Piețe profitabile din jurnal: btts (+4.8% ROI), over25 (+6.1% ROI) — prioritizate
-  if((type === 'btts' || type === 'over25') && edgePct > 8) baseScore += 5;
+  // Piețe profitabile din jurnal: over25 (+21.8% ROI) — prioritizat
+  // btts la edge ≥15% are -23.9% ROI în backtest — penalizat acolo, nu bonusat
+  if(type === 'over25' && edgePct > 8) baseScore += 5;
+  if(type === 'btts' && edgePct > 8 && edgePct < 15) baseScore += 3;
   // Cote sub 1.25: vig mănâncă profitul chiar și la WR 80% (jurnal: 374 pariuri, -4.3% ROI)
   if(Number(b.odds || 0) < 1.25) baseScore -= 6;
   // Ligi cu ROI negativ sistematic: scor penalizat (nu blocate) — apar doar când semnalul e puternic
   var _LG_SCORE_PEN = {
     'FA Cup': -12, 'USL Championship': -12,
+    'Champions League': -12, 'UEFA Champions League': -12,
     'Europa League': -10, 'UEFA Europa League': -10,
     'Ligue 1': -8, 'World Cup 2026': -8, 'FIFA World Cup 2026': -8
   };
@@ -11794,7 +11798,7 @@ function areRowsCorrelated(a, b){
   return (sameLeague && sameMarket) || (sameLeague && sameWindow);
 }
 function hasRecentContrarianTicket(){
-  var cutoff = Date.now() - (4 * 86400000);
+  var cutoff = Date.now() - (7 * 86400000);
   return (TRACKING || []).some(function(t){
     var rawType = String((t && (t.type || t.criteria || t.ticketType || t.label)) || '').toLowerCase();
     if(rawType.indexOf('contrarian') === -1) return false;
@@ -11873,6 +11877,17 @@ function buildPortfolioMarketCandidates(match){
     if(type === 'under35' && Number(match.xgTotal || 0) <= 3.05) score += 4;
     if(type === 'over25' && Number(match.xgTotal || 0) >= 2.70) score += 4;
     if(type === 'over15' && Number(match.xgTotal || 0) >= 2.15) score += 3;
+    // Aplica boost-ul/toxicul din Learning Engine — același sistem ca buildMarketCandidate
+    try {
+      if(typeof learningApplyToCandidate === 'function'){
+        var _lm = learningApplyToCandidate({
+          marketKey: type, leagueName: String(match.league || '—'),
+          odds: odds, edgePct: edge, score: score, probAdj: prob
+        }) || {};
+        if(_lm.toxic) return; // exclude pattern toxic din acumulator pool
+        score += Number(_lm.boost || 0);
+      }
+    } catch(e){}
     score = clampMathScore(score);
     out.push(Object.assign({}, match, {
       source:'portfolio',
