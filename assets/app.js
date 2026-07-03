@@ -12084,9 +12084,9 @@ function generateSinglePremiumTicket(){ return generatePortfolioTicket('premium'
 function generateDoubleConfirmedTicket(){ return generatePortfolioTicket('double'); }
 function generateTripleValueTicket(){ return generatePortfolioTicket('triple'); }
 function generateContrarianShotTicket(){ return generatePortfolioTicket('contrarian'); }
-function generateAccum5Ticket(){  return generatePortfolioTicket('acum5'); }
-function generateAccum10Ticket(){ return generatePortfolioTicket('acum10'); }
-function generateAccum20Ticket(){ return generatePortfolioTicket('acum20'); }
+function generateAccum5Ticket(){  var r = generatePortfolioTicket('acum5');  try{ renderAccumGenerators(); }catch(e){} return r; }
+function generateAccum10Ticket(){ var r = generatePortfolioTicket('acum10'); try{ renderAccumGenerators(); }catch(e){} return r; }
+function generateAccum20Ticket(){ var r = generatePortfolioTicket('acum20'); try{ renderAccumGenerators(); }catch(e){} return r; }
 
 function getAuditMathPool(){
   return ((SIGNAL_AUDIT && SIGNAL_AUDIT.rows) || []).filter(function(row){
@@ -14195,6 +14195,7 @@ function switchSmartLearnSection(section){
   });
   if(section === 'predictii'){
     try{ renderUnifiedEngine(); }catch(e){console.warn(e);}
+    try{ renderAccumGenerators(); }catch(e){console.warn(e);}
   }
   if(section === 'invatare'){
     try{ renderLearningEngine(); }catch(e){console.warn(e);}
@@ -14376,6 +14377,57 @@ function renderUnifiedEngine(){
           '<div style="font-size:9px;margin-top:2px;color:'+scoreColor+'">'+scoreLabel.split(' ')[0]+'</div>' +
         '</div>' +
       '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderAccumGenerators(){
+  var target = document.getElementById('acum-generators-grid');
+  if(!target) return;
+  var ACUM_TYPES = [
+    { type:'acum5',  icon:'⚡', label:'Acumulator 5x',  accent:'#f59e0b', accentRgb:'245,158,11', action:'generateAccum5Ticket' },
+    { type:'acum10', icon:'🔥', label:'Acumulator 10x', accent:'#ef4444', accentRgb:'239,68,68',  action:'generateAccum10Ticket' },
+    { type:'acum20', icon:'💥', label:'Acumulator 20x', accent:'#a855f7', accentRgb:'168,85,247', action:'generateAccum20Ticket' }
+  ];
+  target.innerHTML = ACUM_TYPES.map(function(cfg){
+    var t = (typeof buildPortfolioTicketPreview === 'function') ? buildPortfolioTicketPreview(cfg.type) : null;
+    var meta = (typeof getMathPortfolioMeta === 'function') ? getMathPortfolioMeta(cfg.type, 'portfolio') : {summary:'', empty:'Insuficiente date.'};
+    var picks = (t && t.picks) ? t.picks : [];
+    var isEmpty = !picks.length;
+    var totalOdds = isEmpty ? 1 : Number(t.totalOdds || 1);
+    var combinedProb = isEmpty ? 0 : Number(t.combinedProb || 0);
+
+    var pickRows = picks.map(function(p, i){
+      var bet = p.bestBet || {};
+      return '<div style="padding:'+(i===0?'9px 10px':'7px 10px')+';border-radius:10px;background:rgba(255,255,255,'+(i===0?'.05':'.03')+');border:1px solid rgba(255,255,255,'+(i===0?'.08':'.05')+');margin-bottom:5px">'+
+        '<div style="font-size:'+(i===0?'12':'11')+'px;font-weight:700;color:var(--txt)">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>'+
+        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+(bet.label||'—')+' @ '+Number(bet.odds||0).toFixed(2)+' • Prob '+Number(bet.adjProb||p.prob||0).toFixed(0)+'%</div>'+
+      '</div>';
+    }).join('');
+
+    var emptyMsg = '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center;border-radius:10px;background:rgba(255,255,255,.03)">'+(t&&t.error ? t.error : (meta.empty||'Insuficiente date.'))+'</div>';
+
+    return '<div style="padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba('+cfg.accentRgb+',.25);border-top:3px solid '+cfg.accent+'">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">'+
+        '<div>'+
+          '<div style="font-size:14px;font-weight:900;color:var(--txt)">'+cfg.icon+' '+cfg.label+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px">'+(meta.summary||'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          (isEmpty
+            ? '<span style="font-size:10px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted)">Așteptare date</span>'
+            : '<span style="font-size:16px;font-weight:900;color:'+cfg.accent+'">'+totalOdds.toFixed(2)+'x</span>')+
+        '</div>'+
+      '</div>'+
+      (!isEmpty
+        ? '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">'+
+            '<div style="padding:8px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center"><div style="font-size:13px;font-weight:800;color:var(--txt)">'+picks.length+'</div><div style="font-size:9px;color:var(--muted)">Linii</div></div>'+
+            '<div style="padding:8px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center"><div style="font-size:13px;font-weight:800;color:'+cfg.accent+'">'+totalOdds.toFixed(2)+'x</div><div style="font-size:9px;color:var(--muted)">Cotă</div></div>'+
+            '<div style="padding:8px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center"><div style="font-size:13px;font-weight:800;color:var(--grn)">'+combinedProb.toFixed(1)+'%</div><div style="font-size:9px;color:var(--muted)">Prob.</div></div>'+
+          '</div>'
+        : '')+
+      (isEmpty ? emptyMsg : pickRows)+
+      '<button onclick="window[\''+cfg.action+'\']()" class="btn" style="width:100%;justify-content:center;margin-top:10px;background:rgba('+cfg.accentRgb+',.14);border:1px solid rgba('+cfg.accentRgb+',.35);color:'+cfg.accent+';font-weight:800">Generează '+cfg.icon+' '+cfg.label+'</button>'+
     '</div>';
   }).join('');
 }

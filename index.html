@@ -187,7 +187,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260703fix5"></script>
+<script defer src="./assets/app.js?v=20260703fix6"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260602dash2"></script>
 </head>
@@ -332,6 +332,19 @@ function toggleTheme(){
           <div id="unified-list-meta" style="font-size:10px;color:var(--muted);font-family:var(--mono)">—</div>
         </div>
         <div id="unified-picks-list"></div>
+      </div>
+
+      <div class="section" style="margin-bottom:12px;padding:14px;background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(239,68,68,.05));border:1px solid rgba(245,158,11,.22);border-radius:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div>
+            <div style="font-size:15px;font-weight:900;color:var(--txt)">🎰 Generatoare Acumulatoare</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Bilete cumulate la cotă 5x / 10x / 20x — fiecare linie filtrată strict după probabilitate și corelație.</div>
+          </div>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="renderAccumGenerators()">↻ Reîncarcă</button>
+        </div>
+        <div id="acum-generators-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+          <div class="empty-state" style="padding:16px;grid-column:1/-1">Se încarcă generatoarele…</div>
+        </div>
       </div>
     </div>
 
