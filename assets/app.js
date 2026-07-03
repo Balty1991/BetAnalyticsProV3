@@ -11047,21 +11047,54 @@ function renderML5Analysis(){
   if(!root) return;
 
   var _now = Date.now();
-  var enriched = (window.ALL_MATCHES||[]).filter(function(m){
+  var _ML5_TYPES = typeof getSupportedMarketTypes === 'function' ? getSupportedMarketTypes() :
+    ['over15','over25','under35','btts','dc1x','dcx2','dc12','homeWin'];
+
+  // Toate meciurile enriched (pentru coverage stats)
+  var enrichedRaw = (window.ALL_MATCHES||[]).filter(function(m){
     if(!m.isEnriched) return false;
-    // Hide matches that started more than 2h ago (finished / in-play but API still "notstarted")
     if(m.date){ var _d=new Date(m.date); if(isFinite(_d.getTime()) && _d.getTime() < _now - 2*3600*1000) return false; }
     return true;
   });
+
+  // Aplică aceleași filtre de calitate ca în Meciuri (buildMarketCandidate)
+  // — ML5 acum arată doar predicții care trec pragurile ridicate
+  var enriched = enrichedRaw.map(function(m){
+    var bestCand = null;
+    _ML5_TYPES.forEach(function(t){
+      var cand = buildMarketCandidate(m, t);
+      if(!cand || !cand.bestBet) return;
+      if(!bestCand || (cand.ticketScore||0) > (bestCand.ticketScore||0)) bestCand = cand;
+    });
+    if(!bestCand) return null;
+    // Păstrează datele de enrichment (formă, H2H, antrenori, factori ML5) pe candidat
+    var ml5Bet = m.bestBet || {};
+    return Object.assign({}, bestCand, {
+      homeFormStr   : m.homeFormStr,
+      awayFormStr   : m.awayFormStr,
+      h2hLabel      : m.h2hLabel,
+      homeCoachName : m.homeCoachName,
+      awayCoachName : m.awayCoachName,
+      isDerby       : m.isDerby,
+      isEnriched    : true,
+      bestBet: Object.assign({}, bestCand.bestBet, {
+        ml5Factors   : ml5Bet.ml5Factors   || null,
+        ml5Agreement : ml5Bet.ml5Agreement != null ? ml5Bet.ml5Agreement : null,
+        ml5Kelly     : ml5Bet.ml5Kelly     != null ? ml5Bet.ml5Kelly     : null
+      }),
+      smartScore: Math.max(m.smartScore||0, bestCand.ticketScore||0)
+    });
+  }).filter(Boolean);
+
   var total    = (window.ALL_MATCHES||[]).length;
-  var coverage = total > 0 ? Math.round(enriched.length * 100 / total) : 0;
+  var coverage = total > 0 ? Math.round(enrichedRaw.length * 100 / total) : 0;
   var cacheCount = Object.keys(ENRICHED_EVENT_CACHE).length;
 
   // Header stats
   var headerHtml =
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
-      ml5StatPill('🔬 Enriched', enriched.length + '/' + total, '#a78bfa') +
-      ml5StatPill('📡 Cache', cacheCount + ' meciuri', 'var(--cyan)') +
+      ml5StatPill('🔬 Enriched', enrichedRaw.length + '/' + total, '#a78bfa') +
+      ml5StatPill('✅ Calificate', enriched.length, enriched.length>0?'var(--grn)':'var(--muted)') +
       ml5StatPill('📊 Coverage', coverage + '%', coverage>=70?'var(--grn)':coverage>=40?'var(--yel)':'var(--red)') +
     '</div>';
 
