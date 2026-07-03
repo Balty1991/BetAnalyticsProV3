@@ -1205,9 +1205,13 @@ function renderClaudeAITab(){
       : _acumTodayResult === 'loss'
       ? '<span style="color:#ef4444;font-size:13px;font-weight:900">❌ LOSS</span>'
       : '';
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+    var _acumStreak = Number((acStats && acStats.current_loss_streak) || (trkStats.streak && trkStats.streak.type === 'loss' ? trkStats.streak.count : 0) || 0);
+    var _acumWR = Number((acStats && acStats.winrate) || 0);
+    var _showAcumWarn = (_acumStreak >= 8 || (_acumWR < 25 && Number((acStats && acStats.total) || 0) >= 10));
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid ' + (_showAcumWarn ? 'rgba(239,68,68,.4)' : 'rgba(99,102,241,.25)') + ';border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+      + (_showAcumWarn ? '<div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#ef4444;font-weight:600">⚠️ Sistem în recalibrare — acumulatoarele au ' + (_acumStreak ? _acumStreak + ' pierderi consecutive' : 'performanță scăzută') + '. Urmărește doar selecțiile individuale.</div>' : '')
       + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
-      + '<div style="font-size:14px;font-weight:800;color:#818cf8">🎰 Acumulator Recomandat</div>'
+      + '<div style="font-size:14px;font-weight:800;color:' + (_showAcumWarn ? '#f87171' : '#818cf8') + '">🎰 Acumulator Recomandat</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
       + (_acumBadge ? _acumBadge : '')
       + (cotaTotala ? '<span style="font-size:12px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:3px 10px;color:#818cf8">Cotă: ' + cotaTotala.toFixed(2) + '</span>' : '')
@@ -1981,7 +1985,10 @@ function calcAdjustedProb(prob, confidence, leagueName, marketKey, odds){
   // V17 FIX: clip absolute deviation to ±5pp (Adjusted strong bucket was -2.60% ROI @ 87 bets)
   var raw = p * factor;
   var delta = Math.max(-5, Math.min(5, raw - p));
-  return +(p + delta).toFixed(2);
+  var adjusted = p + delta;
+  // Calibrare ML5: la adjProb >83% modelul supraestimează cu ~10pp (jurnal: 145 pariuri, real WR=76.6% vs estimat 88%)
+  if(adjusted > 83) adjusted = adjusted - Math.min(3, (adjusted - 83) * 0.5);
+  return +adjusted.toFixed(2);
 }
 function oddsInRanges(odds, ranges){
   var o = Number(odds || 0);
@@ -8387,6 +8394,9 @@ function buildMarketCandidate(m, type){
   if(type === 'over25' && oddsInRanges(b.odds, [[1.26,1.45]]) && (b.value || 0) < 0.03) return null;
   // Liga marcată Tier3-avoid: nu generăm selecții pentru ea (exceptând under35)
   if(m.leagueTier === 'avoid' && type !== 'under35') return null;
+  // Ligi cu ROI negativ semnificativ din jurnal (minim 10 pariuri, ROI sub -12%) — blocate complet
+  var _ROI_BLOCK = ['FA Cup','Europa League','UEFA Europa League','USL Championship','FIFA World Cup 2026','World Cup 2026','Ligue 1'];
+  if(_ROI_BLOCK.some(function(l){ return String(m.league||'').indexOf(l) !== -1; })) return null;
   var fit = marketFitAnalysis(m, type);
   var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
@@ -8429,8 +8439,8 @@ function buildMarketCandidate(m, type){
   if(type === 'dcx2' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
   // DC 12 (no draw) — cerem prob >=70, fiind mai riscant statistic
   if(type === 'dc12' && (Number(b.adjProb || 0) < 70 || Number(b.odds || 0) < 1.15 || Number(b.value || 0) < 0.02)) return null;
-  // Home Win: favorit clar acasă (prob >=62, cota rezonabilă, value pozitiv)
-  if(type === 'homeWin' && (Number(b.adjProb || 0) < 62 || Number(b.odds || 0) < 1.10 || Number(b.odds || 0) > 3.50 || Number(b.value || 0) < 0.01)) return null;
+  // Home Win: favorit clar acasă — prag ridicat (53.8% WR, -21.1% ROI în jurnal la prag 62)
+  if(type === 'homeWin' && (Number(b.adjProb || 0) < 67 || Number(b.odds || 0) < 1.10 || Number(b.odds || 0) > 3.50 || Number(b.value || 0) < 0.01)) return null;
 
   // WEEKDAY: restrictiile hardcodate au fost eliminate (nu trebuie sa excludem un eveniment doar pe baza zilei).
   // Motorul de invatare continuu identifica pattern-uri toxice pe zile DACA apar din jurnal — doar acolo blocam.
@@ -8460,6 +8470,10 @@ function buildMarketCandidate(m, type){
   if(m.leagueTier === 'high') baseScore += 4;
   if(m.leagueTier === 'avoid') baseScore -= 8;
   if(b.odds > 2.20) baseScore -= 8;
+  // Piețe profitabile din jurnal: btts (+4.8% ROI), over25 (+6.1% ROI) — prioritizate
+  if((type === 'btts' || type === 'over25') && edgePct > 8) baseScore += 5;
+  // Cote sub 1.25: vig mănâncă profitul chiar și la WR 80% (jurnal: 374 pariuri, -4.3% ROI)
+  if(Number(b.odds || 0) < 1.25) baseScore -= 6;
 
   var trainingMeta = getTrainingBoostMeta(m, type, b);
   if(trainingMeta && isFinite(Number(trainingMeta.boost))){
