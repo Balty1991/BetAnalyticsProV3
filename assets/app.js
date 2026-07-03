@@ -1118,6 +1118,26 @@ function renderClaudeAITab(){
   var cotaTotala = d.cota_totala || null;
   var sansaPct = d.sansa_pct || null;
 
+  // Filtrare acumulator: max 2.20 cotă/linie, max 6 linii, cotă totală ≤ 25x
+  (function(){
+    if(!acumulator.length) return;
+    function parsePickOdds(s){ var m = String(s||'').match(/@\s*([\d.]+)/); return m ? parseFloat(m[1]) : 0; }
+    var filtered = acumulator.filter(function(a){ var o = parsePickOdds(a.pick); return o >= 1.10 && o <= 2.20; });
+    // Sort by highest prob (lowest odds) first for better combined prob
+    filtered.sort(function(a,b){ return parsePickOdds(a.pick) - parsePickOdds(b.pick); });
+    // Cap running total at 25x
+    var kept = [], running = 1;
+    for(var i = 0; i < filtered.length && kept.length < 6; i++){
+      var o = parsePickOdds(filtered[i].pick);
+      if(running * o <= 25) { kept.push(filtered[i]); running *= o; }
+    }
+    if(kept.length < acumulator.length){
+      acumulator = kept;
+      cotaTotala = running > 1 ? +running.toFixed(2) : null;
+      sansaPct = kept.length ? Math.round(kept.reduce(function(acc,a){ var o=parsePickOdds(a.pick); return o>1 ? acc*(1/o) : acc; }, 1) * 100) : null;
+    }
+  })();
+
   if(!generatedAt && !topPicks.length && !acumulator.length){
     root.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted,#64748b)">'
       + '<div style="font-size:32px;margin-bottom:12px">🤖</div>'
