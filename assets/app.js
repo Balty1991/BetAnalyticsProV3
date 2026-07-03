@@ -11646,6 +11646,30 @@ function getMathPortfolioMeta(type, source){
       summary:'2-3 selecții • preț agresiv • miza foarte mică • max 1/săptămână',
       empty:'Nu există acum un setup contrarian suficient de puternic.',
       priority:4
+    },
+    acum5: {
+      icon:'⚡',
+      label:'Acumulator 5x',
+      riskLabel:'Mediu',
+      summary:'3-4 linii • fiecare prob ≥80% • cotă cumulată 4.5-6x',
+      empty:'Nu există 3+ linii cu probabilitate ≥80% și cote compatibile pentru 5x.',
+      priority:5
+    },
+    acum10: {
+      icon:'🔥',
+      label:'Acumulator 10x',
+      riskLabel:'Mediu+',
+      summary:'5-6 linii • fiecare prob ≥77% • cotă cumulată 8.5-12x',
+      empty:'Nu există 5+ linii cu probabilitate ≥77% și cote compatibile pentru 10x.',
+      priority:6
+    },
+    acum20: {
+      icon:'💥',
+      label:'Acumulator 20x',
+      riskLabel:'Ridicat',
+      summary:'6-8 linii • fiecare prob ≥74% • cotă cumulată 16-24x',
+      empty:'Nu există 6+ linii cu probabilitate ≥74% și cote compatibile pentru 20x.',
+      priority:7
     }
   };
   var meta = metaMap[type] || metaMap.double;
@@ -11657,7 +11681,7 @@ function getStakePctForTicket(type){
   if(settings.double == null && settings.balanced != null) settings.double = settings.balanced;
   if(settings.triple == null && settings.goals != null) settings.triple = settings.goals;
   if(settings.contrarian == null && settings.risk != null) settings.contrarian = settings.risk;
-  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian'};
+  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian', acum5:'triple', acum10:'triple', acum20:'contrarian'};
   var key = map[type] || 'double';
   return Number(settings[key] || 0);
 }
@@ -11964,6 +11988,57 @@ function buildMathTicketPreviewFromPool(type, source, pool){
     if(!bestContrarian) return makeEmptyMathTicket(type, source, 'Nu există un setup contrarian valid în intervalul 5.50-15.00 și 12-27% probabilitate compusă.');
     return makeMathTicketObject(type, source, bestContrarian.picks, bestContrarian.totalOdds, bestContrarian.combinedProb, 'Setup contrarian: 2-3 selecții cu preț agresiv și miză mică, folosite rar.');
   }
+  // ── ACUMULATOARE 5x / 10x / 20x ─────────────────────────────────
+  // Strategia: sortăm pe prob DESC (WR maxim per linie), selectăm greedy
+  // cu control corelație și atingem cotă cumulată țintă.
+  if(type === 'acum5' || type === 'acum10' || type === 'acum20'){
+    var acTarget  = type === 'acum5' ? 5  : type === 'acum10' ? 10 : 20;
+    var acMinProb = type === 'acum5' ? 80 : type === 'acum10' ? 77 : 74;
+    var acMinPicks= type === 'acum5' ? 3  : type === 'acum10' ? 5  : 6;
+    var acMaxPicks= type === 'acum5' ? 5  : type === 'acum10' ? 7  : 9;
+    var acMinLeg  = 1.32;
+    var acMaxLeg  = type === 'acum5' ? 1.76 : type === 'acum10' ? 1.82 : 1.90;
+    var acMinTotal= acTarget * 0.80;
+    var acMaxTotal= acTarget * 1.25;
+
+    // Pool: prob ≥ prag, cote per linie în fereastra acumulatorului
+    var acPool = (pool || []).filter(function(item){
+      var p = Number(item.prob || 0);
+      var o = Number(item.odds || 0);
+      return p >= acMinProb && o >= acMinLeg && o <= acMaxLeg;
+    });
+    // Sortare: prob DESC — câștigarea fiecărei linii e prioritatea #1
+    acPool.sort(function(a, b){ return Number(b.prob||0) - Number(a.prob||0); });
+
+    // Selecție greedy cu control corelație
+    var acPicks = [];
+    var acOdds  = 1;
+    for(var ai = 0; ai < acPool.length && acPicks.length < acMaxPicks; ai++){
+      var item = acPool[ai];
+      // Nu adăugăm același eveniment de două ori
+      var dup = acPicks.some(function(p){ return getGenericEventKey(p) === getGenericEventKey(item); });
+      if(dup) continue;
+      // Evităm corelații (același campionat + piață în aceeași fereastră)
+      var corr = acPicks.some(function(p){ return areRowsCorrelated(p, item); });
+      if(corr) continue;
+      var nextOdds = acOdds * Number(item.odds || 1);
+      // Nu depăși limita superioară
+      if(nextOdds > acMaxTotal) continue;
+      acPicks.push(item);
+      acOdds = nextOdds;
+      // Oprire când am atins ținta și avem minimul de linii
+      if(acOdds >= acMinTotal && acPicks.length >= acMinPicks) break;
+    }
+
+    if(acPicks.length < acMinPicks || acOdds < acMinTotal){
+      return makeEmptyMathTicket(type, source, getMathPortfolioMeta(type, source).empty);
+    }
+    var acProb = acPicks.reduce(function(acc, p){ return acc * (Number(p.prob||0)/100); }, 1) * 100;
+    return makeMathTicketObject(type, source, acPicks, acOdds, acProb,
+      acPicks.length + ' linii • fiecare cu prob ≥' + acMinProb + '% • sortate descrescător pe WR individual');
+  }
+  // ─────────────────────────────────────────────────────────────────
+
   return makeEmptyMathTicket(type, source, 'Tip de bilet necunoscut.');
 }
 function buildPortfolioTicketPreview(type){
@@ -12009,6 +12084,9 @@ function generateSinglePremiumTicket(){ return generatePortfolioTicket('premium'
 function generateDoubleConfirmedTicket(){ return generatePortfolioTicket('double'); }
 function generateTripleValueTicket(){ return generatePortfolioTicket('triple'); }
 function generateContrarianShotTicket(){ return generatePortfolioTicket('contrarian'); }
+function generateAccum5Ticket(){  return generatePortfolioTicket('acum5'); }
+function generateAccum10Ticket(){ return generatePortfolioTicket('acum10'); }
+function generateAccum20Ticket(){ return generatePortfolioTicket('acum20'); }
 
 function getAuditMathPool(){
   return ((SIGNAL_AUDIT && SIGNAL_AUDIT.rows) || []).filter(function(row){
@@ -12166,7 +12244,10 @@ function getPresetTicketCards(){
     { key:'premium', title:'Single Premium', accent:'var(--grn)', action:'generateSinglePremiumTicket()', btn:'Generează', preview:buildPortfolioTicketPreview('premium') },
     { key:'double', title:'Double Confirmed', accent:'var(--acc)', action:'generateDoubleConfirmedTicket()', btn:'Generează', preview:buildPortfolioTicketPreview('double') },
     { key:'triple', title:'Triple Value', accent:'var(--pur)', action:'generateTripleValueTicket()', btn:'Generează', preview:buildPortfolioTicketPreview('triple') },
-    { key:'contrarian', title:'Contrarian Shot', accent:'var(--red)', action:'generateContrarianShotTicket()', btn:'Generează', preview:buildPortfolioTicketPreview('contrarian') }
+    { key:'contrarian', title:'Contrarian Shot', accent:'var(--red)', action:'generateContrarianShotTicket()', btn:'Generează', preview:buildPortfolioTicketPreview('contrarian') },
+    { key:'acum5',  title:'⚡ Acumulator 5x',  accent:'#f59e0b', action:'generateAccum5Ticket()',  btn:'Generează', preview:buildPortfolioTicketPreview('acum5') },
+    { key:'acum10', title:'🔥 Acumulator 10x', accent:'#ef4444', action:'generateAccum10Ticket()', btn:'Generează', preview:buildPortfolioTicketPreview('acum10') },
+    { key:'acum20', title:'💥 Acumulator 20x', accent:'#a855f7', action:'generateAccum20Ticket()', btn:'Generează', preview:buildPortfolioTicketPreview('acum20') }
   ];
   var available = presets.filter(function(item){ return item.preview && item.preview.picks && item.preview.picks.length; }).sort(function(a, b){ return rankPresetTicket(b.preview) - rankPresetTicket(a.preview); });
   if(available.length) available[0].recommended = true;
