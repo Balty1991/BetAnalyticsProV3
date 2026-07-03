@@ -1988,6 +1988,15 @@ function calcAdjustedProb(prob, confidence, leagueName, marketKey, odds){
   var adjusted = p + delta;
   // Calibrare ML5: la adjProb >83% modelul supraestimează cu ~10pp (jurnal: 145 pariuri, real WR=76.6% vs estimat 88%)
   if(adjusted > 83) adjusted = adjusted - Math.min(3, (adjusted - 83) * 0.5);
+  // Corecție per-ligă: probabilitate coborâtă pentru ligi cu ROI negativ sistematic — nu blocăm, doar ajustăm
+  var _LG_PROB_CORR = {
+    'FA Cup': -5, 'Europa League': -4, 'UEFA Europa League': -4,
+    'USL Championship': -4, 'FIFA World Cup 2026': -3, 'World Cup 2026': -3, 'Ligue 1': -3
+  };
+  var _lgCorrVal = 0;
+  var _lgName = String(leagueName || '');
+  Object.keys(_LG_PROB_CORR).forEach(function(k){ if(_lgName.indexOf(k) !== -1) _lgCorrVal = _LG_PROB_CORR[k]; });
+  adjusted = adjusted + _lgCorrVal;
   return +adjusted.toFixed(2);
 }
 function oddsInRanges(odds, ranges){
@@ -8394,9 +8403,6 @@ function buildMarketCandidate(m, type){
   if(type === 'over25' && oddsInRanges(b.odds, [[1.26,1.45]]) && (b.value || 0) < 0.03) return null;
   // Liga marcată Tier3-avoid: nu generăm selecții pentru ea (exceptând under35)
   if(m.leagueTier === 'avoid' && type !== 'under35') return null;
-  // Ligi cu ROI negativ semnificativ din jurnal (minim 10 pariuri, ROI sub -12%) — blocate complet
-  var _ROI_BLOCK = ['FA Cup','Europa League','UEFA Europa League','USL Championship','FIFA World Cup 2026','World Cup 2026','Ligue 1'];
-  if(_ROI_BLOCK.some(function(l){ return String(m.league||'').indexOf(l) !== -1; })) return null;
   var fit = marketFitAnalysis(m, type);
   var reasons = uniqueReasons((fit && fit.reasons) || []);
   var edgePct = Number(b.edgePct || 0);
@@ -8474,6 +8480,14 @@ function buildMarketCandidate(m, type){
   if((type === 'btts' || type === 'over25') && edgePct > 8) baseScore += 5;
   // Cote sub 1.25: vig mănâncă profitul chiar și la WR 80% (jurnal: 374 pariuri, -4.3% ROI)
   if(Number(b.odds || 0) < 1.25) baseScore -= 6;
+  // Ligi cu ROI negativ sistematic: scor penalizat (nu blocate) — apar doar când semnalul e puternic
+  var _LG_SCORE_PEN = {
+    'FA Cup': -12, 'USL Championship': -12,
+    'Europa League': -10, 'UEFA Europa League': -10,
+    'Ligue 1': -8, 'World Cup 2026': -8, 'FIFA World Cup 2026': -8
+  };
+  var _lgName2 = String(m.league || '');
+  Object.keys(_LG_SCORE_PEN).forEach(function(k){ if(_lgName2.indexOf(k) !== -1) baseScore += _LG_SCORE_PEN[k]; });
 
   var trainingMeta = getTrainingBoostMeta(m, type, b);
   if(trainingMeta && isFinite(Number(trainingMeta.boost))){
