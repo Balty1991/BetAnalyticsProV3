@@ -1540,6 +1540,148 @@ function renderClaudeAITab(){
 }
 
 // ============================================================
+// MOTOR AI HISTORY & STATISTICS
+// ============================================================
+var _MOTORAI_HIST_KEY = 'veyra_motorai_hist';
+function loadMotorAIHistory(){ try{ return JSON.parse(localStorage.getItem(_MOTORAI_HIST_KEY)||'[]'); }catch(e){ return []; } }
+function saveMotorAIHistory(list){ try{ localStorage.setItem(_MOTORAI_HIST_KEY, JSON.stringify(list.slice(-500))); }catch(e){} }
+function motorAIPiataToKey(piata){
+  var m = { home_win:'homeWin', away_win:'awayWin', draw:'draw',
+    over15:'over15', over_15:'over15', over25:'over25', over_25:'over25',
+    over35:'over35', over_35:'over35', under25:'under25', under_25:'under25',
+    under35:'under35', under_35:'under35', btts:'btts',
+    dc1x:'dc1x', dc_1x:'dc1x', dcx2:'dcx2', dc_x2:'dcx2', dc12:'dc12', dc_12:'dc12' };
+  return m[String(piata||'').toLowerCase()] || String(piata||'');
+}
+function saveMotorAIPick(p){
+  var entry = {
+    id: Date.now() + Math.floor(Math.random()*1000),
+    savedAt: new Date().toISOString(),
+    home: p.home||'', away: p.away||'', league: p.league||'',
+    event_date: p.event_date||'',
+    piata: p.piata||'', piataLabel: p.piata_label||p.piata||'',
+    marketKey: motorAIPiataToKey(p.piata),
+    cota: Number(p.cota||0), incredere: Number(p.incredere||0),
+    edge_pp: Number(p.edge_pp||0), motiv: p.motiv||'',
+    result: 'pending'
+  };
+  var list = loadMotorAIHistory();
+  // Evita duplicate — acelasi meci+piata salvat in aceeasi zi
+  var today = new Date().toDateString();
+  var dup = list.filter(function(e){
+    return e.home===entry.home && e.away===entry.away && e.piata===entry.piata &&
+      new Date(e.savedAt).toDateString()===today;
+  });
+  if(dup.length){ if(typeof toast==='function') toast('⚠️ Deja salvat astăzi!','warn'); return; }
+  list.push(entry);
+  saveMotorAIHistory(list);
+  renderMotorAIHistory();
+  if(typeof toast==='function') toast('⚡ '+htmlEsc(entry.home)+' salvat!','ok');
+}
+function setMotorAIResult(id, result){
+  var list = loadMotorAIHistory();
+  list.forEach(function(e){ if(e.id===id) e.result=result; });
+  saveMotorAIHistory(list);
+  renderMotorAIHistory();
+}
+function deleteMotorAIEntry(id){
+  var list = loadMotorAIHistory().filter(function(e){ return e.id!==id; });
+  saveMotorAIHistory(list);
+  renderMotorAIHistory();
+}
+function autoCheckMotorAIResults(){
+  var list = loadMotorAIHistory();
+  var pending = list.filter(function(e){ return e.result==='pending'; });
+  if(!pending.length) return;
+  var now = Date.now();
+  var GRACE_MS = 2*60*60*1000;
+  var changed = false;
+  pending.forEach(function(entry){
+    var matchMs = entry.event_date ? new Date(entry.event_date).getTime() : 0;
+    if(!matchMs || now < matchMs + GRACE_MS) return;
+    var ev = null;
+    if(ALL_EVENTS && ALL_EVENTS.length){
+      ALL_EVENTS.forEach(function(e){ if(String(e.id||'')===String(entry.eventId||'__')) ev=e; });
+    }
+    if(!ev) ev = (typeof findEventForStoredPick==='function') ? findEventForStoredPick({
+      home:entry.home, away:entry.away, event_date:entry.event_date
+    }) : null;
+    if(!ev) return;
+    var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
+    if(sp.homeScore==null) return;
+    var res = (typeof evaluateMarketOutcome==='function') ? evaluateMarketOutcome(entry.marketKey, sp.homeScore, sp.awayScore) : 'pending';
+    if(res==='pending') return;
+    entry.result = res;
+    entry.finalScore = sp.homeScore+'-'+sp.awayScore;
+    changed = true;
+  });
+  if(changed){
+    saveMotorAIHistory(list);
+    renderMotorAIHistory();
+    if(typeof toast==='function') toast('📊 Rezultate Motor AI actualizate!','ok');
+  }
+}
+function renderMotorAIHistory(){
+  var wrap = document.getElementById('motorai-history-wrap');
+  if(!wrap) return;
+  var list = loadMotorAIHistory().slice().reverse();
+  if(!list.length){ wrap.innerHTML=''; return; }
+  var wins=0, losses=0;
+  list.forEach(function(e){ if(e.result==='win') wins++; else if(e.result==='loss') losses++; });
+  var settled=wins+losses, wr=settled?Math.round(wins*100/settled):null;
+  var avgOdds=0;
+  if(settled){
+    var oddsSum=list.filter(function(e){return e.result!=='pending';}).reduce(function(a,e){return a+Number(e.cota||0);},0);
+    avgOdds=oddsSum/settled;
+  }
+  var roi=settled?((wins*avgOdds-settled)/settled*100):null;
+
+  var statBar='<div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)">'
+    +'<div style="font-size:13px;font-weight:900;color:var(--txt);margin-bottom:10px">⚡ Istoric Motor AI</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+    +'<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted)">Total: '+list.length+'</span>'
+    +'<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(34,197,94,.12);color:#22c55e">✅ WIN: '+wins+'</span>'
+    +'<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(239,68,68,.12);color:#ef4444">❌ LOSS: '+losses+'</span>'
+    +(wr!==null?'<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(99,102,241,.12);color:#a5b4fc">WR: '+wr+'%</span>':'')
+    +(roi!==null?'<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:'+(roi>=0?'rgba(34,197,94,.1)':'rgba(239,68,68,.1)')+';color:'+(roi>=0?'#22c55e':'#ef4444')+'">ROI: '+(roi>=0?'+':'')+roi.toFixed(1)+'%</span>':'')
+    +'</div>';
+
+  var rows=list.map(function(e){
+    var isPending=e.result==='pending', isWin=e.result==='win';
+    var bdCol=isWin?'rgba(34,197,94,.2)':e.result==='loss'?'rgba(239,68,68,.2)':'rgba(255,255,255,.06)';
+    var conf=Number(e.incredere||0);
+    var confCol=conf>=80?'#22c55e':(conf>=65?'#2BE5C5':(conf>=50?'#f59e0b':'#ef4444'));
+    var evDate='';
+    if(e.event_date){ try{ var _d=new Date(e.event_date); if(isFinite(_d.getTime())) evDate=_d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0')+' '+_d.getHours().toString().padStart(2,'0')+':'+_d.getMinutes().toString().padStart(2,'0'); }catch(ex){} }
+    var savedDate='';
+    if(e.savedAt){ try{ var _sd=new Date(e.savedAt); savedDate=_sd.getDate().toString().padStart(2,'0')+'.'+(_sd.getMonth()+1).toString().padStart(2,'0'); }catch(ex){} }
+    return '<div style="background:var(--bg2,#0E1424);border:1px solid '+bdCol+';border-radius:12px;padding:12px 14px;margin-bottom:8px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      +'<span style="font-size:12px;font-weight:900;color:'+confCol+'">'+conf+'%</span>'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--txt)">'+htmlEsc(e.home)+' vs '+htmlEsc(e.away)+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+htmlEsc(e.league||'')+(evDate?' · 🕐 '+evDate:'')+(e.finalScore?' · <span style="color:var(--txt);font-weight:700">'+htmlEsc(e.finalScore)+'</span>':'')+'</div>'
+      +'</div>'
+      +(savedDate?'<span style="font-size:10px;color:var(--muted);flex-shrink:0">'+savedDate+'</span>':'')
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">'
+      +'<span style="font-size:12px;font-weight:800;color:'+confCol+'">'+htmlEsc(e.piataLabel||e.piata||'')+'</span>'
+      +(e.cota?'<span style="font-size:11px;font-weight:700;background:'+confCol+'18;border:1px solid '+confCol+'44;color:'+confCol+';padding:2px 7px;border-radius:16px">@'+Number(e.cota).toFixed(2)+'</span>':'')
+      +(e.edge_pp?'<span style="font-size:10px;color:#2BE5C5">+'+Number(e.edge_pp).toFixed(1)+'pp</span>':'')
+      +(isPending?'<span style="font-size:10px;color:var(--muted);margin-left:auto">⏳ în așteptare</span>':(isWin?'<span style="font-size:11px;font-weight:800;color:#22c55e;margin-left:auto">✅ WIN</span>':'<span style="font-size:11px;font-weight:800;color:#ef4444;margin-left:auto">❌ LOSS</span>'))
+      +'</div>'
+      +(isPending?'<div style="display:flex;gap:6px">'
+        +'<button onclick="setMotorAIResult('+e.id+',\'win\')" style="flex:1;padding:6px;border-radius:8px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.08);color:#22c55e;font-size:11px;font-weight:700;cursor:pointer">✅ WIN</button>'
+        +'<button onclick="setMotorAIResult('+e.id+',\'loss\')" style="flex:1;padding:6px;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#ef4444;font-size:11px;font-weight:700;cursor:pointer">❌ LOSS</button>'
+        +'<button onclick="deleteMotorAIEntry('+e.id+')" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:var(--muted);font-size:11px;cursor:pointer">🗑</button>'
+        +'</div>':'<div style="text-align:right"><button onclick="deleteMotorAIEntry('+e.id+')" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);font-size:10px;cursor:pointer">🗑</button></div>')
+      +'</div>';
+  }).join('');
+
+  wrap.innerHTML = statBar + rows + '</div>';
+}
+
+// ============================================================
 // MOTOR AI TAB — per-match Gemini predictions
 // ============================================================
 function renderMotorAITab(){
@@ -1610,6 +1752,7 @@ function renderMotorAITab(){
       }
     }
 
+    var pIdx = JSON.stringify({home:p.home,away:p.away,piata:p.piata}).replace(/"/g,'&quot;');
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid var(--brd);border-radius:12px;padding:12px 14px;margin-bottom:8px">'
       // Top row: confidence + teams
       + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
@@ -1620,6 +1763,7 @@ function renderMotorAITab(){
       + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">'+htmlEsc(p.home||'')+' vs '+htmlEsc(p.away||'')+'</div>'
       + '<div style="font-size:11px;color:var(--muted)">'+htmlEsc(p.league||'')+(xgStr?' · '+xgStr:'')+(kickoffStr?' · 🕐 '+kickoffStr:'')+'</div>'
       + '</div>'
+      + '<button onclick="saveMotorAIPick((window.AI_MATCH_ENGINE||{}).picks&&(window.AI_MATCH_ENGINE.picks.find(function(q){return q.home===\''+p.home.replace(/'/g,"\\'")+'\'&&q.away===\''+p.away.replace(/'/g,"\\'")+'\'&&q.piata===\''+p.piata+'\';})))" style="flex-shrink:0;padding:5px 10px;border-radius:8px;border:1px solid rgba(43,229,197,.4);background:rgba(43,229,197,.07);color:#2BE5C5;font-size:10px;font-weight:700;cursor:pointer">💾 Salvează</button>'
       + '</div>'
       // Pick row
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
@@ -1636,8 +1780,11 @@ function renderMotorAITab(){
     html += '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Niciun meci cu ≥'+minConf+'% încredere.</div>';
   }
 
+  html += '<div id="motorai-history-wrap"></div>';
   html += '</div>';
   root.innerHTML = html;
+  try{ renderMotorAIHistory(); }catch(e){}
+  setTimeout(function(){ try{ autoCheckMotorAIResults(); }catch(e){} }, 400);
 }
 
 function renderActiveTab(name, opts){
