@@ -12039,7 +12039,8 @@ function getPortfolioMatchPool(){
 function buildMathTicketPreviewFromPool(type, source, pool){
   var bankroll = getActualBankrollValue();
   var strongCount = countStrongMathMatches(pool);
-  if(type !== 'premium' && strongCount < 2){
+  // Sursa 'ml5' are candidați deja filtrați prin buildMarketCandidate — garda strongCount e redundantă
+  if(type !== 'premium' && source !== 'ml5' && strongCount < 2){
     return makeEmptyMathTicket(type, source, 'Disciplina > volum: astăzi nu există minim 2 meciuri diferite cu scor peste 80.');
   }
   if(type === 'premium'){
