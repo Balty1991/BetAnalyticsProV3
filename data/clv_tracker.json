@@ -1,24 +1,24 @@
 {
-  "updated_at": "2026-07-03T16:59:56.940089+00:00",
+  "updated_at": "2026-07-04T07:01:53.870331+00:00",
   "summary": {
-    "total_picks": 1698,
-    "avg_clv_pct": -0.6926,
+    "total_picks": 1700,
+    "avg_clv_pct": -0.6953,
     "median_clv_pct": 0.0,
     "clv_positive_n": 487,
-    "clv_negative_n": 1211,
-    "clv_positive_rate": 0.2868,
-    "avg_clv_wins": -0.3755,
+    "clv_negative_n": 1213,
+    "clv_positive_rate": 0.2865,
+    "avg_clv_wins": -0.3799,
     "avg_clv_losses": -1.4545,
-    "win_rate_pct": 70.61,
-    "roi_flat_pct": -1.3517,
-    "roi_flat_at_picked_odds_pct": -1.3517,
-    "roi_flat_closing_proxy_pct": -0.712,
+    "win_rate_pct": 70.65,
+    "roi_flat_pct": -1.3101,
+    "roi_flat_at_picked_odds_pct": -1.3101,
+    "roi_flat_closing_proxy_pct": -0.6664,
     "roi_basis": "picked_odds",
     "roi_note": "ROI este calculat la cota luată / opening_odds, nu la closing proxy.",
-    "ev_positive_n": 1011,
+    "ev_positive_n": 1012,
     "max_clv_pct": 47.6923,
     "min_clv_pct": -37.4332,
-    "std_clv_pct": 7.2599
+    "std_clv_pct": 7.2563
   },
   "by_market": {
     "btts": {
@@ -79,15 +79,15 @@
       "confidence": "medium"
     },
     "under35": {
-      "n": 992,
-      "avg_clv_pct": -0.6142,
+      "n": 994,
+      "avg_clv_pct": -0.6191,
       "median_clv_pct": 0.0,
-      "clv_positive_rate": 0.2641,
-      "win_rate_pct": 71.57,
-      "roi_flat_pct": -1.5403,
-      "roi_flat_at_picked_odds_pct": -1.5403,
-      "roi_flat_closing_proxy_pct": -1.0146,
-      "avg_ev_at_pick": 2.4456,
+      "clv_positive_rate": 0.2636,
+      "win_rate_pct": 71.63,
+      "roi_flat_pct": -1.4688,
+      "roi_flat_at_picked_odds_pct": -1.4688,
+      "roi_flat_closing_proxy_pct": -0.9361,
+      "avg_ev_at_pick": 2.4443,
       "roi_basis": "picked_odds",
       "verdict": "RECALIBRARE_NECESARA",
       "label": "CLV- și ROI-",
@@ -121,11 +121,11 @@
       "avg_clv": -0.1429
     },
     "clv_mild_neg": {
-      "n": 319,
-      "win_rate": 70.22,
-      "roi_pct": -2.3505,
+      "n": 321,
+      "win_rate": 70.4,
+      "roi_pct": -2.124,
       "roi_basis": "picked_odds",
-      "avg_clv": -2.5563
+      "avg_clv": -2.5592
     },
     "clv_strong_neg": {
       "n": 235,
@@ -136,40 +136,40 @@
     }
   },
   "rolling_30d": {
-    "n": 111,
-    "avg_clv_pct": -0.5613,
-    "win_rate_pct": 70.27,
-    "roi_flat_pct": 0.0991,
+    "n": 106,
+    "avg_clv_pct": -0.5262,
+    "win_rate_pct": 71.7,
+    "roi_flat_pct": 2.5849,
     "roi_basis": "picked_odds",
     "days": 30
   },
   "rolling_90d": {
-    "n": 1698,
-    "avg_clv_pct": -0.6926,
-    "win_rate_pct": 70.61,
-    "roi_flat_pct": -1.3517,
+    "n": 1700,
+    "avg_clv_pct": -0.6953,
+    "win_rate_pct": 70.65,
+    "roi_flat_pct": -1.3101,
     "roi_basis": "picked_odds",
     "days": 90
   },
   "ev_correlation": {
     "ev_positive_picks": {
-      "n": 1011,
-      "avg_clv": 1.0981,
-      "clv_positive_rate": 0.367,
-      "roi_flat_pct": 1.6782
+      "n": 1012,
+      "avg_clv": 1.0957,
+      "clv_positive_rate": 0.3666,
+      "roi_flat_pct": 1.722
     },
     "ev_negative_picks": {
-      "n": 687,
-      "avg_clv": -3.3277,
-      "clv_positive_rate": 0.1689,
-      "roi_flat_pct": -5.8106
+      "n": 688,
+      "avg_clv": -3.3297,
+      "clv_positive_rate": 0.1686,
+      "roi_flat_pct": -5.7702
     },
     "divergence_warning": false,
     "roi_basis": "picked_odds"
   },
   "diagnosis": {
     "signal": "CLV_NEGATIVE_ROI_NEGATIVE",
-    "interpretation": "❌ CLV negativ (-0.69%) și ROI negativ (-1.35%) la cota luată. Edge-ul calculat nu bate piața suficient.",
+    "interpretation": "❌ CLV negativ (-0.70%) și ROI negativ (-1.31%) la cota luată. Edge-ul calculat nu bate piața suficient.",
     "action": "Ridică pragurile de edge și auditează probabilitățile pe piețele slabe.",
     "confidence": "high",
     "rolling_trend": "stabil",
@@ -183,6 +183,60 @@
     ]
   },
   "picks": [
+    {
+      "event_id": "8374",
+      "date": "2026-07-04",
+      "home": "Colombia",
+      "away": "Ghana",
+      "league": "World Cup 2026",
+      "market": "under35",
+      "picked_odds": 1.22,
+      "closing_odds": 1.28,
+      "picked_implied": 0.819672,
+      "closing_implied": 0.78125,
+      "clv_pct": -4.6875,
+      "clv_positive": false,
+      "clv_reliable": true,
+      "ev_at_pick_pct": -0.8872,
+      "model_prob": 81.24,
+      "edge_pct": 12.26,
+      "score": 97,
+      "line_move_pct": 4.918,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-07-04T04:02:50.554125+00:00",
+      "prediction_id": 5333,
+      "profit_at_pick": 0.22,
+      "profit_at_closing_proxy": 0.28,
+      "roi_basis": "picked_odds"
+    },
+    {
+      "event_id": "8373",
+      "date": "2026-07-04",
+      "home": "Argentina",
+      "away": "Cabo Verde",
+      "league": "World Cup 2026",
+      "market": "under35",
+      "picked_odds": 1.46,
+      "closing_odds": 1.48,
+      "picked_implied": 0.684932,
+      "closing_implied": 0.675676,
+      "clv_pct": -1.3514,
+      "clv_positive": false,
+      "clv_reliable": true,
+      "ev_at_pick_pct": 4.463,
+      "model_prob": 71.55,
+      "edge_pct": 12.53,
+      "score": 89,
+      "line_move_pct": 1.3699,
+      "won": true,
+      "status": "win",
+      "settled_at": "2026-07-04T00:56:47.395430+00:00",
+      "prediction_id": 5324,
+      "profit_at_pick": 0.46,
+      "profit_at_closing_proxy": 0.48,
+      "roi_basis": "picked_odds"
+    },
     {
       "event_id": "8370",
       "date": "2026-07-03",
@@ -46034,15 +46088,15 @@
   "market_actions": [
     {
       "market": "under35",
-      "n": 992,
+      "n": 994,
       "verdict": "RECALIBRARE_NECESARA",
       "label": "CLV- și ROI-",
       "severity": "bad",
       "action": "Ridică pragul de edge și auditează probabilitățile/sursa cotelor pentru piața asta.",
       "stake_policy": "avoid_or_probe",
       "edge_adjustment_pp": 2.0,
-      "avg_clv_pct": -0.6142,
-      "roi_flat_pct": -1.5403,
+      "avg_clv_pct": -0.6191,
+      "roi_flat_pct": -1.4688,
       "confidence": "high"
     },
     {
