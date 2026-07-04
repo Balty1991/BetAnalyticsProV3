@@ -10178,11 +10178,19 @@ function getScorePairFromSource(obj){
 
 function evaluateMarketOutcome(marketType, homeScore, awayScore){
   if(homeScore == null || awayScore == null) return 'pending';
-  var total = Number(homeScore) + Number(awayScore);
+  var h = Number(homeScore), a = Number(awayScore), total = h + a;
   if(marketType === 'over15') return total >= 2 ? 'win' : 'loss';
   if(marketType === 'over25') return total >= 3 ? 'win' : 'loss';
+  if(marketType === 'over35') return total >= 4 ? 'win' : 'loss';
+  if(marketType === 'under25') return total <= 2 ? 'win' : 'loss';
   if(marketType === 'under35') return total <= 3 ? 'win' : 'loss';
-  if(marketType === 'btts') return (Number(homeScore) > 0 && Number(awayScore) > 0) ? 'win' : 'loss';
+  if(marketType === 'btts') return (h > 0 && a > 0) ? 'win' : 'loss';
+  if(marketType === 'homeWin' || marketType === '1') return h > a ? 'win' : 'loss';
+  if(marketType === 'awayWin' || marketType === '2') return a > h ? 'win' : 'loss';
+  if(marketType === 'draw'    || marketType === 'x') return h === a ? 'win' : 'loss';
+  if(marketType === 'dc1x') return h >= a ? 'win' : 'loss';
+  if(marketType === 'dcx2') return a >= h ? 'win' : 'loss';
+  if(marketType === 'dc12') return h !== a ? 'win' : 'loss';
   return 'pending';
 }
 
@@ -11229,6 +11237,7 @@ function renderML5Analysis(){
 
   try{ renderML5AccumGenerators(); }catch(e){ console.warn('[ML5 Acum]', e); }
   try{ renderML5AccumHistory(); }catch(e){ console.warn('[ML5 Hist]', e); }
+  setTimeout(function(){ try{ autoCheckML5AccumResults(); }catch(e){} }, 400);
 }
 
 /* ===== ML5 ACCUMULATOR GENERATORS ===== */
@@ -11241,6 +11250,7 @@ function getML5AccumPool(){
       league: m.league || m.leagueName || '',
       event_date: m.date || m.event_date || '',
       date: m.date || m.event_date || '',
+      eventId: m.eventId || m.event_id || null,
       odds: Number(bet.odds || 0),
       prob: Number(bet.adjProb || 0),
       value: Number(bet.value || 0),
@@ -11274,8 +11284,9 @@ function saveML5AccumTicket(cfg, t){
   var picks = (t.picks || []).map(function(p){
     var bet = p.bestBet || {};
     return { home:p.home||'', away:p.away||'', league:p.league||'',
-      market:bet.label||'', odds:Number(bet.odds||0),
-      prob:Number(bet.adjProb||p.prob||0), event_date:p.event_date||p.date||'' };
+      market:bet.label||'', marketKey:p.marketKey||'', odds:Number(bet.odds||0),
+      prob:Number(bet.adjProb||p.prob||0), event_date:p.event_date||p.date||'',
+      eventId:p.eventId||p.event_id||null };
   });
   var entry = { id: Date.now(), generatedAt: new Date().toISOString(),
     type:cfg.type, icon:cfg.icon, label:cfg.label, accent:cfg.accent,
@@ -11297,6 +11308,76 @@ function deleteML5AccumEntry(id){
   var list = loadML5AccumHistory().filter(function(e){ return e.id !== id; });
   saveML5AccumHistory(list);
   renderML5AccumHistory();
+}
+function autoCheckML5AccumResults(){
+  var list = loadML5AccumHistory();
+  var pending = list.filter(function(e){ return e.result === 'pending'; });
+  if(!pending.length) return;
+  var now = Date.now();
+  var GRACE_MS = 2 * 60 * 60 * 1000; // 2h after last match
+  var changed = false;
+  var needsApi = [];
+
+  pending.forEach(function(entry){
+    var latestMs = 0;
+    (entry.picks||[]).forEach(function(p){
+      var ms = p.event_date ? new Date(p.event_date).getTime() : 0;
+      if(isFinite(ms) && ms > latestMs) latestMs = ms;
+    });
+    if(!latestMs || now < latestMs + GRACE_MS) return;
+
+    var pickResults = (entry.picks||[]).map(function(p){
+      var ev = null;
+      if(p.eventId && ALL_EVENTS && ALL_EVENTS.length){
+        ALL_EVENTS.forEach(function(e){ if(String(e.id||'')===String(p.eventId)) ev=e; });
+      }
+      if(!ev) ev = (typeof findEventForStoredPick==='function') ? findEventForStoredPick(p) : null;
+      if(!ev) return { result: null, eventId: p.eventId||null };
+      var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
+      if(sp.homeScore == null) return { result: null, eventId: p.eventId||null };
+      return { result: evaluateMarketOutcome(p.marketKey||'', sp.homeScore, sp.awayScore), eventId: null };
+    });
+
+    var unresolved = pickResults.filter(function(r){ return r && r.result === null; });
+    if(unresolved.length){
+      needsApi.push(entry);
+      return;
+    }
+    var results = pickResults.map(function(r){ return r ? r.result : null; });
+    if(results.indexOf(null)>=0 || results.indexOf('pending')>=0) return;
+    entry.result = results.indexOf('loss')>=0 ? 'loss' : 'win';
+    changed = true;
+  });
+
+  if(changed){
+    saveML5AccumHistory(list);
+    renderML5AccumHistory();
+    if(typeof toast==='function') toast('📊 Rezultate actualizate automat!','ok');
+  }
+
+  if(!needsApi.length || !API_TOKEN) return;
+  needsApi.forEach(function(entry){
+    var promList = (entry.picks||[]).map(function(p){
+      return p.eventId ? fetchEventDetail(String(p.eventId)) : Promise.resolve(null);
+    });
+    Promise.all(promList).then(function(evDetails){
+      var list2 = loadML5AccumHistory();
+      var e2 = list2.filter(function(x){ return x.id===entry.id; })[0];
+      if(!e2 || e2.result!=='pending') return;
+      var results2 = (e2.picks||[]).map(function(p,i){
+        var ev = evDetails[i];
+        if(!ev) return null;
+        var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
+        if(sp.homeScore==null) return null;
+        return evaluateMarketOutcome(p.marketKey||'', sp.homeScore, sp.awayScore);
+      });
+      if(results2.indexOf(null)>=0 || results2.indexOf('pending')>=0) return;
+      e2.result = results2.indexOf('loss')>=0 ? 'loss' : 'win';
+      saveML5AccumHistory(list2);
+      renderML5AccumHistory();
+      if(typeof toast==='function') toast('📊 Rezultate actualizate automat!','ok');
+    }).catch(function(){});
+  });
 }
 function renderML5AccumHistory(){
   var wrap = document.getElementById('ml5-acum-history-wrap');
