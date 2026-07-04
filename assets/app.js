@@ -11195,16 +11195,124 @@ function renderML5Analysis(){
       ml5FactorBar('Tactici ↑',factorCounts.tact, n, '#a78bfa') +
     '</div>';
 
+  // Stocăm pool-ul ML5 global pentru generatoarele de acumulatoare
+  window._ML5_ENRICHED_CACHE = enriched;
+
   // Cards per match
   var cardsHtml = sorted.map(function(m, idx){ return renderML5MatchCard(m, idx+1); }).join('');
+
+  // Secțiunea generatoare acumulatoare — container injectat, populat după setarea innerHTML
+  var acumSection =
+    '<div style="margin-bottom:20px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(245,158,11,.06));border:1px solid rgba(167,139,250,.25)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">' +
+        '<div>' +
+          '<div style="font-size:15px;font-weight:900;color:var(--txt)">🎰 Acumulatoare ML5</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px">Bilete cumulate din pool-ul îmbogățit ML5 — fiecare linie trece filtrul complet de calitate.</div>' +
+        '</div>' +
+        '<button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="renderML5AccumGenerators()">↻ Reîncarcă</button>' +
+      '</div>' +
+      '<div id="ml5-acum-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">' +
+        '<div class="empty-state" style="padding:16px;grid-column:1/-1">Se generează…</div>' +
+      '</div>' +
+    '</div>';
 
   root.innerHTML =
     '<div style="padding:0 4px">' +
       headerHtml + covBar + tokenWarning +
-      summaryBar + distHtml +
+      summaryBar +
+      acumSection +
+      distHtml +
       '<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">Top Picks ML5</div>' +
       cardsHtml +
     '</div>';
+
+  // Populăm generatoarele acum că DOM-ul e gata
+  try{ renderML5AccumGenerators(); }catch(e){ console.warn('[ML5 Acum]', e); }
+}
+
+/* ===== ML5 ACCUMULATOR GENERATORS ===== */
+function getML5AccumPool(){
+  var enriched = window._ML5_ENRICHED_CACHE || [];
+  return enriched.map(function(m){
+    var bet = m.bestBet || {};
+    return {
+      home: m.home || '', away: m.away || '',
+      league: m.league || m.leagueName || '',
+      event_date: m.date || m.event_date || '',
+      date: m.date || m.event_date || '',
+      odds: Number(bet.odds || 0),
+      prob: Number(bet.adjProb || 0),
+      value: Number(bet.value || 0),
+      edge: Number(bet.edgePct || 0),
+      score: m.smartScore || m.ticketScore || 0,
+      ticketScore: m.smartScore || m.ticketScore || 0,
+      marketKey: m.marketKey || m.market_key || '',
+      market: bet.label || '',
+      displayMarket: bet.label || '',
+      displayOdds: Number(bet.odds || 0),
+      bestBet: Object.assign({}, bet, { adjProb: Number(bet.adjProb || 0) }),
+      eventKey: getGenericEventKey(m),
+      source: 'ml5'
+    };
+  }).filter(function(item){ return item.odds >= 1.10 && item.prob > 0; });
+}
+
+function buildML5AccumTicket(type){
+  return buildMathTicketPreviewFromPool(type, 'ml5', getML5AccumPool());
+}
+
+function renderML5AccumGenerators(){
+  var target = document.getElementById('ml5-acum-grid');
+  if(!target) return;
+  var pool = getML5AccumPool();
+  var CFGS = [
+    { type:'acum5',  icon:'⚡', label:'Acumulator 5x',  accent:'#f59e0b', accentRgb:'245,158,11' },
+    { type:'acum10', icon:'🔥', label:'Acumulator 10x', accent:'#ef4444', accentRgb:'239,68,68'  },
+    { type:'acum20', icon:'💥', label:'Acumulator 20x', accent:'#a855f7', accentRgb:'168,85,247' }
+  ];
+  if(!pool.length){
+    target.innerHTML = '<div class="empty-state" style="padding:20px;grid-column:1/-1;text-align:center">Pool ML5 gol — pornește Enrichment mai întâi.</div>';
+    return;
+  }
+  target.innerHTML = CFGS.map(function(cfg){
+    var t = buildMathTicketPreviewFromPool(cfg.type, 'ml5', pool) || {};
+    var meta = getMathPortfolioMeta(cfg.type, 'ml5');
+    var picks = t.picks || [];
+    var isEmpty = !picks.length;
+    var totalOdds = isEmpty ? 1 : Number(t.totalOdds || 1);
+    var combinedProb = isEmpty ? 0 : Number(t.combinedProb || 0);
+
+    var pickRows = picks.map(function(p, i){
+      var bet = p.bestBet || {};
+      return '<div style="padding:'+(i===0?'9':'7')+'px 10px;border-radius:10px;background:rgba(255,255,255,'+(i===0?'.06':'.03')+');border:1px solid rgba(255,255,255,'+(i===0?'.09':'.05')+');margin-bottom:5px">'+
+        '<div style="font-size:'+(i===0?'12':'11')+'px;font-weight:700;color:var(--txt)">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>'+
+        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+(bet.label||'—')+' @ '+Number(bet.odds||0).toFixed(2)+'&nbsp;•&nbsp;Prob '+Number(bet.adjProb||p.prob||0).toFixed(0)+'%'+(p.league?' &nbsp;<span style="opacity:.65">'+p.league+'</span>':'')+'</div>'+
+      '</div>';
+    }).join('');
+
+    var emptyMsg = '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center;border-radius:10px;background:rgba(255,255,255,.03)">'+(t.error || meta.empty || 'Insuficiente date.')+'</div>';
+
+    return '<div style="padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba('+cfg.accentRgb+',.25);border-top:3px solid '+cfg.accent+'">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">'+
+        '<div>'+
+          '<div style="font-size:14px;font-weight:900;color:var(--txt)">'+cfg.icon+' '+cfg.label+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+(meta.summary||'')+'</div>'+
+        '</div>'+
+        (isEmpty
+          ? '<span style="font-size:10px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted)">Pool insuficient</span>'
+          : '<span style="font-size:17px;font-weight:900;color:'+cfg.accent+'">'+totalOdds.toFixed(2)+'x</span>')+
+      '</div>'+
+      (!isEmpty
+        ? '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">'+
+            '<div style="padding:7px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center"><div style="font-size:13px;font-weight:800;color:var(--txt)">'+picks.length+'</div><div style="font-size:9px;color:var(--muted)">Linii</div></div>'+
+            '<div style="padding:7px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center"><div style="font-size:13px;font-weight:800;color:'+cfg.accent+'">'+totalOdds.toFixed(2)+'x</div><div style="font-size:9px;color:var(--muted)">Cotă</div></div>'+
+            '<div style="padding:7px;border-radius:10px;background:rgba(255,255,255,.04);text-align:center"><div style="font-size:13px;font-weight:800;color:var(--grn)">'+combinedProb.toFixed(1)+'%</div><div style="font-size:9px;color:var(--muted)">Prob.</div></div>'+
+          '</div>'
+        : '')+
+      (isEmpty ? emptyMsg : pickRows)+
+      '<button onclick="renderML5AccumGenerators()" class="btn" style="width:100%;justify-content:center;margin-top:10px;background:rgba('+cfg.accentRgb+',.12);border:1px solid rgba('+cfg.accentRgb+',.30);color:'+cfg.accent+';font-weight:800;font-size:12px">↻ Regenerează '+cfg.icon+' '+cfg.label+'</button>'+
+    '</div>';
+  }).join('');
 }
 
 function ml5StatPill(label, value, color){
