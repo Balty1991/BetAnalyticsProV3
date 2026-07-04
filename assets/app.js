@@ -11201,7 +11201,7 @@ function renderML5Analysis(){
   // Cards per match
   var cardsHtml = sorted.map(function(m, idx){ return renderML5MatchCard(m, idx+1); }).join('');
 
-  // Secțiunea generatoare acumulatoare — container injectat, populat după setarea innerHTML
+  // Secțiunea generatoare acumulatoare + istoric
   var acumSection =
     '<div style="margin-bottom:20px;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(245,158,11,.06));border:1px solid rgba(167,139,250,.25)">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">' +
@@ -11214,6 +11214,7 @@ function renderML5Analysis(){
       '<div id="ml5-acum-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">' +
         '<div class="empty-state" style="padding:16px;grid-column:1/-1">Se generează…</div>' +
       '</div>' +
+      '<div id="ml5-acum-history-wrap"></div>' +
     '</div>';
 
   root.innerHTML =
@@ -11226,8 +11227,8 @@ function renderML5Analysis(){
       cardsHtml +
     '</div>';
 
-  // Populăm generatoarele acum că DOM-ul e gata
   try{ renderML5AccumGenerators(); }catch(e){ console.warn('[ML5 Acum]', e); }
+  try{ renderML5AccumHistory(); }catch(e){ console.warn('[ML5 Hist]', e); }
 }
 
 /* ===== ML5 ACCUMULATOR GENERATORS ===== */
@@ -11261,6 +11262,104 @@ function buildML5AccumTicket(type){
   return buildMathTicketPreviewFromPool(type, 'ml5', getML5AccumPool());
 }
 
+/* ===== ML5 ACCUMULATOR HISTORY ===== */
+var _ML5_HIST_KEY = 'veyra_ml5_acum_hist';
+function loadML5AccumHistory(){
+  try{ return JSON.parse(localStorage.getItem(_ML5_HIST_KEY) || '[]'); }catch(e){ return []; }
+}
+function saveML5AccumHistory(list){
+  try{ localStorage.setItem(_ML5_HIST_KEY, JSON.stringify(list.slice(-200))); }catch(e){}
+}
+function saveML5AccumTicket(cfg, t){
+  var picks = (t.picks || []).map(function(p){
+    var bet = p.bestBet || {};
+    return { home:p.home||'', away:p.away||'', league:p.league||'',
+      market:bet.label||'', odds:Number(bet.odds||0),
+      prob:Number(bet.adjProb||p.prob||0), event_date:p.event_date||p.date||'' };
+  });
+  var entry = { id: Date.now(), generatedAt: new Date().toISOString(),
+    type:cfg.type, icon:cfg.icon, label:cfg.label, accent:cfg.accent,
+    totalOdds: Number(t.totalOdds||1), combinedProb: Number(t.combinedProb||0),
+    result:'pending', picks:picks };
+  var list = loadML5AccumHistory();
+  list.push(entry);
+  saveML5AccumHistory(list);
+  renderML5AccumHistory();
+  if(typeof toast === 'function') toast(cfg.icon + ' ' + cfg.label + ' salvat în istoric!', 'ok');
+}
+function setML5AccumResult(id, result){
+  var list = loadML5AccumHistory();
+  list.forEach(function(e){ if(e.id === id) e.result = result; });
+  saveML5AccumHistory(list);
+  renderML5AccumHistory();
+}
+function deleteML5AccumEntry(id){
+  var list = loadML5AccumHistory().filter(function(e){ return e.id !== id; });
+  saveML5AccumHistory(list);
+  renderML5AccumHistory();
+}
+function renderML5AccumHistory(){
+  var wrap = document.getElementById('ml5-acum-history-wrap');
+  if(!wrap) return;
+  var list = loadML5AccumHistory().slice().reverse(); // cel mai recent primul
+  if(!list.length){ wrap.innerHTML = ''; return; }
+  var wins = list.filter(function(e){ return e.result === 'win'; }).length;
+  var losses = list.filter(function(e){ return e.result === 'loss'; }).length;
+  var settled = wins + losses;
+  var wr = settled ? Math.round(wins * 100 / settled) : null;
+  var statBar = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)">' +
+    '<div style="font-size:13px;font-weight:900;color:var(--txt);width:100%;margin-bottom:4px">📋 Istoric bilete salvate</div>' +
+    '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted)">Total: '+list.length+'</span>' +
+    '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(34,197,94,.12);color:#22c55e">✅ WIN: '+wins+'</span>' +
+    '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(239,68,68,.12);color:#ef4444">❌ LOSS: '+losses+'</span>' +
+    (wr !== null ? '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(99,102,241,.12);color:#a5b4fc">WR: '+wr+'%</span>' : '') +
+  '</div>';
+  var rows = list.map(function(e){
+    var isPending = e.result === 'pending';
+    var isWin = e.result === 'win';
+    var bgBorder = isWin ? 'rgba(34,197,94,.18)' : e.result === 'loss' ? 'rgba(239,68,68,.18)' : 'rgba(255,255,255,.06)';
+    var genDate = '';
+    try{ var _gd = new Date(e.generatedAt);
+      genDate = _gd.getDate().toString().padStart(2,'0') + '.' + (_gd.getMonth()+1).toString().padStart(2,'0') + ' ' + _gd.getHours().toString().padStart(2,'0') + ':' + _gd.getMinutes().toString().padStart(2,'0');
+    }catch(ex){}
+    var pickLines = (e.picks||[]).map(function(p){
+      var evDate = '';
+      if(p.event_date){ try{
+        var _d = new Date(p.event_date);
+        if(isFinite(_d.getTime())) evDate = _d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0')+' '+_d.getHours().toString().padStart(2,'0')+':'+_d.getMinutes().toString().padStart(2,'0');
+      }catch(ex){} }
+      return '<div style="font-size:10px;color:var(--muted);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
+        '<span style="color:var(--txt);font-weight:600">'+(p.home||'—')+' vs '+(p.away||'—')+'</span>' +
+        ' &nbsp;<span style="color:#818cf8">'+(p.market||'—')+' @ '+(p.odds||0).toFixed(2)+'</span>'+
+        (evDate ? ' &nbsp;<span style="opacity:.55">🕐 '+evDate+'</span>' : '') +
+      '</div>';
+    }).join('');
+    var resultBtns = isPending
+      ? '<div style="display:flex;gap:6px;margin-top:8px">'+
+          '<button onclick="setML5AccumResult('+e.id+',\'win\')" class="btn" style="flex:1;justify-content:center;font-size:11px;padding:5px 0;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.3);color:#22c55e">✅ WIN</button>'+
+          '<button onclick="setML5AccumResult('+e.id+',\'loss\')" class="btn" style="flex:1;justify-content:center;font-size:11px;padding:5px 0;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28);color:#ef4444">❌ LOSS</button>'+
+          '<button onclick="deleteML5AccumEntry('+e.id+')" class="btn" style="font-size:11px;padding:5px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">🗑</button>'+
+        '</div>'
+      : '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">'+
+          '<span style="font-size:12px;font-weight:800;color:'+(isWin?'#22c55e':'#ef4444')+'">'+(isWin?'✅ WIN':'❌ LOSS')+'</span>'+
+          '<button onclick="setML5AccumResult('+e.id+',\'pending\')" class="btn" style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">Modifică</button>'+
+          '<button onclick="deleteML5AccumEntry('+e.id+')" class="btn" style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">🗑</button>'+
+        '</div>';
+    return '<div style="padding:10px 12px;border-radius:12px;background:'+bgBorder+';border:1px solid '+bgBorder+';margin-bottom:8px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
+        '<span style="font-size:12px;font-weight:800;color:'+e.accent+'">'+(e.icon||'')+' '+(e.label||'')+'</span>'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="font-size:11px;font-weight:800;color:'+e.accent+'">'+(e.totalOdds||1).toFixed(2)+'x</span>'+
+          '<span style="font-size:10px;color:var(--muted)">'+genDate+'</span>'+
+        '</div>'+
+      '</div>'+
+      pickLines+
+      resultBtns+
+    '</div>';
+  }).join('');
+  wrap.innerHTML = statBar + rows;
+}
+
 function renderML5AccumGenerators(){
   var target = document.getElementById('ml5-acum-grid');
   if(!target) return;
@@ -11274,8 +11373,11 @@ function renderML5AccumGenerators(){
     target.innerHTML = '<div class="empty-state" style="padding:20px;grid-column:1/-1;text-align:center">Pool ML5 gol — pornește Enrichment mai întâi.</div>';
     return;
   }
+  // Stocăm biletele curente pentru butonul Salvează
+  window._ML5_CURRENT_TICKETS = {};
   target.innerHTML = CFGS.map(function(cfg){
     var t = buildMathTicketPreviewFromPool(cfg.type, 'ml5', pool) || {};
+    window._ML5_CURRENT_TICKETS[cfg.type] = { cfg:cfg, t:t };
     var meta = getMathPortfolioMeta(cfg.type, 'ml5');
     var picks = t.picks || [];
     var isEmpty = !picks.length;
@@ -11284,9 +11386,19 @@ function renderML5AccumGenerators(){
 
     var pickRows = picks.map(function(p, i){
       var bet = p.bestBet || {};
+      var evDate = '';
+      if(p.event_date || p.date){ try{
+        var _d = new Date(p.event_date || p.date);
+        if(isFinite(_d.getTime())) evDate = _d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0')+' '+_d.getHours().toString().padStart(2,'0')+':'+_d.getMinutes().toString().padStart(2,'0');
+      }catch(ex){} }
       return '<div style="padding:'+(i===0?'9':'7')+'px 10px;border-radius:10px;background:rgba(255,255,255,'+(i===0?'.06':'.03')+');border:1px solid rgba(255,255,255,'+(i===0?'.09':'.05')+');margin-bottom:5px">'+
         '<div style="font-size:'+(i===0?'12':'11')+'px;font-weight:700;color:var(--txt)">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>'+
-        '<div style="font-size:10px;color:var(--muted);margin-top:2px">'+(bet.label||'—')+' @ '+Number(bet.odds||0).toFixed(2)+'&nbsp;•&nbsp;Prob '+Number(bet.adjProb||p.prob||0).toFixed(0)+'%'+(p.league?' &nbsp;<span style="opacity:.65">'+p.league+'</span>':'')+'</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;font-size:10px;color:var(--muted);margin-top:3px">'+
+          '<span style="color:#818cf8">'+(bet.label||'—')+' @ '+Number(bet.odds||0).toFixed(2)+'</span>'+
+          '<span>Prob '+Number(bet.adjProb||p.prob||0).toFixed(0)+'%</span>'+
+          (evDate ? '<span style="opacity:.7">🕐 '+evDate+'</span>' : '')+
+          (p.league ? '<span style="opacity:.55">'+p.league+'</span>' : '')+
+        '</div>'+
       '</div>';
     }).join('');
 
@@ -11310,7 +11422,12 @@ function renderML5AccumGenerators(){
           '</div>'
         : '')+
       (isEmpty ? emptyMsg : pickRows)+
-      '<button onclick="renderML5AccumGenerators()" class="btn" style="width:100%;justify-content:center;margin-top:10px;background:rgba('+cfg.accentRgb+',.12);border:1px solid rgba('+cfg.accentRgb+',.30);color:'+cfg.accent+';font-weight:800;font-size:12px">↻ Regenerează '+cfg.icon+' '+cfg.label+'</button>'+
+      (!isEmpty
+        ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">'+
+            '<button onclick="(function(){var d=window._ML5_CURRENT_TICKETS&&window._ML5_CURRENT_TICKETS[\''+cfg.type+'\'];if(d)saveML5AccumTicket(d.cfg,d.t);})()" class="btn" style="justify-content:center;background:rgba('+cfg.accentRgb+',.18);border:1px solid rgba('+cfg.accentRgb+',.40);color:'+cfg.accent+';font-weight:800;font-size:11px">📌 Salvează</button>'+
+            '<button onclick="renderML5AccumGenerators()" class="btn" style="justify-content:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);font-size:11px">↻ Regenerează</button>'+
+          '</div>'
+        : '<button onclick="renderML5AccumGenerators()" class="btn" style="width:100%;justify-content:center;margin-top:10px;font-size:11px">↻ Regenerează</button>')+
     '</div>';
   }).join('');
 }
