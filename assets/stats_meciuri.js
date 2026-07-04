@@ -267,6 +267,57 @@
   window._ml5ClearAll      = function()   { saveStore(ML5_KEY,   {}); window.renderStatsMeciuri(); };
 
   /* ══════════════════════════════════════════════════
+     REGISTRY GLOBAL — buton Salvează pe carduri externe
+  ══════════════════════════════════════════════════ */
+
+  var _monRegCounter = 0;
+  window._VEYRA_MON_REG = {};
+
+  window._veyraMonReg = function(storeKey, home, away, eid, mkt, date, odds, score, league) {
+    if (!mkt) return null;
+    var eidStr = String(eid != null ? eid : '').trim();
+    var k;
+    if (eidStr && eidStr !== '0' && eidStr !== 'undefined') {
+      k = eidStr + '|' + mkt;
+    } else {
+      var h = String(home||'').toLowerCase().trim();
+      var a = String(away||'').toLowerCase().trim();
+      if (!h || !a) return null;
+      k = h + '|' + a + '|' + String(date||'').slice(0,10) + '|' + mkt;
+    }
+    if (!k) return null;
+    var isSaved = !!loadStore(storeKey)[k];
+    var numId = ++_monRegCounter;
+    window._VEYRA_MON_REG[numId] = {
+      storeKey: storeKey, key: k, isSaved: isSaved,
+      entry: {
+        eventId: eidStr, home: String(home||''), away: String(away||''),
+        league: String(league||''), bestBet: mkt, odds: Number(odds||0),
+        smartScore: Number(score||0), eventDate: String(date||'')
+      }
+    };
+    return { id: numId, isSaved: isSaved };
+  };
+
+  window._veyraMonSave = function(numId) {
+    var r = window._VEYRA_MON_REG[numId];
+    if (!r) return;
+    var store = loadStore(r.storeKey);
+    if (store[r.key]) {
+      if (typeof toast === 'function') toast('⚠️ Deja salvat!', 'warn');
+      return;
+    }
+    store[r.key] = Object.assign({}, r.entry, {status:'pending', homeScore:null, awayScore:null, resolvedAt:null});
+    saveStore(r.storeKey, store);
+    if (typeof toast === 'function') toast('💾 '+(r.entry.home||'Pick')+' salvat!', 'ok');
+    try {
+      var btn = document.querySelector('[data-mon-id="'+numId+'"]');
+      if (btn) { btn.textContent = '✓ Salvat'; btn.disabled = true; btn.style.color = '#22c55e'; btn.style.opacity = '.6'; }
+    } catch(e) {}
+    _triggerUpdate();
+  };
+
+  /* ══════════════════════════════════════════════════
      AUTO-CHECK — updatează win/loss din scoruri reale
   ══════════════════════════════════════════════════ */
 

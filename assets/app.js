@@ -8191,8 +8191,13 @@ function renderMatches(){
       '</div>'+ 
       '<div class="m17-why"><span>De ce</span><strong>'+htmlEsc(m17WhyText)+'</strong></div>'+ 
       '<div class="m17-actions">'+
-        '<button class="m17-btn" onclick="toggleMatchAnalysisDetails(&quot;'+key+'&quot;)">Detalii analiză</button>'+ 
-      '</div>'+ 
+        '<button class="m17-btn" onclick="toggleMatchAnalysisDetails(&quot;'+key+'&quot;)">Detalii analiză</button>'+
+        (window._veyraMonReg && b && b.type ? (function(){
+          var _mmd = window._veyraMonReg('veyra_monitor_v4', m.home, m.away, m.eventId||m.event_id, b.type, m.date||m.eventDate||m.event_date, b.odds, m.smartScore, m.league);
+          if (!_mmd) return '';
+          return '<button data-mon-id="'+_mmd.id+'" onclick="window._veyraMonSave('+_mmd.id+')" class="m17-btn"'+(_mmd.isSaved?' disabled style="color:#22c55e;opacity:.6"':'')+'>'+(_mmd.isSaved?'✓ Salvat':'💾 Salvează')+'</button>';
+        })() : '')+
+      '</div>'+
       '<div class="m16-extra m17-extra'+(MATCH_FOCUS_KEY === key ? ' open' : '')+'" id="match-extra-'+key+'">'+detailBlock+(reasons ? '<div class="reason-list">'+reasons+'</div>' : '')+'</div>'+ 
     '</div>';
   }
@@ -11762,6 +11767,15 @@ function renderML5MatchCard(m, cardIdx){
       '<div style="font-size:10px;color:var(--muted);margin-top:6px">🧠 ' +
         htmlEsc(m.homeCoachName||'?')+' vs '+htmlEsc(m.awayCoachName||'?') +
       '</div>' : '') +
+    (window._veyraMonReg && b && b.type ? (function(){
+      var _mmd = window._veyraMonReg('veyra_ml5_monitor_v2', m.home, m.away, m.eventId||m.event_id, b.type, m.date||m.eventDate, b.odds, score, m.league);
+      if (!_mmd) return '';
+      return '<div style="margin-top:10px;text-align:right">' +
+        '<button data-mon-id="'+_mmd.id+'" onclick="window._veyraMonSave('+_mmd.id+')" ' +
+        'style="padding:5px 12px;border-radius:8px;border:1px solid rgba(43,229,197,' + (_mmd.isSaved?'.2':'.4') + ');background:rgba(43,229,197,' + (_mmd.isSaved?'.04':'.08') + ');color:' + (_mmd.isSaved?'#22c55e':'#2BE5C5') + ';font-size:10px;font-weight:700;cursor:pointer' + (_mmd.isSaved?';opacity:.6':'') + '"' + (_mmd.isSaved?' disabled':'') + '>' +
+        (_mmd.isSaved?'✓ Salvat':'💾 Salvează') +
+        '</button></div>';
+    })() : '') +
   '</div>';
 }
 

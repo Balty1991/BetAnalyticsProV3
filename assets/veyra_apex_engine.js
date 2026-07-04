@@ -535,6 +535,18 @@
       if (reasons.length) reasonsHtml = '<div class="apex-signals-row">' + reasons.join('') + '</div>';
     }
 
+    var _apexMonBtn = '';
+    if (window._veyraMonReg && mk) {
+      var _amd = window._veyraMonReg('veyra_apex_monitor_v2', s.home || s.home_team, s.away || s.away_team, s.event_id, mk, s.event_date, odds, score, s.league || s.league_name);
+      if (_amd) {
+        _apexMonBtn = '<div style="margin-top:8px;text-align:right">' +
+          '<button data-mon-id="' + _amd.id + '" onclick="window._veyraMonSave(' + _amd.id + ')" ' +
+          'style="padding:5px 12px;border-radius:8px;border:1px solid rgba(43,229,197,' + (_amd.isSaved ? '.2' : '.4') + ');background:rgba(43,229,197,' + (_amd.isSaved ? '.04' : '.08') + ');color:' + (_amd.isSaved ? '#22c55e' : '#2BE5C5') + ';font-size:10px;font-weight:700;cursor:pointer' + (_amd.isSaved ? ';opacity:.6' : '') + '"' + (_amd.isSaved ? ' disabled' : '') + '>' +
+          (_amd.isSaved ? '✓ Salvat' : '💾 Salvează') +
+          '</button></div>';
+      }
+    }
+
     return '<div class="apex-pick-card tier-' + tier + '">' +
       '<div class="apex-pick-top">' +
         '<div class="apex-pick-teams">' +
@@ -550,6 +562,7 @@
       chipsHtml +
       confBarHtml +
       reasonsHtml +
+      _apexMonBtn +
     '</div>';
   }
 
