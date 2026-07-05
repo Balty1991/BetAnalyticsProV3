@@ -11711,16 +11711,68 @@ function renderML5AccumHistory(){
     try{ var _gd = new Date(e.generatedAt);
       genDate = _gd.getDate().toString().padStart(2,'0') + '.' + (_gd.getMonth()+1).toString().padStart(2,'0') + ' ' + _gd.getHours().toString().padStart(2,'0') + ':' + _gd.getMinutes().toString().padStart(2,'0');
     }catch(ex){}
+    // Build per-pick score lookup from __RAW_PREDICTIONS
+    var _rById = {}, _rByName = {};
+    _buildML5ScoreLookup(Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : [], _rById, _rByName);
+    var _now = Date.now();
+    var _GRACE = 2*60*60*1000;
+    var _STALE = 8*60*60*1000;
+    function _deriveKey(p){
+      if(p.marketKey) return p.marketKey;
+      var lbl = String(p.market||'').toLowerCase();
+      if(/over\s*1\.?5/.test(lbl)) return 'over15';
+      if(/over\s*2\.?5/.test(lbl)) return 'over25';
+      if(/over\s*3\.?5/.test(lbl)) return 'over35';
+      if(/btts|ambele|gg/.test(lbl)) return 'btts';
+      if(/1x2|home wins?|victoria gazda/.test(lbl)) return '1';
+      if(/draw|egal/.test(lbl)) return 'x';
+      if(/away wins?|victoria oaspeti/.test(lbl)) return '2';
+      if(/dn[bf]|double chance|1x/.test(lbl)) return '1x';
+      if(/x2/.test(lbl)) return 'x2';
+      if(/12/.test(lbl)) return '12';
+      if(/cs|clean sheet/.test(lbl)) return 'cs_home';
+      return lbl || 'over25';
+    }
+    function _pickStatus(p){
+      var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
+      if(!matchMs || _now < matchMs) return 'future';
+      if(_now < matchMs + _GRACE) return 'not_yet';
+      var eid = String(p.event_id != null ? p.event_id : '').trim();
+      var sp = (eid && _rById[eid]) || _rByName[(String(p.home||'').toLowerCase().trim())+'|'+(String(p.away||'').toLowerCase().trim())];
+      if(!sp || sp.homeScore == null){
+        return (_now > matchMs + _GRACE + _STALE) ? 'stale' : 'pending';
+      }
+      return evaluateMarketOutcome(_deriveKey(p), sp.homeScore, sp.awayScore);
+    }
+    function _scoreStr(p){
+      var eid = String(p.event_id != null ? p.event_id : '').trim();
+      var sp = (eid && _rById[eid]) || _rByName[(String(p.home||'').toLowerCase().trim())+'|'+(String(p.away||'').toLowerCase().trim())];
+      return sp && sp.homeScore != null ? sp.homeScore+'-'+sp.awayScore : '';
+    }
     var pickLines = (e.picks||[]).map(function(p){
       var evDate = '';
       if(p.event_date){ try{
         var _d = new Date(p.event_date);
         if(isFinite(_d.getTime())) evDate = _d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0')+' '+_d.getHours().toString().padStart(2,'0')+':'+_d.getMinutes().toString().padStart(2,'0');
       }catch(ex){} }
-      return '<div style="font-size:10px;color:var(--muted);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
-        '<span style="color:var(--txt);font-weight:600">'+(p.home||'—')+' vs '+(p.away||'—')+'</span>' +
-        ' &nbsp;<span style="color:#818cf8">'+(p.market||'—')+' @ '+(p.odds||0).toFixed(2)+'</span>'+
-        (evDate ? ' &nbsp;<span style="opacity:.55">🕐 '+evDate+'</span>' : '') +
+      var pst = _pickStatus(p);
+      var sc = _scoreStr(p);
+      var icon = pst==='win' ? '✅' : pst==='loss' ? '❌' : pst==='future' ? '🕐' : pst==='stale' ? '⏳' : pst==='not_yet' ? '⏳' : '⏳';
+      var badge = '';
+      if(pst==='win')  badge = '<span style="color:#22c55e;font-size:10px;font-weight:800">✅ WIN'+(sc?' <span style="color:var(--muted)">'+sc+'</span>':'')+'</span>';
+      else if(pst==='loss') badge = '<span style="color:#ef4444;font-size:10px;font-weight:800">❌ LOSS'+(sc?' <span style="color:var(--muted)">'+sc+'</span>':'')+'</span>';
+      else if(pst==='future') badge = '<span style="color:var(--muted);font-size:10px">🕐 '+(evDate||'Viitor')+'</span>';
+      else if(pst==='stale') badge = '<span style="color:#f59e0b;font-size:10px">⏳ Fără scor</span>';
+      else badge = '<span style="color:var(--muted);font-size:10px">⏳ În așteptare</span>';
+      return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
+        '<div style="font-size:14px;line-height:1">'+icon+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:10px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:1px">'+
+            '<span style="font-size:10px;color:#818cf8">'+(p.market||'—')+' @ '+(p.odds||0).toFixed(2)+'</span>'+
+            badge+
+          '</div>'+
+        '</div>'+
       '</div>';
     }).join('');
     var resultBtns = isPending
