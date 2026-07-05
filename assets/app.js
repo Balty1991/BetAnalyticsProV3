@@ -11604,14 +11604,18 @@ function autoCheckML5AccumResults(){
     return null;
   }
 
+  var STALE_MS = 8 * 60 * 60 * 1000; // 8h after grace: give up waiting for score
   pending.forEach(function(entry){
     var pickResults = (entry.picks||[]).map(function(p){
       var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
-      // Match not yet finished (hasn't passed grace period)
+      // No date or still within grace period → not yet finished
       if(!matchMs || now < matchMs + GRACE_MS) return 'not_yet';
       var mkey = deriveML5MarketKey(p);
       var sp = findScoreForPick(p);
-      if(!sp || sp.homeScore == null) return null; // finished but score not found yet
+      if(!sp || sp.homeScore == null){
+        // Score unavailable: if match is 8h+ overdue, stop blocking the ticket
+        return (now > matchMs + GRACE_MS + STALE_MS) ? 'stale' : null;
+      }
       return evaluateMarketOutcome(mkey, sp.homeScore, sp.awayScore);
     });
 
@@ -11622,14 +11626,14 @@ function autoCheckML5AccumResults(){
       return;
     }
 
-    // If any pick score is missing and match should be done → needs API
+    // Score missing and match not yet stale → try API
     var hasUnfound = pickResults.indexOf(null) >= 0;
     if(hasUnfound){ needsApi.push(entry); return; }
 
     // Still have matches not yet finished → stay pending
     if(pickResults.indexOf('not_yet') >= 0) return;
 
-    // All resolved and no loss → WIN
+    // All picks are win/stale (no loss, no missing scores within window) → WIN
     entry.result = 'win';
     changed = true;
   });
@@ -11649,7 +11653,8 @@ function autoCheckML5AccumResults(){
     }, 60000);
   }
 
-  if(!needsApi.length || !API_TOKEN) return;
+  var _hasToken = !!(API_TOKEN || localStorage.getItem('bsd_token'));
+  if(!needsApi.length || !_hasToken) return;
   needsApi.forEach(function(entry){
     var promList = (entry.picks||[]).map(function(p){
       return p.eventId ? fetchEventDetail(String(p.eventId)) : Promise.resolve(null);
@@ -11658,13 +11663,15 @@ function autoCheckML5AccumResults(){
       var list2 = loadML5AccumHistory();
       var e2 = list2.filter(function(x){ return x.id===entry.id; })[0];
       if(!e2 || e2.result!=='pending') return;
+      var _now2 = Date.now();
       var results2 = (e2.picks||[]).map(function(p,i){
         var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
-        if(!matchMs || Date.now() < matchMs + GRACE_MS) return 'not_yet';
+        if(!matchMs || _now2 < matchMs + GRACE_MS) return 'not_yet';
         var ev = evDetails[i];
-        if(!ev) return null;
-        var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
-        if(sp.homeScore==null) return null;
+        var sp = ev && (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
+        if(!ev || sp.homeScore==null){
+          return (_now2 > matchMs + GRACE_MS + STALE_MS) ? 'stale' : null;
+        }
         return evaluateMarketOutcome(deriveML5MarketKey(p), sp.homeScore, sp.awayScore);
       });
       if(results2.indexOf('loss') >= 0){
@@ -11672,7 +11679,7 @@ function autoCheckML5AccumResults(){
       } else if(results2.indexOf(null) >= 0 || results2.indexOf('not_yet') >= 0){
         return; // still waiting
       } else {
-        e2.result = 'win';
+        e2.result = 'win'; // all win or stale
       }
       saveML5AccumHistory(list2);
       renderML5AccumHistory();
