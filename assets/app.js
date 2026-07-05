@@ -11714,6 +11714,18 @@ function renderML5AccumGenerators(){
     target.innerHTML = '<div class="empty-state" style="padding:20px;grid-column:1/-1;text-align:center">Pool ML5 gol — pornește Enrichment mai întâi.</div>';
     return;
   }
+  // Build set of already-saved ticket signatures (home|away|marketKey sorted)
+  var _ml5SavedSigs = (function(){
+    var sigs = {};
+    loadML5AccumHistory().forEach(function(e){
+      var sig = (e.picks||[]).map(function(p){
+        return (p.home||'').toLowerCase().trim()+'|'+(p.away||'').toLowerCase().trim()+'|'+(p.marketKey||'');
+      }).sort().join(';;');
+      if(sig) sigs[sig] = true;
+    });
+    return sigs;
+  })();
+
   // Stocăm biletele curente pentru butonul Salvează
   window._ML5_CURRENT_TICKETS = {};
   target.innerHTML = CFGS.map(function(cfg){
@@ -11745,6 +11757,14 @@ function renderML5AccumGenerators(){
 
     var emptyMsg = '<div style="padding:12px;color:var(--muted);font-size:12px;text-align:center;border-radius:10px;background:rgba(255,255,255,.03)">'+(t.error || meta.empty || 'Insuficiente date.')+'</div>';
 
+    // Check if this ticket is already saved (compare picks signature)
+    var _currentSig = picks.map(function(p){
+      var bet = p.bestBet || {};
+      var mk = p.marketKey || (bet && bet.type) || '';
+      return (p.home||'').toLowerCase().trim()+'|'+(p.away||'').toLowerCase().trim()+'|'+mk;
+    }).sort().join(';;');
+    var _alreadySaved = picks.length > 0 && !!_ml5SavedSigs[_currentSig];
+
     return '<div style="padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba('+cfg.accentRgb+',.25);border-top:3px solid '+cfg.accent+'">'+
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">'+
         '<div>'+
@@ -11765,7 +11785,9 @@ function renderML5AccumGenerators(){
       (isEmpty ? emptyMsg : pickRows)+
       (!isEmpty
         ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">'+
-            '<button onclick="(function(){var d=window._ML5_CURRENT_TICKETS&&window._ML5_CURRENT_TICKETS[\''+cfg.type+'\'];if(d)saveML5AccumTicket(d.cfg,d.t);})()" class="btn" style="justify-content:center;background:rgba('+cfg.accentRgb+',.18);border:1px solid rgba('+cfg.accentRgb+',.40);color:'+cfg.accent+';font-weight:800;font-size:11px">📌 Salvează</button>'+
+            (_alreadySaved
+              ? '<button disabled class="btn" style="justify-content:center;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:#22c55e;font-weight:800;font-size:11px;opacity:.7">✓ Salvat</button>'
+              : '<button onclick="(function(){var d=window._ML5_CURRENT_TICKETS&&window._ML5_CURRENT_TICKETS[\''+cfg.type+'\'];if(d)saveML5AccumTicket(d.cfg,d.t);})()" class="btn" style="justify-content:center;background:rgba('+cfg.accentRgb+',.18);border:1px solid rgba('+cfg.accentRgb+',.40);color:'+cfg.accent+';font-weight:800;font-size:11px">📌 Salvează</button>')+
             '<button onclick="renderML5AccumGenerators()" class="btn" style="justify-content:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);font-size:11px">↻ Regenerează</button>'+
           '</div>'
         : '<button onclick="renderML5AccumGenerators()" class="btn" style="width:100%;justify-content:center;margin-top:10px;font-size:11px">↻ Regenerează</button>')+
