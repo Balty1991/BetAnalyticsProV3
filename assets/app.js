@@ -1596,19 +1596,51 @@ function autoCheckMotorAIResults(){
   var now = Date.now();
   var GRACE_MS = 2*60*60*1000;
   var changed = false;
+
+  // Build score lookup from __RAW_PREDICTIONS (recent_results.json)
+  var rawScoreById = {};
+  var rawScoreByName = {};
+  var rawPreds = Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : [];
+  rawPreds.forEach(function(raw){
+    var ev = raw && raw.event ? raw.event : null;
+    if(!ev) return;
+    var hs = (ev.home_score != null && String(ev.home_score) !== 'None') ? Number(ev.home_score) : null;
+    var as2 = (ev.away_score != null && String(ev.away_score) !== 'None') ? Number(ev.away_score) : null;
+    if(hs === null || as2 === null || isNaN(hs) || isNaN(as2)) return;
+    var sd = {homeScore: hs, awayScore: as2};
+    var eid = String(ev.id != null ? ev.id : '').trim();
+    if(eid) rawScoreById[eid] = sd;
+    var h = String(ev.home_team || '').toLowerCase().trim();
+    var a = String(ev.away_team || '').toLowerCase().trim();
+    if(h && a) rawScoreByName[h + '|' + a] = sd;
+  });
+
   pending.forEach(function(entry){
     var matchMs = entry.event_date ? new Date(entry.event_date).getTime() : 0;
     if(!matchMs || now < matchMs + GRACE_MS) return;
+    var sp = null;
+    // 1. Try ALL_EVENTS by eventId
     var ev = null;
     if(ALL_EVENTS && ALL_EVENTS.length){
       ALL_EVENTS.forEach(function(e){ if(String(e.id||'')===String(entry.eventId||'__')) ev=e; });
     }
-    if(!ev) ev = (typeof findEventForStoredPick==='function') ? findEventForStoredPick({
+    // 2. Fuzzy match in ALL_EVENTS
+    if(!ev && typeof findEventForStoredPick==='function') ev = findEventForStoredPick({
       home:entry.home, away:entry.away, event_date:entry.event_date
-    }) : null;
-    if(!ev) return;
-    var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
-    if(sp.homeScore==null) return;
+    });
+    if(ev && typeof getScorePairFromSource==='function'){
+      var s0 = getScorePairFromSource(ev);
+      if(s0.homeScore != null) sp = s0;
+    }
+    // 3. __RAW_PREDICTIONS by eventId
+    if(!sp && entry.eventId) sp = rawScoreById[String(entry.eventId)] || null;
+    // 4. __RAW_PREDICTIONS by team names
+    if(!sp){
+      var ph = String(entry.home||'').toLowerCase().trim();
+      var pa = String(entry.away||'').toLowerCase().trim();
+      if(ph && pa) sp = rawScoreByName[ph+'|'+pa] || null;
+    }
+    if(!sp) return;
     var res = (typeof evaluateMarketOutcome==='function') ? evaluateMarketOutcome(entry.marketKey, sp.homeScore, sp.awayScore) : 'pending';
     if(res==='pending') return;
     entry.result = res;
@@ -1738,6 +1770,13 @@ function renderMotorAITab(){
   // Sort by incredere desc
   filtered = filtered.slice().sort(function(a,b){ return (b.incredere||0)-(a.incredere||0); });
 
+  // Build set of already-saved picks to disable duplicate save buttons
+  var _motorAISavedSet = (function(){
+    var s = {};
+    loadMotorAIHistory().forEach(function(e){ s[(e.home||'')+'||'+(e.away||'')+'||'+(e.piata||'')] = true; });
+    return s;
+  })();
+
   filtered.forEach(function(p){
     var conf = p.incredere || 0;
     var confColor = conf >= 80 ? '#22c55e' : (conf >= 65 ? '#2BE5C5' : (conf >= 50 ? '#f59e0b' : '#ef4444'));
@@ -1763,7 +1802,11 @@ function renderMotorAITab(){
       + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">'+htmlEsc(p.home||'')+' vs '+htmlEsc(p.away||'')+'</div>'
       + '<div style="font-size:11px;color:var(--muted)">'+htmlEsc(p.league||'')+(xgStr?' · '+xgStr:'')+(kickoffStr?' · 🕐 '+kickoffStr:'')+'</div>'
       + '</div>'
-      + '<button onclick="saveMotorAIPick((window.AI_MATCH_ENGINE||{}).picks&&(window.AI_MATCH_ENGINE.picks.find(function(q){return q.home===\''+p.home.replace(/'/g,"\\'")+'\'&&q.away===\''+p.away.replace(/'/g,"\\'")+'\'&&q.piata===\''+p.piata+'\';})))" style="flex-shrink:0;padding:5px 10px;border-radius:8px;border:1px solid rgba(43,229,197,.4);background:rgba(43,229,197,.07);color:#2BE5C5;font-size:10px;font-weight:700;cursor:pointer">💾 Salvează</button>'
+      + (function(){
+          var _mk = (p.home||'')+'||'+(p.away||'')+'||'+(p.piata||'');
+          if(_motorAISavedSet[_mk]) return '<button disabled style="flex-shrink:0;padding:5px 10px;border-radius:8px;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.07);color:#22c55e;font-size:10px;font-weight:700;opacity:.7">✓ Salvat</button>';
+          return '<button onclick="saveMotorAIPick((window.AI_MATCH_ENGINE||{}).picks&&(window.AI_MATCH_ENGINE.picks.find(function(q){return q.home===\''+p.home.replace(/'/g,"\\'")+'\'&&q.away===\''+p.away.replace(/'/g,"\\'")+'\'&&q.piata===\''+p.piata+'\';})))" style="flex-shrink:0;padding:5px 10px;border-radius:8px;border:1px solid rgba(43,229,197,.4);background:rgba(43,229,197,.07);color:#2BE5C5;font-size:10px;font-weight:700;cursor:pointer">💾 Salvează</button>';
+        })()
       + '</div>'
       // Pick row
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
