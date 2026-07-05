@@ -20,14 +20,29 @@
     over25:'Over 2.5G', under35:'Under 3.5G', btts:'BTTS',
     over15:'Over 1.5G', dc1x:'DC 1X', dcx2:'DC X2', dc12:'DC 12',
     homewin:'1 (Home Win)', awaywin:'2 (Away Win)', draw:'X (Egal)',
-    homeWin:'1 (Home Win)', awayWin:'2 (Away Win)'
+    homeWin:'1 (Home Win)', awayWin:'2 (Away Win)',
+    home_win:'1 (Home Win)', away_win:'2 (Away Win)'
   };
   var MKT_COLOR = {
     over25:'#f59e0b', under35:'#3b82f6', btts:'#ec4899',
     over15:'#10b981', dc1x:'#8b5cf6', dcx2:'#06b6d4', dc12:'#f97316',
     homewin:'#22c55e', awaywin:'#ef4444', draw:'#94a3b8',
-    homeWin:'#22c55e', awayWin:'#ef4444'
+    homeWin:'#22c55e', awayWin:'#ef4444',
+    home_win:'#22c55e', away_win:'#ef4444'
   };
+
+  /* mirrors mktKey() in veyra_apex_engine.js — keep in sync */
+  function normalizeApexMkt(raw) {
+    var r = String(raw||'').toLowerCase().replace(/\s+/g,'');
+    if (/over1\.?5|over15/.test(r))   return 'over15';
+    if (/over2\.?5|over25/.test(r))   return 'over25';
+    if (/under3\.?5|under35/.test(r)) return 'under35';
+    if (/btts|bothteams/.test(r))     return 'btts';
+    if (/home_win|homewin/.test(r))   return 'home_win';
+    if (/away_win|awaywin/.test(r))   return 'away_win';
+    if (/draw/.test(r))               return 'draw';
+    return r || 'unknown';
+  }
 
   /* ── storage helpers ── */
   function loadStore(key)           { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) { return {}; } }
@@ -129,8 +144,10 @@
   }
 
   function apexKey(p) {
-    var mk  = p.marketKey || p.market_key || p.market || '';
-    if (!mk) return null;
+    /* Use _mk if present (already normalized by APEX engine); otherwise normalize raw field */
+    var rawMkt = p.marketKey || p.market_key || p.market || '';
+    var mk = p._mk || (rawMkt ? normalizeApexMkt(rawMkt) : '');
+    if (!mk || mk === 'unknown') return null;
     var eid = String(p.event_id != null ? p.event_id : (p.eventId != null ? p.eventId : '')).trim();
     if (eid && eid !== '0') return eid + '|' + mk;
     var h = String(p.home || '').toLowerCase().trim();
@@ -148,8 +165,8 @@
     if (betKey === 'under25') return tot <= 2 ? 'win' : 'loss';
     if (betKey === 'under35') return tot <= 3 ? 'win' : 'loss';
     if (betKey === 'btts')    return (h > 0 && a > 0) ? 'win' : 'loss';
-    if (betKey === 'homewin' || betKey === 'homeWin') return h > a ? 'win' : 'loss';
-    if (betKey === 'awaywin' || betKey === 'awayWin') return a > h ? 'win' : 'loss';
+    if (betKey === 'homewin' || betKey === 'homeWin' || betKey === 'home_win') return h > a ? 'win' : 'loss';
+    if (betKey === 'awaywin' || betKey === 'awayWin' || betKey === 'away_win') return a > h ? 'win' : 'loss';
     if (betKey === 'draw')    return h === a ? 'win' : 'loss';
     if (betKey === 'dc1x')    return h >= a ? 'win' : 'loss';
     if (betKey === 'dcx2')    return a >= h ? 'win' : 'loss';
@@ -429,7 +446,7 @@
     var meciuriAvail = _getAvailablePicks(_getMeciuriLivePool(), STORE_KEY, entryKey,
       function(m){ return { eventId:String(m.eventId||m.event_id||''), home:m.home||'', away:m.away||'', league:m.league||'', bestBet:betType(m), odds:betOdds(m), smartScore:m.smartScore||0, eventDate:matchDate(m) }; });
     var apexAvail    = _getAvailablePicks(_getApexLivePool(), APEX_KEY, apexKey,
-      function(p){ return { eventId:String(p.event_id||p.eventId||''), home:p.home||'', away:p.away||'', league:p.league||'', bestBet:p.marketKey||p.market_key||p.market||'', odds:p.displayOdds||p.book_odds||p.odds||null, smartScore:p.smartScore||p.score||0, eventDate:p.event_date||p.eventDate||'' }; });
+      function(p){ var rawMkt=p.marketKey||p.market_key||p.market||''; return { eventId:String(p.event_id!=null?p.event_id:(p.eventId!=null?p.eventId:'')), home:p.home||p.home_team||'', away:p.away||p.away_team||'', league:p.league||'', bestBet:p._mk||(rawMkt?normalizeApexMkt(rawMkt):''), odds:p._odds||p.displayOdds||p.book_odds||p.odds||null, smartScore:p._apexScore||p.smartScore||p.score||0, eventDate:p.event_date||p.eventDate||'' }; });
     var ml5Avail     = _getAvailablePicks(_getMl5LivePool(), ML5_KEY, entryKey,
       function(m){ return { eventId:String(m.eventId||m.event_id||''), home:m.home||'', away:m.away||'', league:m.league||'', bestBet:betType(m), odds:betOdds(m), smartScore:m.smartScore||0, eventDate:matchDate(m) }; });
 
