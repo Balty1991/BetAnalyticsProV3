@@ -536,8 +536,8 @@
     }
 
     var _apexMonBtn = '';
-    if (window._veyraMonReg && mk) {
-      var _amd = window._veyraMonReg('veyra_apex_monitor_v2', s.home || s.home_team, s.away || s.away_team, s.event_id, mk, s.event_date, odds, score, s.league || s.league_name);
+    if (window._veyraMonRegApex && mk) {
+      var _amd = window._veyraMonRegApex(s, mk);
       if (_amd) {
         _apexMonBtn = '<div style="margin-top:8px;text-align:right">' +
           '<button data-mon-id="' + _amd.id + '" onclick="window._veyraMonSave(' + _amd.id + ')" ' +

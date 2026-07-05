@@ -273,11 +273,49 @@
   var _monRegCounter = 0;
   window._VEYRA_MON_REG = {};
 
+  function _monReg(storeKey, k, home, away, eid, mkt, date, odds, score, league) {
+    if (!k) return null;
+    var isSaved = !!loadStore(storeKey)[k];
+    var numId = ++_monRegCounter;
+    window._VEYRA_MON_REG[numId] = {
+      storeKey: storeKey, key: k, isSaved: isSaved,
+      entry: {
+        eventId: String(eid != null ? eid : ''), home: String(home||''), away: String(away||''),
+        league: String(league||''), bestBet: mkt, odds: Number(odds||0),
+        smartScore: Number(score||0), eventDate: String(date||'')
+      }
+    };
+    return { id: numId, isSaved: isSaved };
+  }
+
+  /* Store-specific reg functions — use same key functions as Statistics tab */
+  window._veyraMonRegMeciuri = function(m) {
+    var k = entryKey(m);
+    var eid = m.eventId != null ? m.eventId : (m.event_id != null ? m.event_id : '');
+    return _monReg(STORE_KEY, k, m.home, m.away, eid, betType(m), matchDate(m), betOdds(m), m.smartScore, m.league);
+  };
+
+  window._veyraMonRegML5 = function(m) {
+    var k = entryKey(m);
+    var eid = m.eventId != null ? m.eventId : (m.event_id != null ? m.event_id : '');
+    return _monReg(ML5_KEY, k, m.home, m.away, eid, betType(m), matchDate(m), betOdds(m), m.smartScore, m.league);
+  };
+
+  window._veyraMonRegApex = function(s, mk) {
+    if (!mk) return null;
+    var proxy = { marketKey: mk, event_id: s.event_id, eventId: s.eventId,
+                  home: s.home||s.home_team, away: s.away||s.away_team, event_date: s.event_date };
+    var k = apexKey(proxy);
+    var eid = s.event_id != null ? s.event_id : (s.eventId != null ? s.eventId : '');
+    return _monReg(APEX_KEY, k, s.home||s.home_team, s.away||s.away_team, eid, mk, s.event_date, s._odds, s._apexScore, s.league||s.league_name);
+  };
+
+  /* Legacy generic reg (kept for backward compat) */
   window._veyraMonReg = function(storeKey, home, away, eid, mkt, date, odds, score, league) {
     if (!mkt) return null;
     var eidStr = String(eid != null ? eid : '').trim();
     var k;
-    if (eidStr && eidStr !== '0' && eidStr !== 'undefined') {
+    if (eidStr && eidStr !== '0' && eidStr !== 'undefined' && eidStr !== 'null') {
       k = eidStr + '|' + mkt;
     } else {
       var h = String(home||'').toLowerCase().trim();
@@ -285,18 +323,7 @@
       if (!h || !a) return null;
       k = h + '|' + a + '|' + String(date||'').slice(0,10) + '|' + mkt;
     }
-    if (!k) return null;
-    var isSaved = !!loadStore(storeKey)[k];
-    var numId = ++_monRegCounter;
-    window._VEYRA_MON_REG[numId] = {
-      storeKey: storeKey, key: k, isSaved: isSaved,
-      entry: {
-        eventId: eidStr, home: String(home||''), away: String(away||''),
-        league: String(league||''), bestBet: mkt, odds: Number(odds||0),
-        smartScore: Number(score||0), eventDate: String(date||'')
-      }
-    };
-    return { id: numId, isSaved: isSaved };
+    return _monReg(storeKey, k, home, away, eidStr, mkt, date, odds, score, league);
   };
 
   window._veyraMonSave = function(numId) {
