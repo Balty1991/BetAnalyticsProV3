@@ -779,6 +779,7 @@
       if ((window.__statsMeciuriHooked && window.__apexMonitorHooked && window.__ml5MonitorHooked) || ++n > 30)
         clearInterval(iv);
     }, 500);
+    _periodicFetch();
     setInterval(_periodicFetch, 5 * 60 * 1000);
   }
 

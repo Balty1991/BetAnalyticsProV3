@@ -11505,6 +11505,21 @@ function deleteML5AccumEntry(id){
   saveML5AccumHistory(list);
   renderML5AccumHistory();
 }
+function _buildML5ScoreLookup(rawPreds, rawScoreById, rawScoreByName){
+  (rawPreds || []).forEach(function(raw){
+    var ev = raw && raw.event ? raw.event : (raw && raw.home_team ? raw : null);
+    if(!ev) return;
+    var hs = (ev.home_score != null && String(ev.home_score) !== 'None') ? Number(ev.home_score) : null;
+    var as2 = (ev.away_score != null && String(ev.away_score) !== 'None') ? Number(ev.away_score) : null;
+    if(hs === null || as2 === null || isNaN(hs) || isNaN(as2)) return;
+    var sd = {homeScore: hs, awayScore: as2};
+    var eid = String(ev.id != null ? ev.id : '').trim();
+    if(eid) rawScoreById[eid] = sd;
+    var h = String(ev.home_team || '').toLowerCase().trim();
+    var a = String(ev.away_team || '').toLowerCase().trim();
+    if(h && a) rawScoreByName[h + '|' + a] = sd;
+  });
+}
 function autoCheckML5AccumResults(){
   var list = loadML5AccumHistory();
   var pending = list.filter(function(e){ return e.result === 'pending'; });
@@ -11518,19 +11533,22 @@ function autoCheckML5AccumResults(){
   var rawScoreById = {};
   var rawScoreByName = {};
   var rawPreds = Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : [];
-  rawPreds.forEach(function(raw){
-    var ev = raw && raw.event ? raw.event : null;
-    if(!ev) return;
-    var hs = (ev.home_score != null && String(ev.home_score) !== 'None') ? Number(ev.home_score) : null;
-    var as2 = (ev.away_score != null && String(ev.away_score) !== 'None') ? Number(ev.away_score) : null;
-    if(hs === null || as2 === null || isNaN(hs) || isNaN(as2)) return;
-    var sd = {homeScore: hs, awayScore: as2};
-    var eid = String(ev.id != null ? ev.id : '').trim();
-    if(eid) rawScoreById[eid] = sd;
-    var h = String(ev.home_team || '').toLowerCase().trim();
-    var a = String(ev.away_team || '').toLowerCase().trim();
-    if(h && a) rawScoreByName[h + '|' + a] = sd;
-  });
+  _buildML5ScoreLookup(rawPreds, rawScoreById, rawScoreByName);
+  // If __RAW_PREDICTIONS not yet populated, kick off a direct fetch and retry
+  if(!rawPreds.length && window.fetch){
+    fetch('data/recent_results.json?_t='+Date.now(), {cache:'no-store'})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; })
+      .then(function(res){
+        if(!res || !Array.isArray(res) || !res.length) return;
+        var tmp = res.map(function(r){ return {event: r}; });
+        if(!Array.isArray(window.__RAW_PREDICTIONS)) window.__RAW_PREDICTIONS = [];
+        window.__RAW_PREDICTIONS = window.__RAW_PREDICTIONS.concat(tmp);
+        // retry after we have fresh data
+        try{ autoCheckML5AccumResults(); }catch(e){}
+      });
+    return; // wait for fetch
+  }
 
   function deriveML5MarketKey(p){
     if(p.marketKey) return p.marketKey;

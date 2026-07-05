@@ -4382,17 +4382,23 @@ def main():
     save_json(recommendation_log, "recommendation_log.json")
     save_json(ai_memory, "ai_memory.json")
 
-    # Slim recent finished results for browser-side score resolution (last 3 days)
-    recent_cutoff = started_at - timedelta(days=3)
+    # Slim recent finished results for browser-side score resolution (last 7 days)
+    # Accept any event that has non-null scores, regardless of status field
+    # (some APIs keep status='notstarted'/'inprogress' even after the game ends)
+    recent_cutoff = started_at - timedelta(days=7)
     recent_results = []
+    seen_recent_ids = set()
     for pred in historical_predictions:
         ev = pred.get('event') or {}
-        if ev.get('status') != 'finished':
-            continue
         hs = ev.get('home_score')
         aws = ev.get('away_score')
         if hs is None or aws is None:
             continue
+        # Skip events that are clearly upcoming (both scores zero AND status not finished)
+        ev_status = ev.get('status', '')
+        if ev_status not in ('finished', 'cancelled', 'postponed', ''):
+            if hs == 0 and aws == 0 and ev_status in ('notstarted', 'upcoming'):
+                continue
         try:
             ev_dt_str = ev.get('event_date', '')
             if ev_dt_str:
@@ -4401,15 +4407,22 @@ def main():
                     ev_dt = ev_dt.replace(tzinfo=timezone.utc)
                 if ev_dt < recent_cutoff:
                     continue
+                # Skip matches that haven't started yet (future dates)
+                if ev_dt > started_at + timedelta(hours=1):
+                    continue
         except Exception:
             pass
+        ev_id = ev.get('id')
+        if ev_id in seen_recent_ids:
+            continue
+        seen_recent_ids.add(ev_id)
         recent_results.append({
-            'id': ev.get('id'),
+            'id': ev_id,
             'home_team': ev.get('home_team', ''),
             'away_team': ev.get('away_team', ''),
             'home_score': hs,
             'away_score': aws,
-            'status': 'finished'
+            'status': ev_status or 'finished'
         })
     save_json(recent_results, 'recent_results.json')
     print(f"Saved {len(recent_results)} recent finished events to recent_results.json")
