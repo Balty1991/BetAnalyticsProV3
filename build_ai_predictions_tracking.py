@@ -321,7 +321,29 @@ def main():
             rec['acumulator_result'] = acum_result(rec['acumulator_picks'])
 
         if entry_date in existing_dates:
-            print(f"Entry for {entry_date} already archived. Re-resolved results only.")
+            # Update today's entry with current picks/odds if they changed
+            today_rec = next((r for r in history if r.get('date') == entry_date), None)
+            if today_rec is not None:
+                acumulator_raw_now = daily.get('acumulator', [])
+                top_picks_raw_now  = daily.get('top_picks', [])
+                new_acum_sig = picks_signature(acumulator_raw_now)
+                new_top_sig  = picks_signature(top_picks_raw_now)
+                old_acum_sig = picks_signature(today_rec.get('acumulator_picks', []))
+                old_top_sig  = picks_signature(today_rec.get('top_picks_results', []))
+                if new_acum_sig != old_acum_sig or new_top_sig != old_top_sig:
+                    today_rec['top_picks_results'] = [resolve_pick(dict(p), lookup) for p in top_picks_raw_now]
+                    today_rec['acumulator_picks']  = [resolve_pick({'meci': a.get('meci', ''), 'pick': a.get('pick', '')}, lookup) for a in acumulator_raw_now]
+                    today_rec['cota_totala'] = daily.get('cota_totala')
+                    today_rec['sansa_pct']   = daily.get('sansa_pct')
+                    today_rec['top_picks_summary'] = summarise_picks(today_rec['top_picks_results'])
+                    today_rec['acumulator_result'] = acum_result(today_rec['acumulator_picks'])
+                    today_rec['generated_at'] = gen_at or now_iso
+                    today_rec['provider'] = daily.get('provider', today_rec.get('provider', 'unknown'))
+                    print(f"Updated {entry_date} entry with new picks (cota_totala={daily.get('cota_totala')}).")
+                else:
+                    print(f"Entry for {entry_date} already archived. Re-resolved results only.")
+            else:
+                print(f"Entry for {entry_date} already archived. Re-resolved results only.")
         else:
             top_picks_raw = daily.get('top_picks', [])
             acumulator_raw = daily.get('acumulator', [])
