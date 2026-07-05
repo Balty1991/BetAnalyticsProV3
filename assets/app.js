@@ -11566,8 +11566,22 @@ function autoCheckML5AccumResults(){
     var ph = String(p.home||'').toLowerCase().trim();
     var pa = String(p.away||'').toLowerCase().trim();
     if(ph && pa){
-      var byName = rawScoreByName[ph + '|' + pa];
-      if(byName) return byName;
+      // exact match
+      if(rawScoreByName[ph+'|'+pa]) return rawScoreByName[ph+'|'+pa];
+      // reversed (API may have home/away swapped)
+      if(rawScoreByName[pa+'|'+ph]) return rawScoreByName[pa+'|'+ph];
+      // fuzzy: normalize names (remove accents/special chars) then try substring match
+      var norm = function(s){ return s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); };
+      var nph = norm(ph), npa = norm(pa);
+      for(var k in rawScoreByName){
+        var parts = k.split('|');
+        if(parts.length !== 2) continue;
+        var kh = norm(parts[0]), ka = norm(parts[1]);
+        if(kh.length < 3 || ka.length < 3) continue;
+        var fwdMatch = (kh===nph||kh.indexOf(nph)>=0||nph.indexOf(kh)>=0) && (ka===npa||ka.indexOf(npa)>=0||npa.indexOf(ka)>=0);
+        var revMatch = (kh===npa||kh.indexOf(npa)>=0||npa.indexOf(kh)>=0) && (ka===nph||ka.indexOf(nph)>=0||nph.indexOf(ka)>=0);
+        if(fwdMatch || revMatch) return rawScoreByName[k];
+      }
     }
     return null;
   }
@@ -11606,6 +11620,15 @@ function autoCheckML5AccumResults(){
     saveML5AccumHistory(list);
     renderML5AccumHistory();
     if(typeof toast==='function') toast('📊 Rezultate actualizate automat!','ok');
+  }
+
+  // Schedule retry if still pending and not already scheduled
+  var _stillPending = list.filter(function(e){ return e.result==='pending'; });
+  if(_stillPending.length && !window._ml5AccumRetryTimer){
+    window._ml5AccumRetryTimer = setTimeout(function(){
+      window._ml5AccumRetryTimer = null;
+      try{ autoCheckML5AccumResults(); }catch(e){}
+    }, 60000);
   }
 
   if(!needsApi.length || !API_TOKEN) return;

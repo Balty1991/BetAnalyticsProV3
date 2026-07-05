@@ -763,6 +763,9 @@
       _autoCheck(STORE_KEY); _autoCheck(APEX_KEY); _autoCheck(ML5_KEY);
       var after = JSON.stringify([loadStore(STORE_KEY), loadStore(APEX_KEY), loadStore(ML5_KEY)]);
       if (before !== after) _triggerUpdate();
+      // Also check ML5 accumulator bilete when fresh results arrive
+      try { if (typeof window.autoCheckML5AccumResults === 'function') window.autoCheckML5AccumResults(); } catch(e) {}
+      try { if (typeof window.autoCheckMotorAIResults === 'function') window.autoCheckMotorAIResults(); } catch(e) {}
     });
   }
 
