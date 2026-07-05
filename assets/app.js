@@ -11433,6 +11433,7 @@ function renderML5Analysis(){
   try{ renderML5AccumGenerators(); }catch(e){ console.warn('[ML5 Acum]', e); }
   try{ renderML5AccumHistory(); }catch(e){ console.warn('[ML5 Hist]', e); }
   setTimeout(function(){ try{ autoCheckML5AccumResults(); }catch(e){} }, 400);
+  setTimeout(function(){ try{ autoCheckML5AccumResults(); }catch(e){} }, 4000);
 }
 
 /* ===== ML5 ACCUMULATOR GENERATORS ===== */
@@ -11572,29 +11573,32 @@ function autoCheckML5AccumResults(){
   }
 
   pending.forEach(function(entry){
-    var latestMs = 0;
-    (entry.picks||[]).forEach(function(p){
-      var ms = p.event_date ? new Date(p.event_date).getTime() : 0;
-      if(isFinite(ms) && ms > latestMs) latestMs = ms;
-    });
-    if(!latestMs || now < latestMs + GRACE_MS) return;
-
     var pickResults = (entry.picks||[]).map(function(p){
+      var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
+      // Match not yet finished (hasn't passed grace period)
+      if(!matchMs || now < matchMs + GRACE_MS) return 'not_yet';
       var mkey = deriveML5MarketKey(p);
       var sp = findScoreForPick(p);
-      if(!sp) return { result: null, eventId: p.eventId||null };
-      if(sp.homeScore == null) return { result: null, eventId: p.eventId||null };
-      return { result: evaluateMarketOutcome(mkey, sp.homeScore, sp.awayScore) };
+      if(!sp || sp.homeScore == null) return null; // finished but score not found yet
+      return evaluateMarketOutcome(mkey, sp.homeScore, sp.awayScore);
     });
 
-    var unresolved = pickResults.filter(function(r){ return r && r.result === null; });
-    if(unresolved.length){
-      needsApi.push(entry);
+    // Early LOSS: any finished pick that lost → whole ticket is lost immediately
+    if(pickResults.indexOf('loss') >= 0){
+      entry.result = 'loss';
+      changed = true;
       return;
     }
-    var results = pickResults.map(function(r){ return r ? r.result : null; });
-    if(results.indexOf(null)>=0 || results.indexOf('pending')>=0) return;
-    entry.result = results.indexOf('loss')>=0 ? 'loss' : 'win';
+
+    // If any pick score is missing and match should be done → needs API
+    var hasUnfound = pickResults.indexOf(null) >= 0;
+    if(hasUnfound){ needsApi.push(entry); return; }
+
+    // Still have matches not yet finished → stay pending
+    if(pickResults.indexOf('not_yet') >= 0) return;
+
+    // All resolved and no loss → WIN
+    entry.result = 'win';
     changed = true;
   });
 
@@ -11614,14 +11618,21 @@ function autoCheckML5AccumResults(){
       var e2 = list2.filter(function(x){ return x.id===entry.id; })[0];
       if(!e2 || e2.result!=='pending') return;
       var results2 = (e2.picks||[]).map(function(p,i){
+        var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
+        if(!matchMs || Date.now() < matchMs + GRACE_MS) return 'not_yet';
         var ev = evDetails[i];
         if(!ev) return null;
         var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
         if(sp.homeScore==null) return null;
         return evaluateMarketOutcome(deriveML5MarketKey(p), sp.homeScore, sp.awayScore);
       });
-      if(results2.indexOf(null)>=0 || results2.indexOf('pending')>=0) return;
-      e2.result = results2.indexOf('loss')>=0 ? 'loss' : 'win';
+      if(results2.indexOf('loss') >= 0){
+        e2.result = 'loss';
+      } else if(results2.indexOf(null) >= 0 || results2.indexOf('not_yet') >= 0){
+        return; // still waiting
+      } else {
+        e2.result = 'win';
+      }
       saveML5AccumHistory(list2);
       renderML5AccumHistory();
       if(typeof toast==='function') toast('📊 Rezultate actualizate automat!','ok');
