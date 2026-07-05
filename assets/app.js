@@ -10337,8 +10337,8 @@ function evaluateMarketOutcome(marketType, homeScore, awayScore){
   if(marketType === 'under25') return total <= 2 ? 'win' : 'loss';
   if(marketType === 'under35') return total <= 3 ? 'win' : 'loss';
   if(marketType === 'btts') return (h > 0 && a > 0) ? 'win' : 'loss';
-  if(marketType === 'homeWin' || marketType === '1') return h > a ? 'win' : 'loss';
-  if(marketType === 'awayWin' || marketType === '2') return a > h ? 'win' : 'loss';
+  if(marketType === 'homeWin' || marketType === 'home_win' || marketType === '1') return h > a ? 'win' : 'loss';
+  if(marketType === 'awayWin' || marketType === 'away_win' || marketType === '2') return a > h ? 'win' : 'loss';
   if(marketType === 'draw'    || marketType === 'x') return h === a ? 'win' : 'loss';
   if(marketType === 'dc1x') return h >= a ? 'win' : 'loss';
   if(marketType === 'dcx2') return a >= h ? 'win' : 'loss';
@@ -11409,7 +11409,7 @@ function getML5AccumPool(){
       edge: Number(bet.edgePct || 0),
       score: m.smartScore || m.ticketScore || 0,
       ticketScore: m.smartScore || m.ticketScore || 0,
-      marketKey: m.marketKey || m.market_key || '',
+      marketKey: m.marketKey || m.market_key || (m.bestBet && m.bestBet.type) || '',
       market: bet.label || '',
       displayMarket: bet.label || '',
       displayOdds: Number(bet.odds || 0),
@@ -11436,7 +11436,7 @@ function saveML5AccumTicket(cfg, t){
   var picks = (t.picks || []).map(function(p){
     var bet = p.bestBet || {};
     return { home:p.home||'', away:p.away||'', league:p.league||'',
-      market:bet.label||'', marketKey:p.marketKey||'', odds:Number(bet.odds||0),
+      market:bet.label||'', marketKey:p.marketKey||bet.type||'', odds:Number(bet.odds||0),
       prob:Number(bet.adjProb||p.prob||0), event_date:p.event_date||p.date||'',
       eventId:p.eventId||p.event_id||null };
   });
@@ -11466,9 +11466,67 @@ function autoCheckML5AccumResults(){
   var pending = list.filter(function(e){ return e.result === 'pending'; });
   if(!pending.length) return;
   var now = Date.now();
-  var GRACE_MS = 2 * 60 * 60 * 1000; // 2h after last match
+  var GRACE_MS = 2 * 60 * 60 * 1000;
   var changed = false;
   var needsApi = [];
+
+  // Build score lookup from __RAW_PREDICTIONS (recent_results.json)
+  var rawScoreById = {};
+  var rawScoreByName = {};
+  var rawPreds = Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : [];
+  rawPreds.forEach(function(raw){
+    var ev = raw && raw.event ? raw.event : null;
+    if(!ev) return;
+    var hs = (ev.home_score != null && String(ev.home_score) !== 'None') ? Number(ev.home_score) : null;
+    var as2 = (ev.away_score != null && String(ev.away_score) !== 'None') ? Number(ev.away_score) : null;
+    if(hs === null || as2 === null || isNaN(hs) || isNaN(as2)) return;
+    var sd = {homeScore: hs, awayScore: as2};
+    var eid = String(ev.id != null ? ev.id : '').trim();
+    if(eid) rawScoreById[eid] = sd;
+    var h = String(ev.home_team || '').toLowerCase().trim();
+    var a = String(ev.away_team || '').toLowerCase().trim();
+    if(h && a) rawScoreByName[h + '|' + a] = sd;
+  });
+
+  function deriveML5MarketKey(p){
+    if(p.marketKey) return p.marketKey;
+    var lbl = String(p.market || '').toLowerCase();
+    if(/over\s*1\.?5/.test(lbl)) return 'over15';
+    if(/over\s*2\.?5/.test(lbl)) return 'over25';
+    if(/under\s*3\.?5/.test(lbl)) return 'under35';
+    if(/under\s*2\.?5/.test(lbl)) return 'under25';
+    if(/btts|ambele\s*echipe/.test(lbl)) return 'btts';
+    if(/[șs]ans[ăa]\s*dubl[ăa]\s*1x|1x\b|dc1x/.test(lbl)) return 'dc1x';
+    if(/[șs]ans[ăa]\s*dubl[ăa]\s*x2|x2\b|dcx2/.test(lbl)) return 'dcx2';
+    if(/[șs]ans[ăa]\s*dubl[ăa]\s*12|\b12\b|dc12/.test(lbl)) return 'dc12';
+    if(/acas[ăa]|home.?win|homewin|victorie\s*gazde|^1\s*[\(\[]/.test(lbl)) return 'homeWin';
+    if(/oaspe[tț]i|away.?win|awaywin|victorie\s*oaspe/.test(lbl)) return 'awayWin';
+    if(/remi[sz]|draw|egal/.test(lbl)) return 'draw';
+    return '';
+  }
+
+  function findScoreForPick(p){
+    var ev = null;
+    if(p.eventId && ALL_EVENTS && ALL_EVENTS.length){
+      ALL_EVENTS.forEach(function(e){ if(String(e.id||'')===String(p.eventId)) ev=e; });
+    }
+    if(!ev && typeof findEventForStoredPick==='function') ev = findEventForStoredPick(p);
+    if(ev){
+      var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
+      if(sp.homeScore != null) return sp;
+    }
+    if(p.eventId){
+      var byId = rawScoreById[String(p.eventId)];
+      if(byId) return byId;
+    }
+    var ph = String(p.home||'').toLowerCase().trim();
+    var pa = String(p.away||'').toLowerCase().trim();
+    if(ph && pa){
+      var byName = rawScoreByName[ph + '|' + pa];
+      if(byName) return byName;
+    }
+    return null;
+  }
 
   pending.forEach(function(entry){
     var latestMs = 0;
@@ -11479,15 +11537,11 @@ function autoCheckML5AccumResults(){
     if(!latestMs || now < latestMs + GRACE_MS) return;
 
     var pickResults = (entry.picks||[]).map(function(p){
-      var ev = null;
-      if(p.eventId && ALL_EVENTS && ALL_EVENTS.length){
-        ALL_EVENTS.forEach(function(e){ if(String(e.id||'')===String(p.eventId)) ev=e; });
-      }
-      if(!ev) ev = (typeof findEventForStoredPick==='function') ? findEventForStoredPick(p) : null;
-      if(!ev) return { result: null, eventId: p.eventId||null };
-      var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
+      var mkey = deriveML5MarketKey(p);
+      var sp = findScoreForPick(p);
+      if(!sp) return { result: null, eventId: p.eventId||null };
       if(sp.homeScore == null) return { result: null, eventId: p.eventId||null };
-      return { result: evaluateMarketOutcome(p.marketKey||'', sp.homeScore, sp.awayScore), eventId: null };
+      return { result: evaluateMarketOutcome(mkey, sp.homeScore, sp.awayScore) };
     });
 
     var unresolved = pickResults.filter(function(r){ return r && r.result === null; });
@@ -11521,7 +11575,7 @@ function autoCheckML5AccumResults(){
         if(!ev) return null;
         var sp = (typeof getScorePairFromSource==='function') ? getScorePairFromSource(ev) : {homeScore:null,awayScore:null};
         if(sp.homeScore==null) return null;
-        return evaluateMarketOutcome(p.marketKey||'', sp.homeScore, sp.awayScore);
+        return evaluateMarketOutcome(deriveML5MarketKey(p), sp.homeScore, sp.awayScore);
       });
       if(results2.indexOf(null)>=0 || results2.indexOf('pending')>=0) return;
       e2.result = results2.indexOf('loss')>=0 ? 'loss' : 'win';
