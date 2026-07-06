@@ -1225,11 +1225,7 @@ function renderClaudeAITab(){
       : _acumTodayResult === 'loss'
       ? '<span style="color:#ef4444;font-size:13px;font-weight:900">❌ LOSS</span>'
       : '';
-    var _acumStreak = Number((acStats && acStats.current_loss_streak) || (trkStats.streak && trkStats.streak.type === 'loss' ? trkStats.streak.count : 0) || 0);
-    var _acumWR = Number((acStats && acStats.winrate) || 0);
-    var _showAcumWarn = (_acumStreak >= 8 || (_acumWR < 25 && Number((acStats && acStats.total) || 0) >= 10));
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid ' + (_showAcumWarn ? 'rgba(239,68,68,.4)' : 'rgba(99,102,241,.25)') + ';border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + (_showAcumWarn ? '<div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:#ef4444;font-weight:600">⚠️ Sistem în recalibrare — acumulatoarele au ' + (_acumStreak ? _acumStreak + ' pierderi consecutive' : 'performanță scăzută') + '. Urmărește doar selecțiile individuale.</div>' : '')
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
       + '<div style="font-size:14px;font-weight:800;color:' + (_showAcumWarn ? '#f87171' : '#818cf8') + '">🎰 Acumulator Recomandat</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
@@ -1289,14 +1285,9 @@ function renderClaudeAITab(){
     html += '</div></div>';
   }
 
-  // ── Monitorizare & Statistici ──────────────────────────────────────────────
+  // Monitorizare & Statistici removed — tab shows generation only
 
-  html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-    + '<div style="font-size:14px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Monitorizare & Statistici</div>';
-
-  if(!trkHistory.length){
-    html += '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:12px">Statisticile se acumulează zilnic. Revin mâine cu primul raport.</div>';
-  } else {
+  if(false){ if(!trkHistory.length){ /* stats removed */ } else {
     // ── ROI computations ──────────────────────────────────────────────────────
     var _tp_roi_sum = 0, _tp_roi_cnt = 0;
     trkHistory.forEach(function(rec){
@@ -1530,10 +1521,7 @@ function renderClaudeAITab(){
         html += '</div>';
       }
     });
-  }
-
-  html += '</div>';
-  // ── End monitorizare ────────────────────────────────────────────────────────
+  }}
 
   html += '</div>';
   root.innerHTML = html;
