@@ -11616,7 +11616,10 @@ function autoCheckML5AccumResults(){
         // Score unavailable: if match is 8h+ overdue, stop blocking the ticket
         return (now > matchMs + GRACE_MS + STALE_MS) ? 'stale' : null;
       }
-      return evaluateMarketOutcome(mkey, sp.homeScore, sp.awayScore);
+      var res = evaluateMarketOutcome(mkey, sp.homeScore, sp.awayScore);
+      p._pickResult = res;
+      p._pickScore = sp.homeScore + '-' + sp.awayScore;
+      return res;
     });
 
     // Early LOSS: any finished pick that lost → whole ticket is lost immediately
@@ -11636,6 +11639,21 @@ function autoCheckML5AccumResults(){
     // All picks are win/stale (no loss, no missing scores within window) → WIN
     entry.result = 'win';
     changed = true;
+  });
+
+  // Enrich picks on ALL tickets (including already-settled WIN/LOSS) so scores persist in localStorage
+  list.forEach(function(entry){
+    (entry.picks||[]).forEach(function(p){
+      if(p._pickResult) return; // already enriched
+      var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
+      if(!matchMs || now < matchMs + GRACE_MS) return;
+      var sp = findScoreForPick(p);
+      if(!sp || sp.homeScore == null) return;
+      var mkey = deriveML5MarketKey(p);
+      p._pickResult = evaluateMarketOutcome(mkey, sp.homeScore, sp.awayScore);
+      p._pickScore = sp.homeScore + '-' + sp.awayScore;
+      changed = true;
+    });
   });
 
   if(changed){
@@ -11734,6 +11752,8 @@ function renderML5AccumHistory(){
       return lbl || 'over25';
     }
     function _pickStatus(p){
+      // Use stored result first (set by autoCheckML5AccumResults, survives page reload)
+      if(p._pickResult === 'win' || p._pickResult === 'loss') return p._pickResult;
       var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
       if(!matchMs || _now < matchMs) return 'future';
       if(_now < matchMs + _GRACE) return 'not_yet';
@@ -11745,6 +11765,7 @@ function renderML5AccumHistory(){
       return evaluateMarketOutcome(_deriveKey(p), sp.homeScore, sp.awayScore);
     }
     function _scoreStr(p){
+      if(p._pickScore) return p._pickScore;
       var eid = String(p.event_id != null ? p.event_id : '').trim();
       var sp = (eid && _rById[eid]) || _rByName[(String(p.home||'').toLowerCase().trim())+'|'+(String(p.away||'').toLowerCase().trim())];
       return sp && sp.homeScore != null ? sp.homeScore+'-'+sp.awayScore : '';
