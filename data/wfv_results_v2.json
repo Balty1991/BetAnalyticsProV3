@@ -1,6 +1,168 @@
 {
-  "updated_at": "2026-07-05T16:57:10.686625",
-  "status": "insufficient_data",
-  "markets": [],
-  "warnings": []
+  "updated_at": "2026-07-06T07:37:39.761689",
+  "source": "baseline_league_rates",
+  "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
+  "n_rows": 8792,
+  "n_folds": 1,
+  "global_score": 74.8,
+  "global_grade": "B",
+  "markets": [
+    {
+      "market": "home_win",
+      "label": "Victorie gazdă",
+      "folds": 1,
+      "avg_brier": 0.2415,
+      "avg_log_loss": 0.6753,
+      "avg_ece": 0.0052,
+      "avg_winrate": 0.4434,
+      "score": 77.4,
+      "grade": "B",
+      "trend": "stabil",
+      "fold_details": [
+        {
+          "n": 3187,
+          "brier": 0.2415,
+          "log_loss": 0.6753,
+          "ece": 0.0052,
+          "winrate": 0.4434
+        }
+      ]
+    },
+    {
+      "market": "draw",
+      "label": "Egal",
+      "folds": 1,
+      "avg_brier": 0.1892,
+      "avg_log_loss": 0.5654,
+      "avg_ece": 0.0077,
+      "avg_winrate": 0.2573,
+      "score": 81.5,
+      "grade": "B",
+      "trend": "stabil",
+      "fold_details": [
+        {
+          "n": 3187,
+          "brier": 0.1892,
+          "log_loss": 0.5654,
+          "ece": 0.0077,
+          "winrate": 0.2573
+        }
+      ]
+    },
+    {
+      "market": "away_win",
+      "label": "Victorie oaspete",
+      "folds": 1,
+      "avg_brier": 0.2032,
+      "avg_log_loss": 0.5943,
+      "avg_ece": 0.0075,
+      "avg_winrate": 0.2993,
+      "score": 80.3,
+      "grade": "B",
+      "trend": "stabil",
+      "fold_details": [
+        {
+          "n": 3187,
+          "brier": 0.2032,
+          "log_loss": 0.5943,
+          "ece": 0.0075,
+          "winrate": 0.2993
+        }
+      ]
+    },
+    {
+      "market": "over25",
+      "label": "Peste 2.5G",
+      "folds": 1,
+      "avg_brier": 0.2411,
+      "avg_log_loss": 0.6749,
+      "avg_ece": 0.0024,
+      "avg_winrate": 0.5074,
+      "score": 78.0,
+      "grade": "B",
+      "trend": "stabil",
+      "fold_details": [
+        {
+          "n": 3187,
+          "brier": 0.2411,
+          "log_loss": 0.6749,
+          "ece": 0.0024,
+          "winrate": 0.5074
+        }
+      ]
+    },
+    {
+      "market": "under35",
+      "label": "Sub 3.5G",
+      "folds": 1,
+      "avg_brier": 0.1919,
+      "avg_log_loss": 0.5696,
+      "avg_ece": 0.0096,
+      "avg_winrate": 0.7233,
+      "score": 80.9,
+      "grade": "B",
+      "trend": "stabil",
+      "fold_details": [
+        {
+          "n": 3187,
+          "brier": 0.1919,
+          "log_loss": 0.5696,
+          "ece": 0.0096,
+          "winrate": 0.7233
+        }
+      ]
+    },
+    {
+      "market": "btts",
+      "label": "Ambele marchează",
+      "folds": 1,
+      "avg_brier": 0.2462,
+      "avg_log_loss": 0.6856,
+      "avg_ece": 0.011,
+      "avg_winrate": 0.5218,
+      "score": 75.7,
+      "grade": "B",
+      "trend": "stabil",
+      "fold_details": [
+        {
+          "n": 3187,
+          "brier": 0.2462,
+          "log_loss": 0.6856,
+          "ece": 0.011,
+          "winrate": 0.5218
+        }
+      ]
+    },
+    {
+      "market": "over15",
+      "label": "Peste 1.5G",
+      "folds": 1,
+      "avg_brier": 0.2891,
+      "avg_log_loss": 0.775,
+      "avg_ece": 0.3015,
+      "avg_winrate": 0.743,
+      "score": 50.0,
+      "grade": "D",
+      "trend": "stabil",
+      "fold_details": [
+        {
+          "n": 3187,
+          "brier": 0.2891,
+          "log_loss": 0.775,
+          "ece": 0.3015,
+          "winrate": 0.743
+        }
+      ]
+    }
+  ],
+  "warnings": [],
+  "fold_windows": [
+    {
+      "train_end": "2026-01-08",
+      "val_start": "2026-01-22",
+      "val_end": "2026-04-22",
+      "n_train": 3183,
+      "n_val": 3187
+    }
+  ]
 }
