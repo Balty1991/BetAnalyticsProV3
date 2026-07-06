@@ -4388,33 +4388,31 @@ def main():
     recent_cutoff = started_at - timedelta(days=7)
     recent_results = []
     seen_recent_ids = set()
-    for pred in historical_predictions:
-        ev = pred.get('event') or {}
+
+    def _add_event_to_recent(ev):
         hs = ev.get('home_score')
         aws = ev.get('away_score')
         if hs is None or aws is None:
-            continue
-        # Skip events that are clearly upcoming (both scores zero AND status not finished)
+            return
         ev_status = ev.get('status', '')
         if ev_status not in ('finished', 'cancelled', 'postponed', ''):
             if hs == 0 and aws == 0 and ev_status in ('notstarted', 'upcoming'):
-                continue
+                return
         try:
-            ev_dt_str = ev.get('event_date', '')
+            ev_dt_str = ev.get('event_date', '') or ev.get('date', '')
             if ev_dt_str:
-                ev_dt = datetime.fromisoformat(ev_dt_str.replace('Z', '+00:00'))
+                ev_dt = datetime.fromisoformat(str(ev_dt_str).replace('Z', '+00:00'))
                 if ev_dt.tzinfo is None:
                     ev_dt = ev_dt.replace(tzinfo=timezone.utc)
                 if ev_dt < recent_cutoff:
-                    continue
-                # Skip matches that haven't started yet (future dates)
+                    return
                 if ev_dt > started_at + timedelta(hours=1):
-                    continue
+                    return
         except Exception:
             pass
         ev_id = ev.get('id')
         if ev_id in seen_recent_ids:
-            continue
+            return
         seen_recent_ids.add(ev_id)
         recent_results.append({
             'id': ev_id,
@@ -4424,6 +4422,24 @@ def main():
             'away_score': aws,
             'status': ev_status or 'finished'
         })
+
+    # 1) From historical predictions (API ML coverage)
+    for pred in historical_predictions:
+        _add_event_to_recent(pred.get('event') or {})
+
+    # 2) Also fetch raw finished events for last 10 days — broader league coverage
+    #    (predictions endpoint only covers leagues with ML models; events endpoint covers all)
+    try:
+        recent_past_str = (started_at - timedelta(days=10)).strftime("%Y-%m-%d")
+        today_str2 = started_at.strftime("%Y-%m-%d")
+        raw_events_past = fetch_all_pages(f"/api/events/?tz={TZ}&date_from={recent_past_str}&date_to={today_str2}&status=finished")
+        print(f"Fetched {len(raw_events_past)} finished events from events endpoint")
+        for ev_wrap in raw_events_past:
+            ev = ev_wrap.get('event') or ev_wrap if isinstance(ev_wrap, dict) else {}
+            _add_event_to_recent(ev)
+    except Exception as e:
+        print(f"[non-fatal] Could not fetch finished events: {e}")
+
     save_json(recent_results, 'recent_results.json')
     print(f"Saved {len(recent_results)} recent finished events to recent_results.json")
 
