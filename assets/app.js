@@ -1260,6 +1260,14 @@ function renderClaudeAITab(){
     + '</div>'
     + '</div></div>';
 
+  // Build set of already-saved picks (meci|pick_text) for today → disable duplicate save button
+  var _savedToday = {};
+  var _todayDateStr = new Date().toDateString();
+  loadClaudeSaved().forEach(function(e){
+    if(new Date(e.savedAt).toDateString() === _todayDateStr)
+      _savedToday[(e.meci||'')+'|'+(e.pick_text||'')] = true;
+  });
+
   // Build result lookup from today's tracking entry
   var _todayStr = new Date().toISOString().slice(0,10);
   var _todayRec = null;
@@ -1305,7 +1313,7 @@ function renderClaudeAITab(){
         + '<div style="flex:1;min-width:0">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px">'
         + '<div style="font-size:13px;font-weight:700;color:var(--txt)">' + (p.meci || '') + '</div>'
-        + (_badge ? '<div>'+_badge+'</div>' : '<button onclick="addClaudeSavedPick(\''+_meci_esc+'\',\''+_pick_esc+'\',\''+_evDate+'\',\'top5\')" style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.35);color:#2BE5C5;cursor:pointer;flex-shrink:0">💾 Salvează</button>')
+        + (_badge ? '<div>'+_badge+'</div>' : (_savedToday[(p.meci||'')+'|'+(p.pick||'')] ? '<span style="font-size:11px;color:#22c55e;font-weight:700;flex-shrink:0">✅ Salvat</span>' : '<button onclick="addClaudeSavedPick(\''+_meci_esc+'\',\''+_pick_esc+'\',\''+_evDate+'\',\'top5\')" style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.35);color:#2BE5C5;cursor:pointer;flex-shrink:0">💾 Salvează</button>'))
         + '</div>'
         + (function(){ var t=_getKickoff(p.meci||''); return t?'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">🕐 '+t+'</div>':''; })()
         + (p.pick ? '<div style="font-size:12px;color:#2BE5C5;margin-bottom:2px">' + p.pick + '</div>' : '')
@@ -1345,7 +1353,7 @@ function renderClaudeAITab(){
         + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
         + '<div style="font-size:11px;color:#818cf8">' + (a.pick || '') + '</div>'
         + (_at ? '<div style="font-size:10px;color:var(--muted)">🕐 ' + _at + '</div>' : '')
-        + (_ab ? '<div>'+_ab+'</div>' : '<button onclick="addClaudeSavedPick(\''+_am_esc+'\',\''+_ap_esc+'\',\''+_aEvDate+'\',\'acum\')" style="font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#818cf8;cursor:pointer">💾</button>')
+        + (_ab ? '<div>'+_ab+'</div>' : (_savedToday[(a.meci||'')+'|'+(a.pick||'')] ? '<span style="font-size:11px;color:#22c55e;font-weight:700">✅</span>' : '<button onclick="addClaudeSavedPick(\''+_am_esc+'\',\''+_ap_esc+'\',\''+_aEvDate+'\',\'acum\')" style="font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#818cf8;cursor:pointer">💾</button>'))
         + '</div>'
         + '</div></div>';
     });
