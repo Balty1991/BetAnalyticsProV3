@@ -766,6 +766,7 @@
       // Also check ML5 accumulator bilete when fresh results arrive
       try { if (typeof window.autoCheckML5AccumResults === 'function') window.autoCheckML5AccumResults(); } catch(e) {}
       try { if (typeof window.autoCheckMotorAIResults === 'function') window.autoCheckMotorAIResults(); } catch(e) {}
+      try { if (typeof window.autoCheckClaudeSavedResults === 'function') window.autoCheckClaudeSavedResults(); } catch(e) {}
     });
   }
 
