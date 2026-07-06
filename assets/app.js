@@ -1325,7 +1325,7 @@ function renderClaudeAITab(){
       : '';
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
-      + '<div style="font-size:14px;font-weight:800;color:' + (_showAcumWarn ? '#f87171' : '#818cf8') + '">🎰 Acumulator Recomandat</div>'
+      + '<div style="font-size:14px;font-weight:800;color:#818cf8">🎰 Acumulator Recomandat</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
       + (_acumBadge ? _acumBadge : '')
       + (cotaTotala ? '<span style="font-size:12px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:3px 10px;color:#818cf8">Cotă: ' + cotaTotala.toFixed(2) + '</span>' : '')
