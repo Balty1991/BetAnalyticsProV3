@@ -1092,7 +1092,15 @@ function _claudeParseMarketKey(txt){
   return 'over25';
 }
 function _claudeParseOdds(txt){ var m = String(txt||'').match(/@\s*([\d.]+)/); return m ? parseFloat(m[1]) : 0; }
-function addClaudeSavedPick(meci, pickTxt, eventDate, pickType){
+function _parseEdge(motiv){ var m=String(motiv||'').match(/(\d+)\s*pp/i); return m?parseInt(m[1],10):null; }
+function _recUnits(pickTxt, motivTxt){
+  var odds=_claudeParseOdds(pickTxt), edge=_parseEdge(motivTxt);
+  if(edge>=15||(odds>0&&odds<=1.35)) return 3;
+  if(edge>=8||(odds>0&&odds<=1.65)) return 2;
+  return 1;
+}
+function _setClaudeUnitSize(n){ localStorage.setItem('veyra_claude_unitsize',String(n)); renderClaudeAITab(); }
+function addClaudeSavedPick(meci, pickTxt, eventDate, pickType, recUnits){
   var list = loadClaudeSaved();
   var today = new Date().toDateString();
   var dup = list.filter(function(e){
@@ -1106,6 +1114,7 @@ function addClaudeSavedPick(meci, pickTxt, eventDate, pickType){
     odds: _claudeParseOdds(pickTxt),
     marketKey: _claudeParseMarketKey(pickTxt),
     event_date: eventDate||'', type: pickType||'top5',
+    rec_units: recUnits||1,
     result: 'pending', score: null
   });
   saveClaudeSaved(list);
@@ -1166,13 +1175,7 @@ function renderClaudeAITab(){
   var generatedAt = d.generated_at || '';
   var matchesAnalyzed = d.matches_analyzed || 0;
 
-  // Tracking data — needed early for result lookups in Top5 & Acumulator
-  var trk = window.AI_PRED_TRACKING || {};
-  var trkHistory = trk.history || [];
-  var trkStats   = trk.stats   || {};
-  var tpStats    = trkStats.top_picks   || {};
-  var acStats    = trkStats.acumulators || {};
-  var streak     = trkStats.streak      || {};
+  var unitSize = parseInt(localStorage.getItem('veyra_claude_unitsize')||'10',10)||10;
 
   // Build kickoff + event_date lookup
   var _kickoffMap = {}, _dateMap = {};
@@ -1201,26 +1204,23 @@ function renderClaudeAITab(){
     if(parts.length < 2) return '';
     var h = parts[0].trim().toLowerCase().replace(/\s+/g,'');
     var a = parts[1].trim().toLowerCase().replace(/\s+/g,'');
-    // exact key match
     var key = h + a;
     if(_kickoffMap[key]) return _kickoffMap[key];
-    // fuzzy: find any key that starts with home fragment and ends with away fragment
     for(var k in _kickoffMap){
       if(k.indexOf(h) !== -1 && k.indexOf(a) !== -1) return _kickoffMap[k];
     }
     return '';
   }
+
   var cotaTotala = d.cota_totala || null;
   var sansaPct = d.sansa_pct || null;
 
-  // Filtrare acumulator: max 2.20 cotă/linie, max 6 linii, cotă totală ≤ 25x
+  // Filter accumulator: max @2.20/line, max 6 lines, total ≤ 25x
   (function(){
     if(!acumulator.length) return;
     function parsePickOdds(s){ var m = String(s||'').match(/@\s*([\d.]+)/); return m ? parseFloat(m[1]) : 0; }
     var filtered = acumulator.filter(function(a){ var o = parsePickOdds(a.pick); return o >= 1.10 && o <= 2.20; });
-    // Sort by highest prob (lowest odds) first for better combined prob
     filtered.sort(function(a,b){ return parsePickOdds(a.pick) - parsePickOdds(b.pick); });
-    // Cap running total at 25x
     var kept = [], running = 1;
     for(var i = 0; i < filtered.length && kept.length < 6; i++){
       var o = parsePickOdds(filtered[i].pick);
@@ -1235,9 +1235,9 @@ function renderClaudeAITab(){
 
   if(!generatedAt && !topPicks.length && !acumulator.length){
     root.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted,#64748b)">'
-      + '<div style="font-size:32px;margin-bottom:12px">🤖</div>'
+      + '<div style="font-size:32px;margin-bottom:12px">⚡</div>'
       + '<div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--txt)">Analiza nu este disponibilă</div>'
-      + '<div style="font-size:13px">Analiza zilnică Claude se generează automat la fiecare rulare a workflow-ului.<br>Încearcă din nou mai târziu.</div>'
+      + '<div style="font-size:13px">Analiza zilnică se generează automat la fiecare rulare a workflow-ului.<br>Încearcă din nou mai târziu.</div>'
       + '</div>';
     return;
   }
@@ -1250,17 +1250,15 @@ function renderClaudeAITab(){
     }catch(e){ genStr = generatedAt.slice(0,16).replace('T',' '); }
   }
 
-  var html = '<div style="padding:0 4px">';
+  // Market condition: count high-edge picks (≥8pp)
+  var highEdgeCnt = 0;
+  topPicks.forEach(function(p){ if(_parseEdge(p.motiv||'') >= 8) highEdgeCnt++; });
+  var marketCond, marketColor, marketBg;
+  if(highEdgeCnt >= 3){ marketCond='FAVORABIL'; marketColor='#22c55e'; marketBg='rgba(34,197,94,.12)'; }
+  else if(highEdgeCnt >= 1){ marketCond='NEUTRU'; marketColor='#f59e0b'; marketBg='rgba(245,158,11,.12)'; }
+  else { marketCond='PRUDENȚĂ'; marketColor='#ef4444'; marketBg='rgba(239,68,68,.12)'; }
 
-  // Header
-  html += '<div style="background:linear-gradient(135deg,rgba(43,229,197,.1),rgba(99,102,241,.08));border:1px solid rgba(43,229,197,.25);border-radius:16px;padding:16px 18px;margin-bottom:14px">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
-    + '<div><div style="font-size:17px;font-weight:900;color:var(--txt)">🤖 Predicții AI Claude</div>'
-    + (genStr ? '<div style="font-size:11px;color:var(--muted)">Generat ' + genStr + (matchesAnalyzed ? ' · ' + matchesAnalyzed + ' meciuri analizate' : '') + '</div>' : '')
-    + '</div>'
-    + '</div></div>';
-
-  // Build set of already-saved picks (meci|pick_text) for today → disable duplicate save button
+  // Today's saved picks for duplicate detection
   var _savedToday = {};
   var _todayDateStr = new Date().toDateString();
   loadClaudeSaved().forEach(function(e){
@@ -1268,157 +1266,175 @@ function renderClaudeAITab(){
       _savedToday[(e.meci||'')+'|'+(e.pick_text||'')] = true;
   });
 
-  // Build result lookup from today's tracking entry
-  var _todayStr = new Date().toISOString().slice(0,10);
-  var _todayRec = null;
-  for(var _ti=0; _ti < trkHistory.length; _ti++){
-    if(trkHistory[_ti].date === _todayStr){ _todayRec = trkHistory[_ti]; break; }
-  }
-  var _topResMap = {};
-  if(_todayRec && Array.isArray(_todayRec.top_picks_results)){
-    _todayRec.top_picks_results.forEach(function(r){
-      var k = (r.meci||'').toLowerCase().replace(/\s+/g,'');
-      if(k) _topResMap[k] = r;
-    });
-  }
-  var _acumResMap = {};
-  if(_todayRec && Array.isArray(_todayRec.acumulator_picks)){
-    _todayRec.acumulator_picks.forEach(function(r){
-      var k = (r.meci||'').toLowerCase().replace(/\s+/g,'');
-      if(k) _acumResMap[k] = r;
-    });
-  }
-  function _resultBadge(res, compact){
-    if(!res || !res.result || res.result === 'pending') return '';
-    var scoreStr = res.score ? ' <span style="font-size:10px;color:var(--muted);font-weight:400">'+res.score+'</span>' : '';
-    if(res.result === 'win')  return '<span style="color:#22c55e;font-size:'+(compact?'11':'12')+'px;font-weight:800">✅ WIN</span>'+scoreStr;
-    if(res.result === 'loss') return '<span style="color:#ef4444;font-size:'+(compact?'11':'12')+'px;font-weight:800">❌ LOSS</span>'+scoreStr;
-    return '';
-  }
+  var html = '<div style="padding:0 4px">';
 
-  // Top Picks
+  // ── HEADER ─────────────────────────────────────────────────────────────────
+  html += '<div style="background:linear-gradient(135deg,rgba(43,229,197,.1),rgba(99,102,241,.08));border:1px solid rgba(43,229,197,.25);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+    + '<div>'
+    + '<div style="font-size:18px;font-weight:900;color:var(--txt);letter-spacing:-.3px">⚡ VEYRA Strategy</div>'
+    + (genStr ? '<div style="font-size:11px;color:var(--muted);margin-top:2px">Analiză ' + genStr + (matchesAnalyzed ? ' · ' + matchesAnalyzed + ' meciuri' : '') + '</div>' : '')
+    + '</div>'
+    + '<div style="background:'+marketBg+';border:1px solid '+marketColor+'44;border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:5px">'
+    + '<div style="width:7px;height:7px;border-radius:50%;background:'+marketColor+'"></div>'
+    + '<div style="font-size:11px;font-weight:900;color:'+marketColor+';letter-spacing:.5px">'+marketCond+'</div>'
+    + '</div>'
+    + '</div></div>';
+
+  // ── PLAN SESIUNE ───────────────────────────────────────────────────────────
+  var recBudget = topPicks.length
+    ? topPicks.reduce(function(acc,p){ return acc + _recUnits(p.pick||'',p.motiv||''); }, 0) * unitSize
+    : 10 * unitSize;
+  var stopLossRon = 5 * unitSize;
+  html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(43,229,197,.18);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+    + '<div style="font-size:13px;font-weight:800;color:#2BE5C5;margin-bottom:10px">💼 Plan Sesiune</div>'
+    + '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Valoare unitate:</div>'
+    + '<div style="display:flex;gap:6px;margin-bottom:10px">';
+  [5,10,20,50].forEach(function(u){
+    var isActive = unitSize === u;
+    html += '<button onclick="_setClaudeUnitSize('+u+')" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:'+(isActive?'900':'600')+';cursor:pointer;border:'+(isActive?'1.5px solid #2BE5C5':'1px solid rgba(43,229,197,.2)')+';background:'+(isActive?'rgba(43,229,197,.18)':'rgba(43,229,197,.05)')+';color:'+(isActive?'#2BE5C5':'var(--muted)')+'">'+u+' RON</button>';
+  });
+  html += '</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<div style="flex:1;background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.15);border-radius:9px;padding:8px;text-align:center">'
+    + '<div style="font-size:15px;font-weight:900;color:#2BE5C5">'+recBudget+' RON</div>'
+    + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Buget Recomandat</div>'
+    + '</div>'
+    + '<div style="flex:1;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:9px;padding:8px;text-align:center">'
+    + '<div style="font-size:15px;font-weight:900;color:#ef4444">-'+stopLossRon+' RON</div>'
+    + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Stop-Loss Sesiune</div>'
+    + '</div>'
+    + '</div></div>';
+
+  // ── SELECȚIE ZILEI ─────────────────────────────────────────────────────────
   if(topPicks.length){
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(43,229,197,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + '<div style="font-size:14px;font-weight:800;color:#2BE5C5;margin-bottom:10px">🏆 Top 5 Pariuri ale Zilei</div>';
+      + '<div style="font-size:13px;font-weight:800;color:#2BE5C5;margin-bottom:10px">🎯 Selecția Zilei</div>';
     topPicks.forEach(function(p, i){
-      var _res = _topResMap[(p.meci||'').toLowerCase().replace(/\s+/g,'')];
-      var _badge = _resultBadge(_res, false);
-      var _borderCol = _res && _res.result === 'win' ? 'rgba(34,197,94,.25)' : _res && _res.result === 'loss' ? 'rgba(239,68,68,.2)' : 'rgba(43,229,197,.12)';
+      var odds = _claudeParseOdds(p.pick||'');
+      var edge = _parseEdge(p.motiv||'');
+      var units = _recUnits(p.pick||'', p.motiv||'');
       var _evDate = _getEventDate(p.meci||'');
       var _meci_esc = (p.meci||'').replace(/'/g,"\\'");
       var _pick_esc = (p.pick||'').replace(/'/g,"\\'");
-      html += '<div style="background:rgba(43,229,197,.05);border:1px solid '+_borderCol+';border-radius:10px;padding:10px 12px;margin-bottom:8px">'
-        + '<div style="display:flex;align-items:flex-start;gap:10px">'
-        + '<div style="min-width:22px;height:22px;border-radius:50%;background:#2BE5C5;color:#0E1424;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center">' + (i+1) + '</div>'
+      var isSaved = _savedToday[(p.meci||'')+'|'+(p.pick||'')];
+      var unitBadge = units===3
+        ? '<span style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">🔥 3U</span>'
+        : units===2
+        ? '<span style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);color:#fbbf24;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">⚡ 2U</span>'
+        : '<span style="background:rgba(100,116,139,.1);border:1px solid rgba(100,116,139,.2);color:#94a3b8;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">1U</span>';
+      var oddsColor = odds<=1.35?'#22c55e':odds<=1.65?'#2BE5C5':odds<=2.0?'#f59e0b':'#ef4444';
+      var edgeBadge = edge!=null
+        ? '<span style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#818cf8;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px">+'+edge+'pp</span>'
+        : '';
+      var stakeRon = units * unitSize;
+      var potReturnRon = odds>0 ? Math.round(stakeRon*odds*10)/10 : 0;
+      var kickoff = _getKickoff(p.meci||'');
+      var pickLabel = p.pick ? p.pick.replace(/@\s*[\d.]+/,'').trim() : '';
+      html += '<div style="background:rgba(43,229,197,.04);border:1px solid rgba(43,229,197,.1);border-radius:11px;padding:11px 13px;margin-bottom:8px">'
+        + '<div style="display:flex;align-items:flex-start;gap:9px">'
+        + '<div style="min-width:21px;height:21px;border-radius:50%;background:#2BE5C5;color:#0E1424;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(i+1)+'</div>'
         + '<div style="flex:1;min-width:0">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px">'
-        + '<div style="font-size:13px;font-weight:700;color:var(--txt)">' + (p.meci || '') + '</div>'
-        + (_badge ? '<div>'+_badge+'</div>' : (_savedToday[(p.meci||'')+'|'+(p.pick||'')] ? '<span style="font-size:11px;color:#22c55e;font-weight:700;flex-shrink:0">✅ Salvat</span>' : '<button onclick="addClaudeSavedPick(\''+_meci_esc+'\',\''+_pick_esc+'\',\''+_evDate+'\',\'top5\')" style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.35);color:#2BE5C5;cursor:pointer;flex-shrink:0">💾 Salvează</button>'))
+        + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">'+(p.meci||'')+'</div>'
+        + (kickoff?'<div style="font-size:10px;color:var(--muted);margin-bottom:4px">🕐 '+kickoff+'</div>':'')
+        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
+        + (pickLabel?'<span style="font-size:12px;color:#2BE5C5;font-weight:600">'+pickLabel+'</span>':'')
+        + (odds>0?'<span style="font-size:13px;font-weight:900;color:'+oddsColor+'">@'+odds.toFixed(2)+'</span>':'')
+        + edgeBadge
         + '</div>'
-        + (function(){ var t=_getKickoff(p.meci||''); return t?'<div style="font-size:11px;color:var(--muted);margin-bottom:3px">🕐 '+t+'</div>':''; })()
-        + (p.pick ? '<div style="font-size:12px;color:#2BE5C5;margin-bottom:2px">' + p.pick + '</div>' : '')
-        + (p.motiv ? '<div style="font-size:11px;color:var(--muted)">' + p.motiv + '</div>' : '')
+        + (p.motiv?'<div style="font-size:10px;color:var(--muted);line-height:1.4;margin-bottom:6px">'+p.motiv+'</div>':'')
+        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+        + unitBadge
+        + '<span style="font-size:11px;color:var(--muted)">→</span>'
+        + '<span style="font-size:12px;font-weight:700;color:var(--txt)">'+stakeRon+' RON</span>'
+        + (potReturnRon>0?'<span style="font-size:10px;color:var(--muted)">ret. '+potReturnRon+' RON</span>':'')
+        + '<div style="flex:1"></div>'
+        + (isSaved
+          ? '<span style="font-size:11px;color:#22c55e;font-weight:700">✅ Salvat</span>'
+          : '<button onclick="addClaudeSavedPick(\''+_meci_esc+'\',\''+_pick_esc+'\',\''+_evDate+'\',\'top5\','+units+')" style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.35);color:#2BE5C5;cursor:pointer">💾 Salvează</button>')
+        + '</div>'
         + '</div></div></div>';
     });
     html += '</div>';
   }
 
-  // Acumulator
+  // ── COMBO ──────────────────────────────────────────────────────────────────
   if(acumulator.length){
-    var _acumTodayResult = _todayRec ? (_todayRec.acumulator_result || 'pending') : 'pending';
-    var _acumBadge = _acumTodayResult === 'win'
-      ? '<span style="color:#22c55e;font-size:13px;font-weight:900">✅ WIN</span>'
-      : _acumTodayResult === 'loss'
-      ? '<span style="color:#ef4444;font-size:13px;font-weight:900">❌ LOSS</span>'
-      : '';
+    var acumStake = unitSize;
+    var acumReturn = cotaTotala ? Math.round(acumStake*cotaTotala*10)/10 : 0;
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
-      + '<div style="font-size:14px;font-weight:800;color:#818cf8">🎰 Acumulator Recomandat</div>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
-      + (_acumBadge ? _acumBadge : '')
-      + (cotaTotala ? '<span style="font-size:12px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:3px 10px;color:#818cf8">Cotă: ' + cotaTotala.toFixed(2) + '</span>' : '')
-      + (sansaPct ? '<span style="font-size:12px;font-weight:700;background:rgba(20,138,92,.12);border:1px solid rgba(20,138,92,.3);border-radius:20px;padding:3px 10px;color:#10b981">Șansă: ' + sansaPct + '%</span>' : '')
+      + '<div style="font-size:13px;font-weight:800;color:#818cf8">🎰 Combo Recomandat</div>'
+      + '<div style="display:flex;gap:6px;align-items:center">'
+      + (cotaTotala?'<span style="font-size:12px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:3px 10px;color:#818cf8">@'+cotaTotala.toFixed(2)+'</span>':'')
+      + (sansaPct?'<span style="font-size:11px;font-weight:700;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:3px 9px;color:#22c55e">'+sansaPct+'%</span>':'')
       + '</div></div>';
+    if(acumReturn>0){
+      html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'
+        + '<div style="flex:1;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:9px;padding:8px;text-align:center">'
+        + '<div style="font-size:14px;font-weight:900;color:#ef4444">'+acumStake+' RON</div>'
+        + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Risc (1U)</div>'
+        + '</div>'
+        + '<div style="font-size:18px;color:var(--muted);flex-shrink:0">→</div>'
+        + '<div style="flex:1;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:9px;padding:8px;text-align:center">'
+        + '<div style="font-size:14px;font-weight:900;color:#22c55e">'+acumReturn+' RON</div>'
+        + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Retur Potențial</div>'
+        + '</div>'
+        + '</div>';
+    }
     acumulator.forEach(function(a){
-      var _at = _getKickoff(a.meci || '');
-      var _ar = _acumResMap[(a.meci||'').toLowerCase().replace(/\s+/g,'')];
-      var _ab = _resultBadge(_ar, true);
+      var _at = _getKickoff(a.meci||'');
       var _aEvDate = _getEventDate(a.meci||'');
       var _am_esc = (a.meci||'').replace(/'/g,"\\'");
       var _ap_esc = (a.pick||'').replace(/'/g,"\\'");
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--brd)">'
-        + '<div style="font-size:16px">' + (_ar && _ar.result === 'win' ? '✅' : _ar && _ar.result === 'loss' ? '❌' : '⚽') + '</div>'
+      var _aOdds = _claudeParseOdds(a.pick||'');
+      var _aOddsColor = _aOdds<=1.35?'#22c55e':_aOdds<=1.65?'#2BE5C5':_aOdds<=2.0?'#f59e0b':'#ef4444';
+      var _aLabel = a.pick ? a.pick.replace(/@\s*[\d.]+/,'').trim() : '';
+      var isSavedA = _savedToday[(a.meci||'')+'|'+(a.pick||'')];
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+        + '<div style="font-size:15px;flex-shrink:0">⚽</div>'
         + '<div style="flex:1;min-width:0">'
-        + '<div style="font-size:12px;font-weight:600;color:var(--txt)">' + (a.meci || '') + '</div>'
-        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
-        + '<div style="font-size:11px;color:#818cf8">' + (a.pick || '') + '</div>'
-        + (_at ? '<div style="font-size:10px;color:var(--muted)">🕐 ' + _at + '</div>' : '')
-        + (_ab ? '<div>'+_ab+'</div>' : (_savedToday[(a.meci||'')+'|'+(a.pick||'')] ? '<span style="font-size:11px;color:#22c55e;font-weight:700">✅</span>' : '<button onclick="addClaudeSavedPick(\''+_am_esc+'\',\''+_ap_esc+'\',\''+_aEvDate+'\',\'acum\')" style="font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#818cf8;cursor:pointer">💾</button>'))
-        + '</div>'
-        + '</div></div>';
+        + '<div style="font-size:12px;font-weight:600;color:var(--txt)">'+(a.meci||'')+'</div>'
+        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px">'
+        + (_aLabel?'<span style="font-size:11px;color:#818cf8">'+_aLabel+'</span>':'')
+        + (_aOdds>0?'<span style="font-size:12px;font-weight:800;color:'+_aOddsColor+'">@'+_aOdds.toFixed(2)+'</span>':'')
+        + (_at?'<span style="font-size:10px;color:var(--muted)">· '+_at+'</span>':'')
+        + '</div></div>'
+        + (isSavedA
+          ? '<span style="font-size:11px;color:#22c55e;font-weight:700;flex-shrink:0">✅</span>'
+          : '<button onclick="addClaudeSavedPick(\''+_am_esc+'\',\''+_ap_esc+'\',\''+_aEvDate+'\',\'acum\',1)" style="font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#818cf8;cursor:pointer;flex-shrink:0">💾</button>')
+        + '</div>';
     });
     html += '</div>';
   }
 
-  // Tipare — collapsible
-  if(tipare.length){
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(251,191,36,.2);border-radius:14px;margin-bottom:12px;overflow:hidden">'
-      + '<div onclick="var b=document.getElementById(\'tip-body\');var a=document.getElementById(\'tip-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none">'
-      + '<div style="font-size:14px;font-weight:800;color:#fbbf24">📊 Tipare Identificate <span style="font-size:11px;font-weight:400;color:var(--muted)">('+tipare.length+')</span></div>'
-      + '<span id="tip-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
-      + '</div>'
-      + '<div id="tip-body" style="display:none;padding:0 16px 14px 16px">';
-    tipare.forEach(function(t){
-      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--brd)">'
-        + '<div style="color:#fbbf24;font-size:14px;flex-shrink:0">•</div>'
-        + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + t + '</div>'
-        + '</div>';
-    });
-    html += '</div></div>';
-  }
-
-  // De evitat — collapsible
-  if(deEvitat.length){
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(196,32,64,.2);border-radius:14px;margin-bottom:12px;overflow:hidden">'
-      + '<div onclick="var b=document.getElementById(\'dev-body\');var a=document.getElementById(\'dev-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none">'
-      + '<div style="font-size:14px;font-weight:800;color:#f87171">⚠️ Meciuri / Piețe de Evitat <span style="font-size:11px;font-weight:400;color:var(--muted)">('+deEvitat.length+')</span></div>'
-      + '<span id="dev-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
-      + '</div>'
-      + '<div id="dev-body" style="display:none;padding:0 16px 14px 16px">';
-    deEvitat.forEach(function(e){
-      html += '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--brd)">'
-        + '<div style="color:#f87171;font-size:14px;flex-shrink:0">✗</div>'
-        + '<div style="font-size:12px;color:var(--txt);line-height:1.5">' + e + '</div>'
-        + '</div>';
-    });
-    html += '</div></div>';
-  }
-
-  // ── Monitorizare picks salvate manual ──────────────────────────────────────
+  // ── SESIUNEA MEA ───────────────────────────────────────────────────────────
   (function(){
     var saved = loadClaudeSaved();
-    var wins = 0, losses = 0, pending = 0, roi = 0, settled = 0;
+    var wins=0, losses=0, pending=0, ronPL=0, settled=0;
     saved.forEach(function(e){
-      if(e.result==='win'){ wins++; roi += (e.odds||1)-1; settled++; }
-      else if(e.result==='loss'){ losses++; roi -= 1; settled++; }
+      var u = e.rec_units||1;
+      var stake = u*unitSize;
+      if(e.result==='win'){ wins++; ronPL+=stake*((e.odds||1)-1); settled++; }
+      else if(e.result==='loss'){ losses++; ronPL-=stake; settled++; }
       else if(e.result!=='stale'){ pending++; }
     });
     var wr = settled ? Math.round(wins/settled*100) : null;
-    var roiPct = settled ? Math.round(roi/settled*100) : 0;
-    var wrColor = wr===null ? '#64748b' : wr>=60 ? '#22c55e' : wr>=50 ? '#f59e0b' : '#ef4444';
-    var roiColor = roiPct>0 ? '#22c55e' : roiPct===0 ? '#f59e0b' : '#ef4444';
+    var wrColor = wr===null?'#64748b':wr>=60?'#22c55e':wr>=50?'#f59e0b':'#ef4444';
+    var plColor = ronPL>0?'#22c55e':ronPL<0?'#ef4444':'#f59e0b';
+    var plStr = (ronPL>=0?'+':'')+Math.round(ronPL*10)/10+' RON';
     html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + '<div style="font-size:14px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Picks Salvate — Monitorizare</div>';
+      + '<div style="font-size:13px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Sesiunea Mea</div>';
     if(!saved.length){
-      html += '<div style="text-align:center;padding:16px 0;color:var(--muted);font-size:12px">Niciun pick salvat încă.<br>Apasă 💾 pe un pick pentru a-l urmări.</div>';
+      html += '<div style="text-align:center;padding:16px 0;color:var(--muted);font-size:12px">Niciun pick salvat.<br>Apasă 💾 pe orice pick pentru a-l urmări.</div>';
     } else {
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">'
         + '<div style="background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:'+wrColor+'">'+(wr!==null ? wr+'%' : '—')+'</div>'
+        + '<div style="font-size:18px;font-weight:900;color:'+wrColor+'">'+(wr!==null?wr+'%':'—')+'</div>'
         + '<div style="font-size:9px;color:var(--muted);margin-top:2px">Win Rate</div></div>'
-        + '<div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:'+roiColor+'">'+(settled ? (roiPct>0?'+':'')+roiPct+'%' : '—')+'</div>'
-        + '<div style="font-size:9px;color:var(--muted);margin-top:2px">ROI</div></div>'
+        + '<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 6px;text-align:center">'
+        + '<div style="font-size:13px;font-weight:900;color:'+plColor+'">'+plStr+'</div>'
+        + '<div style="font-size:9px;color:var(--muted);margin-top:2px">P&amp;L</div></div>'
         + '<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 8px;text-align:center">'
         + '<div style="font-size:18px;font-weight:900;color:#22c55e">'+wins+'</div>'
         + '<div style="font-size:9px;color:var(--muted);margin-top:2px">WIN</div></div>'
@@ -1426,263 +1442,71 @@ function renderClaudeAITab(){
         + '<div style="font-size:18px;font-weight:900;color:#ef4444">'+losses+'</div>'
         + '<div style="font-size:9px;color:var(--muted);margin-top:2px">LOSS</div></div>'
         + '</div>';
-      // Last 15 saved picks, newest first
       saved.slice().reverse().slice(0,15).forEach(function(e){
-        var icon = e.result==='win'?'✅':e.result==='loss'?'❌':e.result==='stale'?'⚠️':'⏳';
-        var resColor = e.result==='win'?'#22c55e':e.result==='loss'?'#ef4444':e.result==='stale'?'#f59e0b':'#64748b';
+        var u=e.rec_units||1, stake=u*unitSize;
+        var icon=e.result==='win'?'✅':e.result==='loss'?'❌':e.result==='stale'?'⚠️':'⏳';
+        var resColor=e.result==='win'?'#22c55e':e.result==='loss'?'#ef4444':e.result==='stale'?'#f59e0b':'#64748b';
+        var uBadge=u===3?'<span style="font-size:9px;color:#ef4444;font-weight:700">🔥3U</span>'
+          :u===2?'<span style="font-size:9px;color:#fbbf24;font-weight:700">⚡2U</span>'
+          :'<span style="font-size:9px;color:#94a3b8;font-weight:700">1U</span>';
         var savedDate='';
         try{ var _sd=new Date(e.savedAt); savedDate=_sd.getDate().toString().padStart(2,'0')+'.'+(_sd.getMonth()+1).toString().padStart(2,'0'); }catch(ex){}
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+        var ronResult='';
+        if(e.result==='win') ronResult='<span style="font-size:10px;font-weight:700;color:#22c55e">+'+(Math.round(stake*((e.odds||1)-1)*10)/10)+' RON</span>';
+        else if(e.result==='loss') ronResult='<span style="font-size:10px;font-weight:700;color:#ef4444">-'+stake+' RON</span>';
+        else if(e.result==='stale') ronResult='<span style="font-size:9px;color:#f59e0b">⚠️</span>';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
           + '<div style="font-size:15px;flex-shrink:0">'+icon+'</div>'
           + '<div style="flex:1;min-width:0">'
           + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.meci+'</div>'
-          + '<div style="display:flex;gap:6px;align-items:center;margin-top:1px">'
-          + '<span style="font-size:10px;color:#818cf8">'+e.pick_text+'</span>'
+          + '<div style="display:flex;gap:5px;align-items:center;margin-top:1px;flex-wrap:wrap">'
+          + '<span style="font-size:10px;color:#818cf8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">'+e.pick_text+'</span>'
+          + uBadge
           + (savedDate?'<span style="font-size:9px;color:var(--muted)">'+savedDate+'</span>':'')
           + (e.score?'<span style="font-size:10px;font-weight:700;color:'+resColor+'">'+e.score+'</span>':'')
           + '</div></div>'
-          + '<button onclick="deleteClaudeSavedPick('+e.id+')" style="font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--muted);cursor:pointer;flex-shrink:0">🗑</button>'
-          + '</div>';
+          + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">'
+          + ronResult
+          + '<button onclick="deleteClaudeSavedPick('+e.id+')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);cursor:pointer">🗑</button>'
+          + '</div></div>';
       });
     }
     html += '</div>';
   })();
 
-  if(false){ if(!trkHistory.length){ /* old stats removed */ } else {
-    // ── ROI computations ──────────────────────────────────────────────────────
-    var _tp_roi_sum = 0, _tp_roi_cnt = 0;
-    trkHistory.forEach(function(rec){
-      (rec.top_picks_results || []).forEach(function(p){
-        if(p.result === 'win'){ _tp_roi_sum += (p.odds || 2) - 1; _tp_roi_cnt++; }
-        else if(p.result === 'loss'){ _tp_roi_sum -= 1; _tp_roi_cnt++; }
-      });
-    });
-    var _tp_roi_pct = _tp_roi_cnt ? Math.round(_tp_roi_sum / _tp_roi_cnt * 100) : 0;
-
-    var _ac_roi_sum = 0, _ac_settled = 0, _ac_won = 0, _ac_lost = 0, _ac_pend_cnt = 0;
-    var _ac_pick_wins = 0, _ac_pick_losses = 0;
-    var _ac_pick_roi_sum = 0, _ac_pick_roi_cnt = 0;
-    trkHistory.forEach(function(rec){
-      var ar = rec.acumulator_result || 'pending';
-      if(ar === 'win'){ _ac_roi_sum += (rec.cota_totala || 1) - 1; _ac_settled++; _ac_won++; }
-      else if(ar === 'loss'){ _ac_roi_sum -= 1; _ac_settled++; _ac_lost++; }
-      else { _ac_pend_cnt++; }
-      (rec.acumulator_picks || []).forEach(function(p){
-        if(p.result === 'win'){ _ac_pick_wins++; _ac_pick_roi_sum += (p.odds || 1.3) - 1; _ac_pick_roi_cnt++; }
-        else if(p.result === 'loss'){ _ac_pick_losses++; _ac_pick_roi_sum -= 1; _ac_pick_roi_cnt++; }
-      });
-    });
-    var _ac_roi_pct = _ac_settled ? Math.round(_ac_roi_sum / _ac_settled * 100) : 0;
-    var _ac_pick_roi_pct = _ac_pick_roi_cnt ? Math.round(_ac_pick_roi_sum / _ac_pick_roi_cnt * 100) : 0;
-    var _ac_wr_pct  = _ac_settled ? parseFloat((_ac_won / _ac_settled * 100).toFixed(1)) : 0;
-
-    // ── Existing top-picks aggregate ──────────────────────────────────────────
-    var tpW = tpStats.wins || 0, tpL = tpStats.losses || 0, tpP = tpStats.pending || 0;
-    var tpWR = (tpStats.winrate != null) ? tpStats.winrate : 0;
-    var tpTotal = tpW + tpL + tpP;
-    var tpColor    = tpWR >= 60 ? '#22c55e' : (tpWR >= 50 ? '#f59e0b' : '#ef4444');
-    var tpRoiColor = _tp_roi_pct > 0 ? '#22c55e' : (_tp_roi_pct === 0 ? '#f59e0b' : '#ef4444');
-    var acColor    = _ac_wr_pct >= 50 ? '#22c55e' : '#ef4444';
-    var acRoiColor = _ac_roi_pct > 0 ? '#22c55e' : (_ac_roi_pct === 0 ? '#f59e0b' : '#ef4444');
-
-    var strN = streak.current || 0, strT = streak.type || '';
-    var strColor = strT === 'win' ? '#22c55e' : (strT === 'loss' ? '#ef4444' : '#64748b');
-    var strLabel = strN ? (strN + ' ' + strT.toUpperCase()) : '—';
-
-    // ── Two dedicated monitoring cards ────────────────────────────────────────
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-      // Top 5 card
-      + '<div style="background:rgba(43,229,197,.05);border:1px solid rgba(43,229,197,.25);border-radius:12px;padding:12px 10px">'
-      + '<div style="font-size:10px;font-weight:800;color:#2BE5C5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🏆 Top 5 Picks</div>'
-      + '<div style="font-size:22px;font-weight:900;color:'+tpColor+';line-height:1">'+tpWR.toFixed(0)+'%</div>'
-      + '<div style="font-size:9px;color:var(--muted);margin-top:2px;margin-bottom:8px">Win Rate</div>'
-      + '<div style="display:flex;flex-direction:column;gap:3px">'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">Jucate</span><span style="font-size:10px;font-weight:700;color:var(--txt)">'+tpTotal+'</span></div>'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Win</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+tpW+'</span></div>'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#ef4444">Loss</span><span style="font-size:10px;font-weight:700;color:#ef4444">'+tpL+'</span></div>'
-      + (tpP ? '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#f59e0b">Pending</span><span style="font-size:10px;font-weight:700;color:#f59e0b">'+tpP+'</span></div>' : '')
-      + '<div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid rgba(43,229,197,.15)">'
-      + '<span style="font-size:10px;color:var(--muted)">ROI</span>'
-      + '<span style="font-size:12px;font-weight:900;color:'+tpRoiColor+'">'+(_tp_roi_pct > 0 ? '+' : '')+_tp_roi_pct+'%</span>'
+  // ── TIPARE (collapsed) ─────────────────────────────────────────────────────
+  if(tipare.length){
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(251,191,36,.15);border-radius:14px;margin-bottom:8px;overflow:hidden">'
+      + '<div onclick="var b=document.getElementById(\'tip-body\');var a=document.getElementById(\'tip-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none">'
+      + '<div style="font-size:12px;font-weight:800;color:#fbbf24">📊 Tipare <span style="font-size:10px;font-weight:400;color:var(--muted)">('+tipare.length+')</span></div>'
+      + '<span id="tip-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
       + '</div>'
-      + '</div></div>'
-      // Accumulator card
-      + '<div style="background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:12px 10px">'
-      + '<div style="font-size:10px;font-weight:800;color:#818cf8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🎰 Acumulatoare</div>'
-      + (function(){
-          var pickSettled = _ac_pick_wins + _ac_pick_losses;
-          var pickWR = pickSettled ? Math.round(_ac_pick_wins / pickSettled * 100) : 0;
-          var pickWRColor = pickWR >= 70 ? '#22c55e' : (pickWR >= 55 ? '#f59e0b' : '#ef4444');
-          return '<div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:2px">'
-            + '<div><div style="font-size:22px;font-weight:900;color:'+acColor+';line-height:1">'+_ac_wr_pct.toFixed(0)+'%</div>'
-            + '<div style="font-size:8px;color:var(--muted);margin-top:1px">bilete</div></div>'
-            + '<div style="width:1px;height:24px;background:rgba(99,102,241,.25);margin-bottom:4px"></div>'
-            + '<div><div style="font-size:22px;font-weight:900;color:'+pickWRColor+';line-height:1">'+pickWR+'%</div>'
-            + '<div style="font-size:8px;color:var(--muted);margin-top:1px">events</div></div>'
-            + '</div>'
-            + '<div style="font-size:9px;color:var(--muted);margin-bottom:8px">Win Rate</div>';
-        })()
-      + '<div style="display:flex;flex-direction:column;gap:3px">'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:var(--muted)">Bilete jucate</span><span style="font-size:10px;font-weight:700;color:var(--txt)">'+(_ac_won+_ac_lost+_ac_pend_cnt)+'</span></div>'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#22c55e">Bilete câșt.</span><span style="font-size:10px;font-weight:700;color:#22c55e">'+_ac_won+'</span></div>'
-      + '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#ef4444">Bilete piers.</span><span style="font-size:10px;font-weight:700;color:#ef4444">'+_ac_lost+'</span></div>'
-      + (_ac_pend_cnt ? '<div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#f59e0b">Pending</span><span style="font-size:10px;font-weight:700;color:#f59e0b">'+_ac_pend_cnt+'</span></div>' : '')
-      + ((_ac_pick_wins + _ac_pick_losses) > 0 ? '<div style="display:flex;justify-content:space-between;margin-top:3px;padding-top:3px;border-top:1px solid rgba(99,102,241,.12)"><span style="font-size:10px;color:var(--muted)">Picks câșt./piers.</span><span style="font-size:10px;font-weight:700;color:var(--txt)"><span style="color:#22c55e">'+_ac_pick_wins+'W</span> <span style="color:#ef4444">'+_ac_pick_losses+'L</span></span></div>' : '')
-      + '<div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px solid rgba(99,102,241,.15)">'
-      + '<span style="font-size:10px;color:var(--muted)">ROI bilet</span>'
-      + '<span style="font-size:12px;font-weight:900;color:'+acRoiColor+'">'+(_ac_roi_pct > 0 ? '+' : '')+_ac_roi_pct+'%</span>'
+      + '<div id="tip-body" style="display:none;padding:0 16px 12px 16px">';
+    tipare.forEach(function(t){
+      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--brd)">'
+        + '<div style="color:#fbbf24;font-size:13px;flex-shrink:0">•</div>'
+        + '<div style="font-size:11px;color:var(--txt);line-height:1.5">'+t+'</div>'
+        + '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // ── DE EVITAT (collapsed) ──────────────────────────────────────────────────
+  if(deEvitat.length){
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(196,32,64,.15);border-radius:14px;margin-bottom:8px;overflow:hidden">'
+      + '<div onclick="var b=document.getElementById(\'dev-body\');var a=document.getElementById(\'dev-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none">'
+      + '<div style="font-size:12px;font-weight:800;color:#f87171">⚠️ De Evitat <span style="font-size:10px;font-weight:400;color:var(--muted)">('+deEvitat.length+')</span></div>'
+      + '<span id="dev-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
       + '</div>'
-      + (function(){ var c=_ac_pick_roi_pct>0?'#22c55e':(_ac_pick_roi_pct===0?'#f59e0b':'#ef4444'); return '<div style="display:flex;justify-content:space-between;margin-top:2px"><span style="font-size:10px;color:var(--muted)">ROI picks</span><span style="font-size:11px;font-weight:700;color:'+c+'">'+(_ac_pick_roi_pct>0?'+':'')+_ac_pick_roi_pct+'%</span></div>'; })()
-      + '</div></div>'
-      + '</div>';
-
-    // Streak row
-    html += '<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">'
-      + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Streak Acumulator</div>'
-      + '<div style="font-size:15px;font-weight:900;color:'+strColor+'">'+strLabel+' <span style="font-size:10px;font-weight:400;color:var(--muted)">consecutiv</span></div>'
-      + '</div>';
-
-    // ── SVG Bar chart — ultimele 14 zile ──────────────────────────────────────
-    var chartData = trkHistory.slice(0, 14).reverse();
-    if(chartData.length){
-      var cW = 300, cH = 70, barW = Math.floor((cW - 8) / chartData.length) - 2, maxH = 50;
-      var svgBars = '';
-      chartData.forEach(function(rec, i){
-        var s = rec.top_picks_summary || {};
-        var w = s.wins || 0, l = s.losses || 0, p = s.pending || 0;
-        var tot = w + l + p || 1;
-        var x = 4 + i * (barW + 2);
-        var wH = Math.round(w / tot * maxH), lH = Math.round(l / tot * maxH), pH = Math.round(p / tot * maxH);
-        var y = cH - 16;
-        // stacked: wins bottom, losses middle, pending top
-        if(pH) svgBars += '<rect x="'+x+'" y="'+(y-wH-lH-pH)+'" width="'+barW+'" height="'+pH+'" fill="#94a3b8" rx="2"/>';
-        if(lH) svgBars += '<rect x="'+x+'" y="'+(y-wH-lH)+'" width="'+barW+'" height="'+lH+'" fill="#ef4444" rx="2"/>';
-        if(wH) svgBars += '<rect x="'+x+'" y="'+(y-wH)+'" width="'+barW+'" height="'+wH+'" fill="#22c55e" rx="2"/>';
-        // date label
-        var dd = rec.date ? rec.date.slice(8,10)+'.'+rec.date.slice(5,7) : '';
-        svgBars += '<text x="'+(x+barW/2)+'" y="'+(cH-2)+'" text-anchor="middle" font-size="8" fill="#64748b">'+dd+'</text>';
-      });
-      html += '<div style="margin-bottom:12px">'
-        + '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Picks / zi — ultimele '+chartData.length+' zile</div>'
-        + '<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">'
-        + '<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:#22c55e;border-radius:2px;display:inline-block"></span>Win</span>'
-        + '<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:#ef4444;border-radius:2px;display:inline-block"></span>Loss</span>'
-        + '<span style="font-size:10px;display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:#94a3b8;border-radius:2px;display:inline-block"></span>Pending</span>'
-        + '</div>'
-        + '<svg width="100%" viewBox="0 0 '+cW+' '+cH+'" style="overflow:visible">'+svgBars+'</svg>'
+      + '<div id="dev-body" style="display:none;padding:0 16px 12px 16px">';
+    deEvitat.forEach(function(e){
+      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--brd)">'
+        + '<div style="color:#f87171;font-size:13px;flex-shrink:0">✗</div>'
+        + '<div style="font-size:11px;color:var(--txt);line-height:1.5">'+e+'</div>'
         + '</div>';
-    }
-
-    // ── Istoric Top 5 ─────────────────────────────────────────────────────────
-    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">Istoric Top 5 — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
-    trkHistory.slice(0,7).forEach(function(rec, idx){
-      var dateStr = '';
-      if(rec.date){
-        var months = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
-        var dp = rec.date.split('-');
-        dateStr = parseInt(dp[2],10)+' '+months[parseInt(dp[1],10)-1];
-      }
-      var prov = rec.provider || '';
-      var provLabel = prov.indexOf('gemini') !== -1 ? 'Gemini' : (prov.indexOf('claude') !== -1 ? 'Claude' : prov || '?');
-      var provColor = prov.indexOf('gemini') !== -1 ? '#2BE5C5' : '#818cf8';
-      var s = rec.top_picks_summary || {};
-      var tpW5 = s.wins || 0, tpL5 = s.losses || 0, tpP5 = s.pending || 0;
-      var tp5Html = '<span style="color:#22c55e">'+tpW5+'W</span> <span style="color:#ef4444">'+tpL5+'L</span>'+(tpP5 ? ' <span style="color:#f59e0b">'+tpP5+'P</span>' : '');
-      var settled5 = tpW5 + tpL5;
-      var wr5 = settled5 ? Math.round(tpW5 / settled5 * 100) : 0;
-      var wr5Color = wr5 >= 60 ? '#22c55e' : (wr5 >= 50 ? '#f59e0b' : '#ef4444');
-      var tp5picks = rec.top_picks_results || [];
-      var detId5 = 'tp5d-'+idx, arrId5 = 'tp5a-'+idx;
-      var toggleFn5 = "var d=document.getElementById('"+detId5+"');var a=document.getElementById('"+arrId5+"');if(d.style.display==='none'){d.style.display='block';a.textContent='▴';}else{d.style.display='none';a.textContent='▾';}";
-      html += '<div onclick="'+toggleFn5+'" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);cursor:pointer;user-select:none">'
-        + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
-        + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
-        + '<span style="font-size:11px">'+tp5Html+'</span>'
-        + '<span style="font-size:11px;font-weight:700;color:'+wr5Color+';margin-left:auto">'+wr5+'%</span>'
-        + (tp5picks.length ? '<span id="'+arrId5+'" style="font-size:10px;color:var(--muted);margin-left:4px">&#9662;</span>' : '')
-        + '</div>';
-      if(tp5picks.length){
-        html += '<div id="'+detId5+'" style="display:none;padding:4px 0 6px 6px;border-bottom:1px solid var(--brd)">';
-        tp5picks.forEach(function(p){
-          var res = p.result || 'pending';
-          var icon = res === 'win' ? '✅' : res === 'loss' ? '❌' : '⏳';
-          var col  = res === 'win' ? '#22c55e' : res === 'loss' ? '#ef4444' : '#f59e0b';
-          var dateLabel = '';
-          if(p.eventDate){
-            try{
-              var ed = new Date(p.eventDate);
-              dateLabel = ed.toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-            }catch(e){ dateLabel = String(p.eventDate).slice(0,10); }
-          }
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
-            + '<span style="font-size:13px">'+icon+'</span>'
-            + '<div style="flex:1;min-width:0;overflow:hidden">'
-            + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.meci||'')+'</div>'
-            + '<div style="font-size:10px;color:#2BE5C5">'+(p.pick||'')+(dateLabel ? ' · <span style="color:#64748b">'+dateLabel+'</span>' : '')+'</div>'
-            + '</div>'
-            + (p.score ? '<div style="font-size:11px;font-weight:700;color:'+col+';white-space:nowrap">'+p.score+'</div>' : '')
-            + '</div>';
-        });
-        html += '</div>';
-      }
     });
-
-    // ── Istoric Acumulator ────────────────────────────────────────────────────
-    html += '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;margin-top:14px">Istoric Acumulator — ultimele '+ Math.min(trkHistory.length,7) + ' înregistrări</div>';
-    trkHistory.slice(0,7).forEach(function(rec, idx){
-      var dateStr = '';
-      if(rec.date){
-        var months = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
-        var dp = rec.date.split('-');
-        dateStr = parseInt(dp[2],10)+' '+months[parseInt(dp[1],10)-1];
-      }
-      var prov = rec.provider || '';
-      var provLabel = prov.indexOf('gemini') !== -1 ? 'Gemini' : (prov.indexOf('claude') !== -1 ? 'Claude' : prov || '?');
-      var provColor = prov.indexOf('gemini') !== -1 ? '#2BE5C5' : '#818cf8';
-      var acPs = rec.acumulator_picks || [];
-      var acPW = acPs.filter(function(p){ return p.result === 'win'; }).length;
-      var acPL = acPs.filter(function(p){ return p.result === 'loss'; }).length;
-      var pickStr = acPs.length ? ('<span style="color:#22c55e">'+acPW+'W</span> <span style="color:#ef4444">'+acPL+'L</span>') : '—';
-      var ar = rec.acumulator_result || 'pending';
-      var arHtml = ar === 'win' ? '<span style="color:#22c55e;font-weight:700">✅ WIN</span>'
-                 : ar === 'loss' ? '<span style="color:#ef4444;font-weight:700">❌ LOSS</span>'
-                 : '<span style="color:#64748b">⏳ Pending</span>';
-      var cotaStr = rec.cota_totala ? ' · @'+Number(rec.cota_totala).toFixed(2) : '';
-      var detIdA = 'acd-'+idx, arrIdA = 'aca-'+idx;
-      var toggleFnA = "var d=document.getElementById('"+detIdA+"');var a=document.getElementById('"+arrIdA+"');if(d.style.display==='none'){d.style.display='block';a.textContent='▴';}else{d.style.display='none';a.textContent='▾';}";
-      html += '<div onclick="'+toggleFnA+'" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--brd);cursor:pointer;user-select:none">'
-        + '<div style="font-size:12px;font-weight:700;color:var(--txt);min-width:52px">'+dateStr+'</div>'
-        + '<span style="font-size:10px;font-weight:700;background:'+provColor+'22;border:1px solid '+provColor+'44;color:'+provColor+';padding:2px 7px;border-radius:20px">'+provLabel+'</span>'
-        + '<span style="font-size:11px">'+pickStr+'</span>'
-        + '<span style="font-size:11px;margin-left:auto">'+arHtml+cotaStr+'</span>'
-        + (acPs.length ? '<span id="'+arrIdA+'" style="font-size:10px;color:var(--muted);margin-left:4px">&#9662;</span>' : '')
-        + '</div>';
-      if(acPs.length){
-        html += '<div id="'+detIdA+'" style="display:none;padding:4px 0 6px 6px;border-bottom:1px solid var(--brd)">';
-        acPs.forEach(function(p){
-          var res = p.result || 'pending';
-          var icon = res === 'win' ? '✅' : res === 'loss' ? '❌' : '⏳';
-          var col  = res === 'win' ? '#22c55e' : res === 'loss' ? '#ef4444' : '#f59e0b';
-          var dateLabel = '';
-          if(p.eventDate){
-            try{
-              var ed = new Date(p.eventDate);
-              dateLabel = ed.toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-            }catch(e){ dateLabel = String(p.eventDate).slice(0,10); }
-          }
-          html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
-            + '<span style="font-size:13px">'+icon+'</span>'
-            + '<div style="flex:1;min-width:0;overflow:hidden">'
-            + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.meci||'')+'</div>'
-            + '<div style="font-size:10px;color:#818cf8">'+(p.pick||'')+(dateLabel ? ' · <span style="color:#64748b">'+dateLabel+'</span>' : '')+'</div>'
-            + '</div>'
-            + (p.score ? '<div style="font-size:11px;font-weight:700;color:'+col+';white-space:nowrap">'+p.score+'</div>' : '')
-            + '</div>';
-        });
-        html += '</div>';
-      }
-    });
-  }}
+    html += '</div></div>';
+  }
 
   html += '</div>';
   root.innerHTML = html;
