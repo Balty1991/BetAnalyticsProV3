@@ -24,7 +24,7 @@ concurrency:
 jobs:
   update-meciuri:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,7 +47,7 @@ jobs:
           PYTHONUNBUFFERED: '1'
         run: |
           echo "Starting fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          timeout 2400s python -u fetch_data.py
+          timeout 1500s python -u fetch_data.py
           echo "Finished fetch_data.py at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
       - name: VEYRA Supreme v5 — stats/incidents/shotmap/player cache
@@ -125,7 +125,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           if [ -f generate_claude_previews.py ]; then
-            pip install anthropic 2>/dev/null | tail -1
+            pip install anthropic || echo "WARN: anthropic install failed"
             timeout 300s python -u generate_claude_previews.py || echo "Claude previews skipped/timed out; non-fatal."
           fi
         continue-on-error: true
@@ -136,7 +136,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           if [ -f build_claude_daily.py ]; then
-            pip install google-genai 2>/dev/null | tail -1
+            pip install google-genai || echo "WARN: google-genai install failed"
             timeout 120s python -u build_claude_daily.py || echo "Claude daily analysis skipped; non-fatal."
           fi
         continue-on-error: true

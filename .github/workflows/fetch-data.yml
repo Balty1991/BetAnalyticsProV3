@@ -34,7 +34,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests anthropic tavily-python google-genai
+        run: pip install requests anthropic tavily-python google-genai catboost scikit-learn pandas numpy scipy
 
       - name: Fetch referee stats (weekly cache + trend repair)
         env:
@@ -45,10 +45,8 @@ jobs:
           if [ ! -f data/referee_stats.json ]; then
             echo "Referee stats missing."
             NEED_REFRESH=1
-          elif [ "$(find data/referee_stats.json -mtime +7)" != "" ]; then
-            echo "Referee stats older than 7 days."
-            NEED_REFRESH=1
           else
+            # mtime is unreliable after git checkout — check content schema instead
             python - <<'PY' || NEED_REFRESH=1
           import json, sys
           from pathlib import Path
@@ -322,9 +320,10 @@ jobs:
 
           git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC')"
           git pull --rebase -X theirs origin main || {
-            git rebase --abort
+            git rebase --abort || true
             git fetch origin main
-            git reset --hard origin/main
+            # soft reset keeps all generated files in working tree + index
+            git reset --soft origin/main
             git add -A data/ index.html assets/
             git commit -m "Auto-update $(date -u '+%Y-%m-%d %H:%M UTC') [conflict-resolved]" || true
           }

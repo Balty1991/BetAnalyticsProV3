@@ -15,6 +15,13 @@ on:
           - incremental
           - features-only
 
+permissions:
+  contents: write
+
+concurrency:
+  group: veyra-ml-push
+  cancel-in-progress: false
+
 env:
   PYTHON_VERSION: '3.11'
 
@@ -95,8 +102,8 @@ jobs:
       # ─── COMMIT ───────────────────────────────────────────────────────────
       - name: Commit și push
         run: |
-          git config --global user.name  'SmartBet Bot'
-          git config --global user.email 'bot@betanalytics.local'
+          git config --local user.name  'SmartBet Bot'
+          git config --local user.email 'bot@betanalytics.local'
 
           # Verifică că modelele există înainte de commit
           MODEL_COUNT=$(ls models/catboost_*.cbm 2>/dev/null | wc -l)

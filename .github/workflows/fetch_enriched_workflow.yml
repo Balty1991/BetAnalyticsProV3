@@ -22,6 +22,13 @@ on:
         required: false
         default: '200'
 
+permissions:
+  contents: write
+
+concurrency:
+  group: veyra-enriched-push
+  cancel-in-progress: false
+
 jobs:
   enrich:
     runs-on: ubuntu-latest
@@ -67,4 +74,4 @@ jobs:
           git add data/enriched.json
           git diff --staged --quiet && echo "No changes" || \
             git commit -m "🔬 ML5 enriched data — $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git push
+          git push || (git fetch origin main && git rebase origin/main && git push)
