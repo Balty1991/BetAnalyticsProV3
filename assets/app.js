@@ -1094,9 +1094,22 @@ function _claudeParseMarketKey(txt){
 function _claudeParseOdds(txt){ var m = String(txt||'').match(/@\s*([\d.]+)/); return m ? parseFloat(m[1]) : 0; }
 function _parseEdge(motiv){ var m=String(motiv||'').match(/(\d+)\s*pp/i); return m?parseInt(m[1],10):null; }
 function _recUnits(pickTxt, motivTxt){
-  var odds=_claudeParseOdds(pickTxt), edge=_parseEdge(motivTxt);
-  if(edge>=15||(odds>0&&odds<=1.35)) return 3;
-  if(edge>=8||(odds>0&&odds<=1.65)) return 2;
+  var odds = _claudeParseOdds(pickTxt);
+  var edge = _parseEdge(motivTxt);
+  if(!odds || odds <= 1.0) return 1;
+  // Cote mari = volatilitate mare, cap hard indiferent de edge
+  if(odds > 4.0) return 1;
+  if(odds > 3.0) return (edge != null && edge >= 15) ? 2 : 1;
+  // Quarter-Kelly: kelly = edge / ((odds-1) * 100)
+  if(edge != null && edge > 0){
+    var kelly = edge / ((odds - 1) * 100);
+    if(kelly >= 0.12) return 3;
+    if(kelly >= 0.05) return 2;
+    return 1;
+  }
+  // Fallback fără edge: sizing după cotă
+  if(odds <= 1.35) return 3;
+  if(odds <= 1.65) return 2;
   return 1;
 }
 function _setClaudeUnitSize(n){ localStorage.setItem('veyra_claude_unitsize',String(n)); renderClaudeAITab(); }
