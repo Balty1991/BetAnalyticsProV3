@@ -1178,6 +1178,32 @@ function autoCheckClaudeSavedResults(){
 // ============================================================
 // CLAUDE AI DAILY ANALYSIS TAB
 // ============================================================
+function _getLiveOddsForPick(e){
+  if(!e.marketKey || !e.odds || Number(e.odds) <= 1) return null;
+  var matches = window.ALL_MATCHES;
+  if(!Array.isArray(matches) || !matches.length) return null;
+  var norm = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); };
+  var parts = String(e.meci||'').split(/\s+vs\s+/i);
+  if(parts.length < 2) return null;
+  var nh = norm(parts[0].trim()), na = norm(parts[1].trim());
+  var found = null;
+  for(var _li=0; _li<matches.length; _li++){
+    var _lm = matches[_li];
+    var _lh = norm(_lm.home||''), _la = norm(_lm.away||'');
+    if(!_lh || !_la) continue;
+    if((_lh===nh||_lh.indexOf(nh)>=0||nh.indexOf(_lh)>=0)&&(_la===na||_la.indexOf(na)>=0||na.indexOf(_la)>=0)){
+      found = _lm; break;
+    }
+  }
+  if(!found) return null;
+  var allBets = found.allBets || [];
+  for(var _bi=0; _bi<allBets.length; _bi++){
+    if(allBets[_bi].type === e.marketKey && Number(allBets[_bi].odds||0) > 1)
+      return Number(allBets[_bi].odds);
+  }
+  return null;
+}
+
 function renderClaudeAITab(){
   var root = document.getElementById('claudeai-root');
   if(!root) return;
@@ -1469,6 +1495,18 @@ function renderClaudeAITab(){
         if(e.result==='win') ronResult='<span style="font-size:10px;font-weight:700;color:#22c55e">+'+(Math.round(stake*((e.odds||1)-1)*10)/10)+' RON</span>';
         else if(e.result==='loss') ronResult='<span style="font-size:10px;font-weight:700;color:#ef4444">-'+stake+' RON</span>';
         else if(e.result==='stale') ronResult='<span style="font-size:9px;color:#f59e0b">⚠️</span>';
+        var clvIndicator = '';
+        if(e.result==='pending' && e.odds && Number(e.odds) > 1){
+          var _liveOdds = _getLiveOddsForPick(e);
+          if(_liveOdds !== null && _liveOdds > 1){
+            var _clvDiff = Number(e.odds) - _liveOdds;
+            var _clvPct = (_clvDiff / _liveOdds) * 100;
+            if(Math.abs(_clvPct) >= 1){
+              var _clvPos = _clvDiff > 0;
+              clvIndicator = '<span style="font-size:9px;font-weight:700;color:'+(_clvPos?'#22c55e':'#ef4444')+'" title="CLV: cotă salvată '+Number(e.odds).toFixed(2)+' vs curentă '+_liveOdds.toFixed(2)+'">'+(_clvPos?'↓ +':'↑ ')+Math.abs(_clvPct).toFixed(1)+'%</span>';
+            }
+          }
+        }
         html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
           + '<div style="font-size:15px;flex-shrink:0">'+icon+'</div>'
           + '<div style="flex:1;min-width:0">'
@@ -1481,6 +1519,7 @@ function renderClaudeAITab(){
           + '</div></div>'
           + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">'
           + ronResult
+          + clvIndicator
           + '<button onclick="deleteClaudeSavedPick('+e.id+')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);cursor:pointer">🗑</button>'
           + '</div></div>';
       });
@@ -8048,8 +8087,26 @@ function renderMatches(){
       }
     }
 
-    var detailLowerFrame = (internalAnalysisBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    var htPoissonBlock = '';
+    if(m.poisson && m.poisson.totalLambda > 0){
+      var _htH = m.poisson.homeLambda * 0.37;
+      var _htA = m.poisson.awayLambda * 0.37;
+      var _htT = _htH + _htA;
+      var _pHtGoal = +((1 - Math.exp(-_htT)) * 100).toFixed(1);
+      var _pHt00   = +(Math.exp(-_htH) * Math.exp(-_htA) * 100).toFixed(1);
+      var _pHt10   = +(_htH * Math.exp(-_htH) * Math.exp(-_htA) * 100).toFixed(1);
+      var _pHt01   = +(Math.exp(-_htH) * _htA * Math.exp(-_htA) * 100).toFixed(1);
+      htPoissonBlock = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">'
+        + '<div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.18);border-radius:8px;padding:8px;text-align:center"><div style="font-size:13px;font-weight:800;color:#60a5fa">'+_pHtGoal+'%</div><div style="font-size:9px;color:var(--c-text-muted);margin-top:2px">Min. 1 gol</div></div>'
+        + '<div style="background:rgba(148,163,184,.06);border:1px solid rgba(148,163,184,.15);border-radius:8px;padding:8px;text-align:center"><div style="font-size:13px;font-weight:800;color:#94a3b8">'+_pHt00+'%</div><div style="font-size:9px;color:var(--c-text-muted);margin-top:2px">HT 0-0</div></div>'
+        + '<div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.18);border-radius:8px;padding:8px;text-align:center"><div style="font-size:13px;font-weight:800;color:#34d399">'+_pHt10+'%</div><div style="font-size:9px;color:var(--c-text-muted);margin-top:2px">HT 1-0</div></div>'
+        + '<div style="background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.18);border-radius:8px;padding:8px;text-align:center"><div style="font-size:13px;font-weight:800;color:#fb923c">'+_pHt01+'%</div><div style="font-size:9px;color:var(--c-text-muted);margin-top:2px">HT 0-1</div></div>'
+        + '</div>';
+    }
+
+    var detailLowerFrame = (internalAnalysisBlock || htPoissonBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
       (internalAnalysisBlock ? buildAnalysisSection('Analiză internă', internalAnalysisBlock, 'analysis-detail-preview-section') : '')+
+      (htPoissonBlock ? buildAnalysisSection('Repriză 1 — Poisson', htPoissonBlock, 'analysis-detail-ht-section') : '')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
@@ -8078,8 +8135,9 @@ function renderMatches(){
       buildAnalysisSection('', simpleBadgeRow, 'analysis-detail-chips-section')+
       buildAnalysisSection('Rezumat rapid', simpleSummary + simpleMetrics, 'analysis-detail-summary-section')+
     '</div>';
-    var simpleLowerFrame = (internalAnalysisBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
+    var simpleLowerFrame = (internalAnalysisBlock || htPoissonBlock || altMarketsHtml || compactWhy || ml5ContextBlock || funfactsBlock || polyBlock || lineupBlock) ? '<div class="analysis-detail-lower-frame">'+
       (internalAnalysisBlock ? buildAnalysisSection('Analiză internă', internalAnalysisBlock, 'analysis-detail-preview-section') : '')+
+      (htPoissonBlock ? buildAnalysisSection('Repriză 1 — Poisson', htPoissonBlock, 'analysis-detail-ht-section') : '')+
       buildAnalysisSection('Piațe eligibile', altMarketsHtml, 'analysis-detail-alt-section')+
       buildAnalysisSection('', compactWhy, 'analysis-detail-why-section')+
       buildAnalysisSection('', ml5ContextBlock, 'analysis-detail-ml5-section')+
@@ -8183,7 +8241,18 @@ function renderMatches(){
       return body ? '<div class="m17-info-row '+cls+'"><span class="m17-info-label">'+label+'</span><div class="m17-info-chips">'+body+'</div></div>' : '';
     }
     var m17RiskPill = b ? '<span class="m17-pill m17-risk '+m17RiskClass+'">'+htmlEsc(m17RiskLabel)+'</span>' : '';
-    var m17DecisionPills = b ? (m17RiskPill + m17VerdictPill + m17ConsensusPill) : '';
+    var m17ModelConsensusPill = '';
+    if(b){
+      var _mcs = 0;
+      if(m.analysisState === 'ELIGIBLE' && (m.verdict === 'safe' || m.verdict === 'moderate')) _mcs++;
+      if(m.riskTier === 'Safe' || m.riskTier === 'Value') _mcs++;
+      if(m.catboostSignal && m.catboostEvPct != null && Number(m.catboostEvPct) > 0) _mcs++;
+      if(_mcs === 3)
+        m17ModelConsensusPill = '<span class="m17-pill" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:rgba(34,197,94,.4);font-weight:800">✓ 3/3 CONSENS</span>';
+      else if(_mcs === 2)
+        m17ModelConsensusPill = '<span class="m17-pill" style="background:rgba(234,179,8,.12);color:#eab308;border-color:rgba(234,179,8,.35);font-weight:700">2/3 PARȚIAL</span>';
+    }
+    var m17DecisionPills = b ? (m17RiskPill + m17VerdictPill + m17ConsensusPill + m17ModelConsensusPill) : '';
     var m17MarketPills = b ? (m17KellyPill + sourceBadge + oddsSourceBadge + compareBadge + m17MarketLine) : '';
     var m17EnginePills = b ? (motorBadge + catboostBadge + ml5Badge + refBadge + lineupBadge + polyBadge + ageBadge + m17ContextPills + m17V2Pill) : '';
     var m17GroupedRows = b ? (
