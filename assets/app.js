@@ -11681,85 +11681,137 @@ function autoCheckML5AccumResults(){
 function renderML5AccumHistory(){
   var wrap = document.getElementById('ml5-acum-history-wrap');
   if(!wrap) return;
-  var list = loadML5AccumHistory().slice().reverse(); // cel mai recent primul
+  var list = loadML5AccumHistory().slice().reverse();
   if(!list.length){ wrap.innerHTML = ''; return; }
+
   var wins = list.filter(function(e){ return e.result === 'win'; }).length;
   var losses = list.filter(function(e){ return e.result === 'loss'; }).length;
   var settled = wins + losses;
   var wr = settled ? Math.round(wins * 100 / settled) : null;
-  var statBar = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)">' +
-    '<div style="font-size:13px;font-weight:900;color:var(--txt);width:100%;margin-bottom:4px">📋 Istoric bilete salvate</div>' +
-    '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted)">Total: '+list.length+'</span>' +
-    '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(34,197,94,.12);color:#22c55e">✅ WIN: '+wins+'</span>' +
-    '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(239,68,68,.12);color:#ef4444">❌ LOSS: '+losses+'</span>' +
-    (wr !== null ? '<span style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(99,102,241,.12);color:#a5b4fc">WR: '+wr+'%</span>' : '') +
-  '</div>';
-  var rows = list.map(function(e){
+
+  // ROI: per unitate investită (stake=1), win = +(totalOdds-1), loss = -1
+  var roiSum = 0;
+  list.forEach(function(e){
+    if(e.result === 'win') roiSum += (Number(e.totalOdds||1) - 1);
+    else if(e.result === 'loss') roiSum -= 1;
+  });
+  var roi = settled ? Math.round(roiSum / settled * 100) : null;
+  var roiColor = roi === null ? '#64748b' : roi > 0 ? '#22c55e' : roi === 0 ? '#f59e0b' : '#ef4444';
+  var roiStr = roi === null ? '—' : (roi > 0 ? '+' : '') + roi + '%';
+  var wrColor = wr === null ? '#64748b' : wr >= 50 ? '#22c55e' : '#ef4444';
+
+  var statBar =
+    '<div style="margin-bottom:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)">' +
+    '<div style="font-size:13px;font-weight:900;color:var(--txt);margin-bottom:8px">📋 Istoric bilete salvate</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">' +
+    '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px;text-align:center">' +
+      '<div style="font-size:16px;font-weight:900;color:var(--txt)">'+list.length+'</div>' +
+      '<div style="font-size:9px;color:var(--muted);margin-top:1px">Total</div></div>' +
+    '<div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:8px;text-align:center">' +
+      '<div style="font-size:16px;font-weight:900;color:'+wrColor+'">'+(wr!==null?wr+'%':'—')+'</div>' +
+      '<div style="font-size:9px;color:var(--muted);margin-top:1px">Win Rate</div></div>' +
+    '<div style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:8px;text-align:center">' +
+      '<div style="font-size:16px;font-weight:900;color:'+roiColor+'">'+roiStr+'</div>' +
+      '<div style="font-size:9px;color:var(--muted);margin-top:1px">ROI</div></div>' +
+    '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:8px;text-align:center">' +
+      '<div style="font-size:13px;font-weight:900;color:var(--txt)"><span style="color:#22c55e">'+wins+'W</span> <span style="color:#ef4444">'+losses+'L</span></div>' +
+      '<div style="font-size:9px;color:var(--muted);margin-top:1px">W / L</div></div>' +
+    '</div></div>';
+
+  // Build score lookup once (outside per-card loop)
+  var _rById = {}, _rByName = {};
+  _buildML5ScoreLookup(Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : [], _rById, _rByName);
+  var _now = Date.now();
+  var _GRACE = 2*60*60*1000;
+  var _STALE = 8*60*60*1000;
+
+  function _deriveKey(p){
+    if(p.marketKey) return p.marketKey;
+    var lbl = String(p.market||'').toLowerCase();
+    if(/over\s*1\.?5/.test(lbl)) return 'over15';
+    if(/over\s*2\.?5/.test(lbl)) return 'over25';
+    if(/over\s*3\.?5/.test(lbl)) return 'over35';
+    if(/btts|ambele|gg/.test(lbl)) return 'btts';
+    if(/1x2|home wins?|victoria gazda/.test(lbl)) return '1';
+    if(/draw|egal/.test(lbl)) return 'x';
+    if(/away wins?|victoria oaspeti/.test(lbl)) return '2';
+    if(/dn[bf]|double chance|1x/.test(lbl)) return '1x';
+    if(/x2/.test(lbl)) return 'x2';
+    if(/12/.test(lbl)) return '12';
+    return lbl || 'over25';
+  }
+  function _pickStatus(p){
+    if(p._pickResult === 'win' || p._pickResult === 'loss') return p._pickResult;
+    var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
+    if(!matchMs || _now < matchMs) return 'future';
+    if(_now < matchMs + _GRACE) return 'not_yet';
+    var eid = String(p.event_id != null ? p.event_id : '').trim();
+    var sp = (eid && _rById[eid]) || _rByName[(String(p.home||'').toLowerCase().trim())+'|'+(String(p.away||'').toLowerCase().trim())];
+    if(!sp || sp.homeScore == null) return (_now > matchMs+_GRACE+_STALE) ? 'stale' : 'pending';
+    return evaluateMarketOutcome(_deriveKey(p), sp.homeScore, sp.awayScore);
+  }
+  function _scoreStr(p){
+    if(p._pickScore) return p._pickScore;
+    var eid = String(p.event_id != null ? p.event_id : '').trim();
+    var sp = (eid && _rById[eid]) || _rByName[(String(p.home||'').toLowerCase().trim())+'|'+(String(p.away||'').toLowerCase().trim())];
+    return sp && sp.homeScore != null ? sp.homeScore+'-'+sp.awayScore : '';
+  }
+
+  var rows = list.map(function(e, idx){
     var isPending = e.result === 'pending';
     var isWin = e.result === 'win';
-    var bgBorder = isWin ? 'rgba(34,197,94,.18)' : e.result === 'loss' ? 'rgba(239,68,68,.18)' : 'rgba(255,255,255,.06)';
+    var isLoss = e.result === 'loss';
+    var accent = e.accent || '#818cf8';
+    var borderCol = isWin ? 'rgba(34,197,94,.25)' : isLoss ? 'rgba(239,68,68,.22)' : 'rgba(255,255,255,.08)';
+    var bgCol    = isWin ? 'rgba(34,197,94,.06)'  : isLoss ? 'rgba(239,68,68,.06)'  : 'rgba(255,255,255,.03)';
     var genDate = '';
-    try{ var _gd = new Date(e.generatedAt);
-      genDate = _gd.getDate().toString().padStart(2,'0') + '.' + (_gd.getMonth()+1).toString().padStart(2,'0') + ' ' + _gd.getHours().toString().padStart(2,'0') + ':' + _gd.getMinutes().toString().padStart(2,'0');
+    try{
+      var _gd = new Date(e.generatedAt);
+      genDate = _gd.getDate().toString().padStart(2,'0')+'.'+(_gd.getMonth()+1).toString().padStart(2,'0')+' '+
+                _gd.getHours().toString().padStart(2,'0')+':'+_gd.getMinutes().toString().padStart(2,'0');
     }catch(ex){}
-    // Build per-pick score lookup from __RAW_PREDICTIONS
-    var _rById = {}, _rByName = {};
-    _buildML5ScoreLookup(Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : [], _rById, _rByName);
-    var _now = Date.now();
-    var _GRACE = 2*60*60*1000;
-    var _STALE = 8*60*60*1000;
-    function _deriveKey(p){
-      if(p.marketKey) return p.marketKey;
-      var lbl = String(p.market||'').toLowerCase();
-      if(/over\s*1\.?5/.test(lbl)) return 'over15';
-      if(/over\s*2\.?5/.test(lbl)) return 'over25';
-      if(/over\s*3\.?5/.test(lbl)) return 'over35';
-      if(/btts|ambele|gg/.test(lbl)) return 'btts';
-      if(/1x2|home wins?|victoria gazda/.test(lbl)) return '1';
-      if(/draw|egal/.test(lbl)) return 'x';
-      if(/away wins?|victoria oaspeti/.test(lbl)) return '2';
-      if(/dn[bf]|double chance|1x/.test(lbl)) return '1x';
-      if(/x2/.test(lbl)) return 'x2';
-      if(/12/.test(lbl)) return '12';
-      if(/cs|clean sheet/.test(lbl)) return 'cs_home';
-      return lbl || 'over25';
-    }
-    function _pickStatus(p){
-      // Use stored result first (set by autoCheckML5AccumResults, survives page reload)
-      if(p._pickResult === 'win' || p._pickResult === 'loss') return p._pickResult;
-      var matchMs = p.event_date ? new Date(p.event_date).getTime() : 0;
-      if(!matchMs || _now < matchMs) return 'future';
-      if(_now < matchMs + _GRACE) return 'not_yet';
-      var eid = String(p.event_id != null ? p.event_id : '').trim();
-      var sp = (eid && _rById[eid]) || _rByName[(String(p.home||'').toLowerCase().trim())+'|'+(String(p.away||'').toLowerCase().trim())];
-      if(!sp || sp.homeScore == null){
-        return (_now > matchMs + _GRACE + _STALE) ? 'stale' : 'pending';
-      }
-      return evaluateMarketOutcome(_deriveKey(p), sp.homeScore, sp.awayScore);
-    }
-    function _scoreStr(p){
-      if(p._pickScore) return p._pickScore;
-      var eid = String(p.event_id != null ? p.event_id : '').trim();
-      var sp = (eid && _rById[eid]) || _rByName[(String(p.home||'').toLowerCase().trim())+'|'+(String(p.away||'').toLowerCase().trim())];
-      return sp && sp.homeScore != null ? sp.homeScore+'-'+sp.awayScore : '';
-    }
-    var pickLines = (e.picks||[]).map(function(p){
+
+    var picks = e.picks || [];
+    var picksDone = picks.filter(function(p){ var s=_pickStatus(p); return s==='win'||s==='loss'; }).length;
+    var picksWon  = picks.filter(function(p){ return _pickStatus(p)==='win'; }).length;
+    // Count pending picks (not yet resolved)
+    var picksPendingCount = picks.length - picksDone;
+
+    // Summary icons for collapsed header
+    var summaryIcons = picks.slice(0,6).map(function(p){
+      var s = _pickStatus(p);
+      return s==='win'?'✅':s==='loss'?'❌':s==='future'?'🕐':'⏳';
+    }).join('');
+
+    var bodyId = 'ml5h-body-'+e.id;
+    var arrId  = 'ml5h-arr-'+e.id;
+    var toggleFn = "var b=document.getElementById('"+bodyId+"');var a=document.getElementById('"+arrId+"');"+
+      "if(b.style.display==='none'){b.style.display='block';a.textContent='▴';}else{b.style.display='none';a.textContent='▾';}";
+
+    // Result badge for header
+    var resBadge = isWin
+      ? '<span style="font-size:10px;font-weight:900;color:#22c55e;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);padding:2px 7px;border-radius:20px">✅ WIN</span>'
+      : isLoss
+      ? '<span style="font-size:10px;font-weight:900;color:#ef4444;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);padding:2px 7px;border-radius:20px">❌ LOSS</span>'
+      : '<span style="font-size:10px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);padding:2px 7px;border-radius:20px">⏳ '+(picksPendingCount>0?picksPendingCount+' pend.':'Pending')+'</span>';
+
+    // Build pick lines (for expanded body)
+    var pickLines = picks.map(function(p){
       var evDate = '';
       if(p.event_date){ try{
-        var _d = new Date(p.event_date);
-        if(isFinite(_d.getTime())) evDate = _d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0')+' '+_d.getHours().toString().padStart(2,'0')+':'+_d.getMinutes().toString().padStart(2,'0');
+        var _d=new Date(p.event_date);
+        if(isFinite(_d.getTime())) evDate=_d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0')+' '+_d.getHours().toString().padStart(2,'0')+':'+_d.getMinutes().toString().padStart(2,'0');
       }catch(ex){} }
-      var pst = _pickStatus(p);
-      var sc = _scoreStr(p);
-      var icon = pst==='win' ? '✅' : pst==='loss' ? '❌' : pst==='future' ? '🕐' : pst==='stale' ? '⏳' : pst==='not_yet' ? '⏳' : '⏳';
-      var badge = '';
-      if(pst==='win')  badge = '<span style="color:#22c55e;font-size:10px;font-weight:800">✅ WIN'+(sc?' <span style="color:var(--muted)">'+sc+'</span>':'')+'</span>';
-      else if(pst==='loss') badge = '<span style="color:#ef4444;font-size:10px;font-weight:800">❌ LOSS'+(sc?' <span style="color:var(--muted)">'+sc+'</span>':'')+'</span>';
-      else if(pst==='future') badge = '<span style="color:var(--muted);font-size:10px">🕐 '+(evDate||'Viitor')+'</span>';
-      else if(pst==='stale') badge = '<span style="color:#f59e0b;font-size:10px">⏳ Fără scor</span>';
-      else badge = '<span style="color:var(--muted);font-size:10px">⏳ În așteptare</span>';
-      return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
-        '<div style="font-size:14px;line-height:1">'+icon+'</div>'+
+      var pst=_pickStatus(p), sc=_scoreStr(p);
+      var icon=pst==='win'?'✅':pst==='loss'?'❌':pst==='future'?'🕐':'⏳';
+      var badge='';
+      if(pst==='win') badge='<span style="color:#22c55e;font-size:10px;font-weight:800">✅ WIN'+(sc?' <span style="color:var(--muted)">'+sc+'</span>':'')+'</span>';
+      else if(pst==='loss') badge='<span style="color:#ef4444;font-size:10px;font-weight:800">❌ LOSS'+(sc?' <span style="color:var(--muted)">'+sc+'</span>':'')+'</span>';
+      else if(pst==='future') badge='<span style="color:var(--muted);font-size:10px">🕐 '+(evDate||'Viitor')+'</span>';
+      else if(pst==='stale') badge='<span style="color:#f59e0b;font-size:10px">⏳ Fără scor</span>';
+      else badge='<span style="color:var(--muted);font-size:10px">⏳ Așteptare</span>';
+      return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'+
+        '<div style="font-size:14px;line-height:1;flex-shrink:0">'+icon+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:10px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.home||'—')+' vs '+(p.away||'—')+'</div>'+
           '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:1px">'+
@@ -11769,29 +11821,46 @@ function renderML5AccumHistory(){
         '</div>'+
       '</div>';
     }).join('');
+
     var resultBtns = isPending
-      ? '<div style="display:flex;gap:6px;margin-top:8px">'+
-          '<button onclick="setML5AccumResult('+e.id+',\'win\')" class="btn" style="flex:1;justify-content:center;font-size:11px;padding:5px 0;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.3);color:#22c55e">✅ WIN</button>'+
-          '<button onclick="setML5AccumResult('+e.id+',\'loss\')" class="btn" style="flex:1;justify-content:center;font-size:11px;padding:5px 0;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28);color:#ef4444">❌ LOSS</button>'+
-          '<button onclick="deleteML5AccumEntry('+e.id+')" class="btn" style="font-size:11px;padding:5px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">🗑</button>'+
+      ? '<div style="display:flex;gap:6px;margin-top:10px">'+
+          '<button onclick="setML5AccumResult('+e.id+',\'win\')" class="btn" style="flex:1;justify-content:center;font-size:11px;padding:6px 0;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.3);color:#22c55e">✅ WIN</button>'+
+          '<button onclick="setML5AccumResult('+e.id+',\'loss\')" class="btn" style="flex:1;justify-content:center;font-size:11px;padding:6px 0;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28);color:#ef4444">❌ LOSS</button>'+
+          '<button onclick="deleteML5AccumEntry('+e.id+')" class="btn" style="font-size:11px;padding:6px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">🗑</button>'+
         '</div>'
-      : '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">'+
-          '<span style="font-size:12px;font-weight:800;color:'+(isWin?'#22c55e':'#ef4444')+'">'+(isWin?'✅ WIN':'❌ LOSS')+'</span>'+
-          '<button onclick="setML5AccumResult('+e.id+',\'pending\')" class="btn" style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">Modifică</button>'+
+      : '<div style="display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end">'+
+          '<button onclick="setML5AccumResult('+e.id+',\'pending\')" class="btn" style="font-size:10px;padding:3px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">Modifică</button>'+
           '<button onclick="deleteML5AccumEntry('+e.id+')" class="btn" style="font-size:10px;padding:3px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);color:var(--muted)">🗑</button>'+
         '</div>';
-    return '<div style="padding:10px 12px;border-radius:12px;background:'+bgBorder+';border:1px solid '+bgBorder+';margin-bottom:8px">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
-        '<span style="font-size:12px;font-weight:800;color:'+e.accent+'">'+(e.icon||'')+' '+(e.label||'')+'</span>'+
-        '<div style="display:flex;align-items:center;gap:8px">'+
-          '<span style="font-size:11px;font-weight:800;color:'+e.accent+'">'+(e.totalOdds||1).toFixed(2)+'x</span>'+
-          '<span style="font-size:10px;color:var(--muted)">'+genDate+'</span>'+
+
+    return '<div style="border:1px solid '+borderCol+';border-radius:12px;background:'+bgCol+';margin-bottom:8px;overflow:hidden">' +
+      // ── Collapsed header (always visible, clickable) ──
+      '<div onclick="'+toggleFn+'" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none">'+
+        '<span style="font-size:12px;font-weight:800;color:'+accent+';flex-shrink:0">'+(e.icon||'')+'</span>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
+            '<span style="font-size:12px;font-weight:800;color:'+accent+'">'+(e.label||'')+'</span>'+
+            '<span style="font-size:11px;font-weight:900;color:'+accent+'">'+(e.totalOdds||1).toFixed(2)+'x</span>'+
+            resBadge+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'+
+            '<span style="font-size:10px;color:var(--muted)">'+genDate+'</span>'+
+            '<span style="font-size:10px;color:var(--muted)">· '+picks.length+' linii</span>'+
+            (picksDone ? '<span style="font-size:10px;color:var(--muted)">'+summaryIcons+'</span>' : '')+
+          '</div>'+
+        '</div>'+
+        '<span id="'+arrId+'" style="font-size:12px;color:var(--muted);flex-shrink:0">▾</span>'+
+      '</div>'+
+      // ── Expandable body (hidden by default) ──
+      '<div id="'+bodyId+'" style="display:none;padding:0 12px 12px 12px">'+
+        '<div style="border-top:1px solid rgba(255,255,255,.06);padding-top:8px">'+
+          pickLines+
+          resultBtns+
         '</div>'+
       '</div>'+
-      pickLines+
-      resultBtns+
     '</div>';
   }).join('');
+
   wrap.innerHTML = statBar + rows;
 }
 
