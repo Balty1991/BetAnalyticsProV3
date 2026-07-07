@@ -1450,7 +1450,7 @@ function renderClaudeAITab(){
           :u===2?'<span style="font-size:9px;color:#fbbf24;font-weight:700">⚡2U</span>'
           :'<span style="font-size:9px;color:#94a3b8;font-weight:700">1U</span>';
         var savedDate='';
-        try{ var _sd=new Date(e.savedAt); savedDate=_sd.getDate().toString().padStart(2,'0')+'.'+(_sd.getMonth()+1).toString().padStart(2,'0'); }catch(ex){}
+        try{ var _sd=new Date(e.event_date||e.savedAt); if(isFinite(_sd.getTime())) savedDate=_sd.getDate().toString().padStart(2,'0')+'.'+(_sd.getMonth()+1).toString().padStart(2,'0'); }catch(ex){}
         var ronResult='';
         if(e.result==='win') ronResult='<span style="font-size:10px;font-weight:700;color:#22c55e">+'+(Math.round(stake*((e.odds||1)-1)*10)/10)+' RON</span>';
         else if(e.result==='loss') ronResult='<span style="font-size:10px;font-weight:700;color:#ef4444">-'+stake+' RON</span>';
