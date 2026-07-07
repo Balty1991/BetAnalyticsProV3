@@ -206,15 +206,18 @@ def enrich_entry(entry, blacklist):
     for mkt, prob_field, odds_field, pair_fields, poi_key in MARKETS:
         # BSD prob
         raw_bsd = _f(_get(entry, prob_field), 0.0)
-        bsd_p   = raw_bsd / 100.0 if raw_bsd > 1.5 else raw_bsd
-        if bsd_p < 0.01: continue
+        # Normalize: values >= 1.0 are percentages (e.g. 65.3), values < 1.0 are fractions
+        bsd_p   = raw_bsd / 100.0 if raw_bsd >= 1.0 else raw_bsd
+        if bsd_p < 0.001 or bsd_p > 1.0: continue  # reject invalid probabilities
 
         odds_val = _f(_get(entry, odds_field), 0.0)
         if odds_val < ODDS_MIN or odds_val > ODDS_MAX: continue
 
-        # Under 3.5 → prob inversă
+        # Under 3.5 → prob inversă (must happen BEFORE the < 0.01 guard below)
         if mkt == "under_35":
             bsd_p = 1.0 - bsd_p
+
+        if bsd_p < 0.01: continue  # skip near-impossible after inversion
 
         # Poisson prob
         poi_p = poisson.get(poi_key) if poisson else None
@@ -474,6 +477,8 @@ def main():
         return
 
     raw = load_json(pred_path, [])
+    if not isinstance(raw, (list, dict)):
+        print(f"[Enrich] predictions.json conține null sau date invalide, se resetează."); raw = []
     predictions = (raw if isinstance(raw, list)
                    else raw.get("predictions") or raw.get("results")
                    or raw.get("events") or list(raw.values()))

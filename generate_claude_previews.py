@@ -237,6 +237,8 @@ def main():
         return
 
     raw = _load_json(pred_path, [])
+    if not isinstance(raw, (list, dict)):
+        print("[ClaudePreview] predictions.json conține null sau date invalide, se resetează."); raw = []
     predictions = raw if isinstance(raw, list) else (
         raw.get("predictions") or raw.get("results")
         or raw.get("events") or list(raw.values())

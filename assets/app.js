@@ -34,9 +34,9 @@ var MATCHES_PAGE_SIZE = 9999;      // afișează toate cardurile filtrate; evit�
 var MATCHES_RENDERED_COUNT = 0;    // câte carduri sunt acum în DOM
 var MATCHES_FILTERED_CACHE = [];   // lista filtrată curentă (pentru load more)
 var MATCHES_SCROLL_OBSERVER = null; // IntersectionObserver sentinel
-var TRACKING = JSON.parse(localStorage.getItem('bet_tracking') || '[]');
-var TICKET_JOURNAL = JSON.parse(localStorage.getItem('bet_ticket_journal') || '[]');
-var BANKROLL_SETTINGS = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{"initial":1000,"single":4,"double":2.5,"triple":1.5,"contrarian":0.8}');
+var TRACKING = (function(){ try{ return JSON.parse(localStorage.getItem('bet_tracking')||'[]'); }catch(e){ return []; } })();
+var TICKET_JOURNAL = (function(){ try{ return JSON.parse(localStorage.getItem('bet_ticket_journal')||'[]'); }catch(e){ return []; } })();
+var BANKROLL_SETTINGS = (function(){ try{ return JSON.parse(localStorage.getItem('bet_bankroll_settings')||'{}'); }catch(e){ return {}; } })();
 var API_TOKEN = ''; // setat din meta.json sau localStorage
 // ============================================================
 // MOTOR MULTI-FACTOR v1 — cache global pentru enrichment live
@@ -1089,7 +1089,7 @@ function _claudeParseMarketKey(txt){
   if(/victori[ae]\s*gazd|home\s*win|acas[ăa]/.test(s)) return 'homeWin';
   if(/victori[ae]\s*oaspe|away\s*win/.test(s)) return 'awayWin';
   if(/remi[sz]|draw|egal/.test(s)) return 'draw';
-  return 'over25';
+  return null; // unknown market → stays pending, not mis-scored as over25
 }
 function _claudeParseOdds(txt){ var m = String(txt||'').match(/@\s*([\d.]+)/); return m ? parseFloat(m[1]) : 0; }
 function _parseEdge(motiv){ var m=String(motiv||'').match(/(\d+)\s*pp/i); return m?parseInt(m[1],10):null; }
@@ -1100,13 +1100,14 @@ function _recUnits(pickTxt, motivTxt){
   // Cote mari = volatilitate mare, cap hard indiferent de edge
   if(odds > 4.0) return 1;
   if(odds > 3.0) return (edge != null && edge >= 15) ? 2 : 1;
-  // Quarter-Kelly: kelly = edge / ((odds-1) * 100)
+  // Quarter-Kelly: f = (edge/100 * odds) / (4 * (odds-1))
   if(edge != null && edge > 0){
-    var kelly = edge / ((odds - 1) * 100);
+    var kelly = (edge / 100) * odds / (4 * (odds - 1));
     if(kelly >= 0.12) return 3;
     if(kelly >= 0.05) return 2;
     return 1;
   }
+  if(edge === 0) return 1; // zero edge → minimum size
   // Fallback fără edge: sizing după cotă
   if(odds <= 1.35) return 3;
   if(odds <= 1.65) return 2;
@@ -7329,7 +7330,8 @@ function buildLeagueFilter(){
 }
 
 
-var MATCH_ALERTS = JSON.parse(localStorage.getItem('bet_match_alerts_v16') || '[]');
+var MATCH_ALERTS = (function(){ try{ return JSON.parse(localStorage.getItem('bet_match_alerts_v16')||'[]'); }catch(e){ return []; } })();
+var SMARTBET_HISTORY_STORAGE_KEY = 'veyra_smartbet_history_v1';
 var MATCH_FOCUS_KEY = '';
 function clearMatchFocus(){ MATCH_FOCUS_KEY = ''; }
 function updateTicketIndicators(){
@@ -11748,9 +11750,9 @@ function renderML5AccumHistory(){
     if(/1x2|home wins?|victoria gazda/.test(lbl)) return '1';
     if(/draw|egal/.test(lbl)) return 'x';
     if(/away wins?|victoria oaspeti/.test(lbl)) return '2';
-    if(/dn[bf]|double chance|1x/.test(lbl)) return '1x';
-    if(/x2/.test(lbl)) return 'x2';
-    if(/12/.test(lbl)) return '12';
+    if(/dn[bf]|double chance|1x/.test(lbl)) return 'dc1x';
+    if(/x2/.test(lbl)) return 'dcx2';
+    if(/12/.test(lbl)) return 'dc12';
     return lbl || 'over25';
   }
   function _pickStatus(p){

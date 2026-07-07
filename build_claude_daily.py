@@ -246,10 +246,13 @@ def main():
 
     if not matches_high and not matches_acum:
         print("[ClaudeDaily] Niciun meci cu edge suficient."); return
+    if not matches_high:
+        print("[ClaudeDaily] Niciun meci cu edge ≥4pp pentru top picks — se omite secțiunea top.")
 
     n_high = len(matches_high)
     n_acum = len(matches_acum)
-    block_high = "\n".join(f"{i+1}. {m}" for i, (_, m) in enumerate(matches_high[:60]))
+    block_high = ("\n".join(f"{i+1}. {m}" for i, (_, m) in enumerate(matches_high[:60]))
+                  if matches_high else "(Niciun meci cu edge ≥4pp azi — top picks omis.)")
     block_acum = "\n".join(f"{i+1}. {m}" for i, (_, m) in enumerate(matches_acum[:40]))
 
     print(f"[ClaudeDaily] Top picks: {n_high} meciuri | Acumulator: {n_acum} meciuri...")
@@ -314,8 +317,15 @@ def main():
     out["raw_response"]     = raw_text
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, indent=2)
+    tmp_path = OUTPUT_FILE.with_suffix(".tmp")
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+        tmp_path.replace(OUTPUT_FILE)  # atomic rename — previous file intact until write succeeds
+    except Exception as e:
+        print(f"[ClaudeDaily] EROARE la salvare: {e}")
+        tmp_path.unlink(missing_ok=True)
+        raise
 
     print(f"[ClaudeDaily] OK [{provider}] — top:{len(out['top_picks'])} "
           f"acum:{len(out['acumulator'])} tipare:{len(out['tipare'])} evitat:{len(out['de_evitat'])}")
