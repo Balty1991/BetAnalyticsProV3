@@ -1,39 +1,39 @@
 {
-  "updated_at": "2026-07-07T06:59:23.745732+00:00",
-  "quality_score": 72.8,
+  "updated_at": "2026-07-07T17:26:37.300629+00:00",
+  "quality_score": 72.9,
   "quality_grade": "B",
-  "overall_brier": 0.2075,
-  "overall_log_loss": 0.6068,
-  "overall_ece": 0.0415,
+  "overall_brier": 0.2073,
+  "overall_log_loss": 0.6065,
+  "overall_ece": 0.0412,
   "overall_calibration_grade": "B",
-  "n_settled": 1733,
+  "n_settled": 1734,
   "diagnosis": "Calibrare acceptabila — variante mici fata de probabilitatile reale.",
   "coverage": {
     "predictions": 290,
-    "ev_signals": 5,
+    "ev_signals": 6,
     "log_total": 1817,
-    "log_closed": 1733,
+    "log_closed": 1734,
     "markets_audited": 4
   },
   "freshness": {
-    "age_hours": 0.39,
+    "age_hours": 0.48,
     "color": "green",
-    "label": "0.4h"
+    "label": "0.5h"
   },
   "markets": [
     {
       "market": "btts",
       "label": "Ambele marchează",
-      "n": 274,
+      "n": 275,
       "credible": true,
-      "brier": 0.2261,
-      "log_loss": 0.6451,
-      "ece": 0.0107,
+      "brier": 0.2255,
+      "log_loss": 0.6437,
+      "ece": 0.0098,
       "calib_label": "excelent",
-      "winrate": 64.6,
-      "roi_pct": 3.38,
-      "n_wins": 177,
-      "score": 77.6,
+      "winrate": 64.73,
+      "roi_pct": 3.47,
+      "n_wins": 178,
+      "score": 77.8,
       "grade": "B"
     },
     {
@@ -104,7 +104,7 @@
         "folds": 1,
         "avg_brier": 0.2414,
         "avg_log_loss": 0.6752,
-        "avg_ece": 0.005,
+        "avg_ece": 0.0049,
         "avg_winrate": 0.4431,
         "score": 77.4,
         "grade": "B",
@@ -114,7 +114,7 @@
             "n": 3189,
             "brier": 0.2414,
             "log_loss": 0.6752,
-            "ece": 0.005,
+            "ece": 0.0049,
             "winrate": 0.4431
           }
         ]
@@ -167,9 +167,9 @@
         "folds": 1,
         "avg_brier": 0.2412,
         "avg_log_loss": 0.6752,
-        "avg_ece": 0.0025,
+        "avg_ece": 0.0024,
         "avg_winrate": 0.5071,
-        "score": 77.9,
+        "score": 78.0,
         "grade": "B",
         "trend": "stabil",
         "fold_details": [
@@ -177,7 +177,7 @@
             "n": 3189,
             "brier": 0.2412,
             "log_loss": 0.6752,
-            "ece": 0.0025,
+            "ece": 0.0024,
             "winrate": 0.5071
           }
         ]
@@ -188,7 +188,7 @@
         "folds": 1,
         "avg_brier": 0.1918,
         "avg_log_loss": 0.5693,
-        "avg_ece": 0.0098,
+        "avg_ece": 0.0099,
         "avg_winrate": 0.7237,
         "score": 80.8,
         "grade": "B",
@@ -198,7 +198,7 @@
             "n": 3189,
             "brier": 0.1918,
             "log_loss": 0.5693,
-            "ece": 0.0098,
+            "ece": 0.0099,
             "winrate": 0.7237
           }
         ]
@@ -209,7 +209,7 @@
         "folds": 1,
         "avg_brier": 0.2462,
         "avg_log_loss": 0.6856,
-        "avg_ece": 0.0107,
+        "avg_ece": 0.0108,
         "avg_winrate": 0.5215,
         "score": 75.8,
         "grade": "B",
@@ -219,7 +219,7 @@
             "n": 3189,
             "brier": 0.2462,
             "log_loss": 0.6856,
-            "ece": 0.0107,
+            "ece": 0.0108,
             "winrate": 0.5215
           }
         ]
@@ -228,9 +228,9 @@
         "market": "over15",
         "label": "Peste 1.5G",
         "folds": 1,
-        "avg_brier": 0.2892,
-        "avg_log_loss": 0.7752,
-        "avg_ece": 0.3011,
+        "avg_brier": 0.2891,
+        "avg_log_loss": 0.775,
+        "avg_ece": 0.301,
         "avg_winrate": 0.7426,
         "score": 50.0,
         "grade": "D",
@@ -238,27 +238,27 @@
         "fold_details": [
           {
             "n": 3189,
-            "brier": 0.2892,
-            "log_loss": 0.7752,
-            "ece": 0.3011,
+            "brier": 0.2891,
+            "log_loss": 0.775,
+            "ece": 0.301,
             "winrate": 0.7426
           }
         ]
       }
     ],
     "warnings": [],
-    "updated_at": "2026-07-07T06:59:23.619093"
+    "updated_at": "2026-07-07T17:26:37.171181"
   },
   "ui_cards": [
     {
       "label": "Scor calibrare",
-      "value": 72.8,
+      "value": 72.9,
       "suffix": "/100",
       "tone": "good"
     },
     {
       "label": "Meciuri analizate",
-      "value": 1733,
+      "value": 1734,
       "suffix": " finalizate",
       "tone": "good"
     },
