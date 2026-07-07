@@ -1,46 +1,47 @@
 {
-  "updated_at": "2026-07-06T17:57:09.383328+00:00",
+  "updated_at": "2026-07-07T06:59:46.553494+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 67.5,
+  "overall_score": 69.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 1814,
-    "pending_rows": 83,
-    "candidates_with_odds_and_probability": 72,
+    "recommendation_rows": 1817,
+    "pending_rows": 84,
+    "candidates_with_odds_and_probability": 74,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
     "baseline_leagues": 28
   },
   "risk_distribution": {
-    "balanced": 14,
-    "safe": 9,
-    "speculative": 47,
-    "value": 2
+    "balanced": 15,
+    "safe": 10,
+    "speculative": 46,
+    "value": 3
   },
   "market_distribution_top150": {
     "Over 2.5G": 2,
-    "Under 3.5G": 48,
-    "Over 1.5G": 15,
+    "Under 3.5G": 51,
+    "Over 1.5G": 14,
     "BTTS": 7
   },
   "league_distribution_top150": {
-    "World Cup 2026": 24,
+    "World Cup 2026": 22,
     "International Friendly Games": 1,
-    "Veikkausliiga": 3,
-    "Chinese Super League": 13,
+    "Veikkausliiga": 4,
+    "Chinese Super League": 14,
     "K League 1": 5,
-    "USL Championship": 10,
+    "USL Championship": 11,
     "Copa Sudamericana": 2,
-    "Champions League": 2,
+    "Champions League": 1,
     "FA Cup": 1,
-    "NPL Queensland": 1,
     "Allsvenskan": 4,
-    "Brasileirão Serie B": 3,
+    "Europa League": 1,
+    "NPL Queensland": 1,
+    "Brasileirão Serie B": 4,
     "Super League": 1,
     "Ligue 1": 1,
     "Championship": 1
@@ -348,6 +349,34 @@
       ]
     },
     {
+      "event_id": 207975,
+      "prediction_id": 5097,
+      "home": "Bolívar",
+      "away": "Grêmio",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-07-24T01:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.43,
+      "model_probability": 0.8151,
+      "model_probability_pct": 81.51,
+      "implied_probability_pct": 69.93,
+      "fair_odds": 1.227,
+      "edge_pp": 11.58,
+      "ev_pct": 16.56,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 41.63,
+      "score": 104.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 81.5% vs. probabilitate implicată 69.9%.",
+        "EV estimat 16.6% și edge 11.6 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 8335,
       "prediction_id": 4861,
       "home": "Switzerland",
@@ -400,34 +429,6 @@
       "rationale": [
         "Probabilitate model 73.5% vs. probabilitate implicată 63.3%.",
         "EV estimat 16.2% și edge 10.2 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 207975,
-      "prediction_id": 5097,
-      "home": "Bolívar",
-      "away": "Grêmio",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-07-24T01:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.43,
-      "model_probability": 0.7991,
-      "model_probability_pct": 79.91,
-      "implied_probability_pct": 69.93,
-      "fair_odds": 1.251,
-      "edge_pp": 9.98,
-      "ev_pct": 14.27,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 41.63,
-      "score": 103.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.9% vs. probabilitate implicată 69.9%.",
-        "EV estimat 14.3% și edge 10.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -684,6 +685,34 @@
       ]
     },
     {
+      "event_id": 210744,
+      "prediction_id": 5348,
+      "home": "Sabah FK",
+      "away": "The New Saints",
+      "league": "Champions League",
+      "event_date": "2026-07-07T19:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.38,
+      "model_probability": 0.808,
+      "model_probability_pct": 80.8,
+      "implied_probability_pct": 72.46,
+      "fair_odds": 1.238,
+      "edge_pp": 8.34,
+      "ev_pct": 11.5,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 38.17,
+      "score": 98.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.8% vs. probabilitate implicată 72.5%.",
+        "EV estimat 11.5% și edge 8.3 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 205807,
       "prediction_id": 4886,
       "home": "Henan FC",
@@ -737,34 +766,6 @@
         "Probabilitate model 74.3% vs. probabilitate implicată 67.6%.",
         "EV estimat 10.0% și edge 6.8 puncte procentuale.",
         "Miză Kelly fracțională 5.20% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 210754,
-      "prediction_id": 5347,
-      "home": "Lincoln Red Imps",
-      "away": "Inter Club d'Escaldes",
-      "league": "Champions League",
-      "event_date": "2026-07-07T19:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.39,
-      "model_probability": 0.7914,
-      "model_probability_pct": 79.14,
-      "implied_probability_pct": 71.94,
-      "fair_odds": 1.264,
-      "edge_pp": 7.2,
-      "ev_pct": 10.0,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 48.67,
-      "score": 97.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.1% vs. probabilitate implicată 71.9%.",
-        "EV estimat 10.0% și edge 7.2 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -824,34 +825,6 @@
       ]
     },
     {
-      "event_id": 210744,
-      "prediction_id": 5348,
-      "home": "Sabah FK",
-      "away": "The New Saints",
-      "league": "Champions League",
-      "event_date": "2026-07-07T19:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.36,
-      "model_probability": 0.7922,
-      "model_probability_pct": 79.22,
-      "implied_probability_pct": 73.53,
-      "fair_odds": 1.262,
-      "edge_pp": 5.69,
-      "ev_pct": 7.74,
-      "kelly_fraction": 0.0537,
-      "kelly_units_100": 5.37,
-      "confidence": 38.17,
-      "score": 96.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.2% vs. probabilitate implicată 73.5%.",
-        "EV estimat 7.7% și edge 5.7 puncte procentuale.",
-        "Miză Kelly fracțională 5.37% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 8346,
       "prediction_id": 4875,
       "home": "Türkiye",
@@ -905,6 +878,34 @@
         "Probabilitate model 74.2% vs. probabilitate implicată 69.4%.",
         "EV estimat 6.9% și edge 4.8 puncte procentuale.",
         "Miză Kelly fracțională 3.90% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 46391,
+      "prediction_id": 4950,
+      "home": "Kalmar FF",
+      "away": "Örgryte IS",
+      "league": "Allsvenskan",
+      "event_date": "2026-07-05T15:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.56,
+      "model_probability": 0.714,
+      "model_probability_pct": 71.4,
+      "implied_probability_pct": 64.1,
+      "fair_odds": 1.401,
+      "edge_pp": 7.3,
+      "ev_pct": 11.38,
+      "kelly_fraction": 0.0508,
+      "kelly_units_100": 5.08,
+      "confidence": 71.69,
+      "score": 94.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 71.4% vs. probabilitate implicată 64.1%.",
+        "EV estimat 11.4% și edge 7.3 puncte procentuale.",
+        "Miză Kelly fracțională 5.08% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1134,6 +1135,62 @@
       ]
     },
     {
+      "event_id": 10022,
+      "prediction_id": 4965,
+      "home": "Sport Recife",
+      "away": "Botafogo-SP",
+      "league": "Brasileirão Serie B",
+      "event_date": "2026-07-11T02:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.22,
+      "model_probability": 0.8291,
+      "model_probability_pct": 82.91,
+      "implied_probability_pct": 81.97,
+      "fair_odds": 1.206,
+      "edge_pp": 0.94,
+      "ev_pct": 1.15,
+      "kelly_fraction": 0.0131,
+      "kelly_units_100": 1.31,
+      "confidence": 71.69,
+      "score": 91.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 82.9% vs. probabilitate implicată 82.0%.",
+        "EV estimat 1.2% și edge 0.9 puncte procentuale.",
+        "Miză Kelly fracțională 1.31% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 207975,
+      "prediction_id": 5097,
+      "home": "Bolívar",
+      "away": "Grêmio",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-07-24T01:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.43,
+      "model_probability": 0.8151,
+      "model_probability_pct": 81.51,
+      "implied_probability_pct": 69.93,
+      "fair_odds": 1.227,
+      "edge_pp": 11.58,
+      "ev_pct": 16.56,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 41.63,
+      "score": 104.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 81.5% vs. probabilitate implicată 69.9%.",
+        "EV estimat 16.6% și edge 11.6 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 8346,
       "prediction_id": 4875,
       "home": "Türkiye",
@@ -1214,6 +1271,34 @@
       "rationale": [
         "Probabilitate model 81.0% vs. probabilitate implicată 69.0%.",
         "EV estimat 17.5% și edge 12.1 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 210744,
+      "prediction_id": 5348,
+      "home": "Sabah FK",
+      "away": "The New Saints",
+      "league": "Champions League",
+      "event_date": "2026-07-07T19:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.38,
+      "model_probability": 0.808,
+      "model_probability_pct": 80.8,
+      "implied_probability_pct": 72.46,
+      "fair_odds": 1.238,
+      "edge_pp": 8.34,
+      "ev_pct": 11.5,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 38.17,
+      "score": 98.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 80.8% vs. probabilitate implicată 72.5%.",
+        "EV estimat 11.5% și edge 8.3 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1330,34 +1415,6 @@
       ]
     },
     {
-      "event_id": 207975,
-      "prediction_id": 5097,
-      "home": "Bolívar",
-      "away": "Grêmio",
-      "league": "Copa Sudamericana",
-      "event_date": "2026-07-24T01:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.43,
-      "model_probability": 0.7991,
-      "model_probability_pct": 79.91,
-      "implied_probability_pct": 69.93,
-      "fair_odds": 1.251,
-      "edge_pp": 9.98,
-      "ev_pct": 14.27,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 41.63,
-      "score": 103.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.9% vs. probabilitate implicată 69.9%.",
-        "EV estimat 14.3% și edge 10.0 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 207680,
       "prediction_id": 4912,
       "home": "Birmingham Legion FC",
@@ -1386,34 +1443,6 @@
       ]
     },
     {
-      "event_id": 210744,
-      "prediction_id": 5348,
-      "home": "Sabah FK",
-      "away": "The New Saints",
-      "league": "Champions League",
-      "event_date": "2026-07-07T19:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.36,
-      "model_probability": 0.7922,
-      "model_probability_pct": 79.22,
-      "implied_probability_pct": 73.53,
-      "fair_odds": 1.262,
-      "edge_pp": 5.69,
-      "ev_pct": 7.74,
-      "kelly_fraction": 0.0537,
-      "kelly_units_100": 5.37,
-      "confidence": 38.17,
-      "score": 96.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.2% vs. probabilitate implicată 73.5%.",
-        "EV estimat 7.7% și edge 5.7 puncte procentuale.",
-        "Miză Kelly fracțională 5.37% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 8339,
       "prediction_id": 4868,
       "home": "South Africa",
@@ -1439,34 +1468,6 @@
         "Probabilitate model 79.2% vs. probabilitate implicată 80.6%.",
         "EV estimat -1.8% și edge -1.5 puncte procentuale.",
         "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 210754,
-      "prediction_id": 5347,
-      "home": "Lincoln Red Imps",
-      "away": "Inter Club d'Escaldes",
-      "league": "Champions League",
-      "event_date": "2026-07-07T19:00:00+03:00",
-      "market": "Over 1.5G",
-      "odds": 1.39,
-      "model_probability": 0.7914,
-      "model_probability_pct": 79.14,
-      "implied_probability_pct": 71.94,
-      "fair_odds": 1.264,
-      "edge_pp": 7.2,
-      "ev_pct": 10.0,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 48.67,
-      "score": 97.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 79.1% vs. probabilitate implicată 71.9%.",
-        "EV estimat 10.0% și edge 7.2 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1976,6 +1977,34 @@
       ]
     },
     {
+      "event_id": 10022,
+      "prediction_id": 4965,
+      "home": "Sport Recife",
+      "away": "Botafogo-SP",
+      "league": "Brasileirão Serie B",
+      "event_date": "2026-07-11T02:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.22,
+      "model_probability": 0.8291,
+      "model_probability_pct": 82.91,
+      "implied_probability_pct": 81.97,
+      "fair_odds": 1.206,
+      "edge_pp": 0.94,
+      "ev_pct": 1.15,
+      "kelly_fraction": 0.0131,
+      "kelly_units_100": 1.31,
+      "confidence": 71.69,
+      "score": 91.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 82.9% vs. probabilitate implicată 82.0%.",
+        "EV estimat 1.2% și edge 0.9 puncte procentuale.",
+        "Miză Kelly fracțională 1.31% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 4902,
       "prediction_id": 2571,
       "home": "FC Thun",
@@ -2002,34 +2031,6 @@
         "EV estimat 1.8% și edge 1.3 puncte procentuale.",
         "Miză Kelly fracțională 1.04% din bancă, plafonată prudent."
       ]
-    },
-    {
-      "event_id": 207684,
-      "prediction_id": 4936,
-      "home": "Pittsburgh Riverhounds",
-      "away": "Brooklyn FC",
-      "league": "USL Championship",
-      "event_date": "2026-07-05T02:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.31,
-      "model_probability": 0.7589,
-      "model_probability_pct": 75.89,
-      "implied_probability_pct": 76.34,
-      "fair_odds": 1.318,
-      "edge_pp": -0.45,
-      "ev_pct": -0.58,
-      "kelly_fraction": 0.0,
-      "kelly_units_100": 0.0,
-      "confidence": 71.69,
-      "score": 85.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 75.9% vs. probabilitate implicată 76.3%.",
-        "EV estimat -0.6% și edge -0.4 puncte procentuale.",
-        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
     }
   ],
   "settled_market_performance": [
@@ -2053,11 +2054,11 @@
     },
     {
       "key": "Under 3.5G",
-      "bets": 1014,
-      "wins": 725,
-      "winrate": 71.5,
-      "profit_units": -12.15,
-      "roi_pct": -1.2,
+      "bets": 1016,
+      "wins": 726,
+      "winrate": 71.46,
+      "profit_units": -12.75,
+      "roi_pct": -1.26,
       "avg_odds": 1.397
     },
     {
@@ -2163,11 +2164,11 @@
     },
     {
       "key": "World Cup 2026",
-      "bets": 44,
-      "wins": 34,
-      "winrate": 77.27,
-      "profit_units": 5.21,
-      "roi_pct": 11.84,
+      "bets": 46,
+      "wins": 35,
+      "winrate": 76.09,
+      "profit_units": 4.61,
+      "roi_pct": 10.02,
       "avg_odds": 1.446
     },
     {
