@@ -1,16 +1,15 @@
 /**
- * clv_tracker_runtime.js — BetAnalytics Pro V3
+ * clv_tracker_runtime.js — BetAnalytics Pro V4
  * =============================================
- * Încarcă și randează datele CLV în #tab-clv.
- * Panoul și butoanele sunt deja în index.html.
- * Versiune: 2026-04-29-v3
+ * Calculeaza si randeaza datele CLV din window.RECOMMENDATION_LOG
+ * (aceeasi sursa si filtru ca apexStats() din statistici.js).
+ * Nu mai face fetch la clv_tracker.json.
  */
 
 (function () {
   "use strict";
 
-  var CLV_DATA_URL = "./data/clv_tracker.json";
-  var dataLoaded   = false;
+  var dataLoaded = false;
 
   /* ── hook pe switchTab ──────────────────────────────────────────────────── */
 
@@ -22,31 +21,244 @@
     var original = window.switchTab;
     window.switchTab = function (name) {
       original.apply(this, arguments);
-      if (name === "clv" && !dataLoaded) {
-        dataLoaded = true;
-        setTimeout(loadCLVData, 100);
+      if (name === "clv") {
+        dataLoaded = false; // re-render pe fiecare vizita (log poate fi updatat)
+        setTimeout(loadCLVData, 80);
       }
     };
   }
 
-  /* ── încărcare date ─────────────────────────────────────────────────────── */
+  /* ── helpers ────────────────────────────────────────────────────────────── */
+
+  function getStartDate() {
+    try { return localStorage.getItem("veyra_stats_start_date") || null; } catch(e) { return null; }
+  }
+
+  function afterStart(dateStr) {
+    var start = getStartDate();
+    if (!start) return true;
+    var d = (dateStr || "").slice(0, 10);
+    return d >= start.slice(0, 10);
+  }
+
+  function avg(arr) {
+    if (!arr.length) return 0;
+    return arr.reduce(function(s, v){ return s + v; }, 0) / arr.length;
+  }
+
+  function median(arr) {
+    if (!arr.length) return 0;
+    var s = arr.slice().sort(function(a,b){ return a-b; });
+    var m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2;
+  }
+
+  /* ── build data from RECOMMENDATION_LOG ────────────────────────────────── */
+
+  function buildCLVData() {
+    var log = Array.isArray(window.RECOMMENDATION_LOG) ? window.RECOMMENDATION_LOG : [];
+    var settled = log.filter(function(r) {
+      return (r.won === true || r.won === false) && afterStart(r.date || r.event_date);
+    });
+
+    if (!settled.length) return null;
+
+    // Only entries with CLV data (opening_odds + from_open_pct)
+    var clvE = settled.filter(function(r){ return r.opening_odds > 1 && r.from_open_pct != null; });
+
+    var wins = settled.filter(function(r){ return r.won === true; });
+    var roiSum = 0;
+    settled.forEach(function(r){ roiSum += r.won ? ((r.odds || 1.5) - 1) : -1; });
+    var roi_flat_pct = settled.length ? roiSum / settled.length * 100 : 0;
+    var win_rate_pct = settled.length ? wins.length / settled.length * 100 : 0;
+
+    var clvPcts = clvE.map(function(r){ return r.from_open_pct; });
+    var avg_clv_pct = clvE.length ? avg(clvPcts) : 0;
+    var median_clv_pct = clvE.length ? median(clvPcts) : 0;
+    var clv_positive_n = clvPcts.filter(function(v){ return v >= 0; }).length;
+    var clv_positive_rate = clvE.length ? clv_positive_n / clvE.length : 0;
+
+    var clvWins = clvE.filter(function(r){ return r.won === true; });
+    var avg_clv_wins = clvWins.length ? avg(clvWins.map(function(r){ return r.from_open_pct; })) : 0;
+
+    // By market
+    var bmMap = {};
+    clvE.forEach(function(r) {
+      var k = r.market_key || r.market || "unknown";
+      if (!bmMap[k]) bmMap[k] = { n:0, clvS:0, posClv:0, wins:0, roiS:0 };
+      bmMap[k].n++;
+      bmMap[k].clvS += r.from_open_pct;
+      if (r.from_open_pct >= 0) bmMap[k].posClv++;
+      if (r.won === true) { bmMap[k].wins++; bmMap[k].roiS += (r.odds||1.5)-1; }
+      else bmMap[k].roiS -= 1;
+    });
+    var by_market = {};
+    Object.keys(bmMap).forEach(function(k) {
+      var m = bmMap[k];
+      by_market[k] = {
+        n: m.n,
+        avg_clv_pct: m.clvS / m.n,
+        clv_positive_rate: m.posClv / m.n,
+        win_rate_pct: m.wins / m.n * 100,
+        roi_flat_pct: m.roiS / m.n * 100
+      };
+    });
+
+    // CLV buckets
+    var bktDef = {
+      clv_strong_pos: function(v){ return v >= 5; },
+      clv_mild_pos:   function(v){ return v >= 0 && v < 5; },
+      clv_neutral:    function(v){ return v >= -1 && v < 0; },
+      clv_mild_neg:   function(v){ return v >= -5 && v < -1; },
+      clv_strong_neg: function(v){ return v < -5; }
+    };
+    var bktMap = {};
+    Object.keys(bktDef).forEach(function(k){ bktMap[k] = { n:0, wins:0, roiS:0, clvS:0 }; });
+    clvE.forEach(function(r) {
+      var c = r.from_open_pct;
+      Object.keys(bktDef).forEach(function(k){
+        if (bktDef[k](c)) {
+          bktMap[k].n++;
+          bktMap[k].clvS += c;
+          if (r.won === true) { bktMap[k].wins++; bktMap[k].roiS += (r.odds||1.5)-1; }
+          else bktMap[k].roiS -= 1;
+        }
+      });
+    });
+    var clv_buckets = {};
+    Object.keys(bktMap).forEach(function(k) {
+      var b = bktMap[k];
+      if (!b.n) return;
+      clv_buckets[k] = { n:b.n, win_rate:b.wins/b.n*100, roi_pct:b.roiS/b.n*100, avg_clv:b.clvS/b.n };
+    });
+
+    // Rolling 30d / 90d
+    function rollingStats(ents, days) {
+      var cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0,10);
+      var sub = ents.filter(function(r){ return (r.date||r.event_date||"").slice(0,10) >= cutoff; });
+      if (!sub.length) return { n:0 };
+      var clvSub = sub.filter(function(r){ return r.from_open_pct != null; });
+      var rs = 0;
+      sub.forEach(function(r){ rs += r.won ? ((r.odds||1.5)-1) : -1; });
+      return {
+        n: sub.length,
+        avg_clv_pct: clvSub.length ? avg(clvSub.map(function(r){ return r.from_open_pct; })) : null,
+        win_rate_pct: sub.filter(function(r){ return r.won; }).length / sub.length * 100,
+        roi_flat_pct: rs / sub.length * 100
+      };
+    }
+
+    // EV correlation
+    var evPos = clvE.filter(function(r){ return (r.edge_pct||0) >= 0; });
+    var evNeg = clvE.filter(function(r){ return (r.edge_pct||0) < 0; });
+    function evStats(ents) {
+      if (!ents.length) return { n:0, avg_clv:null, clv_positive_rate:null };
+      return {
+        n: ents.length,
+        avg_clv: avg(ents.map(function(r){ return r.from_open_pct||0; })),
+        clv_positive_rate: ents.filter(function(r){ return (r.from_open_pct||0) >= 0; }).length / ents.length
+      };
+    }
+
+    // Diagnosis
+    var signal = avg_clv_pct >= 0 && roi_flat_pct >= 0 ? "CLV_POSITIVE_ROI_POSITIVE"
+      : avg_clv_pct >= 0 ? "CLV_POSITIVE_ROI_NEGATIVE"
+      : roi_flat_pct >= 0 ? "CLV_NEGATIVE_ROI_POSITIVE"
+      : "CLV_NEGATIVE_ROI_NEGATIVE";
+    if (clvE.length < 5) signal = "INSUFFICIENT_DATA";
+    var interps = {
+      CLV_POSITIVE_ROI_POSITIVE: "Selectezi in medie cote bune fata de deschidere si ai ROI pozitiv. Edge-ul tau pare real.",
+      CLV_POSITIVE_ROI_NEGATIVE: "Cote bune fata de deschidere, dar ROI negativ. Poate fi volatilitate pe esantion mic.",
+      CLV_NEGATIVE_ROI_POSITIVE: "ROI pozitiv dar cotele s-au scurtat fata de deschidere. Probabilitate de variance.",
+      CLV_NEGATIVE_ROI_NEGATIVE: "Cote scurtate fata de deschidere si ROI negativ. Recalibreaza selectiile.",
+      INSUFFICIENT_DATA: "Date insuficiente. Continua sa inregistrezi pariuri pentru o analiza concludenta."
+    };
+    var actions = {
+      CLV_POSITIVE_ROI_POSITIVE: "Continua strategia actuala. Procesul este solid.",
+      CLV_POSITIVE_ROI_NEGATIVE: "Continua — variance pe termen scurt. Reevalueaza dupa 30+ pariuri.",
+      CLV_NEGATIVE_ROI_POSITIVE: "Analizeaza de ce ROI+ fara CLV+ — poate noroc, poate cotele sunt subestimate.",
+      CLV_NEGATIVE_ROI_NEGATIVE: "Revizuieste criteriile de selectie. Evita pietele cu CLV constant negativ.",
+      INSUFFICIENT_DATA: "Adauga cel putin 5 pariuri cu date de cota initiala pentru diagnostic."
+    };
+
+    // Picks list
+    var picks = clvE.slice().reverse().slice(0, 200).map(function(r) {
+      return {
+        date: (r.date || r.event_date || "").slice(0,10),
+        home: r.home || "",
+        away: r.away || "",
+        market: r.market_key || r.market || "",
+        picked_odds: r.odds || 0,
+        closing_odds: r.opening_odds || 0,
+        clv_pct: r.from_open_pct || 0,
+        ev_at_pick_pct: r.edge_pct != null ? r.edge_pct : null,
+        won: r.won === true
+      };
+    });
+
+    var startD = getStartDate();
+    var sinceNote = startD ? " (din " + startD.slice(0,10) + ")" : "";
+
+    return {
+      summary: {
+        avg_clv_pct: avg_clv_pct,
+        median_clv_pct: median_clv_pct,
+        clv_positive_rate: clv_positive_rate,
+        clv_positive_n: clv_positive_n,
+        total_picks: clvE.length,
+        roi_flat_pct: roi_flat_pct,
+        win_rate_pct: win_rate_pct,
+        avg_clv_wins: avg_clv_wins
+      },
+      diagnosis: {
+        signal: signal,
+        interpretation: interps[signal],
+        action: actions[signal],
+        confidence: clvE.length >= 30 ? "high" : clvE.length >= 10 ? "medium" : "low",
+        rolling_trend: "N/A"
+      },
+      by_market: by_market,
+      clv_buckets: clv_buckets,
+      rolling_30d: rollingStats(clvE, 30),
+      rolling_90d: rollingStats(clvE, 90),
+      ev_correlation: {
+        ev_positive_picks: evStats(evPos),
+        ev_negative_picks: evStats(evNeg),
+        divergence_warning: clvE.length >= 10 && avg_clv_pct < -2 && evPos.length > evNeg.length
+      },
+      picks: picks,
+      _note: settled.length + " APEX decontate" + sinceNote + " | " + clvE.length + " cu date CLV",
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  /* ── incarcare date ─────────────────────────────────────────────────────── */
 
   function loadCLVData() {
     var panel = document.getElementById("tab-clv");
     if (!panel) return;
 
-    fetch(CLV_DATA_URL + "?v=" + Date.now())
-      .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then(function (data) {
-        panel.innerHTML = renderStyles() + renderCLV(data);
-        hookFilters();
-      })
-      .catch(function (err) {
-        panel.innerHTML = renderStyles() + renderError(err.message);
-      });
+    // Asteapta RECOMMENDATION_LOG daca nu e inca incarcat
+    var log = window.RECOMMENDATION_LOG;
+    if (!Array.isArray(log)) {
+      setTimeout(loadCLVData, 300);
+      return;
+    }
+
+    var data = buildCLVData();
+    if (!data) {
+      var startD = getStartDate();
+      var sinceMsg = startD ? " din " + startD.slice(0,10) : "";
+      panel.innerHTML = renderStyles() +
+        "<div style=\"text-align:center;padding:50px 20px;color:var(--muted,#64748b)\">" +
+        "<div style=\"font-size:15px;font-weight:700;margin-bottom:8px\">Nu exista date CLV" + sinceMsg + "</div>" +
+        "<div style=\"font-size:12px\">Datele APEX se acumuleaza automat dupa decontarea meciurilor.</div>" +
+        "</div>";
+      return;
+    }
+
+    panel.innerHTML = renderStyles() + renderCLV(data);
+    hookFilters();
   }
 
   /* ── render principal ───────────────────────────────────────────────────── */
@@ -63,8 +275,8 @@
 
     return "<div class=\"clv-root\">" +
       "<div class=\"clv-header\">" +
-        "<h2 class=\"clv-title\">📈 CLV Tracker — Closing Line Value</h2>" +
-        "<span class=\"clv-updated\">Actualizat: " + fmtDate(data.updated_at) + "</span>" +
+        "<h2 class=\"clv-title\">CLV Tracker — Closing Line Value</h2>" +
+        "<span class=\"clv-updated\">" + (data._note || "") + "</span>" +
       "</div>" +
       renderDiagnosis(diag) +
       renderKPIs(s, r30) +
@@ -88,12 +300,12 @@
       NO_DATA:"diag-info"
     }[diag.signal] || "diag-info";
 
-    var conf = {high:"✅ Înaltă",medium:"⚠️ Medie",low:"🔵 Scăzută"}[diag.confidence] || "";
+    var conf = {high:"Inalta",medium:"Medie",low:"Scazuta"}[diag.confidence] || "";
     return "<div class=\"clv-card " + cls + "\">" +
       "<div class=\"diag-signal\">" + (diag.signal||"—") + "</div>" +
       "<p class=\"diag-text\">" + (diag.interpretation||"—") + "</p>" +
-      "<p class=\"diag-action\"><strong>Acțiune:</strong> " + (diag.action||"—") + "</p>" +
-      "<div class=\"diag-meta\"><span>Încredere: " + conf + "</span><span>Trend: " + (diag.rolling_trend||"—") + "</span></div>" +
+      "<p class=\"diag-action\"><strong>Actiune:</strong> " + (diag.action||"—") + "</p>" +
+      "<div class=\"diag-meta\"><span>Incredere: " + conf + "</span></div>" +
     "</div>";
   }
 
@@ -101,10 +313,10 @@
     var kpis = [
       {label:"Avg CLV",    value:fmtSign(s.avg_clv_pct,2)+"%",    sub:"Median: "+fmtSign(s.median_clv_pct,2)+"%",           good:(s.avg_clv_pct||0)>=0},
       {label:"CLV+ Rate",  value:fmtPct(s.clv_positive_rate),      sub:(s.clv_positive_n||0)+" / "+(s.total_picks||0),       good:(s.clv_positive_rate||0)>=0.5},
-      {label:"ROI Flat",   value:fmtSign(s.roi_flat_pct,2)+"%",    sub:(s.total_picks||0)+" settle-ate",                    good:(s.roi_flat_pct||0)>=0},
-      {label:"Win Rate",   value:fmtNum(s.win_rate_pct,1)+"%",     sub:"CLV+ câștig: "+fmtSign(s.avg_clv_wins,2)+"%",       good:null},
+      {label:"ROI Flat",   value:fmtSign(s.roi_flat_pct,2)+"%",    sub:(s.total_picks||0)+" cu CLV",                         good:(s.roi_flat_pct||0)>=0},
+      {label:"Win Rate",   value:fmtNum(s.win_rate_pct,1)+"%",     sub:"CLV+ castig: "+fmtSign(s.avg_clv_wins,2)+"%",        good:null},
       {label:"CLV 30 zile",value:r30.avg_clv_pct!=null?fmtSign(r30.avg_clv_pct,2)+"%":"N/A",
-                            sub:r30.n?r30.n+" pick-uri | ROI: "+fmtSign(r30.roi_flat_pct,2)+"%":"Insuficient",              good:(r30.avg_clv_pct||0)>=0},
+                            sub:r30.n?r30.n+" pick-uri | ROI: "+fmtSign(r30.roi_flat_pct,2)+"%":"Insuficient",               good:(r30.avg_clv_pct||0)>=0},
     ];
     var html = "<div class=\"kpi-row\">";
     kpis.forEach(function(k){
@@ -118,7 +330,7 @@
 
   function renderBuckets(bkt) {
     var order  = ["clv_strong_pos","clv_mild_pos","clv_neutral","clv_mild_neg","clv_strong_neg"];
-    var labels = {clv_strong_pos:"CLV ≥+5%",clv_mild_pos:"CLV 0–5%",clv_neutral:"CLV -1–0%",clv_mild_neg:"CLV -5– -1%",clv_strong_neg:"CLV ≤-5%"};
+    var labels = {clv_strong_pos:"CLV >=+5%",clv_mild_pos:"CLV 0-5%",clv_neutral:"CLV -1-0%",clv_mild_neg:"CLV -5--1%",clv_strong_neg:"CLV <=-5%"};
     var colors = {clv_strong_pos:"#22c55e",clv_mild_pos:"#86efac",clv_neutral:"#94a3b8",clv_mild_neg:"#fca5a5",clv_strong_neg:"#ef4444"};
     var rows = order.map(function(k){ var b=bkt[k]||{}; return {k:k,label:labels[k],n:b.n||0,wr:b.win_rate||0,roi:b.roi_pct||0,clv:b.avg_clv||0,color:colors[k]}; });
     var maxN = Math.max.apply(null,rows.map(function(r){return r.n;}).concat([1]));
@@ -133,16 +345,16 @@
         "<td class=\"tr "+(r.clv>=0?"pos":"neg")+"\">"+(r.n?fmtSign(r.clv,2)+"%":"—")+"</td>" +
         "<td><div class=\"bar-bg\"><div class=\"bar-f\" style=\"width:"+(r.n?Math.round(r.n/maxN*100):0)+"%;background:"+r.color+"\"></div></div></td></tr>";
     });
-    return html + "</tbody></table><p class=\"clv-note\">💡 CLV+ → ROI+ corelat = edge real.</p></div>";
+    return html + "</tbody></table><p class=\"clv-note\">CLV+ corelat cu ROI+ = edge real.</p></div>";
   }
 
   function renderByMarket(bm) {
-    var markets = Object.entries(bm).sort(function(a,b){return Math.abs(b[1].avg_clv_pct)-Math.abs(a[1].avg_clv_pct);});
+    var markets = Object.keys(bm).sort(function(a,b){return Math.abs(bm[b].avg_clv_pct)-Math.abs(bm[a].avg_clv_pct);});
     if (!markets.length) return "";
-    var html = "<div class=\"clv-card\"><h3 class=\"clv-st\">CLV per piață</h3>" +
-      "<table class=\"clv-tbl\"><thead><tr><th>Piață</th><th>N</th><th>Avg CLV</th><th>CLV+%</th><th>Win Rate</th><th>ROI</th></tr></thead><tbody>";
-    markets.forEach(function(m){
-      var k=m[0]; var s=m[1];
+    var html = "<div class=\"clv-card\"><h3 class=\"clv-st\">CLV per piata</h3>" +
+      "<table class=\"clv-tbl\"><thead><tr><th>Piata</th><th>N</th><th>Avg CLV</th><th>CLV+%</th><th>Win Rate</th><th>ROI</th></tr></thead><tbody>";
+    markets.forEach(function(k){
+      var s=bm[k];
       html += "<tr><td class=\"mk\">"+k+"</td><td class=\"tr\">"+s.n+"</td>" +
         "<td class=\"tr "+(s.avg_clv_pct>=0?"pos":"neg")+"\">"+fmtSign(s.avg_clv_pct,2)+"%</td>" +
         "<td class=\"tr\">"+fmtPct(s.clv_positive_rate)+"</td>" +
@@ -155,8 +367,8 @@
   function renderEVCorrelation(evc) {
     var ep=evc.ev_positive_picks||{}, en=evc.ev_negative_picks||{}, warn=evc.divergence_warning;
     return "<div class=\"clv-card"+(warn?" diag-warn":"")+"\">" +
-      "<h3 class=\"clv-st\">Corelație EV vs CLV</h3>" +
-      (warn?"<div class=\"warn-b\">⚠️ Divergență: EV+ dar CLV negativ constant. Modelul supraestimează edge-ul.</div>":"") +
+      "<h3 class=\"clv-st\">Corelatie EV vs CLV</h3>" +
+      (warn?"<div class=\"warn-b\">Divergenta: EV+ dar CLV negativ constant. Modelul supraestimeaza edge-ul.</div>":"") +
       "<div class=\"two-col\">" +
         "<div class=\"corr-box "+((ep.avg_clv||0)>=0?"box-g":"box-r")+"\">" +
           "<div class=\"box-lbl\">Pick-uri EV+</div><div class=\"box-n\">N = "+(ep.n||0)+"</div>" +
@@ -164,12 +376,12 @@
           "<div class=\"box-sub\">CLV+ rate: "+fmtPct(ep.clv_positive_rate)+"</div>" +
         "</div>" +
         "<div class=\"corr-box "+((en.avg_clv||0)>=0?"box-g":"box-r")+"\">" +
-          "<div class=\"box-lbl\">Pick-uri EV≤0</div><div class=\"box-n\">N = "+(en.n||0)+"</div>" +
+          "<div class=\"box-lbl\">Pick-uri EV<=0</div><div class=\"box-n\">N = "+(en.n||0)+"</div>" +
           "<div class=\"box-val\">CLV: <strong>"+(en.avg_clv!=null?fmtSign(en.avg_clv,2)+"%":"—")+"</strong></div>" +
           "<div class=\"box-sub\">CLV+ rate: "+fmtPct(en.clv_positive_rate)+"</div>" +
         "</div>" +
       "</div>" +
-      "<p class=\"clv-note\">EV+ ar trebui să aibă CLV mai mare decât EV−. Dacă nu, recalibrează probabilitățile.</p></div>";
+      "<p class=\"clv-note\">EV+ ar trebui sa aiba CLV mai mare decat EV-. Daca nu, recalibreaza probabilitatile.</p></div>";
   }
 
   function renderRolling(r30, r90) {
@@ -188,21 +400,20 @@
 
   function renderPicksTable(picks) {
     if (!picks.length) return "";
-    window.__clvAllPicks = picks.slice(0,200);
+    window.__clvAllPicks = picks;
     var mks = picks.map(function(p){return p.market;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
     return "<div class=\"clv-card\">" +
       "<h3 class=\"clv-st\">Pick-uri individuale ("+picks.length+" total)" +
         "<span class=\"p-filters\">" +
-          "<select id=\"clf-m\" class=\"clv-sel\"><option value=\"\">Toate piețele</option>" +
+          "<select id=\"clf-m\" class=\"clv-sel\"><option value=\"\">Toate pietele</option>" +
             mks.map(function(m){return "<option value=\""+m+"\">"+m+"</option>";}).join("")+"</select>" +
-          "<select id=\"clf-r\" class=\"clv-sel\"><option value=\"\">Toate</option><option value=\"win\">Câștig</option><option value=\"lose\">Pierdere</option></select>" +
-          "<select id=\"clf-c\" class=\"clv-sel\"><option value=\"\">Orice CLV</option><option value=\"pos\">CLV+</option><option value=\"neg\">CLV−</option></select>" +
+          "<select id=\"clf-r\" class=\"clv-sel\"><option value=\"\">Toate</option><option value=\"win\">Castig</option><option value=\"lose\">Pierdere</option></select>" +
+          "<select id=\"clf-c\" class=\"clv-sel\"><option value=\"\">Orice CLV</option><option value=\"pos\">CLV+</option><option value=\"neg\">CLV-</option></select>" +
         "</span></h3>" +
       "<div class=\"picks-wrap\"><table class=\"clv-tbl\">" +
-        "<thead><tr><th>Data</th><th>Meci</th><th>Piață</th><th>Pick</th><th>Closing</th><th>CLV%</th><th>EV%</th><th>Rez</th></tr></thead>" +
-        "<tbody id=\"clv-pb\">"+renderRows(picks.slice(0,200))+"</tbody>" +
+        "<thead><tr><th>Data</th><th>Meci</th><th>Piata</th><th>Cota Pick</th><th>Cota Init.</th><th>CLV%</th><th>EV%</th><th>Rez</th></tr></thead>" +
+        "<tbody id=\"clv-pb\">"+renderRows(picks)+"</tbody>" +
       "</table></div>" +
-      (picks.length>200?"<p class=\"clv-note\">Afișate 200 din "+picks.length+". Filtrează.</p>":"") +
     "</div>";
   }
 
@@ -216,7 +427,7 @@
         "<td class=\"tr\">"+fmtNum(p.closing_odds,2)+"</td>" +
         "<td class=\"tr "+(p.clv_pct>=0?"pos":"neg")+"\">"+fmtSign(p.clv_pct,2)+"%</td>" +
         "<td class=\"tr "+((p.ev_at_pick_pct||0)>=0?"pos":"neg")+"\">"+(p.ev_at_pick_pct!=null?fmtSign(p.ev_at_pick_pct,2)+"%":"—")+"</td>" +
-        "<td class=\"rc "+(p.won?"win":"lose")+"\">"+(p.won?"✅":"❌")+"</td></tr>";
+        "<td class=\"rc "+(p.won?"win":"lose")+"\">"+(p.won?"W":"X")+"</td></tr>";
     }).join("");
   }
 
@@ -245,10 +456,9 @@
   function renderStyles() {
     if (document.getElementById("clv-styles")) return "";
     return "<style id=\"clv-styles\">" +
-      "@keyframes clvspin{to{transform:rotate(360deg)}}" +
       ".clv-root{padding:14px;max-width:900px;margin:0 auto}" +
       ".clv-header{margin-bottom:14px}" +
-      ".clv-title{font-size:1.2rem;font-weight:700;margin:0 0 3px}" +
+      ".clv-title{font-size:1.1rem;font-weight:700;margin:0 0 3px}" +
       ".clv-updated{font-size:.7rem;color:var(--muted,#64748b)}" +
       ".clv-card{background:var(--card,#0E1424);border:1px solid var(--brd,#1e293b);border-radius:16px;padding:14px;margin-bottom:14px}" +
       ".clv-st{font-size:.92rem;font-weight:600;margin:0 0 11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}" +
@@ -305,16 +515,8 @@
       ".rc{text-align:center}" +
       ".rc.win{color:#22c55e}" +
       ".rc.lose{color:#ef4444}" +
-      ".clv-err{text-align:center;padding:40px;color:#ef4444}" +
-      ".clv-ehint{font-size:.78rem;color:var(--muted,#94a3b8);margin-top:5px}" +
       "@media(max-width:520px){.kpi-row{flex-direction:column}.two-col,.rolling-g{grid-template-columns:1fr}}" +
     "</style>";
-  }
-
-  function renderError(msg) {
-    return "<div class=\"clv-err\">⚠️ Nu s-au putut încărca datele CLV." +
-      "<div class=\"clv-ehint\">" + msg + "</div>" +
-      "<div class=\"clv-ehint\">Rulați <code>build_clv_tracker.py</code> mai întâi.</div></div>";
   }
 
   /* ── formatare ──────────────────────────────────────────────────────────── */
@@ -322,7 +524,6 @@
   function fmtNum(v,d){if(v==null)return"—";return Number(v).toFixed(d||2);}
   function fmtSign(v,d){if(v==null)return"—";var n=Number(v);return(n>=0?"+":"")+n.toFixed(d||2);}
   function fmtPct(v){if(v==null)return"—";return(Number(v)*100).toFixed(1)+"%";}
-  function fmtDate(iso){if(!iso)return"—";try{return new Date(iso).toLocaleString("ro-RO",{dateStyle:"short",timeStyle:"short"});}catch(e){return iso.slice(0,16);}}
   function short(s,max){if(!s)return"—";max=max||13;return s.length>max?s.slice(0,max-1)+"…":s;}
 
   /* ── start ──────────────────────────────────────────────────────────────── */
