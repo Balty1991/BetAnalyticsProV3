@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-build_claude_daily.py — Analiză zilnică AI: toate meciurile → top picks + acumulator.
+build_claude_daily.py — Analiză zilnică AI: selecție bazată pe edge matematic.
 
-Provider-uri (în ordine, primul disponibil câștigă):
+Provider-uri (în ordine):
   1. Google Gemini 2.0 Flash  — gratuit, principal
   2. Anthropic Claude Haiku   — paid, fallback
 
@@ -15,7 +15,12 @@ from pathlib import Path
 
 DATA_DIR          = Path("data")
 OUTPUT_FILE       = DATA_DIR / "claude_daily_analysis.json"
-CACHE_FRESH_HOURS = 10
+CACHE_FRESH_HOURS = 6
+
+# Praguri minime pentru selecție
+MIN_EDGE_TOP_PICKS  = 4.0   # pp — sub acest prag, nu intră în top picks
+MIN_EDGE_ACUM       = 2.0   # pp — sub acest prag, nu intră în acumulator
+AVOID_TIERS         = {"Avoid"}  # tier-uri excluse din top picks
 
 _MK_RO = {
     "home_win": "Victorie gazda", "away_win": "Victorie oaspete", "draw": "Egal",
@@ -35,7 +40,30 @@ def _load_json(path, default=None):
         return default if default is not None else {}
 
 
-def _format_match(row):
+def _best_market(markets_enriched, min_edge=0.0, exclude_tiers=None):
+    """Returnează cel mai bun market (edge×prob) sau None dacă nu există."""
+    exclude_tiers = exclude_tiers or set()
+    best = None
+    for mk, v in (markets_enriched or {}).items():
+        if not isinstance(v, dict):
+            continue
+        edge = float(v.get("edge_pp") or 0)
+        prob = float(v.get("prob") or 0)
+        odds = float(v.get("odds") or 0)
+        tier = str(v.get("risk_tier") or "")
+        if edge < min_edge or odds < 1.05 or prob < 0.05:
+            continue
+        if tier in exclude_tiers:
+            continue
+        score = edge * prob
+        if best is None or score > best["score"]:
+            best = {"mk": mk, "edge": edge, "prob": prob, "odds": odds,
+                    "tier": tier, "ev": float(v.get("ev_pct") or 0), "score": score}
+    return best
+
+
+def _format_match(row, min_edge=0.0):
+    """Formatează un meci pentru prompt. Returnează None dacă nu îndeplinește criteriile."""
     ev    = row.get("event") or {}
     home  = ev.get("home_team") or "?"
     away  = ev.get("away_team") or "?"
@@ -46,22 +74,35 @@ def _format_match(row):
     af    = row.get("supreme_away_form_string") or row.get("away_form_string") or "?"
     h2h_n = int(float(row.get("supreme_h2h_matches") or 0))
     h2h_g = float(row.get("supreme_h2h_avg_goals") or 0)
-    h2h   = f" H2H:{h2h_n}m/{h2h_g:.1f}g" if h2h_n > 0 else ""
+    h2h_b = float(row.get("supreme_h2h_btts_rate") or 0)
+    h2h_d = float(row.get("supreme_h2h_draw_rate") or 0)
 
+    h2h_parts = []
+    if h2h_n > 0:
+        if h2h_b > 0: h2h_parts.append(f"BTTS{round(h2h_b*100)}%")
+        if h2h_g > 0: h2h_parts.append(f"{h2h_g:.1f}g")
+        if h2h_d > 0: h2h_parts.append(f"egal{round(h2h_d*100)}%")
+    h2h = f" H2H:{h2h_n}m/{'/'.join(h2h_parts)}" if h2h_parts else ""
+
+    # Top 3 piete cu edge pozitiv, sortate edge×prob
     picks = []
     for mk, v in (row.get("markets_enriched") or {}).items():
         if not isinstance(v, dict): continue
         edge = float(v.get("edge_pp") or 0)
-        if edge <= 0: continue
         prob = float(v.get("prob") or 0)
         odds = float(v.get("odds") or 0)
-        if odds < 1.01 or prob < 0.01: continue
-        picks.append((edge * prob, mk, odds, round(prob * 100), edge))
+        tier = str(v.get("risk_tier") or "")
+        ev   = float(v.get("ev_pct") or 0)
+        if edge < min_edge or odds < 1.05 or prob < 0.05: continue
+        picks.append((edge * prob, mk, odds, round(prob * 100), edge, ev, tier))
     picks.sort(reverse=True)
 
+    if not picks:
+        return None
+
     pk = " | ".join(
-        f"{_MK_RO.get(mk, mk)}@{odds:.2f}({p}%/+{edge:.0f}pp)"
-        for _, mk, odds, p, edge in picks[:3]
+        f"{_MK_RO.get(mk, mk)}@{odds:.2f}(prob:{p}%/edge:+{edge:.0f}pp/EV:{ev:+.0f}%/{tier})"
+        for _, mk, odds, p, edge, ev, tier in picks[:3]
     )
     return f"{home} vs {away}|{liga}|xG{xg_h:.1f}-{xg_a:.1f}|G:[{hf}]O:[{af}]{h2h}|{pk}"
 
@@ -74,7 +115,6 @@ def _parse_response(text):
         line = raw.strip()
         if not line:
             continue
-        # strip Markdown headers/bullets so "## TOP_PICKS:" matches too
         clean = line.lstrip("#*- \t").strip()
         upper = clean.upper()
         if upper.startswith("TOP_PICKS") or upper.startswith("TOP PICKS"):
@@ -121,7 +161,7 @@ def _call_gemini(prompt, api_key):
         from google import genai
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             contents=prompt,
         )
         text = response.text.strip()
@@ -138,7 +178,7 @@ def _call_claude(prompt, api_key):
         client = anthropic.Anthropic(api_key=api_key)
         msg = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=1200,
+            max_tokens=1800,
             messages=[{"role": "user", "content": prompt}],
         )
         text = msg.content[0].text.strip()
@@ -157,7 +197,6 @@ def main():
             existing = json.loads(OUTPUT_FILE.read_text(encoding="utf-8"))
             gen_at   = existing.get("generated_at", "")
             if gen_at:
-                from datetime import timezone
                 gen_dt = datetime.fromisoformat(gen_at)
                 if gen_dt.tzinfo is None:
                     gen_dt = gen_dt.replace(tzinfo=timezone.utc)
@@ -176,45 +215,78 @@ def main():
     preds = raw if isinstance(raw, list) else (
         raw.get("predictions") or raw.get("results") or raw.get("events") or [])
 
-    matches = []
+    # Formatare meciuri cu edge ≥ MIN_EDGE_TOP_PICKS (filtru strict pentru prompt)
+    matches_high = []   # edge ≥ 4pp (pentru top picks și context principal)
+    matches_acum = []   # edge ≥ 2pp, tier Safe/Value (pentru acumulator)
+
     for row in preds:
         ev = row.get("event") or {}
-        if ev.get("status") != "notstarted": continue
+        if ev.get("status") != "notstarted":
+            continue
         me = row.get("markets_enriched") or {}
-        if any(isinstance(v, dict) and float(v.get("edge_pp") or 0) > 0 for v in me.values()):
-            matches.append(_format_match(row))
 
-    if not matches:
-        print("[ClaudeDaily] Niciun meci cu edge pozitiv."); return
+        # Cel mai bun market general (pentru sortare)
+        best = _best_market(me, min_edge=MIN_EDGE_TOP_PICKS, exclude_tiers=AVOID_TIERS)
+        if best:
+            fmt = _format_match(row, min_edge=MIN_EDGE_TOP_PICKS)
+            if fmt:
+                matches_high.append((best["score"], fmt))
 
-    n     = len(matches)
-    block = "\n".join(f"{i+1}. {m}" for i, m in enumerate(matches[:80]))
-    print(f"[ClaudeDaily] Analizeaza {n} meciuri...")
+        # Pentru acumulator: piete Safe/Value cu edge ≥ 2pp și odds ≤ 2.10
+        best_acum = _best_market(me, min_edge=MIN_EDGE_ACUM,
+                                  exclude_tiers={"Avoid"})
+        if best_acum and best_acum["odds"] <= 2.10 and best_acum["tier"] in ("Safe", "Value", "Balanced"):
+            fmt_a = _format_match(row, min_edge=MIN_EDGE_ACUM)
+            if fmt_a:
+                matches_acum.append((best_acum["score"], fmt_a))
+
+    # Sortare: cele mai bune meciuri primele
+    matches_high.sort(reverse=True)
+    matches_acum.sort(reverse=True)
+
+    if not matches_high and not matches_acum:
+        print("[ClaudeDaily] Niciun meci cu edge suficient."); return
+
+    n_high = len(matches_high)
+    n_acum = len(matches_acum)
+    block_high = "\n".join(f"{i+1}. {m}" for i, (_, m) in enumerate(matches_high[:60]))
+    block_acum = "\n".join(f"{i+1}. {m}" for i, (_, m) in enumerate(matches_acum[:40]))
+
+    print(f"[ClaudeDaily] Top picks: {n_high} meciuri | Acumulator: {n_acum} meciuri...")
 
     prompt = (
-        f"Esti analist sportiv expert. Analizeaza intreaga oferta disponibila: {n} meciuri cu date statistice reale.\n"
-        f"Format date per meci: EchipaG vs EchipaO|Liga|xG g-o|Forma G:[XXXXX] O:[XXXXX]|"
-        f"Piata@cota(prob%/+edgepp)\n\n"
-        f"DATE MECIURI:\n{block}\n\n"
-        f"Genereaza analiza EXACT in formatul urmator (in romana, fara text suplimentar, fara Markdown, fara ## sau **):\n\n"
+        f"Esti analist sportiv expert. Analiza zilnica bazata pe edge matematic real.\n\n"
+        f"REGULI STRICTE DE SELECTIE:\n"
+        f"1. TOP PICKS: alege EXACT 5 meciuri — cele cu cel mai mare edge (prefer edge >= 8pp)\n"
+        f"2. MOTIV: include OBLIGATORIU valoarea edge in formatul +Xpp (ex: '+12pp edge, xG 2.1-0.8 sustin')\n"
+        f"3. ACUMULATOR: 5-7 selectii NUMAI din meciuri Safe/Value, odds 1.10-2.00\n"
+        f"4. Nu include piete cu tier Avoid sau edge < 3pp\n"
+        f"5. Tipare: observatii statistice concrete din datele de azi (nu generalitati)\n\n"
+        f"FORMAT DATE: EchipaG vs EchipaO|Liga|xG g-o|Forma G:[XXXXX] O:[XXXXX]|"
+        f"Piata@cota(prob:X%/edge:+Xpp/EV:+X%/TIER)\n\n"
+        f"MECIURI CU EDGE RIDICAT ({n_high} total — pentru TOP PICKS):\n{block_high}\n\n"
+        f"MECIURI PENTRU ACUMULATOR ({n_acum} disponibile — Safe/Value/Balanced):\n{block_acum}\n\n"
+        f"Genereaza analiza EXACT in formatul urmator (in romana, fara text suplimentar, fara ## sau **):\n\n"
         f"TOP_PICKS:\n"
-        f"1. [Echipa1 vs Echipa2] | [Piata @ cota] | [motiv 6-8 cuvinte]\n"
-        f"2. [similar]\n3. [similar]\n4. [similar]\n5. [similar]\n\n"
+        f"1. [Echipa1 vs Echipa2] | [Piata @ cota] | [+Xpp edge, motiv 5-7 cuvinte]\n"
+        f"2. [Echipa1 vs Echipa2] | [Piata @ cota] | [+Xpp edge, motiv 5-7 cuvinte]\n"
+        f"3. [Echipa1 vs Echipa2] | [Piata @ cota] | [+Xpp edge, motiv 5-7 cuvinte]\n"
+        f"4. [Echipa1 vs Echipa2] | [Piata @ cota] | [+Xpp edge, motiv 5-7 cuvinte]\n"
+        f"5. [Echipa1 vs Echipa2] | [Piata @ cota] | [+Xpp edge, motiv 5-7 cuvinte]\n\n"
         f"ACUMULATOR:\n"
         f"[Echipa1 vs Echipa2] → [Piata @ cota]\n"
-        f"[repeta pentru 7-9 selectii cu probabilitate ridicata]\n"
+        f"[5-7 selectii Safe/Value cu odds 1.10-2.00]\n"
         f"COTA_TOTALA: [valoare]\n"
         f"SANSA: [procent]%\n\n"
         f"TIPARE:\n"
-        f"• [observatie statistica relevanta din datele de astazi]\n"
-        f"• [alta observatie]\n"
-        f"• [alta observatie]\n\n"
+        f"• [pattern concret identificat azi din date — ex: '6/8 meciuri cu xG>2.0 au terminat BTTS']\n"
+        f"• [alt pattern cu cifre din datele de azi]\n"
+        f"• [al treilea pattern actionabil pentru pariori]\n\n"
         f"DE_EVITAT:\n"
-        f"• [meci sau piata specifica cu motiv scurt]\n"
+        f"• [meci sau piata specifica cu motiv concret — ex: 'egal in Derby X — piata volatila, H2H 70% BTTS']\n"
         f"• [similar]\n"
     )
 
-    # Provider chain: Gemini (gratuit) → Claude (paid fallback)
     raw_text = None
     provider = None
 
@@ -222,7 +294,7 @@ def main():
     if gemini_key:
         raw_text = _call_gemini(prompt, gemini_key)
         if raw_text:
-            provider = "gemini-1.5-flash"
+            provider = "gemini-2.0-flash"
 
     if not raw_text:
         claude_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -236,7 +308,7 @@ def main():
 
     out = _parse_response(raw_text)
     out["generated_at"]     = datetime.now(timezone.utc).isoformat()
-    out["matches_analyzed"] = n
+    out["matches_analyzed"] = n_high
     out["provider"]         = provider
     out["raw_response"]     = raw_text
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-generate_claude_previews.py — Analiză AI v4: Claude alege singur cel mai bun pariu.
+generate_claude_previews.py — Analiză AI v5: Claude alege cel mai bun pariu cu edge explicit.
 
 Rulează DUPĂ enrich_predictions.py.
-Claude primeste TOP 3 piete cu edge pozitiv (sortate edge×prob) si alege singur
-cel mai bun pariu pe baza datelor statistice disponibile.
+Claude primeste TOP 3 piete cu edge ≥ 3pp (exclusiv Avoid) si alege singur
+cel mai bun pariu. Motivul include OBLIGATORIU edge-ul numeric (+Xpp).
 
-Format raspuns: PICK / VERDICT / MOTIV / RISC
-Cache key: {event_id}:v4:{top1_market}@{odds}
+Format raspuns: PICK / VERDICT / INCREDERE / MOTIV / RISC
+Cache key: {event_id}:v5:{top1_market}@{odds}
 """
 import json
 import os
@@ -19,6 +19,9 @@ CLAUDE_PREVIEW_CACHE_FILE = DATA_DIR / "claude_preview_cache_v4.json"
 PREVIEW_MAX_DAYS = 7
 CACHE_FRESH_HOURS = 8
 MAX_NEW_PER_RUN   = 30
+
+MIN_EDGE_PP = 3.0          # pragul minim de edge acceptat
+EXCLUDE_TIERS = {"Avoid"}  # tier-uri excluse complet din picks
 
 try:
     import anthropic as _anthropic_mod
@@ -122,28 +125,30 @@ def _build_local_context(event_id, social_cache, profiles_cache):
 
 def _get_top_picks(markets_enriched, n=3):
     """
-    Returneaza top N piete cu edge pozitiv, sortate dupa edge_pp × prob.
-    Aceasta formula replica cel mai bine cum app-ul stabileste RECOMANDAREA.
-    Toate pietele cu edge pozitiv sunt eligibile (inclusiv Avoid).
+    Returnează top N piete cu edge >= MIN_EDGE_PP, exclusiv tier Avoid.
+    Sortate după edge×prob (cel mai bun raport valoare-probabilitate).
     """
     candidates = []
     for mk, v in (markets_enriched or {}).items():
         if not isinstance(v, dict):
             continue
         edge = float(v.get("edge_pp") or 0)
-        if edge <= 0:
+        if edge < MIN_EDGE_PP:
+            continue
+        tier = str(v.get("risk_tier") or "")
+        if tier in EXCLUDE_TIERS:
             continue
         odds = float(v.get("odds") or 0)
         prob = float(v.get("prob") or v.get("bsd_prob") or 0)
-        if odds < 1.01 or prob < 0.01:
+        if odds < 1.05 or prob < 0.05:
             continue
         candidates.append({
-            "mk":   mk,
-            "ev":   float(v.get("ev_pct") or 0),
-            "odds": odds,
-            "prob": prob,
-            "edge": edge,
-            "tier": str(v.get("risk_tier") or ""),
+            "mk":    mk,
+            "ev":    float(v.get("ev_pct") or 0),
+            "odds":  odds,
+            "prob":  prob,
+            "edge":  edge,
+            "tier":  tier,
             "score": edge * prob,
         })
     candidates.sort(key=lambda x: x["score"], reverse=True)
@@ -173,7 +178,7 @@ def _build_prompt(home, away, league, xg_home, xg_away,
         lines.append(
             f"  • {pick_ro} @ {p['odds']:.2f}"
             f" | prob {round(p['prob']*100)}%"
-            f" | edge {p['edge']:+.1f}pp"
+            f" | edge +{p['edge']:.1f}pp"
             f" | EV {p['ev']:+.1f}%"
             f"{tier_tag}"
         )
@@ -182,25 +187,32 @@ def _build_prompt(home, away, league, xg_home, xg_away,
     ctx_section = (f"\nCONTEXT:\n{local_context}"
                    if local_context else "\nCONTEXT: date statistice standard.")
 
+    # Cel mai bun edge disponibil (pentru referință în prompt)
+    best_edge = max(p["edge"] for p in top_picks) if top_picks else 0
+
     return (
-        f"Esti analist sportiv expert. Ai datele de mai jos si trebuie sa alegi CEL MAI BUN pariu.\n\n"
+        f"Esti analist sportiv expert. Alege CEL MAI BUN pariu bazat pe edge matematic.\n\n"
         f"MECI: {home} vs {away} | {league}{derby_line}\n"
         f"DATE: xG {xg_home:.2f}-{xg_away:.2f}"
         f" | forma {home}:[{home_form or '?'}] {away}:[{away_form or '?'}]"
         f"{h2h_line}{facts_line}{ctx_section}\n\n"
-        f"PIETE CU EDGE POZITIV (alege DOAR din aceasta lista):\n{picks_block}\n\n"
-        f"Bazeaza-te pe xG, forma, H2H si context. Alege pariul cu cel mai bun echilibru "
-        f"intre probabilitate, edge si risc.\n"
+        f"PIETE CU EDGE POZITIV (alege DOAR din aceasta lista — EXCLUDE tier Avoid):\n{picks_block}\n\n"
+        f"INSTRUCTIUNI:\n"
+        f"- Alege pariul cu cel mai bun echilibru: edge mare + probabilitate ridicata + risc scazut\n"
+        f"- Daca edge-ul maxim e sub 5pp sau toti indicatorii sunt slabi, alege EVITA\n"
+        f"- MOTIV trebuie sa includa OBLIGATORIU valoarea edge in format +Xpp\n"
+        f"- INCREDERE: 50=slab, 65=ok, 80=bun, 90=excelent (max 95)\n\n"
         f"FORMAT RASPUNS (exact, fara text suplimentar, in romana):\n"
         f"PICK: [denumire exacta din lista @ cota]\n"
-        f"VERDICT: [JUCABIL / CU GRIJA / EVITA]\n"
-        f"MOTIV: [1 propozitie — de ce acest pariu e cel mai bun]\n"
-        f"RISC: [1 propozitie — riscul principal sau: Risc scazut]"
+        f"VERDICT: [PUTERNIC / JUCABIL / CU GRIJA / EVITA]\n"
+        f"INCREDERE: [50-95]\n"
+        f"MOTIV: [include +Xpp, ex: '+{best_edge:.0f}pp edge, xG {xg_home:.1f}-{xg_away:.1f}, forma sustine']\n"
+        f"RISC: [riscul principal sau: Risc scazut]"
     )
 
 
 def main():
-    print("=== GENERATE CLAUDE PREVIEWS v4 ===")
+    print("=== GENERATE CLAUDE PREVIEWS v5 ===")
 
     if not _ANTHROPIC_AVAILABLE:
         print("[ClaudePreview] Libraria 'anthropic' nu e instalata — skip.")
@@ -211,13 +223,12 @@ def main():
         print("[ClaudePreview] ANTHROPIC_API_KEY lipsa — skip.")
         return
 
-    # Sari daca cache-ul v4 e proaspat (evita apeluri redundante in update-meciuri)
     claude_cache = _load_json(CLAUDE_PREVIEW_CACHE_FILE, {})
     if CLAUDE_PREVIEW_CACHE_FILE.exists() and claude_cache:
         age_hours = (datetime.now(timezone.utc).timestamp()
                      - CLAUDE_PREVIEW_CACHE_FILE.stat().st_mtime) / 3600
         if age_hours < CACHE_FRESH_HOURS:
-            print(f"[ClaudePreview] Cache v4 proaspat ({age_hours:.1f}h < {CACHE_FRESH_HOURS}h) — skip.")
+            print(f"[ClaudePreview] Cache proaspat ({age_hours:.1f}h < {CACHE_FRESH_HOURS}h) — skip.")
             return
 
     pred_path = DATA_DIR / "predictions.json"
@@ -240,7 +251,7 @@ def main():
     now_utc = datetime.now(timezone.utc)
     cutoff  = now_utc + timedelta(days=PREVIEW_MAX_DAYS)
     client  = _anthropic_mod.Anthropic(api_key=api_key)
-    generated = cached_hits = errors = 0
+    generated = cached_hits = errors = skipped = 0
 
     for row in predictions:
         if generated >= MAX_NEW_PER_RUN:
@@ -266,12 +277,13 @@ def main():
         markets_enriched = row.get("markets_enriched") or {}
         top_picks = _get_top_picks(markets_enriched)
 
-        # Cache key v4: basat pe top pick (edge×prob), nu best_market
-        if top_picks:
-            p0 = top_picks[0]
-            cache_key = f"{event_id}:v4:{p0['mk']}@{p0['odds']:.2f}"
-        else:
-            cache_key = f"{event_id}:v4"
+        # Sari meciurile fara niciun market cu edge suficient
+        if not top_picks:
+            skipped += 1
+            continue
+
+        p0 = top_picks[0]
+        cache_key = f"{event_id}:v5:{p0['mk']}@{p0['odds']:.2f}"
 
         if cache_key in claude_cache:
             row["ai_preview"] = claude_cache[cache_key]
@@ -315,10 +327,10 @@ def main():
 
             msg = client.messages.create(
                 model="claude-haiku-4-5-20251001",
-                max_tokens=300,
+                max_tokens=400,
                 messages=[{"role": "user", "content": prompt}],
             )
-            preview = msg.content[0].text.strip()[:700]
+            preview = msg.content[0].text.strip()[:800]
             row["ai_preview"] = preview
             claude_cache[cache_key] = preview
             generated += 1
@@ -328,7 +340,7 @@ def main():
             if errors <= 3:
                 print(f"[ClaudePreview] Eroare event {event_id}: {e}")
 
-    # Salveaza predictions.json cu ai_preview actualizat
+    # Salvare predictions.json cu ai_preview actualizat
     if isinstance(raw, list):
         _save_json(pred_path, predictions)
     else:
@@ -340,7 +352,7 @@ def main():
             _save_json(pred_path, predictions)
 
     _save_cache(CLAUDE_PREVIEW_CACHE_FILE, claude_cache)
-    print(f"[ClaudePreview] Generate: {generated} | Cache: {cached_hits} | Erori: {errors}")
+    print(f"[ClaudePreview] Generate:{generated} | Cache:{cached_hits} | Sarite:{skipped} | Erori:{errors}")
 
 
 if __name__ == "__main__":
