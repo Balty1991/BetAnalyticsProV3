@@ -2576,36 +2576,85 @@ function getVerdictBlock(match, bet) {
 
 
 // ====================================================================
-// PERFORMANTA VERDICT - render tab (sursa: RECOMMENDATION_LOG filtrat ca apexStats)
+// PERFORMANTA VERDICT - render tab (sursa: cele 3 localStorage din Sesiunea Mea)
 // ====================================================================
 function renderPerformantaVerdict() {
   var el = document.getElementById('perf-verdict-content');
   if (!el) return;
 
   try {
-    var log = Array.isArray(window.RECOMMENDATION_LOG) ? window.RECOMMENDATION_LOG : [];
-    if (!log.length) {
-      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Date insuficiente. Statisticile se acumuleaza automat.</div>';
-      return;
-    }
-
     var startDate = null;
     try { startDate = localStorage.getItem('veyra_stats_start_date') || null; } catch(ee) {}
     function _pvAfterStart(dateStr) {
       if (!startDate) return true;
-      var d = (dateStr || '').slice(0, 10);
-      return d >= startDate.slice(0, 10);
+      return (dateStr || '').slice(0, 10) >= startDate.slice(0, 10);
+    }
+    function _pvNorm(s) {
+      return String(s || '').toLowerCase().normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
     }
 
-    var settled = log.filter(function(r) {
-      return (r.won === true || r.won === false) && _pvAfterStart(r.date || r.event_date);
-    });
+    // --- Incarca picks din cele 3 surse localStorage ---
+    var apexRaw = [], claudeRaw = [], ml5Raw = [];
+    try { apexRaw   = JSON.parse(localStorage.getItem('veyra_motorai_hist')         || '[]'); } catch(ee) {}
+    try { claudeRaw = JSON.parse(localStorage.getItem('veyra_claude_saved_v1')      || '[]'); } catch(ee) {}
+    try { ml5Raw    = JSON.parse(localStorage.getItem('veyra_ml5_accuracy_log_v2')  || '[]'); } catch(ee) {}
+
+    function wonFrom(r) {
+      if (r.won === true || r.result === 'won')  return true;
+      if (r.won === false || r.result === 'lost' || r.result === 'loss') return false;
+      return null;
+    }
+    function toUnified(src, arr) {
+      return arr.filter(function(e) {
+        return _pvAfterStart((e.event_date || e.eventDate || e.savedAt || '').slice(0,10));
+      }).map(function(e) {
+        var home = e.home || '', away = e.away || '';
+        if (!home && e.meci) {
+          var p = String(e.meci).split(/\s+vs\s+/i);
+          home = (p[0] || '').trim(); away = (p[1] || '').trim();
+        }
+        return {
+          source: src,
+          date:   (e.event_date || e.eventDate || e.savedAt || '').slice(0,10),
+          home:   home.trim(), away: away.trim(),
+          market: e.marketKey || e.market || 'unknown',
+          odds:   Number(e.cota || e.odds || e.trackOdds || e.ml5Odds || 0) || 0,
+          won:    wonFrom(e),
+          from_open_pct: null
+        };
+      });
+    }
+
+    var allPicks = toUnified('APEX', apexRaw)
+      .concat(toUnified('Claude', claudeRaw))
+      .concat(toUnified('ML5', ml5Raw));
+
+    // Imbogateste cu CLV din RECOMMENDATION_LOG
+    var rlog = Array.isArray(window.RECOMMENDATION_LOG) ? window.RECOMMENDATION_LOG : [];
+    if (rlog.length) {
+      var clvLookup = {};
+      rlog.forEach(function(r) {
+        if (r.from_open_pct == null) return;
+        var d = (r.date || r.event_date || '').slice(0,10);
+        var key = _pvNorm(r.home) + '|' + _pvNorm(r.away) + '|' + d + '|' + (r.market_key || r.market || '');
+        if (!clvLookup[key]) clvLookup[key] = r.from_open_pct;
+      });
+      allPicks.forEach(function(p) {
+        var key = _pvNorm(p.home) + '|' + _pvNorm(p.away) + '|' + p.date + '|' + p.market;
+        if (clvLookup[key] != null) p.from_open_pct = clvLookup[key];
+      });
+    }
+
+    var settled = allPicks.filter(function(p){ return p.won === true || p.won === false; });
 
     if (!settled.length) {
       var sinceMsg = startDate ? ' din ' + startDate.slice(0, 10) : '';
-      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Nu exista pariuri finalizate' + sinceMsg + '.<br><span style="font-size:11px">Datele APEX se acumuleaza automat dupa ce meciurile se incheie.</span></div>';
+      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Nu exista pariuri finalizate' + sinceMsg + '.<br><span style="font-size:11px">Salveaza meciuri in Sesiunea Mea \u2014 vor aparea aici dupa finalizare.</span></div>';
       return;
     }
+
+    var sinceHtml = startDate ? ' &nbsp;<span style="font-size:9px;font-weight:400;color:var(--muted)">din ' + startDate.slice(0,10) + '</span>' : '';
 
     // --- Overall ---
     var totalN = settled.length;
@@ -2614,67 +2663,53 @@ function renderPerformantaVerdict() {
     var roiSum = 0;
     settled.forEach(function(r){ roiSum += r.won ? ((r.odds || 1.5) - 1) : -1; });
     var totalROI = Math.round(roiSum / totalN * 100);
-    var edgeSum = 0;
-    settled.forEach(function(r){ edgeSum += (r.edge_pct || 0); });
-    var avgEdge = parseFloat((edgeSum / totalN).toFixed(1));
     var roiColor = totalROI >= 3 ? '#22c55e' : totalROI >= 0 ? '#f59e0b' : '#ef4444';
-    var sinceHtml = startDate ? ' &nbsp;<span style="font-size:9px;font-weight:400;color:var(--muted)">din ' + startDate.slice(0,10) + '</span>' : '';
     var overallHtml =
       '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">' +
-        '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">APEX \u2014 Global' + sinceHtml + '</div>' +
+        '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Toate pick-urile' + sinceHtml + '</div>' +
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">' +
           _perfMetric('Total', totalN, '') +
           _perfMetric('Win Rate', totalWR + '%', '', totalWR >= 60 ? '#22c55e' : '#f59e0b') +
           _perfMetric('ROI', (totalROI >= 0 ? '+' : '') + totalROI + '%', '', roiColor) +
           _perfMetric('Win', totalWins, '', '#22c55e') +
           _perfMetric('Loss', totalN - totalWins, '', '#ef4444') +
-          _perfMetric('Edge med.', (avgEdge >= 0 ? '+' : '') + avgEdge + '%', '', avgEdge >= 2 ? '#22c55e' : '#f59e0b') +
+          _perfMetric('Picks totale', allPicks.length, '') +
         '</div>' +
       '</div>';
 
-    // --- Verdict breakdown ---
-    var VMETA = {
-      'safe':  { label: 'PARIAZA', color: '#22c55e', bg: 'rgba(34,197,94,.10)',  border: 'rgba(34,197,94,.3)'  },
-      'value': { label: 'VALUE',   color: '#60a5fa', bg: 'rgba(96,165,250,.10)', border: 'rgba(96,165,250,.3)' },
-      'lean':  { label: 'RISC',    color: '#f59e0b', bg: 'rgba(245,158,11,.10)', border: 'rgba(245,158,11,.3)' },
-      'avoid': { label: 'EVITA',   color: '#ef4444', bg: 'rgba(239,68,68,.10)',  border: 'rgba(239,68,68,.3)'  }
-    };
-    var byV = {};
-    settled.forEach(function(r) {
-      var v = r.verdict || 'unknown';
-      if (!byV[v]) byV[v] = { n:0, wins:0, roiSum:0 };
-      byV[v].n++;
-      if (r.won === true) byV[v].wins++;
-      byV[v].roiSum += r.won ? ((r.odds || 1.5) - 1) : -1;
-    });
-    var verdictHtml = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">';
-    ['safe','value','lean','avoid'].forEach(function(v) {
-      var meta = VMETA[v];
-      var s = byV[v];
-      if (!s) {
-        verdictHtml += '<div style="padding:12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07)">'
-          + '<div style="font-size:11px;font-weight:800;color:' + meta.color + '">' + meta.label + '</div>'
-          + '<div style="font-size:10px;color:var(--muted);margin-top:5px">0 pariuri</div></div>';
+    // --- Per sursa: APEX / Claude / ML5 ---
+    var SRCS = [
+      { key: 'APEX',   label: 'APEX (Motor AI)', color: '#60a5fa', bg: 'rgba(96,165,250,.10)', border: 'rgba(96,165,250,.3)' },
+      { key: 'Claude', label: 'Claude AI',        color: '#a78bfa', bg: 'rgba(167,139,250,.10)', border: 'rgba(167,139,250,.3)' },
+      { key: 'ML5',    label: 'ML5',              color: '#34d399', bg: 'rgba(52,211,153,.10)', border: 'rgba(52,211,153,.3)' }
+    ];
+    var srcHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
+    SRCS.forEach(function(s) {
+      var rows = settled.filter(function(p){ return p.source === s.key; });
+      if (!rows.length) {
+        srcHtml += '<div style="padding:12px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07)">'
+          + '<div style="font-size:10px;font-weight:800;color:' + s.color + '">' + s.label + '</div>'
+          + '<div style="font-size:10px;color:var(--muted);margin-top:5px">0 finalizate</div></div>';
         return;
       }
-      var wr = Math.round(s.wins / s.n * 100);
-      var roi = Math.round(s.roiSum / s.n * 100);
-      verdictHtml += '<div style="padding:12px;border-radius:12px;background:' + meta.bg + ';border:1px solid ' + meta.border + '">'
-        + '<div style="font-size:11px;font-weight:800;color:' + meta.color + '">' + meta.label + '</div>'
-        + '<div style="display:flex;gap:8px;align-items:baseline;margin-top:6px">'
-          + '<span style="font-size:19px;font-weight:900;color:' + meta.color + '">' + wr + '%</span>'
-          + '<span style="font-size:10px;color:var(--muted)">WR</span>'
-        + '</div>'
-        + '<div style="font-size:10px;color:var(--muted);margin-top:2px">'
-          + s.n + ' par. &nbsp;|&nbsp; ROI <span style="font-weight:700;color:' + (roi >= 0 ? '#22c55e' : '#ef4444') + '">' + (roi >= 0 ? '+' : '') + roi + '%</span>'
+      var wins = rows.filter(function(p){ return p.won === true; }).length;
+      var wr = Math.round(wins / rows.length * 100);
+      var rs = 0; rows.forEach(function(p){ rs += p.won ? ((p.odds||1.5)-1) : -1; });
+      var roi = Math.round(rs / rows.length * 100);
+      srcHtml += '<div style="padding:12px;border-radius:12px;background:' + s.bg + ';border:1px solid ' + s.border + '">'
+        + '<div style="font-size:10px;font-weight:800;color:' + s.color + '">' + s.label + '</div>'
+        + '<div style="font-size:18px;font-weight:900;color:' + s.color + ';margin-top:4px">' + wr + '%</div>'
+        + '<div style="font-size:9px;color:var(--muted)">Win Rate</div>'
+        + '<div style="font-size:10px;margin-top:5px">'
+          + rows.length + ' par. &nbsp;|&nbsp; ROI <span style="font-weight:700;color:' + (roi>=0?'#22c55e':'#ef4444') + '">' + (roi>=0?'+':'') + roi + '%</span>'
         + '</div></div>';
     });
-    verdictHtml += '</div>';
+    srcHtml += '</div>';
 
     // --- Per piata ---
     var byMkt = {};
     settled.forEach(function(r) {
-      var k = r.market_key || r.market || 'unknown';
+      var k = r.market || 'unknown';
       if (!byMkt[k]) byMkt[k] = { n:0, wins:0, roiSum:0 };
       byMkt[k].n++;
       if (r.won === true) byMkt[k].wins++;
@@ -2700,7 +2735,7 @@ function renderPerformantaVerdict() {
       : '';
 
     // --- CLV summary ---
-    var clvE = settled.filter(function(r){ return r.opening_odds > 1 && r.from_open_pct != null; });
+    var clvE = settled.filter(function(r){ return r.from_open_pct != null; });
     var clvHtml = '';
     if (clvE.length >= 3) {
       var clvSum2 = 0;
@@ -2708,28 +2743,17 @@ function renderPerformantaVerdict() {
       var avgClv = (clvSum2 / clvE.length).toFixed(1);
       var clvPos = clvE.filter(function(r){ return r.from_open_pct >= 0; }).length;
       var clvPosRate = Math.round(clvPos / clvE.length * 100);
-      var bySig = {};
-      clvE.forEach(function(r){ var s = r.line_move_signal || 'UNKNOWN'; bySig[s] = (bySig[s]||0)+1; });
-      var sigColors = { CONFIRMED:'#22c55e', DRIFTING:'#ef4444', NEUTRAL:'#94a3b8', NEW:'#f59e0b' };
-      var sigHtml = Object.keys(bySig).sort().map(function(s) {
-        var pct = Math.round(bySig[s] / clvE.length * 100);
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-          + '<span style="font-size:11px;font-weight:700;color:' + (sigColors[s]||'#94a3b8') + '">' + s + '</span>'
-          + '<span style="font-size:11px;color:var(--muted)">' + bySig[s] + ' (' + pct + '%)</span>'
-          + '</div>';
-      }).join('');
       clvHtml = '<div style="padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);margin-bottom:14px">'
         + '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">CLV \u2014 Miscare cote</div>'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
           + '<div style="text-align:center"><div style="font-size:17px;font-weight:900;color:' + (parseFloat(avgClv)>=0?'#22c55e':'#ef4444') + '">' + (parseFloat(avgClv)>=0?'+':'') + avgClv + '%</div><div style="font-size:9px;color:var(--muted)">Avg CLV</div></div>'
           + '<div style="text-align:center"><div style="font-size:17px;font-weight:900;color:' + (clvPosRate>=50?'#22c55e':'#f59e0b') + '">' + clvPosRate + '%</div><div style="font-size:9px;color:var(--muted)">CLV+ Rate</div></div>'
         + '</div>'
-        + sigHtml
-        + '<div style="font-size:9px;color:var(--muted);margin-top:6px">' + clvE.length + ' pariuri cu date CLV disponibile din ' + totalN + ' totale</div>'
+        + '<div style="font-size:9px;color:var(--muted);margin-top:8px">' + clvE.length + ' pick-uri cu date CLV din ' + totalN + ' finalizate</div>'
         + '</div>';
     }
 
-    el.innerHTML = overallHtml + verdictHtml + mktHtml + clvHtml;
+    el.innerHTML = overallHtml + srcHtml + mktHtml + clvHtml;
 
   } catch(e) {
     el.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:12px">Eroare: ' + e.message + '</div>';
