@@ -2594,41 +2594,40 @@ function renderPerformantaVerdict() {
         .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
     }
 
-    // --- Incarca picks din cele 3 surse localStorage ---
-    var apexRaw = [], claudeRaw = [], ml5Raw = [];
-    try { apexRaw   = JSON.parse(localStorage.getItem('veyra_motorai_hist')         || '[]'); } catch(ee) {}
-    try { claudeRaw = JSON.parse(localStorage.getItem('veyra_claude_saved_v1')      || '[]'); } catch(ee) {}
-    try { ml5Raw    = JSON.parse(localStorage.getItem('veyra_ml5_accuracy_log_v2')  || '[]'); } catch(ee) {}
-
-    function wonFrom(r) {
-      if (r.won === true  || r.result === 'won' || r.result === 'win')  return true;
-      if (r.won === false || r.result === 'lost' || r.result === 'loss') return false;
+    // --- Incarca picks din cele 3 storages din stats_meciuri.js ---
+    function _pvLoadObj(key) {
+      try {
+        var raw = JSON.parse(localStorage.getItem(key) || '{}');
+        if (raw && typeof raw === 'object' && !Array.isArray(raw))
+          return Object.keys(raw).map(function(k){ return raw[k]; }).filter(Boolean);
+        return Array.isArray(raw) ? raw : [];
+      } catch(ee) { return []; }
+    }
+    function wonFromStatus(s) {
+      if (s === 'win'  || s === 'won')  return true;
+      if (s === 'loss' || s === 'lost') return false;
       return null;
     }
     function toUnified(src, arr) {
       return arr.filter(function(e) {
-        return _pvAfterStart((e.event_date || e.eventDate || e.savedAt || '').slice(0,10));
+        return _pvAfterStart((e.eventDate || e.event_date || e.savedAt || '').slice(0,10));
       }).map(function(e) {
-        var home = e.home || '', away = e.away || '';
-        if (!home && e.meci) {
-          var p = String(e.meci).split(/\s+vs\s+/i);
-          home = (p[0] || '').trim(); away = (p[1] || '').trim();
-        }
         return {
           source: src,
-          date:   (e.event_date || e.eventDate || e.savedAt || '').slice(0,10),
-          home:   home.trim(), away: away.trim(),
-          market: e.marketKey || e.market || 'unknown',
-          odds:   Number(e.cota || e.odds || e.trackOdds || e.ml5Odds || 0) || 0,
-          won:    wonFrom(e),
+          date:   (e.eventDate || e.event_date || e.savedAt || '').slice(0,10),
+          home:   String(e.home || '').trim(),
+          away:   String(e.away || '').trim(),
+          market: String(e.bestBet || e.marketKey || e.market || 'unknown'),
+          odds:   Number(e.odds || e.cota || 0) || 0,
+          won:    wonFromStatus(e.status || ''),
           from_open_pct: null
         };
       });
     }
 
-    var allPicks = toUnified('APEX', apexRaw)
-      .concat(toUnified('Claude', claudeRaw))
-      .concat(toUnified('ML5', ml5Raw));
+    var allPicks = toUnified('Meciuri', _pvLoadObj('veyra_monitor_v4'))
+      .concat(toUnified('APEX',    _pvLoadObj('veyra_apex_monitor_v2')))
+      .concat(toUnified('ML5',     _pvLoadObj('veyra_ml5_monitor_v2')));
 
     // Imbogateste cu CLV din RECOMMENDATION_LOG
     var rlog = Array.isArray(window.RECOMMENDATION_LOG) ? window.RECOMMENDATION_LOG : [];
@@ -2679,9 +2678,9 @@ function renderPerformantaVerdict() {
 
     // --- Per sursa: APEX / Claude / ML5 ---
     var SRCS = [
-      { key: 'APEX',   label: 'APEX (Motor AI)', color: '#60a5fa', bg: 'rgba(96,165,250,.10)', border: 'rgba(96,165,250,.3)' },
-      { key: 'Claude', label: 'Claude AI',        color: '#a78bfa', bg: 'rgba(167,139,250,.10)', border: 'rgba(167,139,250,.3)' },
-      { key: 'ML5',    label: 'ML5',              color: '#34d399', bg: 'rgba(52,211,153,.10)', border: 'rgba(52,211,153,.3)' }
+      { key: 'Meciuri', label: 'Meciuri',         color: '#2BE5C5', bg: 'rgba(43,229,197,.10)', border: 'rgba(43,229,197,.3)' },
+      { key: 'APEX',    label: 'APEX Engine',      color: '#60a5fa', bg: 'rgba(96,165,250,.10)', border: 'rgba(96,165,250,.3)' },
+      { key: 'ML5',     label: 'ML5',              color: '#34d399', bg: 'rgba(52,211,153,.10)', border: 'rgba(52,211,153,.3)' }
     ];
     var srcHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
     SRCS.forEach(function(s) {

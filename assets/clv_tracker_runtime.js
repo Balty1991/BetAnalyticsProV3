@@ -1,20 +1,21 @@
 /**
- * clv_tracker_runtime.js — V5
+ * clv_tracker_runtime.js — V6
  * ===========================
- * Sursa de date: cele 3 localStorage-uri din Sesiunea Mea
- *   - veyra_motorai_hist      = APEX (Motor AI) picks salvate manual
- *   - veyra_claude_saved_v1   = Meciuri (Claude AI) picks salvate manual
- *   - veyra_ml5_accuracy_log_v2 = ML5 picks
+ * Sursa de date: cele 3 storages din stats_meciuri.js (pick-uri salvate manual)
+ *   - veyra_monitor_v4       = Meciuri picks salvate manual
+ *   - veyra_apex_monitor_v2  = APEX picks salvate manual
+ *   - veyra_ml5_monitor_v2   = ML5 picks salvate manual
  * CLV (from_open_pct) e obtinut prin match cu RECOMMENDATION_LOG acolo unde exista.
+ * Structura entry: { home, away, bestBet(market), odds, eventDate, status:'win'/'loss'/'pending' }
  */
 
 (function () {
   "use strict";
 
-  var APEX_KEY   = "veyra_motorai_hist";
-  var CLAUDE_KEY = "veyra_claude_saved_v1";
-  var ML5_KEY    = "veyra_ml5_accuracy_log_v2";
-  var RESET_KEY  = "veyra_stats_start_date";
+  var MECIURI_KEY = "veyra_monitor_v4";
+  var APEX_KEY    = "veyra_apex_monitor_v2";
+  var ML5_KEY     = "veyra_ml5_monitor_v2";
+  var RESET_KEY   = "veyra_stats_start_date";
 
   /* ── hook pe switchTab ──────────────────────────────────────────────────── */
 
@@ -59,45 +60,42 @@
   /* ── incarcare picks din toate 3 surse ─────────────────────────────────── */
 
   function loadAllPicks() {
-    var apexRaw = [], claudeRaw = [], ml5Raw = [];
-    try { apexRaw   = JSON.parse(localStorage.getItem(APEX_KEY)   || "[]"); } catch(e) {}
-    try { claudeRaw = JSON.parse(localStorage.getItem(CLAUDE_KEY) || "[]"); } catch(e) {}
-    try { ml5Raw    = JSON.parse(localStorage.getItem(ML5_KEY)    || "[]"); } catch(e) {}
+    function loadObj(key) {
+      try {
+        var raw = JSON.parse(localStorage.getItem(key) || "{}");
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) return Object.keys(raw).map(function(k){ return raw[k]; }).filter(Boolean);
+        if (Array.isArray(raw)) return raw;
+        return [];
+      } catch(e) { return []; }
+    }
 
-    function wonFromResult(r) {
-      if (r === "won"  || r === "win")  return true;
-      if (r === "lost" || r === "loss") return false;
+    function wonFromStatus(s) {
+      if (s === "win"  || s === "won")  return true;
+      if (s === "loss" || s === "lost") return false;
       return null;
     }
 
     function toUnified(src, arr) {
       return arr.filter(function(e) {
-        return afterStart((e.event_date || e.eventDate || e.savedAt || "").slice(0,10));
+        return afterStart((e.eventDate || e.event_date || e.savedAt || "").slice(0,10));
       }).map(function(e) {
-        var home = e.home || "", away = e.away || "";
-        if (!home && e.meci) {
-          var p = String(e.meci).split(/\s+vs\s+/i);
-          home = (p[0] || "").trim();
-          away = (p[1] || "").trim();
-        }
-        var odds = Number(e.cota || e.odds || e.trackOdds || e.ml5Odds || 0) || 0;
         return {
           source: src,
-          date:   (e.event_date || e.eventDate || e.savedAt || "").slice(0,10),
-          home:   home.trim(),
-          away:   away.trim(),
-          market: e.marketKey || e.market || "unknown",
-          odds:   odds,
-          won:    wonFromResult(e.result || ""),
+          date:   (e.eventDate || e.event_date || e.savedAt || "").slice(0,10),
+          home:   String(e.home || "").trim(),
+          away:   String(e.away || "").trim(),
+          market: String(e.bestBet || e.marketKey || e.market || "unknown"),
+          odds:   Number(e.odds || e.cota || 0) || 0,
+          won:    wonFromStatus(e.status || ""),
           from_open_pct: null,
-          edge_pct:  Number(e.edge_pp || e.edge_pct || 0) || null
+          edge_pct: null
         };
       });
     }
 
-    return toUnified("apex",   apexRaw)
-      .concat(toUnified("claude", claudeRaw))
-      .concat(toUnified("ml5",   ml5Raw));
+    return toUnified("Meciuri", loadObj(MECIURI_KEY))
+      .concat(toUnified("APEX",    loadObj(APEX_KEY)))
+      .concat(toUnified("ML5",     loadObj(ML5_KEY)));
   }
 
   /* ── imbogatie cu CLV din RECOMMENDATION_LOG ────────────────────────────── */
