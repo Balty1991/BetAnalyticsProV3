@@ -65,7 +65,7 @@
     try { ml5Raw    = JSON.parse(localStorage.getItem(ML5_KEY)    || "[]"); } catch(e) {}
 
     function wonFromResult(r) {
-      if (r === "won")  return true;
+      if (r === "won"  || r === "win")  return true;
       if (r === "lost" || r === "loss") return false;
       return null;
     }

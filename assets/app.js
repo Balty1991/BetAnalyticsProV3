@@ -2601,7 +2601,7 @@ function renderPerformantaVerdict() {
     try { ml5Raw    = JSON.parse(localStorage.getItem('veyra_ml5_accuracy_log_v2')  || '[]'); } catch(ee) {}
 
     function wonFrom(r) {
-      if (r.won === true || r.result === 'won')  return true;
+      if (r.won === true  || r.result === 'won' || r.result === 'win')  return true;
       if (r.won === false || r.result === 'lost' || r.result === 'loss') return false;
       return null;
     }
