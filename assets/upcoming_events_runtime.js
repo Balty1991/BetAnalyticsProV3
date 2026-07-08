@@ -208,9 +208,10 @@
   function calcPrediction(ev, pred) {
     var markets = [], hasMl = false;
     var mbo = ev.market_best_odds || {};
-    /* Only use Claude-generated Romanian ai_preview; skip English BSD text */
-    var aiText  = (pred && pred.ai_preview) || '';
-    var aiBoost = !!aiText;
+    /* Romanian (Claude) preferred; English BSD text shown but not boosted */
+    var aiTextRo = (pred && pred.ai_preview) || '';
+    var aiText   = aiTextRo || (ev.ai_preview && ev.ai_preview.text) || '';
+    var aiBoost  = !!aiTextRo;
 
     /* xG for derived markets */
     var xgH = pred ? Number(pred.expected_home_goals || 0) : 0;
@@ -256,11 +257,11 @@
         if (prob > 0) markets.push({ key:key, prob:prob, source:ro?'Cote':'ML', odds:ro||estOdds(probFromMl), oddsReal:ro>0 });
       });
 
-      /* Trust ML engine's best_market (has EV/edge) */
-      var bm = pred.best_market;
-      if (bm && bm.market_key) {
-        var eng = markets.filter(function(m){ return m.key === bm.market_key; })[0];
-        if (eng) { eng.ev = bm.ev || null; }
+      /* Store ML engine's best_market key for selection below */
+      var _bm = pred.best_market;
+      if (_bm && _bm.market_key) {
+        var _eng = markets.filter(function(m){ return m.key === _bm.market_key; })[0];
+        if (_eng) { _eng.ev = _bm.ev || null; _eng._mlPick = true; }
       }
 
     } else if (ev.odds_home && ev.odds_draw && ev.odds_away) {
@@ -312,53 +313,37 @@
     });
     markets.sort(function(a,b){ return b.prob - a.prob; });
 
-    /* ── Safety-first selection ───────────────────────────────────────
-       Priority:
-       1. Clear 1X2 favorite (≥62%) — most legible pick
-       2. Best DC (≥68%) — safer than BTTS/O-U when no clear favorite
-       3. ML engine best_market (if marked and ≥55%)
-       4. Any non-DC market ≥55%
-       5. Highest-probability market overall
+    /* ── Pick selection ─────────────────────────────────────────────────
+       Strategy: primary = ML engine pick OR best non-DC market (variety)
+                 DC always shown as "PARIU SIGUR" alternative
     ─────────────────────────────────────────────────────────────────── */
-    var clear1x2 = markets.filter(function(m){
-      return (m.key==='home_win'||m.key==='draw'||m.key==='away_win') && m.prob >= 58;
-    }).sort(function(a,b){ return b.prob-a.prob; })[0];
+    markets.forEach(function(m){ m.isBest=false; m.isBestDc=false; });
 
     var bestDC = markets.filter(function(m){ return m.key.indexOf('dc_')===0; })
                         .sort(function(a,b){ return b.prob-a.prob; })[0];
 
-    var mlMarked = markets.filter(function(m){ return m.isBest; })[0];
+    /* ML engine's recommended pick (already has _mlPick flag + EV) */
+    var mlPick = markets.filter(function(m){ return m._mlPick; })[0];
 
-    /* Clear all flags, we'll re-set the winner */
-    markets.forEach(function(m){ m.isBest=false; m.isBestDc=false; });
-
-    /* xG market: home/away to score when very confident AND above DC */
-    var bestXg = markets.filter(function(m){
-      return (m.key==='home_to_score'||m.key==='away_to_score') && m.prob >= 75;
-    }).sort(function(a,b){ return b.prob-a.prob; })[0];
+    /* Non-DC, non-half markets sorted by prob */
+    var nonDcMkts = markets.filter(function(m){
+      return m.key.indexOf('dc_')!==0 && m.key!=='goal_fh' && m.key!=='goal_sh';
+    });
 
     var chosen;
-    if (clear1x2) {
-      chosen = clear1x2;
-    } else if (bestXg && (!bestDC || bestXg.prob >= bestDC.prob)) {
-      chosen = bestXg;
-    } else if (bestDC && bestDC.prob >= 68) {
-      chosen = bestDC;
-    } else if (mlMarked && mlMarked.prob >= 55) {
-      chosen = mlMarked;
+    if (mlPick && mlPick.key.indexOf('dc_')!==0) {
+      /* Trust ML engine's EV pick as primary */
+      chosen = mlPick;
+    } else if (nonDcMkts.length > 0) {
+      /* Highest-prob non-DC market (gives variety: home_win, away_win, over_25…) */
+      chosen = nonDcMkts[0];
     } else {
-      var noDC2 = markets.filter(function(m){ return m.key.indexOf('dc_')!==0; });
-      chosen = (noDC2[0] && noDC2[0].prob >= 55) ? noDC2[0] : (markets[0]);
+      chosen = bestDC || markets[0];
     }
     chosen.isBest = true;
 
-    /* DC safer alternative: show when primary is a volatile market (BTTS/OU) */
-    if (chosen.key!=='home_win'&&chosen.key!=='draw'&&chosen.key!=='away_win'
-        &&chosen.key.indexOf('dc_')!==0 && bestDC && bestDC.prob >= 65 && bestDC!==chosen) {
-      bestDC.isBestDc = true;
-    }
-    /* Also show DC when primary is 1X2 with high prob (keep as safer hint) */
-    if ((chosen.key==='home_win'||chosen.key==='away_win') && bestDC && bestDC!==chosen && bestDC.prob>=68) {
+    /* DC always shown as safe alternative when it's not the primary and prob ≥65% */
+    if (bestDC && bestDC !== chosen && bestDC.prob >= 65) {
       bestDC.isBestDc = true;
     }
 
@@ -624,8 +609,7 @@
           if (extMkts.length || p.goalIntervals || p.mostLikelyScore || p.xgHome) {
             var extId = 'ext_' + String(ev.id);
             html += '<details style="margin-top:6px">'
-              + '<summary onclick="this.parentElement.setAttribute(\'open\',this.parentElement.hasAttribute(\'open\')?false:\'\')" '
-              + 'style="list-style:none;cursor:pointer;font-size:10px;color:#64748b;'
+              + '<summary style="list-style:none;cursor:pointer;font-size:10px;color:#64748b;'
               + 'display:flex;justify-content:space-between;align-items:center;'
               + 'padding:6px 0;border-top:1px solid rgba(255,255,255,.05)">'
               + '<span>📊 Piețe extinse (' + extMkts.length + ')</span><span>▾</span></summary>';
@@ -688,8 +672,8 @@
             html += '</div></details>';
           }
 
-          /* AI preview: only Romanian (pred.ai_preview from Claude) */
-          var aiText = (pred && pred.ai_preview) || '';
+          /* AI preview: Romanian (Claude) preferred; English BSD as fallback */
+          var aiText = (pred && pred.ai_preview) || (ev.ai_preview && ev.ai_preview.text) || '';
           html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">'
             + '<span style="font-size:9px;color:rgba(255,255,255,.2)">'+(p.hasMl?'🤖 Model ML':'📊 Cote')+'</span>'
             + (p.aiBoost?'<span style="font-size:9px;color:#a78bfa">✨ AI analizat</span>':'');
