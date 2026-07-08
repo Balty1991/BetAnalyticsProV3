@@ -6013,6 +6013,7 @@ function ensureTabData(name){
   if(name === 'tracking') keys = ['events', 'recommendationLog'];
   else if(name === 'charts') keys = ['recommendationLog', 'historyEngine'];
   else if(name === 'smartbet') keys = ['recommendationLog', 'historyEngine', 'recommendationJournal'];
+  else if(name === 'upcoming') keys = ['events'];
   if(!keys.length) return Promise.resolve(false);
   return Promise.all(keys.map(loadLazyDataset));
 }
