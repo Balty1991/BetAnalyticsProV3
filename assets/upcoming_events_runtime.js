@@ -49,15 +49,31 @@
   }
 
   function getOddsForMarket(ev, key, p) {
-    var d = { home_win: ev.odds_home, draw: ev.odds_draw, away_win: ev.odds_away,
-              over_25: ev.odds_over_25, over_15: ev.odds_over_15,
-              under_25: ev.odds_under_25, btts_yes: ev.odds_btts_yes };
-    if (d[key]) return Math.round(Number(d[key]) * 100) / 100;
-    if (p && p.one != null && p.x != null && p.two != null) {
-      var ph = p.one / 100, pd2 = p.x / 100, pa = p.two / 100;
-      if (key === 'dc_1x' && ph + pd2 > 0) return Math.round(100 / (ph + pd2)) / 100;
-      if (key === 'dc_x2' && pd2 + pa > 0) return Math.round(100 / (pd2 + pa)) / 100;
-      if (key === 'dc_12' && ph + pa  > 0) return Math.round(100 / (ph + pa))  / 100;
+    /* 1. Real bookmaker odds (market_best_odds) */
+    var mbo = ev.market_best_odds || {};
+    var mboMap = { home_win:'homeWin', draw:'draw', away_win:'awayWin',
+                   btts_yes:'btts', btts_no:'bttsNo',
+                   dc_1x:'dc1x', dc_x2:'dcx2', dc_12:'dc12',
+                   over_15:'over15', over_25:'over25', over_35:'over35',
+                   under_25:'under25', under_35:'under35' };
+    if (mboMap[key] && mbo[mboMap[key]] && mbo[mboMap[key]].avg_odds)
+      return Math.round(Number(mbo[mboMap[key]].avg_odds) * 100) / 100;
+    /* 2. events.json direct odds */
+    var evMap = { home_win:ev.odds_home, draw:ev.odds_draw, away_win:ev.odds_away,
+                  over_15:ev.odds_over_15, over_25:ev.odds_over_25,
+                  under_25:ev.odds_under_25, btts_yes:ev.odds_btts_yes, btts_no:ev.odds_btts_no };
+    if (evMap[key]) return Math.round(Number(evMap[key]) * 100) / 100;
+    /* 3. From allMarkets array (pre-computed in calcPrediction) */
+    if (p && p.allMarkets) {
+      var m = p.allMarkets.filter(function(m){ return m.key===key; })[0];
+      if (m && m.odds) return m.odds;
+    }
+    /* 4. Estimate from ML probability */
+    if (p) {
+      var ph = (p.one||0)/100, pd2 = (p.x||0)/100, pa = (p.two||0)/100;
+      if (key==='dc_1x' && ph+pd2>0) return Math.round(100/(ph+pd2)/0.93*100)/100;
+      if (key==='dc_x2' && pd2+pa>0) return Math.round(100/(pd2+pa)/0.93*100)/100;
+      if (key==='dc_12' && ph+pa>0)  return Math.round(100/(ph+pa)/0.93*100)/100;
     }
     return 0;
   }
@@ -73,9 +89,13 @@
     if (k === 'under_25') return hs + as2 < 2.5;
     if (k === 'btts_yes') return hs > 0 && as2 > 0;
     if (k === 'btts_no')  return hs === 0 || as2 === 0;
-    if (k === 'dc_1x')    return hs >= as2;
-    if (k === 'dc_x2')    return hs <= as2;
-    if (k === 'dc_12')    return hs !== as2;
+    if (k === 'dc_1x')        return hs >= as2;
+    if (k === 'dc_x2')        return hs <= as2;
+    if (k === 'dc_12')        return hs !== as2;
+    if (k === 'home_to_score') return hs > 0;
+    if (k === 'away_to_score') return as2 > 0;
+    if (k === 'goal_fh')      return null; // requires ht score — manual settle
+    if (k === 'goal_sh')      return null; // requires ht score — manual settle
     return null;
   }
 
@@ -160,81 +180,136 @@
   }
 
   var MKT_LABELS = {
-    home_win: '1 — Victorie gazdă', draw: 'X — Egal', away_win: '2 — Victorie oaspete',
-    over_15: 'Peste 1.5 goluri',    over_25: 'Peste 2.5 goluri',
-    under_25: 'Sub 2.5 goluri',     btts_yes: 'Ambele marchează',
-    btts_no: 'Min. o echipă nu marchează',
-    dc_1x: 'Șansă dublă 1X', dc_x2: 'Șansă dublă X2', dc_12: 'Șansă dublă 12'
+    home_win:'1 — Victorie gazdă', draw:'X — Egal', away_win:'2 — Victorie oaspete',
+    over_15:'Peste 1.5 goluri', over_25:'Peste 2.5 goluri', over_35:'Peste 3.5 goluri',
+    under_25:'Sub 2.5 goluri',  under_35:'Sub 3.5 goluri',
+    btts_yes:'Ambele marchează', btts_no:'Min. o echipă nu marchează',
+    dc_1x:'Șansă dublă 1X', dc_x2:'Șansă dublă X2', dc_12:'Șansă dublă 12',
+    home_to_score:'Gazda marchează', away_to_score:'Oaspeții marchează',
+    goal_fh:'Gol prima repriță',    goal_sh:'Gol a doua repriță',
+    no_goal_fh:'Fără gol prima rep.'
   };
   var MKT_COLORS = {
     home_win:'#22c55e', draw:'#f59e0b', away_win:'#60a5fa',
-    over_15:'#a78bfa',  over_25:'#a78bfa', under_25:'#34d399',
+    over_15:'#a78bfa',  over_25:'#a78bfa', over_35:'#a78bfa',
+    under_25:'#34d399', under_35:'#34d399',
     btts_yes:'#f472b6', btts_no:'#94a3b8',
-    dc_1x:'#2BE5C5',    dc_x2:'#2BE5C5',   dc_12:'#2BE5C5'
+    dc_1x:'#2BE5C5', dc_x2:'#2BE5C5', dc_12:'#2BE5C5',
+    home_to_score:'#4ade80', away_to_score:'#93c5fd',
+    goal_fh:'#fbbf24', goal_sh:'#fb923c', no_goal_fh:'#64748b'
   };
+
+  /* Estimate bookmaker odds from probability (7% vig for 2-way markets) */
+  function estOdds(probPct) {
+    if (!probPct || probPct <= 0) return 0;
+    return Math.round(100 / probPct / 0.93 * 100) / 100;
+  }
 
   function calcPrediction(ev, pred) {
     var markets = [], hasMl = false;
-    var aiText  = (pred && pred.ai_preview) || (ev.ai_preview && ev.ai_preview.text) || '';
+    var mbo = ev.market_best_odds || {};
+    /* Only use Claude-generated Romanian ai_preview; skip English BSD text */
+    var aiText  = (pred && pred.ai_preview) || '';
     var aiBoost = !!aiText;
+
+    /* xG for derived markets */
+    var xgH = pred ? Number(pred.expected_home_goals || 0) : 0;
+    var xgA = pred ? Number(pred.expected_away_goals || 0) : 0;
+    var xgTotal = xgH + xgA;
+
+    /* Helper: real bookmaker odds for a key (from market_best_odds or events.json) */
+    function realOdds(key) {
+      var mboKey = { home_win:'homeWin', draw:'draw', away_win:'awayWin',
+                     btts_yes:'btts', btts_no:'bttsNo',
+                     dc_1x:'dc1x', dc_x2:'dcx2', dc_12:'dc12',
+                     over_15:'over15', over_25:'over25', over_35:'over35',
+                     under_25:'under25', under_35:'under35' }[key];
+      if (mboKey && mbo[mboKey] && mbo[mboKey].avg_odds) return Number(mbo[mboKey].avg_odds);
+      var evKey = { home_win:'odds_home', draw:'odds_draw', away_win:'odds_away',
+                    over_15:'odds_over_15', over_25:'odds_over_25', over_35:'odds_over_35',
+                    under_25:'odds_under_25', btts_yes:'odds_btts_yes', btts_no:'odds_btts_no' }[key];
+      if (evKey && ev[evKey]) return Number(ev[evKey]);
+      return 0;
+    }
 
     if (pred) {
       hasMl = true;
       var ph = Number(pred.prob_home_win||0), pd = Number(pred.prob_draw||0),
           pa = Number(pred.prob_away_win||0), po25 = Number(pred.prob_over_25||0),
-          po15 = Number(pred.prob_over_15||0), pbtts = Number(pred.prob_btts_yes||0);
+          po15 = Number(pred.prob_over_15||0), po35 = Number(pred.prob_over_35||0),
+          pbtts = Number(pred.prob_btts_yes||0);
 
-      if (ph  > 0) markets.push({ key:'home_win', prob:ph,   source:'ML' });
-      if (pd  > 0) markets.push({ key:'draw',     prob:pd,   source:'ML' });
-      if (pa  > 0) markets.push({ key:'away_win', prob:pa,   source:'ML' });
-      if (po25> 0) markets.push({ key:'over_25',  prob:po25, source:'ML' });
-      if (po15> 0) markets.push({ key:'over_15',  prob:po15, source:'ML' });
-      if (pbtts>0) { markets.push({ key:'btts_yes', prob:pbtts,     source:'ML' });
-                     markets.push({ key:'btts_no',  prob:100-pbtts, source:'ML' }); }
-      /* Double chance from ML probs */
-      if (ph>0&&pd>0) markets.push({ key:'dc_1x', prob:Math.min(ph+pd,99), source:'ML' });
-      if (pd>0&&pa>0) markets.push({ key:'dc_x2', prob:Math.min(pd+pa,99), source:'ML' });
-      if (ph>0&&pa>0) markets.push({ key:'dc_12', prob:Math.min(ph+pa,99), source:'ML' });
+      function addMl(key, prob) {
+        if (prob <= 0) return;
+        var ro = realOdds(key);
+        markets.push({ key:key, prob:prob, source:'ML', odds:ro || estOdds(prob), oddsReal:ro>0 });
+      }
+      addMl('home_win', ph);  addMl('draw', pd);  addMl('away_win', pa);
+      addMl('over_25', po25); addMl('over_15', po15); addMl('over_35', po35);
+      if (pbtts > 0) { addMl('btts_yes', pbtts); addMl('btts_no', 100-pbtts); }
+
+      /* Double chance — prefer bookmaker DC odds for probability if available */
+      ['dc_1x','dc_x2','dc_12'].forEach(function(key) {
+        var ro = realOdds(key);
+        var probFromMl = key==='dc_1x' ? Math.min(ph+pd,99) : key==='dc_x2' ? Math.min(pd+pa,99) : Math.min(ph+pa,99);
+        var prob = ro > 0 ? Math.min((1/ro)*100*1.065, 99) : probFromMl;
+        if (prob > 0) markets.push({ key:key, prob:prob, source:ro?'Cote':'ML', odds:ro||estOdds(probFromMl), oddsReal:ro>0 });
+      });
 
       /* Trust ML engine's best_market (has EV/edge) */
       var bm = pred.best_market;
       if (bm && bm.market_key) {
         var eng = markets.filter(function(m){ return m.key === bm.market_key; })[0];
-        if (eng) { eng.isBest = true; eng.ev = bm.ev || null; }
-        /* Also mark DC safer alternative for 1X2 best picks */
-        if (bm.market_key === 'home_win') {
-          var dc1x = markets.filter(function(m){ return m.key === 'dc_1x'; })[0];
-          if (dc1x) dc1x.isBestDc = true;
-        }
-        if (bm.market_key === 'away_win') {
-          var dcx2 = markets.filter(function(m){ return m.key === 'dc_x2'; })[0];
-          if (dcx2) dcx2.isBestDc = true;
-        }
+        if (eng) { eng.ev = bm.ev || null; }
       }
 
     } else if (ev.odds_home && ev.odds_draw && ev.odds_away) {
       var inv1 = 1/Number(ev.odds_home), invX = 1/Number(ev.odds_draw), inv2 = 1/Number(ev.odds_away);
       var tot  = inv1 + invX + inv2;
-      var ph2  = (inv1/tot)*100, pd2 = (invX/tot)*100, pa2 = (inv2/tot)*100;
-      markets.push({ key:'home_win', prob:ph2, source:'Cote' });
-      markets.push({ key:'draw',     prob:pd2, source:'Cote' });
-      markets.push({ key:'away_win', prob:pa2, source:'Cote' });
-      markets.push({ key:'dc_1x',    prob:Math.min(ph2+pd2,99), source:'Cote' });
-      markets.push({ key:'dc_x2',    prob:Math.min(pd2+pa2,99), source:'Cote' });
-      markets.push({ key:'dc_12',    prob:Math.min(ph2+pa2,99), source:'Cote' });
-      if (ev.odds_over_25 && ev.odds_under_25) {
-        var iOv = 1/Number(ev.odds_over_25), iUn = 1/Number(ev.odds_under_25), t25 = iOv+iUn;
-        markets.push({ key:'over_25',  prob:(iOv/t25)*100, source:'Cote' });
-        markets.push({ key:'under_25', prob:(iUn/t25)*100, source:'Cote' });
+      var ph2 = (inv1/tot)*100, pd2 = (invX/tot)*100, pa2 = (inv2/tot)*100;
+      function addCote(key, prob) {
+        var ro = realOdds(key);
+        markets.push({ key:key, prob:prob, source:'Cote', odds:ro||Number(ev['odds_'+key.replace('home_win','home').replace('away_win','away').replace('draw','draw')])||estOdds(prob), oddsReal:ro>0 });
       }
+      addCote('home_win', ph2); addCote('draw', pd2); addCote('away_win', pa2);
+      ['dc_1x','dc_x2','dc_12'].forEach(function(key) {
+        var ro = realOdds(key);
+        var prob = ro > 0 ? Math.min((1/ro)*100*1.065,99) :
+          key==='dc_1x'?Math.min(ph2+pd2,99):key==='dc_x2'?Math.min(pd2+pa2,99):Math.min(ph2+pa2,99);
+        markets.push({ key:key, prob:prob, source:ro?'Cote':'Est', odds:ro||estOdds(prob), oddsReal:ro>0 });
+      });
+      if (ev.odds_over_25) { var ro25=realOdds('over_25'); markets.push({key:'over_25',prob:(1/(Number(ev.odds_over_25)*tot/inv1))||45,source:'Cote',odds:ro25||Number(ev.odds_over_25),oddsReal:ro25>0}); }
       if (ev.odds_btts_yes) {
         var pb = (1/Number(ev.odds_btts_yes))*100;
-        markets.push({ key:'btts_yes', prob:Math.min(pb*1.05,92),    source:'Cote' });
-        markets.push({ key:'btts_no',  prob:Math.max(100-pb*1.05,8), source:'Cote' });
+        var rob = realOdds('btts_yes');
+        markets.push({key:'btts_yes',prob:Math.min(pb*1.05,92),source:'Cote',odds:rob||Number(ev.odds_btts_yes),oddsReal:rob>0});
+        markets.push({key:'btts_no',prob:Math.max(100-pb*1.05,8),source:'Cote',odds:realOdds('btts_no')||estOdds(100-pb*1.05),oddsReal:false});
       }
     }
 
+    /* ── New markets from xG (Poisson model) ────────────────────── */
+    if (xgH > 0) {
+      var pHS = Math.round((1 - Math.exp(-xgH)) * 100);
+      markets.push({ key:'home_to_score', prob:pHS, source:'xG', odds:estOdds(pHS), oddsReal:false, category:'goals' });
+    }
+    if (xgA > 0) {
+      var pAS = Math.round((1 - Math.exp(-xgA)) * 100);
+      markets.push({ key:'away_to_score', prob:pAS, source:'xG', odds:estOdds(pAS), oddsReal:false, category:'goals' });
+    }
+    if (xgTotal > 0) {
+      var pFH = Math.round((1 - Math.exp(-xgTotal * 0.43)) * 100);
+      var pSH = Math.round((1 - Math.exp(-xgTotal * 0.57)) * 100);
+      markets.push({ key:'goal_fh', prob:pFH, source:'xG', odds:estOdds(pFH), oddsReal:false, category:'half' });
+      markets.push({ key:'goal_sh', prob:pSH, source:'xG', odds:estOdds(pSH), oddsReal:false, category:'half' });
+    }
+
     if (!markets.length) return null;
+    /* Remove duplicates (prefer higher-prob entry per key) */
+    var seen = {};
+    markets = markets.filter(function(m){
+      if (seen[m.key] && seen[m.key].prob >= m.prob) return false;
+      seen[m.key] = m; return true;
+    });
     markets.sort(function(a,b){ return b.prob - a.prob; });
 
     /* ── Safety-first selection ───────────────────────────────────────
@@ -246,7 +321,7 @@
        5. Highest-probability market overall
     ─────────────────────────────────────────────────────────────────── */
     var clear1x2 = markets.filter(function(m){
-      return (m.key==='home_win'||m.key==='draw'||m.key==='away_win') && m.prob >= 62;
+      return (m.key==='home_win'||m.key==='draw'||m.key==='away_win') && m.prob >= 58;
     }).sort(function(a,b){ return b.prob-a.prob; })[0];
 
     var bestDC = markets.filter(function(m){ return m.key.indexOf('dc_')===0; })
@@ -257,9 +332,16 @@
     /* Clear all flags, we'll re-set the winner */
     markets.forEach(function(m){ m.isBest=false; m.isBestDc=false; });
 
+    /* xG market: home/away to score when very confident AND above DC */
+    var bestXg = markets.filter(function(m){
+      return (m.key==='home_to_score'||m.key==='away_to_score') && m.prob >= 75;
+    }).sort(function(a,b){ return b.prob-a.prob; })[0];
+
     var chosen;
     if (clear1x2) {
       chosen = clear1x2;
+    } else if (bestXg && (!bestDC || bestXg.prob >= bestDC.prob)) {
+      chosen = bestXg;
     } else if (bestDC && bestDC.prob >= 68) {
       chosen = bestDC;
     } else if (mlMarked && mlMarked.prob >= 55) {
@@ -287,6 +369,17 @@
     var bDc  = markets.filter(function(m){ return m.isBestDc; })[0] || null;
     var isSafePick = best.key.indexOf('dc_') === 0;
 
+    /* Goal intervals per team (Poisson + goal distribution 43%/57% by half) */
+    var goalIntervals = null;
+    if (xgH > 0 && xgA > 0) {
+      goalIntervals = {
+        homeFH: Math.round((1 - Math.exp(-xgH * 0.43)) * 100),
+        homeSH: Math.round((1 - Math.exp(-xgH * 0.57)) * 100),
+        awayFH: Math.round((1 - Math.exp(-xgA * 0.43)) * 100),
+        awaySH: Math.round((1 - Math.exp(-xgA * 0.57)) * 100)
+      };
+    }
+
     /* Confidence: DC picks score higher due to structural safety */
     var baseConf = best.prob + (hasMl?5:0) + (aiBoost?3:0) + (isSafePick?6:0);
     return {
@@ -295,11 +388,17 @@
       two: two  ? Math.round(two.prob): null,
       best: { key:best.key, label:MKT_LABELS[best.key]||best.key,
               color:MKT_COLORS[best.key]||'#94a3b8', prob:Math.round(best.prob),
-              source:best.source, ev:best.ev||null, isSafe:isSafePick },
+              source:best.source, ev:best.ev||null, isSafe:isSafePick,
+              odds:best.odds||0, oddsReal:best.oddsReal||false },
       bestDc: bDc ? { key:bDc.key, label:MKT_LABELS[bDc.key]||bDc.key,
-                      color:'#2BE5C5', prob:Math.round(bDc.prob) } : null,
+                      color:'#2BE5C5', prob:Math.round(bDc.prob),
+                      odds:bDc.odds||0, oddsReal:bDc.oddsReal||false } : null,
       confidence: baseConf>=72?'high':baseConf>=58?'medium':'low',
-      hasMl:hasMl, aiBoost:aiBoost, allMarkets:markets
+      hasMl:hasMl, aiBoost:aiBoost, allMarkets:markets,
+      goalIntervals:goalIntervals,
+      xgHome: xgH > 0 ? Math.round(xgH*100)/100 : null,
+      xgAway: xgA > 0 ? Math.round(xgA*100)/100 : null,
+      mostLikelyScore: pred && pred.most_likely_score || null
     };
   }
 
@@ -473,6 +572,7 @@
           var pickColor  = p.best.isSafe ? '#2BE5C5' : p.best.color;
 
           if (notIn1x2||!p.one||p.best.isSafe) {
+            var oddsDisplay = p.best.odds > 0 ? '<span style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4)">'+(p.best.oddsReal?'@':'~@')+Number(p.best.odds).toFixed(2)+'</span>' : '';
             html += '<div style="padding:8px 0 6px;border-top:1px solid rgba(255,255,255,.06);'
               + 'display:flex;justify-content:space-between;align-items:center">'
               + '<div><div style="font-size:9px;color:'+(p.best.isSafe?'#2BE5C5':'var(--muted)')+';margin-bottom:2px">'+pickHeader+'</div>'
@@ -481,7 +581,8 @@
               + '</div>'
               + '<div style="text-align:right">'
               + '<div style="font-size:17px;font-weight:900;color:'+pickColor+'">'+p.best.prob+'%</div>'
-              + '<div style="font-size:9px;color:'+confColor+'">'+confDot+' '+confLabel+'</div>'
+              + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">'
+              + (oddsDisplay||'')+'<span style="font-size:9px;color:'+confColor+'">'+confDot+' '+confLabel+'</span></div>'
               + '</div></div>';
           } else {
             html += '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.06);'
@@ -492,12 +593,12 @@
 
           /* Alternative non-safe pick when primary is DC */
           if (p.bestDc && !p.best.isSafe) {
+            var dcOddsStr = p.bestDc.odds > 0 ? ' <span style="font-size:9px;opacity:.5">'+(p.bestDc.oddsReal?'@':'~@')+Number(p.bestDc.odds).toFixed(2)+'</span>' : '';
             html += '<div style="background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.2);'
               + 'border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;'
               + 'align-items:center;margin:4px 0 6px">'
               + '<div style="font-size:10px;font-weight:700;color:#2BE5C5">🛡️ '+p.bestDc.label+'</div>'
-              + '<div style="font-size:11px;font-weight:900;color:#2BE5C5">'+p.bestDc.prob+'% '
-              + '<span style="font-size:9px;opacity:.5">mai sigur</span></div></div>';
+              + '<div style="font-size:11px;font-weight:900;color:#2BE5C5">'+p.bestDc.prob+'%'+dcOddsStr+'</div></div>';
           } else if (p.bestDc && p.best.isSafe) {
             /* Primary is already DC; show ML pick as secondary if exists */
             var mlAlt = p.allMarkets.filter(function(m){
@@ -515,8 +616,80 @@
           }
 
           /* Source + AI label */
-          /* AI preview: prefer pred.ai_preview (Romanian) over ev.ai_preview.text (English BSD) */
-          var aiText = (pred && pred.ai_preview) || (ev.ai_preview && ev.ai_preview.text) || '';
+          /* ── Piețe extinse (expandable) ────────────────────────────── */
+          var extMkts = p.allMarkets.filter(function(m){
+            return m.key!=='home_win'&&m.key!=='draw'&&m.key!=='away_win'&&m.key!==p.best.key;
+          }).slice(0, 10);
+
+          if (extMkts.length || p.goalIntervals || p.mostLikelyScore || p.xgHome) {
+            var extId = 'ext_' + String(ev.id);
+            html += '<details style="margin-top:6px">'
+              + '<summary onclick="this.parentElement.setAttribute(\'open\',this.parentElement.hasAttribute(\'open\')?false:\'\')" '
+              + 'style="list-style:none;cursor:pointer;font-size:10px;color:#64748b;'
+              + 'display:flex;justify-content:space-between;align-items:center;'
+              + 'padding:6px 0;border-top:1px solid rgba(255,255,255,.05)">'
+              + '<span>📊 Piețe extinse (' + extMkts.length + ')</span><span>▾</span></summary>';
+
+            html += '<div style="padding:6px 0 4px">';
+
+            /* xG + most likely score row */
+            if (p.xgHome !== null && p.xgAway !== null) {
+              html += '<div style="display:flex;gap:8px;margin-bottom:8px;font-size:10px;'
+                + 'background:rgba(255,255,255,.03);border-radius:8px;padding:6px 8px">'
+                + '<span style="color:var(--muted)">xG:</span>'
+                + '<span style="color:#22c55e;font-weight:700">' + p.xgHome + '</span>'
+                + '<span style="color:rgba(255,255,255,.2)">vs</span>'
+                + '<span style="color:#60a5fa;font-weight:700">' + p.xgAway + '</span>'
+                + (p.mostLikelyScore ? '<span style="margin-left:auto;color:#f59e0b;font-weight:700">~' + p.mostLikelyScore + '</span>' : '')
+                + '</div>';
+            }
+
+            /* Goal intervals table */
+            if (p.goalIntervals) {
+              var gi = p.goalIntervals;
+              html += '<div style="margin-bottom:8px;border:1px solid rgba(255,255,255,.07);'
+                + 'border-radius:8px;overflow:hidden">'
+                + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;'
+                + 'font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;'
+                + 'background:rgba(255,255,255,.04);color:var(--muted)">'
+                + '<div style="padding:5px 6px">Echipă</div>'
+                + '<div style="padding:5px 6px;text-align:center">Rep. 1</div>'
+                + '<div style="padding:5px 6px;text-align:center">Rep. 2</div></div>'
+                + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:10px">'
+                + '<div style="padding:5px 6px;font-weight:700;color:#4ade80;font-size:9px;'
+                + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🏠 ' + (ev.home_team||'').split(' ')[0] + '</div>'
+                + '<div style="padding:5px 6px;text-align:center;color:#4ade80;font-weight:800">' + gi.homeFH + '%</div>'
+                + '<div style="padding:5px 6px;text-align:center;color:#4ade80;font-weight:800">' + gi.homeSH + '%</div>'
+                + '</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:10px;'
+                + 'border-top:1px solid rgba(255,255,255,.05)">'
+                + '<div style="padding:5px 6px;font-weight:700;color:#93c5fd;font-size:9px;'
+                + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">✈️ ' + (ev.away_team||'').split(' ')[0] + '</div>'
+                + '<div style="padding:5px 6px;text-align:center;color:#93c5fd;font-weight:800">' + gi.awayFH + '%</div>'
+                + '<div style="padding:5px 6px;text-align:center;color:#93c5fd;font-weight:800">' + gi.awaySH + '%</div>'
+                + '</div></div>';
+            }
+
+            /* All extended markets with odds */
+            extMkts.forEach(function(m) {
+              var mc = MKT_COLORS[m.key] || '#64748b';
+              var ml = MKT_LABELS[m.key] || m.key;
+              var oddsStr = m.odds > 0 ? (m.oddsReal ? '@' : '~@') + Number(m.odds).toFixed(2) : '';
+              html += '<div style="display:flex;justify-content:space-between;align-items:center;'
+                + 'padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+                + '<div><span style="font-size:10px;font-weight:600;color:' + mc + '">' + ml + '</span>'
+                + (m.source==='xG'||m.source==='Est'?'<span style="font-size:8px;color:rgba(255,255,255,.2);margin-left:4px">(' + m.source + ')</span>':'')
+                + '</div>'
+                + '<div style="display:flex;gap:8px;align-items:center">'
+                + '<span style="font-size:11px;font-weight:900;color:' + mc + '">' + Math.round(m.prob) + '%</span>'
+                + (oddsStr?'<span style="font-size:9px;color:rgba(255,255,255,.3)">' + oddsStr + '</span>':'')
+                + '</div></div>';
+            });
+
+            html += '</div></details>';
+          }
+
+          /* AI preview: only Romanian (pred.ai_preview from Claude) */
+          var aiText = (pred && pred.ai_preview) || '';
           html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">'
             + '<span style="font-size:9px;color:rgba(255,255,255,.2)">'+(p.hasMl?'🤖 Model ML':'📊 Cote')+'</span>'
             + (p.aiBoost?'<span style="font-size:9px;color:#a78bfa">✨ AI analizat</span>':'');
@@ -524,7 +697,7 @@
             html += '<button onclick="window.__veyraUpcToggleAI(this)" '
               + 'data-preview="'+encodeURIComponent(aiText.slice(0,600))+'" '
               + 'style="font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.1);'
-              + 'border:1px solid rgba(167,139,250,.3);color:#a78bfa;cursor:pointer">💬 AI Preview</button>';
+              + 'border:1px solid rgba(167,139,250,.3);color:#a78bfa;cursor:pointer">💬 Analiză AI</button>';
           }
           html += '</div>';
         }
@@ -655,7 +828,7 @@
   window.__veyraUpcToggleAI = function(btn) {
     var next = btn.nextElementSibling;
     if (next&&next.classList.contains('ai-preview-box')) {
-      next.remove(); btn.textContent='💬 AI Preview';
+      next.remove(); btn.textContent='💬 Analiză AI';
     } else {
       var box = document.createElement('div');
       box.className='ai-preview-box';
