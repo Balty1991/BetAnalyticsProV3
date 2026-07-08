@@ -89,13 +89,16 @@
     if (k === 'under_25') return hs + as2 < 2.5;
     if (k === 'btts_yes') return hs > 0 && as2 > 0;
     if (k === 'btts_no')  return hs === 0 || as2 === 0;
-    if (k === 'dc_1x')        return hs >= as2;
-    if (k === 'dc_x2')        return hs <= as2;
-    if (k === 'dc_12')        return hs !== as2;
+    if (k === 'dc_1x')         return hs >= as2;
+    if (k === 'dc_x2')         return hs <= as2;
+    if (k === 'dc_12')         return hs !== as2;
+    if (k === 'under_25')      return hs + as2 < 2.5;
+    if (k === 'under_35')      return hs + as2 < 3.5;
+    if (k === 'under_15')      return hs + as2 < 1.5;
     if (k === 'home_to_score') return hs > 0;
     if (k === 'away_to_score') return as2 > 0;
-    if (k === 'goal_fh')      return null; // requires ht score — manual settle
-    if (k === 'goal_sh')      return null; // requires ht score — manual settle
+    if (k === 'goal_fh')       return null;
+    if (k === 'goal_sh')       return null;
     return null;
   }
 
@@ -173,7 +176,8 @@
     var lookup = {};
     (Array.isArray(window.__RAW_PREDICTIONS) ? window.__RAW_PREDICTIONS : []).forEach(function(p) {
       if (!p) return;
-      var id = p.id || (p.event && p.event.id);
+      /* p.event.id is the event ID; p.id is the prediction row ID — must use event ID */
+      var id = (p.event && p.event.id) || p.id;
       if (id != null) lookup[String(id)] = p;
     });
     return lookup;
@@ -264,6 +268,8 @@
       }
       addMl('home_win', ph);  addMl('draw', pd);  addMl('away_win', pa);
       addMl('over_25', po25); addMl('over_15', po15); addMl('over_35', po35);
+      if (po25 > 0) addMl('under_25', 100 - po25);
+      if (po35 > 0) addMl('under_35', 100 - po35);
       if (pbtts > 0) { addMl('btts_yes', pbtts); /* btts_no omis — prea generic */ }
 
       /* Double chance — prefer bookmaker DC odds for probability if available */
@@ -274,11 +280,20 @@
         if (prob > 0) markets.push({ key:key, prob:prob, source:ro?'Cote':'ML', odds:ro||estOdds(probFromMl), oddsReal:ro>0 });
       });
 
-      /* Store ML engine's best_market key for selection below */
+      /* Store ML engine's best_market for pick selection */
       var _bm = pred.best_market;
       if (_bm && _bm.market_key) {
         var _eng = markets.filter(function(m){ return m.key === _bm.market_key; })[0];
-        if (_eng) { _eng.ev = _bm.ev || null; _eng._mlPick = true; }
+        if (!_eng && typeof _bm.prob === 'number') {
+          /* Market not yet in list (e.g. under_35 when xG is 0) — add from best_market */
+          var _bmProb = _bm.prob <= 1 ? Math.round(_bm.prob * 100) : Math.round(_bm.prob);
+          var _bmRo = realOdds(_bm.market_key);
+          _eng = { key:_bm.market_key, prob:_bmProb, source:'ML',
+                   odds:_bmRo || (typeof _bm.odds === 'number' ? _bm.odds : 0) || estOdds(_bmProb),
+                   oddsReal:_bmRo > 0 };
+          markets.push(_eng);
+        }
+        if (_eng) { _eng.ev = _bm.ev_pct || _bm.ev || null; _eng._mlPick = true; }
       }
 
     } else if (ev.odds_home && ev.odds_draw && ev.odds_away) {
