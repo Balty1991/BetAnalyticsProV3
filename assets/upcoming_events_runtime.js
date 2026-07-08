@@ -220,8 +220,9 @@
   function calcPrediction(ev, pred) {
     var markets = [], hasMl = false;
     var mbo = ev.market_best_odds || {};
-    /* Only Romanian AI text (Claude-generated); English BSD text hidden */
-    var aiText  = (pred && pred.ai_preview) || '';
+    /* Only show AI text if it contains Romanian diacritics (ă î ș ț â) */
+    var _aiRaw  = (pred && pred.ai_preview) || '';
+    var aiText  = /[ăîșțâĂÎȘȚÂ]/.test(_aiRaw) ? _aiRaw : '';
     var aiBoost = !!aiText;
 
     /* xG for derived markets */
@@ -723,8 +724,9 @@
             html += '</div></details>';
           }
 
-          /* AI preview: only Romanian (pred.ai_preview from Claude) */
-          var aiText = (pred && pred.ai_preview) || '';
+          /* AI preview: only if Romanian diacritics detected */
+          var _rawAi = (pred && pred.ai_preview) || '';
+          var aiText = /[ăîșțâĂÎȘȚÂ]/.test(_rawAi) ? _rawAi : '';
           html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">'
             + '<span style="font-size:9px;color:rgba(255,255,255,.2)">'+(p.hasMl?'🤖 Model ML':'📊 Cote')+'</span>'
             + (p.aiBoost?'<span style="font-size:9px;color:#a78bfa">✨ AI analizat</span>':'');
