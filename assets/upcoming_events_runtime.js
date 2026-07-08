@@ -175,7 +175,8 @@
 
   function calcPrediction(ev, pred) {
     var markets = [], hasMl = false;
-    var aiBoost = !!(ev.ai_preview && ev.ai_preview.text);
+    var aiText  = (pred && pred.ai_preview) || (ev.ai_preview && ev.ai_preview.text) || '';
+    var aiBoost = !!aiText;
 
     if (pred) {
       hasMl = true;
@@ -236,14 +237,47 @@
     if (!markets.length) return null;
     markets.sort(function(a,b){ return b.prob - a.prob; });
 
-    if (!markets.some(function(m){ return m.isBest; })) {
-      /* Prefer non-DC ≥58%, else DC ≥72%, else top non-DC */
-      var noDC = markets.filter(function(m){ return m.key.indexOf('dc_') !== 0; });
-      var topDC = markets.filter(function(m){ return m.key.indexOf('dc_') === 0; })[0];
-      if (noDC[0] && noDC[0].prob >= 58)      noDC[0].isBest = true;
-      else if (topDC && topDC.prob >= 72)      topDC.isBest   = true;
-      else if (noDC[0])                        noDC[0].isBest = true;
-      else                                     markets[0].isBest = true;
+    /* ── Safety-first selection ───────────────────────────────────────
+       Priority:
+       1. Clear 1X2 favorite (≥62%) — most legible pick
+       2. Best DC (≥68%) — safer than BTTS/O-U when no clear favorite
+       3. ML engine best_market (if marked and ≥55%)
+       4. Any non-DC market ≥55%
+       5. Highest-probability market overall
+    ─────────────────────────────────────────────────────────────────── */
+    var clear1x2 = markets.filter(function(m){
+      return (m.key==='home_win'||m.key==='draw'||m.key==='away_win') && m.prob >= 62;
+    }).sort(function(a,b){ return b.prob-a.prob; })[0];
+
+    var bestDC = markets.filter(function(m){ return m.key.indexOf('dc_')===0; })
+                        .sort(function(a,b){ return b.prob-a.prob; })[0];
+
+    var mlMarked = markets.filter(function(m){ return m.isBest; })[0];
+
+    /* Clear all flags, we'll re-set the winner */
+    markets.forEach(function(m){ m.isBest=false; m.isBestDc=false; });
+
+    var chosen;
+    if (clear1x2) {
+      chosen = clear1x2;
+    } else if (bestDC && bestDC.prob >= 68) {
+      chosen = bestDC;
+    } else if (mlMarked && mlMarked.prob >= 55) {
+      chosen = mlMarked;
+    } else {
+      var noDC2 = markets.filter(function(m){ return m.key.indexOf('dc_')!==0; });
+      chosen = (noDC2[0] && noDC2[0].prob >= 55) ? noDC2[0] : (markets[0]);
+    }
+    chosen.isBest = true;
+
+    /* DC safer alternative: show when primary is a volatile market (BTTS/OU) */
+    if (chosen.key!=='home_win'&&chosen.key!=='draw'&&chosen.key!=='away_win'
+        &&chosen.key.indexOf('dc_')!==0 && bestDC && bestDC.prob >= 65 && bestDC!==chosen) {
+      bestDC.isBestDc = true;
+    }
+    /* Also show DC when primary is 1X2 with high prob (keep as safer hint) */
+    if ((chosen.key==='home_win'||chosen.key==='away_win') && bestDC && bestDC!==chosen && bestDC.prob>=68) {
+      bestDC.isBestDc = true;
     }
 
     var one  = markets.filter(function(m){ return m.key==='home_win'; })[0];
@@ -251,18 +285,20 @@
     var two  = markets.filter(function(m){ return m.key==='away_win'; })[0];
     var best = markets.filter(function(m){ return m.isBest; })[0] || markets[0];
     var bDc  = markets.filter(function(m){ return m.isBestDc; })[0] || null;
+    var isSafePick = best.key.indexOf('dc_') === 0;
 
-    var conf = best.prob + (hasMl?5:0) + (aiBoost?3:0);
+    /* Confidence: DC picks score higher due to structural safety */
+    var baseConf = best.prob + (hasMl?5:0) + (aiBoost?3:0) + (isSafePick?6:0);
     return {
       one: one ? Math.round(one.prob) : null,
       x:   x   ? Math.round(x.prob)  : null,
       two: two  ? Math.round(two.prob): null,
       best: { key:best.key, label:MKT_LABELS[best.key]||best.key,
               color:MKT_COLORS[best.key]||'#94a3b8', prob:Math.round(best.prob),
-              source:best.source, ev:best.ev||null },
+              source:best.source, ev:best.ev||null, isSafe:isSafePick },
       bestDc: bDc ? { key:bDc.key, label:MKT_LABELS[bDc.key]||bDc.key,
                       color:'#2BE5C5', prob:Math.round(bDc.prob) } : null,
-      confidence: conf>=68?'high':conf>=55?'medium':'low',
+      confidence: baseConf>=72?'high':baseConf>=58?'medium':'low',
       hasMl:hasMl, aiBoost:aiBoost, allMarkets:markets
     };
   }
@@ -433,16 +469,18 @@
           var confColor = p.confidence==='high'?'#22c55e':p.confidence==='medium'?'#f59e0b':'#64748b';
           var confLabel = p.confidence==='high'?'Ridicată':p.confidence==='medium'?'Medie':'Scăzută';
           var confDot   = p.confidence==='high'?'🟢':p.confidence==='medium'?'🟡':'⚪';
+          var pickHeader = p.best.isSafe ? '🛡️ PARIU SIGUR' : 'PREDICȚIE';
+          var pickColor  = p.best.isSafe ? '#2BE5C5' : p.best.color;
 
-          if (notIn1x2||!p.one) {
+          if (notIn1x2||!p.one||p.best.isSafe) {
             html += '<div style="padding:8px 0 6px;border-top:1px solid rgba(255,255,255,.06);'
               + 'display:flex;justify-content:space-between;align-items:center">'
-              + '<div><div style="font-size:9px;color:var(--muted);margin-bottom:2px">PREDICȚIE</div>'
-              + '<div style="font-size:12px;font-weight:800;color:'+p.best.color+'">'+p.best.label+'</div>'
+              + '<div><div style="font-size:9px;color:'+(p.best.isSafe?'#2BE5C5':'var(--muted)')+';margin-bottom:2px">'+pickHeader+'</div>'
+              + '<div style="font-size:12px;font-weight:800;color:'+pickColor+'">'+p.best.label+'</div>'
               + (p.best.ev?'<div style="font-size:9px;color:#94a3b8">EV: +'+Number(p.best.ev).toFixed(2)+'</div>':'')
               + '</div>'
               + '<div style="text-align:right">'
-              + '<div style="font-size:17px;font-weight:900;color:'+p.best.color+'">'+p.best.prob+'%</div>'
+              + '<div style="font-size:17px;font-weight:900;color:'+pickColor+'">'+p.best.prob+'%</div>'
               + '<div style="font-size:9px;color:'+confColor+'">'+confDot+' '+confLabel+'</div>'
               + '</div></div>';
           } else {
@@ -452,23 +490,39 @@
               + '<span style="font-size:9px;color:'+confColor+'">'+confDot+' '+confLabel+'</span></div>';
           }
 
-          /* Safer DC alternative */
-          if (p.bestDc) {
+          /* Alternative non-safe pick when primary is DC */
+          if (p.bestDc && !p.best.isSafe) {
             html += '<div style="background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.2);'
               + 'border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;'
               + 'align-items:center;margin:4px 0 6px">'
-              + '<div style="font-size:10px;font-weight:700;color:#2BE5C5">'+p.bestDc.label+'</div>'
+              + '<div style="font-size:10px;font-weight:700;color:#2BE5C5">🛡️ '+p.bestDc.label+'</div>'
               + '<div style="font-size:11px;font-weight:900;color:#2BE5C5">'+p.bestDc.prob+'% '
               + '<span style="font-size:9px;opacity:.5">mai sigur</span></div></div>';
+          } else if (p.bestDc && p.best.isSafe) {
+            /* Primary is already DC; show ML pick as secondary if exists */
+            var mlAlt = p.allMarkets.filter(function(m){
+              return m.key!==p.best.key && m.key.indexOf('dc_')!==0 && m.prob>=50;
+            })[0];
+            if (mlAlt) {
+              html += '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);'
+                + 'border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;'
+                + 'align-items:center;margin:4px 0 6px">'
+                + '<div style="font-size:9px;color:var(--muted)">Alt. ML: '
+                + '<span style="color:#94a3b8;font-weight:600">'+( MKT_LABELS[mlAlt.key]||mlAlt.key )+'</span></div>'
+                + '<div style="font-size:10px;font-weight:700;color:#94a3b8">'+Math.round(mlAlt.prob)+'%</div>'
+                + '</div>';
+            }
           }
 
           /* Source + AI label */
+          /* AI preview: prefer pred.ai_preview (Romanian) over ev.ai_preview.text (English BSD) */
+          var aiText = (pred && pred.ai_preview) || (ev.ai_preview && ev.ai_preview.text) || '';
           html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">'
             + '<span style="font-size:9px;color:rgba(255,255,255,.2)">'+(p.hasMl?'🤖 Model ML':'📊 Cote')+'</span>'
             + (p.aiBoost?'<span style="font-size:9px;color:#a78bfa">✨ AI analizat</span>':'');
-          if (ev.ai_preview&&ev.ai_preview.text) {
+          if (aiText) {
             html += '<button onclick="window.__veyraUpcToggleAI(this)" '
-              + 'data-preview="'+encodeURIComponent(ev.ai_preview.text.slice(0,500))+'" '
+              + 'data-preview="'+encodeURIComponent(aiText.slice(0,600))+'" '
               + 'style="font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.1);'
               + 'border:1px solid rgba(167,139,250,.3);color:#a78bfa;cursor:pointer">💬 AI Preview</button>';
           }

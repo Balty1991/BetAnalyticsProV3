@@ -224,12 +224,13 @@ def main():
         return
 
     claude_cache = _load_json(CLAUDE_PREVIEW_CACHE_FILE, {})
+    skip_new_calls = False
     if CLAUDE_PREVIEW_CACHE_FILE.exists() and claude_cache:
         age_hours = (datetime.now(timezone.utc).timestamp()
                      - CLAUDE_PREVIEW_CACHE_FILE.stat().st_mtime) / 3600
         if age_hours < CACHE_FRESH_HOURS:
-            print(f"[ClaudePreview] Cache proaspat ({age_hours:.1f}h < {CACHE_FRESH_HOURS}h) — skip.")
-            return
+            print(f"[ClaudePreview] Cache proaspat ({age_hours:.1f}h) — scriem din cache, fara apeluri noi.")
+            skip_new_calls = True
 
     pred_path = DATA_DIR / "predictions.json"
     if not pred_path.exists():
@@ -256,7 +257,7 @@ def main():
     generated = cached_hits = errors = skipped = 0
 
     for row in predictions:
-        if generated >= MAX_NEW_PER_RUN:
+        if not skip_new_calls and generated >= MAX_NEW_PER_RUN:
             print(f"[ClaudePreview] Limita {MAX_NEW_PER_RUN} apeluri/rulare atinsa — stop.")
             break
 
@@ -290,6 +291,9 @@ def main():
         if cache_key in claude_cache:
             row["ai_preview"] = claude_cache[cache_key]
             cached_hits += 1
+            continue
+
+        if skip_new_calls:
             continue
 
         try:
@@ -330,6 +334,7 @@ def main():
             msg = client.messages.create(
                 model="claude-haiku-4-5-20251001",
                 max_tokens=400,
+                system="Ești analist sportiv. Răspunde EXCLUSIV în limba română, indiferent de limba în care sunt scrise numele echipelor sau ligilor.",
                 messages=[{"role": "user", "content": prompt}],
             )
             preview = msg.content[0].text.strip()[:800]
