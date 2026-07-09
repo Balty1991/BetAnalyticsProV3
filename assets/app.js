@@ -8638,6 +8638,20 @@ function marketFitAnalysis(m, type){
     if(ls && ls.away <= ls.home){ score -= 12; }
   }
 
+  if(type === 'over35'){
+    if(m.probOver35 >= 45){ score += 14; reasons.push('Over 3.5 are probabilitate bună'); }
+    if(xgTotal >= 3.00){ score += 12; reasons.push('xG total ridicat'); }
+    if(ls && ls.total >= 4){ score += 12; reasons.push('scor probabil ≥ 4 goluri'); }
+    if(ls && ls.total < 3){ score -= 16; }
+  }
+
+  if(type === 'under15'){
+    if(m.probUnder15 >= 78){ score += 13; reasons.push('Under 1.5 solid'); }
+    if(xgTotal <= 1.50){ score += 12; reasons.push('xG total foarte scăzut'); }
+    if(ls && ls.total <= 1){ score += 14; reasons.push('scor probabil ≤ 1 gol'); }
+    if(ls && ls.total >= 2){ score -= 18; }
+  }
+
   if(type === 'dc1x'){
     // 1X = home win OR draw (avoid away win)
     if(m.probHome + m.probDraw >= 75){ score += 12; reasons.push('1X probabil'); }
