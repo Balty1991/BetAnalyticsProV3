@@ -99,8 +99,10 @@ def build_market_blacklist():
     mq = load_json(DATA_DIR / "model_quality.json", {})
     markets = mq.get("markets", []) if isinstance(mq, dict) else []
     key_map = {"over15":"over_15","over25":"over_25","over35":"over_35",
-               "under35":"under_35","btts":"btts_yes",
-               "home_win":"home_win","draw":"draw","away_win":"away_win"}
+               "under15":"under_15","under25":"under_25","under35":"under_35",
+               "btts":"btts_yes","home_win":"home_win","draw":"draw","away_win":"away_win",
+               "dc1x":"dc_1x","dcx2":"dc_x2","dc12":"dc_12",
+               "homeWin":"home_win","awayWin":"away_win"}
     bl = {}
     for m in markets:
         if not isinstance(m, dict): continue

@@ -326,7 +326,8 @@
       if (mboKey && mbo[mboKey] && mbo[mboKey].avg_odds) return Number(mbo[mboKey].avg_odds);
       var evKey = { home_win:'odds_home', draw:'odds_draw', away_win:'odds_away',
                     over_15:'odds_over_15', over_25:'odds_over_25', over_35:'odds_over_35',
-                    under_25:'odds_under_25', btts_yes:'odds_btts_yes', btts_no:'odds_btts_no' }[key];
+                    under_15:'odds_under_15', under_25:'odds_under_25', under_35:'odds_under_35',
+                    btts_yes:'odds_btts_yes', btts_no:'odds_btts_no' }[key];
       if (evKey && ev[evKey]) return Number(ev[evKey]);
       return 0;
     }
