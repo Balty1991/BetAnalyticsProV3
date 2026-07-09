@@ -1920,10 +1920,14 @@ function renderActiveTab(name, opts){
   if(name === 'stats-meciuri'){
     if(typeof window.renderStatsMeciuri === 'function'){
       window.renderStatsMeciuri();
-      /* retry once after data settles, in case MATCHES_FILTERED_CACHE wasn't ready */
       setTimeout(function(){ if(typeof window.renderStatsMeciuri==='function') window.renderStatsMeciuri(); }, 600);
     }
     markTabRendered('stats-meciuri');
+    return;
+  }
+  if(name === 'performanta'){
+    try{ if(typeof renderPerformantaVerdict === 'function') renderPerformantaVerdict(); }catch(e){}
+    markTabRendered('performanta');
     return;
   }
 }
@@ -3217,12 +3221,12 @@ function calcSmartScoreML5(adjProb, value, confidence, edgePct, factors, agreeme
   if(val  < -0.03) penalty += 8;
   if(edge < -2.0)  penalty += 12;
 
-  return Math.min(100, Math.round(
+  return Math.min(100, Math.max(1, Math.round(
     probScore + valueScore + edgeScore + confScore + factorBonus + agrBonus - penalty
-  ));
+  )));
 }
 
-// --- KELLY ¼ CU CAP 5% ---
+// --- KELLY ¼ CU CAP 4% ---
 function calcKellyML5(prob, odds, bankrollPct){
   var p = Number(prob || 0) / 100;
   var o = Number(odds || 0);
@@ -3497,10 +3501,16 @@ function getNoVigMarketProbFromRaw(raw, marketKey){
     if(marketKey === 'under25') return ou25.b;
   }
   if(ou35){
+    if(marketKey === 'over35') return ou35.a;
     if(marketKey === 'under35') return ou35.b;
   }
   if(btts){
     if(marketKey === 'btts') return btts.a;
+  }
+  if(threeWay){
+    if(marketKey === 'dc1x') return Math.min(threeWay.homeWin + threeWay.draw, 99);
+    if(marketKey === 'dcx2') return Math.min(threeWay.draw + threeWay.awayWin, 99);
+    if(marketKey === 'dc12') return Math.min(threeWay.homeWin + threeWay.awayWin, 99);
   }
   return null;
 }
@@ -5222,8 +5232,8 @@ function analyzeMatch(raw){
 
     var value = calcValue(prob, odds);
     var marketProb = getNoVigMarketProbFromRaw(raw, bt.key);
-    var edgePct = marketProb != null ? +(prob - marketProb).toFixed(2) : null;
     var adjProb = calcAdjustedProb(prob, conf, e.league ? e.league.name : '', bt.key, odds);
+    var edgePct = marketProb != null ? +(adjProb - marketProb).toFixed(2) : null;
     var score = calcSmartScore(adjProb, value, conf, edgePct);
     if(probMeta && probMeta.alert){
       score += probMeta.direction === 'value' ? 2 : -3;
@@ -8572,7 +8582,7 @@ function computeConservativeCombinedProb(picks){
     var prob = ((p.bestBet && p.bestBet.adjProb) ? p.bestBet.adjProb : 0) / 100;
     base *= prob;
     leagues[p.league] = (leagues[p.league] || 0) + 1;
-    markets[p.bestBet.type] = (markets[p.bestBet.type] || 0) + 1;
+    if(p.bestBet) markets[p.bestBet.type] = (markets[p.bestBet.type] || 0) + 1;
   });
 
   var penalty = 1;
@@ -8781,33 +8791,33 @@ function buildMarketCandidate(m, type){
   }
   // btts: edge ≥15% are -23.9% ROI (n=24) — zona distructivă, blocat
   if(type === 'btts' && isMarketDisabled('btts')) return null;
-  if(type === 'btts' && (Number(b.adjProb || 0) < 65 || Number(m.probBtts || 0) < 65 || Number(m.xgHome || 0) < 1.10 || Number(m.xgAway || 0) < 1.10 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 0.80 || edgePct < 5 || edgePct >= 15 || Number(b.value || 0) < 0.04)) return null;
+  if(type === 'btts' && (Number(b.adjProb || 0) < 65 || Number(m.probBtts || 0) < 65 || Number(m.xgHome || 0) < 1.10 || Number(m.xgAway || 0) < 1.10 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 0.80 || edgePct < getMarketMinEdge('btts') || edgePct >= 15 || Number(b.value || 0) < 0.04)) return null;
   // DC 1X / X2 — safe bet, prob >=78%, value >=0.03, max 1.95 (sweet spot)
   if(type === 'dc1x' && isMarketDisabled('dc1x')) return null;
-  if(type === 'dc1x' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'dc1x' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || edgePct < getMarketMinEdge('dc1x') || Number(b.value || 0) < 0.03)) return null;
   if(type === 'dcx2' && isMarketDisabled('dcx2')) return null;
-  if(type === 'dcx2' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'dcx2' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || edgePct < getMarketMinEdge('dcx2') || Number(b.value || 0) < 0.03)) return null;
   // DC 12 (no draw) — cerem prob >=74, mai riscant statistic, max 1.85
   if(type === 'dc12' && isMarketDisabled('dc12')) return null;
-  if(type === 'dc12' && (Number(b.adjProb || 0) < 74 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.85 || edgePct < 4 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'dc12' && (Number(b.adjProb || 0) < 74 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.85 || edgePct < getMarketMinEdge('dc12') || Number(b.value || 0) < 0.03)) return null;
   // Home Win: favorit clar acasă — prag ridicat (53.8% WR la prag 62, acum 72)
   if(type === 'homeWin' && isMarketDisabled('homeWin')) return null;
-  if(type === 'homeWin' && (Number(b.adjProb || 0) < 72 || Number(b.odds || 0) < 1.20 || Number(b.odds || 0) > 2.80 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'homeWin' && (Number(b.adjProb || 0) < 72 || Number(b.odds || 0) < 1.20 || Number(b.odds || 0) > 2.80 || edgePct < getMarketMinEdge('homeWin') || Number(b.value || 0) < 0.03)) return null;
   // Away Win: favorit oaspete — prob ≥60, cotă 1.30-4.00, edge ≥5
   if(type === 'awayWin' && isMarketDisabled('awayWin')) return null;
-  if(type === 'awayWin' && (Number(b.adjProb || 0) < 60 || Number(b.odds || 0) < 1.30 || Number(b.odds || 0) > 4.00 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'awayWin' && (Number(b.adjProb || 0) < 60 || Number(b.odds || 0) < 1.30 || Number(b.odds || 0) > 4.00 || edgePct < getMarketMinEdge('awayWin') || Number(b.value || 0) < 0.03)) return null;
   // Egal — piață volatilă, prob ≥35%, cotă 2.50-5.00, edge ≥5
   if(type === 'draw' && isMarketDisabled('draw')) return null;
-  if(type === 'draw' && (Number(b.adjProb || 0) < 35 || Number(b.odds || 0) < 2.50 || Number(b.odds || 0) > 5.00 || edgePct < 5 || Number(b.value || 0) < 0.04)) return null;
+  if(type === 'draw' && (Number(b.adjProb || 0) < 35 || Number(b.odds || 0) < 2.50 || Number(b.odds || 0) > 5.00 || edgePct < getMarketMinEdge('draw') || Number(b.value || 0) < 0.04)) return null;
   // Over 3.5 — piață rară, prob ≥40%, cotă ≥1.50, edge ≥6
   if(type === 'over35' && isMarketDisabled('over35')) return null;
-  if(type === 'over35' && (Number(b.adjProb || 0) < 40 || Number(b.odds || 0) < 1.50 || edgePct < 6 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'over35' && (Number(b.adjProb || 0) < 40 || Number(b.odds || 0) < 1.50 || edgePct < getMarketMinEdge('over35') || Number(b.value || 0) < 0.03)) return null;
   // Under 2.5 — conservator, prob ≥55%, cotă 1.25-2.50, edge ≥5
   if(type === 'under25' && isMarketDisabled('under25')) return null;
-  if(type === 'under25' && (Number(b.adjProb || 0) < 55 || Number(b.odds || 0) < 1.25 || Number(b.odds || 0) > 2.50 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'under25' && (Number(b.adjProb || 0) < 55 || Number(b.odds || 0) < 1.25 || Number(b.odds || 0) > 2.50 || edgePct < getMarketMinEdge('under25') || Number(b.value || 0) < 0.03)) return null;
   // Under 1.5 — piață rarissimă, prob ≥75%, cotă ≥1.50, edge ≥6
   if(type === 'under15' && isMarketDisabled('under15')) return null;
-  if(type === 'under15' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.50 || edgePct < 6 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'under15' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.50 || edgePct < getMarketMinEdge('under15') || Number(b.value || 0) < 0.03)) return null;
 
   // WEEKDAY: restrictiile hardcodate au fost eliminate (nu trebuie sa excludem un eveniment doar pe baza zilei).
   // Motorul de invatare continuu identifica pattern-uri toxice pe zile DACA apar din jurnal — doar acolo blocam.
@@ -8995,7 +9005,8 @@ function selectDiversifiedPicks(candidates, profile){
   for(var i = 0; i < candidates.length; i++){
     var c = candidates[i];
     if(!c || !c.bestBet) continue;
-    if(events[c.eventId]) continue;
+    var _evKey = getGenericEventKey(c) || String(c.eventId || i);
+    if(events[_evKey]) continue;
 
     var lgCount = leagues[c.league] || 0;
     var mkCount = markets[c.bestBet.type] || 0;
@@ -9008,7 +9019,7 @@ function selectDiversifiedPicks(candidates, profile){
 
     picks.push(c);
     totalOdds = nextOdds;
-    events[c.eventId] = true;
+    events[_evKey] = true;
     leagues[c.league] = lgCount + 1;
     markets[c.bestBet.type] = mkCount + 1;
 
@@ -10095,7 +10106,7 @@ function buildSmartTicketPreview(){
 
 function buildConservativeTicketPreview(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','dc1x','dcx2'],
     minAdjProb: 72,
     minValue: 0.008,
     minConf: 48,
@@ -12669,7 +12680,7 @@ function getStakePctForTicket(type){
   if(settings.double == null && settings.balanced != null) settings.double = settings.balanced;
   if(settings.triple == null && settings.goals != null) settings.triple = settings.goals;
   if(settings.contrarian == null && settings.risk != null) settings.contrarian = settings.risk;
-  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian', acum5:'triple', acum10:'triple', acum20:'contrarian'};
+  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian', acum5:'triple', acum10:'triple', acum20:'contrarian', big_win:'contrarian', over35:'contrarian', custom_combo:'double', custom_single:'single'};
   var key = map[type] || 'double';
   return Number(settings[key] || 0);
 }
@@ -15193,7 +15204,7 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 
 // ===== SmartBet Learning Engine — sub-nav switcher =====
-window._smartLearnSection = 'audit';
+window._smartLearnSection = 'predictii';
 function switchSmartLearnSection(section){
   window._smartLearnSection = section;
   ['predictii','invatare','arhiva','audit','aimemory','smartbet'].forEach(function(s){

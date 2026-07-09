@@ -177,7 +177,7 @@ MARKET_MAP = {m["key"]: m for m in MARKETS}
 STRATEGIES = {
     "engine_overall": {
         "label": "Engine Overall",
-        "allowed": {"homeWin", "draw", "awayWin", "over15", "under15", "over25", "under25", "under35"},
+        "allowed": {"homeWin", "draw", "awayWin", "over15", "under15", "over25", "under25", "over35", "under35", "dc1x", "dcx2", "dc12"},
         # btts exclus: CLV -2.17%, ROI +10.32% pe noroc (69 picks) — nesustenabil
         "min_adj": 66.0,
         "min_conf": 45.0,
@@ -221,14 +221,13 @@ STRATEGIES = {
     },
     "smart_ev": {
         "label": "Smart EV",
-        "allowed": {"homeWin", "awayWin", "over15", "over25", "under25", "under35", "btts"},
-        # btts păstrat doar în smart_ev (strategie experimentală, nu în recomandarea principală)
+        "allowed": {"homeWin", "awayWin", "draw", "over15", "over25", "over35", "under25", "under35", "under15", "btts", "dc1x", "dcx2", "dc12"},
         "min_adj": 66.0,
         "min_conf": 45.0,
         "min_edge": 2.0,
         "min_value": 0.01,
-        "odd_min": 1.20,
-        "odd_max": 2.20,
+        "odd_min": 1.15,
+        "odd_max": 2.50,
         "reject_league_tiers": {"avoid"},
     },
     "controlled_combo": {
@@ -376,16 +375,23 @@ def build_poisson_metrics(row):
 
 
 def api_market_probability(row, market_key):
+    ph = pct(row.get("prob_home_win"))
+    pd = pct(row.get("prob_draw"))
+    pa = pct(row.get("prob_away_win"))
     mapping = {
-        "homeWin": pct(row.get("prob_home_win")),
-        "draw": pct(row.get("prob_draw")),
-        "awayWin": pct(row.get("prob_away_win")),
+        "homeWin": ph,
+        "draw": pd,
+        "awayWin": pa,
         "over15": pct(row.get("prob_over_15")),
         "under15": 100.0 - pct(row.get("prob_over_15")),
         "over25": pct(row.get("prob_over_25")),
         "under25": 100.0 - pct(row.get("prob_over_25")),
+        "over35": pct(row.get("prob_over_35")),
         "under35": 100.0 - pct(row.get("prob_over_35")),
         "btts": pct(row.get("prob_btts_yes")),
+        "dc1x": min(ph + pd, 99.0),
+        "dcx2": min(pd + pa, 99.0),
+        "dc12": min(ph + pa, 99.0),
     }
     return round(mapping.get(market_key, 0.0), 2)
 
@@ -1245,7 +1251,7 @@ def parse_dt(s):
         return None
 
 
-def calc_kelly_pct(prob_pct, odds, fraction=1.0, cap_pct=8.0):
+def calc_kelly_pct(prob_pct, odds, fraction=1.0, cap_pct=4.0):
     try:
         p = pct(prob_pct) / 100.0
         o = float(odds or 0)
@@ -4487,13 +4493,15 @@ def main():
         if ev_id in seen_recent_ids:
             return
         seen_recent_ids.add(ev_id)
+        outcomes = {m['key']: market_outcome(ev, m['key']) for m in MARKETS}
         recent_results.append({
             'id': ev_id,
             'home_team': ev.get('home_team', ''),
             'away_team': ev.get('away_team', ''),
             'home_score': hs,
             'away_score': aws,
-            'status': ev_status or 'finished'
+            'status': ev_status or 'finished',
+            'outcomes': outcomes,
         })
 
     # 1) From historical predictions (API ML coverage)
