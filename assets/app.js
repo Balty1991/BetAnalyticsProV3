@@ -2256,7 +2256,7 @@ function getMarketThresholds() {
 var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 3.0, btts: 5.0 };
 function getMarketMinEdge(marketKey) {
   // Safety floor: dynamic_thresholds poate coborî prea mult pragul când un bucket are ROI marginal.
-  var HARD_EDGE_FLOORS = { under35: 10.0, over15: 12.0, over25: 7.0, btts: 5.0 };
+  var HARD_EDGE_FLOORS = { under35: 10.0, over15: 12.0, over25: 5.0, btts: 5.0 };
   var hardFloor = HARD_EDGE_FLOORS[marketKey] != null ? HARD_EDGE_FLOORS[marketKey] : 0;
   var t = getMarketThresholds()[marketKey];
   var edge = EDGE_FALLBACK[marketKey] != null ? EDGE_FALLBACK[marketKey] : 3.0;
