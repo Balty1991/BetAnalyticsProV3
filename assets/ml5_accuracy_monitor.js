@@ -122,7 +122,7 @@
     {
       var predEids = {}, predKeys = {};
       var nowTs = Date.now();
-      var SETTLE_WINDOW_MS = 2 * 3600 * 1000; // 2h — aligns with ML5 tab visibility cutoff
+      var SETTLE_WINDOW_MS = 36 * 3600 * 1000; // 36h — enough time for recent_results.json to settle yesterday's matches
       preds.forEach(function (m) {
         var eid = m.eventId ? String(m.eventId) : '';
         var ed  = m.event_date || m.eventDate || m.date || '';
@@ -539,9 +539,9 @@
     var nowTs = Date.now();
     log = log.filter(function (e) {
       if (e.result !== 'pending') return true; // decontate/expirate → păstrează
-      // Verifică dacă intrarea e în settlement window (max 3h după eveniment)
+      // Settlement window aligned with expiry: 36h so yesterday's matches can settle
       var evTs = e.eventDate ? new Date(e.eventDate).getTime() : 0;
-      if (evTs > 0 && (nowTs - evTs) > 3 * 3600 * 1000) return false; // prea vechi
+      if (evTs > 0 && (nowTs - evTs) > 36 * 3600 * 1000) return false; // prea vechi
       return true; // altfel păstrează (se va purja prin purge normal)
     });
     if (log.length !== before) saveLog(log);
