@@ -93,9 +93,9 @@
       });
     }
 
-    return toUnified("Meciuri", loadObj(MECIURI_KEY))
-      .concat(toUnified("APEX",    loadObj(APEX_KEY)))
-      .concat(toUnified("ML5",     loadObj(ML5_KEY)));
+    return toUnified("apex",    loadObj(MECIURI_KEY))
+      .concat(toUnified("apex",   loadObj(APEX_KEY)))
+      .concat(toUnified("ml5",    loadObj(ML5_KEY)));
   }
 
   /* ── imbogatie cu CLV din RECOMMENDATION_LOG ────────────────────────────── */
@@ -108,13 +108,13 @@
     log.forEach(function(r) {
       if (r.from_open_pct == null) return;
       var d  = (r.date || r.event_date || "").slice(0,10);
-      var mkt = r.market_key || r.market || "";
+      var mkt = norm(r.market_key || r.market || "");
       var key = norm(r.home) + "|" + norm(r.away) + "|" + d + "|" + mkt;
       if (!lookup[key]) lookup[key] = r;
     });
 
     return picks.map(function(p) {
-      var key = norm(p.home) + "|" + norm(p.away) + "|" + p.date + "|" + p.market;
+      var key = norm(p.home) + "|" + norm(p.away) + "|" + p.date + "|" + norm(p.market || "");
       var match = lookup[key];
       if (match) {
         p.from_open_pct = match.from_open_pct;

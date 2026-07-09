@@ -187,7 +187,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script defer src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260708v3"></script>
+<script defer src="./assets/app.js?v=20260709v11"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260602dash2"></script>
 </head>
@@ -273,9 +273,13 @@ function toggleTheme(){
       <span class="more-card-title">🔬 Analiză ML5</span>
       <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Top picks cu breakdown complet.</span>
     </button>
-<button class="more-card-btn" onclick="switchTab('smartbet')">
+    <button class="more-card-btn" onclick="switchTab('smartbet');closeDesktopMore()">
       <span class="more-card-title">🎯 ⚡ APEX Neural Engine</span>
       <span class="more-card-sub">Kelly + AI Memory + SmartBet — cel mai bun din 3 motoare, un singur scor.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('performanta');closeDesktopMore()">
+      <span class="more-card-title">📊 Performanță Verdict</span>
+      <span class="more-card-sub">Acuratețe ✅ PARIAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('clv');closeDesktopMore()">
       <span class="more-card-title">📈 CLV Tracker</span>
@@ -292,6 +296,10 @@ function toggleTheme(){
     <button class="more-card-btn" onclick="switchTab('upcoming');closeDesktopMore()">
       <span class="more-card-title">📅 Evenimente Viitoare</span>
       <span class="more-card-sub">Toate meciurile viitoare cu predicții automate — probabilități, cea mai sigură piață, analiză AI.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('statistici');if(typeof renderStatisticiTab==='function')renderStatisticiTab();closeDesktopMore()">
+      <span class="more-card-title">📊 Statistici Predicții</span>
+      <span class="more-card-sub">Win rate · ROI · Trend per sursă: AI Claude, ML5, APEX, Meciuri — calculat local.</span>
     </button>
   </div>
 </div>
@@ -647,6 +655,26 @@ function toggleTheme(){
     <div id="upcoming-root" style="padding:48px 0;text-align:center;color:var(--muted)">Se încarcă…</div>
   </div>
 
+  <div class="tab-content" id="tab-bilete">
+    <div id="bilete-container"></div>
+  </div>
+
+  <div class="tab-content" id="tab-tracking">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:12px 4px;font-size:12px;color:var(--muted)">
+      <span>Bilete: <strong id="tr-total" style="color:var(--txt)">—</strong></span>
+      <span>Win Rate: <strong id="tr-winrate" style="color:var(--txt)">—</strong></span>
+      <span>ROI: <strong id="tr-roi" style="color:var(--txt)">—</strong></span>
+      <span>Extra: <strong id="tr-extra-total" style="color:var(--txt)">—</strong></span>
+      <span>WR Extra: <strong id="tr-extra-winrate" style="color:var(--txt)">—</strong></span>
+      <span>ROI Extra: <strong id="tr-extra-roi" style="color:var(--txt)">—</strong></span>
+    </div>
+    <div id="tracking-container"></div>
+  </div>
+
+  <div class="tab-content" id="tab-statistici">
+    <div id="statistici-root" style="padding:48px 0;text-align:center;color:var(--muted)">Se încarcă statisticile…</div>
+  </div>
+
 </div><!-- /main -->
 
 <nav class="mobile-nav" id="mobile-nav" aria-label="Navigare mobilă">
@@ -683,6 +711,7 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">⚡ Motor AI</span><small class="sheet-btn-sub">Gemini 1.5 Flash — predicții per meci cu scor de încredere</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('stats-meciuri');window.renderStatsMeciuri&&renderStatsMeciuri();closeMobileMore()"><span class="sheet-btn-title">📊 Statistică Meciuri</span><small class="sheet-btn-sub">Distribuție piețe · SmartScore · Top ligi · Lista meciuri afișate</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('upcoming');closeMobileMore()"><span class="sheet-btn-title">📅 Evenimente Viitoare</span><small class="sheet-btn-sub">Toate meciurile cu predicții automate · Probabilități · Cea mai sigură piață</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('statistici');if(typeof renderStatisticiTab==='function')renderStatisticiTab();closeMobileMore()"><span class="sheet-btn-title">📊 Statistici Predicții</span><small class="sheet-btn-sub">Win rate · ROI · Trend per sursă: AI Claude, ML5, APEX, Meciuri</small></button>
 
 </div>
 
@@ -691,7 +720,7 @@ function toggleTheme(){
 
 
   <script src="./assets/full-history-hotfix.js?v=20260420hotfix1"></script>
-  <script src="./assets/clv_tracker_runtime.js?v=20260708clv2" defer></script>
+  <script src="./assets/clv_tracker_runtime.js?v=20260709clv3" defer></script>
   <script>
   // NAV FIX — poziționare dinamică bazată pe înălțimea reală a header-ului
   (function(){
@@ -779,7 +808,9 @@ function toggleTheme(){
   <script defer src="./assets/ml5_backend_status_fix.js?v=20260603patch1"></script>
   <script defer src="./assets/display_snapshot.js?v=20260611v3"></script>
   <script defer src="./assets/stats_meciuri.js?v=20260706v1"></script>
-  <script defer src="./assets/upcoming_events_runtime.js?v=20260709up11"></script>
+  <script defer src="./assets/statistici.js?v=20260709v2"></script>
+  <script defer src="./assets/ml5_accuracy_monitor.js?v=20260709acc7"></script>
+  <script defer src="./assets/upcoming_events_runtime.js?v=20260709up13"></script>
   <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
 </body>
 </html>

@@ -155,6 +155,7 @@ MARKETS = [
     {"key": "under15", "label": "Under 1.5G", "prob": lambda r: 100 - pct(r.get("prob_over_15")), "odds": lambda e: e.get("odds_under_15")},
     {"key": "over25", "label": "Over 2.5G", "prob": lambda r: pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_over_25")},
     {"key": "under25", "label": "Under 2.5G", "prob": lambda r: 100 - pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_under_25")},
+    {"key": "over35",  "label": "Over 3.5G",  "prob": lambda r: pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_over_35")},
     {"key": "under35", "label": "Under 3.5G", "prob": lambda r: 100 - pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_under_35")},
     {"key": "btts", "label": "BTTS", "prob": lambda r: pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_yes")},
 ]
@@ -704,6 +705,14 @@ def market_outcome(event, market_key):
         return hs > 0 and aw > 0
     if market_key == "bttsNo":
         return hs == 0 or aw == 0
+    if market_key in ("over35",):
+        return total >= 4
+    if market_key in ("dc_1x", "dc1x"):
+        return hs >= aw
+    if market_key in ("dc_x2", "dcx2"):
+        return aw >= hs
+    if market_key in ("dc_12", "dc12"):
+        return hs != aw
     return None
 
 
@@ -744,11 +753,11 @@ def market_prob_from_row_event(row, event, market_key) -> Optional[float]:
         if not vals:
             return None
         return round(vals[0 if market_key == "over25" else 1], 2)
-    if market_key == "under35":
+    if market_key in {"over35", "under35"}:
         vals = compute_no_vig(event.get("odds_over_35"), event.get("odds_under_35"))
         if not vals:
             return None
-        return round(vals[1], 2)
+        return round(vals[0 if market_key == "over35" else 1], 2)
     if market_key in {"btts", "bttsNo"}:
         vals = compute_no_vig(event.get("odds_btts_yes"), event.get("odds_btts_no"))
         if not vals:
@@ -775,10 +784,14 @@ def api_recommend(row, market_key):
 def heuristic_recommend(row, market_key):
     if market_key == "over15":
         return pct(row.get("prob_over_15")) >= 75
+    if market_key == "under15":
+        return (100 - pct(row.get("prob_over_15"))) >= 78
     if market_key == "over25":
         return pct(row.get("prob_over_25")) >= 65
     if market_key == "under25":
         return pct(100 - pct(row.get("prob_over_25"))) >= 58
+    if market_key == "over35":
+        return pct(row.get("prob_over_35")) >= 45
     if market_key == "under35":
         return pct(100 - pct(row.get("prob_over_35"))) >= 70
     if market_key == "btts":
@@ -806,6 +819,13 @@ def market_fit_score(row, market_key) -> float:
             score += 10
         if scoreline and scoreline["total"] >= 2:
             score += 12
+    elif market_key == "under15":
+        if xg_total <= 1.50:
+            score += 12
+        if scoreline and scoreline["total"] <= 1:
+            score += 14
+        if scoreline and scoreline["total"] >= 2:
+            score -= 18
     elif market_key == "over25":
         if xg_total >= 2.75:
             score += 10
@@ -815,6 +835,11 @@ def market_fit_score(row, market_key) -> float:
         if xg_total <= 2.55:
             score += 10
         if scoreline and scoreline["total"] <= 2:
+            score += 12
+    elif market_key == "over35":
+        if xg_total >= 3.00:
+            score += 10
+        if scoreline and scoreline["total"] >= 4:
             score += 12
     elif market_key == "under35":
         if xg_total <= 3.05:
@@ -1162,7 +1187,7 @@ def accumulate_pick(bucket_map, key, pick):
 def rows_from_bucket_map(bucket_map):
     out = []
     for key, picks in bucket_map.items():
-        stats = finalize_pick_stats(picks)
+        stats = finalize_pick_stats(picks, label=key)
         stats["key"] = key
         out.append(stats)
     out.sort(key=lambda x: (x["roi"], x["bets"]), reverse=True)
@@ -3679,8 +3704,14 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
             row["h2h_avg_goals"]     = None
 
         # ── GAP team form: forma directă W/D/L per echipă ──────────────────
-        home_id_str = str(event.get("home_team_id") or event.get("home_id") or "")
-        away_id_str = str(event.get("away_team_id") or event.get("away_id") or "")
+        home_id_str = str(
+            event.get("home_team_id") or event.get("home_id") or
+            (event.get("home_team_obj") or {}).get("id") or ""
+        )
+        away_id_str = str(
+            event.get("away_team_id") or event.get("away_id") or
+            (event.get("away_team_obj") or {}).get("id") or ""
+        )
         home_form = TEAM_FORM_CACHE.get(home_id_str) or {}
         away_form = TEAM_FORM_CACHE.get(away_id_str) or {}
         row["home_form_score"]  = home_form.get("form_score")

@@ -18,7 +18,7 @@ DATA_DIR = Path("data")
 CLAUDE_PREVIEW_CACHE_FILE = DATA_DIR / "claude_preview_cache_v4.json"
 PREVIEW_MAX_DAYS = 7
 CACHE_FRESH_HOURS = 8
-MAX_NEW_PER_RUN   = 30
+MAX_NEW_PER_RUN   = 80
 
 MIN_EDGE_PP = 3.0          # pragul minim de edge acceptat
 EXCLUDE_TIERS = {"Avoid"}  # tier-uri excluse complet din picks

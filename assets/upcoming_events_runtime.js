@@ -16,10 +16,17 @@
   /* ── Recent results (for auto-settle) ──────────────────────────── */
   var _recentResLookup = null; // null = not loaded yet
   var _recentResLoading = false;
+  var _recentResPending = []; // queued callbacks waiting for in-flight fetch
+  var _recentResLoadedAt = 0; // epoch ms of last successful load
 
   function ensureRecentResults(cb) {
+    // Refresh every 5 min so scores from recent_results.json are picked up mid-session
+    if (_recentResLookup !== null && (Date.now() - _recentResLoadedAt) > 300000) {
+      _recentResLookup = null;
+    }
     if (_recentResLookup !== null) { cb(); return; }
-    if (_recentResLoading) return;
+    _recentResPending.push(cb);
+    if (_recentResLoading) return; // fetch in flight — cb queued, will fire on complete
     _recentResLoading = true;
     fetch('./data/recent_results.json?_=' + Math.floor(Date.now() / 300000))
       .then(function(r) { return r.ok ? r.json() : []; })
@@ -29,8 +36,10 @@
         (arr || []).forEach(function(r) {
           if (r && r.id != null) _recentResLookup[String(r.id)] = r;
         });
+        _recentResLoadedAt = Date.now();
         _recentResLoading = false;
-        cb();
+        var cbs = _recentResPending.splice(0);
+        cbs.forEach(function(fn) { try { fn(); } catch(e) {} });
       });
   }
 
@@ -76,14 +85,17 @@
     var mboMap = { home_win:'homeWin', draw:'draw', away_win:'awayWin',
                    btts_yes:'btts', btts_no:'bttsNo',
                    dc_1x:'dc1x', dc_x2:'dcx2', dc_12:'dc12',
-                   over_15:'over15', over_25:'over25', over_35:'over35',
-                   under_25:'under25', under_35:'under35' };
+                   over_15:'over15', under_15:'under15',
+                   over_25:'over25', under_25:'under25',
+                   over_35:'over35', under_35:'under35' };
     if (mboMap[key] && mbo[mboMap[key]] && mbo[mboMap[key]].avg_odds)
       return Math.round(Number(mbo[mboMap[key]].avg_odds) * 100) / 100;
     /* 2. events.json direct odds */
     var evMap = { home_win:ev.odds_home, draw:ev.odds_draw, away_win:ev.odds_away,
-                  over_15:ev.odds_over_15, over_25:ev.odds_over_25,
-                  under_25:ev.odds_under_25, btts_yes:ev.odds_btts_yes, btts_no:ev.odds_btts_no };
+                  over_15:ev.odds_over_15, under_15:ev.odds_under_15,
+                  over_25:ev.odds_over_25, under_25:ev.odds_under_25,
+                  over_35:ev.odds_over_35, under_35:ev.odds_under_35,
+                  btts_yes:ev.odds_btts_yes, btts_no:ev.odds_btts_no };
     if (evMap[key]) return Math.round(Number(evMap[key]) * 100) / 100;
     /* 3. From allMarkets array (pre-computed in calcPrediction) */
     if (p && p.allMarkets) {
@@ -111,12 +123,12 @@
     if (k === 'under_25') return hs + as2 < 2.5;
     if (k === 'btts_yes') return hs > 0 && as2 > 0;
     if (k === 'btts_no')  return hs === 0 || as2 === 0;
-    if (k === 'dc_1x')         return hs >= as2;
-    if (k === 'dc_x2')         return hs <= as2;
-    if (k === 'dc_12')         return hs !== as2;
-    if (k === 'under_25')      return hs + as2 < 2.5;
-    if (k === 'under_35')      return hs + as2 < 3.5;
-    if (k === 'under_15')      return hs + as2 < 1.5;
+    if (k === 'dc_1x')    return hs >= as2;
+    if (k === 'dc_x2')    return hs <= as2;
+    if (k === 'dc_12')    return hs !== as2;
+    if (k === 'under_35') return hs + as2 < 3.5;
+    if (k === 'under_15') return hs + as2 < 1.5;
+    if (k === 'over_35')  return hs + as2 > 3.5;
     if (k === 'home_to_score') return hs > 0;
     if (k === 'away_to_score') return as2 > 0;
     if (k === 'goal_fh')       return null;
@@ -308,8 +320,9 @@
       var mboKey = { home_win:'homeWin', draw:'draw', away_win:'awayWin',
                      btts_yes:'btts', btts_no:'bttsNo',
                      dc_1x:'dc1x', dc_x2:'dcx2', dc_12:'dc12',
-                     over_15:'over15', over_25:'over25', over_35:'over35',
-                     under_25:'under25', under_35:'under35' }[key];
+                     over_15:'over15', under_15:'under15',
+                     over_25:'over25', under_25:'under25',
+                     over_35:'over35', under_35:'under35' }[key];
       if (mboKey && mbo[mboKey] && mbo[mboKey].avg_odds) return Number(mbo[mboKey].avg_odds);
       var evKey = { home_win:'odds_home', draw:'odds_draw', away_win:'odds_away',
                     over_15:'odds_over_15', over_25:'odds_over_25', over_35:'odds_over_35',
@@ -343,6 +356,7 @@
       addMl('home_win', ph);  addMl('draw', pd);  addMl('away_win', pa);
       addMl('over_25', po25); addMl('over_15', po15); addMl('over_35', po35);
       if (po25 > 0) addMl('under_25', 100 - po25);
+      if (po15 > 0) addMl('under_15', 100 - po15);
       if (po35 > 0) addMl('under_35', 100 - po35);
       if (pbtts > 0) { addMl('btts_yes', pbtts); /* btts_no omis — prea generic */ }
 

@@ -512,13 +512,9 @@
 
     var activeTab = window._statsTab || 'claude';
 
-    // Auto-inițializare: dacă nu e dată de start setată, setăm azi automat
-    var startDate = getStartDate();
-    if (!startDate) {
-      var today = new Date().toISOString().slice(0, 10);
-      try { localStorage.setItem(RESET_KEY, today); } catch(e) {}
-      startDate = today;
-    }
+    // Dacă nu e dată de start, folosim o dată fixă de referință (nu "azi") ca
+    // să nu ascundem istoricul acumulat; utilizatorul poate reseta manual oricând
+    var startDate = getStartDate() || '2026-01-01';
 
     var sinceLabel = 'din ' + startDate.slice(0, 10);
 

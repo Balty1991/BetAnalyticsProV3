@@ -50,13 +50,14 @@ MARKETS: List[Tuple[str, str, str, List[str], str]] = [
     ("over_35",  "prob_over_35",  "odds_over_35", ["odds_over_35","odds_under_35"],      "over35"),
     ("under_35", "prob_over_35",  "odds_under_35",["odds_over_35","odds_under_35"],      "under35"),
     ("under_25", "prob_over_25",  "odds_under_25",["odds_over_25","odds_under_25"],      "under25"),
+    ("under_15", "prob_over_15",  "odds_under_15",["odds_over_15","odds_under_15"],      "under15"),
     ("btts_yes", "prob_btts_yes", "odds_btts_yes",["odds_btts_yes","odds_btts_no"],      "btts"),
 ]
 
 _MARKET_LABELS = {
     "home_win":"victorie gazdă","draw":"egal","away_win":"victorie oaspete",
     "over_15":"Peste 1.5G","over_25":"Peste 2.5G","over_35":"Peste 3.5G",
-    "under_25":"Sub 2.5G","under_35":"Sub 3.5G","btts_yes":"Ambele marchează",
+    "under_15":"Sub 1.5G","under_25":"Sub 2.5G","under_35":"Sub 3.5G","btts_yes":"Ambele marchează",
     "dc_1x":"Șansă Dublă 1X","dc_x2":"Șansă Dublă X2","dc_12":"Șansă Dublă 12",
 }
 _TIER_REASONS = {
@@ -230,7 +231,7 @@ def enrich_entry(entry, blacklist):
         if odds_val < ODDS_MIN or odds_val > ODDS_MAX: continue
 
         # Under markets → prob inversă (must happen BEFORE the < 0.01 guard below)
-        if mkt in ("under_35", "under_25"):
+        if mkt in ("under_35", "under_25", "under_15"):
             bsd_p = 1.0 - bsd_p
 
         if bsd_p < 0.01: continue  # skip near-impossible after inversion
