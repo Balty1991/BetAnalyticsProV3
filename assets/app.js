@@ -8746,6 +8746,16 @@ function buildMarketCandidate(m, type){
   if(type === 'dc12' && (Number(b.adjProb || 0) < 74 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.85 || Number(b.value || 0) < 0.03)) return null;
   // Home Win: favorit clar acasă — prag ridicat (53.8% WR la prag 62, acum 72)
   if(type === 'homeWin' && (Number(b.adjProb || 0) < 72 || Number(b.odds || 0) < 1.20 || Number(b.odds || 0) > 2.80 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  // Away Win: favorit oaspete — prob ≥60, cotă 1.30-4.00, edge ≥5
+  if(type === 'awayWin' && (Number(b.adjProb || 0) < 60 || Number(b.odds || 0) < 1.30 || Number(b.odds || 0) > 4.00 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  // Egal — piață volatilă, prob ≥35%, cotă 2.50-5.00, edge ≥5
+  if(type === 'draw' && (Number(b.adjProb || 0) < 35 || Number(b.odds || 0) < 2.50 || Number(b.odds || 0) > 5.00 || edgePct < 5 || Number(b.value || 0) < 0.04)) return null;
+  // Over 3.5 — piață rară, prob ≥40%, cotă ≥1.50, edge ≥6
+  if(type === 'over35' && (Number(b.adjProb || 0) < 40 || Number(b.odds || 0) < 1.50 || edgePct < 6 || Number(b.value || 0) < 0.03)) return null;
+  // Under 2.5 — conservator, prob ≥55%, cotă 1.25-2.50, edge ≥5
+  if(type === 'under25' && (Number(b.adjProb || 0) < 55 || Number(b.odds || 0) < 1.25 || Number(b.odds || 0) > 2.50 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  // Under 1.5 — piață rarissimă, prob ≥75%, cotă ≥1.50, edge ≥6
+  if(type === 'under15' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.50 || edgePct < 6 || Number(b.value || 0) < 0.03)) return null;
 
   // WEEKDAY: restrictiile hardcodate au fost eliminate (nu trebuie sa excludem un eveniment doar pe baza zilei).
   // Motorul de invatare continuu identifica pattern-uri toxice pe zile DACA apar din jurnal — doar acolo blocam.
