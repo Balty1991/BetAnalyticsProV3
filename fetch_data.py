@@ -158,6 +158,18 @@ MARKETS = [
     {"key": "over35",  "label": "Over 3.5G",  "prob": lambda r: pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_over_35")},
     {"key": "under35", "label": "Under 3.5G", "prob": lambda r: 100 - pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_under_35")},
     {"key": "btts", "label": "BTTS", "prob": lambda r: pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_yes")},
+    {"key": "dc1x", "label": "DC 1X",
+     "prob": lambda r: min(pct(r.get("prob_home_win")) + pct(r.get("prob_draw")), 99.0),
+     "odds": lambda e: round(1.0 / (1.0 / float(e.get("odds_home") or 0) + 1.0 / float(e.get("odds_draw") or 0)), 2)
+             if (float(e.get("odds_home") or 0) > 1.01 and float(e.get("odds_draw") or 0) > 1.01) else None},
+    {"key": "dcx2", "label": "DC X2",
+     "prob": lambda r: min(pct(r.get("prob_draw")) + pct(r.get("prob_away_win")), 99.0),
+     "odds": lambda e: round(1.0 / (1.0 / float(e.get("odds_draw") or 0) + 1.0 / float(e.get("odds_away") or 0)), 2)
+             if (float(e.get("odds_draw") or 0) > 1.01 and float(e.get("odds_away") or 0) > 1.01) else None},
+    {"key": "dc12", "label": "DC 12",
+     "prob": lambda r: min(pct(r.get("prob_home_win")) + pct(r.get("prob_away_win")), 99.0),
+     "odds": lambda e: round(1.0 / (1.0 / float(e.get("odds_home") or 0) + 1.0 / float(e.get("odds_away") or 0)), 2)
+             if (float(e.get("odds_home") or 0) > 1.01 and float(e.get("odds_away") or 0) > 1.01) else None},
 ]
 
 MARKET_MAP = {m["key"]: m for m in MARKETS}
@@ -763,6 +775,15 @@ def market_prob_from_row_event(row, event, market_key) -> Optional[float]:
         if not vals:
             return None
         return round(vals[0 if market_key == "btts" else 1], 2)
+    if market_key in {"dc1x", "dcx2", "dc12"}:
+        vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
+        if not vals:
+            return None
+        if market_key == "dc1x":
+            return round(min(vals[0] + vals[1], 99.0), 2)
+        if market_key == "dcx2":
+            return round(min(vals[1] + vals[2], 99.0), 2)
+        return round(min(vals[0] + vals[2], 99.0), 2)
     return None
 
 
@@ -804,6 +825,12 @@ def heuristic_recommend(row, market_key):
         return row.get("predicted_result") == "A" and pct(row.get("prob_away_win")) >= 52
     if market_key == "draw":
         return row.get("predicted_result") == "D" and pct(row.get("prob_draw")) >= 32
+    if market_key == "dc1x":
+        return (pct(row.get("prob_home_win")) + pct(row.get("prob_draw"))) >= 78
+    if market_key == "dcx2":
+        return (pct(row.get("prob_draw")) + pct(row.get("prob_away_win"))) >= 78
+    if market_key == "dc12":
+        return (pct(row.get("prob_home_win")) + pct(row.get("prob_away_win"))) >= 74
     return False
 
 
@@ -871,6 +898,21 @@ def market_fit_score(row, market_key) -> float:
             score += 9
         if scoreline and scoreline["home"] == scoreline["away"]:
             score += 8
+    elif market_key == "dc1x":
+        if row.get("predicted_result") in ("H", "D"):
+            score += 9
+        if row.get("favorite") == "H":
+            score += 6
+    elif market_key == "dcx2":
+        if row.get("predicted_result") in ("A", "D"):
+            score += 9
+        if row.get("favorite") == "A":
+            score += 6
+    elif market_key == "dc12":
+        if row.get("predicted_result") in ("H", "A"):
+            score += 9
+        if row.get("favorite") in ("H", "A"):
+            score += 5
     return score
 
 

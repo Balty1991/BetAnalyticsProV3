@@ -9063,7 +9063,7 @@ function finalizeTicket(type, label, picks, totalOdds){
 
 function generateConservativeTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','dc1x','dcx2'],
     minAdjProb: 72,
     minValue: 0.008,
     minConf: 48,
@@ -9097,7 +9097,7 @@ function generateConservativeTicket(){
 
 function generateTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
     minAdjProb: 68,
     minValue: 0.015,
     minConf: 52,
@@ -9162,7 +9162,7 @@ function getCustomAllowedTypes(){
   if($('cb-over25').checked) types.push('over25');
   if($('cb-btts').checked) types.push('btts');
   if($('cb-under35').checked) types.push('under35');
-  if(!types.length) types = ['over15','over25','under35','btts'];
+  if(!types.length) types = ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'];
   return types;
 }
 
@@ -9199,6 +9199,11 @@ function isExplicitAiRecommended(c, type){
   if(type === 'btts') return !!c.mlFlags.btts;
   if(type === 'homeWin') return !!((c.mlFlags.winner && c.predictedResult === 'H') || (c.mlFlags.fav && c.favorite === 'H' && c.predictedResult === 'H'));
   if(type === 'awayWin') return !!((c.mlFlags.winner && c.predictedResult === 'A') || (c.mlFlags.fav && c.favorite === 'A' && c.predictedResult === 'A'));
+  if(type === 'draw') return !!(c.mlFlags.winner && c.predictedResult === 'D');
+  if(type === 'over35') return !!(c.mlFlags.winner || c.mlFlags.o25);
+  if(type === 'dc1x') return !!(c.mlFlags.fav && c.favorite === 'H') || !!(c.mlFlags.winner && c.predictedResult !== 'A');
+  if(type === 'dcx2') return !!(c.mlFlags.fav && c.favorite === 'A') || !!(c.mlFlags.winner && c.predictedResult !== 'H');
+  if(type === 'dc12') return !!(c.mlFlags.winner && c.predictedResult !== 'D');
   return false;
 }
 
@@ -9212,6 +9217,11 @@ function isHeuristicAiPass(c, type){
   if(type === 'awayWin') return !!(c.favorite === 'A' && c.predictedResult === 'A' && c.bestBet.adjProb >= 72);
   if(type === 'under25') return !!(c.probUnder25 >= 56 && c.bestBet.adjProb >= 70);
   if(type === 'under35') return !!(c.probUnder35 >= 68 && c.bestBet.adjProb >= 74);
+  if(type === 'over35') return !!(Number(c.probOver35 || 0) >= 45 && c.bestBet.adjProb >= 62);
+  if(type === 'under15') return !!(Number(c.probUnder15 || 0) >= 78 && c.bestBet.adjProb >= 76);
+  if(type === 'dc1x') return !!(c.bestBet.adjProb >= 80 && (c.predictedResult === 'H' || c.predictedResult === 'D'));
+  if(type === 'dcx2') return !!(c.bestBet.adjProb >= 80 && (c.predictedResult === 'A' || c.predictedResult === 'D'));
+  if(type === 'dc12') return !!(c.bestBet.adjProb >= 76 && c.predictedResult !== 'D');
   return false;
 }
 
@@ -9287,8 +9297,9 @@ function customCandidateFilter(c){
   if($('cb-ai-only').checked){
     var aiPass = isExplicitAiRecommended(c, t);
     if(!aiPass && !strictMode) aiPass = isHeuristicAiPass(c, t);
-    if(!aiPass && ['under25','under35','draw'].indexOf(t) !== -1){
-      aiPass = c.bestBet.adjProb >= (t === 'draw' ? 66 : 72);
+    if(!aiPass && ['under25','under35','draw','dc1x','dcx2','dc12','over35','under15'].indexOf(t) !== -1){
+      var _adjFallback = t === 'draw' ? 66 : (t === 'dc1x' || t === 'dcx2') ? 80 : t === 'dc12' ? 76 : t === 'under15' ? 76 : 72;
+      aiPass = c.bestBet.adjProb >= _adjFallback;
     }
     if(!aiPass) return false;
   }
@@ -9507,7 +9518,7 @@ function validateCustomRequest(opts){
 
 function generateControlledComboTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','dc1x','dcx2'],
     minAdjProb: 74,
     minValue: 0.010,
     minConf: 50,
@@ -9753,12 +9764,35 @@ function generateOver15Ticket(){
 }
 
 function generateOver35Ticket(){
-  setTicketError('Piața Over 3.5G a fost scoasă complet din aplicație.');
+  var baseProfile = {
+    allowedTypes: ['over35'],
+    minAdjProb: 62,
+    minValue: 0.010,
+    minConf: 44,
+    minOdd: 1.45,
+    maxOdd: 2.30,
+    minPicks: 1,
+    maxPicks: 3,
+    targetMinOdds: 1.45,
+    targetMaxOdds: 6.00,
+    hardMaxOdds: 8.00,
+    maxSameLeague: 2,
+    maxSameMarket: 99
+  };
+  for(var relax = 0; relax <= 2; relax++){
+    var pack = collectCandidates(['over35'], baseProfile, relax);
+    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
+    if(chosen.picks.length >= pack.profile.minPicks){
+      finalizeTicket('over35', '⚡ Bilet Over 3.5G', chosen.picks, chosen.totalOdds);
+      return;
+    }
+  }
+  finalizeTicket('over35', '⚡ Bilet Over 3.5G', [], 1);
 }
 
 function generateMixTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
     minAdjProb: 70,
     minValue: 0.018,
     minConf: 54,
@@ -9988,7 +10022,7 @@ function generateProfitFocusTicket(){
 
 function generateBigWinTicket(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
     minAdjProb: 70,
     minValue: 0.010,
     minConf: 48,
@@ -10035,7 +10069,7 @@ function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
 
 function buildSmartTicketPreview(){
   var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts'],
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
     minAdjProb: 68,
     minValue: 0.015,
     minConf: 52,
@@ -12776,7 +12810,7 @@ function makeEmptyMathTicket(type, source, msg){
 }
 function buildPortfolioMarketCandidates(match){
   if(!match || !passesSelectionFilter(match)) return [];
-  var marketTypes = ['over15','over25','under35','btts'];
+  var marketTypes = ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'];
   var out = [];
   marketTypes.forEach(function(type){
     var bet = getBetByType(match, type);
@@ -12785,7 +12819,8 @@ function buildPortfolioMarketCandidates(match){
     var odds = Number(bet.odds || 0);
     var prob = Number(bet.adjProb || 0);
     var value = Number(bet.value || 0);
-    if(odds < 1.18 || odds > 3.40) return;
+    var maxOdds = (type === 'draw') ? 5.00 : (type === 'awayWin') ? 4.00 : 3.40;
+    if(odds < 1.18 || odds > maxOdds) return;
     if(prob <= 0 || value <= 0) return;
     var fit = marketFitAnalysis(match, type) || {score:0, reasons:[]};
     var edge = Number(bet.edgePct || 0);
@@ -12807,6 +12842,14 @@ function buildPortfolioMarketCandidates(match){
     if(type === 'under35' && Number(match.xgTotal || 0) <= 3.05) score += 4;
     if(type === 'over25' && Number(match.xgTotal || 0) >= 2.70) score += 4;
     if(type === 'over15' && Number(match.xgTotal || 0) >= 2.15) score += 3;
+    if(type === 'homeWin' && Number(match.xgHome || 0) > Number(match.xgAway || 0)) score += 4;
+    if(type === 'awayWin' && Number(match.xgAway || 0) > Number(match.xgHome || 0)) score += 4;
+    if(type === 'draw' && match.predictedResult === 'D') score += 4;
+    if(type === 'under25' && Number(match.xgTotal || 0) < 2.55) score += 4;
+    if(type === 'under15' && Number(match.xgTotal || 0) < 1.50) score += 5;
+    if(type === 'over35' && Number(match.xgTotal || 0) >= 3.00) score += 4;
+    if((type === 'dc1x' || type === 'dcx2') && prob >= 80) score += 3;
+    if(type === 'dc12' && prob >= 76) score += 3;
     // Aplica boost-ul/toxicul din Learning Engine — același sistem ca buildMarketCandidate
     try {
       if(typeof learningApplyToCandidate === 'function'){
