@@ -784,6 +784,8 @@ def api_recommend(row, market_key):
 def heuristic_recommend(row, market_key):
     if market_key == "over15":
         return pct(row.get("prob_over_15")) >= 75
+    if market_key == "under15":
+        return (100 - pct(row.get("prob_over_15"))) >= 78
     if market_key == "over25":
         return pct(row.get("prob_over_25")) >= 65
     if market_key == "under25":
@@ -817,6 +819,13 @@ def market_fit_score(row, market_key) -> float:
             score += 10
         if scoreline and scoreline["total"] >= 2:
             score += 12
+    elif market_key == "under15":
+        if xg_total <= 1.50:
+            score += 12
+        if scoreline and scoreline["total"] <= 1:
+            score += 14
+        if scoreline and scoreline["total"] >= 2:
+            score -= 18
     elif market_key == "over25":
         if xg_total >= 2.75:
             score += 10
