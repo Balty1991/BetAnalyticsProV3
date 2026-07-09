@@ -16,10 +16,12 @@
   /* ── Recent results (for auto-settle) ──────────────────────────── */
   var _recentResLookup = null; // null = not loaded yet
   var _recentResLoading = false;
+  var _recentResPending = []; // queued callbacks waiting for in-flight fetch
 
   function ensureRecentResults(cb) {
     if (_recentResLookup !== null) { cb(); return; }
-    if (_recentResLoading) return;
+    _recentResPending.push(cb);
+    if (_recentResLoading) return; // fetch in flight — cb queued, will fire on complete
     _recentResLoading = true;
     fetch('./data/recent_results.json?_=' + Math.floor(Date.now() / 300000))
       .then(function(r) { return r.ok ? r.json() : []; })
@@ -30,7 +32,8 @@
           if (r && r.id != null) _recentResLookup[String(r.id)] = r;
         });
         _recentResLoading = false;
-        cb();
+        var cbs = _recentResPending.splice(0);
+        cbs.forEach(function(fn) { try { fn(); } catch(e) {} });
       });
   }
 
@@ -111,12 +114,12 @@
     if (k === 'under_25') return hs + as2 < 2.5;
     if (k === 'btts_yes') return hs > 0 && as2 > 0;
     if (k === 'btts_no')  return hs === 0 || as2 === 0;
-    if (k === 'dc_1x')         return hs >= as2;
-    if (k === 'dc_x2')         return hs <= as2;
-    if (k === 'dc_12')         return hs !== as2;
-    if (k === 'under_25')      return hs + as2 < 2.5;
-    if (k === 'under_35')      return hs + as2 < 3.5;
-    if (k === 'under_15')      return hs + as2 < 1.5;
+    if (k === 'dc_1x')    return hs >= as2;
+    if (k === 'dc_x2')    return hs <= as2;
+    if (k === 'dc_12')    return hs !== as2;
+    if (k === 'under_35') return hs + as2 < 3.5;
+    if (k === 'under_15') return hs + as2 < 1.5;
+    if (k === 'over_35')  return hs + as2 > 3.5;
     if (k === 'home_to_score') return hs > 0;
     if (k === 'away_to_score') return as2 > 0;
     if (k === 'goal_fh')       return null;
