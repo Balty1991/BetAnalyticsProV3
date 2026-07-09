@@ -704,6 +704,14 @@ def market_outcome(event, market_key):
         return hs > 0 and aw > 0
     if market_key == "bttsNo":
         return hs == 0 or aw == 0
+    if market_key in ("over35",):
+        return total >= 4
+    if market_key in ("dc_1x", "dc1x"):
+        return hs >= aw
+    if market_key in ("dc_x2", "dcx2"):
+        return aw >= hs
+    if market_key in ("dc_12", "dc12"):
+        return hs != aw
     return None
 
 
@@ -1162,7 +1170,7 @@ def accumulate_pick(bucket_map, key, pick):
 def rows_from_bucket_map(bucket_map):
     out = []
     for key, picks in bucket_map.items():
-        stats = finalize_pick_stats(picks)
+        stats = finalize_pick_stats(picks, label=key)
         stats["key"] = key
         out.append(stats)
     out.sort(key=lambda x: (x["roi"], x["bets"]), reverse=True)
