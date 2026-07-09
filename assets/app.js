@@ -2253,10 +2253,10 @@ function getMarketThresholds() {
   return _MARKET_THRESHOLDS_CACHE;
 }
 
-var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 3.0, btts: 5.0 };
+var EDGE_FALLBACK = { over15: 10.0, under35: 15.0, over25: 3.0, btts: 5.0, homeWin: 5.0, awayWin: 5.0, draw: 5.0, dc1x: 5.0, dcx2: 5.0, dc12: 4.0, over35: 6.0, under25: 5.0, under15: 6.0 };
 function getMarketMinEdge(marketKey) {
   // Safety floor: dynamic_thresholds poate coborî prea mult pragul când un bucket are ROI marginal.
-  var HARD_EDGE_FLOORS = { under35: 10.0, over15: 12.0, over25: 5.0, btts: 5.0 };
+  var HARD_EDGE_FLOORS = { under35: 10.0, over15: 12.0, over25: 5.0, btts: 5.0, homeWin: 5.0, awayWin: 5.0, draw: 5.0, dc1x: 5.0, dcx2: 5.0, dc12: 4.0, over35: 6.0, under25: 5.0, under15: 6.0 };
   var hardFloor = HARD_EDGE_FLOORS[marketKey] != null ? HARD_EDGE_FLOORS[marketKey] : 0;
   var t = getMarketThresholds()[marketKey];
   var edge = EDGE_FALLBACK[marketKey] != null ? EDGE_FALLBACK[marketKey] : 3.0;
@@ -6205,6 +6205,34 @@ function renderTodayBest(){
       return m.predictedResult === 'A' && m.favorite === 'A' && (xgAway - xgHome) >= profile.minWinXgGap && m.probDraw <= profile.maxDrawProb;
     }
 
+    if(t === 'under35'){
+      return xgTotal < 2.60 && adjProb >= 74 && Number(m.probUnder35 || 0) >= 70;
+    }
+
+    if(t === 'under25'){
+      return xgTotal < 2.55 && adjProb >= 60 && Number(m.probUnder25 || 0) >= 55;
+    }
+
+    if(t === 'under15'){
+      return xgTotal <= 1.50 && adjProb >= 78 && Number(m.probUnder15 || 0) >= 78;
+    }
+
+    if(t === 'draw'){
+      return m.predictedResult === 'D' && adjProb >= 35 && Number(m.probDraw || 0) >= 30;
+    }
+
+    if(t === 'dc1x'){
+      return adjProb >= 80 && (m.predictedResult === 'H' || m.predictedResult === 'D');
+    }
+
+    if(t === 'dcx2'){
+      return adjProb >= 80 && (m.predictedResult === 'A' || m.predictedResult === 'D');
+    }
+
+    if(t === 'dc12'){
+      return adjProb >= 76 && m.predictedResult !== 'D';
+    }
+
     return false;
   }
 
@@ -8752,23 +8780,33 @@ function buildMarketCandidate(m, type){
     ) return null;
   }
   // btts: edge ≥15% are -23.9% ROI (n=24) — zona distructivă, blocat
+  if(type === 'btts' && isMarketDisabled('btts')) return null;
   if(type === 'btts' && (Number(b.adjProb || 0) < 65 || Number(m.probBtts || 0) < 65 || Number(m.xgHome || 0) < 1.10 || Number(m.xgAway || 0) < 1.10 || Math.abs(Number(m.xgHome || 0) - Number(m.xgAway || 0)) > 0.80 || edgePct < 5 || edgePct >= 15 || Number(b.value || 0) < 0.04)) return null;
   // DC 1X / X2 — safe bet, prob >=78%, value >=0.03, max 1.95 (sweet spot)
-  if(type === 'dc1x' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || Number(b.value || 0) < 0.03)) return null;
-  if(type === 'dcx2' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'dc1x' && isMarketDisabled('dc1x')) return null;
+  if(type === 'dc1x' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'dcx2' && isMarketDisabled('dcx2')) return null;
+  if(type === 'dcx2' && (Number(b.adjProb || 0) < 78 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.95 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
   // DC 12 (no draw) — cerem prob >=74, mai riscant statistic, max 1.85
-  if(type === 'dc12' && (Number(b.adjProb || 0) < 74 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.85 || Number(b.value || 0) < 0.03)) return null;
+  if(type === 'dc12' && isMarketDisabled('dc12')) return null;
+  if(type === 'dc12' && (Number(b.adjProb || 0) < 74 || Number(b.odds || 0) < 1.15 || Number(b.odds || 0) > 1.85 || edgePct < 4 || Number(b.value || 0) < 0.03)) return null;
   // Home Win: favorit clar acasă — prag ridicat (53.8% WR la prag 62, acum 72)
+  if(type === 'homeWin' && isMarketDisabled('homeWin')) return null;
   if(type === 'homeWin' && (Number(b.adjProb || 0) < 72 || Number(b.odds || 0) < 1.20 || Number(b.odds || 0) > 2.80 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
   // Away Win: favorit oaspete — prob ≥60, cotă 1.30-4.00, edge ≥5
+  if(type === 'awayWin' && isMarketDisabled('awayWin')) return null;
   if(type === 'awayWin' && (Number(b.adjProb || 0) < 60 || Number(b.odds || 0) < 1.30 || Number(b.odds || 0) > 4.00 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
   // Egal — piață volatilă, prob ≥35%, cotă 2.50-5.00, edge ≥5
+  if(type === 'draw' && isMarketDisabled('draw')) return null;
   if(type === 'draw' && (Number(b.adjProb || 0) < 35 || Number(b.odds || 0) < 2.50 || Number(b.odds || 0) > 5.00 || edgePct < 5 || Number(b.value || 0) < 0.04)) return null;
   // Over 3.5 — piață rară, prob ≥40%, cotă ≥1.50, edge ≥6
+  if(type === 'over35' && isMarketDisabled('over35')) return null;
   if(type === 'over35' && (Number(b.adjProb || 0) < 40 || Number(b.odds || 0) < 1.50 || edgePct < 6 || Number(b.value || 0) < 0.03)) return null;
   // Under 2.5 — conservator, prob ≥55%, cotă 1.25-2.50, edge ≥5
+  if(type === 'under25' && isMarketDisabled('under25')) return null;
   if(type === 'under25' && (Number(b.adjProb || 0) < 55 || Number(b.odds || 0) < 1.25 || Number(b.odds || 0) > 2.50 || edgePct < 5 || Number(b.value || 0) < 0.03)) return null;
   // Under 1.5 — piață rarissimă, prob ≥75%, cotă ≥1.50, edge ≥6
+  if(type === 'under15' && isMarketDisabled('under15')) return null;
   if(type === 'under15' && (Number(b.adjProb || 0) < 75 || Number(b.odds || 0) < 1.50 || edgePct < 6 || Number(b.value || 0) < 0.03)) return null;
 
   // WEEKDAY: restrictiile hardcodate au fost eliminate (nu trebuie sa excludem un eveniment doar pe baza zilei).
