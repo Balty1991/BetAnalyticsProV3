@@ -1877,24 +1877,10 @@ function renderActiveTab(name, opts){
     markTabRendered('tracking');
     return;
   }
-  if(name === 'charts'){
-    renderAdvancedCharts();
-    markTabRendered('charts');
-    return;
-  }
   if(name === 'smartbet'){
     try { renderSmartBet(); } catch(e){}
     try { switchSmartLearnSection(window._smartLearnSection || 'predictii'); } catch(e){}
     markTabRendered('smartbet');
-    return;
-  }
-  if(name === 'bankroll'){
-    calcBankroll();
-    markTabRendered('bankroll');
-    return;
-  }
-  if(name === 'cota2'){
-    markTabRendered('cota2');
     return;
   }
   if(name === 'ml5'){
@@ -1949,6 +1935,8 @@ function prefetchNonCriticalTabData(){
   }, 6000);
 }
 function switchTab(name){
+  if(name==='audit'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
+  if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
   if(name==='istoricfull' || name==='apihistory' || name==='traininglab'){
     if(!LAZY_DATA_READY.fullHistoryAssets){
       ensureFullHistoryAssets().then(function(){
@@ -1969,8 +1957,6 @@ function switchTab(name){
   setDesktopTabActive(name);
   setMobileNavActive(name);
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  if(name==='audit'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
-  if(name==='aimemory'){ switchTab('smartbet'); switchSmartLearnSection('predictii'); return; }
   renderActiveTab(name, { deferDashboardSecondary: name === 'dashboard' });
   renderTicketQuickPeek();
   ensureTabData(name).then(function(){
@@ -9052,8 +9038,13 @@ function finalizeTicket(type, label, picks, totalOdds){
     type === 'profit_single' ? 'Scăzut+' :
     type === 'best_single' ? 'Scăzut' :
     type === 'simple' ? 'Scăzut' :
+    type === 'custom_single' ? 'Scăzut-Mediu' :
+    type === 'controlled_combo' ? 'Mediu' :
+    type === 'custom_combo' ? 'Mediu' :
     type === 'over15' ? 'Mediu' :
     type === 'mix_combo' ? 'Mediu+' :
+    type === 'over35' ? 'Mediu+' :
+    type === 'big_win' ? 'Ridicat+' :
     'Ridicat';
 
   BILETE = {
@@ -9065,7 +9056,8 @@ function finalizeTicket(type, label, picks, totalOdds){
     combinedProb: combinedProb,
     avgEdge: avgEdge,
     riskLabel: riskLabel,
-    stake: getStakeForTicket(type)
+    stake: getStakeForTicket(type),
+    stakePct: getStakePctForTicket(type)
   };
 
   renderBilete();
@@ -12650,7 +12642,7 @@ function getMathPortfolioMeta(type, source){
       icon:'⚡',
       label:'Acumulator 5x',
       riskLabel:'Mediu',
-      summary:'3-4 linii • fiecare prob ≥80% • cotă cumulată 4.5-6x',
+      summary:'3-5 linii • fiecare prob ≥80% • cotă cumulată 4.5-6x',
       empty:'Nu există 3+ linii cu probabilitate ≥80% și cote compatibile pentru 5x.',
       priority:5
     },
@@ -12658,7 +12650,7 @@ function getMathPortfolioMeta(type, source){
       icon:'🔥',
       label:'Acumulator 10x',
       riskLabel:'Mediu+',
-      summary:'5-6 linii • fiecare prob ≥77% • cotă cumulată 8.5-12x',
+      summary:'5-7 linii • fiecare prob ≥77% • cotă cumulată 8.5-12x',
       empty:'Nu există 5+ linii cu probabilitate ≥77% și cote compatibile pentru 10x.',
       priority:6
     },
@@ -12666,7 +12658,7 @@ function getMathPortfolioMeta(type, source){
       icon:'💥',
       label:'Acumulator 20x',
       riskLabel:'Ridicat',
-      summary:'6-8 linii • fiecare prob ≥74% • cotă cumulată 16-24x',
+      summary:'6-9 linii • fiecare prob ≥74% • cotă cumulată 16-24x',
       empty:'Nu există 6+ linii cu probabilitate ≥74% și cote compatibile pentru 20x.',
       priority:7
     }
