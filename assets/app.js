@@ -3229,7 +3229,7 @@ function calcKellyML5(prob, odds, bankrollPct){
   if(p <= 0 || o <= 1.01) return 0;
   var kelly = (p * (o - 1) - (1 - p)) / (o - 1);
   var quarter = kelly / 4;
-  return Math.max(0, Math.min(5, +quarter.toFixed(2))); // cap 5%
+  return Math.max(0, Math.min(4, +quarter.toFixed(2))); // cap 4%
 }
 
 // --- ENRICHMENT APPLY ---
@@ -5263,7 +5263,7 @@ function analyzeMatch(raw){
         if(!p || !o || o < 1.01) return 0;
         var b2 = o - 1, pf = p / 100;
         var k = (pf * b2 - (1 - pf)) / b2;
-        return +Math.max(0, Math.min(k * 0.25, 0.06) * 100).toFixed(3);
+        return +Math.max(0, Math.min(k * 0.25, 0.04) * 100).toFixed(3);
       })(adjProb, odds),
       sourceApi: apiRecommendForRaw(raw, bt.key),
       sourceHeuristic: heuristicRecommendForRaw(raw, bt.key),
@@ -7060,11 +7060,16 @@ function renderBacktest(){
     }
   ];
 
+  var overallNote = (engineBets >= 10 && bt.engine_roi != null)
+    ? ' ROI global motor: <strong style="color:'+(Number(bt.engine_roi||0)>=0?'var(--grn)':'var(--red)')+'">'+fmtSignedPct(Number(bt.engine_roi||0))+'</strong> pe '+engineBets+' pariuri — Top piață/ligă/strategie sunt subseturi cu performanță selectată.'
+    : '';
+
   box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'+cards.map(buildCard).join('')+'</div>'+
     '<div style="margin-top:8px;font-size:9px;line-height:1.35;color:var(--muted);opacity:.92">'+
       '<strong style="color:var(--txt)">Legendă:</strong> win/recomandate = câștigate din total recomandate în backtest; valorile nu sunt numărul de bilete generate acum în tabul Bilete/Tracking.'+
+      overallNote+
     '</div>';
-} 
+}
 
 function buildMlRecommendTags(m){
   var tags = '';

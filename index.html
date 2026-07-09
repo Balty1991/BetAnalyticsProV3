@@ -187,7 +187,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script defer src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260709v4"></script>
+<script defer src="./assets/app.js?v=20260709v5"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260602dash2"></script>
 </head>
@@ -277,6 +277,10 @@ function toggleTheme(){
       <span class="more-card-title">🎯 ⚡ APEX Neural Engine</span>
       <span class="more-card-sub">Kelly + AI Memory + SmartBet — cel mai bun din 3 motoare, un singur scor.</span>
     </button>
+    <button class="more-card-btn" onclick="switchTab('performanta');closeDesktopMore()">
+      <span class="more-card-title">📊 Performanță Verdict</span>
+      <span class="more-card-sub">Acuratețe ✅ PARIAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale.</span>
+    </button>
     <button class="more-card-btn" onclick="switchTab('clv');closeDesktopMore()">
       <span class="more-card-title">📈 CLV Tracker</span>
       <span class="more-card-sub">Closing Line Value — verifică dacă modelul bate piața real.</span>
@@ -292,6 +296,10 @@ function toggleTheme(){
     <button class="more-card-btn" onclick="switchTab('upcoming');closeDesktopMore()">
       <span class="more-card-title">📅 Evenimente Viitoare</span>
       <span class="more-card-sub">Toate meciurile viitoare cu predicții automate — probabilități, cea mai sigură piață, analiză AI.</span>
+    </button>
+    <button class="more-card-btn" onclick="switchTab('statistici');if(typeof renderStatisticiTab==='function')renderStatisticiTab();closeDesktopMore()">
+      <span class="more-card-title">📊 Statistici Predicții</span>
+      <span class="more-card-sub">Win rate · ROI · Trend per sursă: AI Claude, ML5, APEX, Meciuri — calculat local.</span>
     </button>
   </div>
 </div>
@@ -703,6 +711,7 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">⚡ Motor AI</span><small class="sheet-btn-sub">Gemini 1.5 Flash — predicții per meci cu scor de încredere</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('stats-meciuri');window.renderStatsMeciuri&&renderStatsMeciuri();closeMobileMore()"><span class="sheet-btn-title">📊 Statistică Meciuri</span><small class="sheet-btn-sub">Distribuție piețe · SmartScore · Top ligi · Lista meciuri afișate</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('upcoming');closeMobileMore()"><span class="sheet-btn-title">📅 Evenimente Viitoare</span><small class="sheet-btn-sub">Toate meciurile cu predicții automate · Probabilități · Cea mai sigură piață</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('statistici');if(typeof renderStatisticiTab==='function')renderStatisticiTab();closeMobileMore()"><span class="sheet-btn-title">📊 Statistici Predicții</span><small class="sheet-btn-sub">Win rate · ROI · Trend per sursă: AI Claude, ML5, APEX, Meciuri</small></button>
 
 </div>
 
