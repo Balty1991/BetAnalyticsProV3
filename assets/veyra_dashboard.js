@@ -5,8 +5,9 @@
 (function () {
   'use strict';
 
-  if (window.__veyraDashboard) return;
-  window.__veyraDashboard = true;
+  if (window.__veyraDashboardV3) return;
+  window.__veyraDashboard   = null;
+  window.__veyraDashboardV3 = true;
 
   var DAYS   = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
   var MONTHS = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
