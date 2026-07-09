@@ -345,18 +345,38 @@
     );
   }
 
+  var _vdRendering = false;
+
   /* ── Render ── */
   function render() {
+    if (_vdRendering) return;
+    _vdRendering = true;
     try {
       var host = document.getElementById('dashboard-modern-shell');
-      if (!host) return;
+      if (!host) { _vdRendering = false; return; }
       var ph = document.getElementById('vd-boot-placeholder');
       if (ph) ph.parentNode.removeChild(ph);
       host.innerHTML = buildHtml();
     } catch (e) {
       var h = document.getElementById('dashboard-modern-shell');
-      if (h) h.innerHTML = '<div style="padding:20px;color:#EF4444;font-size:12px">Dashboard error: ' + String(e) + '</div>';
+      if (h) h.innerHTML =
+        '<div style="padding:20px 16px;color:#EF4444;font-size:12px;line-height:1.6">' +
+        '<strong>Dashboard error:</strong><br>' + String(e) + '</div>';
     }
+    _vdRendering = false;
+  }
+
+  /* ── Guard against external code clearing the shell ── */
+  function watchShell() {
+    var host = document.getElementById('dashboard-modern-shell');
+    if (!host || !window.MutationObserver) return;
+    var obs = new MutationObserver(function () {
+      if (_vdRendering) return;
+      if (!document.getElementById('veyra-dash')) {
+        setTimeout(render, 0);
+      }
+    });
+    obs.observe(host, { childList: true });
   }
 
   /* ── Global hooks ── */
@@ -364,12 +384,12 @@
     if (typeof window.renderAll === 'function' && !window.__vdRenderAllHooked) {
       window.__vdRenderAllHooked = true;
       var orig = window.renderAll;
-      window.renderAll = function () { var r = orig.apply(this, arguments); setTimeout(render, 250); return r; };
+      window.renderAll = function () { var r = orig.apply(this, arguments); setTimeout(render, 300); return r; };
     }
     if (typeof window.doRefresh === 'function' && !window.__vdRefreshHooked) {
       window.__vdRefreshHooked = true;
       var origR = window.doRefresh;
-      window.doRefresh = function () { var r = origR.apply(this, arguments); setTimeout(render, 600); return r; };
+      window.doRefresh = function () { var r = origR.apply(this, arguments); setTimeout(render, 700); return r; };
     }
   }
 
@@ -377,6 +397,7 @@
   function boot() {
     hookGlobals();
     render();
+    watchShell();
     [150, 500, 1400, 3500, 7000, 14000].forEach(function (d) {
       setTimeout(function () { hookGlobals(); render(); }, d);
     });
