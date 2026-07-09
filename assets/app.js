@@ -2770,7 +2770,6 @@ function _perfMetric(label, val, sub, color) {
 // ====================================================================
 
 function calcSmartScore(adjProb, value, confidence, edgePct){
-  // Sincronizat cu fetch_data.py:calc_smart_score — aceeași scală, penalizări identice
   var c = normalizeConfidence(confidence);
   var edge = Number(edgePct || 0);
   var val  = Number(value  || 0);
@@ -2781,7 +2780,9 @@ function calcSmartScore(adjProb, value, confidence, edgePct){
   var penalty = 0;
   if(val  < -0.03) penalty += 8;
   if(edge < -2.0)  penalty += 12;
-  return Math.min(100, Math.round(probScore + valueScore + edgeScore + confScore - penalty));
+  var raw = probScore + valueScore + edgeScore + confScore - penalty;
+  // Normalize la 100 (componente sum to max 98; /98*100 scales correctly)
+  return Math.min(100, Math.max(1, Math.round(raw / 98 * 100)));
 }
 
 // ============================================================

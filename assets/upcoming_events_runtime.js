@@ -8,9 +8,10 @@
   window.__veyraUpcomingV2 = true;
   window.__veyraUpcomingV1 = true;
 
-  var STORE_KEY   = 'veyra_upcoming_picks_v1';
-  var _activeDate = null;
-  var _activeView = 'matches';
+  var STORE_KEY    = 'veyra_upcoming_picks_v1';
+  var _activeDate  = null;
+  var _activeView  = 'matches';
+  var _filterEdge  = false; // true = show only non-Avoid predictions
 
   /* ── Recent results (for auto-settle) ──────────────────────────── */
   var _recentResLookup = null; // null = not loaded yet
@@ -507,7 +508,12 @@
       goalRanges:goalRanges,
       xgHome: xgH > 0 ? Math.round(xgH*100)/100 : null,
       xgAway: xgA > 0 ? Math.round(xgA*100)/100 : null,
-      mostLikelyScore: pred && pred.most_likely_score || null
+      mostLikelyScore: (pred && pred.poisson_metrics && pred.poisson_metrics.most_likely_score)
+                       || (pred && pred.most_likely_score) || null,
+      mlRiskTier: pred && pred.risk_tier ? pred.risk_tier : null,
+      mlEdgePp:   pred && typeof pred.edge_pp  === 'number' ? pred.edge_pp  : null,
+      mlEvPct:    pred && typeof pred.ev_pct   === 'number' ? pred.ev_pct   : null,
+      mlKellyPct: pred && typeof pred.kelly_pct === 'number' ? pred.kelly_pct : null
     };
   }
 
@@ -587,10 +593,14 @@
     var btnBase = 'flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid ';
     var actStyle = btnBase + 'rgba(59,130,246,.4);background:rgba(59,130,246,.15);color:#60a5fa';
     var inactStyle = btnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
+    var edgeBtnStyle = _filterEdge
+      ? btnBase + 'rgba(34,197,94,.4);background:rgba(34,197,94,.15);color:#22c55e'
+      : btnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
     html += '<div style="display:flex;gap:4px;padding:10px 14px 4px">'
       + '<button onclick="window.__veyraUpcView(\'matches\')" style="' + (_activeView==='matches'?actStyle:inactStyle) + '">📅 Meciuri</button>'
       + '<button onclick="window.__veyraUpcView(\'picks\')" style="' + (_activeView==='picks'?actStyle:inactStyle) + '">'
       + '📌 Picks' + (picksCount>0?' ('+picksCount+')':'') + '</button>'
+      + '<button onclick="window.__veyraUpcToggleEdge()" style="' + edgeBtnStyle + '" title="Afișează doar meciuri cu edge pozitiv">⚡</button>'
       + '</div>';
 
     if (_activeView === 'matches') {
@@ -647,12 +657,37 @@
         var time    = formatTime(ev.event_date);
         var isSaved = !!picks[String(ev.id)];
 
-        html += '<div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);'
-          + 'border-radius:14px;padding:12px;margin-bottom:8px">';
+        /* Edge filter: skip Avoid predictions when filter is active */
+        var hasEdge = pred && pred.risk_tier && pred.risk_tier !== 'Avoid';
+        if (_filterEdge && !hasEdge) return;
 
-        /* Time + save button */
+        var cardOpacity = (!hasEdge && !_filterEdge) ? '.4' : '1';
+        var cardBg      = hasEdge ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.015)';
+        html += '<div style="background:' + cardBg + ';border:1px solid rgba(255,255,255,' + (hasEdge ? '.08' : '.04') + ');'
+          + 'border-radius:14px;padding:12px;margin-bottom:8px;opacity:' + cardOpacity + '">';
+
+        /* Time + weather + save button */
+        var temp    = ev.temperature_c != null ? Math.round(ev.temperature_c) : null;
+        var wind    = ev.wind_speed    != null ? Math.round(ev.wind_speed)    : null;
+        var wcode   = ev.weather_code  != null ? Number(ev.weather_code)      : null;
+        var wIcon   = wcode === 0 ? '☀️' : wcode === 1 ? '🌤️' : wcode === 2 ? '⛅' :
+                      wcode === 3 ? '🌧️' : wcode === 4 ? '🌨️' : wcode === 5 ? '⛈️' : null;
+        var hotFlag = temp != null && temp > 30;
+        var windFlag= wind != null && wind > 25;
         html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
-          + '<span style="font-size:11px;font-weight:800;color:#94a3b8">' + time + '</span>'
+          + '<div style="display:flex;align-items:center;gap:8px">'
+          + '<span style="font-size:11px;font-weight:800;color:#94a3b8">' + time + '</span>';
+        if (temp != null) {
+          html += '<span style="font-size:9px;color:' + (hotFlag ? '#f97316' : 'rgba(255,255,255,.3)') + ';'
+            + 'display:flex;align-items:center;gap:2px" title="Temperatura: ' + temp + '°C">'
+            + (wIcon ? wIcon + ' ' : '') + temp + '°'
+            + (hotFlag ? '<span style="color:#f97316;font-size:8px;margin-left:1px">!</span>' : '')
+            + '</span>';
+        }
+        if (windFlag) {
+          html += '<span style="font-size:9px;color:rgba(148,163,184,.5)" title="Vânt: ' + wind + ' km/h">💨 ' + wind + '</span>';
+        }
+        html += '</div>'
           + (p ? '<button class="upc-save-btn'+(isSaved?' saved':'')+'" '
              + 'onclick="window.__veyraUpcSave(\''+String(ev.id)+'\')">'
              + (isSaved ? '✓ Salvat' : '+ Salvează') + '</button>' : '')
@@ -863,17 +898,32 @@
             html += '</div></details>';
           }
 
-          /* AI preview: only if Romanian diacritics detected */
+          /* Kelly stake recommendation + metadata footer */
           var _rawAi = (pred && pred.ai_preview) || '';
           var aiText = /[ăîșțâĂÎȘȚÂ]/.test(_rawAi) ? _rawAi : '';
-          html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">'
-            + '<span style="font-size:9px;color:rgba(255,255,255,.2)">'+(p.hasMl?'🤖 Model ML':'📊 Cote')+'</span>'
-            + (p.aiBoost?'<span style="font-size:9px;color:#a78bfa">✨ AI analizat</span>':'');
+          html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px">';
+          /* Risk tier badge */
+          if (p.mlRiskTier && p.mlRiskTier !== 'Avoid') {
+            var rtCol = p.mlRiskTier==='Safe'?'#22c55e':p.mlRiskTier==='Value'?'#a78bfa':'#f59e0b';
+            html += '<span style="font-size:8px;background:rgba('+hexToRgb(rtCol)+',.12);color:'+rtCol+';'
+              + 'padding:2px 6px;border-radius:8px;font-weight:700">' + p.mlRiskTier + '</span>';
+          }
+          /* Kelly recommendation */
+          if (p.mlKellyPct && p.mlKellyPct > 0 && p.mlRiskTier && p.mlRiskTier !== 'Avoid') {
+            html += '<span style="font-size:9px;color:rgba(255,255,255,.35)">Miză: '
+              + '<span style="color:rgba(255,255,255,.6);font-weight:700">'
+              + Number(p.mlKellyPct).toFixed(1) + '% bankroll</span></span>';
+          }
+          /* Model source */
+          html += '<span style="font-size:9px;color:rgba(255,255,255,.18)">'+(p.hasMl?'🤖 ML':'📊 Cote')+'</span>';
+          if (p.aiBoost) {
+            html += '<span style="font-size:9px;color:#a78bfa">✨ AI</span>';
+          }
           if (aiText) {
             html += '<button onclick="window.__veyraUpcToggleAI(this)" '
               + 'data-preview="'+encodeURIComponent(aiText.slice(0,600))+'" '
               + 'style="font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(167,139,250,.1);'
-              + 'border:1px solid rgba(167,139,250,.3);color:#a78bfa;cursor:pointer">💬 Analiză AI</button>';
+              + 'border:1px solid rgba(167,139,250,.3);color:#a78bfa;cursor:pointer">💬 AI</button>';
           }
           html += '</div>';
         }
@@ -973,6 +1023,7 @@
   }
 
   /* ── Global handlers ────────────────────────────────────────────────── */
+  window.__veyraUpcToggleEdge = function() { _filterEdge = !_filterEdge; renderUpcomingTab(); };
   window.__veyraUpcSetDate = function(d) { _activeDate=d; _activeView='matches'; renderUpcomingTab(); };
   window.__veyraUpcomingSetDate = window.__veyraUpcSetDate; // backward compat
 

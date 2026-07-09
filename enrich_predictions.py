@@ -23,7 +23,7 @@ DATA_DIR = Path("data")
 
 # ─── parametri ───────────────────────────────────────────────────────────────
 KELLY_FRACTION  = 0.25
-KELLY_CAP       = 0.06
+KELLY_CAP       = 0.04   # lowered from 0.06 — max 4% bankroll per bet (safer)
 EDGE_SAFE_MIN   = 2.0
 EDGE_VALUE_MIN  = 5.0
 EV_POSITIVE     = 0.0
@@ -49,13 +49,15 @@ MARKETS: List[Tuple[str, str, str, List[str], str]] = [
     ("over_25",  "prob_over_25",  "odds_over_25", ["odds_over_25","odds_under_25"],      "over25"),
     ("over_35",  "prob_over_35",  "odds_over_35", ["odds_over_35","odds_under_35"],      "over35"),
     ("under_35", "prob_over_35",  "odds_under_35",["odds_over_35","odds_under_35"],      "under35"),
+    ("under_25", "prob_over_25",  "odds_under_25",["odds_over_25","odds_under_25"],      "under25"),
     ("btts_yes", "prob_btts_yes", "odds_btts_yes",["odds_btts_yes","odds_btts_no"],      "btts"),
 ]
 
 _MARKET_LABELS = {
     "home_win":"victorie gazdă","draw":"egal","away_win":"victorie oaspete",
     "over_15":"Peste 1.5G","over_25":"Peste 2.5G","over_35":"Peste 3.5G",
-    "under_35":"Sub 3.5G","btts_yes":"Ambele marchează",
+    "under_25":"Sub 2.5G","under_35":"Sub 3.5G","btts_yes":"Ambele marchează",
+    "dc_1x":"Șansă Dublă 1X","dc_x2":"Șansă Dublă X2","dc_12":"Șansă Dublă 12",
 }
 _TIER_REASONS = {
     "Safe":    "probabilitate ridicată, cota în interval sigur",
@@ -110,10 +112,24 @@ def build_market_blacklist():
 # ─── Poisson ─────────────────────────────────────────────────────────────────
 
 def compute_poisson(entry) -> Optional[Dict]:
-    """Calculează probabilitățile Poisson/Dixon-Coles pentru un meci."""
+    """Calculează probabilitățile Poisson cu ajustare meteo pentru xG."""
     lh = _f(_get(entry, "expected_home_goals"), 0.0)
     la = _f(_get(entry, "expected_away_goals"), 0.0)
     if lh < 0.05 or la < 0.05: return None
+
+    # Weather adjustment: căldură/vânt reduc golurile
+    ev_obj = entry.get("event") or {}
+    temp = _f(ev_obj.get("temperature_c"), 20.0)
+    wind = _f(ev_obj.get("wind_speed"), 10.0)
+    w_mult = 1.0
+    if temp > 32:   w_mult -= 0.08  # >32°C: -8% xG (oboseală accelerată)
+    elif temp > 28: w_mult -= 0.04  # >28°C: -4% xG
+    if wind > 30:   w_mult -= 0.05  # >30 km/h: -5% xG (mingea impredictibilă)
+    elif wind > 20: w_mult -= 0.02  # >20 km/h: -2% xG
+    if w_mult != 1.0:
+        lh = max(0.05, lh * w_mult)
+        la = max(0.05, la * w_mult)
+
     try:
         return poisson_market_probabilities(lh, la)
     except Exception:
@@ -213,8 +229,8 @@ def enrich_entry(entry, blacklist):
         odds_val = _f(_get(entry, odds_field), 0.0)
         if odds_val < ODDS_MIN or odds_val > ODDS_MAX: continue
 
-        # Under 3.5 → prob inversă (must happen BEFORE the < 0.01 guard below)
-        if mkt == "under_35":
+        # Under markets → prob inversă (must happen BEFORE the < 0.01 guard below)
+        if mkt in ("under_35", "under_25"):
             bsd_p = 1.0 - bsd_p
 
         if bsd_p < 0.01: continue  # skip near-impossible after inversion
@@ -261,6 +277,50 @@ def enrich_entry(entry, blacklist):
             "blacklist_reason": bl_reason or None,
             "score":            score,
             "rationale":        rat,
+        }
+
+    # ─── Double Chance markets (din market_best_odds) ────────────────────────
+    ev_obj2 = entry.get("event") or {}
+    mbo_raw = ev_obj2.get("market_best_odds") or {}
+    ph_raw  = _f(_get(entry, "prob_home_win"), 0.0)
+    pd_raw  = _f(_get(entry, "prob_draw"),     0.0)
+    pa_raw  = _f(_get(entry, "prob_away_win"), 0.0)
+    ph_frac = ph_raw / 100.0 if ph_raw >= 1.0 else ph_raw
+    pd_frac = pd_raw / 100.0 if pd_raw >= 1.0 else pd_raw
+    pa_frac = pa_raw / 100.0 if pa_raw >= 1.0 else pa_raw
+
+    dc_configs = [
+        ("dc_1x", min(ph_frac + pd_frac, 0.99), mbo_raw.get("dc1x") or {}),
+        ("dc_x2", min(pd_frac + pa_frac, 0.99), mbo_raw.get("dcx2") or {}),
+        ("dc_12", min(ph_frac + pa_frac, 0.99), mbo_raw.get("dc12") or {}),
+    ]
+    for dc_mkt, dc_prob, dc_mbo in dc_configs:
+        if dc_prob < 0.55 or not dc_mbo: continue  # DC sub 55% nu are sens
+        dc_odds = _f(dc_mbo.get("avg_odds"), 0.0)
+        if dc_odds < ODDS_MIN or dc_odds > 3.50: continue
+        dc_impl = _f(dc_mbo.get("avg_implied_probability"), 0.0) / 100.0
+        if dc_impl < 0.01: continue
+        # No-vig aproximativ: dc_impl conține marja; scoatem ~5% margin
+        nv_p_dc = round(dc_impl / (dc_impl + (1.0 - dc_impl) * 0.95), 6)
+        edg  = edge_pp(dc_prob, nv_p_dc)
+        ev   = ev_pct(dc_prob, dc_odds)
+        kpct = kelly_pct(dc_prob, dc_odds)
+        fo   = fair_odds_calc(dc_prob)
+        bl_reason = blacklist.get(dc_mkt, "")
+        tier  = risk_tier_calc(dc_mkt, dc_prob, edg, ev, dc_odds, bool(bl_reason))
+        score = composite_score(dc_prob, edg, ev)
+        label = _MARKET_LABELS.get(dc_mkt, dc_mkt)
+        rat = (f"Probabilitate blend {round(dc_prob*100,1)}% pentru {label} "
+               f"(cota {dc_odds}, fair odds {fo}). "
+               f"Edge: {edg:+.1f}pp, EV: {_f(ev):+.1f}%. "
+               f"Categorie: {tier} — {_TIER_REASONS.get(tier,'')}")
+        markets_data[dc_mkt] = {
+            "market": dc_mkt, "prob": round(dc_prob, 6), "bsd_prob": round(dc_prob, 6),
+            "poisson_prob": None, "nv_prob": nv_p_dc,
+            "odds": round(dc_odds, 3), "fair_odds": fo, "edge_pp": edg, "ev_pct": ev,
+            "kelly_pct": kpct, "risk_tier": tier, "poisson_alert": False,
+            "blacklisted": bool(bl_reason), "blacklist_reason": bl_reason or None,
+            "score": score, "rationale": rat,
         }
 
     # Piața cea mai bună (non-Avoid primul, fallback oricare)
