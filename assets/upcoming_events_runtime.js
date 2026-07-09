@@ -12,6 +12,27 @@
   var _activeDate = null;
   var _activeView = 'matches';
 
+  /* ── Recent results (for auto-settle) ──────────────────────────── */
+  var _recentResLookup = null; // null = not loaded yet
+  var _recentResLoading = false;
+
+  function ensureRecentResults(cb) {
+    if (_recentResLookup !== null) { cb(); return; }
+    if (_recentResLoading) return;
+    _recentResLoading = true;
+    fetch('./data/recent_results.json?_=' + Math.floor(Date.now() / 300000))
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .catch(function() { return []; })
+      .then(function(arr) {
+        _recentResLookup = {};
+        (arr || []).forEach(function(r) {
+          if (r && r.id != null) _recentResLookup[String(r.id)] = r;
+        });
+        _recentResLoading = false;
+        cb();
+      });
+  }
+
   /* ── Storage ──────────────────────────────────────────────────────── */
   function loadPicks() {
     try {
@@ -513,6 +534,19 @@
     var today = todayIso();
     var evLookup = {};
     events.forEach(function(e){ if (e&&e.id) evLookup[String(e.id)]=e; });
+
+    /* Overlay finished scores from recent_results.json */
+    if (_recentResLookup === null) {
+      ensureRecentResults(function() { renderUpcomingTab(); });
+    }
+    if (_recentResLookup) {
+      Object.keys(_recentResLookup).forEach(function(id) {
+        var r = _recentResLookup[id];
+        if (!evLookup[id]) evLookup[id] = { id: Number(id) };
+        evLookup[id].home_score = r.home_score;
+        evLookup[id].away_score = r.away_score;
+      });
+    }
 
     var picks    = autoSettle(loadPicks(), evLookup);
     var picksArr = Object.keys(picks).map(function(k){ return picks[k]; })
