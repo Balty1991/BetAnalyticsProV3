@@ -155,6 +155,7 @@ MARKETS = [
     {"key": "under15", "label": "Under 1.5G", "prob": lambda r: 100 - pct(r.get("prob_over_15")), "odds": lambda e: e.get("odds_under_15")},
     {"key": "over25", "label": "Over 2.5G", "prob": lambda r: pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_over_25")},
     {"key": "under25", "label": "Under 2.5G", "prob": lambda r: 100 - pct(r.get("prob_over_25")), "odds": lambda e: e.get("odds_under_25")},
+    {"key": "over35",  "label": "Over 3.5G",  "prob": lambda r: pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_over_35")},
     {"key": "under35", "label": "Under 3.5G", "prob": lambda r: 100 - pct(r.get("prob_over_35")), "odds": lambda e: e.get("odds_under_35")},
     {"key": "btts", "label": "BTTS", "prob": lambda r: pct(r.get("prob_btts_yes")), "odds": lambda e: e.get("odds_btts_yes")},
 ]
@@ -752,11 +753,11 @@ def market_prob_from_row_event(row, event, market_key) -> Optional[float]:
         if not vals:
             return None
         return round(vals[0 if market_key == "over25" else 1], 2)
-    if market_key == "under35":
+    if market_key in {"over35", "under35"}:
         vals = compute_no_vig(event.get("odds_over_35"), event.get("odds_under_35"))
         if not vals:
             return None
-        return round(vals[1], 2)
+        return round(vals[0 if market_key == "over35" else 1], 2)
     if market_key in {"btts", "bttsNo"}:
         vals = compute_no_vig(event.get("odds_btts_yes"), event.get("odds_btts_no"))
         if not vals:
@@ -787,6 +788,8 @@ def heuristic_recommend(row, market_key):
         return pct(row.get("prob_over_25")) >= 65
     if market_key == "under25":
         return pct(100 - pct(row.get("prob_over_25"))) >= 58
+    if market_key == "over35":
+        return pct(row.get("prob_over_35")) >= 45
     if market_key == "under35":
         return pct(100 - pct(row.get("prob_over_35"))) >= 70
     if market_key == "btts":
@@ -823,6 +826,11 @@ def market_fit_score(row, market_key) -> float:
         if xg_total <= 2.55:
             score += 10
         if scoreline and scoreline["total"] <= 2:
+            score += 12
+    elif market_key == "over35":
+        if xg_total >= 3.00:
+            score += 10
+        if scoreline and scoreline["total"] >= 4:
             score += 12
     elif market_key == "under35":
         if xg_total <= 3.05:
