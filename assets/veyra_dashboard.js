@@ -1,281 +1,385 @@
+/**
+ * VEYRA Dashboard v3
+ * Redesigned: score rings, sparkline, modern layout
+ */
 (function () {
   'use strict';
 
   if (window.__veyraDashboard) return;
   window.__veyraDashboard = true;
 
-  var DAYS = ['Duminică', 'Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă'];
-  var MONTHS = ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie',
-                'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'];
+  var DAYS   = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
+  var MONTHS = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
 
+  /* ── Helpers ── */
   function greeting() {
     var h = new Date().getHours();
+    if (h < 5)  return 'Bună noaptea';
     if (h < 12) return 'Bună dimineața';
     if (h < 18) return 'Bună ziua';
     return 'Bună seara';
   }
-
   function todayLabel() {
     var d = new Date();
-    return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+    return DAYS[d.getDay()] + ' · ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
   }
-
-  function safeNum(v) { var n = Number(v); return isFinite(n) ? n : 0; }
+  function safeNum(v)   { var n = Number(v); return isFinite(n) ? n : 0; }
   function getMatches() { return Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : []; }
-  function getTracking() { return Array.isArray(window.TRACKING) ? window.TRACKING : []; }
-
+  function getTracking(){ return Array.isArray(window.TRACKING)    ? window.TRACKING    : []; }
   function isSameLocalDay(iso) {
     if (!iso) return false;
-    var d = new Date(iso);
-    var n = new Date();
+    var d = new Date(iso), n = new Date();
     return isFinite(d.getTime()) &&
       d.getFullYear() === n.getFullYear() &&
       d.getMonth() === n.getMonth() &&
       d.getDate() === n.getDate();
   }
-
   function getSyncTime() {
-    try {
-      if (typeof window.getStatusDisplayTime === 'function') return window.getStatusDisplayTime() || '';
-    } catch (e) {}
+    try { if (typeof window.getStatusDisplayTime === 'function') return window.getStatusDisplayTime() || ''; } catch (e) {}
     return '';
   }
-
-  function getMetrics() {
-    var matches = getMatches();
-    var tracking = getTracking();
-    var openBets = tracking.filter(function (t) { return t && t.status === 'pending'; }).length;
-
-    var wins = 0, losses = 0, profit = 0, staked = 0;
-    tracking.forEach(function (t) {
-      if (!t) return;
-      if (t.status === 'won') {
-        wins++;
-        var s = safeNum(t.stake || 1);
-        staked += s;
-        profit += s * (safeNum(t.odds || 0) - 1);
-      } else if (t.status === 'lost') {
-        losses++;
-        var s2 = safeNum(t.stake || 1);
-        staked += s2;
-        profit -= s2;
-      }
-    });
-    var closedBets = wins + losses;
-    var winrate = closedBets ? (wins / closedBets * 100) : null;
-    var roi = staked > 0 ? (profit / staked * 100) : null;
-
-    var today = matches.filter(function (m) {
-      return isSameLocalDay(m.event_date || m.eventDate || m.date);
-    }).length;
-
-    var withOdds = matches.filter(function (m) {
-      var bet = m.bestBet || {};
-      return Number(bet.odds || bet.displayOdds || 0) > 1.01;
-    }).length;
-
-    return {
-      mlTotal: matches.length,
-      today: today || matches.length,
-      withOdds: withOdds,
-      openBets: openBets,
-      winrate: winrate,
-      roi: roi,
-      closedBets: closedBets
-    };
-  }
-
-  function getTopPicks(limit) {
-    var matches = getMatches();
-    var eligible = matches.filter(function (m) {
-      return m && m.analysisState === 'ELIGIBLE' && m.bestBet;
-    });
-    eligible.sort(function (a, b) {
-      var sa = safeNum((a.bestBet || {}).score || (a.bestBet || {}).prob || 0);
-      var sb = safeNum((b.bestBet || {}).score || (b.bestBet || {}).prob || 0);
-      return sb - sa;
-    });
-    return eligible.slice(0, limit || 4);
-  }
-
   function esc(s) {
-    var d = document.createElement('div');
-    d.textContent = String(s == null ? '' : s);
-    return d.innerHTML;
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
   function signed(n, suffix) {
     var v = safeNum(n);
     return (v >= 0 ? '+' : '') + v.toFixed(1) + (suffix || '');
   }
 
+  /* ── Score ring SVG ──
+     r = 15.91549 → circumference ≈ 100, making stroke-dasharray = score value directly */
+  function scoreRing(score) {
+    var pct = Math.min(100, Math.max(0, safeNum(score)));
+    var col = pct >= 85 ? '#10D07E' : pct >= 68 ? '#4B83F0' : '#F0A830';
+    var dash = pct.toFixed(1) + ' ' + (100 - pct).toFixed(1);
+    return (
+      '<svg class="vd-ring" viewBox="0 0 36 36" aria-hidden="true">' +
+        '<circle cx="18" cy="18" r="15.91" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3.2"/>' +
+        '<circle cx="18" cy="18" r="15.91" fill="none" stroke="' + col + '" stroke-width="3.2"' +
+          ' stroke-dasharray="' + dash + '" stroke-dashoffset="25" stroke-linecap="round"/>' +
+        '<text x="18" y="22.5" text-anchor="middle" fill="' + col + '"' +
+          ' font-size="10" font-weight="900" font-family="ui-monospace,monospace">' +
+          Math.round(pct) +
+        '</text>' +
+      '</svg>'
+    );
+  }
+
+  /* ── Sparkline from TRACKING closed bets ── */
+  function buildSparkline(tracking) {
+    var closed = (tracking || []).filter(function (t) {
+      return t && (t.status === 'won' || t.status === 'lost');
+    });
+    if (closed.length < 2) return '';
+    var slice = closed.slice(-22);
+    var pts = [100], running = 100;
+    slice.forEach(function (t) {
+      var s = safeNum(t.stake || 1);
+      running += t.status === 'won' ? s * (safeNum(t.odds || 2) - 1) : -s;
+      pts.push(Math.max(0, parseFloat(running.toFixed(2))));
+    });
+    var W = 100, H = 44, P = 3;
+    var lo = Math.min.apply(null, pts), hi = Math.max.apply(null, pts);
+    if (lo === hi) { lo -= 2; hi += 2; }
+    var coords = pts.map(function (v, i) {
+      return [
+        (P + (W - P * 2) * (pts.length < 2 ? 0 : i / (pts.length - 1))).toFixed(1),
+        (H - P - ((v - lo) / (hi - lo)) * (H - P * 2)).toFixed(1)
+      ];
+    });
+    var polyPts = coords.map(function (c) { return c[0] + ',' + c[1]; }).join(' ');
+    var last    = coords[coords.length - 1];
+    var isGain  = pts[pts.length - 1] >= pts[0];
+    var col     = isGain ? '#10D07E' : '#EF4444';
+    return (
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:100%;display:block;overflow:visible">' +
+        '<defs>' +
+          '<linearGradient id="vdSpFill" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="' + col + '" stop-opacity=".20"/>' +
+            '<stop offset="100%" stop-color="' + col + '" stop-opacity="0"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path d="M' + coords[0][0] + ',' + H +
+          ' L' + coords.map(function (c) { return c[0] + ',' + c[1]; }).join(' L') +
+          ' L' + last[0] + ',' + H + 'Z" fill="url(#vdSpFill)"/>' +
+        '<polyline points="' + polyPts + '" fill="none" stroke="' + col +
+          '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="' + last[0] + '" cy="' + last[1] +
+          '" r="3" fill="' + col + '" stroke="rgba(0,0,0,.6)" stroke-width="1.5"/>' +
+      '</svg>'
+    );
+  }
+
+  /* ── Metrics from TRACKING ── */
+  function getMetrics() {
+    var matches  = getMatches();
+    var tracking = getTracking();
+    var openBets = tracking.filter(function (t) { return t && t.status === 'pending'; }).length;
+    var wins = 0, losses = 0, profit = 0, staked = 0;
+    tracking.forEach(function (t) {
+      if (!t) return;
+      var s = safeNum(t.stake || 1);
+      if (t.status === 'won')  { wins++;   staked += s; profit += s * (safeNum(t.odds || 0) - 1); }
+      if (t.status === 'lost') { losses++;  staked += s; profit -= s; }
+    });
+    var closedBets = wins + losses;
+    var winrate = closedBets ? (wins / closedBets * 100) : null;
+    var roi     = staked > 0 ? (profit / staked * 100) : null;
+    var today   = matches.filter(function (m) {
+      return m && isSameLocalDay(m.event_date || m.eventDate || m.date);
+    }).length;
+    var eligible = matches.filter(function (m) {
+      if (!m) return false;
+      if (typeof window.passesSelectionFilter === 'function') return window.passesSelectionFilter(m);
+      return m.analysisState === 'ELIGIBLE' && m.bestBet;
+    }).length;
+    return { mlTotal: matches.length, today: today || matches.length, eligible: eligible,
+             openBets: openBets, winrate: winrate, roi: roi, closedBets: closedBets, wins: wins };
+  }
+
+  /* ── Top picks sorted by smartScore ── */
+  function getTopPicks(limit) {
+    var matches = getMatches();
+    var eligible = matches.filter(function (m) {
+      if (!m) return false;
+      if (typeof window.passesSelectionFilter === 'function') return window.passesSelectionFilter(m);
+      return m.analysisState === 'ELIGIBLE' && m.bestBet;
+    });
+    eligible.sort(function (a, b) {
+      var sa = safeNum(a.smartScore || (a.bestBet || {}).adjProb || 0);
+      var sb = safeNum(b.smartScore || (b.bestBet || {}).adjProb || 0);
+      return sb - sa;
+    });
+    return eligible.slice(0, limit || 4);
+  }
+
+  /* ── Best-performing market from last 21 days of TRACKING ── */
+  function getBestMarket() {
+    var tracking = getTracking();
+    var cutoff   = Date.now() - 21 * 86400000;
+    var byMkt    = {};
+    tracking.forEach(function (t) {
+      if (!t || (t.status !== 'won' && t.status !== 'lost')) return;
+      var ts = new Date(t.date || t.updated_at || t.created_at || 0).getTime();
+      if (ts < cutoff) return;
+      var k = (t.market || t.pick_type || 'other');
+      if (!byMkt[k]) byMkt[k] = { wins: 0, total: 0, profit: 0, staked: 0 };
+      var s = safeNum(t.stake || 1);
+      byMkt[k].total++;
+      byMkt[k].staked += s;
+      if (t.status === 'won') { byMkt[k].wins++; byMkt[k].profit += s * (safeNum(t.odds || 2) - 1); }
+      else                   { byMkt[k].profit -= s; }
+    });
+    var best = null, bestScore = -Infinity;
+    Object.keys(byMkt).forEach(function (k) {
+      var g = byMkt[k];
+      if (g.total < 2) return;
+      var roi = g.staked > 0 ? g.profit / g.staked * 100 : 0;
+      var wr  = g.total > 0 ? g.wins / g.total * 100 : 0;
+      var sc  = roi * 0.7 + wr * 0.3;
+      if (sc > bestScore) { bestScore = sc; best = { market: k, roi: roi, winrate: wr, total: g.total, wins: g.wins }; }
+    });
+    return best;
+  }
+
+  /* ── Build dashboard HTML ── */
   function buildHtml() {
-    var m = getMetrics();
+    var m        = getMetrics();
+    var tracking = getTracking();
+    var picks    = getTopPicks(4);
     var syncTime = getSyncTime();
-    var picks = getTopPicks(4);
+    var sparkSvg = buildSparkline(tracking);
+    var bestMkt  = getBestMarket();
 
+    var roiCol = m.roi !== null ? (m.roi >= 0 ? 'var(--vd-green)' : 'var(--vd-red)') : '';
     var roiStr = m.roi !== null ? signed(m.roi, '%') : '—';
-    var roiColor = m.roi !== null ? (m.roi >= 0 ? '#22c55e' : '#ef4444') : 'inherit';
-    var winrateStr = m.winrate !== null ? m.winrate.toFixed(0) + '%' : '—';
+    var wrCol  = m.winrate !== null ? (m.winrate >= 55 ? 'var(--vd-green)' : m.winrate < 45 ? 'var(--vd-red)' : '') : '';
+    var wrStr  = m.winrate !== null ? m.winrate.toFixed(0) + '%' : '—';
 
-    var picksHtml = '';
-    if (picks.length === 0) {
-      picksHtml =
-        '<div class="vd-empty">' +
-          '<div class="vd-empty-icon">🔄</div>' +
-          'Nu există predicții disponibile momentan.<br>Apasă butonul de refresh pentru a actualiza datele.' +
+    /* Opportunity cards */
+    var picksHtml = !picks.length
+      ? '<div class="vd-opp-empty">Nu există oportunități eligibile momentan. Datele se actualizează de 2× pe zi.</div>'
+      : picks.map(function (match, idx) {
+          var bet      = match.bestBet || {};
+          var scoreRaw = safeNum(match.smartScore || bet.adjProb || 0);
+          var score    = scoreRaw > 1 ? Math.min(scoreRaw, 100) : scoreRaw * 100;
+          var home     = esc(match.home || match.homeTeam || match.home_team || '?');
+          var away     = esc(match.away || match.awayTeam || match.away_team || '?');
+          var label    = esc(bet.label || bet.pick || 'PICK');
+          var odds     = safeNum(bet.odds || bet.displayOdds || 0);
+          var adjProb  = safeNum(bet.adjProb || 0);
+          var edgePct  = safeNum(bet.edgePct || 0);
+          var oddsStr  = odds > 1.01 ? odds.toFixed(2) : '—';
+          var probStr  = adjProb > 1 ? adjProb.toFixed(1) + '%' : adjProb > 0 ? (adjProb * 100).toFixed(1) + '%' : '';
+          var timeStr  = '';
+          try {
+            var raw = match.event_date || match.eventDate || match.date || '';
+            if (raw) { var d = new Date(raw); if (isFinite(d.getTime())) timeStr = d.toLocaleTimeString('ro-RO', {hour:'2-digit',minute:'2-digit'}); }
+          } catch (e) {}
+          var edgeCls = edgePct >= 5 ? 'vd-edge-good' : edgePct >= 0 ? 'vd-edge-ok' : 'vd-edge-warn';
+          return (
+            '<button class="vd-opp-card" onclick="switchTab(\'meciuri\')">' +
+              '<div class="vd-opp-hd">' +
+                scoreRing(score) +
+                '<div class="vd-opp-identity">' +
+                  '<div class="vd-opp-teams">' + home + '<span class="vd-opp-vs"> vs </span>' + away + '</div>' +
+                  (timeStr ? '<div class="vd-opp-time">⏱ ' + esc(timeStr) + '</div>' : '') +
+                '</div>' +
+                '<span class="vd-opp-rank">#' + (idx + 1) + '</span>' +
+              '</div>' +
+              '<div class="vd-opp-pick">' + label + (oddsStr !== '—' ? '<span class="vd-opp-odds">@' + oddsStr + '</span>' : '') + '</div>' +
+              '<div class="vd-opp-pills">' +
+                (probStr ? '<span class="vd-pill-neutral">Prob ' + probStr + '</span>' : '') +
+                '<span class="' + edgeCls + '">Edge ' + (edgePct >= 0 ? '+' : '') + edgePct.toFixed(1) + 'pp</span>' +
+              '</div>' +
+            '</button>'
+          );
+        }).join('');
+
+    /* Performance block */
+    var perfHtml = '';
+    if (m.closedBets > 0 || sparkSvg) {
+      perfHtml =
+        '<div class="vd-perf">' +
+          '<div class="vd-perf-hd">' +
+            '<div class="vd-sec-title">Performanță · ' + m.closedBets + ' closed</div>' +
+            (m.closedBets > 0 ? '<span class="vd-perf-roi" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</span>' : '') +
+          '</div>' +
+          (sparkSvg ? '<div class="vd-spark">' + sparkSvg + '</div>' : '') +
+          '<div class="vd-perf-row">' +
+            '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</div><div class="vd-ps-l">ROI</div></div>' +
+            '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (wrCol || 'inherit') + '">' + wrStr + '</div><div class="vd-ps-l">Win Rate</div></div>' +
+            '<div class="vd-ps"><div class="vd-ps-v">' + m.wins + '/' + m.closedBets + '</div><div class="vd-ps-l">W/Total</div></div>' +
+          '</div>' +
         '</div>';
-    } else {
-      picks.forEach(function (match) {
-        var bet = match.bestBet || {};
-        var scoreRaw = safeNum(bet.score || bet.prob || 0);
-        var confPct = scoreRaw >= 1 ? Math.round(scoreRaw) : Math.round(scoreRaw * 100);
-        var home = esc(match.homeTeam || match.home_team || match.home || '?');
-        var away = esc(match.awayTeam || match.away_team || match.away || '?');
-        var label = esc(bet.label || bet.pick || 'ELIGIBLE');
-        var odds = safeNum(bet.odds || bet.displayOdds || 0);
-        var league = esc(match.leagueName || match.league_name || match.league || '');
-        var oddsStr = odds > 1.01 ? ' · @' + odds.toFixed(2) : '';
-        var confCls = 'vd-pick-conf' + (confPct >= 70 ? ' high' : '');
-        var badgeCls = 'vd-pick-badge' + (confPct >= 70 ? ' safe' : confPct >= 55 ? '' : ' mod');
-        var metaParts = [];
-        if (league) metaParts.push(league);
-        metaParts.push(label + oddsStr);
+    }
 
-        picksHtml +=
-          '<div class="vd-pick-card" onclick="switchTab(\'meciuri\')">'+
-            '<div class="' + confCls + '">' + confPct + '%</div>'+
-            '<div class="vd-pick-main">'+
-              '<div class="vd-pick-teams">' + home + ' <span style="opacity:.4;font-weight:400;font-size:10px">vs</span> ' + away + '</div>'+
-              '<div class="vd-pick-meta">' + metaParts.join(' · ') + '</div>'+
-            '</div>'+
-            '<div class="' + badgeCls + '">' + esc(bet.label || bet.pick || 'PICK') + '</div>'+
-          '</div>';
-      });
+    /* Market rec */
+    var recoHtml = '';
+    if (bestMkt) {
+      var mktLabel = (bestMkt.market || '').replace(/_/g,' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      recoHtml =
+        '<div class="vd-reco">' +
+          '<div class="vd-reco-tag">Signal · ultimele 21 zile</div>' +
+          '<div class="vd-reco-mkt">' + esc(mktLabel) + '</div>' +
+          '<div class="vd-reco-stats">' +
+            '<span>ROI ' + signed(bestMkt.roi, '%') + '</span>' +
+            '<span>Win ' + bestMkt.winrate.toFixed(0) + '%</span>' +
+            '<span>' + bestMkt.wins + '/' + bestMkt.total + '</span>' +
+          '</div>' +
+        '</div>';
     }
 
     return (
-      '<div id="veyra-dash">'+
+      '<div id="veyra-dash">' +
 
-        '<div class="vd-hero">'+
-          '<div class="vd-greeting">' + esc(greeting()) + '</div>'+
-          '<div class="vd-date">' + esc(todayLabel()) + '</div>'+
-          '<div class="vd-pills">'+
-            '<span class="vd-pill live">Live</span>'+
-            '<span class="vd-pill">' + m.mlTotal + ' ML</span>'+
-            (syncTime ? '<span class="vd-pill">⏱ ' + esc(syncTime) + '</span>' : '')+
-          '</div>'+
-        '</div>'+
+        /* Status strip */
+        '<div class="vd-status">' +
+          '<span class="vd-live-dot"></span>' +
+          '<span class="vd-status-live">Live</span>' +
+          (syncTime ? '<span class="vd-status-sync">· ' + esc(syncTime) + '</span>' : '') +
+          '<span class="vd-status-date">' + esc(todayLabel()) + '</span>' +
+        '</div>' +
 
-        '<div class="vd-stats">'+
-          '<div class="vd-stat-card">'+
-            '<div class="vd-stat-val">' + m.mlTotal + '</div>'+
-            '<div class="vd-stat-lbl">Predicții ML</div>'+
-            '<div class="vd-stat-sub">' + m.today + ' programate azi</div>'+
-          '</div>'+
-          '<div class="vd-stat-card">'+
-            '<div class="vd-stat-val">' + m.withOdds + '</div>'+
-            '<div class="vd-stat-lbl">Cu cote BSD</div>'+
-            '<div class="vd-stat-sub">preț de pariuri disponibil</div>'+
-          '</div>'+
-          '<div class="vd-stat-card">'+
-            '<div class="vd-stat-val">' + m.openBets + '</div>'+
-            '<div class="vd-stat-lbl">Bilete deschise</div>'+
-            '<div class="vd-stat-sub">în aşteptare</div>'+
-          '</div>'+
-          '<div class="vd-stat-card">'+
-            '<div class="vd-stat-val" style="color:' + roiColor + '">' + roiStr + '</div>'+
-            '<div class="vd-stat-lbl">ROI total</div>'+
-            '<div class="vd-stat-sub">' + winrateStr + ' win rate · ' + m.closedBets + ' închise</div>'+
-          '</div>'+
-        '</div>'+
+        /* Hero */
+        '<div class="vd-hero">' +
+          '<h1 class="vd-greeting">' + esc(greeting()) + '</h1>' +
+          '<p class="vd-subline">' +
+            m.eligible + ' oportunități · ' + m.today + ' meciuri azi' +
+          '</p>' +
+        '</div>' +
 
-        '<div class="vd-divider"></div>'+
+        /* KPI strip */
+        '<div class="vd-kpi">' +
+          '<div class="vd-kpi-card">' +
+            '<div class="vd-kpi-v" style="' + (roiCol ? 'color:' + roiCol : '') + '">' + roiStr + '</div>' +
+            '<div class="vd-kpi-l">ROI</div>' +
+            '<div class="vd-kpi-s">21 zile tracking</div>' +
+          '</div>' +
+          '<div class="vd-kpi-card">' +
+            '<div class="vd-kpi-v" style="' + (wrCol ? 'color:' + wrCol : '') + '">' + wrStr + '</div>' +
+            '<div class="vd-kpi-l">Win Rate</div>' +
+            '<div class="vd-kpi-s">' + m.wins + '/' + m.closedBets + ' închise</div>' +
+          '</div>' +
+          '<div class="vd-kpi-card">' +
+            '<div class="vd-kpi-v">' + m.openBets + '</div>' +
+            '<div class="vd-kpi-l">Active</div>' +
+            '<div class="vd-kpi-s">bilete pending</div>' +
+          '</div>' +
+        '</div>' +
 
-        '<div class="vd-section">'+
-          '<div class="vd-section-hdr"><div class="vd-section-title">Acces rapid</div></div>'+
-          '<div class="vd-nav-grid">'+
-            '<button class="vd-nav-btn" onclick="switchTab(\'meciuri\')">'+
-              '<span class="vd-nav-btn-icon">⚽</span>'+
-              '<span class="vd-nav-btn-label">Meciuri</span>'+
-              '<span class="vd-nav-btn-sub">Lista completă de predicții ML filtrate</span>'+
-            '</button>'+
-            '<button class="vd-nav-btn" onclick="switchTab(\'smartbet\')">'+
-              '<span class="vd-nav-btn-icon">🎯</span>'+
-              '<span class="vd-nav-btn-label">APEX Engine</span>'+
-              '<span class="vd-nav-btn-sub">Motor unificat Kelly + AI Memory</span>'+
-            '</button>'+
-            '<button class="vd-nav-btn" onclick="switchTab(\'clv\')">'+
-              '<span class="vd-nav-btn-icon">📈</span>'+
-              '<span class="vd-nav-btn-label">CLV Tracker</span>'+
-              '<span class="vd-nav-btn-sub">Closing Line Value vs piața</span>'+
-            '</button>'+
-            '<button class="vd-nav-btn" onclick="switchTab(\'ml5\')">'+
-              '<span class="vd-nav-btn-icon">🔬</span>'+
-              '<span class="vd-nav-btn-label">Analiză ML5</span>'+
-              '<span class="vd-nav-btn-sub">Benchmarks și metrici model</span>'+
-            '</button>'+
-          '</div>'+
-        '</div>'+
+        /* Top picks */
+        '<div class="vd-section">' +
+          '<div class="vd-sec-hd">' +
+            '<div class="vd-sec-title">Top oportunități</div>' +
+            '<button class="vd-sec-link" onclick="switchTab(\'meciuri\')">Vezi toate →</button>' +
+          '</div>' +
+          '<div class="vd-opp-scroll">' + picksHtml + '</div>' +
+        '</div>' +
 
-        '<div class="vd-divider"></div>'+
+        /* Performance */
+        perfHtml +
 
-        '<div class="vd-section">'+
-          '<div class="vd-section-hdr">'+
-            '<div class="vd-section-title">Top picks</div>'+
-            '<button class="vd-section-link" onclick="switchTab(\'meciuri\')">Vezi toate →</button>'+
-          '</div>'+
-          picksHtml +
-        '</div>'+
+        /* Market recommendation */
+        recoHtml +
+
+        /* Quick nav */
+        '<div class="vd-nav">' +
+          '<button class="vd-nav-btn" onclick="switchTab(\'meciuri\')">' +
+            '<span class="vd-nav-icon">⚽</span><span class="vd-nav-lbl">Meciuri</span>' +
+          '</button>' +
+          '<button class="vd-nav-btn" onclick="switchTab(\'bilete\')">' +
+            '<span class="vd-nav-icon">🎫</span><span class="vd-nav-lbl">Bilete</span>' +
+          '</button>' +
+          '<button class="vd-nav-btn" onclick="switchTab(\'tracking\')">' +
+            '<span class="vd-nav-icon">📊</span><span class="vd-nav-lbl">Tracking</span>' +
+          '</button>' +
+          '<button class="vd-nav-btn" onclick="switchTab(\'ml5\')">' +
+            '<span class="vd-nav-icon">🔬</span><span class="vd-nav-lbl">ML5</span>' +
+          '</button>' +
+        '</div>' +
 
       '</div>'
     );
   }
 
+  /* ── Render ── */
   function render() {
     var host = document.getElementById('dashboard-modern-shell');
     if (!host) return;
-    host.dataset.veyraNew = '1';
+    var html     = buildHtml();
     var existing = document.getElementById('veyra-dash');
-    var newHtml = buildHtml();
     if (existing) {
       var tmp = document.createElement('div');
-      tmp.innerHTML = newHtml;
-      existing.parentNode.replaceChild(tmp.firstChild, existing);
+      tmp.innerHTML = html;
+      var newEl = tmp.firstChild;
+      if (newEl) existing.parentNode.replaceChild(newEl, existing);
     } else {
-      host.innerHTML = newHtml;
+      host.innerHTML = html;
     }
   }
 
+  /* ── Global hooks ── */
   function hookGlobals() {
     if (typeof window.renderAll === 'function' && !window.__vdRenderAllHooked) {
       window.__vdRenderAllHooked = true;
       var orig = window.renderAll;
-      window.renderAll = function () {
-        var r = orig.apply(this, arguments);
-        setTimeout(render, 250);
-        return r;
-      };
+      window.renderAll = function () { var r = orig.apply(this, arguments); setTimeout(render, 250); return r; };
     }
     if (typeof window.doRefresh === 'function' && !window.__vdRefreshHooked) {
       window.__vdRefreshHooked = true;
       var origR = window.doRefresh;
-      window.doRefresh = function () {
-        var r = origR.apply(this, arguments);
-        setTimeout(render, 600);
-        return r;
-      };
+      window.doRefresh = function () { var r = origR.apply(this, arguments); setTimeout(render, 600); return r; };
     }
   }
 
+  /* ── Boot ── */
   function boot() {
     hookGlobals();
     render();
-    [150, 400, 900, 2000, 4500, 9000].forEach(function (d) {
-      setTimeout(function () {
-        hookGlobals();
-        render();
-      }, d);
+    [150, 500, 1400, 3500, 7000, 14000].forEach(function (d) {
+      setTimeout(function () { hookGlobals(); render(); }, d);
     });
     setInterval(render, 30000);
   }
