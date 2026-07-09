@@ -187,7 +187,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script defer src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260709v13"></script>
+<script defer src="./assets/app.js?v=20260709v14"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260602dash2"></script>
 </head>
@@ -656,6 +656,102 @@ function toggleTheme(){
   </div>
 
   <div class="tab-content" id="tab-bilete">
+
+    <!-- Generator quick-buttons -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px">
+      <button class="btn btn-primary" style="font-size:12px;padding:10px 8px;justify-content:center" onclick="generatePortfolioTicket('premium')">🥇 Premium</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:10px 8px;justify-content:center" onclick="generatePortfolioTicket('double')">✅ Confirmate</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:10px 8px;justify-content:center" onclick="generatePortfolioTicket('triple')">⚡ Value</button>
+      <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#a5b4fc" onclick="generateConservativeTicket()">🛡️ Conservativ</button>
+      <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#a5b4fc" onclick="generateMixTicket()">🎯 Mix</button>
+      <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.28);color:#fbbf24" onclick="generateOver35Ticket()">🔥 Over 3.5G</button>
+      <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.25);color:#f87171" onclick="generateBigWinTicket()">💥 Big Win</button>
+      <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.25);color:#6ee7b7" onclick="generatePortfolioTicket('contrarian')">🔄 Contrarian</button>
+    </div>
+
+    <!-- Custom builder toggle -->
+    <div style="margin-bottom:10px">
+      <button class="btn btn-ghost" style="font-size:12px;padding:8px 14px;width:100%;justify-content:center;border-style:dashed" onclick="toggleAdvancedGenerators()">🛠️ Bilet Personalizat — setează propriile filtre</button>
+    </div>
+
+    <!-- Advanced generators wrapper -->
+    <div id="advanced-generators" style="display:none;margin-bottom:12px">
+      <div id="custom-builder" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:14px">
+        <div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:12px">🛠️ Constructor bilet personalizat</div>
+
+        <!-- Preset buttons -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyCustomPreset('safe')">🛡️ Safe</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyCustomPreset('balanced')">⚖️ Balansat</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="applyCustomPreset('attack')">🎯 Atac</button>
+        </div>
+
+        <!-- Main controls grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">FORMAT</div>
+            <select id="cust-format" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px">
+              <option value="single">Single</option>
+              <option value="combo" selected>Combo</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">RISC</div>
+            <select id="cust-risk" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px">
+              <option value="low">Scăzut</option>
+              <option value="medium" selected>Mediu</option>
+              <option value="high">Ridicat</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">MOD SELECȚIE</div>
+            <select id="cust-mode" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px">
+              <option value="strict">Strict</option>
+              <option value="flex" selected>Flexibil</option>
+              <option value="optimize">Optimizat</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">FEREASTRĂ DATE</div>
+            <select id="cust-date-window" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px">
+              <option value="today" selected>Azi</option>
+              <option value="3d">3 zile</option>
+              <option value="7d">7 zile</option>
+              <option value="14d">14 zile</option>
+              <option value="30d">30 zile</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">MIZĂ (RON)</div>
+            <input id="cust-stake" type="number" min="5" max="500" value="50" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">COTĂ ȚINTĂ</div>
+            <input id="cust-target-odds" type="number" min="1.10" max="20" step="0.05" value="2.40" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:4px">NR. PICKS</div>
+            <input id="cust-picks" type="number" min="1" max="6" value="3" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px;box-sizing:border-box">
+          </div>
+        </div>
+
+        <!-- Market checkboxes -->
+        <div style="font-size:10px;color:var(--muted);margin-bottom:8px">PIEȚE PERMISE</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer"><input id="cb-over15" type="checkbox" checked style="accent-color:#10b981"> Over 1.5G</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer"><input id="cb-over25" type="checkbox" checked style="accent-color:#10b981"> Over 2.5G</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer"><input id="cb-btts" type="checkbox" checked style="accent-color:#10b981"> BTTS</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer"><input id="cb-under35" type="checkbox" checked style="accent-color:#10b981"> Under 3.5G</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer"><input id="cb-ai-only" type="checkbox" checked style="accent-color:#a78bfa"> Doar AI</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer"><input id="cb-fav-only" type="checkbox" style="accent-color:#a78bfa"> Favorit</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer"><input id="cb-goals-only" type="checkbox" style="accent-color:#fbbf24"> Goluri only</label>
+        </div>
+
+        <!-- Generate button -->
+        <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:13px;padding:11px" onclick="generateCustomTicket()">⚙️ Generează bilet personalizat</button>
+      </div>
+    </div>
+
     <div id="bilete-container"></div>
   </div>
 
