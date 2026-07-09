@@ -1983,17 +1983,22 @@ function switchTab(name){
 var BET_TYPES = [
   {key:'over15',   label:'Over 1.5G',    probField:'prob_over_15',   oddsField:'odds_over_15'},
   {key:'over25',   label:'Over 2.5G',    probField:'prob_over_25',   oddsField:'odds_over_25'},
+  {key:'over35',   label:'Over 3.5G',    probField:'prob_over_35',   oddsField:'odds_over_35'},
   {key:'under35',  label:'Under 3.5G',   probField:'prob_under_35',  oddsField:'odds_under_35', probGetter:function(raw){ return 100 - safePct(raw.prob_over_35); }},
+  {key:'under25',  label:'Under 2.5G',   oddsField:'odds_under_25',  probGetter:function(raw){ return 100 - safePct(raw.prob_over_25); }},
+  {key:'under15',  label:'Under 1.5G',   oddsField:'odds_under_15',  probGetter:function(raw){ return 100 - safePct(raw.prob_over_15); }},
   {key:'btts',     label:'BTTS',         probField:'prob_btts_yes',  oddsField:'odds_btts_yes'},
   {key:'homeWin',  label:'1 (Acasă)',    probGetter:function(raw){ return safePct(raw.prob_home_win); }, oddsGetter:function(e){ return Number(e.odds_home || 0); }},
-  // Double Chance markets: odds calculated from 1X2 (margin is minimal on DC)
-  {key:'dc1x',     label:'Șansă Dublă 1X', probGetter:function(raw){ return safePct(raw.prob_home_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var h=Number(e.odds_home||0), d=Number(e.odds_draw||0); if(h<1.01||d<1.01) return 0; return +(1/(1/h + 1/d)).toFixed(2); }},
-  {key:'dcx2',     label:'Șansă Dublă X2', probGetter:function(raw){ return safePct(raw.prob_away_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var d=Number(e.odds_draw||0), a=Number(e.odds_away||0); if(d<1.01||a<1.01) return 0; return +(1/(1/d + 1/a)).toFixed(2); }},
-  {key:'dc12',     label:'Șansă Dublă 12', probGetter:function(raw){ return safePct(raw.prob_home_win) + safePct(raw.prob_away_win); }, oddsField:'odds_dc_12'},
+  {key:'awayWin',  label:'2 (Oaspete)',  probGetter:function(raw){ return safePct(raw.prob_away_win); }, oddsGetter:function(e){ return Number(e.odds_away || 0); }},
+  {key:'draw',     label:'X (Egal)',     probGetter:function(raw){ return safePct(raw.prob_draw); },     oddsGetter:function(e){ return Number(e.odds_draw || 0); }},
+  // Double Chance markets: odds calculated from 1X2
+  {key:'dc1x',  label:'Șansă Dublă 1X', probGetter:function(raw){ return safePct(raw.prob_home_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var h=Number(e.odds_home||0), d=Number(e.odds_draw||0); if(h<1.01||d<1.01) return 0; return +(1/(1/h + 1/d)).toFixed(2); }},
+  {key:'dcx2',  label:'Șansă Dublă X2', probGetter:function(raw){ return safePct(raw.prob_away_win) + safePct(raw.prob_draw); }, oddsGetter:function(e){ var d=Number(e.odds_draw||0), a=Number(e.odds_away||0); if(d<1.01||a<1.01) return 0; return +(1/(1/d + 1/a)).toFixed(2); }},
+  {key:'dc12',  label:'Șansă Dublă 12', probGetter:function(raw){ return safePct(raw.prob_home_win) + safePct(raw.prob_away_win); }, oddsGetter:function(e){ var h=Number(e.odds_home||0), a=Number(e.odds_away||0); if(h<1.01||a<1.01) return 0; return +(1/(1/h + 1/a)).toFixed(2); }},
 ];
 
 function getSupportedMarketTypes(){
-  return ['over15','over25','under35','btts','homeWin','dc1x','dcx2','dc12'];
+  return ['over15','over25','over35','under35','under25','under15','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12'];
 }
 
 function isSaneOddsForType(type, odds){

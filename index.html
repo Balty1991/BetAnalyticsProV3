@@ -187,7 +187,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script defer src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260708v3"></script>
+<script defer src="./assets/app.js?v=20260709v4"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260602dash2"></script>
 </head>
@@ -645,6 +645,26 @@ function toggleTheme(){
 
   <div class="tab-content" id="tab-upcoming">
     <div id="upcoming-root" style="padding:48px 0;text-align:center;color:var(--muted)">Se încarcă…</div>
+  </div>
+
+  <div class="tab-content" id="tab-bilete">
+    <div id="bilete-container"></div>
+  </div>
+
+  <div class="tab-content" id="tab-tracking">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:12px 4px;font-size:12px;color:var(--muted)">
+      <span>Bilete: <strong id="tr-total" style="color:var(--txt)">—</strong></span>
+      <span>Win Rate: <strong id="tr-winrate" style="color:var(--txt)">—</strong></span>
+      <span>ROI: <strong id="tr-roi" style="color:var(--txt)">—</strong></span>
+      <span>Extra: <strong id="tr-extra-total" style="color:var(--txt)">—</strong></span>
+      <span>WR Extra: <strong id="tr-extra-winrate" style="color:var(--txt)">—</strong></span>
+      <span>ROI Extra: <strong id="tr-extra-roi" style="color:var(--txt)">—</strong></span>
+    </div>
+    <div id="tracking-container"></div>
+  </div>
+
+  <div class="tab-content" id="tab-statistici">
+    <div id="statistici-root" style="padding:48px 0;text-align:center;color:var(--muted)">Se încarcă statisticile…</div>
   </div>
 
 </div><!-- /main -->

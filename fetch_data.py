@@ -3687,8 +3687,14 @@ def enrich_with_v2_signals(predictions, v2_recommended_ids, manager_map, xgd_map
             row["h2h_avg_goals"]     = None
 
         # ── GAP team form: forma directă W/D/L per echipă ──────────────────
-        home_id_str = str(event.get("home_team_id") or event.get("home_id") or "")
-        away_id_str = str(event.get("away_team_id") or event.get("away_id") or "")
+        home_id_str = str(
+            event.get("home_team_id") or event.get("home_id") or
+            (event.get("home_team_obj") or {}).get("id") or ""
+        )
+        away_id_str = str(
+            event.get("away_team_id") or event.get("away_id") or
+            (event.get("away_team_obj") or {}).get("id") or ""
+        )
         home_form = TEAM_FORM_CACHE.get(home_id_str) or {}
         away_form = TEAM_FORM_CACHE.get(away_id_str) or {}
         row["home_form_score"]  = home_form.get("form_score")
