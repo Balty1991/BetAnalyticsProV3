@@ -11,6 +11,7 @@
 
   var STORAGE_KEY = 'veyra_ml5_accuracy_log_v2'; // v2: fix purge logic
   var MAX_ENTRIES = 1000;
+  var _recentScores = null; // {[id]: {homeScore, awayScore}} — from recent_results.json
 
   /* ─── helpers ─── */
   function norm(s) {
@@ -49,6 +50,22 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify((log || []).slice(0, MAX_ENTRIES))); } catch(e) {}
   }
 
+  /* ─── fetch recent_results.json → cache scoruri meciuri terminate ─── */
+  function fetchRecentScores(cb) {
+    fetch('./data/recent_results.json?_=' + Math.floor(Date.now() / 300000))
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .catch(function() { return []; })
+      .then(function(arr) {
+        _recentScores = {};
+        (arr || []).forEach(function(r) {
+          if (!r || r.id == null) return;
+          if (r.home_score == null || r.away_score == null) return;
+          _recentScores[String(r.id)] = { homeScore: Number(r.home_score), awayScore: Number(r.away_score) };
+        });
+        if (cb) cb();
+      });
+  }
+
   /* ─── expirare predicții vechi (nu mai sunt în ALL_MATCHES + data trecută) ─── */
   function expireOldPredictions() {
     var log = loadLog();
@@ -65,10 +82,10 @@
     log.forEach(function (e) {
       if (!e.autoTracked || e.result !== 'pending') return;
       var isActive = (e.eventId && activeEids[e.eventId]) || activeKeys[entryKey(e.home, e.away, e.eventDate)];
-      // If event date + 3h is in the past, expire regardless of whether match is still in ALL_MATCHES
-      // (BSD API can keep status "notstarted" for already-finished matches)
+      // Expire only after 36h — gives enough time to fetch recent_results.json
+      // and settle yesterday's matches before they're discarded
       var evTs2 = e.eventDate ? new Date(e.eventDate).getTime() : 0;
-      if (evTs2 > 0 && (now - evTs2) > 3 * 3600 * 1000) {
+      if (evTs2 > 0 && (now - evTs2) > 36 * 3600 * 1000) {
         e.result = 'expired'; changed++; return;
       }
       if (isActive) return;
@@ -198,9 +215,9 @@
     if (mk === 'homewin' || mk === '1') return h > a ? 'won' : 'lost';
     if (mk === 'awaywin' || mk === '2') return a > h ? 'won' : 'lost';
     if (mk === 'draw'    || mk === 'x')  return h === a ? 'won' : 'lost';
-    if (mk === 'doublechange1x' || mk === '1x') return h >= a ? 'won' : 'lost';
-    if (mk === 'doublechangex2' || mk === 'x2') return a >= h ? 'won' : 'lost';
-    if (mk === 'doublechange12' || mk === '12') return h !== a ? 'won' : 'lost';
+    if (mk === 'doublechange1x' || mk === 'dc1x' || mk === '1x') return h >= a ? 'won' : 'lost';
+    if (mk === 'doublechangex2' || mk === 'dcx2' || mk === 'x2') return a >= h ? 'won' : 'lost';
+    if (mk === 'doublechange12' || mk === 'dc12' || mk === '12') return h !== a ? 'won' : 'lost';
     return null;
   }
 
@@ -236,6 +253,14 @@
       var key = entryKey(r.home || '', r.away || '', ed);
       if (key && !byKey[key]) byKey[key] = entry;
     });
+
+    // Sursa 3: recent_results.json (meciuri terminate din ultimele 7 zile)
+    // Aceasta este sursa principală pentru meciurile de ieri care dispar din ALL_MATCHES
+    if (_recentScores) {
+      Object.keys(_recentScores).forEach(function(id) {
+        if (!byEid[id]) byEid[id] = _recentScores[id];
+      });
+    }
 
     if (!Object.keys(byEid).length && !Object.keys(byKey).length) return 0;
 
@@ -295,12 +320,8 @@
     window.syncRecommendationEngine = function () {
       var r = orig.apply(this, arguments);
       setTimeout(function () {
-        autoSettleFromScores();   // settle first
-        autoRegisterPredictions();
-        expireOldPredictions();
-        syncFromTracking();
         var tab = document.getElementById('tab-ml5');
-        if (tab && tab.classList.contains('active')) injectMonitor();
+        settleAndRender(tab && tab.classList.contains('active'));
       }, 400);
       return r;
     };
@@ -314,13 +335,7 @@
     var orig = window.renderML5Analysis;
     window.renderML5Analysis = function () {
       var r = orig.apply(this, arguments);
-      setTimeout(function () {
-        autoSettleFromScores();   // settle first so purge doesn't remove settleable entries
-        autoRegisterPredictions();
-        expireOldPredictions();   // mark 3h+ unsettled entries as expired
-        syncFromTracking();
-        injectMonitor();
-      }, 100);
+      setTimeout(function () { settleAndRender(true); }, 100);
       return r;
     };
   }
@@ -334,13 +349,7 @@
     window.switchTab = function (name) {
       var r = orig.apply(this, arguments);
       if (String(name) === 'ml5') {
-        setTimeout(function () {
-          autoSettleFromScores();   // settle first so purge doesn't remove settleable entries
-          autoRegisterPredictions();
-          expireOldPredictions();   // mark 3h+ unsettled entries as expired
-          syncFromTracking();
-          injectMonitor();
-        }, 300);
+        setTimeout(function () { settleAndRender(true); }, 300);
       }
       return r;
     };
@@ -548,42 +557,58 @@
     injectMonitor();
   };
   window.__ml5AccRescan = function () {
-    var a = autoRegisterPredictions();
-    var sc = autoSettleFromScores();
-    var s = syncFromTracking();
-    injectMonitor();
-    return 'Adăugate: ' + a + ', Decontate din scoruri: ' + sc + ', Sincronizate tracking: ' + s;
+    fetchRecentScores(function() {
+      var a = autoRegisterPredictions();
+      var sc = autoSettleFromScores();
+      var s = syncFromTracking();
+      injectMonitor();
+      console.log('[ML5] Adăugate: ' + a + ', Decontate: ' + sc + ', Sincronizate: ' + s);
+    });
+    return 'Se procesează (async)…';
   };
+
+  /* ─── settle cycle: fetch scores then settle/expire/render ─── */
+  function settleAndRender(showMonitor) {
+    fetchRecentScores(function() {
+      autoSettleFromScores();
+      purgeNonEligible();
+      autoRegisterPredictions();
+      expireOldPredictions();
+      syncFromTracking();
+      if (showMonitor) injectMonitor();
+    });
+  }
 
   /* ─── boot ─── */
   function boot() {
+    // Pre-fetch scores immediately so they're ready when hooks fire
+    fetchRecentScores(null);
+
     hookSyncRec();
     hookRender();
     hookTabSwitch();
 
     [600, 1500, 3000, 6000, 12000].forEach(function (d) {
       setTimeout(function () {
-        autoSettleFromScores();   // settle first
-        purgeNonEligible();       // remove non-eligible pending entries
-        autoRegisterPredictions();
-        expireOldPredictions();
-        syncFromTracking();
-        hookSyncRec();
-        hookRender();
-        hookTabSwitch();
-        var tab = document.getElementById('tab-ml5');
-        if (tab && tab.classList.contains('active')) injectMonitor();
+        fetchRecentScores(function() {
+          autoSettleFromScores();
+          purgeNonEligible();
+          autoRegisterPredictions();
+          expireOldPredictions();
+          syncFromTracking();
+          hookSyncRec();
+          hookRender();
+          hookTabSwitch();
+          var tab = document.getElementById('tab-ml5');
+          if (tab && tab.classList.contains('active')) injectMonitor();
+        });
       }, d);
     });
 
     var tab = document.getElementById('tab-ml5');
     if (tab && tab.classList.contains('active')) {
       setTimeout(function () {
-        autoSettleFromScores();   // settle first
-        autoRegisterPredictions();
-        expireOldPredictions();
-        syncFromTracking();
-        injectMonitor();
+        settleAndRender(true);
       }, 400);
     }
   }
