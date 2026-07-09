@@ -350,6 +350,8 @@
   /* ── Render ── */
   function render() {
     if (_vdRendering) return;
+    /* Skip if already rendered — avoids unnecessary DOM replacement (flickering) */
+    if (document.getElementById('veyra-dash')) return;
     _vdRendering = true;
     try {
       var host = document.getElementById('dashboard-modern-shell');
@@ -398,10 +400,10 @@
     hookGlobals();
     render();
     watchShell();
-    [150, 500, 1400, 3500, 7000, 14000].forEach(function (d) {
+    /* Only a few early retries needed — MutationObserver handles external clears */
+    [150, 600].forEach(function (d) {
       setTimeout(function () { hookGlobals(); render(); }, d);
     });
-    setInterval(render, 30000);
   }
 
   if (document.readyState === 'loading') {
