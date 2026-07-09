@@ -11,7 +11,8 @@
 
   var STORAGE_KEY = 'veyra_ml5_accuracy_log_v2'; // v2: fix purge logic
   var MAX_ENTRIES = 1000;
-  var _recentScores = null; // {[id]: {homeScore, awayScore}} — from recent_results.json
+  var _recentScores = null; // {[id]: {homeScore, awayScore, home, away, date}} — from recent_results.json
+  var _fetchInFlight = false;
 
   /* ─── helpers ─── */
   function norm(s) {
@@ -52,18 +53,28 @@
 
   /* ─── fetch recent_results.json → cache scoruri meciuri terminate ─── */
   function fetchRecentScores(cb) {
+    if (_fetchInFlight) { if (cb) setTimeout(function() { if (cb) cb(); }, 800); return; }
+    _fetchInFlight = true;
     fetch('./data/recent_results.json?_=' + Math.floor(Date.now() / 300000))
       .then(function(r) { return r.ok ? r.json() : []; })
       .catch(function() { return []; })
       .then(function(arr) {
+        _fetchInFlight = false;
         _recentScores = {};
         (arr || []).forEach(function(r) {
           if (!r || r.id == null) return;
           if (r.home_score == null || r.away_score == null) return;
-          _recentScores[String(r.id)] = { homeScore: Number(r.home_score), awayScore: Number(r.away_score) };
+          _recentScores[String(r.id)] = {
+            homeScore: Number(r.home_score),
+            awayScore: Number(r.away_score),
+            home: r.home_team || '',
+            away: r.away_team || '',
+            date: r.event_date || ''
+          };
         });
         if (cb) cb();
-      });
+      })
+      .catch(function() { _fetchInFlight = false; if (cb) cb(); });
   }
 
   /* ─── expirare predicții vechi (nu mai sunt în ALL_MATCHES + data trecută) ─── */
@@ -218,6 +229,8 @@
     if (mk === 'doublechange1x' || mk === 'dc1x' || mk === '1x') return h >= a ? 'won' : 'lost';
     if (mk === 'doublechangex2' || mk === 'dcx2' || mk === 'x2') return a >= h ? 'won' : 'lost';
     if (mk === 'doublechange12' || mk === 'dc12' || mk === '12') return h !== a ? 'won' : 'lost';
+    // Markets we can't determine from final score → void once match has a score
+    if (mk === 'goalfh' || mk === 'goal_fh' || mk === 'goalsh' || mk === 'goal_sh') return 'void';
     return null;
   }
 
@@ -258,7 +271,12 @@
     // Aceasta este sursa principală pentru meciurile de ieri care dispar din ALL_MATCHES
     if (_recentScores) {
       Object.keys(_recentScores).forEach(function(id) {
-        if (!byEid[id]) byEid[id] = _recentScores[id];
+        var sc = _recentScores[id];
+        if (!byEid[id]) byEid[id] = sc;
+        if (sc.home || sc.away) {
+          var k = entryKey(sc.home, sc.away, sc.date);
+          if (!byKey[k]) byKey[k] = sc;
+        }
       });
     }
 

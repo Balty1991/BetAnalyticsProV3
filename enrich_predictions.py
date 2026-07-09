@@ -292,6 +292,16 @@ def enrich_entry(entry, blacklist):
     pd_frac = pd_raw / 100.0 if pd_raw >= 1.0 else pd_raw
     pa_frac = pa_raw / 100.0 if pa_raw >= 1.0 else pa_raw
 
+    # No-vig DC from 1X2 triplet (computed in main loop above)
+    nv_h = markets_data.get("home_win", {}).get("nv_prob")
+    nv_d = markets_data.get("draw",     {}).get("nv_prob")
+    nv_a = markets_data.get("away_win", {}).get("nv_prob")
+    dc_nv_map = {
+        "dc_1x": (nv_h + nv_d) if (nv_h is not None and nv_d is not None) else None,
+        "dc_x2": (nv_d + nv_a) if (nv_d is not None and nv_a is not None) else None,
+        "dc_12": (nv_h + nv_a) if (nv_h is not None and nv_a is not None) else None,
+    }
+
     dc_configs = [
         ("dc_1x", min(ph_frac + pd_frac, 0.99), mbo_raw.get("dc1x") or {}),
         ("dc_x2", min(pd_frac + pa_frac, 0.99), mbo_raw.get("dcx2") or {}),
@@ -301,10 +311,9 @@ def enrich_entry(entry, blacklist):
         if dc_prob < 0.55 or not dc_mbo: continue  # DC sub 55% nu are sens
         dc_odds = _f(dc_mbo.get("avg_odds"), 0.0)
         if dc_odds < ODDS_MIN or dc_odds > 3.50: continue
-        dc_impl = _f(dc_mbo.get("avg_implied_probability"), 0.0) / 100.0
-        if dc_impl < 0.01: continue
-        # No-vig aproximativ: dc_impl conține marja; scoatem ~5% margin
-        nv_p_dc = round(dc_impl / (dc_impl + (1.0 - dc_impl) * 0.95), 6)
+        nv_p_dc = dc_nv_map.get(dc_mkt)
+        if nv_p_dc is None: continue
+        nv_p_dc = round(min(nv_p_dc, 0.9999), 6)
         edg  = edge_pp(dc_prob, nv_p_dc)
         ev   = ev_pct(dc_prob, dc_odds)
         kpct = kelly_pct(dc_prob, dc_odds)

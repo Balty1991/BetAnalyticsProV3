@@ -736,60 +736,73 @@ def market_outcome(event, market_key):
 
 def compute_no_vig(*odds_values):
     clean = []
-    for o in odds_values:
+    indices = []
+    for i, o in enumerate(odds_values):
         try:
             n = float(o or 0)
         except Exception:
-            return None
-        if n < 1.01:
-            return None
-        clean.append(n)
+            n = 0.0
+        if n >= 1.01:
+            clean.append(n)
+            indices.append(i)
+    if not clean:
+        return None
     inv = [1.0 / x for x in clean]
     total = sum(inv)
     if total <= 0:
         return None
-    return [v / total * 100.0 for v in inv]
+    result = [None] * len(odds_values)
+    for j, i in enumerate(indices):
+        result[i] = inv[j] / total * 100.0
+    return result
 
 
 def market_prob_from_row_event(row, event, market_key) -> Optional[float]:
     if market_key == "homeWin":
         vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
-        return round(vals[0], 2) if vals else None
+        return round(vals[0], 2) if vals and vals[0] is not None else None
     if market_key == "draw":
         vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
-        return round(vals[1], 2) if vals else None
+        return round(vals[1], 2) if vals and vals[1] is not None else None
     if market_key == "awayWin":
         vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
-        return round(vals[2], 2) if vals else None
+        return round(vals[2], 2) if vals and vals[2] is not None else None
     if market_key in {"over15", "under15"}:
         vals = compute_no_vig(event.get("odds_over_15"), event.get("odds_under_15"))
         if not vals:
             return None
-        return round(vals[0 if market_key == "over15" else 1], 2)
+        idx = 0 if market_key == "over15" else 1
+        return round(vals[idx], 2) if vals[idx] is not None else None
     if market_key in {"over25", "under25"}:
         vals = compute_no_vig(event.get("odds_over_25"), event.get("odds_under_25"))
         if not vals:
             return None
-        return round(vals[0 if market_key == "over25" else 1], 2)
+        idx = 0 if market_key == "over25" else 1
+        return round(vals[idx], 2) if vals[idx] is not None else None
     if market_key in {"over35", "under35"}:
         vals = compute_no_vig(event.get("odds_over_35"), event.get("odds_under_35"))
         if not vals:
             return None
-        return round(vals[0 if market_key == "over35" else 1], 2)
+        idx = 0 if market_key == "over35" else 1
+        return round(vals[idx], 2) if vals[idx] is not None else None
     if market_key in {"btts", "bttsNo"}:
         vals = compute_no_vig(event.get("odds_btts_yes"), event.get("odds_btts_no"))
         if not vals:
             return None
-        return round(vals[0 if market_key == "btts" else 1], 2)
+        idx = 0 if market_key == "btts" else 1
+        return round(vals[idx], 2) if vals[idx] is not None else None
     if market_key in {"dc1x", "dcx2", "dc12"}:
         vals = compute_no_vig(event.get("odds_home"), event.get("odds_draw"), event.get("odds_away"))
         if not vals:
             return None
         if market_key == "dc1x":
-            return round(min(vals[0] + vals[1], 99.0), 2)
+            v0, v1 = vals[0], vals[1]
+            return round(min(v0 + v1, 99.0), 2) if v0 is not None and v1 is not None else None
         if market_key == "dcx2":
-            return round(min(vals[1] + vals[2], 99.0), 2)
-        return round(min(vals[0] + vals[2], 99.0), 2)
+            v1, v2 = vals[1], vals[2]
+            return round(min(v1 + v2, 99.0), 2) if v1 is not None and v2 is not None else None
+        v0, v2 = vals[0], vals[2]
+        return round(min(v0 + v2, 99.0), 2) if v0 is not None and v2 is not None else None
     return None
 
 
@@ -4494,6 +4507,7 @@ def main():
             return
         seen_recent_ids.add(ev_id)
         outcomes = {m['key']: market_outcome(ev, m['key']) for m in MARKETS}
+        ev_date_str = (ev.get('event_date', '') or ev.get('date', '') or '')[:10]
         recent_results.append({
             'id': ev_id,
             'home_team': ev.get('home_team', ''),
@@ -4501,6 +4515,7 @@ def main():
             'home_score': hs,
             'away_score': aws,
             'status': ev_status or 'finished',
+            'event_date': ev_date_str,
             'outcomes': outcomes,
         })
 
