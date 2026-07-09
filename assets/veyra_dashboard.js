@@ -5,8 +5,9 @@
 (function () {
   'use strict';
 
-  if (window.__veyraDashboard) return;
-  window.__veyraDashboard = true;
+  if (window.__veyraDashboardV3) return;
+  window.__veyraDashboard   = null;
+  window.__veyraDashboardV3 = true;
 
   var DAYS   = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
   var MONTHS = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec'];
@@ -346,17 +347,15 @@
 
   /* ── Render ── */
   function render() {
-    var host = document.getElementById('dashboard-modern-shell');
-    if (!host) return;
-    var html     = buildHtml();
-    var existing = document.getElementById('veyra-dash');
-    if (existing) {
-      var tmp = document.createElement('div');
-      tmp.innerHTML = html;
-      var newEl = tmp.firstChild;
-      if (newEl) existing.parentNode.replaceChild(newEl, existing);
-    } else {
-      host.innerHTML = html;
+    try {
+      var host = document.getElementById('dashboard-modern-shell');
+      if (!host) return;
+      var ph = document.getElementById('vd-boot-placeholder');
+      if (ph) ph.parentNode.removeChild(ph);
+      host.innerHTML = buildHtml();
+    } catch (e) {
+      var h = document.getElementById('dashboard-modern-shell');
+      if (h) h.innerHTML = '<div style="padding:20px;color:#EF4444;font-size:12px">Dashboard error: ' + String(e) + '</div>';
     }
   }
 
