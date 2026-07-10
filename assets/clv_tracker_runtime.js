@@ -532,8 +532,10 @@
   /* ── stiluri ────────────────────────────────────────────────────────────── */
 
   function renderStyles() {
-    if (document.getElementById("clv-styles")) return "";
-    return "<style id=\"clv-styles\">" +
+    if (!document.getElementById("clv-styles")) {
+      var s = document.createElement("style");
+      s.id = "clv-styles";
+      s.textContent =
       ".clv-root{padding:14px;max-width:900px;margin:0 auto}" +
       ".clv-header{margin-bottom:14px}" +
       ".clv-title{font-size:1.1rem;font-weight:700;margin:0 0 3px}" +
@@ -578,8 +580,10 @@
       ".dt{font-size:.72rem;white-space:nowrap;color:var(--muted,#94a3b8)}" +
       ".mt{font-size:.72rem;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
       ".mk{font-weight:600;font-size:.76rem}.rc{text-align:center}" +
-      "@media(max-width:520px){.kpi-row{flex-direction:column}.rolling-g{grid-template-columns:1fr}}" +
-    "</style>";
+      "@media(max-width:520px){.kpi-row{flex-direction:column}.rolling-g{grid-template-columns:1fr}}";
+      document.head.appendChild(s);
+    }
+    return "";
   }
 
   /* ── formatare ──────────────────────────────────────────────────────────── */
