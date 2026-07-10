@@ -1,4 +1,4 @@
-/* VEYRA Dashboard v3 */
+/* VEYRA Dashboard v3 – dash8 */
 :root {
   --vd-green:  #10D07E;
   --vd-red:    #EF4444;
@@ -12,9 +12,9 @@
 }
 
 #veyra-dash {
-  padding: 6px 14px 36px;
+  padding: 8px 16px 36px;
   max-width: 100%;
-  overflow: hidden;
+  overflow: clip;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -23,10 +23,11 @@
 
 /* ── Hero block (card wrapper for status + greeting) ── */
 .vd-hero-block {
-  background: rgba(16, 208, 126, 0.05);
-  border: 1px solid rgba(16, 208, 126, 0.22);
+  background: rgba(16, 208, 126, 0.08);
+  border: 1px solid rgba(16, 208, 126, 0.35);
   border-radius: 18px;
-  padding: 16px 20px 20px;
+  padding: 18px 20px 22px;
+  box-shadow: 0 0 0 1px rgba(16, 208, 126, 0.08) inset;
 }
 
 /* ── Status strip ── */
@@ -52,13 +53,13 @@
 .vd-status-date  { margin-left: auto; font-family: var(--mono, ui-monospace, monospace); font-size: 10px; }
 
 /* ── Hero ── */
-.vd-hero { padding: 10px 0 0; }
+.vd-hero { padding: 12px 0 0; }
 .vd-greeting {
-  font-size: clamp(24px, 6.5vw, 32px);
+  font-size: clamp(20px, 5.5vw, 28px);
   font-weight: 900;
   color: var(--vd-txt);
   letter-spacing: -.03em;
-  line-height: 1.1;
+  line-height: 1.15;
   margin: 0 0 6px;
   text-wrap: balance;
 }
@@ -357,9 +358,9 @@
 
 /* ── Responsive ── */
 @media (max-width: 480px) {
-  #veyra-dash       { padding: 4px 12px 28px; gap: 13px; }
-  .vd-hero-block    { padding: 14px 18px 18px; }
-  .vd-greeting      { font-size: clamp(20px, 7vw, 26px); }
+  #veyra-dash       { padding: 6px 14px 28px; gap: 13px; }
+  .vd-hero-block    { padding: 16px 18px 18px; }
+  .vd-greeting      { font-size: clamp(18px, 6vw, 22px); }
   .vd-kpi           { gap: 8px; }
   .vd-kpi-v         { font-size: clamp(18px, 5.5vw, 24px); }
   .vd-opp-scroll    { grid-auto-columns: min(82vw, 255px); }
