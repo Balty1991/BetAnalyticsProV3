@@ -1,5 +1,5 @@
 /**
- * VEYRA Dashboard v4 – dash15
+ * VEYRA Dashboard v4 – dash16
  * Futuristic redesign: animated ring, scan line, neon glow, pyramid system
  */
 (function () {
@@ -283,7 +283,9 @@
         match:  matches[i] || null
       });
     }
-    return { date: pyrTodayStr(), initStake: stake, numSteps: n, currentStep: 0, steps: steps, done: false, doneStatus: null };
+    var result = { date: pyrTodayStr(), initStake: stake, numSteps: n, currentStep: 0, steps: steps, done: false, doneStatus: null };
+    pyrSave(id, result); /* persist immediately so re-renders use same match assignments */
+    return result;
   }
   function pyrFillMatches(id, state) {
     /* Fill null match slots in not-yet-played steps */
@@ -316,8 +318,12 @@
       var ico = '';
       if      (step.status === 'won')     { cls += ' vd-pyr-s-won';  ico = '<span class="vd-pyr-s-ico vd-pyr-s-ico-win">✓</span>'; }
       else if (step.status === 'lost')    { cls += ' vd-pyr-s-lost'; ico = '<span class="vd-pyr-s-ico vd-pyr-s-ico-lose">✗</span>'; }
-      else if (step.status === 'current') { cls += ' vd-pyr-s-cur'; }
-      else                                { cls += ' vd-pyr-s-pend'; }
+      else if (step.status === 'current') {
+        cls += ' vd-pyr-s-cur';
+        if (step.placed) cls += ' vd-pyr-s-placed';
+      } else { cls += ' vd-pyr-s-pend'; }
+      var placedBadge = (step.status === 'current' && step.placed)
+        ? '<span class="vd-pyr-s-lock">📋</span>' : '';
       var matchLine = step.match
         ? '<div class="vd-pyr-s-match">' +
             '<span class="vd-pyr-s-teams">' + step.match.home + ' vs ' + step.match.away + '</span>' +
@@ -332,6 +338,7 @@
           '<div class="vd-pyr-s-hd">' +
             '<span class="vd-pyr-s-n">P' + (i + 1) + '</span>' +
             ico +
+            placedBadge +
             '<span class="vd-pyr-s-stk">' + step.stake.toFixed(2) + '</span>' +
             '<span class="vd-pyr-s-arr">→</span>' +
             '<span class="vd-pyr-s-pay">' + step.payout.toFixed(2) + ' RON</span>' +
@@ -361,14 +368,23 @@
         '</div>'
       : '';
 
+    var curStep  = !isDone ? state.steps[state.currentStep] : null;
+    var isPlaced = curStep && curStep.placed;
     var actHtml = isDone
       ? '<div class="vd-pyr-acts">' +
           '<button class="vd-pyr-btn vd-pyr-new" onclick="window.__pyrReset(\'' + id + '\')">↺ Piramidă nouă</button>' +
         '</div>'
-      : '<div class="vd-pyr-acts">' +
-          '<button class="vd-pyr-btn vd-pyr-win"  onclick="window.__pyrWin(\''  + id + '\')">✓ WIN</button>' +
-          '<button class="vd-pyr-btn vd-pyr-lose" onclick="window.__pyrLose(\'' + id + '\')">✗ PIERDUT</button>' +
-        '</div>';
+      : !isPlaced
+        ? '<div class="vd-pyr-acts">' +
+            '<button class="vd-pyr-btn vd-pyr-place" onclick="window.__pyrPlace(\'' + id + '\')">📋 Salvează pas plasat</button>' +
+            '<button class="vd-pyr-btn vd-pyr-win"   onclick="window.__pyrWin(\'' + id + '\')">✓</button>' +
+            '<button class="vd-pyr-btn vd-pyr-lose"  onclick="window.__pyrLose(\'' + id + '\')">✗</button>' +
+          '</div>'
+        : '<div class="vd-pyr-acts">' +
+            '<span class="vd-pyr-placed-badge">📋 Plasat</span>' +
+            '<button class="vd-pyr-btn vd-pyr-win"  onclick="window.__pyrWin(\'' + id + '\')">✓ WIN</button>' +
+            '<button class="vd-pyr-btn vd-pyr-lose" onclick="window.__pyrLose(\'' + id + '\')">✗ PIERDUT</button>' +
+          '</div>';
 
     return (
       '<div class="vd-pyr-block' + (isWon ? ' vd-pyr-block-won' : isLost ? ' vd-pyr-block-lost' : '') + '">' +
@@ -765,6 +781,14 @@
     if (state.done) return;
     state.steps[state.currentStep].status = 'lost';
     state.done = true; state.doneStatus = 'lost';
+    pyrSave(id, state);
+    var w = document.getElementById('vd-pyr-wrap-' + id);
+    if (w) w.innerHTML = pyrBuildBlockHtml(id);
+  };
+  window.__pyrPlace = function (id) {
+    var state = pyrLoad(id);
+    if (!state || state.done) return;
+    state.steps[state.currentStep].placed = true;
     pyrSave(id, state);
     var w = document.getElementById('vd-pyr-wrap-' + id);
     if (w) w.innerHTML = pyrBuildBlockHtml(id);

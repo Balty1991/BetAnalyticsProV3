@@ -1,4 +1,4 @@
-/* VEYRA Dashboard v4 – dash15 */
+/* VEYRA Dashboard v4 – dash16 */
 :root {
   --vd-green:  #10D07E;
   --vd-red:    #EF4444;
@@ -644,3 +644,32 @@
 }
 .vd-pyr-new:hover, .vd-pyr-cfg-ok:hover { background: rgba(43,229,197,.18); transform: translateY(-1px); }
 .vd-pyr-cfg-ok { flex: none; padding: 4px 12px; font-size: 14px; }
+/* Placed step */
+.vd-pyr-s-placed {
+  border-color: rgba(75,131,240,.40) !important;
+  background: rgba(75,131,240,.07) !important;
+}
+.vd-pyr-s-placed .vd-pyr-s-pill {
+  background: rgba(75,131,240,.15);
+  border-color: rgba(75,131,240,.35);
+  color: var(--vd-blue);
+}
+.vd-pyr-s-lock {
+  font-size: 11px; flex-shrink: 0; margin-right: 1px;
+}
+/* Placed badge in action row */
+.vd-pyr-placed-badge {
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px 10px; border-radius: 10px;
+  font-size: 11px; font-weight: 800; white-space: nowrap;
+  color: var(--vd-blue);
+  background: rgba(75,131,240,.10);
+  border: 1px solid rgba(75,131,240,.30);
+  flex-shrink: 0;
+}
+/* Place button */
+.vd-pyr-place {
+  background: rgba(75,131,240,.10); border-color: rgba(75,131,240,.30); color: var(--vd-blue);
+  flex: 2;
+}
+.vd-pyr-place:hover { background: rgba(75,131,240,.22); box-shadow: 0 4px 14px rgba(75,131,240,.22); transform: translateY(-1px); }
