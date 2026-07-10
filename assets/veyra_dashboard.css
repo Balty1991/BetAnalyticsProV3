@@ -38,9 +38,11 @@
 
 #veyra-dash {
   padding: 8px 16px 80px;
+  width: 100%;
   max-width: 100%;
-  overflow: clip;
   box-sizing: border-box;
+  overflow-x: hidden; /* clip child overflow; clip is not supported on all mobile browsers */
+  overflow-y: visible;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -135,9 +137,12 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
-.vd-hero-text { flex: 1; min-width: 0; }
+.vd-hero-text { flex: 1; min-width: 0; overflow: hidden; }
 
 .vd-greeting {
   font-size: clamp(18px, 5vw, 24px);
@@ -166,10 +171,10 @@
 .vd-big-ring-wrap {
   flex-shrink: 0;
   position: relative;
-  width: 88px; height: 88px;
+  width: 80px; height: 80px;
   animation: vd-float 4.5s ease-in-out infinite;
 }
-.vd-big-ring { width: 88px; height: 88px; transform: rotate(-90deg); }
+.vd-big-ring { width: 80px; height: 80px; transform: rotate(-90deg); }
 .vd-big-ring-arc {
   stroke-dasharray: 0 100;
   stroke-dashoffset: 0;
@@ -262,7 +267,7 @@
 }
 
 /* ─────────── SECTIONS ─────────── */
-.vd-section { display: flex; flex-direction: column; gap: 10px; }
+.vd-section { display: flex; flex-direction: column; gap: 10px; min-width: 0; width: 100%; }
 .vd-sec-hd  { display: flex; align-items: center; justify-content: space-between; }
 .vd-sec-title {
   font-size: 11px;
@@ -286,9 +291,14 @@
   grid-auto-columns: minmax(220px, 270px);
   gap: 10px;
   overflow-x: auto;
+  overflow-y: visible;
   scroll-snap-type: x proximity;
   padding-bottom: 4px;
   -webkit-overflow-scrolling: touch;
+  /* Must be width-constrained so the horizontal scroll stays inside the viewport */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .vd-opp-scroll::-webkit-scrollbar { height: 3px; }
 .vd-opp-scroll::-webkit-scrollbar-thumb { background: rgba(43,229,197,.2); border-radius: 999px; }
@@ -486,8 +496,8 @@
   .vd-perf-roi    { font-size: 17px; }
   .vd-ps-v        { font-size: 17px; }
   .vd-reco-mkt    { font-size: 19px; }
-  .vd-big-ring-wrap,.vd-big-ring { width: 76px; height: 76px; }
-  .vd-ring-num    { font-size: 22px; }
+  .vd-big-ring-wrap,.vd-big-ring { width: 70px; height: 70px; }
+  .vd-ring-num    { font-size: 20px; }
 }
 @media (max-width: 360px) {
   .vd-nav-lbl     { font-size: 9px; }
