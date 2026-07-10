@@ -1324,9 +1324,12 @@ function renderClaudeAITab(){
     + '<div style="font-size:18px;font-weight:900;color:var(--txt);letter-spacing:-.3px">⚡ VEYRA Strategy</div>'
     + (genStr ? '<div style="font-size:11px;color:var(--muted);margin-top:2px">Analiză ' + genStr + (matchesAnalyzed ? ' · ' + matchesAnalyzed + ' meciuri' : '') + '</div>' : '')
     + '</div>'
+    + '<div style="display:flex;align-items:center;gap:6px">'
     + '<div style="background:'+marketBg+';border:1px solid '+marketColor+'44;border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:5px">'
     + '<div style="width:7px;height:7px;border-radius:50%;background:'+marketColor+'"></div>'
     + '<div style="font-size:11px;font-weight:900;color:'+marketColor+';letter-spacing:.5px">'+marketCond+'</div>'
+    + '</div>'
+    + '<button onclick="window._refreshClaudeDaily&&window._refreshClaudeDaily()" title="Reîncarcă picks-uri" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--muted);flex-shrink:0">🔄</button>'
     + '</div>'
     + '</div></div>';
 
@@ -1354,6 +1357,57 @@ function renderClaudeAITab(){
     + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Stop-Loss Sesiune</div>'
     + '</div>'
     + '</div></div>';
+
+  // ── SIGNAL MAXIM ───────────────────────────────────────────────────────────
+  if(topPicks.length){
+    var _sigPick=topPicks.slice().sort(function(a,b){
+      var ua=_recUnits(a.pick||'',a.motiv||''),ub=_recUnits(b.pick||'',b.motiv||'');
+      var ea=_parseEdge(a.motiv||''),eb=_parseEdge(b.motiv||'');
+      if(ua!==ub) return ub-ua;
+      return eb-ea;
+    })[0];
+    var _sOdds=_claudeParseOdds(_sigPick.pick||'');
+    var _sEdge=_parseEdge(_sigPick.motiv||'');
+    var _sUnits=_recUnits(_sigPick.pick||'',_sigPick.motiv||'');
+    var _sLabel=(_sigPick.pick||'').replace(/@\s*[\d.]+/,'').trim();
+    var _sKick=_getKickoff(_sigPick.meci||'');
+    var _sEvDate=_getEventDate(_sigPick.meci||'');
+    var _sm_esc=(_sigPick.meci||'').replace(/'/g,"\\'");
+    var _sp_esc=(_sigPick.pick||'').replace(/'/g,"\\'");
+    var _sSaved=_savedToday[(_sigPick.meci||'')+'|'+(_sigPick.pick||'')];
+    var _sOddsColor=_sOdds<=1.35?'#22c55e':_sOdds<=1.65?'#2BE5C5':_sOdds<=2.0?'#f59e0b':'#ef4444';
+    var _sPotWin=_sOdds>0?Math.round(_sUnits*unitSize*(_sOdds-1)*10)/10:0;
+    html+='<div style="background:linear-gradient(135deg,rgba(43,229,197,.12),rgba(34,197,94,.06));border:2px solid rgba(43,229,197,.45);border-radius:16px;padding:16px;margin-bottom:12px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+      +'<div style="font-size:10px;font-weight:900;color:#2BE5C5;letter-spacing:1.5px;background:rgba(43,229,197,.2);border:1px solid rgba(43,229,197,.5);border-radius:20px;padding:3px 10px">⚡ SIGNAL MAXIM</div>'
+      +(_sEdge>0?'<div style="font-size:10px;font-weight:700;color:#22c55e;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:2px 8px">+'+_sEdge+'pp edge</div>':'')
+      +'</div>'
+      +'<div style="font-size:15px;font-weight:800;color:var(--txt);margin-bottom:8px">'+(_sigPick.meci||'')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">'
+      +'<span style="font-size:13px;font-weight:700;color:#818cf8">'+_sLabel+'</span>'
+      +(_sOdds>0?'<span style="font-size:18px;font-weight:900;color:'+_sOddsColor+'">@'+_sOdds.toFixed(2)+'</span>':'')
+      +(_sUnits>=3?'<span style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#ef4444;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔥 3U</span>'
+        :_sUnits===2?'<span style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:#fbbf24;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">⚡ 2U</span>'
+        :'<span style="background:rgba(100,116,139,.12);border:1px solid rgba(100,116,139,.25);color:#94a3b8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">1U</span>')
+      +(_sKick?'<span style="font-size:10px;color:var(--muted)">'+_sKick+'</span>':'')
+      +'</div>'
+      +'<div style="display:flex;gap:8px;align-items:stretch">'
+      +'<div style="flex:1;background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.15);border-radius:10px;padding:8px 10px">'
+      +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px">Risc</div>'
+      +'<div style="font-size:15px;font-weight:900;color:#2BE5C5">'+(_sUnits*unitSize)+' RON</div>'
+      +'</div>'
+      +'<div style="flex-shrink:0;display:flex;align-items:center;font-size:16px;color:var(--muted)">→</div>'
+      +'<div style="flex:1;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:8px 10px">'
+      +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px">Câștig potențial</div>'
+      +'<div style="font-size:15px;font-weight:900;color:#22c55e">+'+_sPotWin+' RON</div>'
+      +'</div>'
+      +(_sSaved
+        ?'<div style="flex-shrink:0;display:flex;align-items:center;font-size:16px;color:#22c55e;font-weight:700">✅</div>'
+        :'<button onclick="addClaudeSavedPick(\''+_sm_esc+'\',\''+_sp_esc+'\',\''+_sEvDate+'\',\'signal\','+_sUnits+')" style="flex-shrink:0;padding:0 14px;border-radius:10px;background:rgba(43,229,197,.18);border:1.5px solid rgba(43,229,197,.5);color:#2BE5C5;font-size:12px;font-weight:800;cursor:pointer">💾</button>')
+      +'</div>'
+      +(_sigPick.motiv?'<div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5">'+_sigPick.motiv+'</div>':'')
+      +'</div>';
+  }
 
   // ── SELECȚIE ZILEI ─────────────────────────────────────────────────────────
   if(topPicks.length){
@@ -1411,13 +1465,16 @@ function renderClaudeAITab(){
   if(acumulator.length){
     var acumStake = unitSize;
     var acumReturn = cotaTotala ? Math.round(acumStake*cotaTotala*10)/10 : 0;
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px">'
-      + '<div style="font-size:13px;font-weight:800;color:#818cf8">🎰 Combo Recomandat</div>'
-      + '<div style="display:flex;gap:6px;align-items:center">'
-      + (cotaTotala?'<span style="font-size:12px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:3px 10px;color:#818cf8">@'+cotaTotala.toFixed(2)+'</span>':'')
-      + (sansaPct?'<span style="font-size:11px;font-weight:700;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:3px 9px;color:#22c55e">'+sansaPct+'%</span>':'')
-      + '</div></div>';
+    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;margin-bottom:12px;overflow:hidden">'
+      + '<div onclick="var b=document.getElementById(\'combo-body\');var a=document.getElementById(\'combo-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none">'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      + '<div style="font-size:12px;font-weight:800;color:#818cf8">🎰 Combo Recomandat</div>'
+      + (cotaTotala?'<span style="font-size:11px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:2px 8px;color:#818cf8">@'+cotaTotala.toFixed(2)+'</span>':'')
+      + (sansaPct?'<span style="font-size:10px;font-weight:700;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:2px 7px;color:#22c55e">'+sansaPct+'%</span>':'')
+      + '</div>'
+      + '<span id="combo-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
+      + '</div>'
+      + '<div id="combo-body" style="display:none;padding:0 16px 12px 16px">';
     if(acumReturn>0){
       html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'
         + '<div style="flex:1;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:9px;padding:8px;text-align:center">'
@@ -1454,7 +1511,7 @@ function renderClaudeAITab(){
           : '<button onclick="addClaudeSavedPick(\''+_am_esc+'\',\''+_ap_esc+'\',\''+_aEvDate+'\',\'acum\',1)" style="font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#818cf8;cursor:pointer;flex-shrink:0">💾</button>')
         + '</div>';
     });
-    html += '</div>';
+    html += '</div></div>';
   }
 
   // ── SESIUNEA MEA ───────────────────────────────────────────────────────────
@@ -1491,46 +1548,56 @@ function renderClaudeAITab(){
         + '<div style="font-size:18px;font-weight:900;color:#ef4444">'+losses+'</div>'
         + '<div style="font-size:9px;color:var(--muted);margin-top:2px">LOSS</div></div>'
         + '</div>';
-      saved.slice().reverse().slice(0,15).forEach(function(e){
-        var u=e.rec_units||1, stake=u*unitSize;
-        var icon=e.result==='win'?'✅':e.result==='loss'?'❌':e.result==='stale'?'⚠️':'⏳';
-        var resColor=e.result==='win'?'#22c55e':e.result==='loss'?'#ef4444':e.result==='stale'?'#f59e0b':'#64748b';
-        var uBadge=u===3?'<span style="font-size:9px;color:#ef4444;font-weight:700">🔥3U</span>'
-          :u===2?'<span style="font-size:9px;color:#fbbf24;font-weight:700">⚡2U</span>'
-          :'<span style="font-size:9px;color:#94a3b8;font-weight:700">1U</span>';
-        var savedDate='';
-        try{ var _sd=new Date(e.event_date||e.savedAt); if(isFinite(_sd.getTime())) savedDate=_sd.getDate().toString().padStart(2,'0')+'.'+(_sd.getMonth()+1).toString().padStart(2,'0'); }catch(ex){}
-        var ronResult='';
-        if(e.result==='win') ronResult='<span style="font-size:10px;font-weight:700;color:#22c55e">+'+(Math.round(stake*((e.odds||1)-1)*10)/10)+' RON</span>';
-        else if(e.result==='loss') ronResult='<span style="font-size:10px;font-weight:700;color:#ef4444">-'+stake+' RON</span>';
-        else if(e.result==='stale') ronResult='<span style="font-size:9px;color:#f59e0b">⚠️</span>';
-        var clvIndicator = '';
-        if(e.result==='pending' && e.odds && Number(e.odds) > 1){
-          var _liveOdds = _getLiveOddsForPick(e);
-          if(_liveOdds !== null && _liveOdds > 1){
-            var _clvDiff = Number(e.odds) - _liveOdds;
-            var _clvPct = (_clvDiff / _liveOdds) * 100;
-            if(Math.abs(_clvPct) >= 1){
-              var _clvPos = _clvDiff > 0;
-              clvIndicator = '<span style="font-size:9px;font-weight:700;color:'+(_clvPos?'#22c55e':'#ef4444')+'" title="CLV: cotă salvată '+Number(e.odds).toFixed(2)+' vs curentă '+_liveOdds.toFixed(2)+'">'+(_clvPos?'↓ +':'↑ ')+Math.abs(_clvPct).toFixed(1)+'%</span>';
+      // Group all picks by date — newest first, no cap
+      var _grpByDate={},_grpOrder=[];
+      saved.slice().reverse().forEach(function(e){
+        var _dk='';
+        try{ var _sd2=new Date(e.event_date||e.savedAt); if(isFinite(_sd2.getTime())) _dk=_sd2.toISOString().slice(0,10); }catch(ex){}
+        if(!_dk) _dk='unknown';
+        if(!_grpByDate[_dk]){ _grpByDate[_dk]=[]; _grpOrder.push(_dk); }
+        _grpByDate[_dk].push(e);
+      });
+      _grpOrder.forEach(function(dk){
+        var _dlabel=dk==='unknown'?'—':(function(){ var p=dk.split('-'); return p[2]+'.'+p[1]+'.'+p[0]; })();
+        html+='<div style="font-size:10px;font-weight:700;color:var(--muted);padding:6px 0 2px 0;letter-spacing:.5px;border-top:1px solid rgba(255,255,255,.05);margin-top:4px">'+_dlabel+'</div>';
+        _grpByDate[dk].forEach(function(e){
+          var u=e.rec_units||1,stake=u*unitSize;
+          var icon=e.result==='win'?'✅':e.result==='loss'?'❌':e.result==='stale'?'⚠️':'⏳';
+          var resColor=e.result==='win'?'#22c55e':e.result==='loss'?'#ef4444':e.result==='stale'?'#f59e0b':'#64748b';
+          var uBadge=u===3?'<span style="font-size:9px;color:#ef4444;font-weight:700">🔥3U</span>'
+            :u===2?'<span style="font-size:9px;color:#fbbf24;font-weight:700">⚡2U</span>'
+            :'<span style="font-size:9px;color:#94a3b8;font-weight:700">1U</span>';
+          var ronResult='';
+          if(e.result==='win') ronResult='<span style="font-size:10px;font-weight:700;color:#22c55e">+'+(Math.round(stake*((e.odds||1)-1)*10)/10)+' RON</span>';
+          else if(e.result==='loss') ronResult='<span style="font-size:10px;font-weight:700;color:#ef4444">-'+stake+' RON</span>';
+          else if(e.result==='stale') ronResult='<span style="font-size:9px;color:#f59e0b">⚠️</span>';
+          var clvIndicator='';
+          if(e.result==='pending'&&e.odds&&Number(e.odds)>1){
+            var _liveOdds=_getLiveOddsForPick(e);
+            if(_liveOdds!==null&&_liveOdds>1){
+              var _clvDiff=Number(e.odds)-_liveOdds;
+              var _clvPct=(_clvDiff/_liveOdds)*100;
+              if(Math.abs(_clvPct)>=1){
+                var _clvPos=_clvDiff>0;
+                clvIndicator='<span style="font-size:9px;font-weight:700;color:'+(_clvPos?'#22c55e':'#ef4444')+'" title="CLV: cotă salvată '+Number(e.odds).toFixed(2)+' vs curentă '+_liveOdds.toFixed(2)+'">'+(_clvPos?'↓ +':'↑ ')+Math.abs(_clvPct).toFixed(1)+'%</span>';
+              }
             }
           }
-        }
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-          + '<div style="font-size:15px;flex-shrink:0">'+icon+'</div>'
-          + '<div style="flex:1;min-width:0">'
-          + '<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.meci+'</div>'
-          + '<div style="display:flex;gap:5px;align-items:center;margin-top:1px;flex-wrap:wrap">'
-          + '<span style="font-size:10px;color:#818cf8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">'+e.pick_text+'</span>'
-          + uBadge
-          + (savedDate?'<span style="font-size:9px;color:var(--muted)">'+savedDate+'</span>':'')
-          + (e.score?'<span style="font-size:10px;font-weight:700;color:'+resColor+'">'+e.score+'</span>':'')
-          + '</div></div>'
-          + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">'
-          + ronResult
-          + clvIndicator
-          + '<button onclick="deleteClaudeSavedPick('+e.id+')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);cursor:pointer">🗑</button>'
-          + '</div></div>';
+          html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+            +'<div style="font-size:15px;flex-shrink:0">'+icon+'</div>'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.meci+'</div>'
+            +'<div style="display:flex;gap:5px;align-items:center;margin-top:1px;flex-wrap:wrap">'
+            +'<span style="font-size:10px;color:#818cf8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">'+e.pick_text+'</span>'
+            +uBadge
+            +(e.score?'<span style="font-size:10px;font-weight:700;color:'+resColor+'">'+e.score+'</span>':'')
+            +'</div></div>'
+            +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">'
+            +ronResult
+            +clvIndicator
+            +'<button onclick="deleteClaudeSavedPick('+e.id+')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);cursor:pointer">🗑</button>'
+            +'</div></div>';
+        });
       });
     }
     html += '</div>';
@@ -6082,7 +6149,27 @@ function doRefresh(isManual){
     var enrichedFile = results[8] || {};
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
-    window.CLAUDE_DAILY = results[11] || {};
+    (function(){
+      var _todayKey='veyra_claude_daily_'+new Date().toISOString().slice(0,10);
+      var _fresh=results[11]||{};
+      var _hasContent=_fresh.generated_at||(_fresh.top_picks&&_fresh.top_picks.length);
+      var _usedCache=false;
+      try{
+        var _cached=JSON.parse(localStorage.getItem(_todayKey)||'null');
+        if(_cached&&(_cached.generated_at||(_cached.top_picks&&_cached.top_picks.length))){
+          window.CLAUDE_DAILY=_cached; _usedCache=true;
+        }
+      }catch(e){}
+      if(!_usedCache){
+        window.CLAUDE_DAILY=_fresh;
+        if(_hasContent){try{localStorage.setItem(_todayKey,JSON.stringify(_fresh));}catch(e){}}
+      }
+      try{Object.keys(localStorage).forEach(function(k){if(k.startsWith('veyra_claude_daily_')&&k!==_todayKey)localStorage.removeItem(k);});}catch(e){}
+    })();
+    window._refreshClaudeDaily=function(){
+      try{var k='veyra_claude_daily_'+new Date().toISOString().slice(0,10);localStorage.removeItem(k);}catch(e){}
+      location.reload();
+    };
     window.AI_PRED_TRACKING = results[12] || {};
     window.AI_MATCH_ENGINE = results[13] || {};
     _MARKET_THRESHOLDS_CACHE = null;
