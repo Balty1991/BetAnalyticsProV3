@@ -21,6 +21,14 @@
   gap: 16px;
 }
 
+/* ── Hero block (card wrapper for status + greeting) ── */
+.vd-hero-block {
+  background: var(--vd-card);
+  border: 1px solid var(--vd-border);
+  border-radius: 18px;
+  padding: 14px 18px 18px;
+}
+
 /* ── Status strip ── */
 .vd-status {
   display: flex;
@@ -28,7 +36,6 @@
   gap: 7px;
   font-size: 11px;
   color: var(--vd-muted);
-  padding-top: 4px;
 }
 .vd-live-dot {
   width: 7px;
@@ -45,14 +52,14 @@
 .vd-status-date  { margin-left: auto; font-family: var(--mono, ui-monospace, monospace); font-size: 10px; }
 
 /* ── Hero ── */
-.vd-hero { padding: 2px 0 0; }
+.vd-hero { padding: 10px 0 0; }
 .vd-greeting {
   font-size: clamp(26px, 7vw, 34px);
   font-weight: 900;
   color: var(--vd-txt);
   letter-spacing: -.03em;
   line-height: 1.1;
-  margin: 0 0 7px;
+  margin: 0 0 8px;
   text-wrap: balance;
 }
 .vd-subline {
@@ -351,6 +358,7 @@
 /* ── Responsive ── */
 @media (max-width: 480px) {
   #veyra-dash       { padding: 4px 12px 28px; gap: 13px; }
+  .vd-hero-block    { padding: 12px 14px 14px; }
   .vd-greeting      { font-size: clamp(22px, 8.5vw, 30px); }
   .vd-kpi           { gap: 8px; }
   .vd-kpi-v         { font-size: clamp(18px, 5.5vw, 24px); }
