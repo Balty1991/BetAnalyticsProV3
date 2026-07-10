@@ -8333,7 +8333,7 @@ function renderMatches(){
         '<div class="m17-ml-note"><span>1: '+homeProb.toFixed(0)+'%</span><span>X: '+drawProb.toFixed(0)+'%</span><span>2: '+awayProb.toFixed(0)+'%</span></div>'+ 
       '</div>'+ 
       '<div class="m17-reco">'+
-        '<div class="m17-reco-head"><div><div class="m17-reco-kicker">🎯 Recomandare</div><div class="m17-pick">'+htmlEsc(recLabel)+'</div></div><div class="m17-odd">'+(recOdd ? '@ '+recOdd : '—')+'</div></div>'+ 
+        '<div class="m17-reco-head"><div><div class="m17-reco-kicker">🎯 Recomandare</div><div class="m17-pick">'+htmlEsc(recLabel)+'</div></div><div class="m17-odd">'+(recOdd ? '@ '+recOdd+(b.usesBestOdds && b.bestBookmaker ? '<span style="display:block;font-size:9px;font-weight:700;opacity:.5;margin-top:3px;text-transform:uppercase;letter-spacing:.04em;font-family:var(--mono,monospace)">'+htmlEsc(b.bestBookmaker)+'</span>' : '') : '—')+'</div></div>'+ 
         m17Metrics+
         m17GroupedRows+
       '</div>'+ 
