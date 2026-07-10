@@ -1916,6 +1916,11 @@ function renderActiveTab(name, opts){
     markTabRendered('performanta');
     return;
   }
+  if(name === 'master'){
+    try{ if(typeof window.renderMasterTab === 'function') window.renderMasterTab(); }catch(e){}
+    markTabRendered('master');
+    return;
+  }
 }
 function prefetchNonCriticalTabData(){
   if(NONCRITICAL_PREFETCH_STARTED) return;

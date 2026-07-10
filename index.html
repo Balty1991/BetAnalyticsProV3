@@ -54,6 +54,7 @@ body{font-family:var(--font-sans);min-height:100vh;-webkit-font-smoothing:antial
 <link rel="stylesheet" href="./assets/veyra_reco_grouped.css?v=20260515reco2"/>
 <link rel="stylesheet" href="./assets/veyra_team_boost.css?v=20260515team1"/>
 <link rel="stylesheet" href="./assets/veyra_dashboard.css?v=20260710dash8"/>
+<link rel="stylesheet" href="./assets/veyra_master.css?v=20260710ms1"/>
 <link rel="stylesheet" href="./assets/light_theme.css?v=20260604lgt24"/>
 <!-- APEX light-mode nuclear override — appears LAST in cascade, beats all @import chains -->
 <style id="apex-light-override">
@@ -187,7 +188,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script defer src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260710v18"></script>
+<script defer src="./assets/app.js?v=20260710v19"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260709dash10"></script>
 </head>
@@ -269,6 +270,10 @@ function toggleTheme(){
     <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="closeDesktopMore()">Închide</button>
   </div>
   <div class="more-grid">
+    <button class="more-card-btn" onclick="switchTab('master');closeDesktopMore()" style="border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.03)">
+      <span class="more-card-title">⚡ Master Signal</span>
+      <span class="more-card-sub">Scor compozit unificat — ML5 + APEX + Kelly + Valoare + Motor AI combinate într-un singur semnal.</span>
+    </button>
     <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
       <span class="more-card-title">🔬 Analiză ML5</span>
       <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Top picks cu breakdown complet.</span>
@@ -781,6 +786,11 @@ function toggleTheme(){
     <div id="statistici-root" style="padding:48px 0;text-align:center;color:var(--muted)">Se încarcă statisticile…</div>
   </div>
 
+  <!-- ===== MASTER SIGNAL ===== -->
+  <div class="tab-content" id="tab-master">
+    <div style="padding:48px 16px;text-align:center;color:var(--muted)">Se calculează semnalele Master…</div>
+  </div>
+
 </div><!-- /main -->
 
 <nav class="mobile-nav" id="mobile-nav" aria-label="Navigare mobilă">
@@ -810,6 +820,7 @@ function toggleTheme(){
   </button>
 </nav>
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
+  <button class="mobile-sheet-btn" onclick="switchTab('master');closeMobileMore()" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)"><span class="sheet-btn-title">⚡ Master Signal</span><small class="sheet-btn-sub">Scor compozit unificat — ML5 + APEX + Kelly + Valoare combinate</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 Analiză ML5</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🎯 ⚡ APEX Neural Engine</span><small class="sheet-btn-sub">CatBoost v2 · AI Memory · Kelly · H2H · 3 niveluri de predicție</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
@@ -919,6 +930,7 @@ function toggleTheme(){
   <script defer src="./assets/statistici.js?v=20260709v2"></script>
   <script defer src="./assets/ml5_accuracy_monitor.js?v=20260709acc7"></script>
   <script defer src="./assets/upcoming_events_runtime.js?v=20260709up13"></script>
+  <script defer src="./assets/veyra_master.js?v=20260710ms1"></script>
   <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
 </body>
 </html>

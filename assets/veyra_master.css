@@ -1,0 +1,402 @@
+/* VEYRA Master Signal — Professional Unified Betting Engine */
+/* v1.0 — 2026-07-10 */
+
+/* ── Token overrides scoped to master tab ── */
+#tab-master {
+  --ms-gold:    #F59E0B;
+  --ms-gold-bg: rgba(245,158,11,.08);
+  --ms-gold-bd: rgba(245,158,11,.28);
+  --ms-silver:  #94A3B8;
+  --ms-silver-bg: rgba(148,163,184,.07);
+  --ms-silver-bd: rgba(148,163,184,.22);
+  --ms-bronze:  #D97706;
+  --ms-bronze-bg: rgba(217,119,6,.07);
+  --ms-bronze-bd: rgba(217,119,6,.22);
+  --ms-teal:    #2BE5C5;
+  --ms-teal-bg: rgba(43,229,197,.07);
+  --ms-teal-bd: rgba(43,229,197,.22);
+  --ms-card:    rgba(255,255,255,.04);
+  --ms-bd:      rgba(255,255,255,.08);
+  --ms-r:       14px;
+}
+
+/* ── Header hero ── */
+.ms-hero {
+  background: linear-gradient(135deg, rgba(43,229,197,.06) 0%, rgba(99,102,241,.04) 100%);
+  border: 1px solid rgba(43,229,197,.2);
+  border-radius: 18px;
+  padding: 18px 20px 20px;
+  margin-bottom: 16px;
+}
+.ms-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ms-hero-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--txt, #F0F4FB);
+  letter-spacing: -.03em;
+  line-height: 1.1;
+}
+.ms-hero-title span {
+  color: var(--ms-teal);
+}
+.ms-hero-sub {
+  font-size: 11px;
+  color: var(--muted, #6B7B97);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.ms-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.ms-badge-live {
+  color: var(--ms-teal);
+  background: var(--ms-teal-bg);
+  border-color: var(--ms-teal-bd);
+}
+.ms-badge-gold {
+  color: var(--ms-gold);
+  background: var(--ms-gold-bg);
+  border-color: var(--ms-gold-bd);
+}
+.ms-badge-test {
+  color: #a5b4fc;
+  background: rgba(99,102,241,.08);
+  border-color: rgba(99,102,241,.22);
+}
+
+/* ── KPI strip ── */
+.ms-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 0;
+}
+.ms-kpi-card {
+  background: var(--ms-card);
+  border: 1px solid var(--ms-bd);
+  border-radius: var(--ms-r);
+  padding: 12px 10px;
+  text-align: center;
+}
+.ms-kpi-v {
+  font-size: clamp(17px, 4.5vw, 22px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -.025em;
+  color: var(--txt, #F0F4FB);
+}
+.ms-kpi-v.pos { color: #10D07E; }
+.ms-kpi-v.neg { color: #EF4444; }
+.ms-kpi-v.gold { color: var(--ms-gold); }
+.ms-kpi-l {
+  font-size: 9px;
+  color: var(--muted, #6B7B97);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 5px;
+}
+
+/* ── Tier performance bars ── */
+.ms-tier-bars {
+  background: var(--ms-card);
+  border: 1px solid var(--ms-bd);
+  border-radius: var(--ms-r);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.ms-tier-bar-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted, #6B7B97);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.ms-tier-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ms-tier-row:last-child { margin-bottom: 0; }
+.ms-tier-label {
+  width: 52px;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.ms-tier-label.gold   { color: var(--ms-gold); }
+.ms-tier-label.silver { color: var(--ms-silver); }
+.ms-tier-label.bronze { color: var(--ms-bronze); }
+.ms-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,.07);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.ms-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width .6s ease;
+}
+.ms-fill.gold   { background: linear-gradient(90deg, var(--ms-gold), #FCD34D); }
+.ms-fill.silver { background: linear-gradient(90deg, var(--ms-silver), #CBD5E1); }
+.ms-fill.bronze { background: linear-gradient(90deg, var(--ms-bronze), #F59E0B); }
+.ms-tier-stats {
+  font-size: 9.5px;
+  font-family: var(--mono, ui-monospace, monospace);
+  color: var(--muted, #6B7B97);
+  white-space: nowrap;
+  min-width: 100px;
+  text-align: right;
+}
+.ms-tier-stats b { color: var(--txt, #F0F4FB); }
+
+/* ── Section headers ── */
+.ms-section-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 20px 0 10px;
+}
+.ms-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--txt, #F0F4FB);
+}
+.ms-count-pill {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-variant-numeric: tabular-nums;
+}
+.ms-count-pill.gold   { color: var(--ms-gold);   background: var(--ms-gold-bg);   border-color: var(--ms-gold-bd); }
+.ms-count-pill.silver { color: var(--ms-silver); background: var(--ms-silver-bg); border-color: var(--ms-silver-bd); }
+.ms-count-pill.bronze { color: var(--ms-bronze); background: var(--ms-bronze-bg); border-color: var(--ms-bronze-bd); }
+
+/* ── Master pick card ── */
+.ms-card {
+  background: var(--ms-card);
+  border: 1px solid var(--ms-bd);
+  border-radius: var(--ms-r);
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color .18s, transform .18s;
+  position: relative;
+  overflow: hidden;
+}
+.ms-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+.ms-card.tier-gold   { border-color: var(--ms-gold-bd);   }
+.ms-card.tier-silver { border-color: var(--ms-silver-bd); }
+.ms-card.tier-bronze { border-color: var(--ms-bronze-bd); }
+.ms-card.tier-gold::before   { background: var(--ms-gold); }
+.ms-card.tier-silver::before { background: var(--ms-silver); }
+.ms-card.tier-bronze::before { background: var(--ms-bronze); }
+.ms-card:hover { transform: translateY(-1px); }
+.ms-card.tier-gold:hover   { border-color: rgba(245,158,11,.5); }
+.ms-card.tier-silver:hover { border-color: rgba(148,163,184,.4); }
+.ms-card.tier-bronze:hover { border-color: rgba(217,119,6,.4); }
+
+/* ── Card header row ── */
+.ms-card-hd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ms-score-ring {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+}
+.ms-score-ring svg {
+  width: 52px;
+  height: 52px;
+}
+.ms-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+.ms-teams {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--txt, #F0F4FB);
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+.ms-league {
+  font-size: 10px;
+  color: var(--muted, #6B7B97);
+  margin-top: 2px;
+  font-family: var(--mono, ui-monospace, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Bet info ── */
+.ms-bet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.ms-bet-market {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--txt, #F0F4FB);
+  min-width: 0;
+}
+.ms-bet-odds {
+  font-size: 16px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono, ui-monospace, monospace);
+  color: var(--ms-teal);
+  flex-shrink: 0;
+}
+
+/* ── Signal breakdown pills ── */
+.ms-signals {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.ms-signal {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.ms-signal.prob   { color: #10D07E; background: rgba(16,208,126,.09); border-color: rgba(16,208,126,.25); }
+.ms-signal.value  { color: #4B83F0; background: rgba(75,131,240,.09); border-color: rgba(75,131,240,.25); }
+.ms-signal.edge   { color: #F0A830; background: rgba(240,168,48,.09); border-color: rgba(240,168,48,.25); }
+.ms-signal.kelly  { color: #A78BFA; background: rgba(167,139,250,.09); border-color: rgba(167,139,250,.25); }
+.ms-signal.ml5    { color: var(--ms-teal); background: var(--ms-teal-bg); border-color: var(--ms-teal-bd); }
+.ms-signal.risk   { color: #10D07E; background: rgba(16,208,126,.07); border-color: rgba(16,208,126,.18); }
+.ms-signal.risk-r { color: #EF4444; background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.18); }
+.ms-signal.best-odds { color: #F59E0B; background: rgba(245,158,11,.07); border-color: rgba(245,158,11,.18); }
+
+/* ── Best odds line ── */
+.ms-best-line {
+  font-size: 9.5px;
+  color: var(--muted, #6B7B97);
+  font-family: var(--mono, ui-monospace, monospace);
+}
+.ms-best-line b { color: var(--ms-gold); }
+
+/* ── Empty state ── */
+.ms-empty {
+  text-align: center;
+  padding: 32px 16px;
+  background: var(--ms-card);
+  border: 1px dashed var(--ms-bd);
+  border-radius: var(--ms-r);
+  color: var(--muted, #6B7B97);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.ms-empty-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--txt, #F0F4FB);
+  margin-bottom: 6px;
+}
+
+/* ── Info note ── */
+.ms-info {
+  font-size: 10.5px;
+  color: var(--muted, #6B7B97);
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  line-height: 1.6;
+  margin: 4px 0 14px;
+}
+.ms-info strong { color: var(--txt, #F0F4FB); }
+
+/* ── Refresh button ── */
+.ms-refresh-btn {
+  background: none;
+  border: 1px solid rgba(43,229,197,.3);
+  color: var(--ms-teal);
+  border-radius: 10px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.ms-refresh-btn:hover { background: rgba(43,229,197,.08); }
+.ms-refresh-btn:active { opacity: .7; }
+
+/* ── Responsive ── */
+@media (max-width: 420px) {
+  .ms-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ms-hero { padding: 14px 16px 16px; }
+  .ms-hero-title { font-size: 17px; }
+  .ms-bet-odds { font-size: 14px; }
+}
+
+/* ── Light theme ── */
+:root[data-theme="light"] #tab-master .ms-card,
+body.theme-light #tab-master .ms-card,
+body.theme-light #tab-master .ms-kpi-card,
+body.theme-light #tab-master .ms-tier-bars {
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.10);
+}
+body.theme-light #tab-master .ms-bet-row {
+  background: rgba(0,0,0,.02);
+  border-color: rgba(0,0,0,.07);
+}
+body.theme-light #tab-master .ms-hero {
+  background: linear-gradient(135deg, rgba(12,168,142,.05) 0%, rgba(99,102,241,.03) 100%);
+  border-color: rgba(12,168,142,.2);
+}
+body.theme-light #tab-master .ms-track {
+  background: rgba(0,0,0,.08);
+}
