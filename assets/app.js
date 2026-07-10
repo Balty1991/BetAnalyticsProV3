@@ -5213,7 +5213,7 @@ function analyzeMatch(raw){
     var prob = probMeta && probMeta.effectiveProb != null ? safePct(probMeta.effectiveProb) : fallbackProb;
     var baseOdds = bt.oddsGetter ? Number(bt.oddsGetter(e) || 0) : Number(e[bt.oddsField] || 0);
     var compareMeta = getMarketCompareInfo(raw, bt.key, baseOdds);
-    var odds = Number(compareMeta.bestOdds || baseOdds || 0);
+    var odds = Number(baseOdds > 1.01 ? baseOdds : compareMeta.bestOdds || 0);
     if(!prob || !odds || !isSaneOddsForType(bt.key, odds)) return;
 
     var value = calcValue(prob, odds);
