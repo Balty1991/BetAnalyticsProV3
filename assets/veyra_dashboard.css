@@ -1,4 +1,4 @@
-/* VEYRA Dashboard v3 – dash8 */
+/* VEYRA Dashboard v4 – dash11 */
 :root {
   --vd-green:  #10D07E;
   --vd-red:    #EF4444;
@@ -11,24 +11,43 @@
   --vd-r:      14px;
 }
 
+/* ── Entrance animation ── */
+@keyframes vd-slide-up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.vd-ani { animation: vd-slide-up .35s ease both; }
+
 #veyra-dash {
-  padding: 8px 16px 36px;
+  padding: 8px 16px 80px;
   max-width: 100%;
   overflow: clip;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-/* ── Hero block (card wrapper for status + greeting) ── */
+/* ── Hero block ── */
 .vd-hero-block {
-  background: rgba(16, 208, 126, 0.08);
+  background: linear-gradient(135deg, rgba(16,208,126,.10) 0%, rgba(75,131,240,.07) 100%);
   border: 1px solid rgba(16, 208, 126, 0.35);
   border-radius: 18px;
   padding: 18px 20px 22px;
-  box-shadow: 0 0 0 1px rgba(16, 208, 126, 0.08) inset;
+  box-shadow: 0 0 0 1px rgba(16,208,126,.06) inset, 0 8px 32px rgba(16,208,126,.06);
+  position: relative;
+  overflow: hidden;
 }
+.vd-hero-block::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16,208,126,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+/* Highlighted numbers in subline */
+.vd-hl { color: var(--vd-txt); font-weight: 800; }
 
 /* ── Status strip ── */
 .vd-status {
@@ -397,3 +416,106 @@
   background: rgba(0,0,0,.03);
   border-color: rgba(0,0,0,.08);
 }
+
+/* ── KPI card accent (colored left border when value exists) ── */
+.vd-kpi-accent {
+  border-left: 3px solid var(--kpi-accent, rgba(255,255,255,.1));
+}
+
+/* ── Improved empty opportunity state ── */
+.vd-opp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 20px;
+  text-align: center;
+  background: var(--vd-card);
+  border: 1px dashed var(--vd-border);
+  border-radius: var(--vd-r);
+  min-width: min(280px, 80vw);
+  scroll-snap-align: start;
+}
+.vd-opp-empty-icon { font-size: 32px; opacity: .6; }
+.vd-opp-empty-title { font-size: 14px; font-weight: 700; color: var(--vd-txt); }
+.vd-opp-empty-sub { font-size: 11.5px; color: var(--vd-muted); line-height: 1.6; }
+.vd-opp-empty-btn {
+  margin-top: 6px;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(75,131,240,.12);
+  border: 1px solid rgba(75,131,240,.3);
+  color: var(--vd-blue);
+  transition: background .15s;
+}
+.vd-opp-empty-btn:hover { background: rgba(75,131,240,.22); }
+
+/* ── Motor status bar ── */
+.vd-motor {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+  overflow-x: auto;
+}
+.vd-motor-item {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  padding: 0 8px;
+}
+.vd-motor-val {
+  font-size: 18px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--vd-txt);
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.vd-motor-time { font-size: 13px; }
+.vd-motor-lbl  { font-size: 9px; color: var(--vd-muted); text-transform: uppercase; letter-spacing: .07em; margin-top: 4px; }
+.vd-motor-div  { width: 1px; height: 32px; background: var(--vd-border); flex-shrink: 0; }
+
+/* ── Piata Zilei ── */
+.vd-piata {
+  background: linear-gradient(135deg, rgba(75,131,240,.07) 0%, rgba(16,208,126,.05) 100%);
+  border: 1px solid rgba(75,131,240,.18);
+  border-radius: var(--vd-r);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vd-piata-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vd-piata-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--vd-blue);
+  background: rgba(75,131,240,.12);
+  border: 1px solid rgba(75,131,240,.25);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+.vd-piata-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.vd-market-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.vd-mp-good { background: rgba(16,208,126,.10); border-color: rgba(16,208,126,.28); color: var(--vd-green); }
+.vd-mp-bad  { background: rgba(239,68,68,.08);  border-color: rgba(239,68,68,.22);  color: var(--vd-red); }
