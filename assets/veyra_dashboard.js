@@ -359,6 +359,7 @@
       var ph = document.getElementById('vd-boot-placeholder');
       if (ph) ph.parentNode.removeChild(ph);
       host.innerHTML = buildHtml();
+      host.dataset.veyraNew = '1'; // tells veyra_system_status.js blankDashboard() to skip us
     } catch (e) {
       var h = document.getElementById('dashboard-modern-shell');
       if (h) h.innerHTML =
