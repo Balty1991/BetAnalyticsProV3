@@ -1,5 +1,5 @@
 // VEYRA service worker - network-first with runtime cache fallback
-const CACHE='veyra-runtime-20260709-v12';
+const CACHE='veyra-runtime-20260709-v13';
 self.addEventListener('install',event=>{event.waitUntil(self.skipWaiting())});
 self.addEventListener('activate',event=>{
   event.waitUntil(
