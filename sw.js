@@ -1,5 +1,5 @@
 // VEYRA service worker - network-first with runtime cache fallback
-const CACHE='veyra-runtime-20260710-v24';
+const CACHE='veyra-runtime-20260710-v25';
 self.addEventListener('install',event=>{event.waitUntil(self.skipWaiting())});
 self.addEventListener('activate',event=>{
   event.waitUntil(
@@ -7,7 +7,7 @@ self.addEventListener('activate',event=>{
       .then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
       .then(()=>self.clients.claim())
       .then(()=>self.clients.matchAll({includeUncontrolled:true}).then(clients=>{
-        clients.forEach(c=>c.postMessage({type:'SW_UPDATED',version:'v24'}));
+        clients.forEach(c=>c.postMessage({type:'SW_UPDATED',version:'v25'}));
       }))
   );
 });
