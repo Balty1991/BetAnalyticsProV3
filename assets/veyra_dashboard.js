@@ -1,6 +1,6 @@
 /**
- * VEYRA Dashboard v4 – dash12
- * Futuristic redesign: animated ring, scan line, neon glow, no Piata Zilei
+ * VEYRA Dashboard v4 – dash14
+ * Futuristic redesign: animated ring, scan line, neon glow, pyramid system
  */
 (function () {
   'use strict';
@@ -214,6 +214,112 @@
     return best;
   }
 
+  /* ── Pyramid Betting System ── */
+  var PYR_KEYS  = { '140': 'veyra_pyr_140', '200': 'veyra_pyr_200' };
+  var PYR_ODDS  = { '140': 1.40, '200': 2.00 };
+  var PYR_COLOR = { '140': 'var(--vd-blue)', '200': 'var(--vd-amber)' };
+
+  function pyrLoad(id) {
+    try { var s = localStorage.getItem(PYR_KEYS[id]); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+  }
+  function pyrSave(id, state) {
+    try { localStorage.setItem(PYR_KEYS[id], JSON.stringify(state)); } catch (e) {}
+  }
+  function pyrInit(id, initStake, numSteps) {
+    var odds  = PYR_ODDS[id] || 1.40;
+    var stake = Math.max(0.5, safeNum(initStake) || 10);
+    var n     = Math.min(10, Math.max(2, Math.round(safeNum(numSteps) || 5)));
+    var steps = [];
+    for (var i = 0; i < n; i++) {
+      steps.push({
+        stake:  parseFloat((stake * Math.pow(odds, i)).toFixed(2)),
+        payout: parseFloat((stake * Math.pow(odds, i + 1)).toFixed(2)),
+        status: i === 0 ? 'current' : 'pending'
+      });
+    }
+    return { initStake: stake, numSteps: n, currentStep: 0, steps: steps, done: false, doneStatus: null };
+  }
+  function pyrBuildBlockHtml(id) {
+    var odds   = PYR_ODDS[id]  || 1.40;
+    var color  = PYR_COLOR[id] || 'var(--vd-teal)';
+    var state  = pyrLoad(id)   || pyrInit(id, 10, 5);
+    var isDone = state.done;
+    var isWon  = isDone && state.doneStatus === 'won';
+    var isLost = isDone && state.doneStatus === 'lost';
+
+    var stepsHtml = state.steps.map(function (step, i) {
+      var cls = 'vd-pyr-step';
+      var ico = '';
+      if      (step.status === 'won')     { cls += ' vd-pyr-s-won';  ico = '<span class="vd-pyr-s-ico vd-pyr-s-ico-win">✓</span>'; }
+      else if (step.status === 'lost')    { cls += ' vd-pyr-s-lost'; ico = '<span class="vd-pyr-s-ico vd-pyr-s-ico-lose">✗</span>'; }
+      else if (step.status === 'current') { cls += ' vd-pyr-s-cur'; }
+      else                                { cls += ' vd-pyr-s-pend'; }
+      return (
+        '<div class="' + cls + '">' +
+          '<span class="vd-pyr-s-n">P' + (i + 1) + '</span>' +
+          '<span class="vd-pyr-s-stake">' + step.stake.toFixed(2) + '</span>' +
+          '<span class="vd-pyr-s-arrow">→</span>' +
+          '<span class="vd-pyr-s-pay">' + step.payout.toFixed(2) + '</span>' +
+          ico +
+        '</div>'
+      );
+    }).join('');
+
+    var lastPayout = state.steps[state.steps.length - 1] ? state.steps[state.steps.length - 1].payout : 0;
+    var statusText = isDone
+      ? (isWon
+          ? '🏆 +' + (lastPayout - state.initStake).toFixed(2) + ' RON'
+          : '❌ Pierdut pas ' + (state.currentStep + 1))
+      : 'Pas ' + (state.currentStep + 1) + '/' + state.numSteps;
+
+    var cfgHtml = !isDone
+      ? '<div class="vd-pyr-cfg">' +
+          '<label class="vd-pyr-cfg-lbl">Miză' +
+            '<input type="number" id="vd-pyr-stk-' + id + '" class="vd-pyr-inp" value="' + state.initStake + '" min="0.5" max="9999" step="0.5"/>' +
+            '<span class="vd-pyr-cfg-unit">RON</span>' +
+          '</label>' +
+          '<label class="vd-pyr-cfg-lbl">Pași' +
+            '<input type="number" id="vd-pyr-stp-' + id + '" class="vd-pyr-inp vd-pyr-stp-inp" value="' + state.numSteps + '" min="2" max="10"/>' +
+          '</label>' +
+          '<button class="vd-pyr-btn vd-pyr-cfg-ok" onclick="window.__pyrApplyCfg(\'' + id + '\')">↺</button>' +
+        '</div>'
+      : '';
+
+    var actHtml = isDone
+      ? '<div class="vd-pyr-acts">' +
+          '<button class="vd-pyr-btn vd-pyr-new" onclick="window.__pyrReset(\'' + id + '\')">↺ Piramidă nouă</button>' +
+        '</div>'
+      : '<div class="vd-pyr-acts">' +
+          '<button class="vd-pyr-btn vd-pyr-win"  onclick="window.__pyrWin(\''  + id + '\')">✓ WIN</button>' +
+          '<button class="vd-pyr-btn vd-pyr-lose" onclick="window.__pyrLose(\'' + id + '\')">✗ PIERDUT</button>' +
+        '</div>';
+
+    return (
+      '<div class="vd-pyr-block' + (isWon ? ' vd-pyr-block-won' : isLost ? ' vd-pyr-block-lost' : '') + '">' +
+        '<div class="vd-pyr-blk-hd">' +
+          '<span class="vd-pyr-badge" style="color:' + color + ';border-color:' + color + '">@' + odds.toFixed(2) + '</span>' +
+          '<span class="vd-pyr-status">' + statusText + '</span>' +
+        '</div>' +
+        cfgHtml +
+        '<div class="vd-pyr-steps">' + stepsHtml + '</div>' +
+        actHtml +
+      '</div>'
+    );
+  }
+  function buildPyrSection() {
+    return (
+      '<div class="vd-pyramids vd-ani" style="animation-delay:.25s">' +
+        '<div class="vd-sec-hd">' +
+          '<div class="vd-sec-title">🔺 Sistem Piramidal</div>' +
+        '</div>' +
+        '<div class="vd-pyr-pair">' +
+          '<div id="vd-pyr-wrap-140">' + pyrBuildBlockHtml('140') + '</div>' +
+          '<div id="vd-pyr-wrap-200">' + pyrBuildBlockHtml('200') + '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   /* ── Motor status bar ── */
   function buildMotorStatus() {
     var matches = getMatches();
@@ -385,17 +491,15 @@
 
         /* ── KPI strip ── */
         '<div class="vd-kpi vd-ani" style="animation-delay:.15s">' +
-          '<div class="vd-kpi-card' + (roiCol ? ' vd-kpi-accent' : '') + '"' +
-            (roiCol ? ' style="--kpi-accent:' + roiCol.replace('var(','').replace(')','') + '"' : '') + '>' +
-            '<div class="vd-kpi-v" style="' + (roiCol ? 'color:' + roiCol : '') + '">' + roiStr + '</div>' +
-            '<div class="vd-kpi-l">ROI</div>' +
-            '<div class="vd-kpi-s">21 zile tracking</div>' +
+          '<div class="vd-kpi-card vd-kpi-accent">' +
+            '<div class="vd-kpi-v" style="color:var(--vd-teal)">' + m.eligible + '</div>' +
+            '<div class="vd-kpi-l">Oportunități</div>' +
+            '<div class="vd-kpi-s">eligibile azi</div>' +
           '</div>' +
-          '<div class="vd-kpi-card' + (wrCol ? ' vd-kpi-accent' : '') + '"' +
-            (wrCol ? ' style="--kpi-accent:' + wrCol.replace('var(','').replace(')','') + '"' : '') + '>' +
-            '<div class="vd-kpi-v" style="' + (wrCol ? 'color:' + wrCol : '') + '">' + wrStr + '</div>' +
-            '<div class="vd-kpi-l">Win Rate</div>' +
-            '<div class="vd-kpi-s">' + m.wins + '/' + m.closedBets + ' închise</div>' +
+          '<div class="vd-kpi-card">' +
+            '<div class="vd-kpi-v">' + m.today + '</div>' +
+            '<div class="vd-kpi-l">Meciuri</div>' +
+            '<div class="vd-kpi-s">analizate azi</div>' +
           '</div>' +
           '<div class="vd-kpi-card">' +
             '<div class="vd-kpi-v" style="color:' + (m.openBets > 0 ? 'var(--vd-amber)' : 'inherit') + '">' + m.openBets + '</div>' +
@@ -413,8 +517,11 @@
           '<div class="vd-opp-scroll">' + picksHtml + '</div>' +
         '</div>' +
 
+        /* ── Pyramid system ── */
+        buildPyrSection() +
+
         /* ── Performance ── */
-        (perfHtml ? '<div class="vd-ani" style="animation-delay:.25s">' + perfHtml + '</div>' : '') +
+        (perfHtml ? '<div class="vd-ani" style="animation-delay:.30s">' + perfHtml + '</div>' : '') +
 
         /* ── Market signal ── */
         (recoHtml ? '<div class="vd-ani" style="animation-delay:.28s">' + recoHtml + '</div>' : '') +
@@ -563,6 +670,45 @@
       };
     }
   }
+
+  /* ── Pyramid global handlers ── */
+  window.__pyrWin = function (id) {
+    var state = pyrLoad(id) || pyrInit(id, 10, 5);
+    if (state.done) return;
+    state.steps[state.currentStep].status = 'won';
+    if (state.currentStep + 1 >= state.numSteps) {
+      state.done = true; state.doneStatus = 'won';
+    } else {
+      state.currentStep++;
+      state.steps[state.currentStep].status = 'current';
+    }
+    pyrSave(id, state);
+    var w = document.getElementById('vd-pyr-wrap-' + id);
+    if (w) w.innerHTML = pyrBuildBlockHtml(id);
+  };
+  window.__pyrLose = function (id) {
+    var state = pyrLoad(id) || pyrInit(id, 10, 5);
+    if (state.done) return;
+    state.steps[state.currentStep].status = 'lost';
+    state.done = true; state.doneStatus = 'lost';
+    pyrSave(id, state);
+    var w = document.getElementById('vd-pyr-wrap-' + id);
+    if (w) w.innerHTML = pyrBuildBlockHtml(id);
+  };
+  window.__pyrReset = function (id) {
+    var stk = parseFloat((document.getElementById('vd-pyr-stk-' + id) || {}).value) || 10;
+    var stp = parseInt((document.getElementById('vd-pyr-stp-' + id) || {}).value) || 5;
+    pyrSave(id, pyrInit(id, stk, stp));
+    var w = document.getElementById('vd-pyr-wrap-' + id);
+    if (w) w.innerHTML = pyrBuildBlockHtml(id);
+  };
+  window.__pyrApplyCfg = function (id) {
+    var stk = parseFloat((document.getElementById('vd-pyr-stk-' + id) || {}).value) || 10;
+    var stp = parseInt((document.getElementById('vd-pyr-stp-' + id) || {}).value) || 5;
+    pyrSave(id, pyrInit(id, stk, stp));
+    var w = document.getElementById('vd-pyr-wrap-' + id);
+    if (w) w.innerHTML = pyrBuildBlockHtml(id);
+  };
 
   /* ── Boot ── */
   function boot() {

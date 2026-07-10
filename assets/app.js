@@ -1001,11 +1001,20 @@ function toggleMobileMore(){
   var sheet = $('mobile-sheet');
   if(!sheet) return;
   sheet.classList.toggle('show');
-  setMobileNavActive(sheet.classList.contains('show') ? 'more' : getCurrentActiveTabName());
+  var isShow = sheet.classList.contains('show');
+  if(isShow){
+    sheet.style.display='grid';
+    sheet.style.gridTemplateColumns='repeat(2,1fr)';
+    sheet.style.gap='8px';
+    sheet.style.alignContent='start';
+  } else {
+    sheet.style.display='none';
+  }
+  setMobileNavActive(isShow ? 'more' : getCurrentActiveTabName());
 }
 function closeMobileMore(){
   var sheet = $('mobile-sheet');
-  if(sheet) sheet.classList.remove('show');
+  if(sheet){ sheet.classList.remove('show'); sheet.style.display='none'; }
   setMobileNavActive(getCurrentActiveTabName());
 }
 function setMatchCardMode(mode, btn){
