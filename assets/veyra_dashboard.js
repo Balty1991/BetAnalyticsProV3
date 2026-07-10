@@ -482,20 +482,22 @@
     requestAnimationFrame(step);
   }
 
-  var _vdRendering = false;
+  var _vdRendering    = false;
+  var _vdHadNoData    = true; /* true when last render had 0 matches */
 
-  /* ── Render ── */
-  function render() {
+  /* ── Core render ── */
+  function doRender() {
     if (_vdRendering) return;
-    if (document.getElementById('veyra-dash')) return;
     _vdRendering = true;
     try {
       var host = document.getElementById('dashboard-modern-shell');
       if (!host) { _vdRendering = false; return; }
       var ph = document.getElementById('vd-boot-placeholder');
       if (ph) ph.parentNode.removeChild(ph);
+      /* Remove old content without triggering the MutationObserver re-entry */
       host.innerHTML = buildHtml();
       host.dataset.veyraNew = '1';
+      _vdHadNoData = getMatches().length === 0;
       setTimeout(animateHeroRing, 60);
     } catch (e) {
       var h = document.getElementById('dashboard-modern-shell');
@@ -506,13 +508,37 @@
     _vdRendering = false;
   }
 
+  /* ── Render (with empty-guard bypass) ── */
+  function render() {
+    if (_vdRendering) return;
+    var exists = !!document.getElementById('veyra-dash');
+    if (exists) {
+      /* Only re-render if we previously had no data and now we do */
+      if (!_vdHadNoData || getMatches().length === 0) return;
+    }
+    doRender();
+  }
+
+  /* ── Force re-render (used after data refresh) ── */
+  function forceRerender() {
+    if (_vdRendering) return;
+    /* Remove existing dashboard so doRender can rebuild with fresh data */
+    var d = document.getElementById('veyra-dash');
+    if (d) {
+      _vdRendering = true;          /* suppress MutationObserver while we remove */
+      d.parentNode.removeChild(d);
+      _vdRendering = false;
+    }
+    doRender();
+  }
+
   /* ── Watch host for external clears ── */
   function watchShell() {
     var host = document.getElementById('dashboard-modern-shell');
     if (!host || !window.MutationObserver) return;
     new MutationObserver(function () {
       if (_vdRendering) return;
-      if (!document.getElementById('veyra-dash')) setTimeout(render, 0);
+      if (!document.getElementById('veyra-dash')) setTimeout(doRender, 0);
     }).observe(host, { childList: true });
   }
 
@@ -521,12 +547,20 @@
     if (typeof window.renderAll === 'function' && !window.__vdRenderAllHooked) {
       window.__vdRenderAllHooked = true;
       var orig = window.renderAll;
-      window.renderAll = function () { var r = orig.apply(this, arguments); setTimeout(render, 300); return r; };
+      window.renderAll = function () {
+        var r = orig.apply(this, arguments);
+        setTimeout(forceRerender, 350);
+        return r;
+      };
     }
     if (typeof window.doRefresh === 'function' && !window.__vdRefreshHooked) {
       window.__vdRefreshHooked = true;
       var origR = window.doRefresh;
-      window.doRefresh = function () { var r = origR.apply(this, arguments); setTimeout(render, 700); return r; };
+      window.doRefresh = function () {
+        var r = origR.apply(this, arguments);
+        setTimeout(forceRerender, 750);
+        return r;
+      };
     }
   }
 
@@ -535,7 +569,8 @@
     hookGlobals();
     render();
     watchShell();
-    [150, 600].forEach(function (d) {
+    /* Retry at increasing intervals — catches async data loads */
+    [200, 800, 1800, 3500].forEach(function (d) {
       setTimeout(function () { hookGlobals(); render(); }, d);
     });
   }
