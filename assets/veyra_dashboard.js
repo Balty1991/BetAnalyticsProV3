@@ -1,6 +1,6 @@
 /**
- * VEYRA Dashboard v3
- * Redesigned: score rings, sparkline, modern layout
+ * VEYRA Dashboard v4 – dash12
+ * Futuristic redesign: animated ring, scan line, neon glow, no Piata Zilei
  */
 (function () {
   'use strict';
@@ -24,16 +24,16 @@
     var d = new Date();
     return DAYS[d.getDay()] + ' · ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
   }
-  function safeNum(v)   { var n = Number(v); return isFinite(n) ? n : 0; }
-  function getMatches() { return Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : []; }
-  function getTracking(){ return Array.isArray(window.TRACKING)    ? window.TRACKING    : []; }
+  function safeNum(v)    { var n = Number(v); return isFinite(n) ? n : 0; }
+  function getMatches()  { return Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : []; }
+  function getTracking() { return Array.isArray(window.TRACKING)    ? window.TRACKING    : []; }
   function isSameLocalDay(iso) {
     if (!iso) return false;
     var d = new Date(iso), n = new Date();
     return isFinite(d.getTime()) &&
       d.getFullYear() === n.getFullYear() &&
-      d.getMonth() === n.getMonth() &&
-      d.getDate() === n.getDate();
+      d.getMonth()    === n.getMonth()    &&
+      d.getDate()     === n.getDate();
   }
   function getSyncTime() {
     try { if (typeof window.getStatusDisplayTime === 'function') return window.getStatusDisplayTime() || ''; } catch (e) {}
@@ -48,22 +48,53 @@
     return (v >= 0 ? '+' : '') + v.toFixed(1) + (suffix || '');
   }
 
-  /* ── Score ring SVG ──
-     r = 15.91549 → circumference ≈ 100, making stroke-dasharray = score value directly */
+  /* ── Small score ring SVG (opportunity cards) ── */
   function scoreRing(score) {
     var pct = Math.min(100, Math.max(0, safeNum(score)));
-    var col = pct >= 85 ? '#10D07E' : pct >= 68 ? '#4B83F0' : '#F0A830';
-    var dash = pct.toFixed(1) + ' ' + (100 - pct).toFixed(1);
+    var col = pct >= 85 ? '#2BE5C5' : pct >= 68 ? '#4B83F0' : '#F0A830';
     return (
       '<svg class="vd-ring" viewBox="0 0 36 36" aria-hidden="true">' +
-        '<circle cx="18" cy="18" r="15.91" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3.2"/>' +
+        '<circle cx="18" cy="18" r="15.91" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3.2" pathLength="100"/>' +
         '<circle cx="18" cy="18" r="15.91" fill="none" stroke="' + col + '" stroke-width="3.2"' +
-          ' stroke-dasharray="' + dash + '" stroke-dashoffset="25" stroke-linecap="round"/>' +
+          ' pathLength="100" stroke-dasharray="' + pct.toFixed(1) + ' ' + (100 - pct).toFixed(1) + '"' +
+          ' stroke-dashoffset="25" stroke-linecap="round"' +
+          ' style="filter:drop-shadow(0 0 4px ' + col + ')"/>' +
         '<text x="18" y="22.5" text-anchor="middle" fill="' + col + '"' +
           ' font-size="10" font-weight="900" font-family="ui-monospace,monospace">' +
           Math.round(pct) +
         '</text>' +
       '</svg>'
+    );
+  }
+
+  /* ── Big animated ring for hero ── */
+  function bigRingSvg(eligible) {
+    return (
+      '<svg class="vd-big-ring" viewBox="0 0 88 88" aria-hidden="true">' +
+        '<defs>' +
+          '<filter id="vd-teal-glow" x="-30%" y="-30%" width="160%" height="160%">' +
+            '<feGaussianBlur stdDeviation="2.5" result="blur"/>' +
+            '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+          '</filter>' +
+        '</defs>' +
+        /* Track */
+        '<circle cx="44" cy="44" r="37" fill="none" stroke="rgba(43,229,197,.09)" stroke-width="5" pathLength="100"/>' +
+        /* Inner glow fill */
+        '<circle cx="44" cy="44" r="30" fill="rgba(43,229,197,.05)"/>' +
+        /* Arc — starts at 0, animated via JS after render */
+        '<circle cx="44" cy="44" r="37" fill="none" stroke="#2BE5C5" stroke-width="5"' +
+          ' pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"' +
+          ' filter="url(#vd-teal-glow)" class="vd-big-ring-arc"/>' +
+        /* Tick marks every 25% */
+        '<circle cx="44" cy="7"  r="2.5" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="81" cy="44" r="2.5" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="44" cy="81" r="2.5" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="7"  cy="44" r="2.5" fill="rgba(43,229,197,.25)"/>' +
+      '</svg>' +
+      '<div class="vd-ring-center">' +
+        '<span class="vd-ring-num" id="vd-ring-num">0</span>' +
+        '<span class="vd-ring-sub">oport.</span>' +
+      '</div>'
     );
   }
 
@@ -90,9 +121,9 @@
       ];
     });
     var polyPts = coords.map(function (c) { return c[0] + ',' + c[1]; }).join(' ');
-    var last    = coords[coords.length - 1];
-    var isGain  = pts[pts.length - 1] >= pts[0];
-    var col     = isGain ? '#10D07E' : '#EF4444';
+    var last   = coords[coords.length - 1];
+    var isGain = pts[pts.length - 1] >= pts[0];
+    var col    = isGain ? '#10D07E' : '#EF4444';
     return (
       '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:100%;display:block;overflow:visible">' +
         '<defs>' +
@@ -112,7 +143,7 @@
     );
   }
 
-  /* ── Metrics from TRACKING ── */
+  /* ── Metrics ── */
   function getMetrics() {
     var matches  = getMatches();
     var tracking = getTracking();
@@ -122,7 +153,7 @@
       if (!t) return;
       var s = safeNum(t.stake || 1);
       if (t.status === 'won')  { wins++;   staked += s; profit += s * (safeNum(t.odds || 0) - 1); }
-      if (t.status === 'lost') { losses++;  staked += s; profit -= s; }
+      if (t.status === 'lost') { losses++; staked += s; profit -= s; }
     });
     var closedBets = wins + losses;
     var winrate = closedBets ? (wins / closedBets * 100) : null;
@@ -139,23 +170,22 @@
              openBets: openBets, winrate: winrate, roi: roi, closedBets: closedBets, wins: wins };
   }
 
-  /* ── Top picks sorted by smartScore ── */
+  /* ── Top picks ── */
   function getTopPicks(limit) {
-    var matches = getMatches();
+    var matches  = getMatches();
     var eligible = matches.filter(function (m) {
       if (!m) return false;
       if (typeof window.passesSelectionFilter === 'function') return window.passesSelectionFilter(m);
       return m.analysisState === 'ELIGIBLE' && m.bestBet;
     });
     eligible.sort(function (a, b) {
-      var sa = safeNum(a.smartScore || (a.bestBet || {}).adjProb || 0);
-      var sb = safeNum(b.smartScore || (b.bestBet || {}).adjProb || 0);
-      return sb - sa;
+      return safeNum(b.smartScore || (b.bestBet || {}).adjProb || 0) -
+             safeNum(a.smartScore || (a.bestBet || {}).adjProb || 0);
     });
     return eligible.slice(0, limit || 4);
   }
 
-  /* ── Best-performing market from last 21 days of TRACKING ── */
+  /* ── Best market (21 days) ── */
   function getBestMarket() {
     var tracking = getTracking();
     var cutoff   = Date.now() - 21 * 86400000;
@@ -164,66 +194,24 @@
       if (!t || (t.status !== 'won' && t.status !== 'lost')) return;
       var ts = new Date(t.date || t.updated_at || t.created_at || 0).getTime();
       if (ts < cutoff) return;
-      var k = (t.market || t.pick_type || 'other');
+      var k = t.market || t.pick_type || 'other';
       if (!byMkt[k]) byMkt[k] = { wins: 0, total: 0, profit: 0, staked: 0 };
       var s = safeNum(t.stake || 1);
       byMkt[k].total++;
       byMkt[k].staked += s;
       if (t.status === 'won') { byMkt[k].wins++; byMkt[k].profit += s * (safeNum(t.odds || 2) - 1); }
-      else                   { byMkt[k].profit -= s; }
+      else                    { byMkt[k].profit -= s; }
     });
     var best = null, bestScore = -Infinity;
     Object.keys(byMkt).forEach(function (k) {
       var g = byMkt[k];
       if (g.total < 2) return;
       var roi = g.staked > 0 ? g.profit / g.staked * 100 : 0;
-      var wr  = g.total > 0 ? g.wins / g.total * 100 : 0;
+      var wr  = g.total > 0  ? g.wins  / g.total  * 100 : 0;
       var sc  = roi * 0.7 + wr * 0.3;
       if (sc > bestScore) { bestScore = sc; best = { market: k, roi: roi, winrate: wr, total: g.total, wins: g.wins }; }
     });
     return best;
-  }
-
-  /* ── Piata Zilei — weekday market insights ── */
-  function buildPiataZilei() {
-    var wd = new Date().getDay(); // 0=Sun
-    var wdMon = wd === 0 ? 6 : wd - 1; // 0=Mon..6=Sun
-    var good = [
-      ['Under 3.5G'],
-      ['Under 3.5G','BTTS'],
-      ['Over 2.5G','BTTS','Over 1.5G'],
-      ['BTTS'],
-      ['Over 2.5G','BTTS'],
-      ['Under 3.5G','BTTS','Over 1.5G'],
-      ['BTTS']
-    ];
-    var bad = [
-      ['Over 1.5G'],
-      [],
-      ['Under 3.5G'],
-      ['Under 3.5G','Over 1.5G'],
-      ['Under 3.5G','Over 1.5G'],
-      [],
-      ['Under 3.5G']
-    ];
-    var goodToday = good[wdMon] || [];
-    var badToday  = bad[wdMon]  || [];
-    var dayNames  = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
-    var pills = goodToday.map(function(m){
-      return '<span class="vd-market-pill vd-mp-good">✓ ' + m + '</span>';
-    }).join('') + badToday.map(function(m){
-      return '<span class="vd-market-pill vd-mp-bad">✗ ' + m + '</span>';
-    }).join('');
-    if (!pills) return '';
-    return (
-      '<div class="vd-piata">' +
-        '<div class="vd-piata-hd">' +
-          '<div class="vd-sec-title">Piața Zilei · ' + dayNames[wd] + '</div>' +
-          '<span class="vd-piata-badge">Istoric</span>' +
-        '</div>' +
-        '<div class="vd-piata-pills">' + pills + '</div>' +
-      '</div>'
-    );
   }
 
   /* ── Motor status bar ── */
@@ -232,12 +220,12 @@
     var mlTotal = matches.length;
     if (!mlTotal) return '';
     var syncTime = getSyncTime();
-    var eligible = matches.filter(function(m){
+    var eligible = matches.filter(function (m) {
       if (!m) return false;
       if (typeof window.passesSelectionFilter === 'function') return window.passesSelectionFilter(m);
       return m.analysisState === 'ELIGIBLE' && m.bestBet;
     }).length;
-    var enriched = matches.filter(function(m){
+    var enriched = matches.filter(function (m) {
       return m && window.ENRICHED_EVENT_CACHE && window.ENRICHED_EVENT_CACHE[String(m.eventId)];
     }).length;
     return (
@@ -248,7 +236,7 @@
         '</div>' +
         '<div class="vd-motor-div"></div>' +
         '<div class="vd-motor-item">' +
-          '<div class="vd-motor-val" style="color:var(--vd-green)">' + eligible + '</div>' +
+          '<div class="vd-motor-val" style="color:var(--vd-teal)">' + eligible + '</div>' +
           '<div class="vd-motor-lbl">Eligibile</div>' +
         '</div>' +
         '<div class="vd-motor-div"></div>' +
@@ -256,12 +244,18 @@
           '<div class="vd-motor-val" style="color:var(--vd-blue)">' + enriched + '</div>' +
           '<div class="vd-motor-lbl">ML5 enrich</div>' +
         '</div>' +
-        (syncTime ? '<div class="vd-motor-div"></div><div class="vd-motor-item"><div class="vd-motor-val vd-motor-time">' + esc(syncTime) + '</div><div class="vd-motor-lbl">Ultimul sync</div></div>' : '') +
+        (syncTime
+          ? '<div class="vd-motor-div"></div>' +
+            '<div class="vd-motor-item">' +
+              '<div class="vd-motor-val vd-motor-time">' + esc(syncTime) + '</div>' +
+              '<div class="vd-motor-lbl">Ultimul sync</div>' +
+            '</div>'
+          : '') +
       '</div>'
     );
   }
 
-  /* ── Build dashboard HTML ── */
+  /* ── Main HTML builder ── */
   function buildHtml() {
     var m        = getMetrics();
     var tracking = getTracking();
@@ -300,10 +294,10 @@
             var raw = match.event_date || match.eventDate || match.date || '';
             if (raw) { var d = new Date(raw); if (isFinite(d.getTime())) timeStr = d.toLocaleTimeString('ro-RO', {hour:'2-digit',minute:'2-digit'}); }
           } catch (e) {}
-          var edgeCls = edgePct >= 5 ? 'vd-edge-good' : edgePct >= 0 ? 'vd-edge-ok' : 'vd-edge-warn';
-          var scoreCol = score >= 85 ? 'var(--vd-green)' : score >= 68 ? 'var(--vd-blue)' : 'var(--vd-amber)';
+          var edgeCls  = edgePct >= 5 ? 'vd-edge-good' : edgePct >= 0 ? 'vd-edge-ok' : 'vd-edge-warn';
+          var scoreCol = score >= 85 ? 'var(--vd-teal)' : score >= 68 ? 'var(--vd-blue)' : 'var(--vd-amber)';
           return (
-            '<button class="vd-opp-card" style="border-left:3px solid '+scoreCol+'" onclick="switchTab(\'meciuri\')">' +
+            '<button class="vd-opp-card" style="border-left:3px solid ' + scoreCol + '" onclick="switchTab(\'meciuri\')">' +
               '<div class="vd-opp-hd">' +
                 scoreRing(score) +
                 '<div class="vd-opp-identity">' +
@@ -312,7 +306,9 @@
                 '</div>' +
                 '<span class="vd-opp-rank">#' + (idx + 1) + '</span>' +
               '</div>' +
-              '<div class="vd-opp-pick">' + label + (oddsStr !== '—' ? '<span class="vd-opp-odds">@' + oddsStr + '</span>' : '') + '</div>' +
+              '<div class="vd-opp-pick">' + label +
+                (oddsStr !== '—' ? '<span class="vd-opp-odds">@' + oddsStr + '</span>' : '') +
+              '</div>' +
               '<div class="vd-opp-pills">' +
                 (probStr ? '<span class="vd-pill-neutral">Prob ' + probStr + '</span>' : '') +
                 '<span class="' + edgeCls + '">Edge ' + (edgePct >= 0 ? '+' : '') + edgePct.toFixed(1) + 'pp</span>' +
@@ -321,7 +317,7 @@
           );
         }).join('');
 
-    /* Performance block */
+    /* Performance */
     var perfHtml = '';
     if (m.closedBets > 0 || sparkSvg) {
       perfHtml =
@@ -333,13 +329,13 @@
           (sparkSvg ? '<div class="vd-spark">' + sparkSvg + '</div>' : '') +
           '<div class="vd-perf-row">' +
             '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</div><div class="vd-ps-l">ROI</div></div>' +
-            '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (wrCol || 'inherit') + '">' + wrStr + '</div><div class="vd-ps-l">Win Rate</div></div>' +
+            '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (wrCol  || 'inherit') + '">' + wrStr  + '</div><div class="vd-ps-l">Win Rate</div></div>' +
             '<div class="vd-ps"><div class="vd-ps-v">' + m.wins + '/' + m.closedBets + '</div><div class="vd-ps-l">W/Total</div></div>' +
           '</div>' +
         '</div>';
     }
 
-    /* Market rec */
+    /* Market recommendation */
     var recoHtml = '';
     if (bestMkt) {
       var mktLabel = (bestMkt.market || '').replace(/_/g,' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
@@ -355,40 +351,48 @@
         '</div>';
     }
 
-    var motorHtml   = buildMotorStatus();
-    var piataHtml   = buildPiataZilei();
+    var motorHtml = buildMotorStatus();
 
     return (
       '<div id="veyra-dash">' +
 
-        /* Hero block: status strip + greeting */
-        '<div class="vd-hero-block vd-ani" style="animation-delay:.05s">' +
+        /* ── Hero: grid bg + scan line + ring ── */
+        '<div class="vd-hero-block">' +
+          '<div class="vd-hero-grid"></div>' +
+          '<div class="vd-scan-line"></div>' +
           '<div class="vd-status">' +
             '<span class="vd-live-dot"></span>' +
-            '<span class="vd-status-live">Live</span>' +
+            '<span class="vd-status-live">Online</span>' +
             (syncTime ? '<span class="vd-status-sync">· ' + esc(syncTime) + '</span>' : '') +
             '<span class="vd-status-date">' + esc(todayLabel()) + '</span>' +
           '</div>' +
-          '<div class="vd-hero">' +
-            '<h1 class="vd-greeting">' + esc(greeting()) + '</h1>' +
-            '<p class="vd-subline">' +
-              '<span class="vd-hl">' + m.eligible + '</span> oportunități &middot; ' +
-              '<span class="vd-hl">' + m.today + '</span> meciuri azi' +
-            '</p>' +
+          '<div class="vd-hero-inner">' +
+            '<div class="vd-hero-text">' +
+              '<h1 class="vd-greeting">' + esc(greeting()) + '</h1>' +
+              '<p class="vd-subline">' +
+                '<span class="vd-hl" id="vd-cnt-opp">' + m.eligible + '</span> oportunități &middot; ' +
+                '<span class="vd-hl" id="vd-cnt-ml">' + m.today + '</span> meciuri azi' +
+              '</p>' +
+            '</div>' +
+            '<div class="vd-big-ring-wrap">' +
+              bigRingSvg(m.eligible) +
+            '</div>' +
           '</div>' +
         '</div>' +
 
-        /* Motor status bar */
-        (motorHtml ? '<div class="vd-ani" style="animation-delay:.1s">' + motorHtml + '</div>' : '') +
+        /* ── Motor status ── */
+        (motorHtml ? '<div class="vd-ani" style="animation-delay:.10s">' + motorHtml + '</div>' : '') +
 
-        /* KPI strip */
+        /* ── KPI strip ── */
         '<div class="vd-kpi vd-ani" style="animation-delay:.15s">' +
-          '<div class="vd-kpi-card' + (roiCol ? ' vd-kpi-accent' : '') + '" style="' + (roiCol ? '--kpi-accent:' + roiCol.replace('var(','').replace(')','') + ';' : '') + '">' +
+          '<div class="vd-kpi-card' + (roiCol ? ' vd-kpi-accent' : '') + '"' +
+            (roiCol ? ' style="--kpi-accent:' + roiCol.replace('var(','').replace(')','') + '"' : '') + '>' +
             '<div class="vd-kpi-v" style="' + (roiCol ? 'color:' + roiCol : '') + '">' + roiStr + '</div>' +
             '<div class="vd-kpi-l">ROI</div>' +
             '<div class="vd-kpi-s">21 zile tracking</div>' +
           '</div>' +
-          '<div class="vd-kpi-card' + (wrCol ? ' vd-kpi-accent' : '') + '" style="' + (wrCol ? '--kpi-accent:' + wrCol.replace('var(','').replace(')','') + ';' : '') + '">' +
+          '<div class="vd-kpi-card' + (wrCol ? ' vd-kpi-accent' : '') + '"' +
+            (wrCol ? ' style="--kpi-accent:' + wrCol.replace('var(','').replace(')','') + '"' : '') + '>' +
             '<div class="vd-kpi-v" style="' + (wrCol ? 'color:' + wrCol : '') + '">' + wrStr + '</div>' +
             '<div class="vd-kpi-l">Win Rate</div>' +
             '<div class="vd-kpi-s">' + m.wins + '/' + m.closedBets + ' închise</div>' +
@@ -400,28 +404,26 @@
           '</div>' +
         '</div>' +
 
-        /* Top picks */
-        '<div class="vd-section vd-ani" style="animation-delay:.2s">' +
+        /* ── Top picks ── */
+        '<div class="vd-section vd-ani" style="animation-delay:.20s">' +
           '<div class="vd-sec-hd">' +
-            '<div class="vd-sec-title">🔥 Top oportunități</div>' +
+            '<div class="vd-sec-title">⚡ Top oportunități</div>' +
             '<button class="vd-sec-link" onclick="switchTab(\'meciuri\')">Vezi toate →</button>' +
           '</div>' +
           '<div class="vd-opp-scroll">' + picksHtml + '</div>' +
         '</div>' +
 
-        /* Performance */
+        /* ── Performance ── */
         (perfHtml ? '<div class="vd-ani" style="animation-delay:.25s">' + perfHtml + '</div>' : '') +
 
-        /* Market recommendation */
+        /* ── Market signal ── */
         (recoHtml ? '<div class="vd-ani" style="animation-delay:.28s">' + recoHtml + '</div>' : '') +
 
-        /* Piata Zilei */
-        (piataHtml ? '<div class="vd-ani" style="animation-delay:.3s">' + piataHtml + '</div>' : '') +
-
-        /* Quick nav */
-        '<div class="vd-nav vd-ani" style="animation-delay:.35s">' +
+        /* ── Quick nav ── */
+        '<div class="vd-nav vd-ani" style="animation-delay:.32s">' +
           '<button class="vd-nav-btn" onclick="switchTab(\'master\')">' +
-            '<span class="vd-nav-icon" style="font-size:18px">⚡</span><span class="vd-nav-lbl" style="color:#F59E0B">Master</span>' +
+            '<span class="vd-nav-icon" style="font-size:18px">⚡</span>' +
+            '<span class="vd-nav-lbl" style="color:#F59E0B">Master</span>' +
           '</button>' +
           '<button class="vd-nav-btn" onclick="switchTab(\'meciuri\')">' +
             '<span class="vd-nav-icon">⚽</span><span class="vd-nav-lbl">Meciuri</span>' +
@@ -438,12 +440,53 @@
     );
   }
 
+  /* ── Animate hero ring after render ── */
+  function animateHeroRing() {
+    var m   = getMetrics();
+    var arc = document.querySelector('.vd-big-ring-arc');
+    var num = document.getElementById('vd-ring-num');
+    var opp = document.getElementById('vd-cnt-opp');
+    var ml  = document.getElementById('vd-cnt-ml');
+
+    var pct = m.mlTotal > 0
+      ? Math.min(99.5, m.eligible / m.mlTotal * 100)
+      : (m.eligible > 0 ? Math.min(80, m.eligible * 4) : 0);
+
+    /* Animate arc */
+    if (arc) {
+      setTimeout(function () {
+        arc.style.strokeDasharray = pct.toFixed(1) + ' ' + (100 - pct).toFixed(1);
+      }, 120);
+    }
+
+    /* Count-up numbers */
+    countUp(num, m.eligible, 900);
+    countUp(opp, m.eligible, 900);
+    countUp(ml,  m.today,    700);
+  }
+
+  function countUp(el, target, duration) {
+    if (!el || !isFinite(target) || target <= 0) {
+      if (el) el.textContent = target || 0;
+      return;
+    }
+    var startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var p = Math.min(1, (ts - startTime) / duration);
+      var e = 1 - Math.pow(1 - p, 3); /* ease-out cubic */
+      el.textContent = Math.round(target * e);
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(step);
+  }
+
   var _vdRendering = false;
 
   /* ── Render ── */
   function render() {
     if (_vdRendering) return;
-    /* Skip if already rendered — avoids unnecessary DOM replacement (flickering) */
     if (document.getElementById('veyra-dash')) return;
     _vdRendering = true;
     try {
@@ -452,7 +495,8 @@
       var ph = document.getElementById('vd-boot-placeholder');
       if (ph) ph.parentNode.removeChild(ph);
       host.innerHTML = buildHtml();
-      host.dataset.veyraNew = '1'; // tells veyra_system_status.js blankDashboard() to skip us
+      host.dataset.veyraNew = '1';
+      setTimeout(animateHeroRing, 60);
     } catch (e) {
       var h = document.getElementById('dashboard-modern-shell');
       if (h) h.innerHTML =
@@ -462,20 +506,17 @@
     _vdRendering = false;
   }
 
-  /* ── Guard against external code clearing the shell ── */
+  /* ── Watch host for external clears ── */
   function watchShell() {
     var host = document.getElementById('dashboard-modern-shell');
     if (!host || !window.MutationObserver) return;
-    var obs = new MutationObserver(function () {
+    new MutationObserver(function () {
       if (_vdRendering) return;
-      if (!document.getElementById('veyra-dash')) {
-        setTimeout(render, 0);
-      }
-    });
-    obs.observe(host, { childList: true });
+      if (!document.getElementById('veyra-dash')) setTimeout(render, 0);
+    }).observe(host, { childList: true });
   }
 
-  /* ── Global hooks ── */
+  /* ── Hook global refresh functions ── */
   function hookGlobals() {
     if (typeof window.renderAll === 'function' && !window.__vdRenderAllHooked) {
       window.__vdRenderAllHooked = true;
@@ -494,7 +535,6 @@
     hookGlobals();
     render();
     watchShell();
-    /* Only a few early retries needed — MutationObserver handles external clears */
     [150, 600].forEach(function (d) {
       setTimeout(function () { hookGlobals(); render(); }, d);
     });
