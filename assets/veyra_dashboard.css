@@ -23,10 +23,10 @@
 
 /* ── Hero block (card wrapper for status + greeting) ── */
 .vd-hero-block {
-  background: var(--vd-card);
-  border: 1px solid var(--vd-border);
+  background: rgba(16, 208, 126, 0.05);
+  border: 1px solid rgba(16, 208, 126, 0.22);
   border-radius: 18px;
-  padding: 14px 18px 18px;
+  padding: 16px 20px 20px;
 }
 
 /* ── Status strip ── */
@@ -54,12 +54,12 @@
 /* ── Hero ── */
 .vd-hero { padding: 10px 0 0; }
 .vd-greeting {
-  font-size: clamp(26px, 7vw, 34px);
+  font-size: clamp(24px, 6.5vw, 32px);
   font-weight: 900;
   color: var(--vd-txt);
   letter-spacing: -.03em;
   line-height: 1.1;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   text-wrap: balance;
 }
 .vd-subline {
@@ -358,8 +358,8 @@
 /* ── Responsive ── */
 @media (max-width: 480px) {
   #veyra-dash       { padding: 4px 12px 28px; gap: 13px; }
-  .vd-hero-block    { padding: 12px 14px 14px; }
-  .vd-greeting      { font-size: clamp(22px, 8.5vw, 30px); }
+  .vd-hero-block    { padding: 14px 18px 18px; }
+  .vd-greeting      { font-size: clamp(20px, 7vw, 26px); }
   .vd-kpi           { gap: 8px; }
   .vd-kpi-v         { font-size: clamp(18px, 5.5vw, 24px); }
   .vd-opp-scroll    { grid-auto-columns: min(82vw, 255px); }
