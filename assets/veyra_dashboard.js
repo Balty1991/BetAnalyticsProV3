@@ -275,20 +275,20 @@
     return (
       '<div id="veyra-dash">' +
 
-        /* Status strip */
-        '<div class="vd-status">' +
-          '<span class="vd-live-dot"></span>' +
-          '<span class="vd-status-live">Live</span>' +
-          (syncTime ? '<span class="vd-status-sync">· ' + esc(syncTime) + '</span>' : '') +
-          '<span class="vd-status-date">' + esc(todayLabel()) + '</span>' +
-        '</div>' +
-
-        /* Hero */
-        '<div class="vd-hero">' +
-          '<h1 class="vd-greeting">' + esc(greeting()) + '</h1>' +
-          '<p class="vd-subline">' +
-            m.eligible + ' oportunități · ' + m.today + ' meciuri azi' +
-          '</p>' +
+        /* Hero block: status strip + greeting */
+        '<div class="vd-hero-block">' +
+          '<div class="vd-status">' +
+            '<span class="vd-live-dot"></span>' +
+            '<span class="vd-status-live">Live</span>' +
+            (syncTime ? '<span class="vd-status-sync">· ' + esc(syncTime) + '</span>' : '') +
+            '<span class="vd-status-date">' + esc(todayLabel()) + '</span>' +
+          '</div>' +
+          '<div class="vd-hero">' +
+            '<h1 class="vd-greeting">' + esc(greeting()) + '</h1>' +
+            '<p class="vd-subline">' +
+              m.eligible + ' oportunități · ' + m.today + ' meciuri azi' +
+            '</p>' +
+          '</div>' +
         '</div>' +
 
         /* KPI strip */
