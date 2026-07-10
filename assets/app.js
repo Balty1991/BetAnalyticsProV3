@@ -1214,345 +1214,219 @@ function _getLiveOddsForPick(e){
 }
 
 function renderClaudeAITab(){
-  var root = document.getElementById('claudeai-root');
+  var root=document.getElementById('claudeai-root');
   if(!root) return;
-  var d = window.CLAUDE_DAILY || {};
-  var topPicks = d.top_picks || [];
-  var acumulator = d.acumulator || [];
-  var tipare = d.tipare || [];
-  var deEvitat = d.de_evitat || [];
-  var generatedAt = d.generated_at || '';
-  var matchesAnalyzed = d.matches_analyzed || 0;
+  var d=window.CLAUDE_DAILY||{};
+  var topPicks=d.top_picks||[];
+  var acumulator=d.acumulator||[];
+  var generatedAt=d.generated_at||'';
+  var matchesAnalyzed=d.matches_analyzed||0;
+  var unitSize=parseInt(localStorage.getItem('veyra_claude_unitsize')||'10',10)||10;
 
-  var unitSize = parseInt(localStorage.getItem('veyra_claude_unitsize')||'10',10)||10;
-
-  // Build kickoff + event_date lookup
-  var _kickoffMap = {}, _dateMap = {};
-  (window.ALL_MATCHES || []).forEach(function(m){
-    var key = ((m.home||'')+(m.away||'')).toLowerCase().replace(/\s+/g,'');
+  // Kickoff / event_date lookup
+  var _kickoffMap={},_dateMap={};
+  (window.ALL_MATCHES||[]).forEach(function(m){
+    var key=((m.home||'')+(m.away||'')).toLowerCase().replace(/\s+/g,'');
     if(!key) return;
-    var timeStr = m.timeLabel || (m.date ? fmtTime(m.date) : '');
-    var dateStr = '';
+    var timeStr=m.timeLabel||(m.date?fmtTime(m.date):'');
     if(m.date){
-      var _d = new Date(m.date);
+      var _d=new Date(m.date);
       if(isFinite(_d.getTime())){
-        dateStr = _d.getDate().toString().padStart(2,'0') + '.' + (_d.getMonth()+1).toString().padStart(2,'0');
-        _dateMap[key] = m.date;
+        _dateMap[key]=m.date;
+        var ds=_d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0');
+        if(timeStr&&timeStr!=='00:00') _kickoffMap[key]=ds+' · '+timeStr;
       }
     }
-    if(timeStr && timeStr !== '00:00') _kickoffMap[key] = dateStr ? (dateStr + ' · ' + timeStr) : timeStr;
   });
-  function _getEventDate(meciStr){
-    var parts = meciStr.split(/\s+vs\s+/i);
-    if(parts.length<2) return '';
-    var key = (parts[0].trim()+parts[1].trim()).toLowerCase().replace(/\s+/g,'');
-    return _dateMap[key] || '';
+  function _getEventDate(s){
+    var p=s.split(/\s+vs\s+/i); if(p.length<2) return '';
+    return _dateMap[(p[0].trim()+p[1].trim()).toLowerCase().replace(/\s+/g,'')] || '';
   }
-  function _getKickoff(meciStr){
-    var parts = meciStr.split(/\s+vs\s+/i);
-    if(parts.length < 2) return '';
-    var h = parts[0].trim().toLowerCase().replace(/\s+/g,'');
-    var a = parts[1].trim().toLowerCase().replace(/\s+/g,'');
-    var key = h + a;
+  function _getKickoff(s){
+    var p=s.split(/\s+vs\s+/i); if(p.length<2) return '';
+    var h=p[0].trim().toLowerCase().replace(/\s+/g,''), a=p[1].trim().toLowerCase().replace(/\s+/g,'');
+    var key=h+a;
     if(_kickoffMap[key]) return _kickoffMap[key];
-    for(var k in _kickoffMap){
-      if(k.indexOf(h) !== -1 && k.indexOf(a) !== -1) return _kickoffMap[k];
-    }
+    for(var k in _kickoffMap){ if(k.indexOf(h)!==-1&&k.indexOf(a)!==-1) return _kickoffMap[k]; }
     return '';
   }
 
-  var cotaTotala = d.cota_totala || null;
-  var sansaPct = d.sansa_pct || null;
-
-  // Filter accumulator: max @2.20/line, max 6 lines, total ≤ 25x
-  (function(){
-    if(!acumulator.length) return;
-    function parsePickOdds(s){ var m = String(s||'').match(/@\s*([\d.]+)/); return m ? parseFloat(m[1]) : 0; }
-    var filtered = acumulator.filter(function(a){ var o = parsePickOdds(a.pick); return o >= 1.10 && o <= 2.20; });
-    filtered.sort(function(a,b){ return parsePickOdds(a.pick) - parsePickOdds(b.pick); });
-    var kept = [], running = 1;
-    for(var i = 0; i < filtered.length && kept.length < 6; i++){
-      var o = parsePickOdds(filtered[i].pick);
-      if(running * o <= 25) { kept.push(filtered[i]); running *= o; }
-    }
-    if(kept.length < acumulator.length){
-      acumulator = kept;
-      cotaTotala = running > 1 ? +running.toFixed(2) : null;
-      sansaPct = kept.length ? Math.round(kept.reduce(function(acc,a){ var o=parsePickOdds(a.pick); return o>1 ? acc*(1/o) : acc; }, 1) * 100) : null;
-    }
-  })();
-
-  if(!generatedAt && !topPicks.length && !acumulator.length){
-    root.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted,#64748b)">'
-      + '<div style="font-size:32px;margin-bottom:12px">⚡</div>'
-      + '<div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--txt)">Analiza nu este disponibilă</div>'
-      + '<div style="font-size:13px">Analiza zilnică se generează automat la fiecare rulare a workflow-ului.<br>Încearcă din nou mai târziu.</div>'
-      + '</div>';
+  if(!generatedAt&&!topPicks.length&&!acumulator.length){
+    root.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted)">'
+      +'<div style="font-size:32px;margin-bottom:12px">🎯</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:8px">Nu există bilete pentru astăzi</div>'
+      +'<div style="font-size:12px">Analiza zilnică se generează automat. Încearcă mai târziu.</div>'
+      +'</div>';
     return;
   }
 
-  var genStr = '';
+  var genStr='';
   if(generatedAt){
-    try{
-      var gd = new Date(generatedAt);
-      genStr = gd.toLocaleString('ro-RO', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-    }catch(e){ genStr = generatedAt.slice(0,16).replace('T',' '); }
+    try{ var gd=new Date(generatedAt); genStr=gd.toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+    catch(e){ genStr=generatedAt.slice(0,16).replace('T',' '); }
   }
 
-  // Market condition: count high-edge picks (≥8pp)
-  var highEdgeCnt = 0;
-  topPicks.forEach(function(p){ if(_parseEdge(p.motiv||'') >= 8) highEdgeCnt++; });
-  var marketCond, marketColor, marketBg;
-  if(highEdgeCnt >= 3){ marketCond='FAVORABIL'; marketColor='#22c55e'; marketBg='rgba(34,197,94,.12)'; }
-  else if(highEdgeCnt >= 1){ marketCond='NEUTRU'; marketColor='#f59e0b'; marketBg='rgba(245,158,11,.12)'; }
-  else { marketCond='PRUDENȚĂ'; marketColor='#ef4444'; marketBg='rgba(239,68,68,.12)'; }
+  // Saved picks map for button state
+  var _savedMap={};
+  loadClaudeSaved().forEach(function(e){ _savedMap[(e.meci||'')+'|'+(e.pick_text||'')]=true; });
 
-  // Today's saved picks for duplicate detection
-  var _savedToday = {};
-  var _todayDateStr = new Date().toDateString();
-  loadClaudeSaved().forEach(function(e){
-    if(new Date(e.savedAt).toDateString() === _todayDateStr)
-      _savedToday[(e.meci||'')+'|'+(e.pick_text||'')] = true;
+  // Helpers
+  function _parseOddsLocal(p){ var m=String(p||'').match(/@\s*([\d.]+)/); return m?parseFloat(m[1]):0; }
+  function _parseEdgeLocal(s){ var m=String(s||'').match(/\+(\d+(?:\.\d+)?)\s*pp/); return m?parseFloat(m[1]):0; }
+  function _calcTotalOdds(picks){
+    var t=1;
+    picks.forEach(function(p){ var o=_parseOddsLocal(p.pick||''); if(o>1) t*=o; });
+    return t>1?+t.toFixed(2):0;
+  }
+  function _pickLabel(p){ return (p.pick||'').replace(/@\s*[\d.]+/,'').trim(); }
+
+  // Sort topPicks: units desc, edge desc
+  var sorted=topPicks.slice().sort(function(a,b){
+    var ua=_recUnits(a.pick||'',a.motiv||''),ub=_recUnits(b.pick||'',b.motiv||'');
+    var ea=_parseEdgeLocal(a.motiv||''),eb=_parseEdgeLocal(b.motiv||'');
+    return ua!==ub?ub-ua:eb-ea;
   });
 
-  var html = '<div style="padding:0 4px">';
+  // Build ticket configs
+  var STAKES=[5,10,20,50];
+  var tickets=[];
+  if(sorted.length>=2){
+    tickets.push({label:'⚡ Bilet Principal',border:'rgba(43,229,197,.5)',hdr:'rgba(43,229,197,.15)',picks:sorted.slice(0,Math.min(3,sorted.length))});
+  }
+  if(acumulator.length>=2){
+    tickets.push({label:'🤖 Bilet AI',border:'rgba(139,92,246,.45)',hdr:'rgba(139,92,246,.15)',picks:acumulator.slice(0,5)});
+  }
+  if(sorted.length>=4){
+    tickets.push({label:'💎 Bilet Extins',border:'rgba(251,191,36,.4)',hdr:'rgba(251,191,36,.15)',picks:sorted.slice(0,Math.min(5,sorted.length))});
+  }
 
-  // ── HEADER ─────────────────────────────────────────────────────────────────
-  html += '<div style="background:linear-gradient(135deg,rgba(43,229,197,.1),rgba(99,102,241,.08));border:1px solid rgba(43,229,197,.25);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
-    + '<div>'
-    + '<div style="font-size:18px;font-weight:900;color:var(--txt);letter-spacing:-.3px">⚡ VEYRA Strategy</div>'
-    + (genStr ? '<div style="font-size:11px;color:var(--muted);margin-top:2px">Analiză ' + genStr + (matchesAnalyzed ? ' · ' + matchesAnalyzed + ' meciuri' : '') + '</div>' : '')
-    + '</div>'
-    + '<div style="display:flex;align-items:center;gap:6px">'
-    + '<div style="background:'+marketBg+';border:1px solid '+marketColor+'44;border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:5px">'
-    + '<div style="width:7px;height:7px;border-radius:50%;background:'+marketColor+'"></div>'
-    + '<div style="font-size:11px;font-weight:900;color:'+marketColor+';letter-spacing:.5px">'+marketCond+'</div>'
-    + '</div>'
-    + '<button onclick="window._refreshClaudeDaily&&window._refreshClaudeDaily()" title="Reîncarcă picks-uri" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--muted);flex-shrink:0">🔄</button>'
-    + '</div>'
-    + '</div></div>';
+  function buildTicketHtml(t){
+    var totalOdds=_calcTotalOdds(t.picks);
+    if(totalOdds<=1) return '';
+    var h='<div style="background:var(--bg2,#0E1424);border:2px solid '+t.border+';border-radius:16px;margin-bottom:14px;overflow:hidden">';
+    // Header band
+    h+='<div style="background:'+t.hdr+';padding:11px 16px;display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="font-size:13px;font-weight:900;color:var(--txt)">'+t.label+'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span style="font-size:11px;color:var(--muted)">'+t.picks.length+' selecții</span>'
+      +'<span style="font-size:16px;font-weight:900;color:#2BE5C5">@'+totalOdds.toFixed(2)+'</span>'
+      +'</div></div>';
+    // Picks list
+    h+='<div style="padding:10px 16px 6px 16px">';
+    t.picks.forEach(function(p,i){
+      var odds=_parseOddsLocal(p.pick||'');
+      var label=_pickLabel(p);
+      var kick=_getKickoff(p.meci||'');
+      var edge=_parseEdgeLocal(p.motiv||'');
+      var units=_recUnits(p.pick||'',p.motiv||'');
+      var evDate=_getEventDate(p.meci||'');
+      var meci_esc=(p.meci||'').replace(/'/g,"\\'");
+      var pick_esc=(p.pick||'').replace(/'/g,"\\'");
+      var isSaved=_savedMap[(p.meci||'')+'|'+(p.pick||'')];
+      var oddsColor=odds<=1.45?'#22c55e':odds<=1.75?'#2BE5C5':odds<=2.2?'#f59e0b':'#ef4444';
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;'+(i<t.picks.length-1?'border-bottom:1px solid rgba(255,255,255,.05)':'')+'">'
+        +'<div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--muted);flex-shrink:0">'+(i+1)+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:11px;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.meci||'')+'</div>'
+        +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px">'
+        +'<span style="font-size:11px;color:#a78bfa">'+label+'</span>'
+        +(odds>0?'<span style="font-size:12px;font-weight:800;color:'+oddsColor+'">@'+odds.toFixed(2)+'</span>':'')
+        +(edge>0?'<span style="font-size:9px;font-weight:700;color:#22c55e">+'+edge+'pp</span>':'')
+        +(kick?'<span style="font-size:9px;color:var(--muted)">'+kick+'</span>':'')
+        +'</div></div>'
+        +(isSaved
+          ?'<span style="font-size:13px;color:#22c55e;flex-shrink:0">✅</span>'
+          :'<button onclick="addClaudeSavedPick(\''+meci_esc+'\',\''+pick_esc+'\',\''+evDate+'\',\'acum\','+units+')" style="font-size:10px;padding:3px 9px;border-radius:6px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);color:#a78bfa;cursor:pointer;flex-shrink:0">💾</button>')
+        +'</div>';
+    });
+    h+='</div>';
+    // Stakes grid
+    h+='<div style="padding:10px 16px 16px">'
+      +'<div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:8px;text-transform:uppercase">Câștig potențial</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">';
+    STAKES.forEach(function(s){
+      var ret=Math.round(s*totalOdds*10)/10;
+      h+='<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:10px;padding:10px 4px;text-align:center">'
+        +'<div style="font-size:10px;color:var(--muted);margin-bottom:4px">'+s+' RON</div>'
+        +'<div style="font-size:14px;font-weight:900;color:#22c55e">'+ret+'</div>'
+        +'</div>';
+    });
+    h+='</div></div>';
+    h+='</div>';
+    return h;
+  }
 
-  // ── PLAN SESIUNE ───────────────────────────────────────────────────────────
-  var recBudget = topPicks.length
-    ? topPicks.reduce(function(acc,p){ return acc + _recUnits(p.pick||'',p.motiv||''); }, 0) * unitSize
-    : 10 * unitSize;
-  var stopLossRon = 5 * unitSize;
-  html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(43,229,197,.18);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-    + '<div style="font-size:13px;font-weight:800;color:#2BE5C5;margin-bottom:10px">💼 Plan Sesiune</div>'
-    + '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Valoare unitate:</div>'
-    + '<div style="display:flex;gap:6px;margin-bottom:10px">';
+  var html='<div style="padding:0 4px">';
+
+  // ── HEADER ──────────────────────────────────────────────────────────────────
+  html+='<div style="background:linear-gradient(135deg,rgba(43,229,197,.08),rgba(99,102,241,.06));border:1px solid rgba(43,229,197,.25);border-radius:16px;padding:14px 16px;margin-bottom:14px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between">'
+    +'<div>'
+    +'<div style="font-size:18px;font-weight:900;color:var(--txt);letter-spacing:-.3px">🎯 Bilete Acumulator</div>'
+    +(genStr?'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+genStr+(matchesAnalyzed?' · '+matchesAnalyzed+' meciuri':'')+'</div>':'')
+    +'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px">'
+    +(tickets.length?'<div style="font-size:11px;color:var(--muted);text-align:right">'+tickets.length+'<br><span style="font-size:9px">bilete</span></div>':'')
+    +'<button onclick="window._refreshClaudeDaily&&window._refreshClaudeDaily()" title="Reîncarcă" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0">🔄</button>'
+    +'</div></div></div>';
+
+  // ── STAKE SELECTOR ──────────────────────────────────────────────────────────
+  html+='<div style="background:var(--bg2,#0E1424);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 14px;margin-bottom:14px">'
+    +'<div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:8px;text-transform:uppercase">Valoare miez (pentru calcul)</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">';
   [5,10,20,50].forEach(function(u){
-    var isActive = unitSize === u;
-    html += '<button onclick="_setClaudeUnitSize('+u+')" style="flex:1;padding:7px 0;border-radius:9px;font-size:12px;font-weight:'+(isActive?'900':'600')+';cursor:pointer;border:'+(isActive?'1.5px solid #2BE5C5':'1px solid rgba(43,229,197,.2)')+';background:'+(isActive?'rgba(43,229,197,.18)':'rgba(43,229,197,.05)')+';color:'+(isActive?'#2BE5C5':'var(--muted)')+'">'+u+' RON</button>';
+    var isA=unitSize===u;
+    html+='<button onclick="_setClaudeUnitSize('+u+')" style="padding:8px 0;border-radius:9px;font-size:12px;font-weight:'+(isA?'900':'600')+';cursor:pointer;border:'+(isA?'1.5px solid #2BE5C5':'1px solid rgba(43,229,197,.2)')+';background:'+(isA?'rgba(43,229,197,.18)':'rgba(43,229,197,.04)')+';color:'+(isA?'#2BE5C5':'var(--muted)')+'">'+u+' RON</button>';
   });
-  html += '</div>'
-    + '<div style="display:flex;gap:8px">'
-    + '<div style="flex:1;background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.15);border-radius:9px;padding:8px;text-align:center">'
-    + '<div style="font-size:15px;font-weight:900;color:#2BE5C5">'+recBudget+' RON</div>'
-    + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Buget Recomandat</div>'
-    + '</div>'
-    + '<div style="flex:1;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:9px;padding:8px;text-align:center">'
-    + '<div style="font-size:15px;font-weight:900;color:#ef4444">-'+stopLossRon+' RON</div>'
-    + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Stop-Loss Sesiune</div>'
-    + '</div>'
-    + '</div></div>';
+  html+='</div></div>';
 
-  // ── SIGNAL MAXIM ───────────────────────────────────────────────────────────
-  if(topPicks.length){
-    var _sigPick=topPicks.slice().sort(function(a,b){
-      var ua=_recUnits(a.pick||'',a.motiv||''),ub=_recUnits(b.pick||'',b.motiv||'');
-      var ea=_parseEdge(a.motiv||''),eb=_parseEdge(b.motiv||'');
-      if(ua!==ub) return ub-ua;
-      return eb-ea;
-    })[0];
-    var _sOdds=_claudeParseOdds(_sigPick.pick||'');
-    var _sEdge=_parseEdge(_sigPick.motiv||'');
-    var _sUnits=_recUnits(_sigPick.pick||'',_sigPick.motiv||'');
-    var _sLabel=(_sigPick.pick||'').replace(/@\s*[\d.]+/,'').trim();
-    var _sKick=_getKickoff(_sigPick.meci||'');
-    var _sEvDate=_getEventDate(_sigPick.meci||'');
-    var _sm_esc=(_sigPick.meci||'').replace(/'/g,"\\'");
-    var _sp_esc=(_sigPick.pick||'').replace(/'/g,"\\'");
-    var _sSaved=_savedToday[(_sigPick.meci||'')+'|'+(_sigPick.pick||'')];
-    var _sOddsColor=_sOdds<=1.35?'#22c55e':_sOdds<=1.65?'#2BE5C5':_sOdds<=2.0?'#f59e0b':'#ef4444';
-    var _sPotWin=_sOdds>0?Math.round(_sUnits*unitSize*(_sOdds-1)*10)/10:0;
-    html+='<div style="background:linear-gradient(135deg,rgba(43,229,197,.12),rgba(34,197,94,.06));border:2px solid rgba(43,229,197,.45);border-radius:16px;padding:16px;margin-bottom:12px">'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
-      +'<div style="font-size:10px;font-weight:900;color:#2BE5C5;letter-spacing:1.5px;background:rgba(43,229,197,.2);border:1px solid rgba(43,229,197,.5);border-radius:20px;padding:3px 10px">⚡ SIGNAL MAXIM</div>'
-      +(_sEdge>0?'<div style="font-size:10px;font-weight:700;color:#22c55e;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:2px 8px">+'+_sEdge+'pp edge</div>':'')
-      +'</div>'
-      +'<div style="font-size:15px;font-weight:800;color:var(--txt);margin-bottom:8px">'+(_sigPick.meci||'')+'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">'
-      +'<span style="font-size:13px;font-weight:700;color:#818cf8">'+_sLabel+'</span>'
-      +(_sOdds>0?'<span style="font-size:18px;font-weight:900;color:'+_sOddsColor+'">@'+_sOdds.toFixed(2)+'</span>':'')
-      +(_sUnits>=3?'<span style="background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);color:#ef4444;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">🔥 3U</span>'
-        :_sUnits===2?'<span style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:#fbbf24;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px">⚡ 2U</span>'
-        :'<span style="background:rgba(100,116,139,.12);border:1px solid rgba(100,116,139,.25);color:#94a3b8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">1U</span>')
-      +(_sKick?'<span style="font-size:10px;color:var(--muted)">'+_sKick+'</span>':'')
-      +'</div>'
-      +'<div style="display:flex;gap:8px;align-items:stretch">'
-      +'<div style="flex:1;background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.15);border-radius:10px;padding:8px 10px">'
-      +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px">Risc</div>'
-      +'<div style="font-size:15px;font-weight:900;color:#2BE5C5">'+(_sUnits*unitSize)+' RON</div>'
-      +'</div>'
-      +'<div style="flex-shrink:0;display:flex;align-items:center;font-size:16px;color:var(--muted)">→</div>'
-      +'<div style="flex:1;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:8px 10px">'
-      +'<div style="font-size:10px;color:var(--muted);margin-bottom:2px">Câștig potențial</div>'
-      +'<div style="font-size:15px;font-weight:900;color:#22c55e">+'+_sPotWin+' RON</div>'
-      +'</div>'
-      +(_sSaved
-        ?'<div style="flex-shrink:0;display:flex;align-items:center;font-size:16px;color:#22c55e;font-weight:700">✅</div>'
-        :'<button onclick="addClaudeSavedPick(\''+_sm_esc+'\',\''+_sp_esc+'\',\''+_sEvDate+'\',\'signal\','+_sUnits+')" style="flex-shrink:0;padding:0 14px;border-radius:10px;background:rgba(43,229,197,.18);border:1.5px solid rgba(43,229,197,.5);color:#2BE5C5;font-size:12px;font-weight:800;cursor:pointer">💾</button>')
-      +'</div>'
-      +(_sigPick.motiv?'<div style="font-size:10px;color:var(--muted);margin-top:10px;line-height:1.5">'+_sigPick.motiv+'</div>':'')
+  // ── TICKETS ─────────────────────────────────────────────────────────────────
+  if(tickets.length){
+    tickets.forEach(function(t){ html+=buildTicketHtml(t); });
+  } else {
+    html+='<div style="text-align:center;padding:40px 20px;color:var(--muted)">'
+      +'<div style="font-size:28px;margin-bottom:10px">🎯</div>'
+      +'<div style="font-size:13px">Nu există selecții suficiente pentru bilete azi.</div>'
       +'</div>';
   }
 
-  // ── SELECȚIE ZILEI ─────────────────────────────────────────────────────────
-  if(topPicks.length){
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(43,229,197,.2);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + '<div style="font-size:13px;font-weight:800;color:#2BE5C5;margin-bottom:10px">🎯 Selecția Zilei</div>';
-    topPicks.forEach(function(p, i){
-      var odds = _claudeParseOdds(p.pick||'');
-      var edge = _parseEdge(p.motiv||'');
-      var units = _recUnits(p.pick||'', p.motiv||'');
-      var _evDate = _getEventDate(p.meci||'');
-      var _meci_esc = (p.meci||'').replace(/'/g,"\\'");
-      var _pick_esc = (p.pick||'').replace(/'/g,"\\'");
-      var isSaved = _savedToday[(p.meci||'')+'|'+(p.pick||'')];
-      var unitBadge = units===3
-        ? '<span style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">🔥 3U</span>'
-        : units===2
-        ? '<span style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);color:#fbbf24;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px">⚡ 2U</span>'
-        : '<span style="background:rgba(100,116,139,.1);border:1px solid rgba(100,116,139,.2);color:#94a3b8;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px">1U</span>';
-      var oddsColor = odds<=1.35?'#22c55e':odds<=1.65?'#2BE5C5':odds<=2.0?'#f59e0b':'#ef4444';
-      var edgeBadge = edge!=null
-        ? '<span style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#818cf8;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px">+'+edge+'pp</span>'
-        : '';
-      var stakeRon = units * unitSize;
-      var potReturnRon = odds>0 ? Math.round(stakeRon*odds*10)/10 : 0;
-      var kickoff = _getKickoff(p.meci||'');
-      var pickLabel = p.pick ? p.pick.replace(/@\s*[\d.]+/,'').trim() : '';
-      html += '<div style="background:rgba(43,229,197,.04);border:1px solid rgba(43,229,197,.1);border-radius:11px;padding:11px 13px;margin-bottom:8px">'
-        + '<div style="display:flex;align-items:flex-start;gap:9px">'
-        + '<div style="min-width:21px;height:21px;border-radius:50%;background:#2BE5C5;color:#0E1424;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(i+1)+'</div>'
-        + '<div style="flex:1;min-width:0">'
-        + '<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:2px">'+(p.meci||'')+'</div>'
-        + (kickoff?'<div style="font-size:10px;color:var(--muted);margin-bottom:4px">🕐 '+kickoff+'</div>':'')
-        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">'
-        + (pickLabel?'<span style="font-size:12px;color:#2BE5C5;font-weight:600">'+pickLabel+'</span>':'')
-        + (odds>0?'<span style="font-size:13px;font-weight:900;color:'+oddsColor+'">@'+odds.toFixed(2)+'</span>':'')
-        + edgeBadge
-        + '</div>'
-        + (p.motiv?'<div style="font-size:10px;color:var(--muted);line-height:1.4;margin-bottom:6px">'+p.motiv+'</div>':'')
-        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
-        + unitBadge
-        + '<span style="font-size:11px;color:var(--muted)">→</span>'
-        + '<span style="font-size:12px;font-weight:700;color:var(--txt)">'+stakeRon+' RON</span>'
-        + (potReturnRon>0?'<span style="font-size:10px;color:var(--muted)">ret. '+potReturnRon+' RON</span>':'')
-        + '<div style="flex:1"></div>'
-        + (isSaved
-          ? '<span style="font-size:11px;color:#22c55e;font-weight:700">✅ Salvat</span>'
-          : '<button onclick="addClaudeSavedPick(\''+_meci_esc+'\',\''+_pick_esc+'\',\''+_evDate+'\',\'top5\','+units+')" style="font-size:11px;padding:3px 10px;border-radius:8px;background:rgba(43,229,197,.12);border:1px solid rgba(43,229,197,.35);color:#2BE5C5;cursor:pointer">💾 Salvează</button>')
-        + '</div>'
-        + '</div></div></div>';
-    });
-    html += '</div>';
-  }
-
-  // ── COMBO ──────────────────────────────────────────────────────────────────
-  if(acumulator.length){
-    var acumStake = unitSize;
-    var acumReturn = cotaTotala ? Math.round(acumStake*cotaTotala*10)/10 : 0;
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(99,102,241,.25);border-radius:14px;margin-bottom:12px;overflow:hidden">'
-      + '<div onclick="var b=document.getElementById(\'combo-body\');var a=document.getElementById(\'combo-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none">'
-      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
-      + '<div style="font-size:12px;font-weight:800;color:#818cf8">🎰 Combo Recomandat</div>'
-      + (cotaTotala?'<span style="font-size:11px;font-weight:700;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:20px;padding:2px 8px;color:#818cf8">@'+cotaTotala.toFixed(2)+'</span>':'')
-      + (sansaPct?'<span style="font-size:10px;font-weight:700;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:20px;padding:2px 7px;color:#22c55e">'+sansaPct+'%</span>':'')
-      + '</div>'
-      + '<span id="combo-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
-      + '</div>'
-      + '<div id="combo-body" style="display:none;padding:0 16px 12px 16px">';
-    if(acumReturn>0){
-      html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'
-        + '<div style="flex:1;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:9px;padding:8px;text-align:center">'
-        + '<div style="font-size:14px;font-weight:900;color:#ef4444">'+acumStake+' RON</div>'
-        + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Risc (1U)</div>'
-        + '</div>'
-        + '<div style="font-size:18px;color:var(--muted);flex-shrink:0">→</div>'
-        + '<div style="flex:1;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:9px;padding:8px;text-align:center">'
-        + '<div style="font-size:14px;font-weight:900;color:#22c55e">'+acumReturn+' RON</div>'
-        + '<div style="font-size:9px;color:var(--muted);margin-top:1px">Retur Potențial</div>'
-        + '</div>'
-        + '</div>';
-    }
-    acumulator.forEach(function(a){
-      var _at = _getKickoff(a.meci||'');
-      var _aEvDate = _getEventDate(a.meci||'');
-      var _am_esc = (a.meci||'').replace(/'/g,"\\'");
-      var _ap_esc = (a.pick||'').replace(/'/g,"\\'");
-      var _aOdds = _claudeParseOdds(a.pick||'');
-      var _aOddsColor = _aOdds<=1.35?'#22c55e':_aOdds<=1.65?'#2BE5C5':_aOdds<=2.0?'#f59e0b':'#ef4444';
-      var _aLabel = a.pick ? a.pick.replace(/@\s*[\d.]+/,'').trim() : '';
-      var isSavedA = _savedToday[(a.meci||'')+'|'+(a.pick||'')];
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-        + '<div style="font-size:15px;flex-shrink:0">⚽</div>'
-        + '<div style="flex:1;min-width:0">'
-        + '<div style="font-size:12px;font-weight:600;color:var(--txt)">'+(a.meci||'')+'</div>'
-        + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px">'
-        + (_aLabel?'<span style="font-size:11px;color:#818cf8">'+_aLabel+'</span>':'')
-        + (_aOdds>0?'<span style="font-size:12px;font-weight:800;color:'+_aOddsColor+'">@'+_aOdds.toFixed(2)+'</span>':'')
-        + (_at?'<span style="font-size:10px;color:var(--muted)">· '+_at+'</span>':'')
-        + '</div></div>'
-        + (isSavedA
-          ? '<span style="font-size:11px;color:#22c55e;font-weight:700;flex-shrink:0">✅</span>'
-          : '<button onclick="addClaudeSavedPick(\''+_am_esc+'\',\''+_ap_esc+'\',\''+_aEvDate+'\',\'acum\',1)" style="font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);color:#818cf8;cursor:pointer;flex-shrink:0">💾</button>')
-        + '</div>';
-    });
-    html += '</div></div>';
-  }
-
-  // ── SESIUNEA MEA ───────────────────────────────────────────────────────────
+  // ── SESIUNEA MEA ────────────────────────────────────────────────────────────
   (function(){
-    var saved = loadClaudeSaved();
-    var wins=0, losses=0, pending=0, ronPL=0, settled=0;
+    var saved=loadClaudeSaved();
+    var wins=0,losses=0,ronPL=0,settled=0;
     saved.forEach(function(e){
-      var u = e.rec_units||1;
-      var stake = u*unitSize;
+      var u=e.rec_units||1,stake=u*unitSize;
       if(e.result==='win'){ wins++; ronPL+=stake*((e.odds||1)-1); settled++; }
       else if(e.result==='loss'){ losses++; ronPL-=stake; settled++; }
-      else if(e.result!=='stale'){ pending++; }
     });
-    var wr = settled ? Math.round(wins/settled*100) : null;
-    var wrColor = wr===null?'#64748b':wr>=60?'#22c55e':wr>=50?'#f59e0b':'#ef4444';
-    var plColor = ronPL>0?'#22c55e':ronPL<0?'#ef4444':'#f59e0b';
-    var plStr = (ronPL>=0?'+':'')+Math.round(ronPL*10)/10+' RON';
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      + '<div style="font-size:13px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Sesiunea Mea</div>';
+    var wr=settled?Math.round(wins/settled*100):null;
+    var wrColor=wr===null?'#64748b':wr>=60?'#22c55e':wr>=50?'#f59e0b':'#ef4444';
+    var plColor=ronPL>0?'#22c55e':ronPL<0?'#ef4444':'#f59e0b';
+    var plStr=(ronPL>=0?'+':'')+Math.round(ronPL*10)/10+' RON';
+    html+='<div style="background:var(--bg2,#0E1424);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
+      +'<div style="font-size:13px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Sesiunea Mea</div>';
     if(!saved.length){
-      html += '<div style="text-align:center;padding:16px 0;color:var(--muted);font-size:12px">Niciun pick salvat.<br>Apasă 💾 pe orice pick pentru a-l urmări.</div>';
+      html+='<div style="text-align:center;padding:16px 0;color:var(--muted);font-size:12px">Niciun pick salvat.<br>Apasă 💾 pe orice selecție pentru a o urmări.</div>';
     } else {
-      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">'
-        + '<div style="background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:'+wrColor+'">'+(wr!==null?wr+'%':'—')+'</div>'
-        + '<div style="font-size:9px;color:var(--muted);margin-top:2px">Win Rate</div></div>'
-        + '<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 6px;text-align:center">'
-        + '<div style="font-size:13px;font-weight:900;color:'+plColor+'">'+plStr+'</div>'
-        + '<div style="font-size:9px;color:var(--muted);margin-top:2px">P&amp;L</div></div>'
-        + '<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:#22c55e">'+wins+'</div>'
-        + '<div style="font-size:9px;color:var(--muted);margin-top:2px">WIN</div></div>'
-        + '<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        + '<div style="font-size:18px;font-weight:900;color:#ef4444">'+losses+'</div>'
-        + '<div style="font-size:9px;color:var(--muted);margin-top:2px">LOSS</div></div>'
-        + '</div>';
-      // Group all picks by date — newest first, no cap
+      html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">'
+        +'<div style="background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 8px;text-align:center">'
+        +'<div style="font-size:18px;font-weight:900;color:'+wrColor+'">'+(wr!==null?wr+'%':'—')+'</div>'
+        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">Win Rate</div></div>'
+        +'<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 6px;text-align:center">'
+        +'<div style="font-size:13px;font-weight:900;color:'+plColor+'">'+plStr+'</div>'
+        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">P&L</div></div>'
+        +'<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 8px;text-align:center">'
+        +'<div style="font-size:18px;font-weight:900;color:#22c55e">'+wins+'</div>'
+        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">WIN</div></div>'
+        +'<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 8px;text-align:center">'
+        +'<div style="font-size:18px;font-weight:900;color:#ef4444">'+losses+'</div>'
+        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">LOSS</div></div>'
+        +'</div>';
+      // Full history grouped by date
       var _grpByDate={},_grpOrder=[];
       saved.slice().reverse().forEach(function(e){
         var _dk='';
-        try{ var _sd2=new Date(e.event_date||e.savedAt); if(isFinite(_sd2.getTime())) _dk=_sd2.toISOString().slice(0,10); }catch(ex){}
+        try{ var _sd=new Date(e.event_date||e.savedAt); if(isFinite(_sd.getTime())) _dk=_sd.toISOString().slice(0,10); }catch(ex){}
         if(!_dk) _dk='unknown';
         if(!_grpByDate[_dk]){ _grpByDate[_dk]=[]; _grpOrder.push(_dk); }
         _grpByDate[_dk].push(e);
@@ -1579,7 +1453,7 @@ function renderClaudeAITab(){
               var _clvPct=(_clvDiff/_liveOdds)*100;
               if(Math.abs(_clvPct)>=1){
                 var _clvPos=_clvDiff>0;
-                clvIndicator='<span style="font-size:9px;font-weight:700;color:'+(_clvPos?'#22c55e':'#ef4444')+'" title="CLV: cotă salvată '+Number(e.odds).toFixed(2)+' vs curentă '+_liveOdds.toFixed(2)+'">'+(_clvPos?'↓ +':'↑ ')+Math.abs(_clvPct).toFixed(1)+'%</span>';
+                clvIndicator='<span style="font-size:9px;font-weight:700;color:'+(_clvPos?'#22c55e':'#ef4444')+'">'+(_clvPos?'↓ +':'↑ ')+Math.abs(_clvPct).toFixed(1)+'%</span>';
               }
             }
           }
@@ -1587,7 +1461,7 @@ function renderClaudeAITab(){
             +'<div style="font-size:15px;flex-shrink:0">'+icon+'</div>'
             +'<div style="flex:1;min-width:0">'
             +'<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.meci+'</div>'
-            +'<div style="display:flex;gap:5px;align-items:center;margin-top:1px;flex-wrap:wrap">'
+            +'<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:1px">'
             +'<span style="font-size:10px;color:#818cf8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">'+e.pick_text+'</span>'
             +uBadge
             +(e.score?'<span style="font-size:10px;font-weight:700;color:'+resColor+'">'+e.score+'</span>':'')
@@ -1600,45 +1474,11 @@ function renderClaudeAITab(){
         });
       });
     }
-    html += '</div>';
+    html+='</div>';
   })();
 
-  // ── TIPARE (collapsed) ─────────────────────────────────────────────────────
-  if(tipare.length){
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(251,191,36,.15);border-radius:14px;margin-bottom:8px;overflow:hidden">'
-      + '<div onclick="var b=document.getElementById(\'tip-body\');var a=document.getElementById(\'tip-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none">'
-      + '<div style="font-size:12px;font-weight:800;color:#fbbf24">📊 Tipare <span style="font-size:10px;font-weight:400;color:var(--muted)">('+tipare.length+')</span></div>'
-      + '<span id="tip-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
-      + '</div>'
-      + '<div id="tip-body" style="display:none;padding:0 16px 12px 16px">';
-    tipare.forEach(function(t){
-      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--brd)">'
-        + '<div style="color:#fbbf24;font-size:13px;flex-shrink:0">•</div>'
-        + '<div style="font-size:11px;color:var(--txt);line-height:1.5">'+t+'</div>'
-        + '</div>';
-    });
-    html += '</div></div>';
-  }
-
-  // ── DE EVITAT (collapsed) ──────────────────────────────────────────────────
-  if(deEvitat.length){
-    html += '<div style="background:var(--bg2,#0E1424);border:1px solid rgba(196,32,64,.15);border-radius:14px;margin-bottom:8px;overflow:hidden">'
-      + '<div onclick="var b=document.getElementById(\'dev-body\');var a=document.getElementById(\'dev-arr\');if(b.style.display===\'none\'){b.style.display=\'block\';a.textContent=\'▴\';}else{b.style.display=\'none\';a.textContent=\'▾\';}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none">'
-      + '<div style="font-size:12px;font-weight:800;color:#f87171">⚠️ De Evitat <span style="font-size:10px;font-weight:400;color:var(--muted)">('+deEvitat.length+')</span></div>'
-      + '<span id="dev-arr" style="font-size:12px;color:var(--muted)">&#9662;</span>'
-      + '</div>'
-      + '<div id="dev-body" style="display:none;padding:0 16px 12px 16px">';
-    deEvitat.forEach(function(e){
-      html += '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--brd)">'
-        + '<div style="color:#f87171;font-size:13px;flex-shrink:0">✗</div>'
-        + '<div style="font-size:11px;color:var(--txt);line-height:1.5">'+e+'</div>'
-        + '</div>';
-    });
-    html += '</div></div>';
-  }
-
-  html += '</div>';
-  root.innerHTML = html;
+  html+='</div>';
+  root.innerHTML=html;
 }
 
 // ============================================================
