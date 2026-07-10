@@ -70,7 +70,7 @@
   /* ── Big animated ring for hero ── */
   function bigRingSvg(eligible) {
     return (
-      '<svg class="vd-big-ring" viewBox="0 0 88 88" aria-hidden="true">' +
+      '<svg class="vd-big-ring" viewBox="0 0 80 80" aria-hidden="true">' +
         '<defs>' +
           '<filter id="vd-teal-glow" x="-30%" y="-30%" width="160%" height="160%">' +
             '<feGaussianBlur stdDeviation="2.5" result="blur"/>' +
@@ -78,18 +78,18 @@
           '</filter>' +
         '</defs>' +
         /* Track */
-        '<circle cx="44" cy="44" r="37" fill="none" stroke="rgba(43,229,197,.09)" stroke-width="5" pathLength="100"/>' +
+        '<circle cx="40" cy="40" r="34" fill="none" stroke="rgba(43,229,197,.09)" stroke-width="5" pathLength="100"/>' +
         /* Inner glow fill */
-        '<circle cx="44" cy="44" r="30" fill="rgba(43,229,197,.05)"/>' +
+        '<circle cx="40" cy="40" r="27" fill="rgba(43,229,197,.05)"/>' +
         /* Arc — starts at 0, animated via JS after render */
-        '<circle cx="44" cy="44" r="37" fill="none" stroke="#2BE5C5" stroke-width="5"' +
+        '<circle cx="40" cy="40" r="34" fill="none" stroke="#2BE5C5" stroke-width="5"' +
           ' pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"' +
           ' filter="url(#vd-teal-glow)" class="vd-big-ring-arc"/>' +
         /* Tick marks every 25% */
-        '<circle cx="44" cy="7"  r="2.5" fill="rgba(43,229,197,.25)"/>' +
-        '<circle cx="81" cy="44" r="2.5" fill="rgba(43,229,197,.25)"/>' +
-        '<circle cx="44" cy="81" r="2.5" fill="rgba(43,229,197,.25)"/>' +
-        '<circle cx="7"  cy="44" r="2.5" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="40" cy="6"  r="2" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="74" cy="40" r="2" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="40" cy="74" r="2" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="6"  cy="40" r="2" fill="rgba(43,229,197,.25)"/>' +
       '</svg>' +
       '<div class="vd-ring-center">' +
         '<span class="vd-ring-num" id="vd-ring-num">0</span>' +
