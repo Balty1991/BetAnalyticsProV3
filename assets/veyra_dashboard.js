@@ -184,6 +184,83 @@
     return best;
   }
 
+  /* ── Piata Zilei — weekday market insights ── */
+  function buildPiataZilei() {
+    var wd = new Date().getDay(); // 0=Sun
+    var wdMon = wd === 0 ? 6 : wd - 1; // 0=Mon..6=Sun
+    var good = [
+      ['Under 3.5G'],
+      ['Under 3.5G','BTTS'],
+      ['Over 2.5G','BTTS','Over 1.5G'],
+      ['BTTS'],
+      ['Over 2.5G','BTTS'],
+      ['Under 3.5G','BTTS','Over 1.5G'],
+      ['BTTS']
+    ];
+    var bad = [
+      ['Over 1.5G'],
+      [],
+      ['Under 3.5G'],
+      ['Under 3.5G','Over 1.5G'],
+      ['Under 3.5G','Over 1.5G'],
+      [],
+      ['Under 3.5G']
+    ];
+    var goodToday = good[wdMon] || [];
+    var badToday  = bad[wdMon]  || [];
+    var dayNames  = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
+    var pills = goodToday.map(function(m){
+      return '<span class="vd-market-pill vd-mp-good">✓ ' + m + '</span>';
+    }).join('') + badToday.map(function(m){
+      return '<span class="vd-market-pill vd-mp-bad">✗ ' + m + '</span>';
+    }).join('');
+    if (!pills) return '';
+    return (
+      '<div class="vd-piata">' +
+        '<div class="vd-piata-hd">' +
+          '<div class="vd-sec-title">Piața Zilei · ' + dayNames[wd] + '</div>' +
+          '<span class="vd-piata-badge">Istoric</span>' +
+        '</div>' +
+        '<div class="vd-piata-pills">' + pills + '</div>' +
+      '</div>'
+    );
+  }
+
+  /* ── Motor status bar ── */
+  function buildMotorStatus() {
+    var matches = getMatches();
+    var mlTotal = matches.length;
+    if (!mlTotal) return '';
+    var syncTime = getSyncTime();
+    var eligible = matches.filter(function(m){
+      if (!m) return false;
+      if (typeof window.passesSelectionFilter === 'function') return window.passesSelectionFilter(m);
+      return m.analysisState === 'ELIGIBLE' && m.bestBet;
+    }).length;
+    var enriched = matches.filter(function(m){
+      return m && window.ENRICHED_EVENT_CACHE && window.ENRICHED_EVENT_CACHE[String(m.eventId)];
+    }).length;
+    return (
+      '<div class="vd-motor">' +
+        '<div class="vd-motor-item">' +
+          '<div class="vd-motor-val">' + mlTotal + '</div>' +
+          '<div class="vd-motor-lbl">ML sync</div>' +
+        '</div>' +
+        '<div class="vd-motor-div"></div>' +
+        '<div class="vd-motor-item">' +
+          '<div class="vd-motor-val" style="color:var(--vd-green)">' + eligible + '</div>' +
+          '<div class="vd-motor-lbl">Eligibile</div>' +
+        '</div>' +
+        '<div class="vd-motor-div"></div>' +
+        '<div class="vd-motor-item">' +
+          '<div class="vd-motor-val" style="color:var(--vd-blue)">' + enriched + '</div>' +
+          '<div class="vd-motor-lbl">ML5 enrich</div>' +
+        '</div>' +
+        (syncTime ? '<div class="vd-motor-div"></div><div class="vd-motor-item"><div class="vd-motor-val vd-motor-time">' + esc(syncTime) + '</div><div class="vd-motor-lbl">Ultimul sync</div></div>' : '') +
+      '</div>'
+    );
+  }
+
   /* ── Build dashboard HTML ── */
   function buildHtml() {
     var m        = getMetrics();
@@ -200,7 +277,12 @@
 
     /* Opportunity cards */
     var picksHtml = !picks.length
-      ? '<div class="vd-opp-empty">Nu există oportunități eligibile momentan. Datele se actualizează de 2× pe zi.</div>'
+      ? '<div class="vd-opp-empty">' +
+          '<div class="vd-opp-empty-icon">📡</div>' +
+          '<div class="vd-opp-empty-title">Scanare în curs</div>' +
+          '<div class="vd-opp-empty-sub">Motorul analizează ' + m.mlTotal + ' meciuri. Oportunități disponibile în curând.</div>' +
+          '<button class="vd-opp-empty-btn" onclick="switchTab(\'meciuri\')">Vezi toate meciurile →</button>' +
+        '</div>'
       : picks.map(function (match, idx) {
           var bet      = match.bestBet || {};
           var scoreRaw = safeNum(match.smartScore || bet.adjProb || 0);
@@ -219,8 +301,9 @@
             if (raw) { var d = new Date(raw); if (isFinite(d.getTime())) timeStr = d.toLocaleTimeString('ro-RO', {hour:'2-digit',minute:'2-digit'}); }
           } catch (e) {}
           var edgeCls = edgePct >= 5 ? 'vd-edge-good' : edgePct >= 0 ? 'vd-edge-ok' : 'vd-edge-warn';
+          var scoreCol = score >= 85 ? 'var(--vd-green)' : score >= 68 ? 'var(--vd-blue)' : 'var(--vd-amber)';
           return (
-            '<button class="vd-opp-card" onclick="switchTab(\'meciuri\')">' +
+            '<button class="vd-opp-card" style="border-left:3px solid '+scoreCol+'" onclick="switchTab(\'meciuri\')">' +
               '<div class="vd-opp-hd">' +
                 scoreRing(score) +
                 '<div class="vd-opp-identity">' +
@@ -272,11 +355,14 @@
         '</div>';
     }
 
+    var motorHtml   = buildMotorStatus();
+    var piataHtml   = buildPiataZilei();
+
     return (
       '<div id="veyra-dash">' +
 
         /* Hero block: status strip + greeting */
-        '<div class="vd-hero-block">' +
+        '<div class="vd-hero-block vd-ani" style="animation-delay:.05s">' +
           '<div class="vd-status">' +
             '<span class="vd-live-dot"></span>' +
             '<span class="vd-status-live">Live</span>' +
@@ -286,58 +372,65 @@
           '<div class="vd-hero">' +
             '<h1 class="vd-greeting">' + esc(greeting()) + '</h1>' +
             '<p class="vd-subline">' +
-              m.eligible + ' oportunități · ' + m.today + ' meciuri azi' +
+              '<span class="vd-hl">' + m.eligible + '</span> oportunități &middot; ' +
+              '<span class="vd-hl">' + m.today + '</span> meciuri azi' +
             '</p>' +
           '</div>' +
         '</div>' +
 
+        /* Motor status bar */
+        (motorHtml ? '<div class="vd-ani" style="animation-delay:.1s">' + motorHtml + '</div>' : '') +
+
         /* KPI strip */
-        '<div class="vd-kpi">' +
-          '<div class="vd-kpi-card">' +
+        '<div class="vd-kpi vd-ani" style="animation-delay:.15s">' +
+          '<div class="vd-kpi-card' + (roiCol ? ' vd-kpi-accent' : '') + '" style="' + (roiCol ? '--kpi-accent:' + roiCol.replace('var(','').replace(')','') + ';' : '') + '">' +
             '<div class="vd-kpi-v" style="' + (roiCol ? 'color:' + roiCol : '') + '">' + roiStr + '</div>' +
             '<div class="vd-kpi-l">ROI</div>' +
             '<div class="vd-kpi-s">21 zile tracking</div>' +
           '</div>' +
-          '<div class="vd-kpi-card">' +
+          '<div class="vd-kpi-card' + (wrCol ? ' vd-kpi-accent' : '') + '" style="' + (wrCol ? '--kpi-accent:' + wrCol.replace('var(','').replace(')','') + ';' : '') + '">' +
             '<div class="vd-kpi-v" style="' + (wrCol ? 'color:' + wrCol : '') + '">' + wrStr + '</div>' +
             '<div class="vd-kpi-l">Win Rate</div>' +
             '<div class="vd-kpi-s">' + m.wins + '/' + m.closedBets + ' închise</div>' +
           '</div>' +
           '<div class="vd-kpi-card">' +
-            '<div class="vd-kpi-v">' + m.openBets + '</div>' +
+            '<div class="vd-kpi-v" style="color:' + (m.openBets > 0 ? 'var(--vd-amber)' : 'inherit') + '">' + m.openBets + '</div>' +
             '<div class="vd-kpi-l">Active</div>' +
             '<div class="vd-kpi-s">bilete pending</div>' +
           '</div>' +
         '</div>' +
 
         /* Top picks */
-        '<div class="vd-section">' +
+        '<div class="vd-section vd-ani" style="animation-delay:.2s">' +
           '<div class="vd-sec-hd">' +
-            '<div class="vd-sec-title">Top oportunități</div>' +
+            '<div class="vd-sec-title">🔥 Top oportunități</div>' +
             '<button class="vd-sec-link" onclick="switchTab(\'meciuri\')">Vezi toate →</button>' +
           '</div>' +
           '<div class="vd-opp-scroll">' + picksHtml + '</div>' +
         '</div>' +
 
         /* Performance */
-        perfHtml +
+        (perfHtml ? '<div class="vd-ani" style="animation-delay:.25s">' + perfHtml + '</div>' : '') +
 
         /* Market recommendation */
-        recoHtml +
+        (recoHtml ? '<div class="vd-ani" style="animation-delay:.28s">' + recoHtml + '</div>' : '') +
+
+        /* Piata Zilei */
+        (piataHtml ? '<div class="vd-ani" style="animation-delay:.3s">' + piataHtml + '</div>' : '') +
 
         /* Quick nav */
-        '<div class="vd-nav">' +
+        '<div class="vd-nav vd-ani" style="animation-delay:.35s">' +
+          '<button class="vd-nav-btn" onclick="switchTab(\'master\')">' +
+            '<span class="vd-nav-icon" style="font-size:18px">⚡</span><span class="vd-nav-lbl" style="color:#F59E0B">Master</span>' +
+          '</button>' +
           '<button class="vd-nav-btn" onclick="switchTab(\'meciuri\')">' +
             '<span class="vd-nav-icon">⚽</span><span class="vd-nav-lbl">Meciuri</span>' +
           '</button>' +
           '<button class="vd-nav-btn" onclick="switchTab(\'bilete\')">' +
             '<span class="vd-nav-icon">🎫</span><span class="vd-nav-lbl">Bilete</span>' +
           '</button>' +
-          '<button class="vd-nav-btn" onclick="switchTab(\'tracking\')">' +
-            '<span class="vd-nav-icon">📊</span><span class="vd-nav-lbl">Tracking</span>' +
-          '</button>' +
-          '<button class="vd-nav-btn" onclick="switchTab(\'ml5\')">' +
-            '<span class="vd-nav-icon">🔬</span><span class="vd-nav-lbl">ML5</span>' +
+          '<button class="vd-nav-btn" onclick="switchTab(\'claudeai\')">' +
+            '<span class="vd-nav-icon">🧠</span><span class="vd-nav-lbl">AI Claude</span>' +
           '</button>' +
         '</div>' +
 
