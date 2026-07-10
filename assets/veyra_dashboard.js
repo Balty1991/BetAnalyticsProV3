@@ -1,5 +1,5 @@
 /**
- * VEYRA Dashboard v4 – dash14
+ * VEYRA Dashboard v4 – dash15
  * Futuristic redesign: animated ring, scan line, neon glow, pyramid system
  */
 (function () {
@@ -219,30 +219,94 @@
   var PYR_ODDS  = { '140': 1.40, '200': 2.00 };
   var PYR_COLOR = { '140': 'var(--vd-blue)', '200': 'var(--vd-amber)' };
 
+  function pyrTodayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
   function pyrLoad(id) {
-    try { var s = localStorage.getItem(PYR_KEYS[id]); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+    try {
+      var s = localStorage.getItem(PYR_KEYS[id]);
+      if (!s) return null;
+      var state = JSON.parse(s);
+      if (state.date !== pyrTodayStr()) return null; /* new day → fresh */
+      return state;
+    } catch (e) { return null; }
   }
   function pyrSave(id, state) {
     try { localStorage.setItem(PYR_KEYS[id], JSON.stringify(state)); } catch (e) {}
   }
+  function pyrGetMatchesForOdds(targetOdds, limit) {
+    var lo = targetOdds * 0.82, hi = targetOdds * 1.22;
+    var today = pyrTodayStr();
+    return getMatches().filter(function (m) {
+      if (!m) return false;
+      var raw = m.event_date || m.eventDate || m.date || '';
+      if (!raw) return false;
+      try { if (new Date(raw).toISOString().slice(0,10) !== today) return false; } catch(e) { return false; }
+      var ok = typeof window.passesSelectionFilter === 'function'
+        ? window.passesSelectionFilter(m)
+        : (m.analysisState === 'ELIGIBLE' && m.bestBet);
+      if (!ok) return false;
+      var odds = safeNum((m.bestBet || {}).odds || (m.bestBet || {}).displayOdds || 0);
+      return odds >= lo && odds <= hi;
+    }).sort(function (a, b) {
+      return safeNum(b.smartScore || (b.bestBet||{}).adjProb || 0) -
+             safeNum(a.smartScore || (a.bestBet||{}).adjProb || 0);
+    }).slice(0, limit).map(function (m) {
+      var bet = m.bestBet || {};
+      var odds = safeNum(bet.odds || bet.displayOdds || 0);
+      var timeStr = '';
+      try {
+        var d = new Date(m.event_date || m.eventDate || m.date || '');
+        if (isFinite(d.getTime())) timeStr = d.toLocaleTimeString('ro-RO', {hour:'2-digit',minute:'2-digit'});
+      } catch(e) {}
+      return {
+        home: esc(m.home || m.homeTeam || m.home_team || '?'),
+        away: esc(m.away || m.awayTeam || m.away_team || '?'),
+        pick: esc(bet.label || bet.pick || 'PICK'),
+        odds: odds,
+        time: timeStr
+      };
+    });
+  }
   function pyrInit(id, initStake, numSteps) {
-    var odds  = PYR_ODDS[id] || 1.40;
+    var tOdds = PYR_ODDS[id] || 1.40;
     var stake = Math.max(0.5, safeNum(initStake) || 10);
     var n     = Math.min(10, Math.max(2, Math.round(safeNum(numSteps) || 5)));
+    var matches = pyrGetMatchesForOdds(tOdds, n);
     var steps = [];
     for (var i = 0; i < n; i++) {
       steps.push({
-        stake:  parseFloat((stake * Math.pow(odds, i)).toFixed(2)),
-        payout: parseFloat((stake * Math.pow(odds, i + 1)).toFixed(2)),
-        status: i === 0 ? 'current' : 'pending'
+        stake:  parseFloat((stake * Math.pow(tOdds, i)).toFixed(2)),
+        payout: parseFloat((stake * Math.pow(tOdds, i + 1)).toFixed(2)),
+        status: i === 0 ? 'current' : 'pending',
+        match:  matches[i] || null
       });
     }
-    return { initStake: stake, numSteps: n, currentStep: 0, steps: steps, done: false, doneStatus: null };
+    return { date: pyrTodayStr(), initStake: stake, numSteps: n, currentStep: 0, steps: steps, done: false, doneStatus: null };
+  }
+  function pyrFillMatches(id, state) {
+    /* Fill null match slots in not-yet-played steps */
+    var tOdds = PYR_ODDS[id] || 1.40;
+    var hasNull = state.steps.some(function(s){ return !s.match && (s.status==='current'||s.status==='pending'); });
+    if (!hasNull) return state;
+    var taken = {};
+    state.steps.forEach(function(s){ if(s.match) taken[s.match.home+'|'+s.match.away]=true; });
+    var cands = pyrGetMatchesForOdds(tOdds, state.numSteps * 2).filter(function(c){ return !taken[c.home+'|'+c.away]; });
+    var ci = 0, changed = false;
+    state.steps.forEach(function(step){
+      if (!step.match && (step.status==='current'||step.status==='pending') && ci < cands.length) {
+        step.match = cands[ci++]; changed = true;
+      }
+    });
+    if (changed) pyrSave(id, state);
+    return state;
   }
   function pyrBuildBlockHtml(id) {
-    var odds   = PYR_ODDS[id]  || 1.40;
+    var tOdds = PYR_ODDS[id]  || 1.40;
     var color  = PYR_COLOR[id] || 'var(--vd-teal)';
     var state  = pyrLoad(id)   || pyrInit(id, 10, 5);
+    state = pyrFillMatches(id, state);
     var isDone = state.done;
     var isWon  = isDone && state.doneStatus === 'won';
     var isLost = isDone && state.doneStatus === 'lost';
@@ -254,18 +318,30 @@
       else if (step.status === 'lost')    { cls += ' vd-pyr-s-lost'; ico = '<span class="vd-pyr-s-ico vd-pyr-s-ico-lose">✗</span>'; }
       else if (step.status === 'current') { cls += ' vd-pyr-s-cur'; }
       else                                { cls += ' vd-pyr-s-pend'; }
+      var matchLine = step.match
+        ? '<div class="vd-pyr-s-match">' +
+            '<span class="vd-pyr-s-teams">' + step.match.home + ' vs ' + step.match.away + '</span>' +
+            '<span class="vd-pyr-s-pill">' + step.match.pick +
+              (step.match.odds > 0 ? ' @' + step.match.odds.toFixed(2) : '') +
+            '</span>' +
+            (step.match.time ? '<span class="vd-pyr-s-time">⏱' + step.match.time + '</span>' : '') +
+          '</div>'
+        : '<div class="vd-pyr-s-nomatch">— fără meci eligibil azi</div>';
       return (
         '<div class="' + cls + '">' +
-          '<span class="vd-pyr-s-n">P' + (i + 1) + '</span>' +
-          '<span class="vd-pyr-s-stake">' + step.stake.toFixed(2) + '</span>' +
-          '<span class="vd-pyr-s-arrow">→</span>' +
-          '<span class="vd-pyr-s-pay">' + step.payout.toFixed(2) + '</span>' +
-          ico +
+          '<div class="vd-pyr-s-hd">' +
+            '<span class="vd-pyr-s-n">P' + (i + 1) + '</span>' +
+            ico +
+            '<span class="vd-pyr-s-stk">' + step.stake.toFixed(2) + '</span>' +
+            '<span class="vd-pyr-s-arr">→</span>' +
+            '<span class="vd-pyr-s-pay">' + step.payout.toFixed(2) + ' RON</span>' +
+          '</div>' +
+          matchLine +
         '</div>'
       );
     }).join('');
 
-    var lastPayout = state.steps[state.steps.length - 1] ? state.steps[state.steps.length - 1].payout : 0;
+    var lastPayout = state.steps.length ? state.steps[state.steps.length - 1].payout : 0;
     var statusText = isDone
       ? (isWon
           ? '🏆 +' + (lastPayout - state.initStake).toFixed(2) + ' RON'
@@ -297,7 +373,7 @@
     return (
       '<div class="vd-pyr-block' + (isWon ? ' vd-pyr-block-won' : isLost ? ' vd-pyr-block-lost' : '') + '">' +
         '<div class="vd-pyr-blk-hd">' +
-          '<span class="vd-pyr-badge" style="color:' + color + ';border-color:' + color + '">@' + odds.toFixed(2) + '</span>' +
+          '<span class="vd-pyr-badge" style="color:' + color + ';border-color:' + color + '">@' + tOdds.toFixed(2) + '</span>' +
           '<span class="vd-pyr-status">' + statusText + '</span>' +
         '</div>' +
         cfgHtml +
@@ -310,12 +386,10 @@
     return (
       '<div class="vd-pyramids vd-ani" style="animation-delay:.25s">' +
         '<div class="vd-sec-hd">' +
-          '<div class="vd-sec-title">🔺 Sistem Piramidal</div>' +
+          '<div class="vd-sec-title">🔺 Sistem Piramidal · meciuri zilnice</div>' +
         '</div>' +
-        '<div class="vd-pyr-pair">' +
-          '<div id="vd-pyr-wrap-140">' + pyrBuildBlockHtml('140') + '</div>' +
-          '<div id="vd-pyr-wrap-200">' + pyrBuildBlockHtml('200') + '</div>' +
-        '</div>' +
+        '<div id="vd-pyr-wrap-140">' + pyrBuildBlockHtml('140') + '</div>' +
+        '<div id="vd-pyr-wrap-200">' + pyrBuildBlockHtml('200') + '</div>' +
       '</div>'
     );
   }
@@ -696,15 +770,22 @@
     if (w) w.innerHTML = pyrBuildBlockHtml(id);
   };
   window.__pyrReset = function (id) {
-    var stk = parseFloat((document.getElementById('vd-pyr-stk-' + id) || {}).value) || 10;
-    var stp = parseInt((document.getElementById('vd-pyr-stp-' + id) || {}).value) || 5;
+    var existing = pyrLoad(id);
+    var stk = existing ? existing.initStake : 10;
+    var stp = existing ? existing.numSteps  : 5;
+    var stkEl = document.getElementById('vd-pyr-stk-' + id);
+    var stpEl = document.getElementById('vd-pyr-stp-' + id);
+    if (stkEl) stk = parseFloat(stkEl.value) || stk;
+    if (stpEl) stp = parseInt(stpEl.value)   || stp;
     pyrSave(id, pyrInit(id, stk, stp));
     var w = document.getElementById('vd-pyr-wrap-' + id);
     if (w) w.innerHTML = pyrBuildBlockHtml(id);
   };
   window.__pyrApplyCfg = function (id) {
-    var stk = parseFloat((document.getElementById('vd-pyr-stk-' + id) || {}).value) || 10;
-    var stp = parseInt((document.getElementById('vd-pyr-stp-' + id) || {}).value) || 5;
+    var stkEl = document.getElementById('vd-pyr-stk-' + id);
+    var stpEl = document.getElementById('vd-pyr-stp-' + id);
+    var stk = stkEl ? (parseFloat(stkEl.value) || 10) : 10;
+    var stp = stpEl ? (parseInt(stpEl.value)   || 5)  : 5;
     pyrSave(id, pyrInit(id, stk, stp));
     var w = document.getElementById('vd-pyr-wrap-' + id);
     if (w) w.innerHTML = pyrBuildBlockHtml(id);
