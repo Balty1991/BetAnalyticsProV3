@@ -1,5 +1,5 @@
 /**
- * VEYRA Dashboard v4 – dash16
+ * VEYRA Dashboard v4 – dash17
  * Futuristic redesign: animated ring, scan line, neon glow, pyramid system
  */
 (function () {
@@ -228,8 +228,11 @@
       var s = localStorage.getItem(PYR_KEYS[id]);
       if (!s) return null;
       var state = JSON.parse(s);
-      if (state.date !== pyrTodayStr()) return null; /* new day → fresh */
-      return state;
+      if (state.date === pyrTodayStr()) return state;
+      /* Different calendar day — keep state if any step is placed (bet locked in) */
+      var hasPlaced = state.steps && state.steps.some(function(st){ return st.placed; });
+      if (hasPlaced) return state; /* preserve until user marks WIN / PIERDUT */
+      return null; /* no placed bets → start fresh for new day */
     } catch (e) { return null; }
   }
   function pyrSave(id, state) {
@@ -242,7 +245,7 @@
       if (!m) return false;
       var raw = m.event_date || m.eventDate || m.date || '';
       if (!raw) return false;
-      try { if (new Date(raw).toISOString().slice(0,10) !== today) return false; } catch(e) { return false; }
+      try { var _rd=new Date(raw); if(!isFinite(_rd.getTime())) return false; var _rds=_rd.getFullYear()+'-'+String(_rd.getMonth()+1).padStart(2,'0')+'-'+String(_rd.getDate()).padStart(2,'0'); if(_rds!==today) return false; } catch(e){ return false; }
       var ok = typeof window.passesSelectionFilter === 'function'
         ? window.passesSelectionFilter(m)
         : (m.analysisState === 'ELIGIBLE' && m.bestBet);
