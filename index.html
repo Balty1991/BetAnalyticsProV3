@@ -188,7 +188,7 @@ function toggleTheme(){
 <script src="./assets/performance-patch.js?v=20260509autorefresh30"></script>
 <script defer src="./assets/smartbet_v2_integration.js?v=20260425v2"></script>
 <script defer id="ba-clv-card-guidance-runtime-direct" src="./assets/clv_card_guidance_runtime.js?v=20260503clvguide3"></script>
-<script defer src="./assets/app.js?v=20260710v19"></script>
+<script defer src="./assets/app.js?v=20260710v20"></script>
 <script defer src="./assets/supreme_engine_v5_runtime.js?v=20260516apex2"></script>
 <script defer src="./assets/veyra_dashboard.js?v=20260709dash10"></script>
 </head>
@@ -931,6 +931,16 @@ function toggleTheme(){
   <script defer src="./assets/ml5_accuracy_monitor.js?v=20260709acc7"></script>
   <script defer src="./assets/upcoming_events_runtime.js?v=20260709up13"></script>
   <script defer src="./assets/veyra_master.js?v=20260710ms1"></script>
-  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+  <script>
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js');
+    navigator.serviceWorker.addEventListener('message',function(ev){
+      if(ev.data && ev.data.type==='SW_UPDATED'){
+        // New SW activated — reload once to serve fresh assets
+        window.location.reload();
+      }
+    });
+  }
+  </script>
 </body>
 </html>
