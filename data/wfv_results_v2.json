@@ -1,10 +1,10 @@
 {
-  "updated_at": "2026-07-11T06:10:38.970023",
+  "updated_at": "2026-07-11T13:23:47.408523",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
   "n_rows": 8565,
   "n_folds": 1,
-  "global_score": 74.7,
+  "global_score": 79.3,
   "global_grade": "B",
   "markets": [
     {
@@ -137,19 +137,19 @@
       "market": "over15",
       "label": "Peste 1.5G",
       "folds": 1,
-      "avg_brier": 0.2895,
-      "avg_log_loss": 0.776,
-      "avg_ece": 0.3029,
+      "avg_brier": 0.1858,
+      "avg_log_loss": 0.5564,
+      "avg_ece": 0.0069,
       "avg_winrate": 0.7441,
-      "score": 50.0,
-      "grade": "D",
+      "score": 82.0,
+      "grade": "B",
       "trend": "stabil",
       "fold_details": [
         {
           "n": 3114,
-          "brier": 0.2895,
-          "log_loss": 0.776,
-          "ece": 0.3029,
+          "brier": 0.1858,
+          "log_loss": 0.5564,
+          "ece": 0.0069,
           "winrate": 0.7441
         }
       ]
