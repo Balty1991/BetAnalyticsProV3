@@ -232,7 +232,7 @@
     over_15:'#a78bfa',  over_25:'#a78bfa', over_35:'#a78bfa',
     under_25:'#34d399', under_35:'#34d399',
     btts_yes:'#f472b6', btts_no:'#94a3b8',
-    dc_1x:'#2BE5C5', dc_x2:'#2BE5C5', dc_12:'#2BE5C5',
+    dc_1x:'#7C5CFC', dc_x2:'#7C5CFC', dc_12:'#7C5CFC',
     home_to_score:'#4ade80', away_to_score:'#93c5fd',
     goal_fh:'#fbbf24', goal_sh:'#fb923c', no_goal_fh:'#64748b'
   };
@@ -513,7 +513,7 @@
               source:best.source, ev:best.ev||null, isSafe:isSafePick,
               odds:best.odds||0, oddsReal:best.oddsReal||false },
       bestDc: bDc ? { key:bDc.key, label:MKT_LABELS[bDc.key]||bDc.key,
-                      color:'#2BE5C5', prob:Math.round(bDc.prob),
+                      color:'#7C5CFC', prob:Math.round(bDc.prob),
                       odds:bDc.odds||0, oddsReal:bDc.oddsReal||false } : null,
       mlInfo: mlInfoMkt ? { key:mlInfoMkt.key, label:MKT_LABELS[mlInfoMkt.key]||mlInfoMkt.key,
                             prob:Math.round(mlInfoMkt.prob), odds:mlInfoMkt.odds||0,
@@ -736,7 +736,7 @@
           }
 
           /* ── Professional pick card ──────────────────────────── */
-          var pickColor = p.best.isSafe ? '#2BE5C5' : p.best.color;
+          var pickColor = p.best.isSafe ? '#7C5CFC' : p.best.color;
           var pickRgb   = hexToRgb(pickColor);
           var isSafe    = p.best.isSafe;
           var pickDesc  = PICK_DESCS[p.best.key] || '';
@@ -807,16 +807,16 @@
           /* DC safe alternative strip (compact) */
           if (p.bestDc) {
             var dcOddsStr = p.bestDc.odds > 0 ? (p.bestDc.oddsReal ? '@' : '~') + Number(p.bestDc.odds).toFixed(2) : '';
-            html += '<div style="background:rgba(43,229,197,.04);border:1px solid rgba(43,229,197,.16);'
+            html += '<div style="background:rgba(124,92,252,.04);border:1px solid rgba(124,92,252,.16);'
               + 'border-radius:8px;padding:7px 10px;display:flex;justify-content:space-between;'
               + 'align-items:center;margin-bottom:6px">'
               + '<div>'
-              + '<div style="font-size:8px;color:rgba(43,229,197,.45);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Alternativă sigură</div>'
-              + '<div style="font-size:10px;font-weight:700;color:#2BE5C5;margin-top:2px">🛡️ ' + p.bestDc.label + '</div>'
+              + '<div style="font-size:8px;color:rgba(124,92,252,.45);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Alternativă sigură</div>'
+              + '<div style="font-size:10px;font-weight:700;color:#7C5CFC;margin-top:2px">🛡️ ' + p.bestDc.label + '</div>'
               + '</div>'
               + '<div style="text-align:right">'
-              + '<div style="font-size:15px;font-weight:900;color:#2BE5C5">' + p.bestDc.prob + '%</div>'
-              + (dcOddsStr ? '<div style="font-size:9px;color:rgba(43,229,197,.4)">' + dcOddsStr + '</div>' : '')
+              + '<div style="font-size:15px;font-weight:900;color:#7C5CFC">' + p.bestDc.prob + '%</div>'
+              + (dcOddsStr ? '<div style="font-size:9px;color:rgba(124,92,252,.4)">' + dcOddsStr + '</div>' : '')
               + '</div></div>';
           }
 

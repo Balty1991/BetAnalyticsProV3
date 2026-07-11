@@ -488,7 +488,7 @@
     var recentRows = log.filter(function(e){ return e.result !== 'expired'; }).slice(0, 15).map(function (e) {
       var icon = e.result === 'won' ? '✅' : e.result === 'lost' ? '❌' : '⏳';
       var rc   = e.result === 'won' ? '#22c55e' : e.result === 'lost' ? '#ef4444' : '#f59e0b';
-      var sc   = e.ml5Score >= 80 ? '#22c55e' : e.ml5Score >= 65 ? '#2BE5C5' : '#f59e0b';
+      var sc   = e.ml5Score >= 80 ? '#22c55e' : e.ml5Score >= 65 ? '#7C5CFC' : '#f59e0b';
       var dateStr = e.eventDate ? ('<span>' + String(e.eventDate).substring(0, 10) + '</span>') : '';
       return '<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
@@ -511,7 +511,7 @@
         recentRows + '</div>' : '';
 
     var pendingNote = stats.pending > 0 && stats.settled === 0 ?
-      '<div style="font-size:11px;color:var(--muted);background:rgba(43,229,197,.05);border:1px solid rgba(43,229,197,.15);border-radius:10px;padding:8px 12px;margin-bottom:14px">' +
+      '<div style="font-size:11px;color:var(--muted);background:rgba(124,92,252,.05);border:1px solid rgba(124,92,252,.15);border-radius:10px;padding:8px 12px;margin-bottom:14px">' +
         'ℹ️ Predicțiile sunt salvate automat. Acuratețea se va calcula după ce meciurile sunt jucate.' +
       '</div>' : '';
 

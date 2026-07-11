@@ -24,7 +24,7 @@
     #vs::before {
       content: ''; position: absolute; inset: 0;
       pointer-events: none; z-index: 30;
-      background: rgba(43,229,197,.12);
+      background: rgba(124,92,252,.12);
       animation: vs-poweron .35s ease-out 0s forwards;
     }
     @keyframes vs-poweron { 0%{opacity:1} 100%{opacity:0} }
@@ -44,8 +44,8 @@
       transform: translate(-50%,-50%); border-radius: 50%;
       pointer-events: none;
       background: radial-gradient(circle,
-        rgba(43,229,197,.07) 0%,
-        rgba(43,229,197,.02) 40%,
+        rgba(124,92,252,.07) 0%,
+        rgba(124,92,252,.02) 40%,
         transparent 65%);
       animation: vs-breathe 4s ease-in-out .5s infinite alternate;
     }
@@ -85,13 +85,13 @@
       to   { clip-path: inset(0 0 0% 0)   }
     }
     @keyframes vs-flash {
-      0%   { filter: drop-shadow(0 0 8px  rgba(43,229,197,.3)) brightness(1)   }
-      35%  { filter: drop-shadow(0 0 40px rgba(43,229,197,.9)) brightness(1.7) }
-      100% { filter: drop-shadow(0 0 22px rgba(43,229,197,.55)) brightness(1)  }
+      0%   { filter: drop-shadow(0 0 8px  rgba(124,92,252,.3)) brightness(1)   }
+      35%  { filter: drop-shadow(0 0 40px rgba(124,92,252,.9)) brightness(1.7) }
+      100% { filter: drop-shadow(0 0 22px rgba(124,92,252,.55)) brightness(1)  }
     }
     @keyframes vs-pulse {
-      from { filter: drop-shadow(0 0 16px rgba(43,229,197,.4)) drop-shadow(0 0 45px rgba(43,229,197,.18)) }
-      to   { filter: drop-shadow(0 0 34px rgba(43,229,197,.85)) drop-shadow(0 0 80px rgba(43,229,197,.35)) drop-shadow(0 2px 8px rgba(245,166,35,.2)) }
+      from { filter: drop-shadow(0 0 16px rgba(124,92,252,.4)) drop-shadow(0 0 45px rgba(124,92,252,.18)) }
+      to   { filter: drop-shadow(0 0 34px rgba(124,92,252,.85)) drop-shadow(0 0 80px rgba(124,92,252,.35)) drop-shadow(0 2px 8px rgba(245,166,35,.2)) }
     }
 
     /* linia de scan — lumina care coboară */
@@ -103,17 +103,17 @@
       pointer-events: none; z-index: 10;
       background: linear-gradient(to bottom,
         transparent                   0%,
-        rgba(43,229,197,.03)          30%,
-        rgba(43,229,197,.12)          60%,
+        rgba(124,92,252,.03)          30%,
+        rgba(124,92,252,.12)          60%,
         rgba(255,255,255,.85)         90%,
-        rgba(43,229,197,.2)          100%
+        rgba(124,92,252,.2)          100%
       );
       /* linie strălucitoare la capătul de jos */
-      border-bottom: 1px solid rgba(43,229,197,.9);
+      border-bottom: 1px solid rgba(124,92,252,.9);
       box-shadow:
-        0 2px 18px rgba(43,229,197,.8),
-        0 4px 50px rgba(43,229,197,.35),
-        0 0  80px rgba(43,229,197,.15);
+        0 2px 18px rgba(124,92,252,.8),
+        0 4px 50px rgba(124,92,252,.35),
+        0 0  80px rgba(124,92,252,.15);
       animation: vs-scan-move 1.25s linear .28s forwards;
     }
     @keyframes vs-scan-move {
@@ -126,8 +126,8 @@
       position: absolute; width: 16px; height: 16px;
       opacity: 0; animation: vs-fi .3s ease 1.58s forwards;
     }
-    .vs-c.tl { top:-1px;    left:-1px;    border-top:  1.5px solid rgba(43,229,197,.65); border-left: 1.5px solid rgba(43,229,197,.65) }
-    .vs-c.tr { top:-1px;    right:-1px;   border-top:  1.5px solid rgba(43,229,197,.65); border-right:1.5px solid rgba(43,229,197,.65) }
+    .vs-c.tl { top:-1px;    left:-1px;    border-top:  1.5px solid rgba(124,92,252,.65); border-left: 1.5px solid rgba(124,92,252,.65) }
+    .vs-c.tr { top:-1px;    right:-1px;   border-top:  1.5px solid rgba(124,92,252,.65); border-right:1.5px solid rgba(124,92,252,.65) }
     .vs-c.bl { bottom:-1px; left:-1px;    border-bottom:1.5px solid rgba(245,166,35,.55); border-left: 1.5px solid rgba(245,166,35,.55) }
     .vs-c.br { bottom:-1px; right:-1px;   border-bottom:1.5px solid rgba(245,166,35,.55); border-right:1.5px solid rgba(245,166,35,.55) }
 
@@ -143,7 +143,7 @@
     .vs-pct {
       font-family: 'Courier New', monospace;
       font-size: 14px; font-weight: 700;
-      color: #2BE5C5; letter-spacing: .06em;
+      color: #7C5CFC; letter-spacing: .06em;
       opacity: 0; animation: vs-fi .4s ease .3s forwards;
     }
 
@@ -152,7 +152,7 @@
       font-family: 'Courier New', monospace;
       font-size: 7.5px; font-weight: 700;
       letter-spacing: .26em; text-transform: uppercase;
-      color: rgba(43,229,197,.28); white-space: nowrap;
+      color: rgba(124,92,252,.28); white-space: nowrap;
       opacity: 0; animation: vs-fi .6s ease 2s forwards;
     }
 
@@ -161,8 +161,8 @@
       position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
       background: linear-gradient(to right,
         transparent 0%,
-        rgba(43,229,197,.4)  20%,
-        rgba(43,229,197,.7)  50%,
+        rgba(124,92,252,.4)  20%,
+        rgba(124,92,252,.7)  50%,
         rgba(245,166,35,.5)  80%,
         transparent 100%);
       transform: scaleX(0); transform-origin: center;
@@ -178,11 +178,11 @@
     }
     .vs-hl {
       right: calc(50% + min(168px,43vw)); left: 0;
-      background: linear-gradient(to left, rgba(43,229,197,.2), transparent 75%);
+      background: linear-gradient(to left, rgba(124,92,252,.2), transparent 75%);
     }
     .vs-hr {
       left:  calc(50% + min(168px,43vw)); right: 0;
-      background: linear-gradient(to right, rgba(43,229,197,.2), transparent 75%);
+      background: linear-gradient(to right, rgba(124,92,252,.2), transparent 75%);
     }
 
     @keyframes vs-fi { from{opacity:0} to{opacity:1} }

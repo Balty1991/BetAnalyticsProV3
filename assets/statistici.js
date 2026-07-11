@@ -183,7 +183,7 @@
     var st = trk.stats || {};
     var streak = st.streak || {};
 
-    if (!hist.length) return noDataMsg('#2BE5C5');
+    if (!hist.length) return noDataMsg('#7C5CFC');
 
     var tpW = 0, tpL = 0, tpPend = 0, tpRoiSum = 0, tpRoiCnt = 0;
     var acRoiSum = 0, acSettled = 0, acWon = 0;
@@ -215,15 +215,15 @@
 
     var html = '';
     html += card(
-      secHead('🏆 Top 5 Picks', '#2BE5C5')
-      + overviewBlock(donut(tpWR, '#2BE5C5', 84),
+      secHead('🏆 Top 5 Picks', '#7C5CFC')
+      + overviewBlock(donut(tpWR, '#7C5CFC', 84),
         statRow('Win', tpW, '#22c55e')
         + statRow('Loss', tpL, '#ef4444')
         + (tpPend ? statRow('Pending', tpPend, '#f59e0b') : '')
-        + '<div style="border-top:1px solid rgba(43,229,197,.15);margin-top:5px;padding-top:5px">'
+        + '<div style="border-top:1px solid rgba(124,92,252,.15);margin-top:5px;padding-top:5px">'
         + statRow('ROI per pick', roiStr(tpROI), roiCol(tpROI))
         + '</div>'
-      ), 'rgba(43,229,197,.2)'
+      ), 'rgba(124,92,252,.2)'
     );
 
     var allPicks = [];
@@ -234,7 +234,7 @@
       function (p) { return p.result === 'win'; },
       function (p) { return p.odds || 2; }
     );
-    if (mktRows.length) html += card(secHead('📊 Per Piață — Top 5', '#64748b') + hBars(mktRows), 'rgba(43,229,197,.12)');
+    if (mktRows.length) html += card(secHead('📊 Per Piață — Top 5', '#64748b') + hBars(mktRows), 'rgba(124,92,252,.12)');
 
     html += card(
       secHead('🎰 Acumulatoare', '#818cf8')
@@ -431,10 +431,10 @@
       var topLeagues = Object.keys(leagueMap).sort(function(a, b) { return leagueMap[b] - leagueMap[a]; }).slice(0, 8);
 
       html += card(
-        secHead('⚽ Meciuri Afișate Azi', '#2BE5C5')
+        secHead('⚽ Meciuri Afișate Azi', '#7C5CFC')
         + '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">'
-        + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(43,229,197,.07);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 6px">'
-        + '<div style="font-size:22px;font-weight:900;color:#2BE5C5">' + preds.length + '</div>'
+        + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(124,92,252,.07);border:1px solid rgba(124,92,252,.2);border-radius:10px;padding:10px 6px">'
+        + '<div style="font-size:22px;font-weight:900;color:#7C5CFC">' + preds.length + '</div>'
         + '<div style="font-size:9px;color:#64748b;margin-top:2px">Total API</div></div>'
         + '<div style="flex:1;min-width:70px;text-align:center;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px 6px">'
         + '<div style="font-size:22px;font-weight:900;color:#fbbf24">' + ml5Today.length + '</div>'
@@ -452,11 +452,11 @@
             var bW = Math.round(cnt / preds.length * 180);
             return '<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;margin-bottom:2px">'
               + '<span style="font-size:11px;color:var(--txt)">' + String(l).slice(0, 28) + '</span>'
-              + '<span style="font-size:10px;color:#2BE5C5;font-weight:700">' + cnt + '</span></div>'
+              + '<span style="font-size:10px;color:#7C5CFC;font-weight:700">' + cnt + '</span></div>'
               + '<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.06)">'
-              + '<div style="height:5px;width:' + bW + 'px;max-width:100%;border-radius:3px;background:rgba(43,229,197,.5)"></div></div></div>';
+              + '<div style="height:5px;width:' + bW + 'px;max-width:100%;border-radius:3px;background:rgba(124,92,252,.5)"></div></div></div>';
           }).join(''),
-        'rgba(43,229,197,.2)'
+        'rgba(124,92,252,.2)'
       );
     }
 
@@ -500,7 +500,7 @@
   // ─── Main render ─────────────────────────────────────────────────────────────
 
   var TABS = [
-    { id: 'claude',  label: '🤖 AI Claude', col: '#2BE5C5' },
+    { id: 'claude',  label: '🤖 AI Claude', col: '#7C5CFC' },
     { id: 'ml5',     label: '🧠 ML5',       col: '#22c55e' },
     { id: 'apex',    label: '⚡ APEX',      col: '#818cf8' },
     { id: 'meciuri', label: '⚽ Meciuri',   col: '#f59e0b' }
@@ -521,7 +521,7 @@
     var html = '<div style="padding:0 4px 24px">';
 
     // Header + reset button
-    html += '<div style="background:linear-gradient(135deg,rgba(43,229,197,.1),rgba(99,102,241,.08));border:1px solid rgba(43,229,197,.2);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
+    html += '<div style="background:linear-gradient(135deg,rgba(124,92,252,.1),rgba(99,102,241,.08));border:1px solid rgba(124,92,252,.2);border-radius:16px;padding:14px 16px;margin-bottom:12px">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       + '<div>'
       + '<div style="font-size:17px;font-weight:900;color:var(--txt,#e2e8f0)">📊 Statistici Predicții</div>'
