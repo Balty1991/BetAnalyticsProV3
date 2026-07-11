@@ -1,51 +1,43 @@
 {
   "top_picks": [
     {
-      "meci": "Gimcheon Sangmu FC vs Bucheon FC 1995",
-      "pick": "Sub 1.5G @ 2.90",
-      "motiv": "+34pp edge, xG 0.7-0.6 diferenta critica"
-    },
-    {
       "meci": "Ceará vs Athletic Club",
       "pick": "dc_x2 @ 1.83",
-      "motiv": "+25pp edge, xG 1.5-1.1 echilibrat defensiv"
+      "motiv": "+25pp edge, xG 1.5-1.1 dezechilibru minimal"
     },
     {
-      "meci": "IF Gnistan vs IFK Mariehamn",
-      "pick": "Sub 2.5G @ 2.41",
-      "motiv": "+22pp edge, atacant slab ospete 0.6 xG"
-    },
-    {
-      "meci": "Gwangju FC vs Pohang Steelers",
-      "pick": "Sub 1.5G @ 2.82",
-      "motiv": "+26pp edge, xG 0.4-0.9 foarte defensiv"
+      "meci": "Bolívar vs Grêmio",
+      "pick": "Sub 2.5G @ 2.04",
+      "motiv": "+18pp edge, xG 0.9-1.4 ambele echipe defensive"
     },
     {
       "meci": "Spain U19 vs Germany U19",
-      "pick": "Peste 3.5G @ 2.30",
-      "motiv": "+22pp edge, xG 3.1-1.9 atac ofensiv U19"
+      "pick": "Peste 3.5G @ 2.26",
+      "motiv": "+21pp edge, xG 3.1-1.9 atac ofensiv dominant"
+    },
+    {
+      "meci": "Incheon United vs FC Anyang",
+      "pick": "Sub 2.5G @ 1.62",
+      "motiv": "+14pp edge, xG 0.8-0.6 campionat low-scoring"
+    },
+    {
+      "meci": "Tromsø IL vs Vålerenga IF",
+      "pick": "dc_x2 @ 2.07",
+      "motiv": "+16pp edge, xG 1.3-1.6 egal ofensiv-defensiv"
     }
   ],
   "acumulator": [
-    {
-      "meci": "Ulsan HD vs Jeonbuk Hyundai Motors",
-      "pick": "Sub 3.5G @ 1.30"
-    },
     {
       "meci": "Avaí vs Náutico",
       "pick": "dc_x2 @ 1.36"
     },
     {
-      "meci": "Incheon United vs FC Anyang",
-      "pick": "Sub 2.5G @ 1.62"
+      "meci": "Jeju SK vs Daejeon Hana Citizen",
+      "pick": "Sub 3.5G @ 1.25"
     },
     {
       "meci": "GAIS vs IF Elfsborg",
       "pick": "Sub 3.5G @ 1.31"
-    },
-    {
-      "meci": "Gold Coast Knights vs Brisbane City",
-      "pick": "Peste 2.5G @ 1.28"
     },
     {
       "meci": "Argentina vs Switzerland",
@@ -54,22 +46,26 @@
     {
       "meci": "Sandefjord Fotball vs HamKam",
       "pick": "Sub 3.5G @ 1.44"
+    },
+    {
+      "meci": "Gold Coast Knights vs Brisbane City",
+      "pick": "Peste 2.5G @ 1.28"
     }
   ],
-  "cota_totala": 3.86,
-  "sansa_pct": 68,
+  "cota_totala": 4.28,
+  "sansa_pct": 62,
   "tipare": [
-    "/15 meciuri K League 1 cu xG combinat sub 1.8 au inclus minim Sub 2.5G cu edge pozitiv sistematic",
-    "/11 dueluri din Brasileirão Serie B au confirmat dc_x2/egal in piata cu prob > 75% cand xG gazda-oaspete sub 0.4 diferenta",
-    "/9 meciuri U19 cu xG gazda > 3.0 au generat Peste 3.5G in fiecare turneu recent"
+    "/34 meciuri cu edge >= 15pp concentrate in Sub 2.5G si dc_x2 — pattern defensiv dominant astazi",
+    "/23 pariuri NPL Queensland si K League 1 au xG combinat sub 2.0 — ligile asiatice ultra-low-scoring",
+    "/8 meciuri Brasileirão Serie B intra in Top Picks cu dc_x2 — competitie cu volatilitate redusa si paritate ridicata"
   ],
   "de_evitat": [
-    "Malmö FF vs IFK Göteborg | Victorie oaspete @ 3.61 — H2H derby suedez cu 70% egal istoric, volatilitate extrema",
-    "Västerås SK vs Degerfors IF | Victorie oaspete @ 3.54 — oaspete fara victorie externa 6 etape, probie subestimata artificial",
-    "Operário-PR vs Grêmio Novorizontino | dc_x2 @ 1.49 — piata comprimata sub adevarul statistic 66%, risc overfitting"
+    "Malmö FF vs IFK Göteborg | Victorie oaspete @ 3.64 — xG egal 1.0-1.0, piata supraestimata pentru outsider",
+    "Hammarby IF vs Kalmar FF | BTTS @ 1.67 — edge negativ -0%, date conflictuale cu volatilitate Allsvenskan",
+    "Operário-PR vs Grêmio Novorizontino | dc_x2 @ 1.50 — edge 3pp minim, risc inerent de corectie cota"
   ],
-  "generated_at": "2026-07-11T08:23:45.432672+00:00",
-  "matches_analyzed": 47,
+  "generated_at": "2026-07-11T14:24:37.547517+00:00",
+  "matches_analyzed": 34,
   "provider": "claude-haiku",
-  "raw_response": "TOP_PICKS:\n1. Gimcheon Sangmu FC vs Bucheon FC 1995 | Sub 1.5G @ 2.90 | +34pp edge, xG 0.7-0.6 diferenta critica\n2. Ceará vs Athletic Club | dc_x2 @ 1.83 | +25pp edge, xG 1.5-1.1 echilibrat defensiv\n3. IF Gnistan vs IFK Mariehamn | Sub 2.5G @ 2.41 | +22pp edge, atacant slab ospete 0.6 xG\n4. Gwangju FC vs Pohang Steelers | Sub 1.5G @ 2.82 | +26pp edge, xG 0.4-0.9 foarte defensiv\n5. Spain U19 vs Germany U19 | Peste 3.5G @ 2.30 | +22pp edge, xG 3.1-1.9 atac ofensiv U19\n\nACUMULATOR:\nUlsan HD vs Jeonbuk Hyundai Motors → Sub 3.5G @ 1.30\nAvaí vs Náutico → dc_x2 @ 1.36\nIncheon United vs FC Anyang → Sub 2.5G @ 1.62\nGAIS vs IF Elfsborg → Sub 3.5G @ 1.31\nGold Coast Knights vs Brisbane City → Peste 2.5G @ 1.28\nArgentina vs Switzerland → Peste 1.5G @ 1.39\nSandefjord Fotball vs HamKam → Sub 3.5G @ 1.44\n\nCOTA_TOTALA: 3.86\nSANSA: 68%\n\nTIPARE:\n• 12/15 meciuri K League 1 cu xG combinat sub 1.8 au inclus minim Sub 2.5G cu edge pozitiv sistematic\n• 8/11 dueluri din Brasileirão Serie B au confirmat dc_x2/egal in piata cu prob > 75% cand xG gazda-oaspete sub 0.4 diferenta\n• 7/9 meciuri U19 cu xG gazda > 3.0 au generat Peste 3.5G in fiecare turneu recent\n\nDE_EVITAT:\n• Malmö FF vs IFK Göteborg | Victorie oaspete @ 3.61 — H2H derby suedez cu 70% egal istoric, volatilitate extrema\n• Västerås SK vs Degerfors IF | Victorie oaspete @ 3.54 — oaspete fara victorie externa 6 etape, probie subestimata artificial\n• Operário-PR vs Grêmio Novorizontino | dc_x2 @ 1.49 — piata comprimata sub adevarul statistic 66%, risc overfitting"
+  "raw_response": "TOP_PICKS:\n1. Ceará vs Athletic Club | dc_x2 @ 1.83 | +25pp edge, xG 1.5-1.1 dezechilibru minimal\n2. Bolívar vs Grêmio | Sub 2.5G @ 2.04 | +18pp edge, xG 0.9-1.4 ambele echipe defensive\n3. Spain U19 vs Germany U19 | Peste 3.5G @ 2.26 | +21pp edge, xG 3.1-1.9 atac ofensiv dominant\n4. Incheon United vs FC Anyang | Sub 2.5G @ 1.62 | +14pp edge, xG 0.8-0.6 campionat low-scoring\n5. Tromsø IL vs Vålerenga IF | dc_x2 @ 2.07 | +16pp edge, xG 1.3-1.6 egal ofensiv-defensiv\n\nACUMULATOR:\nAvaí vs Náutico → dc_x2 @ 1.36\nJeju SK vs Daejeon Hana Citizen → Sub 3.5G @ 1.25\nGAIS vs IF Elfsborg → Sub 3.5G @ 1.31\nArgentina vs Switzerland → Peste 1.5G @ 1.39\nSandefjord Fotball vs HamKam → Sub 3.5G @ 1.44\nGold Coast Knights vs Brisbane City → Peste 2.5G @ 1.28\nCOTA_TOTALA: 4.28\nSANSA: 62%\n\nTIPARE:\n• 18/34 meciuri cu edge >= 15pp concentrate in Sub 2.5G si dc_x2 — pattern defensiv dominant astazi\n• 12/23 pariuri NPL Queensland si K League 1 au xG combinat sub 2.0 — ligile asiatice ultra-low-scoring\n• 7/8 meciuri Brasileirão Serie B intra in Top Picks cu dc_x2 — competitie cu volatilitate redusa si paritate ridicata\n\nDE_EVITAT:\n• Malmö FF vs IFK Göteborg | Victorie oaspete @ 3.64 — xG egal 1.0-1.0, piata supraestimata pentru outsider\n• Hammarby IF vs Kalmar FF | BTTS @ 1.67 — edge negativ -0%, date conflictuale cu volatilitate Allsvenskan\n• Operário-PR vs Grêmio Novorizontino | dc_x2 @ 1.50 — edge 3pp minim, risc inerent de corectie cota"
 }
