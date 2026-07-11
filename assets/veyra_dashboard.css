@@ -519,16 +519,40 @@
 }
 
 /* ─────────── LIGHT THEME ─────────── */
-:root[data-theme="light"] .vd-kpi-card,
-:root[data-theme="light"] .vd-opp-card,
-:root[data-theme="light"] .vd-perf,
-:root[data-theme="light"] .vd-nav-btn {
+/* The actual toggle (toggleTheme() in index.html) sets body.theme-light,
+   not a [data-theme] attribute — the old :root[data-theme="light"] rules
+   below never matched anything.
+   --vd-txt/--vd-muted/--vd-card/--vd-border are derived once at :root from
+   --txt/--muted (var(--txt, ...)), which only get reassigned on body — so
+   the derived --vd-* tokens must be redeclared here too, or every element
+   that inherits them keeps the dark-theme value even though body.theme-light
+   correctly flips the base --txt/--muted. This was making dashboard text
+   (team names, nav labels, KPI values) render pale-on-light and unreadable. */
+body.theme-light #veyra-dash {
+  --vd-txt:    #0C1220;
+  --vd-muted:  #546376;
+  --vd-card:   rgba(0,0,0,.03);
+  --vd-border: rgba(0,0,0,.08);
+}
+body.theme-light .vd-kpi-card,
+body.theme-light .vd-opp-card,
+body.theme-light .vd-perf,
+body.theme-light .vd-nav-btn {
   background: rgba(0,0,0,.03);
   border-color: rgba(0,0,0,.08);
 }
-:root[data-theme="light"] .vd-opp-pick {
+body.theme-light .vd-opp-pick {
   background: rgba(0,0,0,.02);
   border-color: rgba(0,0,0,.07);
+}
+body.theme-light .vd-hero-block {
+  background: linear-gradient(135deg, rgba(43,229,197,.08) 0%, rgba(75,131,240,.05) 55%, rgba(43,229,197,.03) 100%);
+}
+body.theme-light .vd-perf-trust {
+  background: linear-gradient(135deg, rgba(43,229,197,.06) 0%, rgba(0,0,0,.015) 100%);
+}
+body.theme-light .vd-motor {
+  background: rgba(43,229,197,.06);
 }
 
 /* ─────────── PYRAMID SYSTEM ─────────── */
