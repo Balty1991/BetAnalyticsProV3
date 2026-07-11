@@ -77,7 +77,7 @@
         setI(mnav, 'left',           '12px');
         setI(mnav, 'right',          '12px');
         setI(mnav, 'background',     'rgba(8,11,22,.92)');
-        setI(mnav, 'border',         '1px solid rgba(43,229,197,.15)');
+        setI(mnav, 'border',         '1px solid rgba(124,92,252,.15)');
         setI(mnav, 'box-shadow',     '0 14px 40px rgba(0,0,0,.55)');
         setI(mnav, 'border-radius',  '22px');
         setI(mnav, 'padding',        '6px');

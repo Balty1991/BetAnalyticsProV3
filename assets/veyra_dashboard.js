@@ -51,7 +51,7 @@
   /* ── Small score ring SVG (opportunity cards) ── */
   function scoreRing(score) {
     var pct = Math.min(100, Math.max(0, safeNum(score)));
-    var col = pct >= 85 ? '#2BE5C5' : pct >= 68 ? '#4B83F0' : '#F0A830';
+    var col = pct >= 85 ? '#7C5CFC' : pct >= 68 ? '#4B83F0' : '#F0A830';
     return (
       '<svg class="vd-ring" viewBox="0 0 36 36" aria-hidden="true">' +
         '<circle cx="18" cy="18" r="15.91" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3.2" pathLength="100"/>' +
@@ -78,18 +78,18 @@
           '</filter>' +
         '</defs>' +
         /* Track */
-        '<circle cx="40" cy="40" r="34" fill="none" stroke="rgba(43,229,197,.09)" stroke-width="5" pathLength="100"/>' +
+        '<circle cx="40" cy="40" r="34" fill="none" stroke="rgba(124,92,252,.09)" stroke-width="5" pathLength="100"/>' +
         /* Inner glow fill */
-        '<circle cx="40" cy="40" r="27" fill="rgba(43,229,197,.05)"/>' +
+        '<circle cx="40" cy="40" r="27" fill="rgba(124,92,252,.05)"/>' +
         /* Arc — starts at 0, animated via JS after render */
-        '<circle cx="40" cy="40" r="34" fill="none" stroke="#2BE5C5" stroke-width="5"' +
+        '<circle cx="40" cy="40" r="34" fill="none" stroke="#7C5CFC" stroke-width="5"' +
           ' pathLength="100" stroke-dasharray="0 100" stroke-linecap="round"' +
           ' filter="url(#vd-teal-glow)" class="vd-big-ring-arc"/>' +
         /* Tick marks every 25% */
-        '<circle cx="40" cy="6"  r="2" fill="rgba(43,229,197,.25)"/>' +
-        '<circle cx="74" cy="40" r="2" fill="rgba(43,229,197,.25)"/>' +
-        '<circle cx="40" cy="74" r="2" fill="rgba(43,229,197,.25)"/>' +
-        '<circle cx="6"  cy="40" r="2" fill="rgba(43,229,197,.25)"/>' +
+        '<circle cx="40" cy="6"  r="2" fill="rgba(124,92,252,.25)"/>' +
+        '<circle cx="74" cy="40" r="2" fill="rgba(124,92,252,.25)"/>' +
+        '<circle cx="40" cy="74" r="2" fill="rgba(124,92,252,.25)"/>' +
+        '<circle cx="6"  cy="40" r="2" fill="rgba(124,92,252,.25)"/>' +
       '</svg>' +
       '<div class="vd-ring-center">' +
         '<span class="vd-ring-num" id="vd-ring-num">0</span>' +

@@ -387,7 +387,7 @@
   function renderBySource(bySource) {
     var srcMeta = {
       apex:   { label:"APEX (Motor AI)", color:"#818cf8" },
-      claude: { label:"Claude AI",       color:"#2BE5C5" },
+      claude: { label:"Claude AI",       color:"#7C5CFC" },
       ml5:    { label:"ML5",             color:"#22c55e" }
     };
     var html = "<div class=\"clv-card\"><h3 class=\"clv-st\">Performanta per sursa</h3>" +
@@ -488,7 +488,7 @@
       "</table></div></div>";
   }
 
-  var SRC_COL = { apex:"#818cf8", claude:"#2BE5C5", ml5:"#22c55e" };
+  var SRC_COL = { apex:"#818cf8", claude:"#7C5CFC", ml5:"#22c55e" };
 
   function renderRows(picks) {
     return picks.map(function(p){

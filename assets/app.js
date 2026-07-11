@@ -1291,7 +1291,7 @@ function renderClaudeAITab(){
   var STAKES=[5,10,20,50];
   var tickets=[];
   if(sorted.length>=2){
-    tickets.push({label:'⚡ Bilet Principal',border:'rgba(43,229,197,.5)',hdr:'rgba(43,229,197,.15)',picks:sorted.slice(0,Math.min(3,sorted.length))});
+    tickets.push({label:'⚡ Bilet Principal',border:'rgba(124,92,252,.5)',hdr:'rgba(124,92,252,.15)',picks:sorted.slice(0,Math.min(3,sorted.length))});
   }
   if(acumulator.length>=2){
     tickets.push({label:'🤖 Bilet AI',border:'rgba(139,92,246,.45)',hdr:'rgba(139,92,246,.15)',picks:acumulator.slice(0,5)});
@@ -1309,7 +1309,7 @@ function renderClaudeAITab(){
       +'<div style="font-size:13px;font-weight:900;color:var(--txt)">'+t.label+'</div>'
       +'<div style="display:flex;align-items:center;gap:10px">'
       +'<span style="font-size:11px;color:var(--muted)">'+t.picks.length+' selecții</span>'
-      +'<span style="font-size:16px;font-weight:900;color:#2BE5C5">@'+totalOdds.toFixed(2)+'</span>'
+      +'<span style="font-size:16px;font-weight:900;color:#7C5CFC">@'+totalOdds.toFixed(2)+'</span>'
       +'</div></div>';
     // Picks list
     h+='<div style="padding:10px 16px 6px 16px">';
@@ -1323,7 +1323,7 @@ function renderClaudeAITab(){
       var meci_esc=(p.meci||'').replace(/'/g,"\\'");
       var pick_esc=(p.pick||'').replace(/'/g,"\\'");
       var isSaved=_savedMap[(p.meci||'')+'|'+(p.pick||'')];
-      var oddsColor=odds<=1.45?'#22c55e':odds<=1.75?'#2BE5C5':odds<=2.2?'#f59e0b':'#ef4444';
+      var oddsColor=odds<=1.45?'#22c55e':odds<=1.75?'#7C5CFC':odds<=2.2?'#f59e0b':'#ef4444';
       h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;'+(i<t.picks.length-1?'border-bottom:1px solid rgba(255,255,255,.05)':'')+'">'
         +'<div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--muted);flex-shrink:0">'+(i+1)+'</div>'
         +'<div style="flex:1;min-width:0">'
@@ -1359,7 +1359,7 @@ function renderClaudeAITab(){
   var html='<div style="padding:0 4px">';
 
   // ── HEADER ──────────────────────────────────────────────────────────────────
-  html+='<div style="background:linear-gradient(135deg,rgba(43,229,197,.08),rgba(99,102,241,.06));border:1px solid rgba(43,229,197,.25);border-radius:16px;padding:14px 16px;margin-bottom:14px">'
+  html+='<div style="background:linear-gradient(135deg,rgba(124,92,252,.08),rgba(99,102,241,.06));border:1px solid rgba(124,92,252,.25);border-radius:16px;padding:14px 16px;margin-bottom:14px">'
     +'<div style="display:flex;align-items:center;justify-content:space-between">'
     +'<div>'
     +'<div style="font-size:18px;font-weight:900;color:var(--txt);letter-spacing:-.3px">🎯 Bilete Acumulator</div>'
@@ -1376,7 +1376,7 @@ function renderClaudeAITab(){
     +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">';
   [5,10,20,50].forEach(function(u){
     var isA=unitSize===u;
-    html+='<button onclick="_setClaudeUnitSize('+u+')" style="padding:8px 0;border-radius:9px;font-size:12px;font-weight:'+(isA?'900':'600')+';cursor:pointer;border:'+(isA?'1.5px solid #2BE5C5':'1px solid rgba(43,229,197,.2)')+';background:'+(isA?'rgba(43,229,197,.18)':'rgba(43,229,197,.04)')+';color:'+(isA?'#2BE5C5':'var(--muted)')+'">'+u+' RON</button>';
+    html+='<button onclick="_setClaudeUnitSize('+u+')" style="padding:8px 0;border-radius:9px;font-size:12px;font-weight:'+(isA?'900':'600')+';cursor:pointer;border:'+(isA?'1.5px solid #7C5CFC':'1px solid rgba(124,92,252,.2)')+';background:'+(isA?'rgba(124,92,252,.18)':'rgba(124,92,252,.04)')+';color:'+(isA?'#7C5CFC':'var(--muted)')+'">'+u+' RON</button>';
   });
   html+='</div></div>';
 
@@ -1409,7 +1409,7 @@ function renderClaudeAITab(){
       html+='<div style="text-align:center;padding:16px 0;color:var(--muted);font-size:12px">Niciun pick salvat.<br>Apasă 💾 pe orice selecție pentru a o urmări.</div>';
     } else {
       html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">'
-        +'<div style="background:rgba(43,229,197,.06);border:1px solid rgba(43,229,197,.2);border-radius:10px;padding:10px 8px;text-align:center">'
+        +'<div style="background:rgba(124,92,252,.06);border:1px solid rgba(124,92,252,.2);border-radius:10px;padding:10px 8px;text-align:center">'
         +'<div style="font-size:18px;font-weight:900;color:'+wrColor+'">'+(wr!==null?wr+'%':'—')+'</div>'
         +'<div style="font-size:9px;color:var(--muted);margin-top:2px">Win Rate</div></div>'
         +'<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 6px;text-align:center">'
@@ -1530,7 +1530,7 @@ function renderPicksTab(){
     return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   }
   function calcTotalOdds(picks){ var t=1; picks.forEach(function(p){ var o=Number(p.odds||0); if(o>1.01) t*=o; }); return t>1?+t.toFixed(2):0; }
-  function oddsColor(o){ return o<=1.45?'#22c55e':o<=1.75?'#2BE5C5':o<=2.2?'#f59e0b':'#ef4444'; }
+  function oddsColor(o){ return o<=1.45?'#22c55e':o<=1.75?'#7C5CFC':o<=2.2?'#f59e0b':'#ef4444'; }
 
   // Convert match to pick object
   function matchToPick(m){
@@ -1592,7 +1592,7 @@ function renderPicksTab(){
     // ECHILIBRAT: top 4 picks across wider range
     var echPicks = sorted.filter(function(p){ return p.odds >= 1.20 && p.odds <= 3.5; }).slice(0,4);
     if(echPicks.length >= 3){
-      tickets.push({ label:'⚖️ Bilet Echilibrat', border:'rgba(43,229,197,.5)', hdr:'rgba(43,229,197,.15)', picks:echPicks });
+      tickets.push({ label:'⚖️ Bilet Echilibrat', border:'rgba(124,92,252,.5)', hdr:'rgba(124,92,252,.15)', picks:echPicks });
     }
 
     // AVANSAT: top 5 overall
@@ -1617,7 +1617,7 @@ function renderPicksTab(){
       + '<div style="font-size:13px;font-weight:900;color:var(--txt)">'+t.label+'</div>'
       + '<div style="display:flex;align-items:center;gap:10px">'
       + '<span style="font-size:11px;color:var(--muted)">'+t.picks.length+' selecții</span>'
-      + '<span style="font-size:16px;font-weight:900;color:#2BE5C5">@'+totalOdds.toFixed(2)+'</span>'
+      + '<span style="font-size:16px;font-weight:900;color:#7C5CFC">@'+totalOdds.toFixed(2)+'</span>'
       + '</div></div>';
     h += '<div style="padding:10px 16px 6px 16px">';
     t.picks.forEach(function(p, i){
@@ -1646,7 +1646,7 @@ function renderPicksTab(){
       var ret = (stake * totalOdds).toFixed(0);
       h += '<div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,.04)">'
         + '<div style="font-size:9px;color:var(--muted)">'+stake+' RON</div>'
-        + '<div style="font-size:12px;font-weight:800;color:#2BE5C5">'+ret+'</div></div>';
+        + '<div style="font-size:12px;font-weight:800;color:#7C5CFC">'+ret+'</div></div>';
     });
     h += '</div></div>';
     return h;
@@ -1672,7 +1672,7 @@ function renderPicksTab(){
       + '<span style="font-size:11px;font-weight:700;color:#22c55e">✅ '+wins+' WIN</span>'
       + '<span style="font-size:11px;font-weight:700;color:#ef4444">❌ '+losses+' LOSS</span>'
       + '<span style="font-size:11px;color:var(--muted)">⏳ '+pending+' pending</span>'
-      + (wins+losses>0?'<span style="font-size:11px;font-weight:700;color:#2BE5C5">'+wr+'% WR</span>':'')
+      + (wins+losses>0?'<span style="font-size:11px;font-weight:700;color:#7C5CFC">'+wr+'% WR</span>':'')
       + '</div>';
     Object.keys(byDate).forEach(function(dk){
       h += '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px">'+dk+'</div>';
@@ -1705,7 +1705,7 @@ function renderPicksTab(){
     + '<div style="font-size:11px;color:var(--muted);margin-top:3px">Meciuri · ML5 · APEX · Signal Master — blended prin SmartScore</div>'
     + '</div>'
     + '<div style="display:flex;gap:6px;align-items:center">'
-    + '<span style="font-size:11px;font-weight:700;color:#2BE5C5;background:rgba(43,229,197,.1);border:1px solid rgba(43,229,197,.25);border-radius:8px;padding:4px 8px">'+eligible.length+' ELIGIBLE</span>'
+    + '<span style="font-size:11px;font-weight:700;color:#7C5CFC;background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.25);border-radius:8px;padding:4px 8px">'+eligible.length+' ELIGIBLE</span>'
     + '<button onclick="try{doRefresh(true)}catch(e){location.reload()}" style="padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt);font-size:11px;cursor:pointer">🔄 Refresh</button>'
     + '</div></div>';
 
@@ -1714,7 +1714,7 @@ function renderPicksTab(){
     + '<span style="font-size:10px;color:var(--muted)">Miză:</span>';
   [5,10,20,50].forEach(function(s){
     var isAct = s === unitSize;
-    h += '<button onclick="localStorage.setItem(\'veyra_picks_unitsize\',\''+s+'\');renderPicksTab()" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(43,229,197,'+(isAct?'.5':'0.18')+');background:rgba(43,229,197,'+(isAct?'.15':'0.04')+');color:'+(isAct?'#2BE5C5':'var(--txt)')+'">'+s+' RON</button>';
+    h += '<button onclick="localStorage.setItem(\'veyra_picks_unitsize\',\''+s+'\');renderPicksTab()" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(124,92,252,'+(isAct?'.5':'0.18')+');background:rgba(124,92,252,'+(isAct?'.15':'0.04')+');color:'+(isAct?'#7C5CFC':'var(--txt)')+'">'+s+' RON</button>';
   });
   h += '</div>';
 
@@ -1743,7 +1743,7 @@ function renderPicksTab(){
       var isSaved = _savedMap[(p.meci||'')+'|'+(p.pick_text||'')];
       var srcBadge = p.source === 'signal'
         ? '<span style="font-size:9px;color:#a78bfa;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);border-radius:5px;padding:1px 5px">Signal</span>'
-        : '<span style="font-size:9px;color:#2BE5C5;background:rgba(43,229,197,.08);border:1px solid rgba(43,229,197,.18);border-radius:5px;padding:1px 5px">ML5</span>';
+        : '<span style="font-size:9px;color:#7C5CFC;background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.18);border-radius:5px;padding:1px 5px">ML5</span>';
       var probBar = p.prob > 0 ? ('<div style="height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:5px;overflow:hidden"><div style="height:100%;width:'+Math.min(100,p.prob).toFixed(0)+'%;background:'+oc+';border-radius:2px"></div></div>') : '';
       h += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-bottom:8px">'
         + '<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">'
@@ -1861,7 +1861,7 @@ function renderAITab(){
     if(!isFinite(d.getTime())) return '';
     return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   }
-  function oddsColor(o){ return o<=1.45?'#22c55e':o<=1.75?'#2BE5C5':o<=2.2?'#f59e0b':'#ef4444'; }
+  function oddsColor(o){ return o<=1.45?'#22c55e':o<=1.75?'#7C5CFC':o<=2.2?'#f59e0b':'#ef4444'; }
   function calcTotalOdds(picks){
     var t=1;
     picks.forEach(function(p){ var o=Number(p.odds||0); if(o>1.01) t*=o; });
@@ -1887,7 +1887,7 @@ function renderAITab(){
       + '<div style="font-size:13px;font-weight:900;color:var(--txt)">'+label+'</div>'
       + '<div style="display:flex;align-items:center;gap:10px">'
       + '<span style="font-size:11px;color:var(--muted)">'+good.length+' selecții</span>'
-      + '<span style="font-size:16px;font-weight:900;color:#2BE5C5">@'+totalOdds.toFixed(2)+'</span>'
+      + '<span style="font-size:16px;font-weight:900;color:#7C5CFC">@'+totalOdds.toFixed(2)+'</span>'
       + '</div></div>';
     h += '<div style="padding:10px 16px 6px 16px">';
     good.forEach(function(p, i){
@@ -1915,7 +1915,7 @@ function renderAITab(){
     STAKES.forEach(function(stake){
       h += '<div style="padding:8px 4px;text-align:center;border-right:1px solid rgba(255,255,255,.04)">'
         + '<div style="font-size:9px;color:var(--muted)">'+stake+' RON</div>'
-        + '<div style="font-size:12px;font-weight:800;color:#2BE5C5">'+(stake*totalOdds).toFixed(0)+'</div></div>';
+        + '<div style="font-size:12px;font-weight:800;color:#7C5CFC">'+(stake*totalOdds).toFixed(0)+'</div></div>';
     });
     h += '</div></div>';
     return h;
@@ -1965,7 +1965,7 @@ function renderAITab(){
       + '<span style="font-size:11px;font-weight:700;color:#22c55e">✅ '+wins+' WIN</span>'
       + '<span style="font-size:11px;font-weight:700;color:#ef4444">❌ '+losses+' LOSS</span>'
       + '<span style="font-size:11px;color:var(--muted)">⏳ '+pending+' pending</span>'
-      + (wins+losses>0?'<span style="font-size:11px;font-weight:700;color:#2BE5C5">'+wr+'% WR</span>':'')
+      + (wins+losses>0?'<span style="font-size:11px;font-weight:700;color:#7C5CFC">'+wr+'% WR</span>':'')
       + '</div>';
     Object.keys(byDate).forEach(function(dk){
       h += '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px">'+dk+'</div>';
@@ -2005,7 +2005,7 @@ function renderAITab(){
     + '<span style="font-size:10px;color:var(--muted)">Miză:</span>';
   [5,10,20,50].forEach(function(s){
     var isAct = s === unitSize;
-    h += '<button onclick="localStorage.setItem(\'veyra_ai_unitsize\',\''+s+'\');renderAITab()" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(43,229,197,'+(isAct?'.5':'0.18')+');background:rgba(43,229,197,'+(isAct?'.15':'0.04')+');color:'+(isAct?'#2BE5C5':'var(--txt)')+'">'+s+' RON</button>';
+    h += '<button onclick="localStorage.setItem(\'veyra_ai_unitsize\',\''+s+'\');renderAITab()" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(124,92,252,'+(isAct?'.5':'0.18')+');background:rgba(124,92,252,'+(isAct?'.15':'0.04')+');color:'+(isAct?'#7C5CFC':'var(--txt)')+'">'+s+' RON</button>';
   });
   h += '</div>';
 
@@ -2039,7 +2039,7 @@ function renderAITab(){
       if(!usedCombined[p.meci]){ combined.push(p); usedCombined[p.meci]=true; }
     });
     if(combined.length >= 3){
-      h += buildAITicket('🧠 Bilet Combinat', 'rgba(43,229,197,.5)', 'rgba(43,229,197,.15)', combined.slice(0,5));
+      h += buildAITicket('🧠 Bilet Combinat', 'rgba(124,92,252,.5)', 'rgba(124,92,252,.15)', combined.slice(0,5));
     }
 
     // Individual picks — Claude section
@@ -2217,7 +2217,7 @@ function renderMotorAIHistory(){
     var isPending=e.result==='pending', isWin=e.result==='win';
     var bdCol=isWin?'rgba(34,197,94,.2)':e.result==='loss'?'rgba(239,68,68,.2)':'rgba(255,255,255,.06)';
     var conf=Number(e.incredere||0);
-    var confCol=conf>=80?'#22c55e':(conf>=65?'#2BE5C5':(conf>=50?'#f59e0b':'#ef4444'));
+    var confCol=conf>=80?'#22c55e':(conf>=65?'#7C5CFC':(conf>=50?'#f59e0b':'#ef4444'));
     var evDate='';
     if(e.event_date){ try{ var _d=new Date(e.event_date); if(isFinite(_d.getTime())) evDate=_d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0')+' '+_d.getHours().toString().padStart(2,'0')+':'+_d.getMinutes().toString().padStart(2,'0'); }catch(ex){} }
     var savedDate='';
@@ -2234,7 +2234,7 @@ function renderMotorAIHistory(){
       +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">'
       +'<span style="font-size:12px;font-weight:800;color:'+confCol+'">'+htmlEsc(e.piataLabel||e.piata||'')+'</span>'
       +(e.cota?'<span style="font-size:11px;font-weight:700;background:'+confCol+'18;border:1px solid '+confCol+'44;color:'+confCol+';padding:2px 7px;border-radius:16px">@'+Number(e.cota).toFixed(2)+'</span>':'')
-      +(e.edge_pp?'<span style="font-size:10px;color:#2BE5C5">+'+Number(e.edge_pp).toFixed(1)+'pp</span>':'')
+      +(e.edge_pp?'<span style="font-size:10px;color:#7C5CFC">+'+Number(e.edge_pp).toFixed(1)+'pp</span>':'')
       +(isPending?'<span style="font-size:10px;color:var(--muted);margin-left:auto">⏳ în așteptare</span>':(isWin?'<span style="font-size:11px;font-weight:800;color:#22c55e;margin-left:auto">✅ WIN</span>':'<span style="font-size:11px;font-weight:800;color:#ef4444;margin-left:auto">❌ LOSS</span>'))
       +'</div>'
       +(isPending?'<div style="display:flex;gap:6px">'
@@ -2324,7 +2324,7 @@ function renderMotorAITab(){
 
   filtered.forEach(function(p, i){
     var conf = p.incredere || 0;
-    var confColor = conf >= 80 ? '#22c55e' : (conf >= 65 ? '#2BE5C5' : (conf >= 50 ? '#f59e0b' : '#ef4444'));
+    var confColor = conf >= 80 ? '#22c55e' : (conf >= 65 ? '#7C5CFC' : (conf >= 50 ? '#f59e0b' : '#ef4444'));
     var xgStr = (p.xg_home || p.xg_away) ? ('xG '+Number(p.xg_home||0).toFixed(1)+'-'+Number(p.xg_away||0).toFixed(1)) : '';
     var edgeStr = p.edge_pp ? ('+'+Number(p.edge_pp).toFixed(1)+'pp') : '';
     var kickoffStr = '';
@@ -3205,7 +3205,7 @@ function renderPerformantaVerdict() {
 
     // --- Per sursa: APEX / Claude / ML5 ---
     var SRCS = [
-      { key: 'Meciuri', label: 'Meciuri',         color: '#2BE5C5', bg: 'rgba(43,229,197,.10)', border: 'rgba(43,229,197,.3)' },
+      { key: 'Meciuri', label: 'Meciuri',         color: '#7C5CFC', bg: 'rgba(124,92,252,.10)', border: 'rgba(124,92,252,.3)' },
       { key: 'APEX',    label: 'APEX Engine',      color: '#60a5fa', bg: 'rgba(96,165,250,.10)', border: 'rgba(96,165,250,.3)' },
       { key: 'ML5',     label: 'ML5',              color: '#34d399', bg: 'rgba(52,211,153,.10)', border: 'rgba(52,211,153,.3)' }
     ];
@@ -12826,7 +12826,7 @@ function renderML5MatchCard(m, cardIdx){
       if (!_mmd) return '';
       return '<div style="margin-top:10px;text-align:right">' +
         '<button data-mon-id="'+_mmd.id+'" onclick="window._veyraMonSave('+_mmd.id+')" ' +
-        'style="padding:5px 12px;border-radius:8px;border:1px solid rgba(43,229,197,' + (_mmd.isSaved?'.2':'.4') + ');background:rgba(43,229,197,' + (_mmd.isSaved?'.04':'.08') + ');color:' + (_mmd.isSaved?'#22c55e':'#2BE5C5') + ';font-size:10px;font-weight:700;cursor:pointer' + (_mmd.isSaved?';opacity:.6':'') + '"' + (_mmd.isSaved?' disabled':'') + '>' +
+        'style="padding:5px 12px;border-radius:8px;border:1px solid rgba(124,92,252,' + (_mmd.isSaved?'.2':'.4') + ');background:rgba(124,92,252,' + (_mmd.isSaved?'.04':'.08') + ');color:' + (_mmd.isSaved?'#22c55e':'#7C5CFC') + ';font-size:10px;font-weight:700;cursor:pointer' + (_mmd.isSaved?';opacity:.6':'') + '"' + (_mmd.isSaved?' disabled':'') + '>' +
         (_mmd.isSaved?'✓ Salvat':'💾 Salvează') +
         '</button></div>';
     })() : '') +

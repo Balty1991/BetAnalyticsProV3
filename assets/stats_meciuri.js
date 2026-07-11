@@ -556,9 +556,9 @@
 
     var h = '<div style="margin-bottom:12px">';
     h += '<button onclick="window._toggleAvailable(\'' + tabKey + '\')" '
-      + 'style="width:100%;background:linear-gradient(135deg,rgba(43,229,197,.07),rgba(139,92,246,.05));border:1px solid rgba(43,229,197,.2);border-radius:12px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;margin-bottom:' + (isOpen?'6':'0') + 'px">'
+      + 'style="width:100%;background:linear-gradient(135deg,rgba(124,92,252,.07),rgba(139,92,246,.05));border:1px solid rgba(124,92,252,.2);border-radius:12px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;margin-bottom:' + (isOpen?'6':'0') + 'px">'
       + '<div style="display:flex;align-items:center;gap:10px">'
-      + '<span style="font-size:12px;font-weight:700;color:#2BE5C5">📋 Picks disponibile</span>'
+      + '<span style="font-size:12px;font-weight:700;color:#7C5CFC">📋 Picks disponibile</span>'
       + '<span style="font-size:11px;color:#475569">' + unsaved.length + ' nesalvate</span>'
       + '</div>'
       + '<span style="font-size:14px;color:#475569">' + (isOpen?'▲':'▼') + '</span>'
@@ -593,7 +593,7 @@
           h += '<span style="font-size:10px;color:#22c55e;font-weight:600">✓ Deja în istoric</span>';
         } else {
           h += '<button onclick="window._savePick(\'' + storeKey + '\',\'' + pickEncoded.replace(/'/g,"\\'") + '\')" '
-            + 'style="width:100%;padding:7px;border-radius:8px;border:1px solid rgba(43,229,197,.4);background:rgba(43,229,197,.08);color:#2BE5C5;font-size:11px;font-weight:700;cursor:pointer">'
+            + 'style="width:100%;padding:7px;border-radius:8px;border:1px solid rgba(124,92,252,.4);background:rgba(124,92,252,.08);color:#7C5CFC;font-size:11px;font-weight:700;cursor:pointer">'
             + '💾 Salvează în istoric</button>';
         }
         h += '</div>';
