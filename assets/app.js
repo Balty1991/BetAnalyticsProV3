@@ -12767,8 +12767,10 @@ function renderML5MatchCard(m, cardIdx){
     });
   }
 
-  // Kelly display
-  var kelly = b.ml5Kelly != null ? b.ml5Kelly : (b.kelly_quarter_pct || 0);
+  // Kelly display — prefer the server value (policy/CLV-adjusted in predict_current.py)
+  // over the client-side ml5Kelly recompute, which is a flat quarter-Kelly with no
+  // per-market reliability or stake-policy dampening.
+  var kelly = b.kelly_quarter_pct != null ? b.kelly_quarter_pct : (b.ml5Kelly != null ? b.ml5Kelly : 0);
   var kellyColor = kelly>=2?'var(--grn)':kelly>=1?'var(--acc)':'var(--muted)';
 
   // Agreement

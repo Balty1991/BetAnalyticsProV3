@@ -207,6 +207,7 @@ def build_league_map(rows):
             "league_draw_rate": pct(sum(to_int(r.get("draw")) for r in items), total),
             "league_away_win_rate": pct(sum(to_int(r.get("away_win")) for r in items), total),
             "league_btts_rate": pct(sum(to_int(r.get("btts_yes")) for r in items), total),
+            "league_over15_rate": pct(sum(to_int(r.get("over_15")) for r in items), total),
             "league_over25_rate": pct(sum(to_int(r.get("over_25")) for r in items), total),
             "league_under35_rate": pct(sum(to_int(r.get("under_35")) for r in items), total),
         }
@@ -327,7 +328,7 @@ def build_summary(features):
             "home_btts_rate_5", "away_btts_rate_5", "btts_rate_diff_5",
             "home_over25_rate_5", "away_over25_rate_5", "over25_rate_diff_5",
             # League context
-            "league_avg_goals", "league_btts_rate", "league_over25_rate", "league_under35_rate",
+            "league_avg_goals", "league_btts_rate", "league_over15_rate", "league_over25_rate", "league_under35_rate",
             # H2H (calculat din datele istorice de antrenament)
             "h2h_matches", "h2h_home_win_rate", "h2h_draw_rate",
             "h2h_away_win_rate", "h2h_avg_goals", "h2h_btts_rate",

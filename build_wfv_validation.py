@@ -45,7 +45,7 @@ MARKETS: List[Tuple[str, str, str, str]] = [
     ("over25",   "target_over_25",   "league_over25_rate",   "Peste 2.5G"),
     ("under35",  "target_under_35",  "league_under35_rate",  "Sub 3.5G"),
     ("btts",     "target_btts_yes",  "league_btts_rate",     "Ambele marchează"),
-    ("over15",   "target_over_15",   "league_home_win_rate", "Peste 1.5G"),  # proxy
+    ("over15",   "target_over_15",   "league_over15_rate",   "Peste 1.5G"),
 ]
 
 # ─── I/O ─────────────────────────────────────────────────────────────────────

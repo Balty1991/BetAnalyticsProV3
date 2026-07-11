@@ -36,14 +36,20 @@ TARGETS = {
 
 PROB_MIN_BY_MARKET = {
     "home_win": 0.46, "draw": 0.28, "away_win": 0.30,
-    # over15: WFV ECE=0.30 (grade D) → model slab calibrat pe zone de prob scazute.
-    # Ridicat la 0.66 pentru a pastra doar meci-urile cu semnal clar.
+    # over15: NU e o problemă de calibrare — CatBoost real are ECE 0.0112 (excelent,
+    # vezi data/model_pack_v2.json). Pragul de 0.30/"grade D" citat anterior aici venea
+    # dintr-un bug în build_wfv_validation.py (compara over15 cu baseline-ul de
+    # home_win_rate al ligii, nu cu unul relevant — fixat, vezi league_over15_rate).
+    # Ridicat la 0.66 pentru că piața e în recovery_probe (data/model_benchmarks.json /
+    # patch_over15_recovery_probe.py): CLV e pozitiv dar ROI realizat încă negativ, deci
+    # ținem filtrul strict intenționat până piața își reconfirmă profitabilitatea live.
     "btts": 0.48, "over15": 0.66, "over25": 0.48, "under35": 0.58,
 }
 EDGE_MIN_BY_MARKET = {
     "home_win": 3.0, "draw": 4.0, "away_win": 3.5,
-    # over15: ridicat la 3.0 (de la 1.8) — filtru mai strict compensat calibrare slaba
-    # under35: ridicat la 2.5 (de la 1.8) — reduce dominanta
+    # Aceste valori sunt doar un fallback dacă data/model_benchmarks.json lipsește —
+    # vezi load_dynamic_edge_minimums(), care aplică pragurile validate prin backtest
+    # (ex. over15/under35 ajung efectiv la 15pp, nu la 3.0/2.5 de mai jos).
     "btts": 2.8, "over15": 3.0, "over25": 2.8, "under35": 2.5,
 }
 EV_MIN_BY_MARKET = {
@@ -57,6 +63,24 @@ ODDS_RANGE_BY_MARKET = {
 }
 CAT_FEATURES = ["league", "home_streak_type", "away_streak_type"]
 KELLY_FRACTION = 0.25
+
+BENCHMARKS_PATH = DATA_DIR / "model_benchmarks.json"
+CLV_TRACKER_PATH = DATA_DIR / "clv_tracker.json"
+
+# data/clv_tracker.json's market_actions.stake_policy already encodes how much
+# to trust a market's live (not just backtest) edge. Was computed but never
+# consumed here — every market was staked at the same flat Kelly fraction.
+STAKE_POLICY_MULTIPLIER = {
+    "avoid_or_probe": 0.15,
+    "recovery_strict": 0.5,
+    "cap_stake": 0.5,
+}
+# home_win/draw/away_win have too few settled bets for clv_tracker.json to carry
+# a verdict at all (17/0/5 bets historically, ROI -31.65%/n.a./-69.8%). Cap their
+# stake until they build a real live track record instead of trusting the
+# offline quality_gate alone.
+UNCONFIRMED_MARKET_STAKE_CAP = 0.35
+MONEYLINE_MARKETS = {"home_win", "draw", "away_win"}
 
 try:
     from catboost import CatBoostClassifier, Pool
@@ -112,6 +136,49 @@ def save_json(path: Path, payload: Any):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
+
+
+def load_dynamic_edge_minimums() -> Dict[str, float]:
+    """Merge the hand-tuned EDGE_MIN_BY_MARKET floor with the backtest-validated
+    dynamic_thresholds in model_benchmarks.json (built by build_model_benchmarks.py
+    / patch_over15_recovery_probe.py). That file was being computed correctly but
+    never read here, so live betting used edge floors far below what the engine's
+    own bootstrap analysis says is required for a market to be profitable."""
+    effective = dict(EDGE_MIN_BY_MARKET)
+    payload = load_json(BENCHMARKS_PATH, {})
+    thresholds = payload.get("dynamic_thresholds", {}) if isinstance(payload, dict) else {}
+    if not isinstance(thresholds, dict):
+        return effective
+    for market, cfg in thresholds.items():
+        if not isinstance(cfg, dict) or market not in effective:
+            continue
+        if cfg.get("disabled"):
+            effective[market] = float("inf")
+            continue
+        min_edge = _f(cfg.get("min_edge"), 0.0)
+        if min_edge > 0:
+            effective[market] = max(effective[market], min_edge)
+    return effective
+
+
+def load_stake_multipliers() -> Dict[str, float]:
+    """Dampen Kelly stake for markets clv_tracker.json's market_actions flags as
+    not yet CLV-confirmed profitable. Also computed but never fed back into
+    staking — every market used the same flat KELLY_FRACTION regardless of
+    whether it has ever actually beaten the closing line."""
+    multipliers: Dict[str, float] = {}
+    payload = load_json(CLV_TRACKER_PATH, {})
+    actions = payload.get("market_actions", []) if isinstance(payload, dict) else []
+    if not isinstance(actions, list):
+        return multipliers
+    for entry in actions:
+        if not isinstance(entry, dict):
+            continue
+        market = entry.get("market")
+        policy = entry.get("stake_policy")
+        if market and policy in STAKE_POLICY_MULTIPLIER:
+            multipliers[market] = STAKE_POLICY_MULTIPLIER[policy]
+    return multipliers
 
 
 def write_skip(reason: str):
@@ -1473,6 +1540,9 @@ def main():
         feats_list.append(feats)
         pred_refs.append(pred)
 
+    effective_edge_min = load_dynamic_edge_minimums()
+    stake_multipliers = load_stake_multipliers()
+
     signals = []
     for market_key, info in TARGETS.items():
         model_path = MODELS_DIR / f"catboost_{market_key}.cbm"
@@ -1507,12 +1577,15 @@ def main():
             if final_p < PROB_MIN_BY_MARKET.get(market_key, 0.48):
                 continue
             edge_pp = round((final_p - nv_p) * 100.0, 3)
-            if edge_pp < EDGE_MIN_BY_MARKET.get(market_key, 2.5):
+            if edge_pp < effective_edge_min.get(market_key, EDGE_MIN_BY_MARKET.get(market_key, 2.5)):
                 continue
             evp = ev_pct(final_p, odds)
             if evp is None or evp < EV_MIN_BY_MARKET.get(market_key, 0.0):
                 continue
-            kelly_pct = kelly(final_p, odds)
+            stake_mult = stake_multipliers.get(market_key, 1.0)
+            if market_key in MONEYLINE_MARKETS:
+                stake_mult = min(stake_mult, UNCONFIRMED_MARKET_STAKE_CAP)
+            kelly_pct = kelly(final_p, odds, fraction=KELLY_FRACTION * stake_mult)
             if kelly_pct <= 0:
                 continue
 

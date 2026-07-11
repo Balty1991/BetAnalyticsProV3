@@ -495,6 +495,13 @@
           } catch (e) {}
           var edgeCls  = edgePct >= 5 ? 'vd-edge-good' : edgePct >= 0 ? 'vd-edge-ok' : 'vd-edge-warn';
           var scoreCol = score >= 85 ? 'var(--vd-teal)' : score >= 68 ? 'var(--vd-blue)' : 'var(--vd-amber)';
+          var agr      = bet.ml5Agreement;
+          var agrPill  = '';
+          if (typeof agr === 'number' && isFinite(agr)) {
+            var agrPct = Math.round(agr * 100);
+            var agrCls = agr >= 0.75 ? 'vd-edge-good' : agr >= 0.5 ? 'vd-edge-ok' : 'vd-edge-warn';
+            agrPill = '<span class="' + agrCls + '" title="Cât de mult sunt de acord sursele de semnal (ML5 + piață)">Consens ' + agrPct + '%</span>';
+          }
           return (
             '<button class="vd-opp-card" style="border-left:3px solid ' + scoreCol + '" onclick="switchTab(\'meciuri\')">' +
               '<div class="vd-opp-hd">' +
@@ -511,28 +518,28 @@
               '<div class="vd-opp-pills">' +
                 (probStr ? '<span class="vd-pill-neutral">Prob ' + probStr + '</span>' : '') +
                 '<span class="' + edgeCls + '">Edge ' + (edgePct >= 0 ? '+' : '') + edgePct.toFixed(1) + 'pp</span>' +
+                agrPill +
               '</div>' +
             '</button>'
           );
         }).join('');
 
-    /* Performance */
-    var perfHtml = '';
-    if (m.closedBets > 0 || sparkSvg) {
-      perfHtml =
-        '<div class="vd-perf">' +
-          '<div class="vd-perf-hd">' +
-            '<div class="vd-sec-title">Performanță · ' + m.closedBets + ' closed</div>' +
-            (m.closedBets > 0 ? '<span class="vd-perf-roi" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</span>' : '') +
-          '</div>' +
-          (sparkSvg ? '<div class="vd-spark">' + sparkSvg + '</div>' : '') +
-          '<div class="vd-perf-row">' +
-            '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</div><div class="vd-ps-l">ROI</div></div>' +
-            '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (wrCol  || 'inherit') + '">' + wrStr  + '</div><div class="vd-ps-l">Win Rate</div></div>' +
-            '<div class="vd-ps"><div class="vd-ps-v">' + m.wins + '/' + m.closedBets + '</div><div class="vd-ps-l">W/Total</div></div>' +
-          '</div>' +
-        '</div>';
-    }
+    /* Performance — trust anchor, shown right after hero */
+    var perfHtml =
+      '<div class="vd-perf vd-perf-trust">' +
+        '<div class="vd-perf-hd">' +
+          '<div class="vd-sec-title">📊 Rezultate reale · ' + m.closedBets + ' închise</div>' +
+          (m.closedBets > 0 ? '<span class="vd-perf-roi" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</span>' : '') +
+        '</div>' +
+        (sparkSvg ? '<div class="vd-spark">' + sparkSvg + '</div>' : '') +
+        (m.closedBets > 0
+          ? '<div class="vd-perf-row">' +
+              '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</div><div class="vd-ps-l">ROI</div></div>' +
+              '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (wrCol  || 'inherit') + '">' + wrStr  + '</div><div class="vd-ps-l">Win Rate</div></div>' +
+              '<div class="vd-ps"><div class="vd-ps-v">' + m.wins + '/' + m.closedBets + '</div><div class="vd-ps-l">W/Total</div></div>' +
+            '</div>'
+          : '<div class="vd-perf-empty">Niciun pariu închis încă — ROI și win rate apar aici după primele rezultate.</div>') +
+      '</div>';
 
     /* Market recommendation */
     var recoHtml = '';
@@ -582,6 +589,9 @@
         /* ── Motor status ── */
         (motorHtml ? '<div class="vd-ani" style="animation-delay:.10s">' + motorHtml + '</div>' : '') +
 
+        /* ── Performance — trust first: prove it works before selling the picks ── */
+        (perfHtml ? '<div class="vd-ani" style="animation-delay:.13s">' + perfHtml + '</div>' : '') +
+
         /* ── KPI strip ── */
         '<div class="vd-kpi vd-ani" style="animation-delay:.15s">' +
           '<div class="vd-kpi-card vd-kpi-accent">' +
@@ -601,6 +611,9 @@
           '</div>' +
         '</div>' +
 
+        /* ── Market signal ── */
+        (recoHtml ? '<div class="vd-ani" style="animation-delay:.18s">' + recoHtml + '</div>' : '') +
+
         /* ── Top picks ── */
         '<div class="vd-section vd-ani" style="animation-delay:.20s">' +
           '<div class="vd-sec-hd">' +
@@ -612,12 +625,6 @@
 
         /* ── Pyramid system ── */
         buildPyrSection() +
-
-        /* ── Performance ── */
-        (perfHtml ? '<div class="vd-ani" style="animation-delay:.30s">' + perfHtml + '</div>' : '') +
-
-        /* ── Market signal ── */
-        (recoHtml ? '<div class="vd-ani" style="animation-delay:.28s">' + recoHtml + '</div>' : '') +
 
         /* ── Quick nav ── */
         '<div class="vd-nav vd-ani" style="animation-delay:.32s">' +
