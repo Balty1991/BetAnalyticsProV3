@@ -473,6 +473,53 @@ def league_stats_from_items(items):
     }
 
 
+def build_season_standings(rows_sorted):
+    """
+    Clasament curent (puncte, GD, meciuri jucate, poziție) per echipă, scopat
+    pe season_id, calculat exclusiv din rezultate reale din warehouse — fără
+    apel extern la /standings/ (acela există doar pentru xGd și, la data
+    acestei implementări, întoarce mereu None în producție — vezi
+    fetch_standings_xgd_map în fetch_data.py). Nu are risc de leakage atâta
+    timp cât rows_sorted reprezintă meciuri deja disputate la momentul apelului
+    (adevărat pentru inferența live pe hist_rows_sorted din predict_current.py).
+    Returnează {season_id: {team_id: {points, played, gd, rank, teams_in_league}}}.
+    """
+    table = defaultdict(lambda: defaultdict(lambda: {"points": 0, "played": 0, "gf": 0, "ga": 0}))
+    for row in rows_sorted:
+        sid = row.get("season_id")
+        hid = row.get("home_team_id")
+        aid = row.get("away_team_id")
+        hs = row.get("home_score")
+        aws = row.get("away_score")
+        if sid is None or hid is None or aid is None or hs is None or aws is None:
+            continue
+        ht, at = table[sid][hid], table[sid][aid]
+        ht["played"] += 1; at["played"] += 1
+        ht["gf"] += hs; ht["ga"] += aws
+        at["gf"] += aws; at["ga"] += hs
+        if hs > aws:   ht["points"] += 3
+        elif hs == aws: ht["points"] += 1; at["points"] += 1
+        else:          at["points"] += 3
+
+    result = {}
+    for sid, teams in table.items():
+        ranked = sorted(teams.items(), key=lambda kv: (-kv[1]["points"], -(kv[1]["gf"] - kv[1]["ga"])))
+        n = len(ranked)
+        season_out = {}
+        for i, (tid, stats) in enumerate(ranked):
+            played = stats["played"]
+            season_out[tid] = {
+                "points": stats["points"],
+                "played": played,
+                "gd": stats["gf"] - stats["ga"],
+                "rank": i + 1,
+                "teams_in_league": n,
+                "ppg": round(stats["points"] / played, 3) if played else 0.0,
+            }
+        result[sid] = season_out
+    return result
+
+
 def build_league_baseline_snapshots(rows_sorted):
     """Baseline pre-match per ligă: doar meciuri anterioare evenimentului (fără leakage)."""
     per_league = defaultdict(list)

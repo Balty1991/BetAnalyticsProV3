@@ -254,9 +254,11 @@ def fetch_event_bundle(eid: str, token: str) -> Dict[str, Any]:
 
         # VENUE: stadion, suprafață (natural/artificial), capacitate, dimensiuni
         # Folosit în predict_current.py pentru venue_market_bonus() și risc context
-        venue_id = detail.get("venue_id") or detail.get("venue", {}) if isinstance(detail.get("venue"), dict) else None
-        if not venue_id and isinstance(detail.get("venue"), dict):
-            venue_id = detail["venue"].get("id")
+        venue_obj = detail.get("venue")
+        if isinstance(venue_obj, dict):
+            venue_id = venue_obj.get("id")
+        else:
+            venue_id = detail.get("venue_id")
         if venue_id:
             bundle["venue"] = safe_get(f"venues/{venue_id}/", token)
         else:

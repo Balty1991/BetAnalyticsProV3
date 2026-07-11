@@ -94,7 +94,7 @@ try:
     from feature_engineering import (
         load_warehouse, form_features, diff_features, h2h_features, xg_features,
         odds_features, context_features, stats_features, incidents_features, shotmap_features, player_stats_features,
-        build_league_baselines, elo_expected, _parse_dt, _f as fe_float,
+        build_league_baselines, build_season_standings, elo_expected, _parse_dt, _f as fe_float,
         poisson_over, poisson_under, poisson_btts, poisson_1x2,
         ELO_START, ELO_K,
     )
@@ -1024,6 +1024,45 @@ def team_form_bonus(row: Dict[str, Any], form_cache: Dict, market_key: str) -> f
     return round(clamp(bonus, -1.5, 1.5), 2)
 
 
+def standings_context_bonus(row: Dict[str, Any], standings_map: Dict[Any, Dict], market_key: str) -> float:
+    """
+    Bonus din poziția reală de clasament (puncte per meci, calculate din
+    rezultate — vezi build_season_standings() în feature_engineering.py).
+    Confirmă/contrazice favoritul din piață pe baza formei de sezon întreg,
+    nu doar ultimele 5 meciuri (team_form_bonus). Nu depinde de niciun API
+    extern, deci nu are riscul de fetch care afectează venue/xGd.
+    """
+    if not standings_map:
+        return 0.0
+    sid = row.get("season_id")
+    season = standings_map.get(sid) if sid is not None else None
+    if not season:
+        return 0.0
+    hid = row.get("home_team_id")
+    aid = row.get("away_team_id")
+    h = season.get(hid) if hid is not None else None
+    a = season.get(aid) if aid is not None else None
+    if not h or not a or h.get("played", 0) < 5 or a.get("played", 0) < 5:
+        return 0.0  # eșantion insuficient în sezonul curent — nu forțăm un semnal
+
+    ppg_diff = _f(h.get("ppg")) - _f(a.get("ppg"))
+    bonus = 0.0
+    if market_key == "homeWin":
+        if ppg_diff >= 1.0:    bonus += 0.50
+        elif ppg_diff >= 0.6:  bonus += 0.25
+        elif ppg_diff <= -1.0: bonus -= 0.40
+        elif ppg_diff <= -0.6: bonus -= 0.20
+    elif market_key == "awayWin":
+        if ppg_diff <= -1.0:   bonus += 0.50
+        elif ppg_diff <= -0.6: bonus += 0.25
+        elif ppg_diff >= 1.0:  bonus -= 0.40
+        elif ppg_diff >= 0.6:  bonus -= 0.20
+    elif market_key == "draw":
+        if abs(ppg_diff) <= 0.15:
+            bonus += 0.20
+    return round(clamp(bonus, -1.5, 1.5), 2)
+
+
 def market_intel_bonus(odds_meta: Dict[str, Any]) -> float:
     if not isinstance(odds_meta, dict):
         return 0.0
@@ -1497,6 +1536,7 @@ def main():
     hist_rows = load_warehouse()
     hist_rows_sorted = sorted(hist_rows, key=lambda r: str(r.get("date") or r.get("event_date") or ""))
     league_baselines = build_league_baselines(hist_rows_sorted) if hist_rows_sorted else (load_json(DATA_DIR / "league_baselines_v2.json", {}) or {})
+    standings_map = build_season_standings(hist_rows_sorted) if hist_rows_sorted else {}
     team_index, pair_rows = build_history_indexes(hist_rows_sorted)
     stats_cache = load_json(DATA_DIR / "stats_cache.json", {}) or {}
     incidents_cache = load_json(DATA_DIR / "incidents_cache.json", {}) or {}
@@ -1603,6 +1643,7 @@ def main():
             v2_ml_prob_val  = _extract_v2_ml_prob(bundle, market_key) if isinstance(bundle, dict) else None
             tactical_bonus_val = tactical_match_bonus(row, market_key)
             form_bonus_val     = team_form_bonus(row, _team_form, market_key)
+            standings_bonus_val = standings_context_bonus(row, standings_map, market_key)
             market_bonus = market_intel_bonus(odds_meta)
             stats_bonus = stats_context_bonus(feat, market_key)
             player_bonus = player_context_bonus(feat, market_key)
@@ -1616,7 +1657,8 @@ def main():
                          - news_risk    * 0.10)
                 + market_bonus + stats_bonus + player_bonus
                 + venue_bonus_val + lq_bonus_val
-                + tactical_bonus_val + form_bonus_val,
+                + tactical_bonus_val + form_bonus_val
+                + standings_bonus_val,
                 0.0, 100.0
             ), 1)
             # Gating suplimentar: nu ridicăm semnale premium când datele sunt subțiri, contextul e riscant sau modelele nu se confirmă.
