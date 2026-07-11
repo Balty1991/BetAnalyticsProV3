@@ -593,6 +593,18 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-sans);min-heig
 }
 /* The ::before pseudo is a grid item too — span full width */
 .mobile-sheet::before{ grid-column:1/-1; }
+.sheet-group-title{
+  grid-column:1/-1;
+  font-size:10.5px;
+  font-weight:800;
+  color:var(--acc);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin:12px 0 -2px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+.sheet-group-title:first-of-type{ margin-top:0; padding-top:0; border-top:none; }
 .mobile-sheet-btn{
   width:100%;
   padding:13px 12px 11px;
@@ -744,6 +756,8 @@ body.more-open{overflow:hidden}
 .desktop-more-title{font-size:15px;font-weight:800;color:var(--txt)}
 .desktop-more-sub{font-size:11px;color:var(--muted);line-height:1.55;max-width:720px;margin-top:4px}
 .more-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.more-group-title{grid-column:1/-1;font-size:11px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 -2px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}
+.more-group-title:first-child{margin-top:0;padding-top:0;border-top:none}
 .more-card-btn{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(20,30,55,.92),rgba(13,20,36,.96));color:var(--txt);text-align:left;display:flex;flex-direction:column;gap:6px;box-shadow:0 10px 24px rgba(0,0,0,.16)}
 .more-card-btn:hover{border-color:rgba(84,119,255,.22);transform:translateY(-1px)}
 .more-card-title{font-size:13px;font-weight:800;color:var(--txt)}

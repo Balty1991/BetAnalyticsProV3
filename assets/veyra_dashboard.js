@@ -638,8 +638,8 @@
           '<button class="vd-nav-btn" onclick="switchTab(\'bilete\')">' +
             '<span class="vd-nav-icon">🎫</span><span class="vd-nav-lbl">Bilete</span>' +
           '</button>' +
-          '<button class="vd-nav-btn" onclick="switchTab(\'claudeai\')">' +
-            '<span class="vd-nav-icon">🧠</span><span class="vd-nav-lbl">AI Claude</span>' +
+          '<button class="vd-nav-btn" onclick="switchTab(\'ai\')">' +
+            '<span class="vd-nav-icon">🧠</span><span class="vd-nav-lbl">AI</span>' +
           '</button>' +
         '</div>' +
 
