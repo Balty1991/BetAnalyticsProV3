@@ -800,15 +800,16 @@ body.more-open{overflow:hidden}
 .ticket-mini-grid{gap:8px!important}
 .ticket-mini{padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
 .ticket-mini .v{font-size:16px!important}
-.match-card{padding:14px!important;border-radius:18px!important;display:grid;gap:10px}
+.match-card{padding:15px!important;border-radius:20px!important;display:grid;gap:10px;border-color:rgba(124,92,252,.14)!important;box-shadow:0 10px 30px rgba(0,0,0,.22)!important;transition:border-color .18s,box-shadow .18s,transform .18s}
+.match-card:hover{border-color:rgba(124,92,252,.32)!important;box-shadow:0 14px 38px rgba(0,0,0,.28),0 0 24px rgba(124,92,252,.10)!important}
 .mc-head{margin-bottom:0!important}
 .mc-teams-premium{margin:0!important}
 .mc-team-row span{font-size:15px;font-weight:800}
 .mc-vs{font-size:11px;letter-spacing:.1em;opacity:.72}
 .mc-midrow{margin:0!important;gap:8px!important}
-.card-reco-main{padding:12px!important;border-radius:14px!important;background:linear-gradient(180deg,rgba(59,130,246,.08),rgba(168,85,247,.05));border:1px solid rgba(84,119,255,.16)}
-.card-reco-title{font-size:10px!important;letter-spacing:.08em;text-transform:uppercase}
-.card-reco-pick{font-size:17px!important;line-height:1.3}
+.card-reco-main{padding:13px 14px!important;border-radius:16px!important;background:linear-gradient(135deg,rgba(124,92,252,.12),rgba(75,131,240,.05));border:1px solid rgba(124,92,252,.24)!important;box-shadow:0 0 0 1px rgba(124,92,252,.05) inset!important;position:relative}
+.card-reco-title{font-size:10px!important;letter-spacing:.08em;text-transform:uppercase;color:var(--acc)!important;font-weight:800!important}
+.card-reco-pick{font-size:18px!important;line-height:1.3;font-weight:800!important}
 .card-reco-badges{gap:6px!important}
 .card-reco-badge{font-size:10px!important;padding:4px 8px!important}
 .match-why{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:11px;color:var(--txt);line-height:1.55}
