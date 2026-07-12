@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-07-12T06:21:27.453211",
+  "updated_at": "2026-07-12T16:18:31.793977",
   "source": "baseline_league_rates",
   "note": "Validare pe probabilități baseline (rate ligă). Rulați ml_pipeline_full.yml pentru WFV CatBoost complet.",
-  "n_rows": 8575,
+  "n_rows": 8587,
   "n_folds": 1,
   "global_score": 79.4,
   "global_grade": "B",
@@ -11,19 +11,19 @@
       "market": "home_win",
       "label": "Victorie gazdă",
       "folds": 1,
-      "avg_brier": 0.2414,
-      "avg_log_loss": 0.6751,
-      "avg_ece": 0.0046,
+      "avg_brier": 0.2413,
+      "avg_log_loss": 0.675,
+      "avg_ece": 0.0041,
       "avg_winrate": 0.4428,
-      "score": 77.5,
+      "score": 77.6,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
         {
           "n": 3112,
-          "brier": 0.2414,
-          "log_loss": 0.6751,
-          "ece": 0.0046,
+          "brier": 0.2413,
+          "log_loss": 0.675,
+          "ece": 0.0041,
           "winrate": 0.4428
         }
       ]
@@ -32,9 +32,9 @@
       "market": "draw",
       "label": "Egal",
       "folds": 1,
-      "avg_brier": 0.1899,
-      "avg_log_loss": 0.5669,
-      "avg_ece": 0.0075,
+      "avg_brier": 0.1898,
+      "avg_log_loss": 0.5666,
+      "avg_ece": 0.0074,
       "avg_winrate": 0.2587,
       "score": 81.5,
       "grade": "B",
@@ -42,9 +42,9 @@
       "fold_details": [
         {
           "n": 3112,
-          "brier": 0.1899,
-          "log_loss": 0.5669,
-          "ece": 0.0075,
+          "brier": 0.1898,
+          "log_loss": 0.5666,
+          "ece": 0.0074,
           "winrate": 0.2587
         }
       ]
@@ -54,8 +54,8 @@
       "label": "Victorie oaspete",
       "folds": 1,
       "avg_brier": 0.2027,
-      "avg_log_loss": 0.5931,
-      "avg_ece": 0.0077,
+      "avg_log_loss": 0.5932,
+      "avg_ece": 0.0079,
       "avg_winrate": 0.2985,
       "score": 80.3,
       "grade": "B",
@@ -64,8 +64,8 @@
         {
           "n": 3112,
           "brier": 0.2027,
-          "log_loss": 0.5931,
-          "ece": 0.0077,
+          "log_loss": 0.5932,
+          "ece": 0.0079,
           "winrate": 0.2985
         }
       ]
@@ -74,19 +74,19 @@
       "market": "over25",
       "label": "Peste 2.5G",
       "folds": 1,
-      "avg_brier": 0.241,
-      "avg_log_loss": 0.6746,
-      "avg_ece": 0.0019,
+      "avg_brier": 0.2408,
+      "avg_log_loss": 0.6742,
+      "avg_ece": 0.0025,
       "avg_winrate": 0.5087,
-      "score": 78.1,
+      "score": 78.0,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
         {
           "n": 3112,
-          "brier": 0.241,
-          "log_loss": 0.6746,
-          "ece": 0.0019,
+          "brier": 0.2408,
+          "log_loss": 0.6742,
+          "ece": 0.0025,
           "winrate": 0.5087
         }
       ]
@@ -116,20 +116,20 @@
       "market": "btts",
       "label": "Ambele marchează",
       "folds": 1,
-      "avg_brier": 0.2462,
-      "avg_log_loss": 0.6854,
-      "avg_ece": 0.0111,
-      "avg_winrate": 0.5219,
-      "score": 75.7,
+      "avg_brier": 0.246,
+      "avg_log_loss": 0.6851,
+      "avg_ece": 0.0106,
+      "avg_winrate": 0.5228,
+      "score": 75.8,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
         {
           "n": 3112,
-          "brier": 0.2462,
-          "log_loss": 0.6854,
-          "ece": 0.0111,
-          "winrate": 0.5219
+          "brier": 0.246,
+          "log_loss": 0.6851,
+          "ece": 0.0106,
+          "winrate": 0.5228
         }
       ]
     },
@@ -138,18 +138,18 @@
       "label": "Peste 1.5G",
       "folds": 1,
       "avg_brier": 0.1861,
-      "avg_log_loss": 0.5572,
-      "avg_ece": 0.0074,
+      "avg_log_loss": 0.557,
+      "avg_ece": 0.0069,
       "avg_winrate": 0.7436,
-      "score": 81.8,
+      "score": 81.9,
       "grade": "B",
       "trend": "stabil",
       "fold_details": [
         {
           "n": 3112,
           "brier": 0.1861,
-          "log_loss": 0.5572,
-          "ece": 0.0074,
+          "log_loss": 0.557,
+          "ece": 0.0069,
           "winrate": 0.7436
         }
       ]
