@@ -179,6 +179,13 @@
       if (typeof window.passesSelectionFilter === 'function') return window.passesSelectionFilter(m);
       return m.analysisState === 'ELIGIBLE' && m.bestBet;
     });
+    /* "Ce pariez azi" means today — was pulling the top-N eligible picks
+       across every day in the feed, so a match at 01:00 tomorrow could
+       outrank one at 18:00 today just by score. Filter to today first. */
+    var today = eligible.filter(function (m) {
+      return isSameLocalDay(m.event_date || m.eventDate || m.date);
+    });
+    eligible = today.length ? today : eligible;
     eligible.sort(function (a, b) {
       return safeNum(b.smartScore || (b.bestBet || {}).adjProb || 0) -
              safeNum(a.smartScore || (a.bestBet || {}).adjProb || 0);
