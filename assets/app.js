@@ -9614,7 +9614,7 @@ function selectDiversifiedPicks(candidates, profile){
   return { picks: picks, totalOdds: totalOdds };
 }
 
-function finalizeTicket(type, label, picks, totalOdds){
+function finalizeTicket(type, label, picks, totalOdds, targetContainerId){
   if(!picks || !picks.length){
     BILETE = {
       picks: [],
@@ -9622,7 +9622,7 @@ function finalizeTicket(type, label, picks, totalOdds){
       generatedAt: new Date().toISOString(),
       error: 'Nu exista selectie EV+ suficient de buna pentru acest tip de bilet.'
     };
-    renderBilete();
+    renderBilete(targetContainerId);
     toast('Nu exista selectie EV+ suficient de buna', 'warn');
     return;
   }
@@ -9657,7 +9657,7 @@ function finalizeTicket(type, label, picks, totalOdds){
     stakePct: getStakePctForTicket(type)
   };
 
-  renderBilete();
+  renderBilete(targetContainerId);
   toast(label + ' generat!', 'ok');
 }
 
@@ -10751,7 +10751,7 @@ function getUpcomingScopedMatches(scope){
   });
 }
 
-function generateUpcomingTicket(genKey, scope){
+function generateUpcomingTicket(genKey, scope, targetContainerId){
   var prof = UPCOMING_TICKET_PROFILES[genKey];
   if (!prof) return;
   var pool = getUpcomingScopedMatches(scope);
@@ -10762,20 +10762,21 @@ function generateUpcomingTicket(genKey, scope){
     var pack = collectCandidates(prof.allowedTypes, prof, relax, pool);
     var chosen = selectDiversifiedPicks(pack.list, pack.profile);
     if (chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds) {
-      finalizeTicket(prof.type, prof.label + scopeSuffix, chosen.picks, chosen.totalOdds);
+      finalizeTicket(prof.type, prof.label + scopeSuffix, chosen.picks, chosen.totalOdds, targetContainerId);
       return;
     }
   }
   var pack4 = collectCandidates(prof.allowedTypes, prof, 3, pool);
   var chosen4 = selectDiversifiedPicks(pack4.list, pack4.profile);
   if (!chosen4.picks.length) {
-    finalizeTicket(prof.type, prof.label + scopeSuffix, [], 1);
+    finalizeTicket(prof.type, prof.label + scopeSuffix, [], 1, targetContainerId);
     toast('Niciun meci din Evenimente Viitoare (' + (scope === 'today' ? 'azi' : 'toate zilele') + ') nu se potrivește acestui bilet', 'warn');
     return;
   }
-  finalizeTicket(prof.type, prof.label + scopeSuffix + ' (parțial)', chosen4.picks, chosen4.totalOdds);
+  finalizeTicket(prof.type, prof.label + scopeSuffix + ' (parțial)', chosen4.picks, chosen4.totalOdds, targetContainerId);
 }
 window.generateUpcomingTicket = generateUpcomingTicket;
+window.renderBilete = renderBilete;
 
 
 function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
@@ -13993,8 +13994,8 @@ function getPresetTicketCards(){
   else if(presets[0]) presets[0].recommended = true;
   return presets;
 }
-function renderBilete(){
-  var container = $('bilete-container');
+function renderBilete(targetId){
+  var container = $(targetId || 'bilete-container');
   if(!container) return;
 
   // Weekday restrictions banner
