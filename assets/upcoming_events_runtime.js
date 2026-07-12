@@ -611,11 +611,19 @@
     var edgeBtnStyle = _filterEdge
       ? btnBase + 'rgba(34,197,94,.4);background:rgba(34,197,94,.15);color:#22c55e'
       : btnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
+    /* Count matches with a real edge today, so pressing the filter always
+       visibly changes something — even just the button label — instead of
+       silently doing nothing when there's nothing to filter. */
+    var edgeCountToday = (byDate[_activeDate] || []).filter(function(e){
+      var pr = predLookup[String(e.id)];
+      return pr && pr.risk_tier && pr.risk_tier !== 'Avoid';
+    }).length;
     html += '<div style="display:flex;gap:4px;padding:10px 14px 4px">'
       + '<button onclick="window.__veyraUpcView(\'matches\')" style="' + (_activeView==='matches'?actStyle:inactStyle) + '">📅 Meciuri</button>'
       + '<button onclick="window.__veyraUpcView(\'picks\')" style="' + (_activeView==='picks'?actStyle:inactStyle) + '">'
       + '📌 Picks' + (picksCount>0?' ('+picksCount+')':'') + '</button>'
-      + '<button onclick="window.__veyraUpcToggleEdge()" style="' + edgeBtnStyle + '" title="Afișează doar meciuri cu edge pozitiv">⚡</button>'
+      + '<button onclick="window.__veyraUpcToggleEdge()" style="' + edgeBtnStyle + '" title="Afișează doar meciuri cu edge pozitiv">'
+      + '⚡ Edge+' + (edgeCountToday > 0 ? ' (' + edgeCountToday + ')' : '') + '</button>'
       + '</div>';
 
     if (_activeView === 'matches') {
@@ -1038,7 +1046,14 @@
   }
 
   /* ── Global handlers ────────────────────────────────────────────────── */
-  window.__veyraUpcToggleEdge = function() { _filterEdge = !_filterEdge; renderUpcomingTab(); };
+  window.__veyraUpcToggleEdge = function() {
+    _filterEdge = !_filterEdge;
+    /* Filtrul se aplică doar în vederea Meciuri — dacă utilizatorul apasă din
+       Picks, butonul părea "stricat" (niciun efect vizibil). Comutăm automat
+       pe Meciuri, ca apăsarea să facă mereu ceva vizibil. */
+    if (_activeView !== 'matches') _activeView = 'matches';
+    renderUpcomingTab();
+  };
   window.__veyraUpcSetDate = function(d) { _activeDate=d; _activeView='matches'; renderUpcomingTab(); };
   window.__veyraUpcomingSetDate = window.__veyraUpcSetDate; // backward compat
 
