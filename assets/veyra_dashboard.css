@@ -710,3 +710,142 @@ body.theme-light .vd-motor {
   flex: 2;
 }
 .vd-pyr-place:hover { background: rgba(75,131,240,.22); box-shadow: 0 4px 14px rgba(75,131,240,.22); transform: translateY(-1px); }
+
+/* ═══════════ "CE PARIEZ AZI" — TICKET LIST ═══════════
+   Boarding-pass metaphor: match info on the left, a dashed perforation,
+   a stub on the right with the two numbers that actually matter —
+   one confidence score, one RON stake. Vertical list, not a carousel:
+   this is meant to be scanned top-to-bottom like a real ticket queue. */
+.vd-ticket-list { display: flex; flex-direction: column; gap: 10px; }
+
+.vd-ticket {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: linear-gradient(165deg, rgba(124,92,252,.05), rgba(255,255,255,.02));
+  border: 1px solid rgba(124,92,252,.16);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+  transition: border-color .18s, box-shadow .18s, transform .18s;
+  position: relative;
+}
+.vd-ticket:hover {
+  border-color: rgba(124,92,252,.36);
+  box-shadow: 0 12px 30px rgba(0,0,0,.24), 0 0 20px rgba(124,92,252,.10);
+  transform: translateY(-1px);
+}
+
+.vd-ticket-main {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.vd-ticket-top {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 9.5px; font-family: var(--mono, ui-monospace, monospace); color: var(--vd-muted);
+}
+.vd-ticket-rank { color: var(--vd-teal); font-weight: 800; }
+.vd-ticket-teams {
+  font-size: 14px; font-weight: 800; color: var(--vd-txt);
+  line-height: 1.3; overflow-wrap: break-word;
+}
+.vd-ticket-pick {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 12.5px; font-weight: 700; color: var(--vd-txt);
+}
+.vd-ticket-odds {
+  font-size: 12.5px; font-weight: 900; color: var(--vd-teal);
+  font-family: var(--mono, ui-monospace, monospace);
+}
+.vd-ticket-why {
+  font-size: 10.5px; color: var(--vd-muted); line-height: 1.5;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Perforation: dashed line + two notches cut into the page background */
+.vd-ticket-divider {
+  position: relative;
+  width: 0;
+  border-left: 2px dashed rgba(124,92,252,.28);
+  margin: 8px 0;
+  flex-shrink: 0;
+}
+.vd-ticket-divider::before,
+.vd-ticket-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  width: 14px; height: 14px;
+  background: var(--bg);
+  border-radius: 50%;
+}
+.vd-ticket-divider::before { top: -15px; }
+.vd-ticket-divider::after  { bottom: -15px; }
+
+.vd-ticket-stub {
+  flex-shrink: 0;
+  width: 92px;
+  padding: 13px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(124,92,252,.04);
+}
+.vd-ticket-conf, .vd-ticket-stake {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.vd-ticket-conf-v {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 22px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.vd-ticket-conf-l, .vd-ticket-stake-l {
+  font-size: 8px; color: var(--vd-muted); text-transform: uppercase; letter-spacing: .06em;
+}
+.vd-ticket-stake-v {
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 13px; font-weight: 800; color: var(--vd-txt); line-height: 1;
+}
+
+.vd-tix-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 28px 20px; text-align: center;
+  background: rgba(124,92,252,.03);
+  border: 1px dashed rgba(124,92,252,.18);
+  border-radius: 16px;
+}
+
+/* Bankroll control inside the trust card */
+.vd-bankroll-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--vd-border);
+}
+.vd-bankroll-lbl { font-size: 10.5px; color: var(--vd-muted); }
+.vd-bankroll-input-wrap {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.05); border: 1px solid var(--vd-border);
+  border-radius: 10px; padding: 4px 8px; flex-shrink: 0;
+}
+.vd-bankroll-input {
+  width: 64px; border: none; background: none; color: var(--vd-txt);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12px; font-weight: 700; text-align: right;
+}
+.vd-bankroll-input:focus { outline: none; }
+.vd-bankroll-unit { font-size: 10px; color: var(--vd-muted); }
+
+@media (max-width: 360px) {
+  .vd-ticket-stub  { width: 78px; padding: 11px 7px; }
+  .vd-ticket-conf-v { font-size: 19px; }
+  .vd-ticket-stake-v { font-size: 11.5px; }
+  .vd-ticket-teams { font-size: 13px; }
+}
