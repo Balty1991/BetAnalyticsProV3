@@ -3745,12 +3745,13 @@ function calcSmartScoreML5(adjProb, value, confidence, edgePct, factors, agreeme
 }
 
 // --- KELLY ¼ CU CAP 4% ---
-function calcKellyML5(prob, odds, bankrollPct){
+function calcKellyML5(prob, odds, bankrollPct, marketKey){
   var p = Number(prob || 0) / 100;
   var o = Number(odds || 0);
   if(p <= 0 || o <= 1.01) return 0;
   var kelly = (p * (o - 1) - (1 - p)) / (o - 1);
-  var quarter = kelly / 4;
+  var frac = (typeof stakePolicyMultiplier === 'function' && marketKey) ? stakePolicyMultiplier(marketKey) : 1.0;
+  var quarter = kelly / 4 * frac;
   return Math.max(0, Math.min(4, +quarter.toFixed(2))); // cap 4%
 }
 
@@ -3765,7 +3766,7 @@ function applyEnrichmentToMatch(m, raw, enrichedDetail){
     var ml5   = calcFinalProbML5(bet.prob, enrichedDetail, bet.type, noVig);
     var newAdj= ml5.finalProb;
     var newSc = calcSmartScoreML5(newAdj, bet.value, m.confidence, bet.edgePct, ml5.factors, ml5.agreementScore);
-    var newKelly = calcKellyML5(newAdj, bet.odds, null);
+    var newKelly = calcKellyML5(newAdj, bet.odds, null, bet.type);
 
     return Object.assign({}, bet, {
       adjProb      : newAdj,
@@ -5726,6 +5727,43 @@ function renderLearningEngine(){
 }
 
 
+// ─── Stake policy (mirrors predict_current.py's load_stake_multipliers /
+// UNCONFIRMED_MARKET_STAKE_CAP — see standings_context_bonus commit) ──────────
+// The client builds its own Kelly stake independently of predict_current.py's
+// output (analyzeMatch/BET_TYPES read predictions.json, not ev_signals_v2.json),
+// so it was always using a flat 0.25 fraction with no awareness that
+// data/clv_tracker.json flags btts/under35 as RECALIBRARE_NECESARA (CLV-
+// negative, ROI-negative) or that moneylines have too few settled bets to be
+// CLV-confirmed. Same policy, same numbers, applied here too.
+var STAKE_POLICY_MULTIPLIER = { avoid_or_probe: 0.15, recovery_strict: 0.5, cap_stake: 0.5 };
+var UNCONFIRMED_MARKET_STAKE_CAP = 0.35;
+var MONEYLINE_CLIENT_KEYS = { homeWin: 1, draw: 1, awayWin: 1 };
+// client camelCase key -> server snake_case key used in clv_tracker.json market_actions
+var CLIENT_TO_SERVER_MARKET_KEY = { over15: 'over15', over25: 'over25', under35: 'under35', btts: 'btts', homeWin: 'home_win', draw: 'draw', awayWin: 'away_win' };
+var _STAKE_POLICY_CACHE = null;
+function getStakePolicyMap(){
+  if(_STAKE_POLICY_CACHE) return _STAKE_POLICY_CACHE;
+  var map = {};
+  try{
+    var actions = (window.CLV_TRACKER && window.CLV_TRACKER.market_actions) || [];
+    actions.forEach(function(a){
+      if(a && a.market && STAKE_POLICY_MULTIPLIER[a.stake_policy] != null){
+        map[a.market] = STAKE_POLICY_MULTIPLIER[a.stake_policy];
+      }
+    });
+  }catch(e){}
+  _STAKE_POLICY_CACHE = map;
+  return map;
+}
+function stakePolicyMultiplier(clientMarketKey){
+  var serverKey = CLIENT_TO_SERVER_MARKET_KEY[clientMarketKey];
+  if(!serverKey) return 1.0;
+  var mult = getStakePolicyMap()[serverKey];
+  if(mult == null) mult = 1.0;
+  if(MONEYLINE_CLIENT_KEYS[clientMarketKey]) mult = Math.min(mult, UNCONFIRMED_MARKET_STAKE_CAP);
+  return mult;
+}
+
 function analyzeMatch(raw){
   var e = raw.event || {};
   var conf = normalizeConfidence(raw.confidence != null ? raw.confidence : raw.favorite_prob);
@@ -5787,12 +5825,13 @@ function analyzeMatch(raw){
       verdict: verdict,
       marketProb: marketProb,
       edgePct: edgePct,
-      kellyPct: (function(p, o){
+      kellyPct: (function(p, o, marketKey){
         if(!p || !o || o < 1.01) return 0;
         var b2 = o - 1, pf = p / 100;
         var k = (pf * b2 - (1 - pf)) / b2;
-        return +Math.max(0, Math.min(k * 0.25, 0.04) * 100).toFixed(3);
-      })(adjProb, odds),
+        var frac = 0.25 * stakePolicyMultiplier(marketKey);
+        return +Math.max(0, Math.min(k * frac, 0.04) * 100).toFixed(3);
+      })(adjProb, odds, bt.key),
       sourceApi: apiRecommendForRaw(raw, bt.key),
       sourceHeuristic: heuristicRecommendForRaw(raw, bt.key),
       probabilityEngine: (probMeta && probMeta.poissonProb != null) ? 'hybrid' : 'api',
@@ -6579,7 +6618,8 @@ function doRefresh(isManual){
     fetch9('/data/model_benchmarks.json', {}),
     fetch9('/data/claude_daily_analysis.json', {}),
     fetch9('/data/ai_predictions_tracking.json', {}),
-    fetch9('/data/ai_match_engine.json', {})
+    fetch9('/data/ai_match_engine.json', {}),
+    fetch9('/data/clv_tracker.json', {})
   ]).then(function(results){
     var predData = results[0];
     var meta = results[1];
@@ -6592,6 +6632,8 @@ function doRefresh(isManual){
     var enrichedFile = results[8] || {};
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
+    window.CLV_TRACKER = results[14] || {};
+    _STAKE_POLICY_CACHE = null;
     (function(){
       var _todayKey='veyra_claude_daily_'+new Date().toISOString().slice(0,10);
       var _fresh=results[11]||{};
