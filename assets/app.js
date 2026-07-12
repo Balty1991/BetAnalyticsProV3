@@ -9655,7 +9655,15 @@ function selectDiversifiedPicks(candidates, profile){
    cota țintă se atinge prin volum (adunăm cât mai multe selecții sigure,
    sortate după probabilitate, până la 30 de meciuri dacă e nevoie), nu
    prin compromis pe calitate. Exact cerința: "combină predicții cât mai
-   sigure, chiar dacă adunăm 20-30 evenimente pentru o cotă 1000". */
+   sigure, chiar dacă adunăm 20-30 evenimente pentru o cotă 1000".
+
+   Nivelul 1 (sigur) epuizează rapid pool-ul disponibil (verificat: doar
+   11-15 din ~300 meciuri trec de 55-60% probabilitate în orice zi dată).
+   Dacă tot nu ajunge la cotă, nivelul 2 (opt-in prin fallbackMinAdjProb)
+   continuă să adauge — tot sortat după probabilitate, deci cele mai bune
+   dintre cele slabe primele — dar clar separat: câte selecții au venit din
+   nivelul 2 se raportează în usedFallbackCount, ca UI-ul să poată eticheta
+   biletul cinstit ("+ extins"), nu să ascundă compromisul. */
 function buildSafeVolumeTicket(allowedTypes, matchPool, opts){
   opts = opts || {};
   var minAdjProb        = opts.minAdjProb != null ? opts.minAdjProb : 70;
@@ -9668,50 +9676,72 @@ function buildSafeVolumeTicket(allowedTypes, matchPool, opts){
   var minPicks           = opts.minPicks != null ? opts.minPicks : 1;
   var targetMinOdds      = opts.targetMinOdds || 100;
   var hardMaxOdds        = opts.hardMaxOdds || (targetMinOdds * 6);
+  var fallbackMinAdjProb = opts.fallbackMinAdjProb; // undefined = fără nivel 2
+  var fallbackMinAgreedModelProb = opts.fallbackMinAgreedModelProb != null ? opts.fallbackMinAgreedModelProb : minAgreedModelProb;
+  var fallbackMaxOdd     = opts.fallbackMaxOdd != null ? opts.fallbackMaxOdd : maxOdd;
 
-  var candidates = [];
-  (matchPool || []).forEach(function(m){
-    if(!passesSelectionFilter(m)) return;
-    var best = null;
-    allowedTypes.forEach(function(t){
-      if(!isAccumulatorAllowedMarket(t)) return;
-      var c = buildMarketCandidate(m, t);
-      if(!c || !c.bestBet) return;
-      if(Number(c.bestBet.adjProb || 0) < minAdjProb) return;
-      if(Number(c.bestBet.odds || 0) < minOdd || Number(c.bestBet.odds || 0) > maxOdd) return;
-      if(c.bestBet.probabilityEngine === 'hybrid' && c.bestBet.apiProb != null && c.bestBet.poissonProb != null){
-        if(Math.min(Number(c.bestBet.apiProb), Number(c.bestBet.poissonProb)) < minAgreedModelProb) return;
-      }
-      if(!best || (c.bestBet.adjProb || 0) > (best.bestBet.adjProb || 0)) best = c;
+  function gatherCandidates(pMinAdjProb, pMinAgreed, pMaxOdd, excludeEvents){
+    var out = [];
+    (matchPool || []).forEach(function(m){
+      if(!passesSelectionFilter(m)) return;
+      var evKey = getGenericEventKey(m);
+      if(excludeEvents && excludeEvents[evKey]) return;
+      var best = null;
+      allowedTypes.forEach(function(t){
+        if(!isAccumulatorAllowedMarket(t)) return;
+        var c = buildMarketCandidate(m, t);
+        if(!c || !c.bestBet) return;
+        if(Number(c.bestBet.adjProb || 0) < pMinAdjProb) return;
+        if(Number(c.bestBet.odds || 0) < minOdd || Number(c.bestBet.odds || 0) > pMaxOdd) return;
+        if(c.bestBet.probabilityEngine === 'hybrid' && c.bestBet.apiProb != null && c.bestBet.poissonProb != null){
+          if(Math.min(Number(c.bestBet.apiProb), Number(c.bestBet.poissonProb)) < pMinAgreed) return;
+        }
+        if(!best || (c.bestBet.adjProb || 0) > (best.bestBet.adjProb || 0)) best = c;
+      });
+      if(best) out.push(best);
     });
-    if(best) candidates.push(best);
-  });
-
-  candidates.sort(function(a, b){ return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0); });
-
-  var picks = [], totalOdds = 1, leagues = {}, markets = {}, events = {};
-  for(var i = 0; i < candidates.length; i++){
-    var c = candidates[i];
-    var evKey = getGenericEventKey(c);
-    if(events[evKey]) continue;
-    var lgCount = leagues[c.league] || 0;
-    var mkCount = markets[c.bestBet.type] || 0;
-    if(lgCount >= maxSameLeague) continue;
-    if(mkCount >= maxSameMarket) continue;
-    var nextOdds = totalOdds * c.bestBet.odds;
-    if(nextOdds > hardMaxOdds) continue;
-
-    picks.push(c);
-    totalOdds = nextOdds;
-    events[evKey] = true;
-    leagues[c.league] = lgCount + 1;
-    markets[c.bestBet.type] = mkCount + 1;
-
-    if(picks.length >= maxPicks) break;
-    if(totalOdds >= targetMinOdds && picks.length >= minPicks) break;
+    out.sort(function(a, b){ return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0); });
+    return out;
   }
 
-  return { picks: picks, totalOdds: totalOdds, reachedTarget: totalOdds >= targetMinOdds && picks.length >= minPicks };
+  function fillFrom(candidates, state){
+    for(var i = 0; i < candidates.length; i++){
+      var c = candidates[i];
+      var evKey = getGenericEventKey(c);
+      if(state.events[evKey]) continue;
+      var lgCount = state.leagues[c.league] || 0;
+      var mkCount = state.markets[c.bestBet.type] || 0;
+      if(lgCount >= maxSameLeague) continue;
+      if(mkCount >= maxSameMarket) continue;
+      var nextOdds = state.totalOdds * c.bestBet.odds;
+      if(nextOdds > hardMaxOdds) continue;
+
+      state.picks.push(c);
+      state.totalOdds = nextOdds;
+      state.events[evKey] = true;
+      state.leagues[c.league] = lgCount + 1;
+      state.markets[c.bestBet.type] = mkCount + 1;
+
+      if(state.picks.length >= maxPicks) break;
+      if(state.totalOdds >= targetMinOdds && state.picks.length >= minPicks) break;
+    }
+  }
+
+  var state = { picks: [], totalOdds: 1, leagues: {}, markets: {}, events: {} };
+  fillFrom(gatherCandidates(minAdjProb, minAgreedModelProb, maxOdd, null), state);
+  var tier1Count = state.picks.length;
+
+  if(fallbackMinAdjProb != null && !(state.totalOdds >= targetMinOdds && state.picks.length >= minPicks) && state.picks.length < maxPicks){
+    var fallbackCandidates = gatherCandidates(fallbackMinAdjProb, fallbackMinAgreedModelProb, fallbackMaxOdd, state.events);
+    fillFrom(fallbackCandidates, state);
+  }
+
+  return {
+    picks: state.picks,
+    totalOdds: state.totalOdds,
+    reachedTarget: state.totalOdds >= targetMinOdds && state.picks.length >= minPicks,
+    usedFallbackCount: state.picks.length - tier1Count
+  };
 }
 
 function finalizeTicket(type, label, picks, totalOdds, targetContainerId){
@@ -10773,9 +10803,18 @@ function generateBoomTicket(tier){
     maxPicks: isMega ? 30 : 18,
     minPicks: isMega ? 10 : 5,
     targetMinOdds: isMega ? 1000 : 100,
-    hardMaxOdds: isMega ? 6000 : 400
+    hardMaxOdds: isMega ? 6000 : 400,
+    /* Nivel 2, la cerere explicită: dacă tot nu ajunge la cotă doar din
+       selecții "sigure", continuă cu restul — tot cele mai bune disponibile,
+       nu oricare — dar cu prag mai jos. Etichetat separat mai jos, nu ascuns. */
+    fallbackMinAdjProb: 50,
+    fallbackMinAgreedModelProb: 50,
+    fallbackMaxOdd: 2.50
   });
-  finalizeTicket(type, result.reachedTarget ? label : label + ' (parțial)', result.picks, result.totalOdds);
+  var finalLabel = label;
+  if(result.usedFallbackCount > 0) finalLabel += ' + ' + result.usedFallbackCount + ' extinse';
+  if(!result.reachedTarget) finalLabel += ' (parțial)';
+  finalizeTicket(type, finalLabel, result.picks, result.totalOdds);
 }
 function generateBoom100Ticket(){ generateBoomTicket('100'); }
 function generateBoom1000Ticket(){ generateBoomTicket('1000'); }
@@ -10860,14 +10899,20 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
       maxPicks: isMega ? 30 : 18,
       minPicks: isMega ? 10 : 5,
       targetMinOdds: prof.targetMinOdds,
-      hardMaxOdds: isMega ? 6000 : 400
+      hardMaxOdds: isMega ? 6000 : 400,
+      fallbackMinAdjProb: 50,
+      fallbackMinAgreedModelProb: 50,
+      fallbackMaxOdd: 2.50
     });
     if (!result.picks.length) {
       finalizeTicket(prof.type, prof.label + scopeSuffix, [], 1, targetContainerId);
       toast('Niciun meci din Evenimente Viitoare (' + (scope === 'today' ? 'azi' : 'toate zilele') + ') nu trece pragul de siguranță pentru acest bilet', 'warn');
       return;
     }
-    finalizeTicket(prof.type, prof.label + scopeSuffix + (result.reachedTarget ? '' : ' (parțial)'), result.picks, result.totalOdds, targetContainerId);
+    var scopedLabel = prof.label + scopeSuffix;
+    if (result.usedFallbackCount > 0) scopedLabel += ' + ' + result.usedFallbackCount + ' extinse';
+    if (!result.reachedTarget) scopedLabel += ' (parțial)';
+    finalizeTicket(prof.type, scopedLabel, result.picks, result.totalOdds, targetContainerId);
     return;
   }
 
