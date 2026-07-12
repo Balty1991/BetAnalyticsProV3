@@ -10764,7 +10764,7 @@ function generateBoomTicket(tier){
   var label = isMega ? '💎 Boom 1000+' : '🎯 Boom 100+';
 
   var result = buildSafeVolumeTicket(allowedTypes, ALL_MATCHES, {
-    minAdjProb: 60,
+    minAdjProb: 55,
     minAgreedModelProb: 55,
     minOdd: 1.10,
     maxOdd: 2.20,
@@ -10851,7 +10851,7 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
   if (genKey === 'boom100' || genKey === 'boom1000') {
     var isMega = genKey === 'boom1000';
     var result = buildSafeVolumeTicket(prof.allowedTypes, pool, {
-      minAdjProb: 60,
+      minAdjProb: 55,
       minAgreedModelProb: 55,
       minOdd: 1.10,
       maxOdd: 2.20,
