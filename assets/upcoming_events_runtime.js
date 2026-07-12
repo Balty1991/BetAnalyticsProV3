@@ -1018,6 +1018,25 @@
       + '<button onclick="window.__veyraUpcSetTicketScope(\'all\')" style="' + (_ticketScope==='all'?scopeAct:scopeInact) + '">🌍 Toate zilele (' + totalUpcomingCount + ')</button>'
       + '</div>';
 
+    /* Acumulator AI — reutilizează analiza zilnică Gemini/Claude (Safe/Value
+       only, cote 1.10-2.00), nu motorul local de scor. E singurul buton de
+       aici care nu relaxează niciun prag ca să atingă o cotă — de-asta e
+       "precis", nu "mare". */
+    var aiInfo = (window.CLAUDE_DAILY && window.CLAUDE_DAILY.generated_at) ? window.CLAUDE_DAILY : null;
+    var aiFreshStr = '';
+    if (aiInfo && aiInfo.generated_at) {
+      try {
+        var _ad = new Date(aiInfo.generated_at);
+        aiFreshStr = _ad.toLocaleString('ro-RO', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      } catch (e) {}
+    }
+    html += '<button onclick="window.generateAiPreciseTicket(\'' + _ticketScope + '\',\'upc-bilete-result\')" '
+      + 'style="width:100%;padding:13px 10px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:10px;'
+      + 'border:1px solid rgba(34,197,94,.35);background:linear-gradient(135deg,rgba(34,197,94,.14),rgba(59,130,246,.10));color:#4ade80;text-align:left">'
+      + '🧠 Acumulator AI — cel mai precis<br>'
+      + '<small style="font-weight:600;opacity:.8;color:rgba(255,255,255,.55)">doar piețe Safe/Value, cote 1.10-2.00'
+      + (aiFreshStr ? ' · generat ' + aiFreshStr : '') + '</small></button>';
+
     var genBtnStyle = 'padding:12px 8px;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;border:1px solid ';
     function genBtn(key, label, colorBorder, colorBg, colorText) {
       return '<button onclick="window.generateUpcomingTicket(\'' + key + '\',\'' + _ticketScope + '\',\'upc-bilete-result\')" '
