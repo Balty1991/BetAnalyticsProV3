@@ -10870,6 +10870,7 @@ function generateAiPreciseTicket(scope, targetContainerId){
      exact ce a semnalat userul (Incheon United: confidence 35%, +22.7pp). */
   var AI_PRECISE_MIN_CONFIDENCE = 30;
   var AI_PRECISE_MAX_DIVERGENCE = 15;
+  var AI_PRECISE_MIN_PROB = 65;
   var norm = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); };
   var usedEvents = {};
   var picks = [];
@@ -10907,6 +10908,11 @@ function generateAiPreciseTicket(scope, targetContainerId){
       var divergence = Math.abs(Number(bet.apiProb) - Number(bet.poissonProb));
       if(divergence > AI_PRECISE_MAX_DIVERGENCE){ skippedLowQuality++; return; }
     }
+    /* Divergență mică nu înseamnă automat pick sigur — un 59% pe care API
+       și Poisson sunt de acord tot e un 59%. Pentru un bilet numit "cel
+       mai precis" cerem explicit o probabilitate finală (adjProb) decentă,
+       nu doar acord între modele. */
+    if(Number(bet.adjProb || 0) < AI_PRECISE_MIN_PROB){ skippedLowQuality++; return; }
 
     usedEvents[evKey] = true;
     picks.push(Object.assign({}, found, { bestBet: bet }));
@@ -10915,7 +10921,7 @@ function generateAiPreciseTicket(scope, targetContainerId){
   if(!picks.length){
     finalizeTicket('ai_precise', '🧠 AI Precis', [], 1, targetContainerId);
     toast(skippedLowQuality
-      ? 'Toate picks-urile AI din fereastra selectată au picat testul local de calitate (confidence/discrepanță model)'
+      ? 'Toate picks-urile AI din fereastra selectată au picat testul local de calitate (probabilitate/confidence/discrepanță model)'
       : 'Niciun pick din acumulatorul AI nu se regăsește în fereastra selectată (' + (scope==='today'?'azi':'toate zilele') + ')', 'warn');
     return;
   }
@@ -10923,7 +10929,7 @@ function generateAiPreciseTicket(scope, targetContainerId){
   var scopeSuffix = scope === 'today' ? '' : ' · toate zilele';
   finalizeTicket('ai_precise', '🧠 AI Precis' + scopeSuffix, picks, totalOdds, targetContainerId);
   if(skippedLowQuality){
-    toast(skippedLowQuality + ' pick' + (skippedLowQuality > 1 ? '-uri' : '') + ' AI exclus' + (skippedLowQuality > 1 ? 'e' : '') + ' local (confidence sub ' + AI_PRECISE_MIN_CONFIDENCE + '% sau discrepanță model mare)', 'warn');
+    toast(skippedLowQuality + ' pick' + (skippedLowQuality > 1 ? '-uri' : '') + ' AI exclus' + (skippedLowQuality > 1 ? 'e' : '') + ' local (probabilitate sub ' + AI_PRECISE_MIN_PROB + '%, confidence sub ' + AI_PRECISE_MIN_CONFIDENCE + '% sau discrepanță model mare)', 'warn');
   }
 }
 window.generateAiPreciseTicket = generateAiPreciseTicket;
