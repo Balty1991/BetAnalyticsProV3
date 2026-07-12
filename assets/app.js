@@ -10807,9 +10807,9 @@ function generateBoomTicket(tier){
     /* Nivel 2, la cerere explicită: dacă tot nu ajunge la cotă doar din
        selecții "sigure", continuă cu restul — tot cele mai bune disponibile,
        nu oricare — dar cu prag mai jos. Etichetat separat mai jos, nu ascuns. */
-    fallbackMinAdjProb: 50,
-    fallbackMinAgreedModelProb: 50,
-    fallbackMaxOdd: 2.50
+    fallbackMinAdjProb: 45,
+    fallbackMinAgreedModelProb: 40,
+    fallbackMaxOdd: 2.80
   });
   var finalLabel = label;
   if(result.usedFallbackCount > 0) finalLabel += ' + ' + result.usedFallbackCount + ' extinse';
@@ -10900,9 +10900,9 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
       minPicks: isMega ? 10 : 5,
       targetMinOdds: prof.targetMinOdds,
       hardMaxOdds: isMega ? 6000 : 400,
-      fallbackMinAdjProb: 50,
-      fallbackMinAgreedModelProb: 50,
-      fallbackMaxOdd: 2.50
+      fallbackMinAdjProb: 45,
+      fallbackMinAgreedModelProb: 40,
+      fallbackMaxOdd: 2.80
     });
     if (!result.picks.length) {
       finalizeTicket(prof.type, prof.label + scopeSuffix, [], 1, targetContainerId);
