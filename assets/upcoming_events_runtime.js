@@ -639,6 +639,12 @@
 
     html += '</div>';
     el.innerHTML = html;
+
+    /* Redau biletul deja generat (dacă există) în noul container, ca
+       toggle-ul de scope să nu-l facă să dispară de pe ecran. */
+    if (_activeView === 'tickets' && window.BILETE && typeof window.renderBilete === 'function') {
+      window.renderBilete('upc-bilete-result');
+    }
   }
 
   /* ── Matches view ──────────────────────────────────────────────────── */
@@ -1014,7 +1020,7 @@
 
     var genBtnStyle = 'padding:12px 8px;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;border:1px solid ';
     function genBtn(key, label, colorBorder, colorBg, colorText) {
-      return '<button onclick="window.generateUpcomingTicket(\'' + key + '\',\'' + _ticketScope + '\');window.switchTab(\'bilete\')" '
+      return '<button onclick="window.generateUpcomingTicket(\'' + key + '\',\'' + _ticketScope + '\',\'upc-bilete-result\')" '
         + 'style="' + genBtnStyle + colorBorder + ';background:' + colorBg + ';color:' + colorText + '">' + label + '</button>';
     }
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
@@ -1023,6 +1029,9 @@
       + genBtn('boom100',      '🎯 Boom 100+<br><small style="font-weight:600;opacity:.75">multe evenimente</small>', 'rgba(124,92,252,.30)', 'rgba(124,92,252,.10)', '#c4b5fd')
       + genBtn('boom1000',     '💎 Boom 1000+<br><small style="font-weight:600;opacity:.75">moonshot</small>',        'rgba(124,92,252,.38)', 'rgba(124,92,252,.14)', '#a78bfa')
       + '</div>';
+
+    /* Rezultatul apare aici, în aceeași pagină — nu mai navigăm către tab-ul Bilete. */
+    html += '<div id="upc-bilete-result" style="margin-top:16px"></div>';
 
     html += '</div>';
     return html;
