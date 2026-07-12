@@ -8030,7 +8030,10 @@ function renderTicketQuickPeek(){
   var host = $('ticket-quickpeek');
   if(!host) return;
   var activeTab = getCurrentActiveTabName();
-  var show = !!(BILETE && Array.isArray(BILETE.picks) && BILETE.picks.length && activeTab !== 'bilete');
+  /* Pe tab-ul "upcoming" biletul deja apare inline (vezi #upc-bilete-result
+     din upcoming_events_runtime.js) — bula flotantă ar fi doar un duplicat
+     care te-ar scoate din pagină la click, exact ce nu-și dorește userul. */
+  var show = !!(BILETE && Array.isArray(BILETE.picks) && BILETE.picks.length && activeTab !== 'bilete' && activeTab !== 'upcoming');
   host.classList.toggle('show', show);
   if(!show){ host.innerHTML = ''; updateTicketIndicators(); return; }
   var picks = BILETE.picks.slice(0,3);
@@ -10772,6 +10775,62 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
     finalizeTicket(prof.type, prof.label + scopeSuffix, [], 1, targetContainerId);
     toast('Niciun meci din Evenimente Viitoare (' + (scope === 'today' ? 'azi' : 'toate zilele') + ') nu se potrivește acestui bilet', 'warn');
     return;
+  }
+
+  /* Fereastra scopată (mai ales "Doar azi") poate fi prea mică pentru ca
+     diversificarea normală (max/ligă, max/piață) să ajungă la cota țintă.
+     În acel caz, completăm biletul cu restul candidaților calificați rămași
+     — sortați descrescător după probabilitate — ignorând limitele de
+     diversificare, până ne apropiem de cota țintă sau rămânem fără candidați. */
+  if (chosen4.picks.length && chosen4.totalOdds < prof.targetMinOdds) {
+    var usedEvents = {};
+    chosen4.picks.forEach(function(p){ usedEvents[getGenericEventKey(p)] = true; });
+    var remaining = pack4.list
+      .filter(function(c){ return !usedEvents[getGenericEventKey(c)]; })
+      .sort(function(a, b){ return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0); });
+
+    for (var j = 0; j < remaining.length && chosen4.totalOdds < prof.targetMinOdds; j++) {
+      var cand = remaining[j];
+      var k = getGenericEventKey(cand);
+      if (usedEvents[k]) continue;
+      var nextOdds = chosen4.totalOdds * cand.bestBet.odds;
+      if (nextOdds > pack4.profile.hardMaxOdds) continue;
+      chosen4.picks.push(cand);
+      chosen4.totalOdds = nextOdds;
+      usedEvents[k] = true;
+    }
+
+    /* Ferestrele scopate mici (mai ales "Doar azi") pot epuiza chiar și
+       candidații relaxați. Ultimul pas: mai încercăm restul meciurilor din
+       fereastră cu cea mai bună piață a lor (tot motorul de value/edge din
+       buildMarketCandidate — nu praguri arbitrare), sortate după
+       probabilitate descrescătoare, ca să ne apropiem cât mai mult de cota
+       țintă din câte evenimente există efectiv în fereastră. */
+    if (chosen4.totalOdds < prof.targetMinOdds) {
+      var deepPool = [];
+      pool.forEach(function(m){
+        var k2 = getGenericEventKey(m);
+        if (usedEvents[k2] || !passesSelectionFilter(m)) return;
+        var best = null;
+        prof.allowedTypes.forEach(function(t){
+          var c = buildMarketCandidate(m, t);
+          if (c && c.bestBet && (!best || (c.bestBet.adjProb || 0) > (best.bestBet.adjProb || 0))) best = c;
+        });
+        if (best) deepPool.push(best);
+      });
+      deepPool.sort(function(a, b){ return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0); });
+
+      for (var d = 0; d < deepPool.length && chosen4.totalOdds < prof.targetMinOdds; d++) {
+        var dcand = deepPool[d];
+        var dk = getGenericEventKey(dcand);
+        if (usedEvents[dk]) continue;
+        var dNextOdds = chosen4.totalOdds * dcand.bestBet.odds;
+        if (dNextOdds > pack4.profile.hardMaxOdds) continue;
+        chosen4.picks.push(dcand);
+        chosen4.totalOdds = dNextOdds;
+        usedEvents[dk] = true;
+      }
+    }
   }
   finalizeTicket(prof.type, prof.label + scopeSuffix + ' (parțial)', chosen4.picks, chosen4.totalOdds, targetContainerId);
 }
