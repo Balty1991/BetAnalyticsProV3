@@ -167,7 +167,8 @@
       return m.analysisState === 'ELIGIBLE' && m.bestBet;
     }).length;
     return { mlTotal: matches.length, today: today || matches.length, eligible: eligible,
-             openBets: openBets, winrate: winrate, roi: roi, closedBets: closedBets, wins: wins };
+             openBets: openBets, winrate: winrate, roi: roi, closedBets: closedBets, wins: wins,
+             profit: profit, staked: staked };
   }
 
   /* ── Top picks ── */
@@ -184,6 +185,26 @@
     });
     return eligible.slice(0, limit || 4);
   }
+
+  /* ── Bankroll (RON) — reuses the same setting as Bilete/tracking, so stake
+     recommendations stay consistent across the app instead of a new silo ── */
+  function getBankroll() {
+    try {
+      var s = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{}');
+      var v = safeNum(s.initial);
+      return v > 0 ? v : 1000;
+    } catch (e) { return 1000; }
+  }
+  function setBankroll(v) {
+    v = Math.max(10, safeNum(v) || 1000);
+    try {
+      var s = JSON.parse(localStorage.getItem('bet_bankroll_settings') || '{}');
+      s.initial = v;
+      localStorage.setItem('bet_bankroll_settings', JSON.stringify(s));
+    } catch (e) {}
+    return v;
+  }
+  window.__vdSetBankroll = function (val) { setBankroll(val); forceRerender(); };
 
   /* ── Best market (21 days) ── */
   function getBestMarket() {
@@ -468,12 +489,16 @@
     var wrCol  = m.winrate !== null ? (m.winrate >= 55 ? 'var(--vd-green)' : m.winrate < 45 ? 'var(--vd-red)' : '') : '';
     var wrStr  = m.winrate !== null ? m.winrate.toFixed(0) + '%' : '—';
 
-    /* Opportunity cards */
+    /* ── "Ce pariez azi" — one ticket per pick, one confidence number, RON stake.
+       No separate ML5/APEX/Consens badges: score already blends every source
+       server-side (smartbet_score() in predict_current.py + the client
+       equivalent), so showing it as competing pills was noise, not signal. ── */
+    var bankroll = getBankroll();
     var picksHtml = !picks.length
-      ? '<div class="vd-opp-empty">' +
+      ? '<div class="vd-tix-empty">' +
           '<div class="vd-opp-empty-icon">📡</div>' +
           '<div class="vd-opp-empty-title">Scanare în curs</div>' +
-          '<div class="vd-opp-empty-sub">Motorul analizează ' + m.mlTotal + ' meciuri. Oportunități disponibile în curând.</div>' +
+          '<div class="vd-opp-empty-sub">Motorul analizează ' + m.mlTotal + ' meciuri. Pariurile de azi apar aici imediat ce trec de filtrele de calitate.</div>' +
           '<button class="vd-opp-empty-btn" onclick="switchTab(\'meciuri\')">Vezi toate meciurile →</button>' +
         '</div>'
       : picks.map(function (match, idx) {
@@ -484,61 +509,71 @@
           var away     = esc(match.away || match.awayTeam || match.away_team || '?');
           var label    = esc(bet.label || bet.pick || 'PICK');
           var odds     = safeNum(bet.odds || bet.displayOdds || 0);
-          var adjProb  = safeNum(bet.adjProb || 0);
-          var edgePct  = safeNum(bet.edgePct || 0);
+          var kellyPct = safeNum(bet.kellyPct || 0);
+          var stakeRon = Math.round(bankroll * kellyPct / 100);
           var oddsStr  = odds > 1.01 ? odds.toFixed(2) : '—';
-          var probStr  = adjProb > 1 ? adjProb.toFixed(1) + '%' : adjProb > 0 ? (adjProb * 100).toFixed(1) + '%' : '';
+          var why      = esc(match.why || '').split('•')[0].trim();
           var timeStr  = '';
           try {
             var raw = match.event_date || match.eventDate || match.date || '';
             if (raw) { var d = new Date(raw); if (isFinite(d.getTime())) timeStr = d.toLocaleTimeString('ro-RO', {hour:'2-digit',minute:'2-digit'}); }
           } catch (e) {}
-          var edgeCls  = edgePct >= 5 ? 'vd-edge-good' : edgePct >= 0 ? 'vd-edge-ok' : 'vd-edge-warn';
           var scoreCol = score >= 85 ? 'var(--vd-teal)' : score >= 68 ? 'var(--vd-blue)' : 'var(--vd-amber)';
-          var agr      = bet.ml5Agreement;
-          var agrPill  = '';
-          if (typeof agr === 'number' && isFinite(agr)) {
-            var agrPct = Math.round(agr * 100);
-            var agrCls = agr >= 0.75 ? 'vd-edge-good' : agr >= 0.5 ? 'vd-edge-ok' : 'vd-edge-warn';
-            agrPill = '<span class="' + agrCls + '" title="Cât de mult sunt de acord sursele de semnal (ML5 + piață)">Consens ' + agrPct + '%</span>';
-          }
           return (
-            '<button class="vd-opp-card" style="border-left:3px solid ' + scoreCol + '" onclick="switchTab(\'meciuri\')">' +
-              '<div class="vd-opp-hd">' +
-                scoreRing(score) +
-                '<div class="vd-opp-identity">' +
-                  '<div class="vd-opp-teams">' + home + '<span class="vd-opp-vs"> vs </span>' + away + '</div>' +
-                  (timeStr ? '<div class="vd-opp-time">⏱ ' + esc(timeStr) + '</div>' : '') +
+            '<button class="vd-ticket" onclick="switchTab(\'meciuri\')">' +
+              '<div class="vd-ticket-main">' +
+                '<div class="vd-ticket-top">' +
+                  '<span class="vd-ticket-rank">#' + (idx + 1) + '</span>' +
+                  (timeStr ? '<span class="vd-ticket-time">⏱ ' + esc(timeStr) + '</span>' : '') +
                 '</div>' +
-                '<span class="vd-opp-rank">#' + (idx + 1) + '</span>' +
+                '<div class="vd-ticket-teams">' + home + '<span class="vd-opp-vs"> vs </span>' + away + '</div>' +
+                '<div class="vd-ticket-pick">' + label +
+                  (oddsStr !== '—' ? '<span class="vd-ticket-odds">@' + oddsStr + '</span>' : '') +
+                '</div>' +
+                (why ? '<div class="vd-ticket-why">' + why + '</div>' : '') +
               '</div>' +
-              '<div class="vd-opp-pick">' + label +
-                (oddsStr !== '—' ? '<span class="vd-opp-odds">@' + oddsStr + '</span>' : '') +
-              '</div>' +
-              '<div class="vd-opp-pills">' +
-                (probStr ? '<span class="vd-pill-neutral">Prob ' + probStr + '</span>' : '') +
-                '<span class="' + edgeCls + '">Edge ' + (edgePct >= 0 ? '+' : '') + edgePct.toFixed(1) + 'pp</span>' +
-                agrPill +
+              '<div class="vd-ticket-divider"></div>' +
+              '<div class="vd-ticket-stub">' +
+                '<div class="vd-ticket-conf" style="color:' + scoreCol + '">' +
+                  '<span class="vd-ticket-conf-v">' + Math.round(score) + '</span>' +
+                  '<span class="vd-ticket-conf-l">încredere</span>' +
+                '</div>' +
+                '<div class="vd-ticket-stake">' +
+                  '<span class="vd-ticket-stake-v">' + (stakeRon > 0 ? stakeRon + ' RON' : '—') + '</span>' +
+                  '<span class="vd-ticket-stake-l">miză reco.</span>' +
+                '</div>' +
               '</div>' +
             '</button>'
           );
         }).join('');
 
-    /* Performance — trust anchor, shown right after hero */
+    /* Performance — trust anchor, shown right after hero. Money first: the
+       headline number is RON profit/loss, not an abstract ROI%. */
+    var profitRon = Math.round(m.profit || 0);
+    var profitCol = profitRon > 0 ? 'var(--vd-green)' : profitRon < 0 ? 'var(--vd-red)' : 'inherit';
+    var profitStr = m.closedBets > 0 ? (profitRon >= 0 ? '+' : '') + profitRon + ' RON' : '—';
     var perfHtml =
       '<div class="vd-perf vd-perf-trust">' +
         '<div class="vd-perf-hd">' +
           '<div class="vd-sec-title">📊 Rezultate reale · ' + m.closedBets + ' închise</div>' +
-          (m.closedBets > 0 ? '<span class="vd-perf-roi" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</span>' : '') +
+          (m.closedBets > 0 ? '<span class="vd-perf-roi" style="color:' + profitCol + '">' + profitStr + '</span>' : '') +
         '</div>' +
         (sparkSvg ? '<div class="vd-spark">' + sparkSvg + '</div>' : '') +
         (m.closedBets > 0
           ? '<div class="vd-perf-row">' +
+              '<div class="vd-ps"><div class="vd-ps-v" style="color:' + profitCol + '">' + profitStr + '</div><div class="vd-ps-l">Profit</div></div>' +
               '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (roiCol || 'inherit') + '">' + roiStr + '</div><div class="vd-ps-l">ROI</div></div>' +
               '<div class="vd-ps"><div class="vd-ps-v" style="color:' + (wrCol  || 'inherit') + '">' + wrStr  + '</div><div class="vd-ps-l">Win Rate</div></div>' +
-              '<div class="vd-ps"><div class="vd-ps-v">' + m.wins + '/' + m.closedBets + '</div><div class="vd-ps-l">W/Total</div></div>' +
             '</div>'
-          : '<div class="vd-perf-empty">Niciun pariu închis încă — ROI și win rate apar aici după primele rezultate.</div>') +
+          : '<div class="vd-perf-empty">Niciun pariu închis încă — profitul real apare aici după primele rezultate.</div>') +
+        '<div class="vd-bankroll-row">' +
+          '<span class="vd-bankroll-lbl">Bankroll (pentru mize recomandate)</span>' +
+          '<span class="vd-bankroll-input-wrap">' +
+            '<input type="number" class="vd-bankroll-input" id="vd-bankroll-input" value="' + bankroll + '" min="10" step="10" ' +
+              'onchange="window.__vdSetBankroll(this.value)"/>' +
+            '<span class="vd-bankroll-unit">RON</span>' +
+          '</span>' +
+        '</div>' +
       '</div>';
 
     /* Market recommendation */
@@ -614,13 +649,13 @@
         /* ── Market signal ── */
         (recoHtml ? '<div class="vd-ani" style="animation-delay:.18s">' + recoHtml + '</div>' : '') +
 
-        /* ── Top picks ── */
+        /* ── Ce pariez azi — the actual point of the app ── */
         '<div class="vd-section vd-ani" style="animation-delay:.20s">' +
           '<div class="vd-sec-hd">' +
-            '<div class="vd-sec-title">⚡ Top oportunități</div>' +
+            '<div class="vd-sec-title">🎫 Ce pariez azi</div>' +
             '<button class="vd-sec-link" onclick="switchTab(\'meciuri\')">Vezi toate →</button>' +
           '</div>' +
-          '<div class="vd-opp-scroll">' + picksHtml + '</div>' +
+          '<div class="vd-ticket-list">' + picksHtml + '</div>' +
         '</div>' +
 
         /* ── Pyramid system ── */
