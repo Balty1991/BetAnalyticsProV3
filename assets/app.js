@@ -9552,6 +9552,16 @@ function getRelaxedProfile(profile, relax){
   };
 }
 
+/* Cerință explicită a userului: după mai multe exemple concrete (Riga FC,
+   Incheon, GAIS, Boca Juniors, Levski Sofia — toate Under 2.5G, cu
+   probabilitate/confidence mediocre), a cerut ca piața asta să nu mai intre
+   deloc în bilete generate automat — nu (doar) o problemă de calibrare a
+   pragurilor. Exclus din toate generatoarele automate (collectCandidates,
+   portofoliu, top-up-ul Boom, AI Precis). "Bilet Personalizat" rămâne
+   neatins — acolo userul alege manual piețele, deci alegerea îi aparține. */
+var ACCUMULATOR_EXCLUDED_MARKETS = { under25: true };
+function isAccumulatorAllowedMarket(type){ return !ACCUMULATOR_EXCLUDED_MARKETS[type]; }
+
 /* Filtru pe acordul dintre modelul API și cel Poisson — opt-in per profil,
    nu global. O primă variantă globală (fie diferență absolută, fie prag pe
    minimul celor două) elimina ~40% din candidați și golea complet Mix/Big
@@ -9563,6 +9573,7 @@ function getRelaxedProfile(profile, relax){
    profile.minAgreedModelProb; cele care nu îl setează rămân neafectate. */
 function candidateAccepted(c, profile){
   if(!c || !c.bestBet) return false;
+  if(!isAccumulatorAllowedMarket(c.bestBet.type)) return false;
   if(profile.allowedTypes.indexOf(c.bestBet.type) === -1) return false;
   if(c.bestBet.adjProb < profile.minAdjProb) return false;
   if(c.bestBet.value < profile.minValue) return false;
@@ -10837,6 +10848,7 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
         if (usedEvents[k2] || !passesSelectionFilter(m)) return;
         var best = null;
         prof.allowedTypes.forEach(function(t){
+          if (!isAccumulatorAllowedMarket(t)) return;
           var c = buildMarketCandidate(m, t);
           if (!c || !c.bestBet) return;
           if (prof.minAgreedModelProb && c.bestBet.probabilityEngine === 'hybrid' && c.bestBet.apiProb != null && c.bestBet.poissonProb != null) {
@@ -10904,6 +10916,7 @@ function generateAiPreciseTicket(scope, targetContainerId){
     if(!nh || !na) return;
     var marketKey = _claudeParseMarketKey(e.pick);
     if(!marketKey) return;
+    if(!isAccumulatorAllowedMarket(marketKey)) return;
     var found = null;
     for(var i = 0; i < pool.length; i++){
       var m = pool[i];
@@ -13722,6 +13735,7 @@ function buildPortfolioMarketCandidates(match){
   var marketTypes = ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'];
   var out = [];
   marketTypes.forEach(function(type){
+    if(!isAccumulatorAllowedMarket(type)) return;
     var bet = getBetByType(match, type);
     if(!bet) return;
     if(isHardContradiction(match, type)) return;
