@@ -284,18 +284,10 @@ function toggleTheme(){
       <span class="more-card-sub">Distribuție piețe · SmartScore · Top ligi · Lista meciuri afișate în timp real.</span>
     </button>
 
-    <div class="more-group-title">🧠 Motoare de analiză</div>
+    <div class="more-group-title">🧠 Cum decide VEYRA</div>
     <button class="more-card-btn" onclick="switchTab('master');closeDesktopMore()" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.03)">
-      <span class="more-card-title">⚡ Master Signal</span>
-      <span class="more-card-sub">Scor compozit unificat — ML5 + APEX + Kelly + Valoare combinate într-un singur semnal.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('ml5');closeDesktopMore()">
-      <span class="more-card-title">🔬 ML5 Avansat</span>
-      <span class="more-card-sub">Motor multi-factor: formă, H2H, tactici, absențe. Breakdown complet per meci.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('smartbet');closeDesktopMore()">
-      <span class="more-card-title">🧬 APEX Neural Engine</span>
-      <span class="more-card-sub">Kelly + AI Memory + SmartBet Fusion — analiză profundă cu motor de învățare.</span>
+      <span class="more-card-title">⚡ Master Signal — motorul unificat</span>
+      <span class="more-card-sub">Un singur scor 0-100. ML5, APEX, Kelly și Valoare sunt deja combinate aici — nu mai trebuie să verifici 3 ecrane separate.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('claudeai');closeDesktopMore()">
       <span class="more-card-title">🧠 AI Claude (doar sursa Claude)</span>
@@ -850,10 +842,8 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('upcoming');closeMobileMore()"><span class="sheet-btn-title">📅 Evenimente Viitoare</span><small class="sheet-btn-sub">Toate meciurile cu predicții automate · Probabilități</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('stats-meciuri');window.renderStatsMeciuri&&renderStatsMeciuri();closeMobileMore()"><span class="sheet-btn-title">📊 Statistică Meciuri</span><small class="sheet-btn-sub">Distribuție piețe · SmartScore · Top ligi · Lista meciuri afișate</small></button>
 
-  <div class="sheet-group-title">🧠 Motoare de analiză</div>
-  <button class="mobile-sheet-btn" onclick="switchTab('master');closeMobileMore()" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)"><span class="sheet-btn-title">⚡ Master Signal</span><small class="sheet-btn-sub">Scor compozit unificat — ML5 + APEX + Kelly + Valoare combinate</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('ml5');closeMobileMore()"><span class="sheet-btn-title">🔬 ML5 Avansat</span><small class="sheet-btn-sub">Motor multi-factor — formă, H2H, tactici, absențe — breakdown complet</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('smartbet');closeMobileMore()"><span class="sheet-btn-title">🧬 APEX Neural Engine</span><small class="sheet-btn-sub">Kelly · AI Memory · SmartBet Fusion — motor profund de predicție</small></button>
+  <div class="sheet-group-title">🧠 Cum decide VEYRA</div>
+  <button class="mobile-sheet-btn" onclick="switchTab('master');closeMobileMore()" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)"><span class="sheet-btn-title">⚡ Master Signal — motorul unificat</span><small class="sheet-btn-sub">Un singur scor 0-100 — ML5 + APEX + Kelly + Valoare deja combinate, nu mai verifici 3 ecrane</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('claudeai');closeMobileMore()"><span class="sheet-btn-title">🧠 AI Claude (doar Claude)</span><small class="sheet-btn-sub">Vedere izolată doar pe picks Claude — varianta combinată e în tab-ul principal AI</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">🤖 Motor AI (doar Gemini)</span><small class="sheet-btn-sub">Vedere izolată doar pe picks Gemini — varianta combinată e în tab-ul principal AI</small></button>
 
