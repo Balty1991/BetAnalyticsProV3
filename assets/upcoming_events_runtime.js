@@ -595,39 +595,43 @@
       + '.upc-settle{border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;border:none;font-weight:700}'
       + '.upc-settle.win{background:rgba(34,197,94,.15);color:#22c55e}'
       + '.upc-settle.loss{background:rgba(239,68,68,.12);color:#ef4444}'
+      + '.upc-seg{display:flex;align-items:stretch;gap:2px;background:rgba(255,255,255,.04);'
+      + 'border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:3px}'
+      + '.upc-seg-btn{flex:1;padding:8px 4px;border-radius:9px;font-size:11.5px;font-weight:700;'
+      + 'cursor:pointer;border:none;background:transparent;color:var(--muted);text-align:center;white-space:nowrap}'
+      + '.upc-seg-btn.active{background:rgba(59,130,246,.18);color:#60a5fa}'
+      + '.upc-seg-div{width:1px;align-self:stretch;background:rgba(255,255,255,.08);margin:2px 1px}'
+      + '.upc-seg-edge{padding:8px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;'
+      + 'border:none;background:transparent;color:var(--muted);white-space:nowrap}'
+      + '.upc-seg-edge.active{background:rgba(34,197,94,.18);color:#22c55e}'
       + '</style>';
 
     var picksCount = picksArr.length;
     var html = css + '<div style="padding:0 0 88px">';
 
-    /* Header */
-    html += '<div style="padding:14px 14px 0">'
-      + '<div style="font-size:17px;font-weight:900;color:var(--txt)">📅 Evenimente Viitoare</div>'
-      + '<div style="font-size:11px;color:var(--muted);margin-top:2px">'
-      + upcoming.length + ' meciuri • ' + dateOrder.length + ' zile</div></div>';
+    /* Header — un singur rând, titlu + total, fără text repetat mai jos */
+    html += '<div style="padding:14px 14px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:10px">'
+      + '<div style="font-size:17px;font-weight:900;color:var(--txt);white-space:nowrap">📅 Evenimente Viitoare</div>'
+      + '<div style="font-size:11px;color:var(--muted);white-space:nowrap">'
+      + upcoming.length + ' meciuri · ' + dateOrder.length + ' zile</div></div>';
 
-    /* Sub-nav */
-    var btnBase = 'flex:1;padding:7px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid ';
-    var actStyle = btnBase + 'rgba(59,130,246,.4);background:rgba(59,130,246,.15);color:#60a5fa';
-    var inactStyle = btnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
-    var edgeBtnStyle = _filterEdge
-      ? btnBase + 'rgba(34,197,94,.4);background:rgba(34,197,94,.15);color:#22c55e'
-      : btnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
-    /* Count matches with a real edge today, so pressing the filter always
-       visibly changes something — even just the button label — instead of
-       silently doing nothing when there's nothing to filter. */
+    /* Sub-nav — un singur control segmentat (Meciuri/Picks/Bilete), cu
+       filtrul Edge+ separat vizual printr-un divider, ca să nu pară "4
+       butoane egale" ci "taburi + un filtru". */
     var edgeCountToday = (byDate[_activeDate] || []).filter(function(e){
       var pr = predLookup[String(e.id)];
       return pr && pr.risk_tier && pr.risk_tier !== 'Avoid';
     }).length;
-    html += '<div style="display:flex;gap:4px;padding:10px 14px 4px;flex-wrap:wrap">'
-      + '<button onclick="window.__veyraUpcView(\'matches\')" style="' + (_activeView==='matches'?actStyle:inactStyle) + '">📅 Meciuri</button>'
-      + '<button onclick="window.__veyraUpcView(\'picks\')" style="' + (_activeView==='picks'?actStyle:inactStyle) + '">'
+    html += '<div style="padding:0 14px 10px">'
+      + '<div class="upc-seg">'
+      + '<button class="upc-seg-btn' + (_activeView==='matches'?' active':'') + '" onclick="window.__veyraUpcView(\'matches\')">📅 Meciuri</button>'
+      + '<button class="upc-seg-btn' + (_activeView==='picks'?' active':'') + '" onclick="window.__veyraUpcView(\'picks\')">'
       + '📌 Picks' + (picksCount>0?' ('+picksCount+')':'') + '</button>'
-      + '<button onclick="window.__veyraUpcView(\'tickets\')" style="' + (_activeView==='tickets'?actStyle:inactStyle) + '">🎫 Bilete</button>'
-      + '<button onclick="window.__veyraUpcToggleEdge()" style="' + edgeBtnStyle + '" title="Afișează doar meciuri cu edge pozitiv">'
-      + '⚡ Edge+' + (edgeCountToday > 0 ? ' (' + edgeCountToday + ')' : '') + '</button>'
-      + '</div>';
+      + '<button class="upc-seg-btn' + (_activeView==='tickets'?' active':'') + '" onclick="window.__veyraUpcView(\'tickets\')">🎫 Bilete</button>'
+      + '<div class="upc-seg-div"></div>'
+      + '<button class="upc-seg-edge' + (_filterEdge?' active':'') + '" onclick="window.__veyraUpcToggleEdge()" title="Afișează doar meciuri cu edge pozitiv">'
+      + '⚡' + (edgeCountToday > 0 ? ' ' + edgeCountToday : '') + '</button>'
+      + '</div></div>';
 
     if (_activeView === 'matches') {
       html += renderMatchesView(dateOrder, byDate, predLookup, picks);
@@ -671,9 +675,12 @@
 
     var dayEvs  = byDate[_activeDate] || [];
     html += '<div style="padding:0 14px">';
+    /* Contorul de meciuri e deja pe pastila de dată selectată mai sus —
+       aici doar ziua (etichetă scurtă) + sortarea, ca să nu repetăm "N
+       meciuri" de două ori pe același ecran. */
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-      + '<div style="font-size:12px;font-weight:800;color:var(--txt)">'
-      + formatDateLabel(_activeDate) + ' — ' + dayEvs.length + ' meciuri</div>';
+      + '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">'
+      + formatDateLabel(_activeDate) + '</div>';
     var sortBtnBase = 'padding:4px 9px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ';
     var sortAct   = sortBtnBase + 'rgba(59,130,246,.4);background:rgba(59,130,246,.15);color:#60a5fa';
     var sortInact = sortBtnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
