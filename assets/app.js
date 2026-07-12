@@ -10862,9 +10862,18 @@ function generateAiPreciseTicket(scope, targetContainerId){
   var pool = getUpcomingScopedMatches(scope);
   if(pool === null){ toast('Evenimentele viitoare încă se încarcă...', 'warn'); return; }
 
+  /* Pragurile de confidence din restul motorului (45-76, calibrate pe piețe
+     lichide) nu se ating aproape deloc pe under25/under35 din ligi mici —
+     acolo confidence stă natural în banda 35-50 chiar și pentru selecții
+     bune. Nu e un semnal discriminant aici, deci rămâne doar ca prag minim
+     de siguranță; semnalul real de calitate e dezacordul API vs Poisson —
+     exact ce a semnalat userul (Incheon United: confidence 35%, +22.7pp). */
+  var AI_PRECISE_MIN_CONFIDENCE = 30;
+  var AI_PRECISE_MAX_DIVERGENCE = 15;
   var norm = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); };
   var usedEvents = {};
   var picks = [];
+  var skippedLowQuality = 0;
   acum.forEach(function(e){
     var parts = String(e.meci||'').split(/\s+vs\s+/i);
     if(parts.length < 2) return;
@@ -10886,18 +10895,36 @@ function generateAiPreciseTicket(scope, targetContainerId){
     if(usedEvents[evKey]) return;
     var bet = (found.allBets || []).filter(function(b){ return b && b.type === marketKey && Number(b.odds||0) > 1; })[0];
     if(!bet) return;
+
+    /* Selecția AI vine dintr-un pipeline server-side separat (CatBoost pe
+       predictions.json), nu din motorul local care randează efectiv acest
+       bet. Trebuie validată și local înainte să intre într-un bilet numit
+       "cel mai precis" — altfel putem afișa un pick pe care motorul local
+       îl consideră confidence scăzută / dezacord mare Poisson vs API. */
+    var localConf = Number(found.confidence || 0);
+    if(localConf < AI_PRECISE_MIN_CONFIDENCE){ skippedLowQuality++; return; }
+    if(bet.probabilityEngine === 'hybrid' && bet.apiProb != null && bet.poissonProb != null){
+      var divergence = Math.abs(Number(bet.apiProb) - Number(bet.poissonProb));
+      if(divergence > AI_PRECISE_MAX_DIVERGENCE){ skippedLowQuality++; return; }
+    }
+
     usedEvents[evKey] = true;
     picks.push(Object.assign({}, found, { bestBet: bet }));
   });
 
   if(!picks.length){
     finalizeTicket('ai_precise', '🧠 AI Precis', [], 1, targetContainerId);
-    toast('Niciun pick din acumulatorul AI nu se regăsește în fereastra selectată (' + (scope==='today'?'azi':'toate zilele') + ')', 'warn');
+    toast(skippedLowQuality
+      ? 'Toate picks-urile AI din fereastra selectată au picat testul local de calitate (confidence/discrepanță model)'
+      : 'Niciun pick din acumulatorul AI nu se regăsește în fereastra selectată (' + (scope==='today'?'azi':'toate zilele') + ')', 'warn');
     return;
   }
   var totalOdds = picks.reduce(function(acc,p){ return acc * Number(p.bestBet.odds||1); }, 1);
   var scopeSuffix = scope === 'today' ? '' : ' · toate zilele';
   finalizeTicket('ai_precise', '🧠 AI Precis' + scopeSuffix, picks, totalOdds, targetContainerId);
+  if(skippedLowQuality){
+    toast(skippedLowQuality + ' pick' + (skippedLowQuality > 1 ? '-uri' : '') + ' AI exclus' + (skippedLowQuality > 1 ? 'e' : '') + ' local (confidence sub ' + AI_PRECISE_MIN_CONFIDENCE + '% sau discrepanță model mare)', 'warn');
+  }
 }
 window.generateAiPreciseTicket = generateAiPreciseTicket;
 
