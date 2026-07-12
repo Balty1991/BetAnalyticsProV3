@@ -247,9 +247,9 @@ function toggleTheme(){
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
     Dashboard
   </button>
-  <button class="tab" data-tab="picks" onclick="switchTab('picks')">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    PICKS
+  <button class="tab" data-tab="meciuri" onclick="switchTab('meciuri')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7l3.2 2.3-1.2 3.8H10l-1.2-3.8L12 7z"/><path d="M12 3v4M4.3 8.2l3.3 1.1M16.4 9.3l3.3-1.1M7.2 14.4L5 18M16.8 14.4L19 18"/></svg>
+    MECIURI
   </button>
   <button class="tab" data-tab="ai" onclick="switchTab('ai')">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -271,9 +271,9 @@ function toggleTheme(){
   </div>
   <div class="more-grid">
     <div class="more-group-title">🔮 Predicții &amp; meciuri</div>
-    <button class="more-card-btn" onclick="switchTab('meciuri');closeDesktopMore()">
-      <span class="more-card-title">⚽ Meciuri Complete</span>
-      <span class="more-card-sub">Lista completă de meciuri cu filtre avansate — ligă, piață, verdict, edge minim.</span>
+    <button class="more-card-btn" onclick="switchTab('picks');closeDesktopMore()">
+      <span class="more-card-title">🎯 Picks — selecție rapidă</span>
+      <span class="more-card-sub">Doar cele mai bune oportunități, filtrate — varianta scurtă a tab-ului Meciuri.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('upcoming');closeDesktopMore()">
       <span class="more-card-title">📅 Evenimente Viitoare</span>
@@ -825,11 +825,11 @@ function toggleTheme(){
     </span>
     <small>Dashboard</small>
   </button>
-  <button class="mobile-nav-btn" data-tab="picks" onclick="switchTab('picks')" aria-label="PICKS">
+  <button class="mobile-nav-btn" data-tab="meciuri" onclick="switchTab('meciuri')" aria-label="Meciuri">
     <span aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l3.2 2.3-1.2 3.8H10l-1.2-3.8L12 7z"/><path d="M12 3v4M4.3 8.2l3.3 1.1M16.4 9.3l3.3-1.1M7.2 14.4L5 18M16.8 14.4L19 18"/></svg>
     </span>
-    <small>PICKS</small>
+    <small>Meciuri</small>
   </button>
   <button class="mobile-nav-btn" data-tab="ai" onclick="switchTab('ai')" aria-label="AI">
     <span aria-hidden="true">
@@ -846,7 +846,7 @@ function toggleTheme(){
 </nav>
 <div class="mobile-sheet" id="mobile-sheet" aria-hidden="true">
   <div class="sheet-group-title">🔮 Predicții &amp; meciuri</div>
-  <button class="mobile-sheet-btn" onclick="switchTab('meciuri');closeMobileMore()"><span class="sheet-btn-title">⚽ Meciuri Complete</span><small class="sheet-btn-sub">Lista completă cu filtre avansate — ligă, piață, verdict, edge minim</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('picks');closeMobileMore()"><span class="sheet-btn-title">🎯 Picks — selecție rapidă</span><small class="sheet-btn-sub">Doar cele mai bune oportunități — varianta scurtă a tab-ului Meciuri</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('upcoming');closeMobileMore()"><span class="sheet-btn-title">📅 Evenimente Viitoare</span><small class="sheet-btn-sub">Toate meciurile cu predicții automate · Probabilități</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('stats-meciuri');window.renderStatsMeciuri&&renderStatsMeciuri();closeMobileMore()"><span class="sheet-btn-title">📊 Statistică Meciuri</span><small class="sheet-btn-sub">Distribuție piețe · SmartScore · Top ligi · Lista meciuri afișate</small></button>
 
