@@ -12,6 +12,8 @@
   var _activeDate  = null;
   var _activeView  = 'matches';
   var _filterEdge  = false; // true = show only non-Avoid predictions
+  var _sortMode    = 'time'; // 'time' | 'prob'
+  var _ticketScope = 'today'; // 'today' | 'all' — for the Bilete sub-view
 
   /* ── Recent results (for auto-settle) ──────────────────────────── */
   var _recentResLookup = null; // null = not loaded yet
@@ -618,16 +620,19 @@
       var pr = predLookup[String(e.id)];
       return pr && pr.risk_tier && pr.risk_tier !== 'Avoid';
     }).length;
-    html += '<div style="display:flex;gap:4px;padding:10px 14px 4px">'
+    html += '<div style="display:flex;gap:4px;padding:10px 14px 4px;flex-wrap:wrap">'
       + '<button onclick="window.__veyraUpcView(\'matches\')" style="' + (_activeView==='matches'?actStyle:inactStyle) + '">📅 Meciuri</button>'
       + '<button onclick="window.__veyraUpcView(\'picks\')" style="' + (_activeView==='picks'?actStyle:inactStyle) + '">'
       + '📌 Picks' + (picksCount>0?' ('+picksCount+')':'') + '</button>'
+      + '<button onclick="window.__veyraUpcView(\'tickets\')" style="' + (_activeView==='tickets'?actStyle:inactStyle) + '">🎫 Bilete</button>'
       + '<button onclick="window.__veyraUpcToggleEdge()" style="' + edgeBtnStyle + '" title="Afișează doar meciuri cu edge pozitiv">'
       + '⚡ Edge+' + (edgeCountToday > 0 ? ' (' + edgeCountToday + ')' : '') + '</button>'
       + '</div>';
 
     if (_activeView === 'matches') {
       html += renderMatchesView(dateOrder, byDate, predLookup, picks);
+    } else if (_activeView === 'tickets') {
+      html += renderTicketsView(upcoming.length);
     } else {
       html += renderPicksView(picksArr, evLookup, stats);
     }
@@ -660,13 +665,44 @@
 
     var dayEvs  = byDate[_activeDate] || [];
     html += '<div style="padding:0 14px">';
-    html += '<div style="font-size:12px;font-weight:800;color:var(--txt);margin-bottom:10px">'
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      + '<div style="font-size:12px;font-weight:800;color:var(--txt)">'
       + formatDateLabel(_activeDate) + ' — ' + dayEvs.length + ' meciuri</div>';
+    var sortBtnBase = 'padding:4px 9px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ';
+    var sortAct   = sortBtnBase + 'rgba(59,130,246,.4);background:rgba(59,130,246,.15);color:#60a5fa';
+    var sortInact = sortBtnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
+    html += '<div style="display:flex;gap:4px">'
+      + '<button onclick="window.__veyraUpcSetSort(\'time\')" style="' + (_sortMode==='time'?sortAct:sortInact) + '">🕐 Oră</button>'
+      + '<button onclick="window.__veyraUpcSetSort(\'prob\')" style="' + (_sortMode==='prob'?sortAct:sortInact) + '">📈 Probabilitate</button>'
+      + '</div></div>';
+
+    /* Pre-compute best-pick probability per event when sorting by it */
+    var probByEvId = null;
+    if (_sortMode === 'prob') {
+      probByEvId = {};
+      dayEvs.forEach(function(e){
+        var pr = calcPrediction(e, predLookup[String(e.id)]);
+        probByEvId[String(e.id)] = pr && pr.best ? pr.best.prob : -1;
+      });
+    }
 
     /* Group by league */
     var byLeague={}, lgOrder=[];
     dayEvs.forEach(function(e){ var lg=(e.league&&e.league.name)||'Altele';
       if(!byLeague[lg]){byLeague[lg]=[];lgOrder.push(lg);} byLeague[lg].push(e); });
+
+    if (probByEvId) {
+      lgOrder.forEach(function(lg){
+        byLeague[lg].sort(function(a,b){
+          return (probByEvId[String(b.id)]||-1) - (probByEvId[String(a.id)]||-1);
+        });
+      });
+      lgOrder.sort(function(a,b){
+        var maxA = byLeague[a].length ? (probByEvId[String(byLeague[a][0].id)]||-1) : -1;
+        var maxB = byLeague[b].length ? (probByEvId[String(byLeague[b][0].id)]||-1) : -1;
+        return maxB - maxA;
+      });
+    }
 
     lgOrder.forEach(function(lgName) {
       html += '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;'
@@ -957,6 +993,42 @@
     html += '</div>';
     return html;
   }
+
+  /* ── Tickets (generatoare) view ────────────────────────────────────── */
+  /* Same generator engine as tab-ul Bilete, dar candidații vin doar din
+     window.ALL_EVENTS (setul de Evenimente Viitoare), nu din tot ALL_MATCHES
+     — vezi generateUpcomingTicket()/getUpcomingScopedMatches() în app.js. */
+  function renderTicketsView(totalUpcomingCount) {
+    var scopeBtnBase = 'flex:1;padding:9px;border-radius:10px;font-size:11.5px;font-weight:800;cursor:pointer;border:1px solid ';
+    var scopeAct   = scopeBtnBase + 'rgba(124,92,252,.45);background:rgba(124,92,252,.16);color:#c4b5fd';
+    var scopeInact = scopeBtnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
+
+    var html = '<div style="padding:0 14px">';
+    html += '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5">'
+      + 'Generatoare care folosesc <strong style="color:var(--txt)">doar evenimentele din acest tab</strong> — nu tot ce a analizat motorul, ca în tab-ul Bilete.</div>';
+
+    html += '<div style="display:flex;gap:6px;margin-bottom:12px">'
+      + '<button onclick="window.__veyraUpcSetTicketScope(\'today\')" style="' + (_ticketScope==='today'?scopeAct:scopeInact) + '">📅 Doar azi</button>'
+      + '<button onclick="window.__veyraUpcSetTicketScope(\'all\')" style="' + (_ticketScope==='all'?scopeAct:scopeInact) + '">🌍 Toate zilele (' + totalUpcomingCount + ')</button>'
+      + '</div>';
+
+    var genBtnStyle = 'padding:12px 8px;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;border:1px solid ';
+    function genBtn(key, label, colorBorder, colorBg, colorText) {
+      return '<button onclick="window.generateUpcomingTicket(\'' + key + '\',\'' + _ticketScope + '\');window.switchTab(\'bilete\')" '
+        + 'style="' + genBtnStyle + colorBorder + ';background:' + colorBg + ';color:' + colorText + '">' + label + '</button>';
+    }
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      + genBtn('conservative', '🧊 Conservator<br><small style="font-weight:600;opacity:.75">bilet mic, sigur</small>', 'rgba(99,102,241,.28)', 'rgba(99,102,241,.10)', '#a5b4fc')
+      + genBtn('big_win',      '💥 Big Win<br><small style="font-weight:600;opacity:.75">cotă 30-80x</small>',        'rgba(239,68,68,.28)',  'rgba(239,68,68,.10)',  '#f87171')
+      + genBtn('boom100',      '🎯 Boom 100+<br><small style="font-weight:600;opacity:.75">multe evenimente</small>', 'rgba(124,92,252,.30)', 'rgba(124,92,252,.10)', '#c4b5fd')
+      + genBtn('boom1000',     '💎 Boom 1000+<br><small style="font-weight:600;opacity:.75">moonshot</small>',        'rgba(124,92,252,.38)', 'rgba(124,92,252,.14)', '#a78bfa')
+      + '</div>';
+
+    html += '</div>';
+    return html;
+  }
+  window.__veyraUpcSetTicketScope = function (s) { _ticketScope = s; renderUpcomingTab(); };
+  window.__veyraUpcSetSort = function (s) { _sortMode = s; renderUpcomingTab(); };
 
   /* ── Picks view ─────────────────────────────────────────────────────── */
   function renderPicksView(picksArr, evLookup, stats) {

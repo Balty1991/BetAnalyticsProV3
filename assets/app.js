@@ -9553,11 +9553,12 @@ function candidateAccepted(c, profile){
   return true;
 }
 
-function collectCandidates(types, profile, relax){
+function collectCandidates(types, profile, relax, matchesOverride){
   var rp = getRelaxedProfile(profile, relax);
   var list = [];
+  var pool = matchesOverride || ALL_MATCHES;
 
-  ALL_MATCHES.forEach(function(m){
+  pool.forEach(function(m){
     if(!passesSelectionFilter(m)) return;
 
     types.forEach(function(t){
@@ -10692,6 +10693,89 @@ function generateBoomTicket(tier){
 }
 function generateBoom100Ticket(){ generateBoomTicket('100'); }
 function generateBoom1000Ticket(){ generateBoomTicket('1000'); }
+
+/* ── Generatoare scopate la Evenimente Viitoare ──────────────────────────
+   User request: same generators, but usable from inside "Evenimente
+   Viitoare" and restricted to only the events shown there (today's date
+   or, with the "Toate zilele" scope, all ~700 upcoming events across the
+   full window) — not the whole app-wide ALL_MATCHES pool. Reuses the exact
+   same collectCandidates/selectDiversifiedPicks/finalizeTicket pipeline via
+   collectCandidates' matchesOverride param, just pre-filtered to the
+   event-ID set window.ALL_EVENTS (the Evenimente Viitoare data source)
+   currently covers. */
+var UPCOMING_TICKET_PROFILES = {
+  conservative: {
+    label: '🧊 Conservator', type: 'simple',
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','dc1x','dcx2'],
+    minAdjProb: 72, minValue: 0.008, minConf: 48, minOdd: 1.12, maxOdd: 1.58,
+    minPicks: 3, maxPicks: 5, targetMinOdds: 1.90, targetMaxOdds: 4.20, hardMaxOdds: 5.20,
+    maxSameLeague: 1, maxSameMarket: 3
+  },
+  big_win: {
+    label: '💥 Big Win', type: 'big_win',
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
+    minAdjProb: 70, minValue: 0.010, minConf: 48, minOdd: 1.20, maxOdd: 1.80,
+    minPicks: 8, maxPicks: 12, targetMinOdds: 30, targetMaxOdds: 80, hardMaxOdds: 100,
+    maxSameLeague: 2, maxSameMarket: 4
+  },
+  boom100: {
+    label: '🎯 Boom 100+', type: 'boom100',
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
+    minAdjProb: 66, minValue: 0.005, minConf: 45, minOdd: 1.15, maxOdd: 1.55,
+    minPicks: 10, maxPicks: 16, targetMinOdds: 100, targetMaxOdds: 300, hardMaxOdds: 400,
+    maxSameLeague: 4, maxSameMarket: 10
+  },
+  boom1000: {
+    label: '💎 Boom 1000+', type: 'boom1000',
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
+    minAdjProb: 66, minValue: 0.005, minConf: 45, minOdd: 1.15, maxOdd: 1.55,
+    minPicks: 16, maxPicks: 26, targetMinOdds: 1000, targetMaxOdds: 3000, hardMaxOdds: 6000,
+    maxSameLeague: 4, maxSameMarket: 10
+  }
+};
+
+function getUpcomingScopedMatches(scope){
+  var evs = Array.isArray(window.ALL_EVENTS) ? window.ALL_EVENTS : [];
+  if (!evs.length) return null; /* not loaded yet — distinct from "loaded but empty" */
+  var idSet = {};
+  if (scope === 'today') {
+    var todayStr = new Date().toISOString().slice(0, 10);
+    evs.forEach(function(e){
+      if (e && e.id != null && String(e.event_date || '').slice(0, 10) === todayStr) idSet[String(e.id)] = true;
+    });
+  } else {
+    evs.forEach(function(e){ if (e && e.id != null) idSet[String(e.id)] = true; });
+  }
+  return (Array.isArray(ALL_MATCHES) ? ALL_MATCHES : []).filter(function(m){
+    return idSet[String(m.eventId)];
+  });
+}
+
+function generateUpcomingTicket(genKey, scope){
+  var prof = UPCOMING_TICKET_PROFILES[genKey];
+  if (!prof) return;
+  var pool = getUpcomingScopedMatches(scope);
+  if (pool === null) { toast('Evenimentele viitoare încă se încarcă...', 'warn'); return; }
+  var scopeSuffix = scope === 'today' ? '' : ' · toate zilele';
+
+  for (var relax = 0; relax <= 3; relax++) {
+    var pack = collectCandidates(prof.allowedTypes, prof, relax, pool);
+    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
+    if (chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds) {
+      finalizeTicket(prof.type, prof.label + scopeSuffix, chosen.picks, chosen.totalOdds);
+      return;
+    }
+  }
+  var pack4 = collectCandidates(prof.allowedTypes, prof, 3, pool);
+  var chosen4 = selectDiversifiedPicks(pack4.list, pack4.profile);
+  if (!chosen4.picks.length) {
+    finalizeTicket(prof.type, prof.label + scopeSuffix, [], 1);
+    toast('Niciun meci din Evenimente Viitoare (' + (scope === 'today' ? 'azi' : 'toate zilele') + ') nu se potrivește acestui bilet', 'warn');
+    return;
+  }
+  finalizeTicket(prof.type, prof.label + scopeSuffix + ' (parțial)', chosen4.picks, chosen4.totalOdds);
+}
+window.generateUpcomingTicket = generateUpcomingTicket;
 
 
 function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
