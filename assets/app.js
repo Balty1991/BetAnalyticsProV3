@@ -9639,6 +9639,8 @@ function finalizeTicket(type, label, picks, totalOdds){
     type === 'mix_combo' ? 'Mediu+' :
     type === 'over35' ? 'Mediu+' :
     type === 'big_win' ? 'Ridicat+' :
+    type === 'boom100' ? 'Extrem' :
+    type === 'boom1000' ? 'Extrem' :
     'Ridicat';
 
   BILETE = {
@@ -10645,6 +10647,51 @@ function generateBigWinTicket(){
 
   finalizeTicket('big_win', '🚀 Mega Big Win', [], 1);
 }
+
+
+/* "Boom" tickets: many low-odds ("safe") legs compounded into a huge total
+   price — user explicitly wants these alongside the small conservative
+   tickets ("știu că șansele sunt mici, dar nu se știe niciodată"). Built on
+   the exact same collectCandidates/selectDiversifiedPicks/finalizeTicket
+   pipeline as Big Win, just with far more legs and relaxed diversity caps
+   (a 20-leg ticket can't cap at 4-per-market like Big Win does). */
+function generateBoomTicket(tier){
+  var isMega = tier === '1000';
+  var baseProfile = {
+    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
+    minAdjProb: 66,
+    minValue: 0.005,
+    minConf: 45,
+    minOdd: 1.15,
+    maxOdd: 1.55,
+    minPicks: isMega ? 16 : 10,
+    maxPicks: isMega ? 26 : 16,
+    targetMinOdds: isMega ? 1000 : 100,
+    targetMaxOdds: isMega ? 3000 : 300,
+    hardMaxOdds: isMega ? 6000 : 400,
+    maxSameLeague: 4,
+    maxSameMarket: 10
+  };
+  var type  = isMega ? 'boom1000' : 'boom100';
+  var label = isMega ? '💎 Boom 1000+' : '🎯 Boom 100+';
+
+  for(var relax = 0; relax <= 3; relax++){
+    var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
+    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
+    if(chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds){
+      finalizeTicket(type, label, chosen.picks, chosen.totalOdds);
+      return;
+    }
+  }
+  /* Not enough same-day picks to reach the target odds honestly — show
+     whatever the best relaxed attempt found rather than silently failing,
+     so the user can see it's a coverage problem, not a broken button. */
+  var pack4 = collectCandidates(baseProfile.allowedTypes, baseProfile, 3);
+  var chosen4 = selectDiversifiedPicks(pack4.list, pack4.profile);
+  finalizeTicket(type, label + ' (parțial)', chosen4.picks, chosen4.totalOdds);
+}
+function generateBoom100Ticket(){ generateBoomTicket('100'); }
+function generateBoom1000Ticket(){ generateBoomTicket('1000'); }
 
 
 function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
@@ -13268,7 +13315,7 @@ function getStakePctForTicket(type){
   if(settings.double == null && settings.balanced != null) settings.double = settings.balanced;
   if(settings.triple == null && settings.goals != null) settings.triple = settings.goals;
   if(settings.contrarian == null && settings.risk != null) settings.contrarian = settings.risk;
-  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian', acum5:'triple', acum10:'triple', acum20:'contrarian', big_win:'contrarian', over35:'contrarian', custom_combo:'double', custom_single:'single'};
+  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian', acum5:'triple', acum10:'triple', acum20:'contrarian', big_win:'contrarian', over35:'contrarian', custom_combo:'double', custom_single:'single', boom100:'contrarian', boom1000:'contrarian'};
   var key = map[type] || 'double';
   return Number(settings[key] || 0);
 }

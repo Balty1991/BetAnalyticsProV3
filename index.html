@@ -693,7 +693,10 @@ function toggleTheme(){
       <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.28);color:#fbbf24" onclick="generateOver35Ticket()">🔥 Over 3.5G</button>
       <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.25);color:#f87171" onclick="generateBigWinTicket()">💥 Big Win</button>
       <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.25);color:#6ee7b7" onclick="generatePortfolioTicket('contrarian')">🔄 Contrarian</button>
+      <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(124,92,252,.10);border:1px solid rgba(124,92,252,.28);color:#c4b5fd" onclick="generateBoom100Ticket()">🎯 Boom 100+</button>
+      <button class="btn" style="font-size:12px;padding:10px 8px;justify-content:center;background:rgba(124,92,252,.14);border:1px solid rgba(124,92,252,.35);color:#a78bfa" onclick="generateBoom1000Ticket()">💎 Boom 1000+</button>
     </div>
+    <div style="font-size:10px;color:var(--muted);margin:-4px 0 12px;line-height:1.5">🎯💎 Boom = multe evenimente cu cote mici (predicții "sigure") înmulțite într-o cotă totală uriașă. Șansă mică de a trece integral biletul — joacă doar cu miză mică, dedicată.</div>
 
     <!-- Custom builder toggle -->
     <div style="margin-bottom:10px">
@@ -753,11 +756,11 @@ function toggleTheme(){
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);margin-bottom:4px">COTĂ ȚINTĂ</div>
-            <input id="cust-target-odds" type="number" min="1.10" max="20" step="0.05" value="2.40" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px;box-sizing:border-box">
+            <input id="cust-target-odds" type="number" min="1.10" max="5000" step="0.05" value="2.40" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px;box-sizing:border-box">
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);margin-bottom:4px">NR. PICKS</div>
-            <input id="cust-picks" type="number" min="1" max="6" value="3" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px;box-sizing:border-box">
+            <input id="cust-picks" type="number" min="1" max="30" value="3" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px;box-sizing:border-box">
           </div>
         </div>
 
