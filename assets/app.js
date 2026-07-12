@@ -9547,10 +9547,20 @@ function getRelaxedProfile(profile, relax){
     targetMaxOdds: profile.targetMaxOdds + (relax * 0.7),
     hardMaxOdds: profile.hardMaxOdds + (relax * 1.0),
     maxSameLeague: profile.maxSameLeague,
-    maxSameMarket: profile.maxSameMarket
+    maxSameMarket: profile.maxSameMarket,
+    minAgreedModelProb: profile.minAgreedModelProb
   };
 }
 
+/* Filtru pe acordul dintre modelul API și cel Poisson — opt-in per profil,
+   nu global. O primă variantă globală (fie diferență absolută, fie prag pe
+   minimul celor două) elimina ~40% din candidați și golea complet Mix/Big
+   Win, care se bazează structural pe piețe unde cele două modele diverg
+   moderat. E specific util doar acolo unde volumul de legs "acoperă" un
+   target mare de cotă (Boom100/1000) — acolo un pick pe care Poisson îl
+   vede drept coin-flip (ex: 68% API / 51% Poisson) poate trece neobservat
+   printre alte 10+ selecții. Profilele care vor filtrul setează
+   profile.minAgreedModelProb; cele care nu îl setează rămân neafectate. */
 function candidateAccepted(c, profile){
   if(!c || !c.bestBet) return false;
   if(profile.allowedTypes.indexOf(c.bestBet.type) === -1) return false;
@@ -9558,6 +9568,9 @@ function candidateAccepted(c, profile){
   if(c.bestBet.value < profile.minValue) return false;
   if(c.confidence < profile.minConf) return false;
   if(c.bestBet.odds < profile.minOdd || c.bestBet.odds > profile.maxOdd) return false;
+  if(profile.minAgreedModelProb && c.bestBet.probabilityEngine === 'hybrid' && c.bestBet.apiProb != null && c.bestBet.poissonProb != null){
+    if(Math.min(Number(c.bestBet.apiProb), Number(c.bestBet.poissonProb)) < profile.minAgreedModelProb) return false;
+  }
   return true;
 }
 
@@ -10680,7 +10693,12 @@ function generateBoomTicket(tier){
     targetMaxOdds: isMega ? 3000 : 300,
     hardMaxOdds: isMega ? 6000 : 400,
     maxSameLeague: 4,
-    maxSameMarket: 10
+    maxSameMarket: 10,
+    /* Boom acceptă probabilitate mai mică pentru volum (design asumat), dar
+       nu și legs unde Poisson vede coin-flip cât timp API arată optimist
+       (sau invers) — un dezacord real de fond, nu doar "probabilitate
+       moderată". Vezi candidateAccepted(). */
+    minAgreedModelProb: 55
   };
   var type  = isMega ? 'boom1000' : 'boom100';
   var label = isMega ? '💎 Boom 1000+' : '🎯 Boom 100+';
@@ -10732,14 +10750,14 @@ var UPCOMING_TICKET_PROFILES = {
     allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
     minAdjProb: 66, minValue: 0.005, minConf: 45, minOdd: 1.15, maxOdd: 1.55,
     minPicks: 10, maxPicks: 16, targetMinOdds: 100, targetMaxOdds: 300, hardMaxOdds: 400,
-    maxSameLeague: 4, maxSameMarket: 10
+    maxSameLeague: 4, maxSameMarket: 10, minAgreedModelProb: 55
   },
   boom1000: {
     label: '💎 Boom 1000+', type: 'boom1000',
     allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
     minAdjProb: 66, minValue: 0.005, minConf: 45, minOdd: 1.15, maxOdd: 1.55,
     minPicks: 16, maxPicks: 26, targetMinOdds: 1000, targetMaxOdds: 3000, hardMaxOdds: 6000,
-    maxSameLeague: 4, maxSameMarket: 10
+    maxSameLeague: 4, maxSameMarket: 10, minAgreedModelProb: 55
   }
 };
 
@@ -10820,7 +10838,11 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
         var best = null;
         prof.allowedTypes.forEach(function(t){
           var c = buildMarketCandidate(m, t);
-          if (c && c.bestBet && (!best || (c.bestBet.adjProb || 0) > (best.bestBet.adjProb || 0))) best = c;
+          if (!c || !c.bestBet) return;
+          if (prof.minAgreedModelProb && c.bestBet.probabilityEngine === 'hybrid' && c.bestBet.apiProb != null && c.bestBet.poissonProb != null) {
+            if (Math.min(Number(c.bestBet.apiProb), Number(c.bestBet.poissonProb)) < prof.minAgreedModelProb) return;
+          }
+          if (!best || (c.bestBet.adjProb || 0) > (best.bestBet.adjProb || 0)) best = c;
         });
         if (best) deepPool.push(best);
       });
