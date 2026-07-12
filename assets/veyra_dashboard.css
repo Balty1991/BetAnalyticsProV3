@@ -9,7 +9,7 @@
   --vd-muted:  var(--muted, #5C6E8A);
   --vd-card:   rgba(255,255,255,.04);
   --vd-border: rgba(255,255,255,.07);
-  --vd-r:      14px;
+  --vd-r:      18px;
 }
 
 /* ── Keyframes ── */
@@ -145,12 +145,13 @@
 .vd-hero-text { flex: 1; min-width: 0; overflow: hidden; }
 
 .vd-greeting {
-  font-size: clamp(18px, 5vw, 24px);
-  font-weight: 900;
+  font-family: var(--font-display, var(--font-sans));
+  font-size: clamp(24px, 7.5vw, 34px);
+  font-weight: 800;
   color: var(--vd-txt);
-  letter-spacing: -.03em;
-  line-height: 1.2;
-  margin: 0 0 6px;
+  letter-spacing: -.035em;
+  line-height: 1.08;
+  margin: 0 0 7px;
   text-wrap: balance;
   text-shadow: 0 0 32px rgba(124,92,252,.18);
 }
@@ -239,12 +240,13 @@
   box-shadow: 0 8px 24px rgba(0,0,0,.2), 0 0 18px rgba(124,92,252,.08);
 }
 .vd-kpi-v {
-  font-size: clamp(22px, 5.5vw, 30px);
-  font-weight: 900;
+  font-family: var(--font-display, var(--font-sans));
+  font-size: clamp(26px, 6.5vw, 36px);
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--vd-txt);
   line-height: 1;
-  letter-spacing: -.025em;
+  letter-spacing: -.03em;
 }
 .vd-kpi-l {
   font-size: 10px;
