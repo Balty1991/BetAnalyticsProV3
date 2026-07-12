@@ -300,16 +300,12 @@ function toggleTheme(){
 
     <div class="more-group-title">📊 Performanță reală</div>
     <button class="more-card-btn" onclick="switchTab('performanta');closeDesktopMore()">
-      <span class="more-card-title">📊 Performanță Verdict</span>
-      <span class="more-card-sub">Acuratețe ✅ PARIAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale.</span>
-    </button>
-    <button class="more-card-btn" onclick="switchTab('clv');closeDesktopMore()">
-      <span class="more-card-title">📈 CLV Tracker</span>
-      <span class="more-card-sub">Closing Line Value — verifică dacă modelul bate piața real.</span>
+      <span class="more-card-title">📊 Performanță &amp; CLV</span>
+      <span class="more-card-sub">Acuratețe ✅ PARIAZĂ / ⚠️ RISC / ❌ EVITĂ + Closing Line Value, într-un singur loc — erau două tab-uri pe aceleași picks salvate.</span>
     </button>
     <button class="more-card-btn" onclick="switchTab('statistici');if(typeof renderStatisticiTab==='function')renderStatisticiTab();closeDesktopMore()">
       <span class="more-card-title">📊 Statistici Predicții</span>
-      <span class="more-card-sub">Win rate · ROI · Trend per sursă — calculat local din selecțiile salvate.</span>
+      <span class="more-card-sub">Win rate · ROI · Trend per sursă — din log-ul automat de recomandări (eșantion mai mare, nu doar picks salvate manual).</span>
     </button>
 
     <div class="more-group-title">🎫 Bilete</div>
@@ -499,6 +495,14 @@ function toggleTheme(){
       <div style="font-size:11px;color:var(--muted);margin-bottom:16px">Acuratețe semnale ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</div>
       <div id="perf-verdict-content">
         <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Se încarcă...</div>
+      </div>
+      <div style="font-size:15px;font-weight:900;color:var(--txt);margin:24px 0 4px">📈 CLV Tracker</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Closing Line Value — verifică dacă modelul bate piața real, nu doar dacă a câștigat</div>
+      <div id="tab-clv-embedded">
+        <div class="clv-loading-init" style="text-align:center;padding:48px;color:var(--muted,#64748b)">
+          <div style="display:inline-block;width:22px;height:22px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:clvspin .7s linear infinite;margin-bottom:8px"></div>
+          <br>Se încarcă datele CLV…
+        </div>
       </div>
     </div>
   </div>
@@ -848,9 +852,8 @@ function toggleTheme(){
   <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">🤖 Motor AI (doar Gemini)</span><small class="sheet-btn-sub">Vedere izolată doar pe picks Gemini — varianta combinată e în tab-ul principal AI</small></button>
 
   <div class="sheet-group-title">📊 Performanță reală</div>
-  <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță Verdict</span><small class="sheet-btn-sub">Acuratețe ✅ PAREAZĂ / ⚠️ RISC / ❌ EVITĂ pe date reale</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('clv');closeMobileMore()"><span class="sheet-btn-title">📈 CLV Tracker</span><small class="sheet-btn-sub">Closing Line Value — verifică dacă modelul bate piața real</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('statistici');if(typeof renderStatisticiTab==='function')renderStatisticiTab();closeMobileMore()"><span class="sheet-btn-title">📊 Statistici Predicții</span><small class="sheet-btn-sub">Win rate · ROI · Trend per sursă — calculat local</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță &amp; CLV</span><small class="sheet-btn-sub">Verdict acuratețe + Closing Line Value — un singur loc, aceleași picks salvate</small></button>
+  <button class="mobile-sheet-btn" onclick="switchTab('statistici');if(typeof renderStatisticiTab==='function')renderStatisticiTab();closeMobileMore()"><span class="sheet-btn-title">📊 Statistici Predicții</span><small class="sheet-btn-sub">Win rate · ROI · Trend per sursă — log automat, eșantion mai mare</small></button>
 
   <div class="sheet-group-title">🎫 Bilete</div>
   <button class="mobile-sheet-btn" onclick="switchTab('bilete');closeMobileMore()"><span class="sheet-btn-title">🎫 Bilete</span><small class="sheet-btn-sub">Generatoare — Premium, Value, Conservativ, Mix, Over 3.5G, Custom</small></button>
