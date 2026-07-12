@@ -9552,14 +9552,15 @@ function getRelaxedProfile(profile, relax){
   };
 }
 
-/* Cerință explicită a userului: după mai multe exemple concrete (Riga FC,
-   Incheon, GAIS, Boca Juniors, Levski Sofia — toate Under 2.5G, cu
-   probabilitate/confidence mediocre), a cerut ca piața asta să nu mai intre
-   deloc în bilete generate automat — nu (doar) o problemă de calibrare a
-   pragurilor. Exclus din toate generatoarele automate (collectCandidates,
-   portofoliu, top-up-ul Boom, AI Precis). "Bilet Personalizat" rămâne
-   neatins — acolo userul alege manual piețele, deci alegerea îi aparține. */
-var ACCUMULATOR_EXCLUDED_MARKETS = { under25: true };
+/* Blocarea categorică a Under 2.5G a fost pârghia greșită — a mutat doar
+   problema: motorul a umplut biletele cu Draw @ 3.40-4.32 la 38-50% șansă,
+   mult mai riscant decât ce s-a exclus. Piața în sine nu era problema;
+   problema e că profilele Boom relaxau progresiv pragul de calitate ca să
+   atingă cota țintă mai repede — vezi buildSafeVolumeTicket(), care nu mai
+   relaxează niciodată, ci adună volum (20-30+ selecții) din tot ce trece
+   de un prag fix de siguranță. ACCUMULATOR_EXCLUDED_MARKETS rămâne ca
+   mecanism disponibil dacă apare vreodată o piață cu adevărat nefiabilă. */
+var ACCUMULATOR_EXCLUDED_MARKETS = { };
 function isAccumulatorAllowedMarket(type){ return !ACCUMULATOR_EXCLUDED_MARKETS[type]; }
 
 /* Filtru pe acordul dintre modelul API și cel Poisson — opt-in per profil,
@@ -9644,6 +9645,73 @@ function selectDiversifiedPicks(candidates, profile){
   }
 
   return { picks: picks, totalOdds: totalOdds };
+}
+
+/* Bilet "volum sigur" — pentru Boom100/1000. Diferă fundamental de
+   collectCandidates+selectDiversifiedPicks: acolo relax loop-ul coboară
+   progresiv minAdjProb/minConf ca să "încapă" mai repede în cota țintă,
+   ceea ce înseamnă legs din ce în ce mai slabe pe măsură ce fereastra e
+   mică. Aici pragul de siguranță e FIX — nu se relaxează niciodată — și
+   cota țintă se atinge prin volum (adunăm cât mai multe selecții sigure,
+   sortate după probabilitate, până la 30 de meciuri dacă e nevoie), nu
+   prin compromis pe calitate. Exact cerința: "combină predicții cât mai
+   sigure, chiar dacă adunăm 20-30 evenimente pentru o cotă 1000". */
+function buildSafeVolumeTicket(allowedTypes, matchPool, opts){
+  opts = opts || {};
+  var minAdjProb        = opts.minAdjProb != null ? opts.minAdjProb : 70;
+  var minAgreedModelProb = opts.minAgreedModelProb != null ? opts.minAgreedModelProb : 55;
+  var minOdd             = opts.minOdd != null ? opts.minOdd : 1.10;
+  var maxOdd             = opts.maxOdd != null ? opts.maxOdd : 1.60;
+  var maxSameLeague      = opts.maxSameLeague != null ? opts.maxSameLeague : 6;
+  var maxSameMarket      = opts.maxSameMarket != null ? opts.maxSameMarket : 15;
+  var maxPicks           = opts.maxPicks != null ? opts.maxPicks : 30;
+  var minPicks           = opts.minPicks != null ? opts.minPicks : 1;
+  var targetMinOdds      = opts.targetMinOdds || 100;
+  var hardMaxOdds        = opts.hardMaxOdds || (targetMinOdds * 6);
+
+  var candidates = [];
+  (matchPool || []).forEach(function(m){
+    if(!passesSelectionFilter(m)) return;
+    var best = null;
+    allowedTypes.forEach(function(t){
+      if(!isAccumulatorAllowedMarket(t)) return;
+      var c = buildMarketCandidate(m, t);
+      if(!c || !c.bestBet) return;
+      if(Number(c.bestBet.adjProb || 0) < minAdjProb) return;
+      if(Number(c.bestBet.odds || 0) < minOdd || Number(c.bestBet.odds || 0) > maxOdd) return;
+      if(c.bestBet.probabilityEngine === 'hybrid' && c.bestBet.apiProb != null && c.bestBet.poissonProb != null){
+        if(Math.min(Number(c.bestBet.apiProb), Number(c.bestBet.poissonProb)) < minAgreedModelProb) return;
+      }
+      if(!best || (c.bestBet.adjProb || 0) > (best.bestBet.adjProb || 0)) best = c;
+    });
+    if(best) candidates.push(best);
+  });
+
+  candidates.sort(function(a, b){ return (b.bestBet.adjProb || 0) - (a.bestBet.adjProb || 0); });
+
+  var picks = [], totalOdds = 1, leagues = {}, markets = {}, events = {};
+  for(var i = 0; i < candidates.length; i++){
+    var c = candidates[i];
+    var evKey = getGenericEventKey(c);
+    if(events[evKey]) continue;
+    var lgCount = leagues[c.league] || 0;
+    var mkCount = markets[c.bestBet.type] || 0;
+    if(lgCount >= maxSameLeague) continue;
+    if(mkCount >= maxSameMarket) continue;
+    var nextOdds = totalOdds * c.bestBet.odds;
+    if(nextOdds > hardMaxOdds) continue;
+
+    picks.push(c);
+    totalOdds = nextOdds;
+    events[evKey] = true;
+    leagues[c.league] = lgCount + 1;
+    markets[c.bestBet.type] = mkCount + 1;
+
+    if(picks.length >= maxPicks) break;
+    if(totalOdds >= targetMinOdds && picks.length >= minPicks) break;
+  }
+
+  return { picks: picks, totalOdds: totalOdds, reachedTarget: totalOdds >= targetMinOdds && picks.length >= minPicks };
 }
 
 function finalizeTicket(type, label, picks, totalOdds, targetContainerId){
@@ -10691,43 +10759,23 @@ function generateBigWinTicket(){
    (a 20-leg ticket can't cap at 4-per-market like Big Win does). */
 function generateBoomTicket(tier){
   var isMega = tier === '1000';
-  var baseProfile = {
-    allowedTypes: ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'],
-    minAdjProb: 66,
-    minValue: 0.005,
-    minConf: 45,
-    minOdd: 1.15,
-    maxOdd: 1.55,
-    minPicks: isMega ? 16 : 10,
-    maxPicks: isMega ? 26 : 16,
-    targetMinOdds: isMega ? 1000 : 100,
-    targetMaxOdds: isMega ? 3000 : 300,
-    hardMaxOdds: isMega ? 6000 : 400,
-    maxSameLeague: 4,
-    maxSameMarket: 10,
-    /* Boom acceptă probabilitate mai mică pentru volum (design asumat), dar
-       nu și legs unde Poisson vede coin-flip cât timp API arată optimist
-       (sau invers) — un dezacord real de fond, nu doar "probabilitate
-       moderată". Vezi candidateAccepted(). */
-    minAgreedModelProb: 55
-  };
+  var allowedTypes = ['over15','over25','under35','btts','homeWin','awayWin','draw','dc1x','dcx2','dc12','over35','under25','under15'];
   var type  = isMega ? 'boom1000' : 'boom100';
   var label = isMega ? '💎 Boom 1000+' : '🎯 Boom 100+';
 
-  for(var relax = 0; relax <= 3; relax++){
-    var pack = collectCandidates(baseProfile.allowedTypes, baseProfile, relax);
-    var chosen = selectDiversifiedPicks(pack.list, pack.profile);
-    if(chosen.picks.length >= pack.profile.minPicks && chosen.totalOdds >= pack.profile.targetMinOdds){
-      finalizeTicket(type, label, chosen.picks, chosen.totalOdds);
-      return;
-    }
-  }
-  /* Not enough same-day picks to reach the target odds honestly — show
-     whatever the best relaxed attempt found rather than silently failing,
-     so the user can see it's a coverage problem, not a broken button. */
-  var pack4 = collectCandidates(baseProfile.allowedTypes, baseProfile, 3);
-  var chosen4 = selectDiversifiedPicks(pack4.list, pack4.profile);
-  finalizeTicket(type, label + ' (parțial)', chosen4.picks, chosen4.totalOdds);
+  var result = buildSafeVolumeTicket(allowedTypes, ALL_MATCHES, {
+    minAdjProb: 60,
+    minAgreedModelProb: 55,
+    minOdd: 1.10,
+    maxOdd: 2.20,
+    maxSameLeague: 6,
+    maxSameMarket: 15,
+    maxPicks: isMega ? 30 : 18,
+    minPicks: isMega ? 10 : 5,
+    targetMinOdds: isMega ? 1000 : 100,
+    hardMaxOdds: isMega ? 6000 : 400
+  });
+  finalizeTicket(type, result.reachedTarget ? label : label + ' (parțial)', result.picks, result.totalOdds);
 }
 function generateBoom100Ticket(){ generateBoomTicket('100'); }
 function generateBoom1000Ticket(){ generateBoomTicket('1000'); }
@@ -10795,6 +10843,33 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
   var pool = getUpcomingScopedMatches(scope);
   if (pool === null) { toast('Evenimentele viitoare încă se încarcă...', 'warn'); return; }
   var scopeSuffix = scope === 'today' ? '' : ' · toate zilele';
+
+  /* Boom100/1000: volum de selecții sigure, prag fix, nicio relaxare —
+     vezi buildSafeVolumeTicket(). Restul profilelor (Conservator, Big Win)
+     rămân pe relax loop-ul clasic de mai jos, care funcționează bine
+     pentru ele. */
+  if (genKey === 'boom100' || genKey === 'boom1000') {
+    var isMega = genKey === 'boom1000';
+    var result = buildSafeVolumeTicket(prof.allowedTypes, pool, {
+      minAdjProb: 60,
+      minAgreedModelProb: 55,
+      minOdd: 1.10,
+      maxOdd: 2.20,
+      maxSameLeague: 6,
+      maxSameMarket: 15,
+      maxPicks: isMega ? 30 : 18,
+      minPicks: isMega ? 10 : 5,
+      targetMinOdds: prof.targetMinOdds,
+      hardMaxOdds: isMega ? 6000 : 400
+    });
+    if (!result.picks.length) {
+      finalizeTicket(prof.type, prof.label + scopeSuffix, [], 1, targetContainerId);
+      toast('Niciun meci din Evenimente Viitoare (' + (scope === 'today' ? 'azi' : 'toate zilele') + ') nu trece pragul de siguranță pentru acest bilet', 'warn');
+      return;
+    }
+    finalizeTicket(prof.type, prof.label + scopeSuffix + (result.reachedTarget ? '' : ' (parțial)'), result.picks, result.totalOdds, targetContainerId);
+    return;
+  }
 
   for (var relax = 0; relax <= 3; relax++) {
     var pack = collectCandidates(prof.allowedTypes, prof, relax, pool);
