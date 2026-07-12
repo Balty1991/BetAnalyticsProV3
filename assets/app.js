@@ -1086,11 +1086,16 @@ function deleteClaudeSavedPick(id){
 }
 function _claudeParseMarketKey(txt){
   var s = String(txt||'').toLowerCase();
-  if(/over\s*3\.?5/.test(s)) return 'over35';
-  if(/over\s*2\.?5/.test(s)) return 'over25';
-  if(/over\s*1\.?5/.test(s)) return 'over15';
-  if(/under\s*3\.?5/.test(s)) return 'under35';
-  if(/under\s*2\.?5/.test(s)) return 'under25';
+  /* Analiza AI zilnica (build_claude_daily.py) foloseste etichete romanesti
+     "Peste"/"Sub" (nu "over"/"under") — trebuie recunoscute pe langa
+     variantele englezesti, altfel majoritatea picks-urilor AI raman
+     nematchuite (marketKey null). */
+  if(/(?:over|peste)\s*3\.?5/.test(s)) return 'over35';
+  if(/(?:over|peste)\s*2\.?5/.test(s)) return 'over25';
+  if(/(?:over|peste)\s*1\.?5/.test(s)) return 'over15';
+  if(/(?:under|sub)\s*3\.?5/.test(s)) return 'under35';
+  if(/(?:under|sub)\s*2\.?5/.test(s)) return 'under25';
+  if(/(?:under|sub)\s*1\.?5/.test(s)) return 'under15';
   if(/btts|ambele|gg/.test(s)) return 'btts';
   if(/[șs]an[șs][ăa]\s*dubl[ăa]\s*1x|^1x\b|dc.?1x/.test(s)) return 'dc1x';
   if(/[șs]an[șs][ăa]\s*dubl[ăa]\s*x2|\bx2\b|dc.?x2/.test(s)) return 'dcx2';
@@ -9637,6 +9642,7 @@ function finalizeTicket(type, label, picks, totalOdds, targetContainerId){
     type === 'best_single' ? 'Scăzut' :
     type === 'simple' ? 'Scăzut' :
     type === 'custom_single' ? 'Scăzut-Mediu' :
+    type === 'ai_precise' ? 'Scăzut-Mediu' :
     type === 'controlled_combo' ? 'Mediu' :
     type === 'custom_combo' ? 'Mediu' :
     type === 'over15' ? 'Mediu' :
@@ -10836,6 +10842,64 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
 }
 window.generateUpcomingTicket = generateUpcomingTicket;
 window.renderBilete = renderBilete;
+
+/* ── Acumulator AI (Gemini/Claude) — scopat la Evenimente Viitoare ──────
+   Boom100/Boom1000 sunt volum: relaxează pragurile ca să atingă o cotă
+   țintă, ceea ce înseamnă legs din ce în ce mai riscante pe ferestre mici.
+   Acumulatorul AI e opusul: reutilizează analiza zilnică deja generată
+   server-side de Gemini/Claude (build_claude_daily.py → data/
+   claude_daily_analysis.json), care e limitată strict la piețe
+   Safe/Value/Balanced cu cote 1.10-2.00 — deci prin construcție e cea mai
+   "precisă" variantă, nu una nouă calculată aici. */
+function generateAiPreciseTicket(scope, targetContainerId){
+  var d = window.CLAUDE_DAILY || {};
+  var acum = Array.isArray(d.acumulator) ? d.acumulator : [];
+  if(!acum.length){
+    finalizeTicket('ai_precise', '🧠 AI Precis', [], 1, targetContainerId);
+    toast('Analiza AI zilnică nu are un acumulator generat momentan — încearcă mai târziu', 'warn');
+    return;
+  }
+  var pool = getUpcomingScopedMatches(scope);
+  if(pool === null){ toast('Evenimentele viitoare încă se încarcă...', 'warn'); return; }
+
+  var norm = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); };
+  var usedEvents = {};
+  var picks = [];
+  acum.forEach(function(e){
+    var parts = String(e.meci||'').split(/\s+vs\s+/i);
+    if(parts.length < 2) return;
+    var nh = norm(parts[0]), na = norm(parts[1]);
+    if(!nh || !na) return;
+    var marketKey = _claudeParseMarketKey(e.pick);
+    if(!marketKey) return;
+    var found = null;
+    for(var i = 0; i < pool.length; i++){
+      var m = pool[i];
+      var mh = norm(m.home||''), ma = norm(m.away||'');
+      if(!mh || !ma) continue;
+      if((mh===nh||mh.indexOf(nh)>=0||nh.indexOf(mh)>=0) && (ma===na||ma.indexOf(na)>=0||na.indexOf(ma)>=0)){
+        found = m; break;
+      }
+    }
+    if(!found) return;
+    var evKey = getGenericEventKey(found);
+    if(usedEvents[evKey]) return;
+    var bet = (found.allBets || []).filter(function(b){ return b && b.type === marketKey && Number(b.odds||0) > 1; })[0];
+    if(!bet) return;
+    usedEvents[evKey] = true;
+    picks.push(Object.assign({}, found, { bestBet: bet }));
+  });
+
+  if(!picks.length){
+    finalizeTicket('ai_precise', '🧠 AI Precis', [], 1, targetContainerId);
+    toast('Niciun pick din acumulatorul AI nu se regăsește în fereastra selectată (' + (scope==='today'?'azi':'toate zilele') + ')', 'warn');
+    return;
+  }
+  var totalOdds = picks.reduce(function(acc,p){ return acc * Number(p.bestBet.odds||1); }, 1);
+  var scopeSuffix = scope === 'today' ? '' : ' · toate zilele';
+  finalizeTicket('ai_precise', '🧠 AI Precis' + scopeSuffix, picks, totalOdds, targetContainerId);
+}
+window.generateAiPreciseTicket = generateAiPreciseTicket;
 
 
 function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
@@ -13459,7 +13523,7 @@ function getStakePctForTicket(type){
   if(settings.double == null && settings.balanced != null) settings.double = settings.balanced;
   if(settings.triple == null && settings.goals != null) settings.triple = settings.goals;
   if(settings.contrarian == null && settings.risk != null) settings.contrarian = settings.risk;
-  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian', acum5:'triple', acum10:'triple', acum20:'contrarian', big_win:'contrarian', over35:'contrarian', custom_combo:'double', custom_single:'single', boom100:'contrarian', boom1000:'contrarian'};
+  var map = {premium:'single', best_single:'single', profit_single:'single', single:'single', double:'double', cota2:'double', simple:'double', controlled_combo:'double', triple:'triple', over15:'triple', mix_combo:'triple', contrarian:'contrarian', acum5:'triple', acum10:'triple', acum20:'contrarian', big_win:'contrarian', over35:'contrarian', custom_combo:'double', custom_single:'single', boom100:'contrarian', boom1000:'contrarian', ai_precise:'double'};
   var key = map[type] || 'double';
   return Number(settings[key] || 0);
 }
