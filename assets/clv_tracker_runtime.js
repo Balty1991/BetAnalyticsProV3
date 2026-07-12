@@ -24,7 +24,7 @@
     var original = window.switchTab;
     window.switchTab = function (name) {
       original.apply(this, arguments);
-      if (name === "clv") setTimeout(renderCLVTab, 80);
+      if (name === "clv" || name === "performanta") setTimeout(renderCLVTab, 80);
     };
   }
 
@@ -314,7 +314,11 @@
   /* ── render ─────────────────────────────────────────────────────────────── */
 
   function renderCLVTab() {
-    var panel = document.getElementById("tab-clv");
+    // Embedded inside the Performanță Verdict tab now (same underlying picks
+    // data — Performanță/CLV were two separate tabs computing verdicts on the
+    // exact same 3 localStorage monitor sources). Fall back to the old
+    // standalone id in case something else still targets it directly.
+    var panel = document.getElementById("tab-clv-embedded") || document.getElementById("tab-clv");
     if (!panel) return;
 
     var data = buildData();
