@@ -9,6 +9,8 @@
   window.__veyraUpcomingV1 = true;
 
   var STORE_KEY    = 'veyra_upcoming_picks_v1';
+  var VISITED_KEY  = 'veyra_upcoming_visited_dates_v1';
+  var ALL_DATES_KEY = '__ALL__'; // pseudo-dată pentru pastila "Toate"
   var _activeDate  = null;
   var _activeView  = 'matches';
   var _filterEdge  = false; // true = show only non-Avoid predictions
@@ -53,6 +55,20 @@
     } catch(e) { return {}; }
   }
   function savePicks(obj) { try { localStorage.setItem(STORE_KEY, JSON.stringify(obj)); } catch(e) {} }
+
+  function loadVisitedDates() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(VISITED_KEY) || '{}');
+      return (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+    } catch(e) { return {}; }
+  }
+  function markDateVisited(d) {
+    if (!d || d === ALL_DATES_KEY) return;
+    var v = loadVisitedDates();
+    if (v[d]) return;
+    v[d] = true;
+    try { localStorage.setItem(VISITED_KEY, JSON.stringify(v)); } catch(e) {}
+  }
 
   function togglePick(ev, pred) {
     var picks = loadPicks();
@@ -585,7 +601,8 @@
       if(!byDate[d]){byDate[d]=[];dateOrder.push(d);}
       byDate[d].push(e);
     });
-    if (!_activeDate||!byDate[_activeDate]) _activeDate=dateOrder[0]||today;
+    if (!_activeDate || (_activeDate !== ALL_DATES_KEY && !byDate[_activeDate])) _activeDate=dateOrder[0]||today;
+    markDateVisited(_activeDate);
 
     var css = '<style>'
       + '.upc-pills-wrap::-webkit-scrollbar{display:none}'
@@ -618,7 +635,7 @@
     /* Sub-nav — un singur control segmentat (Meciuri/Picks/Bilete), cu
        filtrul Edge+ separat vizual printr-un divider, ca să nu pară "4
        butoane egale" ci "taburi + un filtru". */
-    var edgeCountToday = (byDate[_activeDate] || []).filter(function(e){
+    var edgeCountToday = (_activeDate === ALL_DATES_KEY ? upcoming : (byDate[_activeDate] || [])).filter(function(e){
       var pr = predLookup[String(e.id)];
       return pr && pr.risk_tier && pr.risk_tier !== 'Avoid';
     }).length;
@@ -654,33 +671,50 @@
   /* ── Matches view ──────────────────────────────────────────────────── */
   function renderMatchesView(dateOrder, byDate, predLookup, picks) {
     var html = '';
+    var visited = loadVisitedDates();
+    var allEvs = [];
+    dateOrder.forEach(function(d){ allEvs = allEvs.concat(byDate[d] || []); });
 
-    /* Date pills — fixed overflow */
+    /* Date pills — fixed overflow. "Toate" e prima pastilă (vede tot),
+       apoi zilele individuale. Pastilele deja vizitate (dar neactive acum)
+       primesc o culoare distinctă, ca să știi ce ai verificat deja. */
     html += '<div class="upc-pills-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;'
       + 'scrollbar-width:none;-ms-overflow-style:none;padding:4px 0 10px">'
       + '<div style="display:inline-flex;gap:6px;padding:0 14px;min-width:max-content">';
 
+    var allAct = _activeDate === ALL_DATES_KEY;
+    html += '<button onclick="window.__veyraUpcSetDate(\'' + ALL_DATES_KEY + '\')" style="'
+      + 'padding:6px 13px;border-radius:20px;cursor:pointer;font-size:11px;white-space:nowrap;font-weight:'
+      + (allAct?'800':'600') + ';border:1px solid ' + (allAct?'#a78bfa':'rgba(167,139,250,.35)') + ';'
+      + 'background:' + (allAct?'rgba(167,139,250,.22)':'rgba(167,139,250,.08)') + ';'
+      + 'color:' + (allAct?'#c4b5fd':'#a78bfa') + '">'
+      + '🌐 Toate <span style="opacity:.7">(' + allEvs.length + ')</span></button>';
+
     dateOrder.slice(0,20).forEach(function(d) {
       var act = d===_activeDate;
+      var wasVisited = !act && !!visited[d];
+      var borderCol = act ? '#3b82f6' : wasVisited ? 'rgba(34,197,94,.45)' : 'rgba(255,255,255,.12)';
+      var bgCol     = act ? 'rgba(59,130,246,.18)' : wasVisited ? 'rgba(34,197,94,.10)' : 'transparent';
+      var txtCol    = act ? '#60a5fa' : wasVisited ? '#4ade80' : 'var(--muted)';
       html += '<button onclick="window.__veyraUpcSetDate(\'' + d + '\')" style="'
         + 'padding:6px 13px;border-radius:20px;cursor:pointer;font-size:11px;white-space:nowrap;font-weight:'
-        + (act?'800':'500') + ';border:1px solid ' + (act?'#3b82f6':'rgba(255,255,255,.12)') + ';'
-        + 'background:' + (act?'rgba(59,130,246,.18)':'transparent') + ';'
-        + 'color:' + (act?'#60a5fa':'var(--muted)') + '">'
-        + formatDateLabel(d) + ' <span style="opacity:.7">(' + byDate[d].length + ')</span></button>';
+        + (act?'800':'500') + ';border:1px solid ' + borderCol + ';'
+        + 'background:' + bgCol + ';'
+        + 'color:' + txtCol + '">'
+        + (wasVisited ? '✓ ' : '') + formatDateLabel(d) + ' <span style="opacity:.7">(' + byDate[d].length + ')</span></button>';
     });
     if (dateOrder.length>20)
       html += '<span style="font-size:10px;color:var(--muted);align-self:center;padding-right:4px">+'+(dateOrder.length-20)+' zile</span>';
     html += '</div></div>';
 
-    var dayEvs  = byDate[_activeDate] || [];
+    var dayEvs  = _activeDate === ALL_DATES_KEY ? allEvs : (byDate[_activeDate] || []);
     html += '<div style="padding:0 14px">';
     /* Contorul de meciuri e deja pe pastila de dată selectată mai sus —
        aici doar ziua (etichetă scurtă) + sortarea, ca să nu repetăm "N
        meciuri" de două ori pe același ecran. */
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
       + '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">'
-      + formatDateLabel(_activeDate) + '</div>';
+      + (_activeDate === ALL_DATES_KEY ? '🌐 Toate zilele' : formatDateLabel(_activeDate)) + '</div>';
     var sortBtnBase = 'padding:4px 9px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ';
     var sortAct   = sortBtnBase + 'rgba(59,130,246,.4);background:rgba(59,130,246,.15);color:#60a5fa';
     var sortInact = sortBtnBase + 'rgba(255,255,255,.1);background:transparent;color:var(--muted)';
@@ -1161,7 +1195,7 @@
     if (_activeView !== 'matches') _activeView = 'matches';
     renderUpcomingTab();
   };
-  window.__veyraUpcSetDate = function(d) { _activeDate=d; _activeView='matches'; renderUpcomingTab(); };
+  window.__veyraUpcSetDate = function(d) { _activeDate=d; _activeView='matches'; markDateVisited(d); renderUpcomingTab(); };
   window.__veyraUpcomingSetDate = window.__veyraUpcSetDate; // backward compat
 
   window.__veyraUpcView = function(v) { _activeView=v; renderUpcomingTab(); };
