@@ -120,15 +120,16 @@ jobs:
             timeout 420s python -u enrich_predictions.py || echo "Optional enrich skipped or timed out; non-fatal."
           fi
 
-      - name: Generate Claude AI previews (VERDICT/GASIT/CONCLUZIE in romana)
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          if [ -f generate_claude_previews.py ]; then
-            pip install anthropic || echo "WARN: anthropic install failed"
-            timeout 300s python -u generate_claude_previews.py || echo "Claude previews skipped/timed out; non-fatal."
-          fi
-        continue-on-error: true
+      # Disabled: rula la fiecare 30 min (48x/zi) si consuma credite Anthropic degeaba.
+      # - name: Generate Claude AI previews (VERDICT/GASIT/CONCLUZIE in romana)
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      #   run: |
+      #     if [ -f generate_claude_previews.py ]; then
+      #       pip install anthropic || echo "WARN: anthropic install failed"
+      #       timeout 300s python -u generate_claude_previews.py || echo "Claude previews skipped/timed out; non-fatal."
+      #     fi
+      #   continue-on-error: true
 
       - name: Build Claude daily analysis (top picks + acumulator)
         env:
