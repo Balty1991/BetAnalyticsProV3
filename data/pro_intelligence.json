@@ -1,34 +1,35 @@
 {
-  "updated_at": "2026-07-12T16:18:47.425379+00:00",
+  "updated_at": "2026-07-13T06:28:12.025081+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 79.1,
+  "overall_score": 79.6,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 1871,
-    "pending_rows": 125,
-    "candidates_with_odds_and_probability": 113,
+    "recommendation_rows": 1876,
+    "pending_rows": 130,
+    "candidates_with_odds_and_probability": 117,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
-    "baseline_leagues": 27
+    "baseline_leagues": 26
   },
   "risk_distribution": {
-    "safe": 16,
-    "balanced": 22,
-    "speculative": 72,
-    "value": 3
+    "safe": 17,
+    "balanced": 21,
+    "speculative": 74,
+    "value": 5
   },
   "market_distribution_top150": {
-    "Under 3.5G": 85,
+    "Under 3.5G": 89,
     "Over 2.5G": 4,
     "Over 1.5G": 15,
     "BTTS": 9
   },
   "league_distribution_top150": {
+    "Europa League": 3,
     "Veikkausliiga": 6,
     "Allsvenskan": 10,
     "Champions League": 12,
@@ -37,7 +38,7 @@
     "K League 1": 11,
     "Chinese Super League": 21,
     "USL Championship": 12,
-    "Copa Sudamericana": 2,
+    "Copa Sudamericana": 3,
     "Eliteserien": 5,
     "FA Cup": 1,
     "Brasileirão Serie B": 8,
@@ -67,6 +68,34 @@
     "risk_tiers": "safe/value/balanced/speculative based on probability, edge, odds and confidence"
   },
   "top_ev": [
+    {
+      "event_id": 210787,
+      "prediction_id": 5392,
+      "home": "Ferencváros TC",
+      "away": "FK Vojvodina",
+      "league": "Europa League",
+      "event_date": "2026-07-16T21:15:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.73,
+      "model_probability": 0.8501,
+      "model_probability_pct": 85.01,
+      "implied_probability_pct": 57.8,
+      "fair_odds": 1.176,
+      "edge_pp": 27.21,
+      "ev_pct": 47.07,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 90.24,
+      "score": 129.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 85.0% vs. probabilitate implicată 57.8%.",
+        "EV estimat 47.1% și edge 27.2 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
     {
       "event_id": 207267,
       "prediction_id": 4977,
@@ -852,58 +881,30 @@
       ]
     },
     {
-      "event_id": 205085,
-      "prediction_id": 4947,
-      "home": "FC Seoul",
-      "away": "Incheon United",
-      "league": "K League 1",
-      "event_date": "2026-07-05T13:30:00+03:00",
+      "event_id": 207975,
+      "prediction_id": 5097,
+      "home": "Bolívar",
+      "away": "Grêmio",
+      "league": "Copa Sudamericana",
+      "event_date": "2026-07-24T01:00:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.25,
-      "model_probability": 0.8374,
-      "model_probability_pct": 83.74,
-      "implied_probability_pct": 80.0,
-      "fair_odds": 1.194,
-      "edge_pp": 3.74,
-      "ev_pct": 4.67,
-      "kelly_fraction": 0.0467,
-      "kelly_units_100": 4.67,
-      "confidence": 42.26,
+      "odds": 1.38,
+      "model_probability": 0.8151,
+      "model_probability_pct": 81.51,
+      "implied_probability_pct": 72.46,
+      "fair_odds": 1.227,
+      "edge_pp": 9.05,
+      "ev_pct": 12.48,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 41.63,
       "score": 100.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 83.7% vs. probabilitate implicată 80.0%.",
-        "EV estimat 4.7% și edge 3.7 puncte procentuale.",
-        "Miză Kelly fracțională 4.67% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 8358,
-      "prediction_id": 4902,
-      "home": "Jordan",
-      "away": "Argentina",
-      "league": "World Cup 2026",
-      "event_date": "2026-06-28T05:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.59,
-      "model_probability": 0.7205,
-      "model_probability_pct": 72.05,
-      "implied_probability_pct": 62.89,
-      "fair_odds": 1.388,
-      "edge_pp": 9.16,
-      "ev_pct": 14.56,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 47.66,
-      "score": 99.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 72.0% vs. probabilitate implicată 62.9%.",
-        "EV estimat 14.6% și edge 9.2 puncte procentuale.",
+        "Probabilitate model 81.5% vs. probabilitate implicată 72.5%.",
+        "EV estimat 12.5% și edge 9.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
@@ -1103,6 +1104,34 @@
         "Probabilitate model 85.3% vs. probabilitate implicată 85.5%.",
         "EV estimat -0.2% și edge -0.1 puncte procentuale.",
         "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 210787,
+      "prediction_id": 5392,
+      "home": "Ferencváros TC",
+      "away": "FK Vojvodina",
+      "league": "Europa League",
+      "event_date": "2026-07-16T21:15:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.73,
+      "model_probability": 0.8501,
+      "model_probability_pct": 85.01,
+      "implied_probability_pct": 57.8,
+      "fair_odds": 1.176,
+      "edge_pp": 27.21,
+      "ev_pct": 47.07,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 90.24,
+      "score": 129.0,
+      "risk_tier": "safe",
+      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 85.0% vs. probabilitate implicată 57.8%.",
+        "EV estimat 47.1% și edge 27.2 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1347,7 +1376,7 @@
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 42.51,
-      "score": 98.0,
+      "score": 97.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
@@ -1393,24 +1422,24 @@
       "league": "Champions League",
       "event_date": "2026-07-14T20:30:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.27,
+      "odds": 1.29,
       "model_probability": 0.827,
       "model_probability_pct": 82.7,
-      "implied_probability_pct": 78.74,
+      "implied_probability_pct": 77.52,
       "fair_odds": 1.209,
-      "edge_pp": 3.96,
-      "ev_pct": 5.03,
-      "kelly_fraction": 0.0466,
-      "kelly_units_100": 4.66,
+      "edge_pp": 5.18,
+      "ev_pct": 6.68,
+      "kelly_fraction": 0.0576,
+      "kelly_units_100": 5.76,
       "confidence": 50.43,
-      "score": 90.0,
+      "score": 91.0,
       "risk_tier": "speculative",
       "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 82.7% vs. probabilitate implicată 78.7%.",
-        "EV estimat 5.0% și edge 4.0 puncte procentuale.",
-        "Miză Kelly fracțională 4.66% din bancă, plafonată prudent."
+        "Probabilitate model 82.7% vs. probabilitate implicată 77.5%.",
+        "EV estimat 6.7% și edge 5.2 puncte procentuale.",
+        "Miză Kelly fracțională 5.76% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1440,37 +1469,37 @@
         "EV estimat 32.0% și edge 20.0 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
-    },
+    }
+  ],
+  "balanced": [
     {
-      "event_id": 210765,
-      "prediction_id": 5375,
-      "home": "Kuopion Palloseura",
-      "away": "FK Vardar Skopje",
-      "league": "Champions League",
-      "event_date": "2026-07-14T18:00:00+03:00",
+      "event_id": 210787,
+      "prediction_id": 5392,
+      "home": "Ferencváros TC",
+      "away": "FK Vojvodina",
+      "league": "Europa League",
+      "event_date": "2026-07-16T21:15:00+03:00",
       "market": "Under 3.5G",
-      "odds": 1.58,
-      "model_probability": 0.8226,
-      "model_probability_pct": 82.26,
-      "implied_probability_pct": 63.29,
-      "fair_odds": 1.216,
-      "edge_pp": 18.97,
-      "ev_pct": 29.97,
+      "odds": 1.73,
+      "model_probability": 0.8501,
+      "model_probability_pct": 85.01,
+      "implied_probability_pct": 57.8,
+      "fair_odds": 1.176,
+      "edge_pp": 27.21,
+      "ev_pct": 47.07,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
-      "confidence": 90.62,
-      "score": 115.0,
+      "confidence": 90.24,
+      "score": 129.0,
       "risk_tier": "safe",
       "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 82.3% vs. probabilitate implicată 63.3%.",
-        "EV estimat 30.0% și edge 19.0 puncte procentuale.",
+        "Probabilitate model 85.0% vs. probabilitate implicată 57.8%.",
+        "EV estimat 47.1% și edge 27.2 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
-    }
-  ],
-  "balanced": [
+    },
     {
       "event_id": 207267,
       "prediction_id": 4977,
@@ -2001,34 +2030,6 @@
         "Probabilitate model 73.7% vs. probabilitate implicată 68.0%.",
         "EV estimat 8.3% și edge 5.7 puncte procentuale.",
         "Miză Kelly fracțională 4.43% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 207264,
-      "prediction_id": 4963,
-      "home": "VPS",
-      "away": "SJK",
-      "league": "Veikkausliiga",
-      "event_date": "2026-07-10T19:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.51,
-      "model_probability": 0.7532,
-      "model_probability_pct": 75.32,
-      "implied_probability_pct": 66.23,
-      "fair_odds": 1.328,
-      "edge_pp": 9.09,
-      "ev_pct": 13.73,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 67.33,
-      "score": 93.0,
-      "risk_tier": "safe",
-      "risk_note": "probabilitate mare, edge pozitiv și volatilitate redusă",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 75.3% vs. probabilitate implicată 66.2%.",
-        "EV estimat 13.7% și edge 9.1 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     }
   ],
