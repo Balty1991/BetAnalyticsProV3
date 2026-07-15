@@ -289,10 +289,6 @@ function toggleTheme(){
       <span class="more-card-title">⚡ Master Signal — motorul unificat</span>
       <span class="more-card-sub">Un singur scor 0-100. ML5, APEX, Kelly și Valoare sunt deja combinate aici — nu mai trebuie să verifici 3 ecrane separate.</span>
     </button>
-    <button class="more-card-btn" onclick="switchTab('claudeai');closeDesktopMore()">
-      <span class="more-card-title">🧠 AI Claude (doar sursa Claude)</span>
-      <span class="more-card-sub">Vedere izolată doar pe picks Claude. Pentru varianta combinată Claude + Gemini, vezi tab-ul principal AI.</span>
-    </button>
     <button class="more-card-btn" onclick="switchTab('motorai');closeDesktopMore()">
       <span class="more-card-title">🤖 Motor AI (doar sursa Gemini)</span>
       <span class="more-card-sub">Vedere izolată doar pe picks Gemini per-meci. Pentru varianta combinată, vezi tab-ul principal AI.</span>
@@ -653,11 +649,6 @@ function toggleTheme(){
 
   <!-- end tab-charts -->
 
-  <!-- ===== PREDICȚII AI CLAUDE ===== -->
-  <div class="tab-content" id="tab-claudeai">
-    <div id="claudeai-root" style="padding:16px 0 80px"></div>
-  </div>
-
   <!-- ===== MOTOR AI — PER-MATCH GEMINI ANALYSIS ===== -->
   <div class="tab-content" id="tab-motorai">
     <div id="motorai-root" style="padding:16px 0 80px"></div>
@@ -856,7 +847,6 @@ function toggleTheme(){
 
   <div class="sheet-group-title">🧠 Cum decide VEYRA</div>
   <button class="mobile-sheet-btn" onclick="switchTab('master');closeMobileMore()" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)"><span class="sheet-btn-title">⚡ Master Signal — motorul unificat</span><small class="sheet-btn-sub">Un singur scor 0-100 — ML5 + APEX + Kelly + Valoare deja combinate, nu mai verifici 3 ecrane</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('claudeai');closeMobileMore()"><span class="sheet-btn-title">🧠 AI Claude (doar Claude)</span><small class="sheet-btn-sub">Vedere izolată doar pe picks Claude — varianta combinată e în tab-ul principal AI</small></button>
   <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">🤖 Motor AI (doar Gemini)</span><small class="sheet-btn-sub">Vedere izolată doar pe picks Gemini — varianta combinată e în tab-ul principal AI</small></button>
 
   <div class="sheet-group-title">📊 Performanță reală</div>
