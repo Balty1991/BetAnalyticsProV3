@@ -1127,7 +1127,6 @@ function _recUnits(pickTxt, motivTxt){
   if(odds <= 1.65) return 2;
   return 1;
 }
-function _setClaudeUnitSize(n){ localStorage.setItem('veyra_claude_unitsize',String(n)); renderClaudeAITab(); }
 function addClaudeSavedPick(meci, pickTxt, eventDate, pickType, recUnits){
   var list = loadClaudeSaved();
   var today = new Date().toDateString();
@@ -1189,302 +1188,6 @@ function autoCheckClaudeSavedResults(){
   if(changed){ saveClaudeSaved(list); _reRenderPickViews(); }
 }
 
-// ============================================================
-// CLAUDE AI DAILY ANALYSIS TAB
-// ============================================================
-function _getLiveOddsForPick(e){
-  if(!e.marketKey || !e.odds || Number(e.odds) <= 1) return null;
-  var matches = window.ALL_MATCHES;
-  if(!Array.isArray(matches) || !matches.length) return null;
-  var norm = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); };
-  var parts = String(e.meci||'').split(/\s+vs\s+/i);
-  if(parts.length < 2) return null;
-  var nh = norm(parts[0].trim()), na = norm(parts[1].trim());
-  var found = null;
-  for(var _li=0; _li<matches.length; _li++){
-    var _lm = matches[_li];
-    var _lh = norm(_lm.home||''), _la = norm(_lm.away||'');
-    if(!_lh || !_la) continue;
-    if((_lh===nh||_lh.indexOf(nh)>=0||nh.indexOf(_lh)>=0)&&(_la===na||_la.indexOf(na)>=0||na.indexOf(_la)>=0)){
-      found = _lm; break;
-    }
-  }
-  if(!found) return null;
-  var allBets = found.allBets || [];
-  for(var _bi=0; _bi<allBets.length; _bi++){
-    if(allBets[_bi].type === e.marketKey && Number(allBets[_bi].odds||0) > 1)
-      return Number(allBets[_bi].odds);
-  }
-  return null;
-}
-
-function renderClaudeAITab(){
-  var root=document.getElementById('claudeai-root');
-  if(!root) return;
-  var d=window.CLAUDE_DAILY||{};
-  var topPicks=d.top_picks||[];
-  var acumulator=d.acumulator||[];
-  var generatedAt=d.generated_at||'';
-  var matchesAnalyzed=d.matches_analyzed||0;
-  var unitSize=parseInt(localStorage.getItem('veyra_claude_unitsize')||'10',10)||10;
-
-  // Kickoff / event_date lookup
-  var _kickoffMap={},_dateMap={};
-  (window.ALL_MATCHES||[]).forEach(function(m){
-    var key=((m.home||'')+(m.away||'')).toLowerCase().replace(/\s+/g,'');
-    if(!key) return;
-    var timeStr=m.timeLabel||(m.date?fmtTime(m.date):'');
-    if(m.date){
-      var _d=new Date(m.date);
-      if(isFinite(_d.getTime())){
-        _dateMap[key]=m.date;
-        var ds=_d.getDate().toString().padStart(2,'0')+'.'+(_d.getMonth()+1).toString().padStart(2,'0');
-        if(timeStr&&timeStr!=='00:00') _kickoffMap[key]=ds+' · '+timeStr;
-      }
-    }
-  });
-  function _getEventDate(s){
-    var p=s.split(/\s+vs\s+/i); if(p.length<2) return '';
-    return _dateMap[(p[0].trim()+p[1].trim()).toLowerCase().replace(/\s+/g,'')] || '';
-  }
-  function _getKickoff(s){
-    var p=s.split(/\s+vs\s+/i); if(p.length<2) return '';
-    var h=p[0].trim().toLowerCase().replace(/\s+/g,''), a=p[1].trim().toLowerCase().replace(/\s+/g,'');
-    var key=h+a;
-    if(_kickoffMap[key]) return _kickoffMap[key];
-    for(var k in _kickoffMap){ if(k.indexOf(h)!==-1&&k.indexOf(a)!==-1) return _kickoffMap[k]; }
-    return '';
-  }
-
-  if(!generatedAt&&!topPicks.length&&!acumulator.length){
-    root.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted)">'
-      +'<div style="font-size:32px;margin-bottom:12px">🎯</div>'
-      +'<div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:8px">Nu există bilete pentru astăzi</div>'
-      +'<div style="font-size:12px">Analiza zilnică se generează automat. Încearcă mai târziu.</div>'
-      +'</div>';
-    return;
-  }
-
-  var genStr='';
-  if(generatedAt){
-    try{ var gd=new Date(generatedAt); genStr=gd.toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
-    catch(e){ genStr=generatedAt.slice(0,16).replace('T',' '); }
-  }
-
-  // Saved picks map for button state
-  var _savedMap={};
-  loadClaudeSaved().forEach(function(e){ _savedMap[(e.meci||'')+'|'+(e.pick_text||'')]=true; });
-
-  // Helpers
-  function _parseOddsLocal(p){ var m=String(p||'').match(/@\s*([\d.]+)/); return m?parseFloat(m[1]):0; }
-  function _parseEdgeLocal(s){ var m=String(s||'').match(/\+(\d+(?:\.\d+)?)\s*pp/); return m?parseFloat(m[1]):0; }
-  function _calcTotalOdds(picks){
-    var t=1;
-    picks.forEach(function(p){ var o=_parseOddsLocal(p.pick||''); if(o>1) t*=o; });
-    return t>1?+t.toFixed(2):0;
-  }
-  function _pickLabel(p){ return (p.pick||'').replace(/@\s*[\d.]+/,'').trim(); }
-
-  // Sort topPicks: units desc, edge desc
-  var sorted=topPicks.slice().sort(function(a,b){
-    var ua=_recUnits(a.pick||'',a.motiv||''),ub=_recUnits(b.pick||'',b.motiv||'');
-    var ea=_parseEdgeLocal(a.motiv||''),eb=_parseEdgeLocal(b.motiv||'');
-    return ua!==ub?ub-ua:eb-ea;
-  });
-
-  // Build ticket configs
-  var STAKES=[5,10,20,50];
-  var tickets=[];
-  if(sorted.length>=2){
-    tickets.push({label:'⚡ Bilet Principal',border:'rgba(124,92,252,.5)',hdr:'rgba(124,92,252,.15)',picks:sorted.slice(0,Math.min(3,sorted.length))});
-  }
-  if(acumulator.length>=2){
-    tickets.push({label:'🤖 Bilet AI',border:'rgba(139,92,246,.45)',hdr:'rgba(139,92,246,.15)',picks:acumulator.slice(0,5)});
-  }
-  if(sorted.length>=4){
-    tickets.push({label:'💎 Bilet Extins',border:'rgba(251,191,36,.4)',hdr:'rgba(251,191,36,.15)',picks:sorted.slice(0,Math.min(5,sorted.length))});
-  }
-
-  function buildTicketHtml(t){
-    var totalOdds=_calcTotalOdds(t.picks);
-    if(totalOdds<=1) return '';
-    var h='<div style="background:var(--bg2,#0E1424);border:2px solid '+t.border+';border-radius:16px;margin-bottom:14px;overflow:hidden">';
-    // Header band
-    h+='<div style="background:'+t.hdr+';padding:11px 16px;display:flex;align-items:center;justify-content:space-between">'
-      +'<div style="font-size:13px;font-weight:900;color:var(--txt)">'+t.label+'</div>'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<span style="font-size:11px;color:var(--muted)">'+t.picks.length+' selecții</span>'
-      +'<span style="font-size:16px;font-weight:900;color:#7C5CFC">@'+totalOdds.toFixed(2)+'</span>'
-      +'</div></div>';
-    // Picks list
-    h+='<div style="padding:10px 16px 6px 16px">';
-    t.picks.forEach(function(p,i){
-      var odds=_parseOddsLocal(p.pick||'');
-      var label=_pickLabel(p);
-      var kick=_getKickoff(p.meci||'');
-      var edge=_parseEdgeLocal(p.motiv||'');
-      var units=_recUnits(p.pick||'',p.motiv||'');
-      var evDate=_getEventDate(p.meci||'');
-      var meci_esc=(p.meci||'').replace(/'/g,"\\'");
-      var pick_esc=(p.pick||'').replace(/'/g,"\\'");
-      var isSaved=_savedMap[(p.meci||'')+'|'+(p.pick||'')];
-      var oddsColor=odds<=1.45?'#22c55e':odds<=1.75?'#7C5CFC':odds<=2.2?'#f59e0b':'#ef4444';
-      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;'+(i<t.picks.length-1?'border-bottom:1px solid rgba(255,255,255,.05)':'')+'">'
-        +'<div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--muted);flex-shrink:0">'+(i+1)+'</div>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:11px;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(p.meci||'')+'</div>'
-        +'<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px">'
-        +'<span style="font-size:11px;color:#a78bfa">'+label+'</span>'
-        +(odds>0?'<span style="font-size:12px;font-weight:800;color:'+oddsColor+'">@'+odds.toFixed(2)+'</span>':'')
-        +(edge>0?'<span style="font-size:9px;font-weight:700;color:#22c55e">+'+edge+'pp</span>':'')
-        +(kick?'<span style="font-size:9px;color:var(--muted)">'+kick+'</span>':'')
-        +'</div></div>'
-        +(isSaved
-          ?'<span style="font-size:13px;color:#22c55e;flex-shrink:0">✅</span>'
-          :'<button onclick="addClaudeSavedPick(\''+meci_esc+'\',\''+pick_esc+'\',\''+evDate+'\',\'acum\','+units+')" style="font-size:10px;padding:3px 9px;border-radius:6px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);color:#a78bfa;cursor:pointer;flex-shrink:0">💾</button>')
-        +'</div>';
-    });
-    h+='</div>';
-    // Stakes grid
-    h+='<div style="padding:10px 16px 16px">'
-      +'<div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:8px;text-transform:uppercase">Câștig potențial</div>'
-      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">';
-    STAKES.forEach(function(s){
-      var ret=Math.round(s*totalOdds*10)/10;
-      h+='<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:10px;padding:10px 4px;text-align:center">'
-        +'<div style="font-size:10px;color:var(--muted);margin-bottom:4px">'+s+' RON</div>'
-        +'<div style="font-size:14px;font-weight:900;color:#22c55e">'+ret+'</div>'
-        +'</div>';
-    });
-    h+='</div></div>';
-    h+='</div>';
-    return h;
-  }
-
-  var html='<div style="padding:0 4px">';
-
-  // ── HEADER ──────────────────────────────────────────────────────────────────
-  html+='<div style="background:linear-gradient(135deg,rgba(124,92,252,.08),rgba(99,102,241,.06));border:1px solid rgba(124,92,252,.25);border-radius:16px;padding:14px 16px;margin-bottom:14px">'
-    +'<div style="display:flex;align-items:center;justify-content:space-between">'
-    +'<div>'
-    +'<div style="font-size:18px;font-weight:900;color:var(--txt);letter-spacing:-.3px">🎯 Bilete Acumulator</div>'
-    +(genStr?'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+genStr+(matchesAnalyzed?' · '+matchesAnalyzed+' meciuri':'')+'</div>':'')
-    +'</div>'
-    +'<div style="display:flex;align-items:center;gap:8px">'
-    +(tickets.length?'<div style="font-size:11px;color:var(--muted);text-align:right">'+tickets.length+'<br><span style="font-size:9px">bilete</span></div>':'')
-    +'<button onclick="window._refreshClaudeDaily&&window._refreshClaudeDaily()" title="Reîncarcă" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0">🔄</button>'
-    +'</div></div></div>';
-
-  // ── STAKE SELECTOR ──────────────────────────────────────────────────────────
-  html+='<div style="background:var(--bg2,#0E1424);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 14px;margin-bottom:14px">'
-    +'<div style="font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.8px;margin-bottom:8px;text-transform:uppercase">Valoare miez (pentru calcul)</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">';
-  [5,10,20,50].forEach(function(u){
-    var isA=unitSize===u;
-    html+='<button onclick="_setClaudeUnitSize('+u+')" style="padding:8px 0;border-radius:9px;font-size:12px;font-weight:'+(isA?'900':'600')+';cursor:pointer;border:'+(isA?'1.5px solid #7C5CFC':'1px solid rgba(124,92,252,.2)')+';background:'+(isA?'rgba(124,92,252,.18)':'rgba(124,92,252,.04)')+';color:'+(isA?'#7C5CFC':'var(--muted)')+'">'+u+' RON</button>';
-  });
-  html+='</div></div>';
-
-  // ── TICKETS ─────────────────────────────────────────────────────────────────
-  if(tickets.length){
-    tickets.forEach(function(t){ html+=buildTicketHtml(t); });
-  } else {
-    html+='<div style="text-align:center;padding:40px 20px;color:var(--muted)">'
-      +'<div style="font-size:28px;margin-bottom:10px">🎯</div>'
-      +'<div style="font-size:13px">Nu există selecții suficiente pentru bilete azi.</div>'
-      +'</div>';
-  }
-
-  // ── SESIUNEA MEA ────────────────────────────────────────────────────────────
-  (function(){
-    var saved=loadClaudeSaved();
-    var wins=0,losses=0,ronPL=0,settled=0;
-    saved.forEach(function(e){
-      var u=e.rec_units||1,stake=u*unitSize;
-      if(e.result==='win'){ wins++; ronPL+=stake*((e.odds||1)-1); settled++; }
-      else if(e.result==='loss'){ losses++; ronPL-=stake; settled++; }
-    });
-    var wr=settled?Math.round(wins/settled*100):null;
-    var wrColor=wr===null?'#64748b':wr>=60?'#22c55e':wr>=50?'#f59e0b':'#ef4444';
-    var plColor=ronPL>0?'#22c55e':ronPL<0?'#ef4444':'#f59e0b';
-    var plStr=(ronPL>=0?'+':'')+Math.round(ronPL*10)/10+' RON';
-    html+='<div style="background:var(--bg2,#0E1424);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:14px 16px;margin-bottom:12px">'
-      +'<div style="font-size:13px;font-weight:800;color:#a78bfa;margin-bottom:12px">📊 Sesiunea Mea</div>';
-    if(!saved.length){
-      html+='<div style="text-align:center;padding:16px 0;color:var(--muted);font-size:12px">Niciun pick salvat.<br>Apasă 💾 pe orice selecție pentru a o urmări.</div>';
-    } else {
-      html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">'
-        +'<div style="background:rgba(124,92,252,.06);border:1px solid rgba(124,92,252,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        +'<div style="font-size:18px;font-weight:900;color:'+wrColor+'">'+(wr!==null?wr+'%':'—')+'</div>'
-        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">Win Rate</div></div>'
-        +'<div style="background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:10px 6px;text-align:center">'
-        +'<div style="font-size:13px;font-weight:900;color:'+plColor+'">'+plStr+'</div>'
-        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">P&L</div></div>'
-        +'<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        +'<div style="font-size:18px;font-weight:900;color:#22c55e">'+wins+'</div>'
-        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">WIN</div></div>'
-        +'<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 8px;text-align:center">'
-        +'<div style="font-size:18px;font-weight:900;color:#ef4444">'+losses+'</div>'
-        +'<div style="font-size:9px;color:var(--muted);margin-top:2px">LOSS</div></div>'
-        +'</div>';
-      // Full history grouped by date
-      var _grpByDate={},_grpOrder=[];
-      saved.slice().reverse().forEach(function(e){
-        var _dk='';
-        try{ var _sd=new Date(e.event_date||e.savedAt); if(isFinite(_sd.getTime())) _dk=_sd.toISOString().slice(0,10); }catch(ex){}
-        if(!_dk) _dk='unknown';
-        if(!_grpByDate[_dk]){ _grpByDate[_dk]=[]; _grpOrder.push(_dk); }
-        _grpByDate[_dk].push(e);
-      });
-      _grpOrder.forEach(function(dk){
-        var _dlabel=dk==='unknown'?'—':(function(){ var p=dk.split('-'); return p[2]+'.'+p[1]+'.'+p[0]; })();
-        html+='<div style="font-size:10px;font-weight:700;color:var(--muted);padding:6px 0 2px 0;letter-spacing:.5px;border-top:1px solid rgba(255,255,255,.05);margin-top:4px">'+_dlabel+'</div>';
-        _grpByDate[dk].forEach(function(e){
-          var u=e.rec_units||1,stake=u*unitSize;
-          var icon=e.result==='win'?'✅':e.result==='loss'?'❌':e.result==='stale'?'⚠️':'⏳';
-          var resColor=e.result==='win'?'#22c55e':e.result==='loss'?'#ef4444':e.result==='stale'?'#f59e0b':'#64748b';
-          var uBadge=u===3?'<span style="font-size:9px;color:#ef4444;font-weight:700">🔥3U</span>'
-            :u===2?'<span style="font-size:9px;color:#fbbf24;font-weight:700">⚡2U</span>'
-            :'<span style="font-size:9px;color:#94a3b8;font-weight:700">1U</span>';
-          var ronResult='';
-          if(e.result==='win') ronResult='<span style="font-size:10px;font-weight:700;color:#22c55e">+'+(Math.round(stake*((e.odds||1)-1)*10)/10)+' RON</span>';
-          else if(e.result==='loss') ronResult='<span style="font-size:10px;font-weight:700;color:#ef4444">-'+stake+' RON</span>';
-          else if(e.result==='stale') ronResult='<span style="font-size:9px;color:#f59e0b">⚠️</span>';
-          var clvIndicator='';
-          if(e.result==='pending'&&e.odds&&Number(e.odds)>1){
-            var _liveOdds=_getLiveOddsForPick(e);
-            if(_liveOdds!==null&&_liveOdds>1){
-              var _clvDiff=Number(e.odds)-_liveOdds;
-              var _clvPct=(_clvDiff/_liveOdds)*100;
-              if(Math.abs(_clvPct)>=1){
-                var _clvPos=_clvDiff>0;
-                clvIndicator='<span style="font-size:9px;font-weight:700;color:'+(_clvPos?'#22c55e':'#ef4444')+'">'+(_clvPos?'↓ +':'↑ ')+Math.abs(_clvPct).toFixed(1)+'%</span>';
-              }
-            }
-          }
-          html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-            +'<div style="font-size:15px;flex-shrink:0">'+icon+'</div>'
-            +'<div style="flex:1;min-width:0">'
-            +'<div style="font-size:11px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.meci+'</div>'
-            +'<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:1px">'
-            +'<span style="font-size:10px;color:#818cf8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">'+e.pick_text+'</span>'
-            +uBadge
-            +(e.score?'<span style="font-size:10px;font-weight:700;color:'+resColor+'">'+e.score+'</span>':'')
-            +'</div></div>'
-            +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">'
-            +ronResult
-            +clvIndicator
-            +'<button onclick="deleteClaudeSavedPick('+e.id+')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);cursor:pointer">🗑</button>'
-            +'</div></div>';
-        });
-      });
-    }
-    html+='</div>';
-  })();
-
-  html+='</div>';
-  root.innerHTML=html;
-}
 
 
 // ============================================================
@@ -1494,7 +1197,6 @@ function _reRenderPickViews(){
   var active = typeof getCurrentActiveTabName === 'function' ? getCurrentActiveTabName() : '';
   if(active === 'picks') { try{ renderPicksTab(); }catch(e){} }
   else if(active === 'ai') { try{ renderAITab(); }catch(e){} }
-  else { try{ renderClaudeAITab(); }catch(e){} }
 }
 
 // ============================================================
@@ -1792,11 +1494,6 @@ function renderAITab(){
   var STAKES = [5,10,20,50];
 
   // ── 1. Gather picks from all AI sources ──────────────────────
-  var claudeD = window.CLAUDE_DAILY || {};
-  var claudePicks = (claudeD.top_picks || []).slice();  // {meci, pick, motiv}
-  var claudeAcum  = (claudeD.acumulator || []).slice(); // {meci, pick, motiv}
-  var generatedAt = claudeD.generated_at || '';
-
   var motorEng = window.AI_MATCH_ENGINE || {};
   var motorPicks = (motorEng.picks || []).slice();      // {home, away, piata, cota, incredere, edge_pp, event_date, league}
   var motorGenAt = motorEng.generated_at || '';
@@ -1820,38 +1517,6 @@ function renderAITab(){
       source: 'motorai'
     };
   }
-  // Normalize Claude picks to common format
-  function claudePickNorm(p, src){
-    var odds = (function(s){ var m=String(s||'').match(/@\s*([\d.]+)/); return m?parseFloat(m[1]):0; })(p.pick||'');
-    var label = (p.pick||'').replace(/@\s*[\d.]+/,'').trim();
-    var edge = (function(s){ var m=String(s||'').match(/\+(\d+(?:\.\d+)?)\s*pp/); return m?parseFloat(m[1]):0; })(p.motiv||'');
-    return {
-      meci: p.meci||'',
-      pick: p.pick||'',
-      motiv: p.motiv||'',
-      odds: odds,
-      label: label,
-      edge: edge,
-      conf: 0,
-      league: '',
-      date: (function(){
-        // Try to lookup from ALL_MATCHES
-        if(!p.meci) return '';
-        var parts = p.meci.split(/\s+vs\s+/i);
-        if(parts.length<2) return '';
-        var nh = parts[0].trim().toLowerCase(), na = parts[1].trim().toLowerCase();
-        var found = (window.ALL_MATCHES||[]).find(function(m){
-          var mh=(m.home||'').toLowerCase(), ma=(m.away||'').toLowerCase();
-          return (mh===nh||mh.indexOf(nh)>=0||nh.indexOf(mh)>=0)&&(ma===na||ma.indexOf(na)>=0||na.indexOf(ma)>=0);
-        });
-        return found ? (found.date||'') : '';
-      })(),
-      source: src||'claude'
-    };
-  }
-
-  var claudeNorm = claudePicks.map(function(p){ return claudePickNorm(p,'claude'); });
-  var acumNorm   = claudeAcum.map(function(p){ return claudePickNorm(p,'claude_acum'); });
   var motorNorm  = motorPicks.map(function(p){ return motorToPick(p); });
 
   // ── 2. Saved picks map ───────────────────────────────────────
@@ -1871,14 +1536,6 @@ function renderAITab(){
     var t=1;
     picks.forEach(function(p){ var o=Number(p.odds||0); if(o>1.01) t*=o; });
     return t>1?+t.toFixed(2):0;
-  }
-  function genDateStr(s){
-    if(!s) return '';
-    try{
-      var d=new Date(s);
-      if(!isFinite(d.getTime())) return s.slice(0,16).replace('T',' ');
-      return d.toLocaleString('ro-RO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-    }catch(e){ return s.slice(0,16).replace('T',' '); }
   }
 
   // ── 4. Build accumulator tickets ─────────────────────────────
@@ -1991,17 +1648,16 @@ function renderAITab(){
   }
 
   // ── 7. Build full HTML ────────────────────────────────────────
-  var noData = !claudePicks.length && !motorPicks.length;
+  var noData = !motorPicks.length;
   var h = '';
 
   // Header
   h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">'
     + '<div>'
-    + '<div style="font-size:17px;font-weight:900;color:var(--txt)">🤖 AI — Analiză Combinată</div>'
-    + '<div style="font-size:11px;color:var(--muted);margin-top:3px">Claude AI · Motor AI (Gemini) · blended în selecții inteligente</div>'
+    + '<div style="font-size:17px;font-weight:900;color:var(--txt)">🤖 AI — Analiză Motor AI</div>'
+    + '<div style="font-size:11px;color:var(--muted);margin-top:3px">Motor AI (Gemini) · selecții inteligente per meci</div>'
     + '</div>'
     + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-    + (claudePicks.length?'<span style="font-size:10px;color:var(--muted);font-family:monospace">Claude: '+genDateStr(generatedAt)+'</span>':'')
     + '<button onclick="window._refreshClaudeDaily?window._refreshClaudeDaily():location.reload()" style="padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--txt);font-size:11px;cursor:pointer">🔄 Refresh</button>'
     + '</div></div>';
 
@@ -2024,45 +1680,17 @@ function renderAITab(){
     // Accumulator tickets
     h += '<div style="margin-bottom:8px;font-size:13px;font-weight:900;color:var(--txt)">🎫 Acumulatoare AI Generate</div>';
 
-    // Ticket 1: Claude Daily top picks
-    if(claudeNorm.length >= 2){
-      h += buildAITicket('🎯 Bilet Claude AI', 'rgba(139,92,246,.5)', 'rgba(139,92,246,.15)', claudeNorm.slice(0,4));
-    }
-    // Ticket 2: Motor AI best picks (incredere >= 70)
+    // Ticket: Motor AI best picks (incredere >= 70)
     var motorBest = motorNorm.filter(function(p){ return p.conf >= 70; }).sort(function(a,b){ return b.conf-a.conf; }).slice(0,4);
     if(motorBest.length < 2) motorBest = motorNorm.slice(0,3);
     if(motorBest.length >= 2){
       h += buildAITicket('⚡ Bilet Motor AI', 'rgba(251,191,36,.4)', 'rgba(251,191,36,.15)', motorBest);
-    }
-    // Ticket 3: Combined best-of-both
-    var combined = [];
-    var usedCombined = {};
-    claudeNorm.slice(0,3).forEach(function(p){
-      if(!usedCombined[p.meci]){ combined.push(p); usedCombined[p.meci]=true; }
-    });
-    motorNorm.slice(0,3).forEach(function(p){
-      if(!usedCombined[p.meci]){ combined.push(p); usedCombined[p.meci]=true; }
-    });
-    if(combined.length >= 3){
-      h += buildAITicket('🧠 Bilet Combinat', 'rgba(124,92,252,.5)', 'rgba(124,92,252,.15)', combined.slice(0,5));
-    }
-
-    // Individual picks — Claude section
-    if(claudeNorm.length){
-      h += '<div style="margin:16px 0 8px;font-size:13px;font-weight:900;color:var(--txt)">🎯 Claude AI — Selecții zilnice</div>';
-      claudeNorm.forEach(function(p){ h += buildPickCard(p, 'Claude AI', '#a78bfa'); });
     }
 
     // Individual picks — Motor AI section
     if(motorNorm.length){
       h += '<div style="margin:16px 0 8px;font-size:13px;font-weight:900;color:var(--txt)">⚡ Motor AI — Analize per meci</div>';
       motorNorm.slice(0,10).forEach(function(p){ h += buildPickCard(p, 'Motor AI', '#fbbf24'); });
-    }
-
-    // Claude acumulator picks (if available and different from top_picks)
-    if(acumNorm.length){
-      h += '<div style="margin:16px 0 8px;font-size:13px;font-weight:900;color:var(--txt)">📋 Claude Acumulator</div>';
-      acumNorm.slice(0,5).forEach(function(p){ h += buildPickCard(p, 'Acum', '#22c55e'); });
     }
   }
 
@@ -2418,11 +2046,6 @@ function renderActiveTab(name, opts){
   if(name === 'ai'){
     try{ renderAITab(); }catch(e){ console.warn('[renderActiveTab] ai', e); }
     markTabRendered('ai');
-    return;
-  }
-  if(name === 'claudeai'){
-    renderClaudeAITab();
-    markTabRendered('claudeai');
     return;
   }
   if(name === 'motorai'){
