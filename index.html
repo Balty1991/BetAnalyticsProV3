@@ -255,10 +255,6 @@ function toggleTheme(){
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8 14l2.4 2.4L16 11"/></svg>
     VIITOARE
   </button>
-  <button class="tab" data-tab="ai" onclick="switchTab('ai')">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
-    AI
-  </button>
   <button class="tab" data-tab="more" onclick="toggleDesktopMore()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
     Mai mult
@@ -289,11 +285,6 @@ function toggleTheme(){
       <span class="more-card-title">⚡ Master Signal — motorul unificat</span>
       <span class="more-card-sub">Un singur scor 0-100. ML5, APEX, Kelly și Valoare sunt deja combinate aici — nu mai trebuie să verifici 3 ecrane separate.</span>
     </button>
-    <button class="more-card-btn" onclick="switchTab('motorai');closeDesktopMore()">
-      <span class="more-card-title">🤖 Motor AI (doar sursa Gemini)</span>
-      <span class="more-card-sub">Vedere izolată doar pe picks Gemini per-meci. Pentru varianta combinată, vezi tab-ul principal AI.</span>
-    </button>
-
     <div class="more-group-title">📊 Performanță reală</div>
     <button class="more-card-btn" onclick="switchTab('performanta');closeDesktopMore()">
       <span class="more-card-title">📊 Performanță &amp; CLV</span>
@@ -649,11 +640,6 @@ function toggleTheme(){
 
   <!-- end tab-charts -->
 
-  <!-- ===== MOTOR AI — PER-MATCH GEMINI ANALYSIS ===== -->
-  <div class="tab-content" id="tab-motorai">
-    <div id="motorai-root" style="padding:16px 0 80px"></div>
-  </div>
-
   <!-- ===== CLV TRACKER ===== -->
   <div class="tab-content" id="tab-clv">
     <div class="clv-loading-init" style="text-align:center;padding:48px;color:var(--muted,#64748b)">
@@ -801,10 +787,6 @@ function toggleTheme(){
     <div id="picks-root" style="padding:16px 12px 80px"></div>
   </div>
 
-  <!-- ===== AI — Analiză Combinată ===== -->
-  <div class="tab-content" id="tab-ai">
-    <div id="ai-root" style="padding:16px 12px 80px"></div>
-  </div>
 
 </div><!-- /main -->
 
@@ -827,12 +809,6 @@ function toggleTheme(){
     </span>
     <small>Viitoare</small>
   </button>
-  <button class="mobile-nav-btn" data-tab="ai" onclick="switchTab('ai')" aria-label="AI">
-    <span aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
-    </span>
-    <small>AI</small>
-  </button>
   <button class="mobile-nav-btn" data-tab="more" onclick="toggleMobileMore()" aria-label="Mai mult">
     <span aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg>
@@ -847,7 +823,6 @@ function toggleTheme(){
 
   <div class="sheet-group-title">🧠 Cum decide VEYRA</div>
   <button class="mobile-sheet-btn" onclick="switchTab('master');closeMobileMore()" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)"><span class="sheet-btn-title">⚡ Master Signal — motorul unificat</span><small class="sheet-btn-sub">Un singur scor 0-100 — ML5 + APEX + Kelly + Valoare deja combinate, nu mai verifici 3 ecrane</small></button>
-  <button class="mobile-sheet-btn" onclick="switchTab('motorai');closeMobileMore()"><span class="sheet-btn-title">🤖 Motor AI (doar Gemini)</span><small class="sheet-btn-sub">Vedere izolată doar pe picks Gemini — varianta combinată e în tab-ul principal AI</small></button>
 
   <div class="sheet-group-title">📊 Performanță reală</div>
   <button class="mobile-sheet-btn" onclick="switchTab('performanta');closeMobileMore()"><span class="sheet-btn-title">📊 Performanță &amp; CLV</span><small class="sheet-btn-sub">Verdict acuratețe + Closing Line Value — un singur loc, aceleași picks salvate</small></button>
