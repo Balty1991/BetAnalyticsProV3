@@ -34,7 +34,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests anthropic tavily-python google-genai catboost scikit-learn pandas numpy scipy
+        run: pip install requests catboost scikit-learn pandas numpy scipy
 
       - name: Fetch referee stats (weekly cache + trend repair)
         env:
@@ -176,30 +176,10 @@ jobs:
       - name: Enrich predictions with EV/Kelly/fair_odds/risk_tier
         run: python enrich_predictions.py
 
-      - name: Build Claude daily analysis (top picks + acumulator)
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          if [ -f build_claude_daily.py ]; then
-            timeout 120s python -u build_claude_daily.py || echo "Claude daily analysis skipped; non-fatal."
-          fi
-        continue-on-error: true
-
       - name: Build AI predictions tracking
         run: |
           if [ -f build_ai_predictions_tracking.py ]; then
             timeout 120s python -u build_ai_predictions_tracking.py || echo "AI tracking skipped; non-fatal."
-          fi
-        continue-on-error: true
-
-      - name: Motor AI — analiză per meci cu Gemini
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          if [ -f build_ai_match_engine.py ]; then
-            timeout 180s python -u build_ai_match_engine.py || echo "Motor AI skipped; non-fatal."
           fi
         continue-on-error: true
 
@@ -294,9 +274,7 @@ jobs:
           # Safe add: folosim folderele, nu listă rigidă de fișiere JS/CSS.
           # Astfel workflow-ul nu mai pică dacă un asset auxiliar este șters intenționat.
           git add -A data/ index.html assets/ \
-            build_claude_daily.py \
             build_ai_predictions_tracking.py \
-            build_ai_match_engine.py \
             build_adaptive_predictions.py \
             build_prediction_type_history.py \
             build_training_features.py \

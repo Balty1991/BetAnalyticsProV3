@@ -5710,9 +5710,7 @@ function doRefresh(isManual){
     fetch9('/data/enriched.json', {}),  // ML5 pre-baked enrichment
     fetch9('/data/build_status.json', {}),
     fetch9('/data/model_benchmarks.json', {}),
-    fetch9('/data/claude_daily_analysis.json', {}),
     fetch9('/data/ai_predictions_tracking.json', {}),
-    fetch9('/data/ai_match_engine.json', {}),
     fetch9('/data/clv_tracker.json', {})
   ]).then(function(results){
     var predData = results[0];
@@ -5726,31 +5724,9 @@ function doRefresh(isManual){
     var enrichedFile = results[8] || {};
     BUILD_STATUS = results[9] || {};
     MODEL_BENCHMARKS = results[10] || {};
-    window.CLV_TRACKER = results[14] || {};
+    window.CLV_TRACKER = results[12] || {};
     _STAKE_POLICY_CACHE = null;
-    (function(){
-      var _todayKey='veyra_claude_daily_'+new Date().toISOString().slice(0,10);
-      var _fresh=results[11]||{};
-      var _hasContent=_fresh.generated_at||(_fresh.top_picks&&_fresh.top_picks.length);
-      var _usedCache=false;
-      try{
-        var _cached=JSON.parse(localStorage.getItem(_todayKey)||'null');
-        if(_cached&&(_cached.generated_at||(_cached.top_picks&&_cached.top_picks.length))){
-          window.CLAUDE_DAILY=_cached; _usedCache=true;
-        }
-      }catch(e){}
-      if(!_usedCache){
-        window.CLAUDE_DAILY=_fresh;
-        if(_hasContent){try{localStorage.setItem(_todayKey,JSON.stringify(_fresh));}catch(e){}}
-      }
-      try{Object.keys(localStorage).forEach(function(k){if(k.startsWith('veyra_claude_daily_')&&k!==_todayKey)localStorage.removeItem(k);});}catch(e){}
-    })();
-    window._refreshClaudeDaily=function(){
-      try{var k='veyra_claude_daily_'+new Date().toISOString().slice(0,10);localStorage.removeItem(k);}catch(e){}
-      location.reload();
-    };
-    window.AI_PRED_TRACKING = results[12] || {};
-    window.AI_MATCH_ENGINE = results[13] || {};
+    window.AI_PRED_TRACKING = results[11] || {};
     _MARKET_THRESHOLDS_CACHE = null;
     if(document.getElementById('perf-verdict-content')) try{ renderPerformantaVerdict(); }catch(e){}
 
@@ -10085,99 +10061,6 @@ function generateUpcomingTicket(genKey, scope, targetContainerId){
 }
 window.generateUpcomingTicket = generateUpcomingTicket;
 window.renderBilete = renderBilete;
-
-/* ── Acumulator AI (Gemini/Claude) — scopat la Evenimente Viitoare ──────
-   Boom100/Boom1000 sunt volum: relaxează pragurile ca să atingă o cotă
-   țintă, ceea ce înseamnă legs din ce în ce mai riscante pe ferestre mici.
-   Acumulatorul AI e opusul: reutilizează analiza zilnică deja generată
-   server-side de Gemini/Claude (build_claude_daily.py → data/
-   claude_daily_analysis.json), care e limitată strict la piețe
-   Safe/Value/Balanced cu cote 1.10-2.00 — deci prin construcție e cea mai
-   "precisă" variantă, nu una nouă calculată aici. */
-function generateAiPreciseTicket(scope, targetContainerId){
-  var d = window.CLAUDE_DAILY || {};
-  var acum = Array.isArray(d.acumulator) ? d.acumulator : [];
-  if(!acum.length){
-    finalizeTicket('ai_precise', '🧠 AI Precis', [], 1, targetContainerId);
-    toast('Analiza AI zilnică nu are un acumulator generat momentan — încearcă mai târziu', 'warn');
-    return;
-  }
-  var pool = getUpcomingScopedMatches(scope);
-  if(pool === null){ toast('Evenimentele viitoare încă se încarcă...', 'warn'); return; }
-
-  /* Pragurile de confidence din restul motorului (45-76, calibrate pe piețe
-     lichide) nu se ating aproape deloc pe under25/under35 din ligi mici —
-     acolo confidence stă natural în banda 35-50 chiar și pentru selecții
-     bune. Nu e un semnal discriminant aici, deci rămâne doar ca prag minim
-     de siguranță; semnalul real de calitate e dezacordul API vs Poisson —
-     exact ce a semnalat userul (Incheon United: confidence 35%, +22.7pp). */
-  var AI_PRECISE_MIN_CONFIDENCE = 30;
-  var AI_PRECISE_MAX_DIVERGENCE = 15;
-  var AI_PRECISE_MIN_PROB = 65;
-  var norm = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); };
-  var usedEvents = {};
-  var picks = [];
-  var skippedLowQuality = 0;
-  acum.forEach(function(e){
-    var parts = String(e.meci||'').split(/\s+vs\s+/i);
-    if(parts.length < 2) return;
-    var nh = norm(parts[0]), na = norm(parts[1]);
-    if(!nh || !na) return;
-    var marketKey = _claudeParseMarketKey(e.pick);
-    if(!marketKey) return;
-    if(!isAccumulatorAllowedMarket(marketKey)) return;
-    var found = null;
-    for(var i = 0; i < pool.length; i++){
-      var m = pool[i];
-      var mh = norm(m.home||''), ma = norm(m.away||'');
-      if(!mh || !ma) continue;
-      if((mh===nh||mh.indexOf(nh)>=0||nh.indexOf(mh)>=0) && (ma===na||ma.indexOf(na)>=0||na.indexOf(ma)>=0)){
-        found = m; break;
-      }
-    }
-    if(!found) return;
-    var evKey = getGenericEventKey(found);
-    if(usedEvents[evKey]) return;
-    var bet = (found.allBets || []).filter(function(b){ return b && b.type === marketKey && Number(b.odds||0) > 1; })[0];
-    if(!bet) return;
-
-    /* Selecția AI vine dintr-un pipeline server-side separat (CatBoost pe
-       predictions.json), nu din motorul local care randează efectiv acest
-       bet. Trebuie validată și local înainte să intre într-un bilet numit
-       "cel mai precis" — altfel putem afișa un pick pe care motorul local
-       îl consideră confidence scăzută / dezacord mare Poisson vs API. */
-    var localConf = Number(found.confidence || 0);
-    if(localConf < AI_PRECISE_MIN_CONFIDENCE){ skippedLowQuality++; return; }
-    if(bet.probabilityEngine === 'hybrid' && bet.apiProb != null && bet.poissonProb != null){
-      var divergence = Math.abs(Number(bet.apiProb) - Number(bet.poissonProb));
-      if(divergence > AI_PRECISE_MAX_DIVERGENCE){ skippedLowQuality++; return; }
-    }
-    /* Divergență mică nu înseamnă automat pick sigur — un 59% pe care API
-       și Poisson sunt de acord tot e un 59%. Pentru un bilet numit "cel
-       mai precis" cerem explicit o probabilitate finală (adjProb) decentă,
-       nu doar acord între modele. */
-    if(Number(bet.adjProb || 0) < AI_PRECISE_MIN_PROB){ skippedLowQuality++; return; }
-
-    usedEvents[evKey] = true;
-    picks.push(Object.assign({}, found, { bestBet: bet }));
-  });
-
-  if(!picks.length){
-    finalizeTicket('ai_precise', '🧠 AI Precis', [], 1, targetContainerId);
-    toast(skippedLowQuality
-      ? 'Toate picks-urile AI din fereastra selectată au picat testul local de calitate (probabilitate/confidence/discrepanță model)'
-      : 'Niciun pick din acumulatorul AI nu se regăsește în fereastra selectată (' + (scope==='today'?'azi':'toate zilele') + ')', 'warn');
-    return;
-  }
-  var totalOdds = picks.reduce(function(acc,p){ return acc * Number(p.bestBet.odds||1); }, 1);
-  var scopeSuffix = scope === 'today' ? '' : ' · toate zilele';
-  finalizeTicket('ai_precise', '🧠 AI Precis' + scopeSuffix, picks, totalOdds, targetContainerId);
-  if(skippedLowQuality){
-    toast(skippedLowQuality + ' pick' + (skippedLowQuality > 1 ? '-uri' : '') + ' AI exclus' + (skippedLowQuality > 1 ? 'e' : '') + ' local (probabilitate sub ' + AI_PRECISE_MIN_PROB + '%, confidence sub ' + AI_PRECISE_MIN_CONFIDENCE + '% sau discrepanță model mare)', 'warn');
-  }
-}
-window.generateAiPreciseTicket = generateAiPreciseTicket;
-
 
 function makeTicketPreview(type, label, picks, totalOdds, riskLabel, summary){
   picks = Array.isArray(picks) ? picks : [];
