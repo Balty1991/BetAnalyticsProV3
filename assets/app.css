@@ -8022,44 +8022,9 @@ button[onclick*="resetFilter"]:hover {
   opacity: .90;
 }
 
-/* ── Motor AI — modern cards ──────────────────────────────────────────────── */
-@keyframes motorai-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── Dashboard animations ──────────────────────────────────────────────── */
 @keyframes dash-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse-ring{0%,100%{box-shadow:0 0 0 0 rgba(124,92,252,.35)}50%{box-shadow:0 0 0 6px rgba(124,92,252,.08)}}
-@keyframes shine-sweep{from{background-position:200% center}to{background-position:-200% center}}
-
-.mai-wrap{padding:0 4px;animation:motorai-in .4s ease}
-.mai-header{background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(124,92,252,.08));border:1px solid rgba(139,92,246,.32);border-radius:18px;padding:18px 20px;margin-bottom:16px;position:relative;overflow:hidden}
-.mai-header::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(139,92,246,.06) 50%,transparent 100%);background-size:200% 100%;animation:shine-sweep 4s linear infinite;pointer-events:none}
-.mai-title{font-size:18px;font-weight:900;color:var(--txt);letter-spacing:-.3px}
-.mai-meta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.mai-meta-dot{width:5px;height:5px;border-radius:50%;background:rgba(124,92,252,.6);display:inline-block}
-.mai-provider-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);color:#a78bfa}
-.mai-filters{display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
-.mai-filter-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);transition:all .15s}
-.mai-filter-btn.active,.mai-filter-btn:hover{background:rgba(124,92,252,.12);border-color:rgba(124,92,252,.4);color:#7C5CFC}
-.mai-card{background:var(--bg2,#0E1424);border:1px solid var(--brd,#1e293b);border-radius:14px;padding:14px;margin-bottom:10px;animation:motorai-in .3s ease both;position:relative;overflow:hidden;transition:border-color .2s,box-shadow .2s}
-.mai-card:hover{border-color:rgba(124,92,252,.2);box-shadow:0 4px 20px rgba(124,92,252,.06)}
-.mai-card-accent{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
-.mai-conf-ring{position:relative;flex-shrink:0}
-.mai-conf-ring svg{display:block}
-.mai-conf-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;line-height:1}
-.mai-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.mai-teams{flex:1;min-width:0}
-.mai-team-name{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mai-team-sub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mai-pick-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-.mai-pick-label{font-size:13px;font-weight:800}
-.mai-odds-badge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px}
-.mai-edge-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#818cf8}
-.mai-motiv{font-size:11px;color:var(--muted);font-style:italic;line-height:1.5}
-.mai-save-btn{flex-shrink:0;padding:6px 12px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(124,92,252,.4);background:rgba(124,92,252,.07);color:#7C5CFC;transition:all .15s}
-.mai-save-btn:hover{background:rgba(124,92,252,.16);border-color:rgba(124,92,252,.7)}
-.mai-save-btn:disabled{opacity:.6;cursor:default;background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.35);color:#22c55e}
-.mai-empty{text-align:center;padding:60px 24px;color:var(--muted)}
-.mai-empty-icon{font-size:44px;margin-bottom:14px;opacity:.5}
-.mai-empty-title{font-size:15px;font-weight:700;color:var(--txt);margin-bottom:8px}
-.mai-empty-sub{font-size:13px;line-height:1.6}
 
 /* ── Dashboard entrance animations ───────────────────────────────────────── */
 .monitor-card{animation:dash-in .35s ease both}
