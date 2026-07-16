@@ -283,7 +283,15 @@
     }).sort(function (a, b) {
       return safeNum(b.smartScore || (b.bestBet||{}).adjProb || 0) -
              safeNum(a.smartScore || (a.bestBet||{}).adjProb || 0);
-    }).slice(0, limit).map(function (m) {
+    }).slice(0, limit).sort(function (a, b) {
+      /* Pașii unei piramide trebuie jucați în ordine cronologică — pasul 1
+         se rezolvă înainte ca pasul 2 să înceapă. Selecția de mai sus alege
+         cele mai bune meciuri după smartScore; aici doar le reordonăm după
+         ora de start, ca P1→P5 să progreseze real în timp. */
+      var da = new Date(a.event_date || a.eventDate || a.date || 0).getTime();
+      var db = new Date(b.event_date || b.eventDate || b.date || 0).getTime();
+      return (isFinite(da) ? da : Infinity) - (isFinite(db) ? db : Infinity);
+    }).map(function (m) {
       var bet = m.bestBet || {};
       var odds = safeNum(bet.odds || bet.displayOdds || 0);
       var timeStr = '';
