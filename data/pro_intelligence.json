@@ -1,37 +1,37 @@
 {
-  "updated_at": "2026-07-21T06:11:53.386034+00:00",
+  "updated_at": "2026-07-21T16:45:53.304986+00:00",
   "version": "pro-intelligence-v1",
-  "overall_score": 87.4,
+  "overall_score": 87.2,
   "executive_summary": {
     "title": "BetAnalytics Pro Intelligence Layer",
     "description": "Strat profesional pentru decizie: EV, fair odds, Kelly, risc, shortlist și sănătate model/date.",
     "primary_action": "Folosește Top EV pentru selecții value și Safe Picks pentru bilete conservative."
   },
   "data_quality": {
-    "recommendation_rows": 2008,
-    "pending_rows": 214,
-    "candidates_with_odds_and_probability": 179,
+    "recommendation_rows": 2013,
+    "pending_rows": 219,
+    "candidates_with_odds_and_probability": 178,
     "top_ev_count": 30,
     "has_backtest": true,
     "has_training_summary": true,
-    "baseline_leagues": 25
+    "baseline_leagues": 20
   },
   "risk_distribution": {
-    "value": 7,
+    "value": 6,
     "safe": 17,
-    "speculative": 108,
-    "balanced": 47
+    "speculative": 106,
+    "balanced": 49
   },
   "market_distribution_top150": {
     "Over 2.5G": 4,
     "BTTS": 21,
-    "Under 3.5G": 114,
-    "Over 1.5G": 11
+    "Under 3.5G": 113,
+    "Over 1.5G": 12
   },
   "league_distribution_top150": {
-    "Europa League": 4,
-    "Champions League": 9,
-    "Veikkausliiga": 11,
+    "Europa League": 3,
+    "Champions League": 8,
+    "Veikkausliiga": 12,
     "Allsvenskan": 14,
     "Copa Sudamericana": 2,
     "USL Championship": 19,
@@ -40,15 +40,16 @@
     "International Friendly Games": 1,
     "Chinese Super League": 21,
     "Liga MX Apertura": 2,
-    "MLS": 8,
-    "Brasileirão Serie A": 4,
-    "Parva Liga": 1,
+    "MLS": 6,
+    "Brasileirão Serie A": 5,
+    "Parva Liga": 2,
     "Eliteserien": 6,
     "FA Cup": 1,
     "Brasileirão Serie B": 4,
     "Super League": 1,
     "Ligue 1": 1,
-    "Championship": 1
+    "Championship": 1,
+    "Superliga": 1
   },
   "bankroll": {
     "default_bankroll_units": 100,
@@ -80,13 +81,13 @@
       "league": "Europa League",
       "event_date": "2026-07-23T21:00:00+03:00",
       "market": "Over 2.5G",
-      "odds": 1.86,
+      "odds": 1.87,
       "model_probability": 0.7731,
       "model_probability_pct": 77.31,
-      "implied_probability_pct": 53.76,
+      "implied_probability_pct": 53.48,
       "fair_odds": 1.293,
-      "edge_pp": 23.55,
-      "ev_pct": 43.8,
+      "edge_pp": 23.83,
+      "ev_pct": 44.57,
       "kelly_fraction": 0.06,
       "kelly_units_100": 6.0,
       "confidence": 56.15,
@@ -95,8 +96,8 @@
       "risk_note": "avantaj matematic puternic, dar volatilitate mai mare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 77.3% vs. probabilitate implicată 53.8%.",
-        "EV estimat 43.8% și edge 23.5 puncte procentuale.",
+        "Probabilitate model 77.3% vs. probabilitate implicată 53.5%.",
+        "EV estimat 44.6% și edge 23.8 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -241,6 +242,34 @@
       ]
     },
     {
+      "event_id": 207708,
+      "prediction_id": 5116,
+      "home": "Colorado Springs Switchbacks FC",
+      "away": "Miami FC",
+      "league": "USL Championship",
+      "event_date": "2026-07-23T04:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.56,
+      "model_probability": 0.765,
+      "model_probability_pct": 76.5,
+      "implied_probability_pct": 64.1,
+      "fair_odds": 1.307,
+      "edge_pp": 12.4,
+      "ev_pct": 19.34,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 55.66,
+      "score": 114.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 76.5% vs. probabilitate implicată 64.1%.",
+        "EV estimat 19.3% și edge 12.4 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 207270,
       "prediction_id": 5041,
       "home": "AC Oulu",
@@ -265,34 +294,6 @@
       "rationale": [
         "Probabilitate model 84.1% vs. probabilitate implicată 70.9%.",
         "EV estimat 18.6% și edge 13.2 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 207708,
-      "prediction_id": 5116,
-      "home": "Colorado Springs Switchbacks FC",
-      "away": "Miami FC",
-      "league": "USL Championship",
-      "event_date": "2026-07-23T04:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.56,
-      "model_probability": 0.765,
-      "model_probability_pct": 76.5,
-      "implied_probability_pct": 64.1,
-      "fair_odds": 1.307,
-      "edge_pp": 12.4,
-      "ev_pct": 19.34,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 55.66,
-      "score": 113.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.5% vs. probabilitate implicată 64.1%.",
-        "EV estimat 19.3% și edge 12.4 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -332,24 +333,24 @@
       "league": "Champions League",
       "event_date": "2026-07-22T20:30:00+03:00",
       "market": "BTTS",
-      "odds": 1.88,
+      "odds": 1.87,
       "model_probability": 0.6122,
       "model_probability_pct": 61.22,
-      "implied_probability_pct": 53.19,
+      "implied_probability_pct": 53.48,
       "fair_odds": 1.633,
-      "edge_pp": 8.03,
-      "ev_pct": 15.09,
-      "kelly_fraction": 0.0429,
-      "kelly_units_100": 4.29,
+      "edge_pp": 7.74,
+      "ev_pct": 14.48,
+      "kelly_fraction": 0.0416,
+      "kelly_units_100": 4.16,
       "confidence": 39.17,
       "score": 112.0,
-      "risk_tier": "value",
-      "risk_note": "avantaj matematic puternic, dar volatilitate mai mare",
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 61.2% vs. probabilitate implicată 53.2%.",
-        "EV estimat 15.1% și edge 8.0 puncte procentuale.",
-        "Miză Kelly fracțională 4.29% din bancă, plafonată prudent."
+        "Probabilitate model 61.2% vs. probabilitate implicată 53.5%.",
+        "EV estimat 14.5% și edge 7.7 puncte procentuale.",
+        "Miză Kelly fracțională 4.16% din bancă, plafonată prudent."
       ]
     },
     {
@@ -605,6 +606,34 @@
       ]
     },
     {
+      "event_id": 211508,
+      "prediction_id": 5443,
+      "home": "CD Toluca",
+      "away": "Pumas UNAM",
+      "league": "Liga MX Apertura",
+      "event_date": "2026-07-22T06:05:00+03:00",
+      "market": "BTTS",
+      "odds": 1.64,
+      "model_probability": 0.6706,
+      "model_probability_pct": 67.06,
+      "implied_probability_pct": 60.98,
+      "fair_odds": 1.491,
+      "edge_pp": 6.08,
+      "ev_pct": 9.98,
+      "kelly_fraction": 0.039,
+      "kelly_units_100": 3.9,
+      "confidence": 58.92,
+      "score": 109.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 67.1% vs. probabilitate implicată 61.0%.",
+        "EV estimat 10.0% și edge 6.1 puncte procentuale.",
+        "Miză Kelly fracțională 3.90% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 210772,
       "prediction_id": 5444,
       "home": "FC Thun",
@@ -630,34 +659,6 @@
         "Probabilitate model 65.8% vs. probabilitate implicată 61.0%.",
         "EV estimat 7.9% și edge 4.8 puncte procentuale.",
         "Miză Kelly fracțională 3.10% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 211508,
-      "prediction_id": 5443,
-      "home": "CD Toluca",
-      "away": "Pumas UNAM",
-      "league": "Liga MX Apertura",
-      "event_date": "2026-07-22T06:05:00+03:00",
-      "market": "BTTS",
-      "odds": 1.65,
-      "model_probability": 0.6706,
-      "model_probability_pct": 67.06,
-      "implied_probability_pct": 60.61,
-      "fair_odds": 1.491,
-      "edge_pp": 6.45,
-      "ev_pct": 10.65,
-      "kelly_fraction": 0.041,
-      "kelly_units_100": 4.1,
-      "confidence": 58.92,
-      "score": 108.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 67.1% vs. probabilitate implicată 60.6%.",
-        "EV estimat 10.6% și edge 6.5 puncte procentuale.",
-        "Miză Kelly fracțională 4.10% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1055,6 +1056,34 @@
       ]
     },
     {
+      "event_id": 205100,
+      "prediction_id": 5070,
+      "home": "Jeju SK",
+      "away": "Gangwon FC",
+      "league": "K League 1",
+      "event_date": "2026-07-21T13:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.17,
+      "model_probability": 0.8641,
+      "model_probability_pct": 86.41,
+      "implied_probability_pct": 85.47,
+      "fair_odds": 1.157,
+      "edge_pp": 0.94,
+      "ev_pct": 1.1,
+      "kelly_fraction": 0.0162,
+      "kelly_units_100": 1.62,
+      "confidence": 58.22,
+      "score": 94.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 86.4% vs. probabilitate implicată 85.5%.",
+        "EV estimat 1.1% și edge 0.9 puncte procentuale.",
+        "Miză Kelly fracțională 1.62% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 205096,
       "prediction_id": 5023,
       "home": "Incheon United",
@@ -1080,6 +1109,34 @@
         "Probabilitate model 85.5% vs. probabilitate implicată 82.6%.",
         "EV estimat 3.4% și edge 2.8 puncte procentuale.",
         "Miză Kelly fracțională 4.04% din bancă, plafonată prudent."
+      ]
+    },
+    {
+      "event_id": 205102,
+      "prediction_id": 5071,
+      "home": "Ulsan HD",
+      "away": "Incheon United",
+      "league": "K League 1",
+      "event_date": "2026-07-21T13:30:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.26,
+      "model_probability": 0.8542,
+      "model_probability_pct": 85.42,
+      "implied_probability_pct": 79.37,
+      "fair_odds": 1.171,
+      "edge_pp": 6.05,
+      "ev_pct": 7.63,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 36.92,
+      "score": 102.0,
+      "risk_tier": "speculative",
+      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 85.4% vs. probabilitate implicată 79.4%.",
+        "EV estimat 7.6% și edge 6.1 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
     {
@@ -1391,34 +1448,6 @@
       ]
     },
     {
-      "event_id": 205100,
-      "prediction_id": 5070,
-      "home": "Jeju SK",
-      "away": "Gangwon FC",
-      "league": "K League 1",
-      "event_date": "2026-07-21T13:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.17,
-      "model_probability": 0.8382,
-      "model_probability_pct": 83.82,
-      "implied_probability_pct": 85.47,
-      "fair_odds": 1.193,
-      "edge_pp": -1.65,
-      "ev_pct": -1.93,
-      "kelly_fraction": 0.0,
-      "kelly_units_100": 0.0,
-      "confidence": 58.22,
-      "score": 93.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.8% vs. probabilitate implicată 85.5%.",
-        "EV estimat -1.9% și edge -1.7 puncte procentuale.",
-        "Miză Kelly fracțională 0.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
       "event_id": 205085,
       "prediction_id": 4947,
       "home": "FC Seoul",
@@ -1444,34 +1473,6 @@
         "Probabilitate model 83.7% vs. probabilitate implicată 80.0%.",
         "EV estimat 4.7% și edge 3.7 puncte procentuale.",
         "Miză Kelly fracțională 4.67% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 205098,
-      "prediction_id": 5056,
-      "home": "Bucheon FC 1995",
-      "away": "FC Seoul",
-      "league": "K League 1",
-      "event_date": "2026-07-19T13:30:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.23,
-      "model_probability": 0.8371,
-      "model_probability_pct": 83.71,
-      "implied_probability_pct": 81.3,
-      "fair_odds": 1.195,
-      "edge_pp": 2.41,
-      "ev_pct": 2.96,
-      "kelly_fraction": 0.0322,
-      "kelly_units_100": 3.22,
-      "confidence": 50.83,
-      "score": 98.0,
-      "risk_tier": "speculative",
-      "risk_note": "semnal slab sau volatil; miză mică ori evitare",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 83.7% vs. probabilitate implicată 81.3%.",
-        "EV estimat 3.0% și edge 2.4 puncte procentuale.",
-        "Miză Kelly fracțională 3.22% din bancă, plafonată prudent."
       ]
     }
   ],
@@ -1533,6 +1534,34 @@
       ]
     },
     {
+      "event_id": 207708,
+      "prediction_id": 5116,
+      "home": "Colorado Springs Switchbacks FC",
+      "away": "Miami FC",
+      "league": "USL Championship",
+      "event_date": "2026-07-23T04:00:00+03:00",
+      "market": "Under 3.5G",
+      "odds": 1.56,
+      "model_probability": 0.765,
+      "model_probability_pct": 76.5,
+      "implied_probability_pct": 64.1,
+      "fair_odds": 1.307,
+      "edge_pp": 12.4,
+      "ev_pct": 19.34,
+      "kelly_fraction": 0.06,
+      "kelly_units_100": 6.0,
+      "confidence": 55.66,
+      "score": 114.0,
+      "risk_tier": "balanced",
+      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
+      "status": "pending",
+      "rationale": [
+        "Probabilitate model 76.5% vs. probabilitate implicată 64.1%.",
+        "EV estimat 19.3% și edge 12.4 puncte procentuale.",
+        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
+      ]
+    },
+    {
       "event_id": 207270,
       "prediction_id": 5041,
       "home": "AC Oulu",
@@ -1557,34 +1586,6 @@
       "rationale": [
         "Probabilitate model 84.1% vs. probabilitate implicată 70.9%.",
         "EV estimat 18.6% și edge 13.2 puncte procentuale.",
-        "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
-      ]
-    },
-    {
-      "event_id": 207708,
-      "prediction_id": 5116,
-      "home": "Colorado Springs Switchbacks FC",
-      "away": "Miami FC",
-      "league": "USL Championship",
-      "event_date": "2026-07-23T04:00:00+03:00",
-      "market": "Under 3.5G",
-      "odds": 1.56,
-      "model_probability": 0.765,
-      "model_probability_pct": 76.5,
-      "implied_probability_pct": 64.1,
-      "fair_odds": 1.307,
-      "edge_pp": 12.4,
-      "ev_pct": 19.34,
-      "kelly_fraction": 0.06,
-      "kelly_units_100": 6.0,
-      "confidence": 55.66,
-      "score": 113.0,
-      "risk_tier": "balanced",
-      "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
-      "status": "pending",
-      "rationale": [
-        "Probabilitate model 76.5% vs. probabilitate implicată 64.1%.",
-        "EV estimat 19.3% și edge 12.4 puncte procentuale.",
         "Miză Kelly fracțională 6.00% din bancă, plafonată prudent."
       ]
     },
@@ -1764,24 +1765,24 @@
       "league": "Liga MX Apertura",
       "event_date": "2026-07-22T06:05:00+03:00",
       "market": "BTTS",
-      "odds": 1.65,
+      "odds": 1.64,
       "model_probability": 0.6706,
       "model_probability_pct": 67.06,
-      "implied_probability_pct": 60.61,
+      "implied_probability_pct": 60.98,
       "fair_odds": 1.491,
-      "edge_pp": 6.45,
-      "ev_pct": 10.65,
-      "kelly_fraction": 0.041,
-      "kelly_units_100": 4.1,
+      "edge_pp": 6.08,
+      "ev_pct": 9.98,
+      "kelly_fraction": 0.039,
+      "kelly_units_100": 3.9,
       "confidence": 58.92,
-      "score": 108.0,
+      "score": 109.0,
       "risk_tier": "balanced",
       "risk_note": "profil echilibrat, bun pentru shortlist și confirmare manuală",
       "status": "pending",
       "rationale": [
-        "Probabilitate model 67.1% vs. probabilitate implicată 60.6%.",
-        "EV estimat 10.6% și edge 6.5 puncte procentuale.",
-        "Miză Kelly fracțională 4.10% din bancă, plafonată prudent."
+        "Probabilitate model 67.1% vs. probabilitate implicată 61.0%.",
+        "EV estimat 10.0% și edge 6.1 puncte procentuale.",
+        "Miză Kelly fracțională 3.90% din bancă, plafonată prudent."
       ]
     },
     {
