@@ -1148,6 +1148,76 @@ function addClaudeSavedPick(meci, pickTxt, eventDate, pickType, recUnits){
   _reRenderPickViews();
   if(typeof toast==='function') toast('💾 Pick salvat!','ok');
 }
+// ============================================================
+// AUTO-SAVE — înregistrează automat toate predicțiile eligibile
+// din tab-ul Picks, ca userul să nu mai trebuiască să apese
+// manual "Salvează" pentru ca ele să conteze în statistici.
+// ============================================================
+function autoRegisterPicksUnificate(){
+  var allM = Array.isArray(window.ALL_MATCHES) ? window.ALL_MATCHES : [];
+  var eligible = allM.filter(function(m){
+    if(!m || !m.bestBet || m.analysisState !== 'ELIGIBLE') return false;
+    try{ return typeof isMatchStillDisplayable === 'function' ? isMatchStillDisplayable(m) : true; }catch(e){ return true; }
+  });
+  var auditRows = [];
+  if(window.SIGNAL_AUDIT && Array.isArray(window.SIGNAL_AUDIT.rows)){
+    auditRows = window.SIGNAL_AUDIT.rows.filter(function(r){
+      return (r.edge_pct||0) > 2 && (r.value||0) > 0 && (r.adjusted_prob||0) >= 68;
+    }).slice(0,8);
+  }
+  if(!eligible.length && !auditRows.length) return 0;
+
+  var list = loadClaudeSaved();
+  var existing = {};
+  list.forEach(function(e){ existing[(e.meci||'')+'|'+(e.pick_text||'')] = true; });
+
+  var added = 0;
+  eligible.forEach(function(m){
+    var bb = m.bestBet || {};
+    var odds = Number(bb.odds||0);
+    var label = bb.label || bb.type || '';
+    var meci = (m.home||'') + ' vs ' + (m.away||'');
+    var pickTxt = label + (odds>1?' @ '+odds.toFixed(2):'');
+    var k = meci+'|'+pickTxt;
+    if(!label || existing[k]) return;
+    list.push({
+      id: Date.now() + Math.floor(Math.random()*999) + added,
+      savedAt: new Date().toISOString(),
+      meci: meci, pick_text: pickTxt,
+      odds: odds, marketKey: _claudeParseMarketKey(pickTxt),
+      event_date: m.date||'', type: 'picks',
+      rec_units: 1, result: 'pending', score: null,
+      autoTracked: true
+    });
+    existing[k] = true;
+    added++;
+  });
+  auditRows.forEach(function(r){
+    var market = r.market || r.market_key || '';
+    var odds = Number(r.book_odds||0);
+    var meci = (r.home||'') + ' vs ' + (r.away||'');
+    var pickTxt = market + (odds>1?' @ '+odds.toFixed(2):'');
+    var k = meci+'|'+pickTxt;
+    if(!market || odds<=1.01 || existing[k]) return;
+    list.push({
+      id: Date.now() + Math.floor(Math.random()*999) + added,
+      savedAt: new Date().toISOString(),
+      meci: meci, pick_text: pickTxt,
+      odds: odds, marketKey: _claudeParseMarketKey(pickTxt),
+      event_date: r.event_date||'', type: 'picks',
+      rec_units: 1, result: 'pending', score: null,
+      autoTracked: true
+    });
+    existing[k] = true;
+    added++;
+  });
+
+  if(added > 0){
+    saveClaudeSaved(list);
+    try{ _reRenderPickViews(); }catch(e){}
+  }
+  return added;
+}
 function autoCheckClaudeSavedResults(){
   var list = loadClaudeSaved();
   var pending = list.filter(function(e){ return e.result==='pending'; });
@@ -1549,6 +1619,13 @@ function prefetchNonCriticalTabData(){
   scheduleIdleTask(function(){
     loadLazyDataset('recommendationLog').catch(function(err){ console.warn('[Prefetch] recommendationLog failed', err); });
   }, 2200);
+  scheduleIdleTask(function(){
+    // Necesar pentru auto-salvarea picks-urilor din Evenimente Viitoare —
+    // fără acest prefetch, ALL_EVENTS rămâne gol până userul deschide tab-ul.
+    loadLazyDataset('events').then(function(){
+      try{ if(typeof window.autoRegisterUpcomingPicks === 'function') window.autoRegisterUpcomingPicks(); }catch(e){}
+    }).catch(function(err){ console.warn('[Prefetch] events failed', err); });
+  }, 2600);
   scheduleIdleTask(function(){
     loadLazyDataset('historyEngine').catch(function(err){ console.warn('[Prefetch] historyEngine failed', err); });
   }, 3400);
