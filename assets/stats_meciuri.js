@@ -232,6 +232,46 @@
   }
 
   /* ══════════════════════════════════════════════════
+     AUTO-SAVE — înregistrează automat toate picks-urile
+     disponibile (Meciuri/APEX/ML5), ca userul să nu mai
+     trebuiască să apese manual "Salvează" pe fiecare card
+     pentru ca el să conteze în Statistica Meciuri.
+  ══════════════════════════════════════════════════ */
+  function _autoPersistAvailable(storeKey, avail) {
+    var toAdd = avail.filter(function(p){ return p && !p._alreadySaved; });
+    if (!toAdd.length) return 0;
+    var store = loadStore(storeKey);
+    var added = 0;
+    toAdd.forEach(function(p) {
+      var k = p._key;
+      if (!k || store[k]) return; // dublă verificare — evită race-uri între cele 3 pool-uri
+      var entry = Object.assign({}, p, { status: 'pending', homeScore: null, awayScore: null, resolvedAt: null, autoTracked: true });
+      delete entry._key;
+      delete entry._alreadySaved;
+      store[k] = entry;
+      added++;
+    });
+    if (added > 0) saveStore(storeKey, store);
+    return added;
+  }
+
+  window.autoRegisterStatsMeciuriPicks = function() {
+    var meciuriAvail = _getAvailablePicks(_getMeciuriLivePool(), STORE_KEY, entryKey,
+      function(m){ return { eventId:String(m.eventId||m.event_id||''), home:m.home||'', away:m.away||'', league:m.league||'', bestBet:betType(m), odds:betOdds(m), smartScore:m.smartScore||0, eventDate:matchDate(m) }; });
+    var apexAvail = _getAvailablePicks(_getApexLivePool(), APEX_KEY, apexKey,
+      function(p){ var rawMkt=p.marketKey||p.market_key||p.market||''; return { eventId:String(p.event_id!=null?p.event_id:(p.eventId!=null?p.eventId:'')), home:p.home||p.home_team||'', away:p.away||p.away_team||'', league:p.league||'', bestBet:p._mk||(rawMkt?normalizeApexMkt(rawMkt):''), odds:p._odds||p.displayOdds||p.book_odds||p.odds||null, smartScore:p._apexScore||p.smartScore||p.score||0, eventDate:p.event_date||p.eventDate||'' }; });
+    var ml5Avail = _getAvailablePicks(_getMl5LivePool(), ML5_KEY, entryKey,
+      function(m){ return { eventId:String(m.eventId||m.event_id||''), home:m.home||'', away:m.away||'', league:m.league||'', bestBet:betType(m), odds:betOdds(m), smartScore:m.smartScore||0, eventDate:matchDate(m) }; });
+
+    /* Nu re-randăm de aici — apelantul (heartbeat-ul periodic sau
+       renderStatsMeciuri însuși) decide dacă/când re-randează, ca să
+       evităm o buclă auto-register → render → auto-register. */
+    return _autoPersistAvailable(STORE_KEY, meciuriAvail)
+      + _autoPersistAvailable(APEX_KEY, apexAvail)
+      + _autoPersistAvailable(ML5_KEY, ml5Avail);
+  };
+
+  /* ══════════════════════════════════════════════════
      SAVE / DELETE / SETTLE — acțiuni manuale
   ══════════════════════════════════════════════════ */
 
@@ -431,6 +471,10 @@
     if (!root) return;
 
     _pendingEntries = [];
+
+    /* auto-save — orice pick nou disponibil intră direct în istoric,
+       ca statisticile de mai jos să nu depindă de un click manual */
+    try { window.autoRegisterStatsMeciuriPicks(); } catch(e) {}
 
     /* auto-check win/loss pentru picks deja salvate */
     _autoCheck(STORE_KEY);
@@ -767,6 +811,15 @@
       try { if (typeof window.autoCheckML5AccumResults === 'function') window.autoCheckML5AccumResults(); } catch(e) {}
       try { if (typeof window.autoCheckMotorAIResults === 'function') window.autoCheckMotorAIResults(); } catch(e) {}
       try { if (typeof window.autoCheckClaudeSavedResults === 'function') window.autoCheckClaudeSavedResults(); } catch(e) {}
+
+      // ── Auto-save — înregistrează automat toate predicțiile eligibile
+      // din toate categoriile, indiferent ce tab e deschis, ca userul
+      // să nu mai trebuiască să apese manual "Salvează" nicăieri.
+      var autoAdded = 0;
+      try { if (typeof window.autoRegisterStatsMeciuriPicks === 'function') autoAdded += window.autoRegisterStatsMeciuriPicks() || 0; } catch(e) {}
+      try { if (typeof window.autoRegisterPicksUnificate === 'function') autoAdded += window.autoRegisterPicksUnificate() || 0; } catch(e) {}
+      try { if (typeof window.autoRegisterUpcomingPicks === 'function') autoAdded += window.autoRegisterUpcomingPicks() || 0; } catch(e) {}
+      if (autoAdded > 0) _triggerUpdate();
     });
   }
 

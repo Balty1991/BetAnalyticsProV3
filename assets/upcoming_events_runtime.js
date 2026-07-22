@@ -97,6 +97,51 @@
     return true;
   }
 
+  /* ── Auto-save — înregistrează automat toate evenimentele eligibile ────
+     Rulează în fundal (vezi hook-ul din stats_meciuri.js) ca userul să nu
+     mai trebuiască să apese manual "Salvează" pe fiecare eveniment pentru
+     ca el să conteze în statisticile Winrate/ROI de mai jos. Filtrul de
+     calitate e identic cu cel folosit deja de "Filtru edge" din acest tab:
+     risk_tier prezent și diferit de "Avoid". */
+  function autoRegisterUpcomingPicks() {
+    var events = Array.isArray(window.ALL_EVENTS) ? window.ALL_EVENTS : [];
+    if (!events.length) return 0;
+    var predLookup = buildPredLookup();
+    var picks = loadPicks();
+    var added = 0;
+    events.forEach(function (ev) {
+      if (!ev || ev.id == null) return;
+      var k = String(ev.id);
+      if (picks[k]) return; // deja urmărit (manual sau auto)
+      var pred = predLookup[k];
+      if (!pred || !pred.risk_tier || pred.risk_tier === 'Avoid') return;
+      var p = calcPrediction(ev, pred);
+      if (!p || !p.best) return;
+      picks[k] = {
+        eventId:      k,
+        home:         ev.home_team || '',
+        away:         ev.away_team || '',
+        league:       (ev.league && ev.league.name) || '',
+        bestBet:      p.best.key,
+        bestBetLabel: p.best.label,
+        odds:         getOddsForMarket(ev, p.best.key, p),
+        prob:         p.best.prob,
+        smartScore:   p.best.prob,
+        eventDate:    ev.event_date || '',
+        status:       'pending',
+        homeScore:    null,
+        awayScore:    null,
+        resolvedAt:   null,
+        savedAt:      new Date().toISOString(),
+        autoTracked:  true
+      };
+      added++;
+    });
+    if (added > 0) savePicks(picks);
+    return added;
+  }
+  window.autoRegisterUpcomingPicks = autoRegisterUpcomingPicks;
+
   function getOddsForMarket(ev, key, p) {
     /* 1. Real bookmaker odds (market_best_odds) */
     var mbo = ev.market_best_odds || {};
@@ -573,6 +618,8 @@
     var today = todayIso();
     var evLookup = {};
     events.forEach(function(e){ if (e&&e.id) evLookup[String(e.id)]=e; });
+
+    try { autoRegisterUpcomingPicks(); } catch(e) {}
 
     /* Overlay finished scores from recent_results.json */
     if (_recentResLookup === null) {
