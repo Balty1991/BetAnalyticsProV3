@@ -1,70 +1,70 @@
 {
   "version": "smartbet-fusion-v2",
-  "updated_at": "2026-07-01T08:00:36.158527+00:00",
+  "updated_at": "2026-08-01T06:46:25.049305+00:00",
   "system": {
-    "avg_wfv_auc": 0.5986,
-    "avg_test_ece": 0.0154,
+    "avg_wfv_auc": 0.5969,
+    "avg_test_ece": 0.0217,
     "models_trained": 7,
     "feature_count": 253,
-    "training_rows": 56854,
-    "eligible_rows_min5": 51301,
-    "warehouse_events": 56854,
-    "warehouse_leagues": 35,
+    "training_rows": 67253,
+    "eligible_rows_min5": 57579,
+    "warehouse_events": 67253,
+    "warehouse_leagues": 75,
     "warehouse_year_min": 2003,
     "warehouse_year_max": 2079
   },
   "markets_ranked": [
     {
       "market": "away_win",
-      "wfv_auc": 0.6786,
-      "test_ece": 0.0201,
+      "wfv_auc": 0.6705,
+      "test_ece": 0.0368,
       "quality_gate": "A",
       "label": "away_win"
     },
     {
       "market": "home_win",
-      "wfv_auc": 0.6697,
-      "test_ece": 0.0225,
+      "wfv_auc": 0.6619,
+      "test_ece": 0.0254,
       "quality_gate": "A",
       "label": "home_win"
     },
     {
       "market": "under35",
-      "wfv_auc": 0.5896,
-      "test_ece": 0.0201,
+      "wfv_auc": 0.5957,
+      "test_ece": 0.0187,
       "quality_gate": "B",
       "label": "under35"
     },
     {
       "market": "over15",
-      "wfv_auc": 0.5809,
-      "test_ece": 0.0112,
+      "wfv_auc": 0.586,
+      "test_ece": 0.0122,
       "quality_gate": "B",
       "label": "over15"
     },
     {
       "market": "over25",
-      "wfv_auc": 0.5796,
-      "test_ece": 0.0102,
+      "wfv_auc": 0.5775,
+      "test_ece": 0.0212,
       "quality_gate": "B",
       "label": "over25"
     },
     {
       "market": "btts",
-      "wfv_auc": 0.5562,
-      "test_ece": 0.0204,
+      "wfv_auc": 0.5538,
+      "test_ece": 0.0171,
       "quality_gate": "B",
       "label": "btts"
     },
     {
       "market": "draw",
-      "wfv_auc": 0.5358,
-      "test_ece": 0.0031,
+      "wfv_auc": 0.5329,
+      "test_ece": 0.0206,
       "quality_gate": "C",
       "label": "draw"
     }
   ],
-  "leagues_count": 31,
+  "leagues_count": 59,
   "health": {
     "all_ok": true,
     "files": {
@@ -82,13 +82,13 @@
       },
       "models_count": 7,
       "models": [
-        "catboost_under35.cbm",
-        "catboost_over25.cbm",
         "catboost_btts.cbm",
+        "catboost_home_win.cbm",
         "catboost_away_win.cbm",
-        "catboost_over15.cbm",
+        "catboost_under35.cbm",
         "catboost_draw.cbm",
-        "catboost_home_win.cbm"
+        "catboost_over15.cbm",
+        "catboost_over25.cbm"
       ]
     }
   },
