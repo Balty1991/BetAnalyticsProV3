@@ -1,8 +1,7 @@
 name: SmartBet Fusion v2 — Full ML Pipeline
 
 on:
-  schedule:
-    - cron: '0 3 1 * *'
+  # Pipeline-ul care consultă API-ul rulează doar manual, pentru a păstra limita zilnică.
   workflow_dispatch:
     inputs:
       mode:

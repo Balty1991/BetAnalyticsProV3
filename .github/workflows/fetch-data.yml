@@ -2,7 +2,8 @@ name: Fetch VEYRA Data
 
 on:
   schedule:
-    - cron: '20 2,14 * * *'
+    # Exact două actualizări API: dimineața și seara, în fusul României.
+    - cron: '20 5,16 * * *'
   workflow_dispatch:
   push:
     branches:

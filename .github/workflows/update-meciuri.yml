@@ -1,8 +1,8 @@
 name: Update Meciuri
 
 on:
-  schedule:
-    - cron: '*/30 * * * *'
+  # Flux API disponibil doar manual; actualizarea automată este centralizată
+  # în fetch-data.yml, la două execuții zilnice.
   workflow_dispatch:
   push:
     branches: [main]

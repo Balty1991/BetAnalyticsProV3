@@ -1,8 +1,7 @@
 name: SmartBet Fusion v2 — Incremental Update (Weekly)
 
 on:
-  schedule:
-    - cron: '0 4 * * 1'   # Luni 04:00 UTC
+  # Reantrenarea cu date API rulează doar manual, pentru a păstra limita zilnică.
   workflow_dispatch:
 
 permissions:
